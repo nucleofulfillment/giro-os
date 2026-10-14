@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Giro OS — Mesa · GIRO-OS-003</title>
+<title>Giro OS — Mesa · GIRO-OS-004</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -433,19 +433,8 @@
 /* mesma lista de transportadoras do painel principal (mesmos códigos) */
 var DELTADIS_API='https://giro-os-api.nucleofull.workers.dev';
 var TRANSPORTADORAS=[
-  {id:'jt',  n:'J&T Express',        ini:'JT', cor:'#ECA548', hoje:0, dominio:'jtexpress.com.br'},
-  {id:'anj', n:'Anjun',              ini:'AJ', cor:'#16A34A', hoje:0, dominio:'anjunexpress.com'},
-  {id:'dhl', n:'DHL',                ini:'DH', cor:'#FFCC00', hoje:0, dominio:'dhl.com'},
-  {id:'pic', n:'Pichau',             ini:'PI', cor:'#1D4ED8', hoje:0, dominio:'pichau.com.br'},
-  {id:'enq', n:'Expresso Nordeste',  ini:'EQ', cor:'#DC2626', hoje:0, dominio:'expnordeste.com.br'},
-  {id:'kmc', n:'Km Cargo',           ini:'KM', cor:'#0F766E', hoje:0, dominio:'kmcargo.com.br'},
-  {id:'lsl', n:'Ls Log',             ini:'LL', cor:'#EA7A33', hoje:0, dominio:'lslog.com.br'},
-  {id:'din', n:'Dinâmica',           ini:'DI', cor:'#B08A00', hoje:0, dominio:'dinamicagroup.com.br'},
-  {id:'dia', n:'Diálogo Logística',  ini:'DL', cor:'#D96D28', hoje:0, dominio:'dialogologistica.com.br'},
-  {id:'lgb', n:'Log GB',             ini:'LG', cor:'#16A34A', hoje:0, dominio:null},
-  {id:'app', n:'Bipado no app',      ini:'📱', cor:'#D96D28', hoje:0, dominio:null, somente:true},
-  {id:'dev', n:'Devoluções',         ini:'↩', cor:'#B45309', hoje:0, dominio:null, somente:true, dev:true}
-];
+  {id:'del', n:'Entregas', ini:'EN', cor:'#9B1C1C', hoje:0, dominio:null}
+];   /* (GIRO-OS-004) delivery: sem transportadoras — só o motorista. Uma única 'carga' interna (id del) */
 /* login: usa a mesma entrada do painel (se o painel já estava aberto neste navegador, entra direto) */
 var DD_TOKEN='', DD_USER=null;
 try{ DD_TOKEN=localStorage.getItem('dd_jwt')||''; DD_USER=JSON.parse(localStorage.getItem('dd_user')||'null'); }catch(e){}
@@ -541,6 +530,7 @@ function carregarMotoristas(){
     el('mot-lista').innerHTML=h; motAquiOpcoes();
     s.placeholder=MOTS.length?'digite ou escolha o motorista':'Nenhum motorista cadastrado no painel';
     if(!ATIVA) restaurarSessao();
+    if(!ATIVA&&!MODO){ MODO='entrada'; ajustarModoTela(); pintarCards(); abrirMesa('del'); }   /* (GIRO-OS-004) já abre em Entregas: só falta escolher o motorista */
   }).catch(function(){ el('mot-sel').placeholder='Não consegui carregar os motoristas'; });
 }
 function escolherMotorista(){
@@ -552,7 +542,7 @@ function escolherMotorista(){
   if(MOT && (!novo || MOT.id!==novo.id)) encerrar();
   MOT=novo; if(novo) campo.value=novo.n;
   el('mesa-cards').classList.toggle('bloq',!MOT);
-  if(MOT&&MODO==='devolucao') abrirDevolucao(); else if(MOT) aviso('Motorista: '+MOT.n+' — agora escolha a transportadora');
+  if(MOT&&MODO==='devolucao') abrirDevolucao(); else if(MOT) aviso('Motorista: '+MOT.n+' — agora bipe os pacotes');
   salvarSessao(); motChip();
 }
 function abrirMesa(id){
@@ -753,17 +743,18 @@ function trocarModo(m){
   MODO=m; XML_LOTE=[]; CTE_LOTE=[]; DEV_MOT=''; TAM_SEL='P'; ajustarModoTela(); pintarCards();
   if(m==='esquecido') abrirEsquecido();
   if(m==='devolucao'&&MOT) abrirDevolucao();
+  if(m==='entrada') abrirMesa('del');
 }
 function ajustarModoTela(){
   var nada=(MODO===''), esq=(MODO==='esquecido');
-  el('mot-box').style.display='none'; el('mesa-cards').style.display=(nada||esq||MODO==='devolucao')?'none':'';
+  el('mot-box').style.display='none'; el('mesa-cards').style.display='none';   /* (GIRO-OS-004) sem cartões de transportadora */
   el('mot-sel').readOnly=esq;   /* esquecido: o motorista é preenchido sozinho */
   var v=el('scan-vazio').querySelector('span');
-  if(v) v.textContent=(MODO===''?'Escolha uma operação acima para começar: Entregas, Devolução ou Esquecido.':MODO==='devolucao'?'Escolha o motivo e bipe os pacotes. A transportadora e o motorista o sistema já sabe.':(MODO==='cte'?'Escolha a transportadora; depois bipe a chave do CT-e (DACTE) e informe o valor do frete.':MODO==='xml'?'Escolha a transportadora; depois bipe a chave da NF.':(MODO==='os'?'Escolha a transportadora; depois digite o número da OS.':'Escolha a transportadora ao lado para começar a bipar.')));
+  if(v) v.textContent=(MODO===''?'Escolha uma operação acima para começar: Entregas, Devolução ou Esquecido.':MODO==='devolucao'?'Escolha o motivo e bipe os pacotes. A transportadora e o motorista o sistema já sabe.':(MODO==='cte'?'Escolha a transportadora; depois bipe a chave do CT-e (DACTE) e informe o valor do frete.':MODO==='xml'?'Escolha a transportadora; depois bipe a chave da NF.':(MODO==='os'?'Escolha a transportadora; depois digite o número da OS.':'Escolha o motorista para começar a bipar.')));
 }
 function modoPreparar(){
   var ex=el('mo-extra'), xm=(MODO==='xml'); motAquiMostrar();
-  el('scan-manual-box').style.display=''; el('scan-auto-box').style.display=(MODO==='entrada')?'':'none';
+  el('scan-manual-box').style.display=''; el('scan-auto-box').style.display='none';
   el('scan-cam-row').style.display=(MODO==='os')?'none':''; var mq=el('mbtn-qr'); if(mq) mq.style.display=(MODO==='os')?'none':'';
   el('scan-manual').placeholder=(MODO==='os')?'Digite o número da OS (mín. 5 caracteres)':(xm?'Bipe a chave da NF (código de barras da nota, 44 números)':(MODO==='cte'?'Bipe a chave do CT-e (código de barras da DACTE, 44 números)':'Bipe ou digite o código'));
   el('btn-desfazer').style.display=(MODO==='entrada')?'':'none';
@@ -1562,6 +1553,7 @@ function sairLogin(msg){
 }
 /* (45) a lista de transportadoras vem do painel (Configurações → Precificação): nome, site/logo e as novas que forem cadastradas */
 function carregarTransportadoras(quieto){
+  return;   /* (GIRO-OS-004) delivery: lista de transportadoras desligada */
   api('/mesa/transportadoras').then(function(d){
     if(!d||!d.ok||!d.itens||!d.itens.length) return;
     var esp=TRANSPORTADORAS.filter(function(t){ return t.somente; }), ant={}, i;
