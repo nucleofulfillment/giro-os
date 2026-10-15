@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Giro OS — Painel do ponto · GIRO-OS-034</title>
+<title>Giro OS — Painel do ponto · GIRO-OS-036</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -384,6 +384,9 @@ a{color:inherit}
 @keyframes mpAj{from{box-shadow:0 0 0 2px rgba(37,99,235,.2)}to{box-shadow:0 0 0 7px rgba(37,99,235,.45)}}
 .mp-pkq{display:none;position:absolute;top:-5px;right:-5px;width:16px;height:16px;border-radius:50%;background:#fff;border:2px solid #F59E0B;color:#92400E;font-size:9px;font-weight:800;align-items:center;justify-content:center;z-index:2;pointer-events:auto;cursor:pointer}
 .mp-pkw.conf .mp-pkq{display:flex}
+.mp-pkw.urg .mp-pk{box-shadow:0 0 0 3px #DC2626,0 1px 5px rgba(41,35,30,.5)}
+.mp-pkw.urg::after{content:'🔥';position:absolute;left:-7px;top:-12px;font-size:14px;pointer-events:none;z-index:5}
+.mp-urg{display:inline-block;background:#DC2626;color:#fff;border-radius:6px;font-size:10.5px;font-weight:800;padding:1px 6px;letter-spacing:.3px}
 .mp-pkl{display:none;position:absolute;left:15px;top:35px;height:2px;margin-top:-1px;background:rgba(41,35,30,.65);transform-origin:0 50%;pointer-events:none;border-radius:2px}
 .mp-pkdot{display:none;position:absolute;left:11px;top:31px;width:8px;height:8px;border-radius:50%;background:#29231E;border:1.5px solid #fff;pointer-events:none}
 .mp-pkw.esp .mp-pkl,.mp-pkw.esp .mp-pkdot{display:block}
@@ -659,7 +662,7 @@ a{color:inherit}
 
       <!-- PEDIDOS -->
       <section class="page" id="pg-pedidos">
-        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-034</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
+        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-036</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
         <div id="pd-chip"></div>
         <div class="card">
           <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
@@ -1518,7 +1521,7 @@ function enviarPedidosServidor(forcar){
     setTimeout(agendarEnvioPedidos,60000);
   });
 }
-function pedExtra(p){ if(!(p.com||p.atn||p.tpe||p.prz||p.ref||p.op||p.cmid||p.tpg!=null||p.apg!=null)) return 0; return {com:p.com||'',atn:p.atn||'',tpe:p.tpe||'',prz:p.prz||'',prt:p.prt||'',ref:p.ref||'',tpg:(p.tpg==null?null:p.tpg),apg:(p.apg==null?null:p.apg),op:p.op||'',cmid:p.cmid||''}; }
+function pedExtra(p){ if(!(p.com||p.atn||p.tpe||p.prz||p.ref||p.op||p.cmid||p.tpg!=null||p.apg!=null||p.urg)) return 0; return {com:p.com||'',atn:p.atn||'',tpe:p.tpe||'',prz:p.prz||'',prt:p.prt||'',ref:p.ref||'',tpg:(p.tpg==null?null:p.tpg),apg:(p.apg==null?null:p.apg),op:p.op||'',cmid:p.cmid||'',urg:p.urg?1:0}; }
 function packPed(){ var pc=[],i,p; for(i=0;i<PEDIDOS.length;i++){ p=PEDIDOS[i]; pc.push([p.cod,p.tr,p.mt,p.st,p.dia||'',p.hora||'',p.obs||'',(p.scan&&p.scan!==p.cod)?p.scan:'',p.ent||'',p.cliente||'',p.bairro||'',(p.vl==null?null:p.vl),p.cep||'',p.area||'',p.fechId||null,p.tel||'',p.canal||'',p.vend||'',p.rua||'',p.num||'',p.comp||'',p.bai||'',p.cid||'',p.endOrig||'',p.tam||'',p.hp||0,p.pg||'',p.pgp?1:0,p.pgr||'',(p.tx==null?null:p.tx),p.itens||'',p.atend||'',(p.lat==null?null:p.lat),(p.lng==null?null:p.lng),p.gq||0,p.ga||'',pedExtra(p)]); } return pc; }
 function salvarLocal(cb){
   var o; try{ sincStatusFech(); }catch(eSf){}
@@ -1541,7 +1544,7 @@ function aplicarSalvo(d){
   if(d.rast){ RASTREADOS={}; d.rast.forEach(function(c){ RASTREADOS[c]=1; }); }
   if(d.ciclos) CICLOS=d.ciclos; else if(d.ciclo && d.ciclo.modo) CICLOS=[{id:'c0',grupo:'todos',modo:d.ciclo.modo,tipo:d.ciclo.tipo,dia:d.ciclo.dia,prazo:d.ciclo.prazo}];
   if((d.pedidos||d.pc) && d.motoristas){
-    if(d.pc){ PEDIDOS=d.pc.map(function(a){ return {cod:a[0], tr:a[1], mt:a[2], cliente:a[9]||'', bairro:a[10]||'', vl:(a[11]==null?null:a[11]), cep:a[12]||'', area:a[13]||'', fechId:a[14]||null, tel:a[15]||'', canal:a[16]||'', vend:a[17]||'', rua:a[18]||'', num:a[19]||'', comp:a[20]||'', bai:a[21]||'', cid:a[22]||'', endOrig:a[23]||'', tam:a[24]||'', hp:a[25]||0, pg:a[26]||'', pgp:a[27]?1:0, pgr:a[28]||'', tx:(a[29]==null?null:a[29]), itens:a[30]||'', atend:a[31]||'', lat:(a[32]==null?null:a[32]), lng:(a[33]==null?null:a[33]), gq:a[34]||0, ga:a[35]||'', com:(a[36]&&a[36].com)||'', atn:(a[36]&&a[36].atn)||'', tpe:(a[36]&&a[36].tpe)||'', prz:(a[36]&&a[36].prz)||'', prt:(a[36]&&a[36].prt)||'', ref:(a[36]&&a[36].ref)||'', tpg:(a[36]&&a[36].tpg!=null)?a[36].tpg:null, apg:(a[36]&&a[36].apg!=null)?a[36].apg:null, op:(a[36]&&a[36].op)||'', cmid:(a[36]&&a[36].cmid)||'', st:a[3], t1:'', t2:'', scan:a[7]||a[0], dia:a[4], hora:a[5], obs:a[6], ent:a[8]}; }); }
+    if(d.pc){ PEDIDOS=d.pc.map(function(a){ return {cod:a[0], tr:a[1], mt:a[2], cliente:a[9]||'', bairro:a[10]||'', vl:(a[11]==null?null:a[11]), cep:a[12]||'', area:a[13]||'', fechId:a[14]||null, tel:a[15]||'', canal:a[16]||'', vend:a[17]||'', rua:a[18]||'', num:a[19]||'', comp:a[20]||'', bai:a[21]||'', cid:a[22]||'', endOrig:a[23]||'', tam:a[24]||'', hp:a[25]||0, pg:a[26]||'', pgp:a[27]?1:0, pgr:a[28]||'', tx:(a[29]==null?null:a[29]), itens:a[30]||'', atend:a[31]||'', lat:(a[32]==null?null:a[32]), lng:(a[33]==null?null:a[33]), gq:a[34]||0, ga:a[35]||'', com:(a[36]&&a[36].com)||'', atn:(a[36]&&a[36].atn)||'', tpe:(a[36]&&a[36].tpe)||'', prz:(a[36]&&a[36].prz)||'', prt:(a[36]&&a[36].prt)||'', ref:(a[36]&&a[36].ref)||'', tpg:(a[36]&&a[36].tpg!=null)?a[36].tpg:null, apg:(a[36]&&a[36].apg!=null)?a[36].apg:null, op:(a[36]&&a[36].op)||'', cmid:(a[36]&&a[36].cmid)||'', urg:(a[36]&&a[36].urg)?1:0, st:a[3], t1:'', t2:'', scan:a[7]||a[0], dia:a[4], hora:a[5], obs:a[6], ent:a[8]}; }); }
     else PEDIDOS=d.pedidos;
     PEDIDOS.forEach(garantirEndereco);
     MOTORISTAS=d.motoristas; EXTRATO=d.extrato||[];
@@ -1664,7 +1667,7 @@ function srvEnviarDireto(cb){
 /* ══ (70) VÁRIAS TELAS, MESMO LOGIN: antes cada tela guardava a própria cópia e a última a salvar apagava o que as outras tinham feito. Agora:
    • a cada 15 s (aba visível e nada pendente de envio) a tela pergunta ao servidor se algum bloco de pedidos mudou e traz o que mudou;
    • antes de enviar, se outra tela mexeu no mesmo bloco, junta os pedidos (nenhum some) e só então envia. ══ */
-function srvLinhaPed(a){ var p={cod:a[0], tr:a[1], mt:a[2], cliente:a[9]||'', bairro:a[10]||'', vl:(a[11]==null?null:a[11]), cep:a[12]||'', area:a[13]||'', fechId:a[14]||null, tel:a[15]||'', canal:a[16]||'', vend:a[17]||'', rua:a[18]||'', num:a[19]||'', comp:a[20]||'', bai:a[21]||'', cid:a[22]||'', endOrig:a[23]||'', tam:a[24]||'', hp:a[25]||0, pg:a[26]||'', pgp:a[27]?1:0, pgr:a[28]||'', tx:(a[29]==null?null:a[29]), itens:a[30]||'', atend:a[31]||'', lat:(a[32]==null?null:a[32]), lng:(a[33]==null?null:a[33]), gq:a[34]||0, ga:a[35]||'', com:(a[36]&&a[36].com)||'', atn:(a[36]&&a[36].atn)||'', tpe:(a[36]&&a[36].tpe)||'', prz:(a[36]&&a[36].prz)||'', prt:(a[36]&&a[36].prt)||'', ref:(a[36]&&a[36].ref)||'', tpg:(a[36]&&a[36].tpg!=null)?a[36].tpg:null, apg:(a[36]&&a[36].apg!=null)?a[36].apg:null, op:(a[36]&&a[36].op)||'', cmid:(a[36]&&a[36].cmid)||'', st:a[3], t1:'', t2:'', scan:a[7]||a[0], dia:a[4], hora:a[5], obs:a[6], ent:a[8]}; try{ garantirEndereco(p); }catch(e){} return p; }
+function srvLinhaPed(a){ var p={cod:a[0], tr:a[1], mt:a[2], cliente:a[9]||'', bairro:a[10]||'', vl:(a[11]==null?null:a[11]), cep:a[12]||'', area:a[13]||'', fechId:a[14]||null, tel:a[15]||'', canal:a[16]||'', vend:a[17]||'', rua:a[18]||'', num:a[19]||'', comp:a[20]||'', bai:a[21]||'', cid:a[22]||'', endOrig:a[23]||'', tam:a[24]||'', hp:a[25]||0, pg:a[26]||'', pgp:a[27]?1:0, pgr:a[28]||'', tx:(a[29]==null?null:a[29]), itens:a[30]||'', atend:a[31]||'', lat:(a[32]==null?null:a[32]), lng:(a[33]==null?null:a[33]), gq:a[34]||0, ga:a[35]||'', com:(a[36]&&a[36].com)||'', atn:(a[36]&&a[36].atn)||'', tpe:(a[36]&&a[36].tpe)||'', prz:(a[36]&&a[36].prz)||'', prt:(a[36]&&a[36].prt)||'', ref:(a[36]&&a[36].ref)||'', tpg:(a[36]&&a[36].tpg!=null)?a[36].tpg:null, apg:(a[36]&&a[36].apg!=null)?a[36].apg:null, op:(a[36]&&a[36].op)||'', cmid:(a[36]&&a[36].cmid)||'', urg:(a[36]&&a[36].urg)?1:0, st:a[3], t1:'', t2:'', scan:a[7]||a[0], dia:a[4], hora:a[5], obs:a[6], ent:a[8]}; try{ garantirEndereco(p); }catch(e){} return p; }
 function srvChaveDia(p){ return String(p.dia||'_').replace(/[^0-9A-Za-z_-]/g,'_').slice(0,40); }
 var SRV_FINAL={entregue:1,devolvido:1,extraviado:1};
 /* modo 'servidor': o servidor manda (tela sem nada pendente). modo 'juntar': une local + servidor (local vence, exceto status final vindo do servidor). */
@@ -3213,8 +3216,10 @@ function ir(p){
   if(p==='mensagens') msgAbrirTela(); else clearInterval(MSG.timer);
   if(p==='cte') cteAbrirTela();
   if(p==='mapeamento' && typeof mpBuscar==='function'){ MP_ENQ=true; setTimeout(mpBuscar,30); }
+  if(p==='pedidos'){ if(PD_DATA_KEEP){ PD_DATA_KEEP=false; } else { var hjP=hojeISO(), aP=el('pd-data-ini'), bP=el('pd-data-fim'); if(aP) aP.value=hjP; if(bP) bP.value=hjP; try{ pintarPedidos(); }catch(eP){} } }   /* a tela de Pedidos sempre abre no dia de hoje */
   window.scrollTo(0,0);
 }
+var PD_DATA_KEEP=false;
 function abrir(id){el('ovl').classList.add('on'); el(id).classList.add('on');}
 function fecharTudo(){
   PD_ABERTO='';
@@ -3883,6 +3888,7 @@ function abrirPedido(cod){
   h+='<div class="sh-row"><span class="k">Motorista</span><span class="v" id="pd-mt-v">'+(m?esc(m.n):'sem motorista')+(m?' <button class="btn sec" title="Ver o motorista" style="padding:3px 9px;font-size:13px;margin-left:8px;min-width:0;font-weight:800" onclick="pdVerMotorista(\''+esc(p.cod)+'\','+m.id+')">+</button>':'')+(REAL?' <button class="btn sec" style="padding:3px 10px;font-size:12px;margin-left:6px;min-width:0" onclick="pdMotEditar(\''+esc(p.cod)+'\')">Alterar</button>':'')+'</span></div>';
   h+='<div class="sh-row"><span class="k">Endereço</span><span class="v">'+esc([[p.rua,p.num].filter(Boolean).join(', ')+(p.comp?' - '+p.comp:''),p.bai||p.bairro,p.cid,(String(p.cep||'').replace(/\D/g,'').length===8?'CEP '+String(p.cep).replace(/\D/g,'').replace(/^(\d{5})(\d{3})$/,'$1-$2'):'')].filter(Boolean).join(' · ')||'—')+(((p.bairro||p.rua) && (!p.num||!p.rua))?'<br><span style="color:var(--amber);font-size:11.5px;font-weight:600">⚠ '+(!p.num?'sem número — não dá pra roteirizar':'sem nome da rua — usar o CEP')+'</span>':'')+'</span></div>';
   h+='<div class="sh-row"><span class="k">Valor da NF</span><span class="v">'+(p.vl==null?'—':moeda(p.vl))+'</span></div>';
+  if(p.urg) h+='<div class="sh-row"><span class="k">Prioridade</span><span class="v"><span class="mp-urg">🔥 URGENTE</span></span></div>';
   if(p.com) h+='<div class="sh-row"><span class="k">Nº da comanda</span><span class="v">#'+esc(String(p.com).replace(/^#/,''))+'</span></div>';
   if(p.atn) h+='<div class="sh-row"><span class="k">Atendimento (Pedidos10)</span><span class="v">#'+esc(p.atn)+cpBtn(p.atn)+'</span></div>';
   if(p.tpe||p.prz) h+='<div class="sh-row"><span class="k">Tipo de entrega</span><span class="v">'+esc(p.tpe||'—')+(p.prz?' · prometido até '+esc(p.prz):'')+(p.prt?' ('+esc(p.prt)+')':'')+'</span></div>';
@@ -4101,12 +4107,12 @@ function pintarPedidos(){
   /* os mais antigos primeiro (quem espera há mais tempo fica no topo); entregues/devolvidos por último */
   achados.sort(function(a,b){
     var fa=PD_FIM[a.p.st]?1:0, fb=PD_FIM[b.p.st]?1:0; if(fa!==fb) return fa-fb;
-    if(!fa){ var ma=pdHoraMs(a.p)||9e15, mb=pdHoraMs(b.p)||9e15; if(ma!==mb) return ma-mb; }
+    if(!fa){ var ua=a.p.urg?1:0, ub=b.p.urg?1:0; if(ua!==ub) return ub-ua; var ma=pdHoraMs(a.p)||9e15, mb=pdHoraMs(b.p)||9e15; if(ma!==mb) return ma-mb; }
     return a.i-b.i;
   });
   var h='', n=achados.length, k;
   for(k=0;k<achados.length && k<LIM;k++){ var p3=achados[k].p, m3=motorista(p3.mt), ender=[(p3.bai||p3.bairro||''),(p3.cid||'')].filter(Boolean).join(' · ');
-    h+='<tr onclick="abrirPedido(\''+p3.cod+'\')"><td><b>'+esc(pdNum(p3))+'</b>'+((p3.tr==='gir'&&p3.dia&&p3.dia!==hojeISO())?' <span style="font-size:11px;color:var(--muted)">'+esc(p3.dia.slice(8,10)+'/'+p3.dia.slice(5,7))+'</span>':'')+cpBtn(pdNum(p3))+'<br><span style="color:var(--muted);font-size:11.5px">'+esc(p3.cliente||infoPacote(p3))+'</span>'+((p3.obs&&p3.obs!=='em aberto'&&p3.obs!=='na base'&&p3.st!=='entregue')?'<br><span style="color:var(--amber);font-size:11px;font-weight:600">⚠ '+esc(p3.obs)+'</span>':'')+((p3.st!=='entregue'&&p3.bairro&&(!p3.num||!p3.rua))?'<br><span style="color:var(--amber);font-size:11px;font-weight:600">⚠ '+(!p3.num?'sem número':'sem nome da rua')+'</span>':'')+'</td>'+
+    h+='<tr onclick="abrirPedido(\''+p3.cod+'\')"><td>'+(p3.urg?'<span class="mp-urg">🔥</span> ':'')+'<b>'+esc(pdNum(p3))+'</b>'+((p3.tr==='gir'&&p3.dia&&p3.dia!==hojeISO())?' <span style="font-size:11px;color:var(--muted)">'+esc(p3.dia.slice(8,10)+'/'+p3.dia.slice(5,7))+'</span>':'')+cpBtn(pdNum(p3))+'<br><span style="color:var(--muted);font-size:11.5px">'+esc(p3.cliente||infoPacote(p3))+'</span>'+((p3.obs&&p3.obs!=='em aberto'&&p3.obs!=='na base'&&p3.st!=='entregue')?'<br><span style="color:var(--amber);font-size:11px;font-weight:600">⚠ '+esc(p3.obs)+'</span>':'')+((p3.st!=='entregue'&&p3.bairro&&(!p3.num||!p3.rua))?'<br><span style="color:var(--amber);font-size:11px;font-weight:600">⚠ '+(!p3.num?'sem número':'sem nome da rua')+'</span>':'')+'</td>'+
        '<td>'+esc(ender||'—')+'</td><td>'+esc(p3.canal||'—')+'</td><td>'+pdTempoHtml(p3)+'</td><td>'+esc(m3?m3.n:'sem motorista')+'</td><td>'+badgeStatus(p3.st)+'</td><td>'+(p3.vl==null?'—':moeda(p3.vl))+'</td><td>'+pdRecebHtml(p3)+'</td><td style="white-space:nowrap">'+pdAcaoHtml(p3)+'</td></tr>';}
   if(n>LIM) h+='<tr><td colspan="9"><div class="empty">Mostrando os primeiros '+LIM+' de '+n+' pedidos — use a busca ou os filtros para ver os outros</div></td></tr>';
   if(!h) h='<tr><td colspan="9"><div class="empty">Nenhum pedido encontrado'+(tf?' para esta transportadora':'')+'</div></td></tr>';
@@ -4120,7 +4126,7 @@ function dashParaPedidos(st){
   FILTRO_TR=DASH_TR||null; FILTRO_PD=st;
   var a=el('pd-data-ini'), b=el('pd-data-fim'), o=el('pd-ocor'), q=el('pd-busca');
   if(a) a.value=DASH_G_INI||''; if(b) b.value=DASH_G_FIM||''; if(o) o.value=''; if(q) q.value=''; ['pd-mot','pd-origem','pd-forma'].forEach(function(id){ var x=el(id); if(x) x.value=''; });
-  ir('pedidos'); pintarPedidos();
+  PD_DATA_KEEP=true; ir('pedidos'); pintarPedidos();
 }
 
 /* ══ (GIRO-OS-009) NOVO PEDIDO de entrega, digitado pelo conferente (WhatsApp, balcão/telefone...) ══ */
@@ -4178,9 +4184,9 @@ function comandaImportar(c,fim){
     if(d.dia===hoje && /^\d{2}:\d{2}$/.test(d.hora||'')){ var t=new Date(hoje+'T'+d.hora+':00').getTime(); if(!isNaN(t) && t<=ms) ms=t; }
     var dh=new Date(ms), hora=('0'+dh.getHours()).slice(-2)+':'+('0'+dh.getMinutes()).slice(-2);
     var forma=d.forma||'online', apg=(d.apagar==null?null:d.apagar), pago=(apg!=null?(apg<=0):(forma==='online'))?1:0;
-    var ped={cod:cod, tr:'gir', mt:null, cliente:d.nome||'', bairro:d.bairro||'', rua:d.rua||'', num:d.numero||'', comp:d.comp||'', bai:d.bairro||'', cid:d.cid||'', endOrig:d.endBruto||'', vl:(d.total==null?0:d.total), cep:'', area:'', st:'coletado', t1:'', t2:'', tel:d.fone||'', canal:(d.origem||'Pedidos10'), vend:'', scan:cod, dia:hoje, hora:hora, obs:'em aberto', ent:'', fechId:null,
+    var ped={cod:cod, tr:'gir', mt:null, cliente:d.nome||'', bairro:d.bairro||'', rua:d.rua||'', num:d.numero||'', comp:d.comp||'', bai:d.bairro||'', cid:d.cid||(function(){ try{ return localStorage.getItem('giro_cidade')||''; }catch(e){ return ''; } })(), endOrig:d.endBruto||'', vl:(d.total==null?0:d.total), cep:'', area:'', st:'coletado', t1:'', t2:'', tel:d.fone||'', canal:(d.origem||'Pedidos10'), vend:'', scan:cod, dia:hoje, hora:hora, obs:'em aberto', ent:'', fechId:null,
       tam:'', hp:ms, pg:forma, pgp:pago, pgr:'', tx:(d.taxa==null?null:d.taxa), itens:d.itens||'', atend:'',
-      com:d.com||'', atn:d.atn||'', tpe:d.tipo||'', prz:d.prazo||'', prt:d.prazoTxt||'', ref:d.ref||'', tpg:(d.pago==null?null:d.pago), apg:apg, op:d.obs||'', cmid:c.id};
+      com:d.com||'', atn:d.atn||'', tpe:d.tipo||'', prz:d.prazo||'', prt:d.prazoTxt||'', ref:d.ref||'', tpg:(d.pago==null?null:d.pago), apg:apg, op:d.obs||'', cmid:c.id, urg:d.urg?1:0};
     PEDIDOS.push(ped); fim(true);
   }
   var tmo=setTimeout(function(){ if(!feito){ feito=true; criar(ult+1); } },4000);
@@ -5498,7 +5504,7 @@ var MP_GCORES=['#2563EB','#7C3AED','#DB2777','#0891B2','#92400E','#334155'];
 try{ var _m=localStorage.getItem('giro_mp_modo'); if(_m==='lista'||_m==='mapa') MP_MODO=_m; }catch(e){}
 function mpPool(){
   var out=[],i,p; for(i=0;i<PEDIDOS.length;i++){ p=PEDIDOS[i]; if(p.tr==='gir' && p.st==='coletado') out.push(p); }
-  out.sort(function(a,b){ return (pdHoraMs(a)||9e15)-(pdHoraMs(b)||9e15); });
+  out.sort(function(a,b){ return ((b.urg?1:0)-(a.urg?1:0)) || ((pdHoraMs(a)||9e15)-(pdHoraMs(b)||9e15)); });   /* urgentes vão pro topo da fila */
   return out;
 }
 function mpAcharPed(cod){ for(var i=0;i<PEDIDOS.length;i++) if(PEDIDOS[i].cod===cod) return PEDIDOS[i]; return null; }
@@ -5630,7 +5636,7 @@ function mpListaPintar(){
   el('mp-l-n').textContent=n; el('mp-l-leg').innerHTML=mpLegenda();
   for(i=0;i<n;i++){ p=pool[i]; t=mpTemp(p); g=mpGrupoDe(p.cod);
     h+='<div class="mp-lr'+(MP_SEL[p.cod]?' sel':'')+(g?' grp':'')+'" data-cod="'+esc(p.cod)+'" style="--tc:'+t.cor+'"><span class="mp-ck">'+(MP_SEL[p.cod]?'✓':'')+'</span>'+
-      '<div class="mp-lr-b"><b>#'+esc(pdNum(p))+'</b> · '+esc(p.cliente||'—')+'<small>'+esc((p.bairro||p.bai||'—')+' · '+(p.canal||'—')+' · '+moeda(p.vl))+(p.lat==null?' · sem posição':'')+'</small></div>'+
+      '<div class="mp-lr-b">'+(p.urg?'<span class="mp-urg">🔥 URGENTE</span> ':'')+'<b>#'+esc(pdNum(p))+'</b> · '+esc(p.cliente||'—')+'<small>'+esc((p.bairro||p.bai||'—')+' · '+(p.canal||'—')+' · '+moeda(p.vl))+(p.lat==null?' · sem posição':'')+'</small></div>'+
       (g?'<span class="mp-gtag" style="background:'+g.cor+'">'+esc(g.nome)+'</span>':'<span class="badge '+t.cls+'">'+esc(t.txt)+'</span>')+'</div>';
   }
   el('mp-l-ped').innerHTML=h||'<div class="empty"><div class="em">🍕</div>Nenhum pedido na fila.</div>';
@@ -5760,7 +5766,7 @@ function mpInfoPin(cod){
 var MP_AJ='';   /* pedido em "ajuste de posição": só ele pode ser arrastado */
 function mpPkEstilo(p){
   var o=MP_PK[p.cod]; if(!o) return; var t=mpTemp(p);
-  o.in.className='mp-pk'+(MP_SEL[p.cod]?' sel':'')+(MP_AJ===p.cod?' aj':''); o.el.classList.toggle('conf',p.gq===1);
+  o.in.className='mp-pk'+(MP_SEL[p.cod]?' sel':'')+(MP_AJ===p.cod?' aj':''); o.el.classList.toggle('conf',p.gq===1); o.el.classList.toggle('urg',!!p.urg);
   var g=mpGrupoDe(p.cod); o.in.style.setProperty('--pc',g?g.cor:t.cor); o.dot.style.background=g?g.cor:t.cor; o.n.textContent=mpNumCurto(p);
   o.el.style.zIndex=(MP_SEL[p.cod]||MP_AJ===p.cod)?30:(1+Math.min(20,Math.floor((t.min||0)/10)));   /* o mais atrasado fica por cima */
   o.in.title='#'+pdNum(p)+' · '+(p.cliente||'')+' · '+t.txt+(p.gq===1?' · conferir posição':'');
