@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Giro OS — Painel do ponto · GIRO-OS-027</title>
+<title>Giro OS — Painel do ponto · GIRO-OS-028</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -655,7 +655,7 @@ a{color:inherit}
 
       <!-- PEDIDOS -->
       <section class="page" id="pg-pedidos">
-        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-027</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
+        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-028</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
         <div id="pd-chip"></div>
         <div class="card">
           <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
@@ -695,7 +695,7 @@ a{color:inherit}
       <section class="page" id="pg-mapeamento">
         <div class="pghd"><div><h1>Mapeamento</h1><div class="sub" id="mp-sub">pedidos na fila e entregas, ao vivo</div></div>
           <div style="display:flex;gap:8px;flex-wrap:nowrap;align-items:center">
-            <div class="pills" style="margin:0;flex-wrap:nowrap;white-space:nowrap" id="mp-modos"><span class="pill" data-m="lista" onclick="mpModo('lista')">Lista</span><span class="pill" data-m="mapa" onclick="mpModo('mapa')">Mapa</span></div>
+            <div class="pills" style="margin:0;flex-wrap:nowrap;white-space:nowrap" id="mp-modos"><span class="pill" data-m="lista" onclick="mpModo('lista')">Lista</span><span class="pill" data-m="mapa" onclick="mpModo('mapa')">Mapa</span><span class="pill" onclick="mpGeoResetTudo()" title="Joga fora as posições guardadas e busca de novo pelo endereço do pedido">↻ Refazer posições</span></div>
             <span id="mp-diabar" style="display:contents">
             <button class="btn sec" style="padding:9px 13px" onclick="mpMudarDia(-1)" title="Dia anterior">‹</button>
             <input class="inp" type="date" id="mp-dia" style="width:150px" onchange="mpEscolherDia()">
@@ -5469,7 +5469,7 @@ function mpAplicarModo(){
   el('mp-diabar').style.display=(m==='vivo')?'contents':'none';
   el('mp-opbar').style.display=(m==='mapa')?'flex':'none'; el('mp-opmot').style.display='none'; el('mp-vivo').style.display=(m==='mapa')?'':'none';
   var rl=el('mp-ritmo'); if(rl&&rl.parentNode) rl.parentNode.style.display=(m==='vivo')?'':'none';
-  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-027';
+  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-028';
   if(m!=='mapa'){ mpPkTodos(false); el('mp-sempos').style.display='none'; el('mp-sempos-btn').style.display='none'; }
   if(m==='vivo'){ MP_ENQ=true; mpBuscar(); } else mpOperador();
 }
@@ -5484,8 +5484,10 @@ function mpOperador(){
 function mpNormT(t){ return String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\b(rua|r|av|avenida|estrada|est|rod|rodovia|travessa|tv|alameda|al)\b\.?/g,' ').replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim(); }
 function mpAchouRua(p){ if(!p.ga) return true; var r=mpNormT(p.rua), a=mpNormT(p.ga); if(!r) return true; var ps=r.split(' ').filter(function(w){ return w.length>3; }); if(!ps.length) return true; var ok=0; ps.forEach(function(w){ if(a.indexOf(w)>=0) ok++; }); return ok>=Math.ceil(ps.length*0.6); }
 function mpAjustarPin(cod){ if(MP_INFO){ try{ MP_INFO.remove(); }catch(e){} MP_INFO=null; } MP_AJ=cod; mpEspalhar(); mpPkEstiloTodos(); aviso('Arraste o pin #'+pdNum(mpAcharPed(cod))+' até o endereço certo'); }
+function mpGeoResetTudo(){ if(!REAL) return; mpPool().forEach(function(p){ p.lat=null; p.lng=null; p.gq=0; p.ga=''; }); MP_GEO_TENT={}; salvarLocal(); mpPkTodos(); aviso('Buscando as posições de novo pelo endereço…'); mpOperador(); }
 function mpGeoPendentes(){
   if(MP_GEO_BUSY||!REAL||!DD_TOKEN) return;
+  try{ if(localStorage.getItem('giro_geo_v')!=='3'){ localStorage.setItem('giro_geo_v','3'); var jaTem=mpPool().some(function(p){ return p.lat!=null; }); if(jaTem){ mpPool().forEach(function(p){ p.lat=null; p.lng=null; p.gq=0; p.ga=''; }); salvarLocal(); mpPkTodos(); } } }catch(eV){}
   var pend=mpPool().filter(function(p){ return (p.lat==null||(p.gq!==2&&!p.ga)) && p.rua && p.cid && !MP_GEO_TENT[p.cod]; });
   if(!pend.length) return;
   var lote=pend.slice(0,12); MP_GEO_BUSY=true; lote.forEach(function(p){ MP_GEO_TENT[p.cod]=1; });
