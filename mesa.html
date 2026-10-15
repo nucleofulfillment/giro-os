@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Giro OS — Mesa · GIRO-OS-008</title>
+<title>Giro OS — Mesa · GIRO-OS-009</title>
 <script>try{ if(localStorage.getItem('dd_jwt')) document.documentElement.classList.add('dd-ret'); }catch(e){}</script>
 <style>html.dd-ret #login{display:none!important}</style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -233,7 +233,7 @@
     <div class="field"><label>Senha</label><input class="inp" id="lg-senha" type="password" placeholder="••••••••"></div>
     <button class="btn pri" style="width:100%" onclick="entrar()">Entrar</button>
     <p class="lg-demo" id="lg-msg" style="min-height:16px"></p>
-    <p class="lg-demo" style="opacity:.55;font-size:10.5px">GIRO-OS-008</p>
+    <p class="lg-demo" style="opacity:.55;font-size:10.5px">GIRO-OS-009</p>
   </div>
 </div>
 
@@ -1657,7 +1657,7 @@ document.addEventListener('DOMContentLoaded',function(){
   <div id="cm-form">
     <div id="cm-fcorpo">
       <label class="cm-urg" id="cm-urg-l"><input type="checkbox" id="cm-urg" onchange="this.parentNode.classList.toggle('on',this.checked)"><span><b>🔥 Pedido urgente</b><small>Vai pro topo da fila do Mapeamento, com etiqueta vermelha, pra o operador despachar primeiro.</small></span></label>
-      <h4>Confira os dados da comanda</h4><p class="sub">A IA leu a foto. Corrija o que estiver errado antes de lançar.</p>
+      <h4>Confira os dados da comanda</h4><p class="sub" id="cm-sub">A IA leu a foto. Corrija o que estiver errado antes de lançar.</p>
       <div class="cm-g">
         <div class="cm-f"><label>Nº da comanda</label><input class="inp" id="cm-com"></div>
         <div class="cm-f"><label>Atendimento (Pedidos10)</label><input class="inp" id="cm-atn" inputmode="numeric"></div>
@@ -1718,8 +1718,8 @@ function cmCamera(){
 }
 function cmSemCamera(t){ var av=el('cm-aviso'); av.textContent=t; av.style.display='block'; el('cm-guia').style.display='none'; el('cm-dica').style.display='none'; el('cm-foto').disabled=true; el('cm-foto').style.opacity=.5; }
 function cmReduz(origem,w,h,fim){
-  var m=1400, k=Math.min(1,m/Math.max(w,h)), c=document.createElement('canvas'); c.width=Math.round(w*k); c.height=Math.round(h*k);
-  c.getContext('2d').drawImage(origem,0,0,c.width,c.height); fim(c.toDataURL('image/jpeg',0.8));
+  var m=1280, k=Math.min(1,m/Math.max(w,h)), c=document.createElement('canvas'); c.width=Math.round(w*k); c.height=Math.round(h*k);
+  c.getContext('2d').drawImage(origem,0,0,c.width,c.height); fim(c.toDataURL('image/jpeg',0.75));
 }
 function cmFotografar(){ var v=el('cm-video'); if(!v||!v.videoWidth){ aviso('A câmera ainda não abriu'); return; } cmReduz(v,v.videoWidth,v.videoHeight,cmLer); }
 function cmArquivo(inp){
@@ -1732,7 +1732,7 @@ function cmLer(dataUrl){
     CM.busy=false;
     if(!d||!d.ok){ aviso((d&&d.mensagem)||'Não consegui ler a comanda'); cmMostrar('cam'); cmCamera(); return; }
     if(d.duplicada){ var dd=d.dados||{}; cmAviso('erro','Comanda já lançada','A comanda '+(dd.com?'#'+String(dd.com).replace(/^#/,'')+' ':'')+(dd.nome?'de '+dd.nome+' ':'')+'já foi lançada antes. Não precisa lançar de novo.',function(){ cmRefazer(); }); return; }
-    cmPreencher(d.dados||{}); cmMostrar('form');
+    cmPreencher(d.dados||{}); el('cm-sub').textContent='A IA leu a foto'+(d.ms?' em '+(d.ms/1000).toFixed(1).replace('.',',')+' s':'')+'. Corrija o que estiver errado antes de lançar.'; cmMostrar('form');
   }).catch(function(){ CM.busy=false; aviso('Sem resposta do servidor. Tente de novo.'); cmMostrar('cam'); cmCamera(); });
 }
 var CM_IDS=['com','atn','hora','nome','fone','rua','numero','comp','ref','bairro','cid','tipo','prazo','itens','obs'];
