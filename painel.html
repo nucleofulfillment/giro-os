@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Giro OS — Painel do ponto · GIRO-OS-029</title>
+<title>Giro OS — Painel do ponto · GIRO-OS-032</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -655,7 +655,7 @@ a{color:inherit}
 
       <!-- PEDIDOS -->
       <section class="page" id="pg-pedidos">
-        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-029</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
+        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-032</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
         <div id="pd-chip"></div>
         <div class="card">
           <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
@@ -4134,14 +4134,24 @@ function salvarNovoPedido(){
   var dh=new Date(ms), hora=('0'+dh.getHours()).slice(-2)+':'+('0'+dh.getMinutes()).slice(-2);
   var pref=hoje.slice(2).replace(/-/g,'')+'-', cod, k, j, ult=0, mm;
   for(j=0;j<PEDIDOS.length;j++){ if(PEDIDOS[j].cod.indexOf(pref)===0){ mm=/^\d{4}$/.exec(PEDIDOS[j].cod.slice(pref.length)); if(mm && Number(mm[0])>ult) ult=Number(mm[0]); } }
-  cod=pref+('000'+(ult+1)).slice(-4);   /* 0001, 0002... recomeça em 0001 a cada dia (o código guardado leva a data na frente pra nunca repetir entre dias) */
+  var btn=document.querySelector('#sh-novo-pedido .btn.pri'); if(btn){ if(btn.dataset.busy==='1') return; btn.dataset.busy='1'; }
+  function livre(){ if(btn) btn.dataset.busy=''; }
+  function criar(n){
+    cod=pref+('000'+n).slice(-4);   /* 0001, 0002... recomeça em 0001 a cada dia (o código guardado leva a data na frente pra nunca repetir entre dias) */
   var ped={cod:cod, tr:'gir', mt:null, cliente:cli, bairro:bai, rua:rua, num:nr, comp:el('np-comp').value.trim(), bai:bai, cid:cid, endOrig:'', vl:total, cep:'', area:'', st:'coletado', t1:'', t2:'', tel:tel, canal:el('np-origem').value, vend:'', scan:cod, dia:hoje, hora:hora, obs:'em aberto', ent:'', fechId:null,
-           tam:'', hp:ms, pg:forma, pgp:pago, pgr:'', tx:npNum(el('np-taxa').value), itens:el('np-itens').value.trim(), atend:el('np-atend').value.trim()};
-  PEDIDOS.push(ped);
-  try{ localStorage.setItem('giro_cidade',cid); }catch(e){}
-  try{ recalcularReal(); }catch(e){}
-  salvarLocal(); fecharTudo(); repintarTudo();
-  aviso('Pedido '+cod.slice(-4)+' entrou na fila');
+             tam:'', hp:ms, pg:forma, pgp:pago, pgr:'', tx:npNum(el('np-taxa').value), itens:el('np-itens').value.trim(), atend:el('np-atend').value.trim()};
+    PEDIDOS.push(ped);
+    try{ localStorage.setItem('giro_cidade',cid); }catch(e){}
+    try{ recalcularReal(); }catch(e){}
+    salvarLocal(); fecharTudo(); repintarTudo();
+    aviso('Pedido '+cod.slice(-4)+' entrou na fila');
+    livre();
+  }
+  /* o número vem do contador do servidor (nunca repete); sem resposta em 4s, usa a contagem local */
+  var feito=false, tmo=setTimeout(function(){ if(!feito){ feito=true; criar(ult+1); } },4000);
+  fetch(DELTADIS_API+'/painel/numero',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({dia:hoje,min:ult})})
+  .then(function(r){ return r.json(); }).then(function(d){ if(feito) return; feito=true; clearTimeout(tmo); var n=(d&&d.ok&&d.n)?Number(d.n):ult+1; while(PEDIDOS.some(function(q){ return q.cod===pref+('000'+n).slice(-4); })) n++; criar(n); })
+  .catch(function(){ if(feito) return; feito=true; clearTimeout(tmo); criar(ult+1); });
 }
 
 /* ══ upload de planilha (alimenta os pedidos) ══ */
@@ -5469,7 +5479,7 @@ function mpAplicarModo(){
   el('mp-diabar').style.display=(m==='vivo')?'contents':'none';
   el('mp-opbar').style.display=(m==='mapa')?'flex':'none'; el('mp-opmot').style.display='none'; el('mp-vivo').style.display=(m==='mapa')?'':'none';
   var rl=el('mp-ritmo'); if(rl&&rl.parentNode) rl.parentNode.style.display=(m==='vivo')?'':'none';
-  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-029';
+  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-032';
   if(m!=='mapa'){ mpPkTodos(false); el('mp-sempos').style.display='none'; el('mp-sempos-btn').style.display='none'; }
   if(m==='vivo'){ MP_ENQ=true; mpBuscar(); } else mpOperador();
 }
@@ -5537,14 +5547,28 @@ function mpMotOrdem(){
   var ord=FILA.ordem||[]; if(!ord.length){ try{ ord=JSON.parse(localStorage.getItem('giro_ordem_mot')||'[]')||[]; }catch(e){} }
   var out=[],usados={},i,m; ord.forEach(function(id){ for(i=0;i<MOTORISTAS.length;i++) if(String(MOTORISTAS[i].id)===String(id) && !usados[id]){ out.push(MOTORISTAS[i]); usados[id]=1; } });
   for(i=0;i<MOTORISTAS.length;i++){ m=MOTORISTAS[i]; if(!usados[String(m.id)]) out.push(m); }
+  if(mpChkAtivo()){ var com=[],sem=[]; out.forEach(function(x){ (CHK_POS[String(x.id)]?com:sem).push(x); }); com.sort(function(a,b){ return CHK_POS[String(a.id)]-CHK_POS[String(b.id)]; }); out=com.concat(sem); }
   return out;
 }
+/* fila automática: quem faz Check-in no app entra na fila na ordem em que chegou (modo automático) */
+var CHK_POS={}, CHK_OK=false, CHK_LEU=false;
+function mpChkAtivo(){ return CHK_OK && FILA.modo!=='manual'; }
+function checkinSincronizar(){
+  if(!REAL||!DD_TOKEN||document.hidden||CHK_LEU) return; CHK_LEU=true;
+  fetch(DELTADIS_API+'/painel/checkin').then(function(r){ return r.json(); }).then(function(d){
+    CHK_LEU=false; if(!d||!d.ok||!d.fila) return;
+    var np={}; d.fila.forEach(function(x,i){ np[String(x.mt)]=i+1; });
+    var mudou=JSON.stringify(np)!==JSON.stringify(CHK_POS)||!CHK_OK; CHK_POS=np; CHK_OK=true;
+    if(mudou && PAG==='mapeamento' && el('mp-l-mot') && !MP_ARR){ el('mp-l-mot').innerHTML=mpMotCardsHtml(); }
+  }).catch(function(){ CHK_LEU=false; });
+}
+setInterval(checkinSincronizar,8000); setTimeout(checkinSincronizar,2500);
 function mpMotFila(){ var fora={}; PEDIDOS.forEach(function(p){ if(p.st==='em rota' && p.mt!=null && p.mt!=='') fora[String(p.mt)]=1; }); return mpMotOrdem().filter(function(m){ return !fora[String(m.id)]; }); }
 function mpMotOpcoes(){ var h='<option value="">Motoboy…</option>',l=mpMotFila(),i; for(i=0;i<l.length;i++) h+='<option value="'+esc(String(l[i].id))+'"'+(String(l[i].id)===MP_MOT?' selected':'')+'>'+(i+1)+' · '+esc(l[i].n)+'</option>'; return h; }
 function mpMotCardsHtml(){
   var mh='',m,ml=mpMotFila(),i,cont={},k; for(k in MP_RASC) cont[MP_RASC[k]]=(cont[MP_RASC[k]]||0)+1;
   for(i=0;i<ml.length;i++){ m=ml[i]; var on=false, n=cont[String(m.id)]||0, cor=MP_GCORES[i%MP_GCORES.length];
-    mh+='<div class="mp-lr mp-mot'+(on?' sel':'')+'" data-mt="'+esc(String(m.id))+'" style="--tc:'+(n?cor:(on?'#F97316':'#9CA3AF'))+'"><span class="mp-senha"'+(n?' style="background:'+cor+'"':'')+'>'+(i+1)+'</span><div class="mp-lr-b"><b>'+esc(m.n)+'</b><small>🏍️ senha '+(i+1)+(n?' · '+n+' pedido'+(n>1?'s':''):'')+(on?' · escolhido':'')+'</small></div><span class="mp-grip" title="Arraste para mudar a ordem">⋮⋮</span></div>'; }
+    mh+='<div class="mp-lr mp-mot'+(on?' sel':'')+'" data-mt="'+esc(String(m.id))+'" style="--tc:'+(n?cor:(on?'#F97316':'#9CA3AF'))+'"><span class="mp-senha"'+(n?' style="background:'+cor+'"':'')+'>'+(mpChkAtivo()&&!CHK_POS[String(m.id)]?'–':(i+1))+'</span><div class="mp-lr-b"><b>'+esc(m.n)+'</b><small>🏍️ '+(mpChkAtivo()&&!CHK_POS[String(m.id)]?'sem check-in':'senha '+(i+1))+(n?' · '+n+' pedido'+(n>1?'s':''):'')+(on?' · escolhido':'')+'</small></div><span class="mp-grip" title="Arraste para mudar a ordem">⋮⋮</span></div>'; }
   return mh||'<div class="empty" style="padding:10px">Nenhum motoboy cadastrado</div>';
 }
 function mpListaPintar(){
@@ -5588,12 +5612,53 @@ function mpConfFechar(){ var d=el('mp-conf'); if(d) d.style.display='none'; }
 function mpConfirmarSaida(){
   var cods=Object.keys(MP_RASC), n=0, mots={}; 
   cods.forEach(function(c){ var p=mpAcharPed(c), m=motorista(MP_RASC[c])||motorista(Number(MP_RASC[c])); if(p&&m&&p.st==='coletado'){ p.st='em rota'; p.mt=m.id; n++; mots[m.id]=1; } });
+  var porMt={}; cods.forEach(function(c){ var p=mpAcharPed(c); if(p && p.st==='em rota' && p.mt!=null && mots[p.mt]) (porMt[p.mt]=porMt[p.mt]||[]).push(p); });
+  saidasAgendar(porMt);
   MP_RASC={}; MP_SEL={}; MP_MOT=''; mpConfFechar();
   try{ recalcularReal(); }catch(e){}
   salvarLocal(); repintarTudo();
   var nm=Object.keys(mots).length; aviso(n+' pedido(s) em rota com '+nm+' motoboy'+(nm>1?'s':''));
   mpOperador();
 }
+/* ── saídas: o painel manda a saída pro servidor (o app do motoboy lê) e traz de volta o que o motoboy marcou (entregue / ausente) ── */
+function saidasPend(){ try{ return JSON.parse(localStorage.getItem('giro_saidas_pend')||'[]')||[]; }catch(e){ return []; } }
+function saidasPendSalvar(l){ try{ localStorage.setItem('giro_saidas_pend',JSON.stringify(l)); }catch(e){} }
+function saidasAgendar(porMt){
+  var l=saidasPend(), mt;
+  for(mt in porMt){ var m=motorista(mt)||motorista(Number(mt)), ps=porMt[mt].slice().sort(function(a,b){ return (a.hp||0)-(b.hp||0); });
+    l.push({id:'s'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), mt:String(mt), mtn:m?m.n:'', paradas:ps.map(function(p){ return {cod:p.cod,num:pdNum(p),cliente:p.cliente,tel:p.tel,rua:p.rua,numero:p.num,comp:p.comp,bairro:p.bairro||p.bai,cid:p.cid,lat:p.lat,lng:p.lng,vl:p.vl,pg:p.pg,pgp:p.pgp,itens:p.itens,tx:p.tx,atend:p.atend,hp:p.hp,canal:p.canal}; })}); }
+  saidasPendSalvar(l); saidasEnviar();
+}
+var SD_BUSY=false;
+function saidasEnviar(){
+  var l=saidasPend(); if(!l.length||SD_BUSY||!REAL||!DD_TOKEN) return;
+  SD_BUSY=true; var it=l[0];
+  fetch(DELTADIS_API+'/painel/saida',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(it)})
+  .then(function(r){ return r.json(); }).then(function(d){
+    SD_BUSY=false;
+    if(d&&(d.ok||d.erro==='ja_tem_saida'||d.erro==='saida_vazia')){ var q=saidasPend().filter(function(x){ return x.id!==it.id; }); saidasPendSalvar(q); if(d.ok) aviso('Saída de '+(it.mtn||'motoboy')+' enviada pro celular dele'); if(q.length) saidasEnviar(); }
+    else aviso('A saída ainda não chegou no servidor, tentando de novo…');
+  }).catch(function(){ SD_BUSY=false; });
+}
+var SD_LEU=false;
+function saidasSincronizar(){
+  if(!REAL||!DD_TOKEN||document.hidden||SD_LEU) return;
+  saidasEnviar();
+  if(!PEDIDOS.some(function(p){ return p.tr==='gir' && p.st==='em rota'; })) return;
+  SD_LEU=true;
+  fetch(DELTADIS_API+'/painel/saidas').then(function(r){ return r.json(); }).then(function(d){
+    SD_LEU=false; if(!d||!d.ok||!d.saidas) return;
+    var mud=0, agora=new Date(), forma={dinheiro:'dinheiro',pix:'pix',cartao:'cartao',pago:'online'};
+    d.saidas.forEach(function(sd){ (sd.paradas||[]).forEach(function(pa){
+      var p=mpAcharPed(pa.cod); if(!p||p.tr!=='gir') return;
+      if(pa.st==='entregue' && p.st==='em rota'){ var dt=new Date(pa.quando||Date.now()); p.st='entregue'; p.ent=ymdLocal(dt)+' '+('0'+dt.getHours()).slice(-2)+':'+('0'+dt.getMinutes()).slice(-2); p.pgr=forma[pa.pgr]||pa.pgr; p.pgp=1; mud++; }
+      else if(pa.st==='ausente' && p.st==='em rota'){ p.st='devolvido'; mud++; }
+      else if(pa.st==='pendente' && (p.st==='entregue'||p.st==='devolvido') && sd.status==='ativa'){ p.st='em rota'; p.ent=''; p.pgr=''; mud++; }
+    }); });
+    if(mud){ try{ recalcularReal(); }catch(e){} salvarLocal(); repintarTudo(); if(PAG==='mapeamento') mpOperador(); aviso(mud+' atualização(ões) do motoboy'); }
+  }).catch(function(){ SD_LEU=false; });
+}
+setInterval(saidasSincronizar,12000);
 function mpDesfazerGrupo(id){ mpGrCarregar(); MP_GR=MP_GR.filter(function(g){ return String(g.id)!==String(id); }); mpGrSalvar(); mpOperador(); if(MP_MODO==='mapa') mpPkEstiloTodos(); }
 /* barra do modo mapa */
 function mpBarraPintar(){

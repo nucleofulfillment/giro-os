@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <script>/* (208) APK: sem "viewport-fit=cover" o Android empurra o app para dentro das barras dele (cima e botões de baixo) em todas as telas */try{ if(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform()){ var mv=document.querySelector('meta[name=viewport]'); mv.setAttribute('content',mv.getAttribute('content').replace(/,\s*viewport-fit=cover/,'')); } }catch(e){}</script>
-<title>Giro OS — App do Motorista · GIRO-OS-007</title>
+<title>Giro OS — App do Motorista · GIRO-OS-008</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://giro-os-api.nucleofull.workers.dev" crossorigin>
@@ -541,6 +541,11 @@ html.apk div[style*="position:fixed"][style*="left:0"][style*="bottom:0"]{bottom
 .ge-pgs button{border:1.5px solid var(--border2);background:var(--s1);border-radius:14px;padding:16px 8px;font-weight:800;font-size:15px;cursor:pointer;color:var(--text)}
 .ge-pgs button:active{background:var(--s3)}
 .ge-vazio{text-align:center;color:var(--muted2);padding:40px 10px}
+.ge-ck{margin-bottom:12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.ge-ck:not(.on){display:block}
+.ge-ck.on{border:2px solid var(--green)}
+.ge-ckn{width:46px;height:46px;border-radius:50%;background:var(--green);color:#fff;font-weight:800;font-size:17px;display:flex;align-items:center;justify-content:center;flex:none}
+.ge-cks{font-size:12.5px;color:var(--muted2);margin-top:2px}
 .ge-vazio b{display:block;font-size:17px;color:var(--text);margin-bottom:6px}
 </style>
 <style>html.dd-ret #login{visibility:hidden}</style><script>try{if(localStorage.getItem('dd_m_jwt'))document.documentElement.classList.add('dd-ret');}catch(e){}</script>
@@ -1158,7 +1163,7 @@ function ir(p){
 }
 
 /* ══ ENTREGAS (delivery) — a saída montada pelo operador aparece aqui; a rota é só sugestão e o motoboy entrega em qualquer ordem ══ */
-var GE={saida:null,ordem:'rota',pos:null,timer:null,busy:false,envio:false,erro:'',visUp:false};
+var GE={fila:null,ckBusy:false,saida:null,ordem:'rota',pos:null,timer:null,busy:false,envio:false,erro:'',visUp:false};
 function geVisto(){ try{ return localStorage.getItem('giro_ge_visto')||''; }catch(e){ return ''; } }
 function geMarcarVisto(){ try{ if(GE.saida) localStorage.setItem('giro_ge_visto',GE.saida.id); }catch(e){} }
 function geIniciar(){
@@ -1174,7 +1179,7 @@ function geBadge(){ var b=el('ge-bd'); if(!b) return; var n=gePend(GE.saida); b.
 function geAviso(sd){
   /* saída nova: faixa no topo + apito + vibração (com o app aberto; com o app fechado o aviso vai por WhatsApp) */
   var b=el('ge-banner'); if(!b) return; var n=gePend(sd);
-  b.innerHTML='🛵 <span><b>Nova saída:</b> '+n+' entrega'+(n>1?'s':'')+'</span><span class="go">Ver</span>'; b.classList.add('on');
+  var nm=String((DD_M_USER&&DD_M_USER.nome)||'').split(' ')[0]; b.innerHTML='🛵 <span><b>Olá'+(nm?' '+esc(nm):'')+', seus pedidos estão prontos pra retirada.</b></span><span class="go">Ver</span>'; b.classList.add('on');
   try{ rpApito(); }catch(e){}
   setTimeout(function(){ b.classList.remove('on'); },12000);
 }
@@ -1186,6 +1191,7 @@ function geCarregar(manual){
     if(!d.ok){ if(d.erro!=='sessao_invalida') GE.erro=d.mensagem||'Não consegui buscar as entregas.'; if(PAG==='entregas'&&!document.querySelector('.ge-bg')) gePintar(); return; }
     GE.erro=''; var novo=d.saida&&d.saida.id!==geVisto()&&PAG!=='entregas';
     GE.saida=d.saida; geBadge();
+    rpApi('/motoboy/fila').then(function(f){ if(f&&f.ok){ GE.fila=f; if(PAG==='entregas'&&!document.querySelector('.ge-bg')) gePintar(); } }).catch(function(){});
     if(novo) geAviso(d.saida);
     if(PAG==='entregas'&&!document.querySelector('.ge-bg')){ geMarcarVisto(); gePintar(); }
     if(manual) aviso('Atualizado');
@@ -1230,7 +1236,7 @@ function gePintar(){
   var box=el('ge-conteudo'); if(!box) return; var sd=GE.saida;
   var h='<h2 class="titulo-pg" style="display:flex;justify-content:space-between;align-items:center">Entregas<span class="vertodos" onclick="geCarregar(true)">↻ Atualizar</span></h2>';
   if(GE.erro) h+='<div class="card" style="color:var(--red);font-weight:700;font-size:13px;margin-bottom:12px">'+esc(GE.erro)+'</div>';
-  if(!sd){ h+='<div class="ge-vazio"><b>Sem saída agora</b>Quando o operador fechar a sua saída, os pedidos aparecem aqui e você recebe um aviso.</div>'; }
+  if(!sd){ h+=geCheckinHtml()+'<div class="ge-vazio"><b>Sem saída agora</b>Quando o operador montar o seu lote, os pedidos aparecem aqui e você recebe um aviso.</div>'; }
   else {
     var o=geOrdenar(sd.paradas), tot=sd.paradas.length, ok=tot-o.pend.length;
     h+='<div class="card" style="margin-bottom:12px"><div class="ge-resumo"><div><div class="n">'+ok+' / '+tot+'</div><div class="t">entregas feitas</div></div><div style="margin-left:auto;text-align:right"><div class="n">'+o.pend.length+'</div><div class="t">faltam</div></div></div>'+(sd.troco>0?'<div class="ge-troco">Vale de troco: '+moeda(sd.troco)+'</div>':'')+'</div>';
@@ -1239,11 +1245,25 @@ function gePintar(){
       var ru=geRotaUrl(o.pend); if(ru) h+='<a class="btn sec" href="'+ru+'" target="_blank" style="width:100%;margin-bottom:10px;text-decoration:none">Abrir rota completa no mapa</a>';
       h+='<div style="font-size:12px;color:var(--muted2);margin:0 2px 10px;font-weight:600">A ordem é só uma sugestão: você pode entregar em qualquer ordem.</div>';
       o.pend.forEach(function(p,i){ h+=geStopHtml(p,i+1,i===0); });
-    } else h+='<div class="ge-vazio"><b>Saída concluída</b>Todas as entregas foram marcadas.</div>';
+    } else h+=geCheckinHtml()+'<div class="ge-vazio"><b>Saída concluída</b>Todas as entregas foram marcadas.</div>';
     if(o.feitos.length){ h+='<div style="font-size:12px;font-weight:800;color:var(--muted2);margin:18px 2px 8px">JÁ MARCADOS</div>'; o.feitos.forEach(function(p){ h+=geStopHtml(p,0,false); }); }
   }
-  h+='<div style="text-align:center;font-size:10.5px;color:var(--muted);margin-top:14px">GIRO-OS-007</div>';
+  h+='<div style="text-align:center;font-size:10.5px;color:var(--muted);margin-top:14px">GIRO-OS-008</div>';
   box.innerHTML=h;
+}
+function geCheckinHtml(){
+  var f=GE.fila, na=f&&f.na_fila;
+  if(na) return '<div class="card ge-ck on"><div class="ge-ckn">'+f.pos+'º</div><div><b>Você está na fila</b><div class="ge-cks">Posição '+f.pos+' de '+f.total+'. Aguarde o operador chamar.</div></div><button class="ge-gh" style="margin:0 0 0 auto" onclick="geCheckin(\'sair\')">Sair da fila</button></div>';
+  return '<div class="card ge-ck"><button class="btn pri" style="width:100%;font-size:16px;padding:15px" onclick="geCheckin()"'+(GE.ckBusy?' disabled':'')+'>Check-in</button><div class="ge-cks" style="text-align:center;margin-top:8px">Toque ao chegar no restaurante para entrar na fila.</div></div>';
+}
+function geCheckin(acao){
+  if(GE.ckBusy) return; GE.ckBusy=true; gePintar();
+  rpApi('/motoboy/checkin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({acao:acao||'entrar'})}).then(function(d){
+    GE.ckBusy=false;
+    if(d&&d.ok){ GE.fila={ok:true,na_fila:!!d.na_fila,pos:d.pos||0,total:d.total||0}; aviso(d.na_fila?'Check-in feito: você é o '+d.pos+'º da fila':'Você saiu da fila'); }
+    else aviso((d&&d.mensagem)||'Não consegui fazer o check-in.');
+    gePintar(); geCarregar();
+  }).catch(function(){ GE.ckBusy=false; aviso('Sem conexão. Tente de novo.'); gePintar(); });
 }
 function geOrdem(o){ GE.ordem=o; gePintar(); }
 function geParadaDe(cod){ var r=null; (GE.saida?GE.saida.paradas:[]).forEach(function(p){ if(p.cod===cod) r=p; }); return r; }
