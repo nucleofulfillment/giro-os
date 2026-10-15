@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <script>/* (208) APK: sem "viewport-fit=cover" o Android empurra o app para dentro das barras dele (cima e botões de baixo) em todas as telas */try{ if(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform()){ var mv=document.querySelector('meta[name=viewport]'); mv.setAttribute('content',mv.getAttribute('content').replace(/,\s*viewport-fit=cover/,'')); } }catch(e){}</script>
-<title>Giro OS — App do Motorista · GIRO-OS-010</title>
+<title>Giro OS — App do Motorista · GIRO-OS-011</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://giro-os-api.nucleofull.workers.dev" crossorigin>
@@ -1170,7 +1170,7 @@ function ir(p){
 
 /* ══ ENTREGAS (delivery) — a saída montada pelo operador aparece aqui; a rota é só sugestão e o motoboy entrega em qualquer ordem ══ */
 var GE_OCULTA_BIPE=true;
-var GE={fila:null,ckBusy:false,saida:null,ordem:'rota',pos:null,timer:null,busy:false,envio:false,erro:'',visUp:false};
+var GE={vista:'mapa',sel:null,mapa:null,mapaEl:null,mapaOk:false,marc:[],linha:null,lbusy:false,fitKey:'',fila:null,ckBusy:false,saida:null,ordem:'rota',pos:null,timer:null,busy:false,envio:false,erro:'',visUp:false};
 function geVisto(){ try{ return localStorage.getItem('giro_ge_visto')||''; }catch(e){ return ''; } }
 function geMarcarVisto(){ try{ if(GE.saida) localStorage.setItem('giro_ge_visto',GE.saida.id); }catch(e){} }
 function geIniciar(){
@@ -1241,6 +1241,7 @@ function geStopHtml(p,i,prox){
 }
 function gePintar(){
   var box=el('ge-conteudo'); if(!box) return; var sd=GE.saida;
+  if(sd&&GE.vista==='mapa'&&gePend(sd)>0){ box.innerHTML=geMapaHtml(sd); geMapaMontar(); return; }
   var h='<h2 class="titulo-pg" style="display:flex;justify-content:space-between;align-items:center">Entregas<span class="vertodos" onclick="geCarregar(true)">↻ Atualizar</span></h2>';
   if(GE.erro) h+='<div class="card" style="color:var(--red);font-weight:700;font-size:13px;margin-bottom:12px">'+esc(GE.erro)+'</div>';
   if(!sd){ h+=geCheckinHtml()+'<div class="ge-vazio"><b>Sem saída agora</b>Quando o operador montar o seu lote, os pedidos aparecem aqui e você recebe um aviso.</div>'; }
@@ -1248,6 +1249,7 @@ function gePintar(){
     var o=geOrdenar(sd.paradas), tot=sd.paradas.length, ok=tot-o.pend.length;
     h+='<div class="card" style="margin-bottom:12px"><div class="ge-resumo"><div><div class="n">'+ok+' / '+tot+'</div><div class="t">entregas feitas</div></div><div style="margin-left:auto;text-align:right"><div class="n">'+o.pend.length+'</div><div class="t">faltam</div></div></div>'+(sd.troco>0?'<div class="ge-troco">Vale de troco: '+moeda(sd.troco)+'</div>':'')+'</div>';
     if(o.pend.length){
+      h+='<button class="btn sec" style="width:100%;margin-bottom:10px" onclick="geVista(\'mapa\')">🗺 Ver no mapa</button>';
       h+='<div class="ge-seg"><button class="'+(GE.ordem==='rota'?'on':'')+'" onclick="geOrdem(\'rota\')">Rota sugerida</button><button class="'+(GE.ordem==='pedido'?'on':'')+'" onclick="geOrdem(\'pedido\')">Ordem dos pedidos</button></div>';
       var ru=geRotaUrl(o.pend); if(ru) h+='<a class="btn sec" href="'+ru+'" target="_blank" style="width:100%;margin-bottom:10px;text-decoration:none">Abrir rota completa no mapa</a>';
       h+='<div style="font-size:12px;color:var(--muted2);margin:0 2px 10px;font-weight:600">A ordem é só uma sugestão: você pode entregar em qualquer ordem.</div>';
@@ -1255,8 +1257,75 @@ function gePintar(){
     } else h+=geCheckinHtml()+'<div class="ge-vazio"><b>Saída concluída</b>Todas as entregas foram marcadas.</div>';
     if(o.feitos.length){ h+='<div style="font-size:12px;font-weight:800;color:var(--muted2);margin:18px 2px 8px">JÁ MARCADOS</div>'; o.feitos.forEach(function(p){ h+=geStopHtml(p,0,false); }); }
   }
-  h+='<div style="text-align:center;font-size:10.5px;color:var(--muted);margin-top:14px">GIRO-OS-010</div>';
+  h+='<div style="text-align:center;font-size:10.5px;color:var(--muted);margin-top:14px">GIRO-OS-011</div>';
   box.innerHTML=h;
+}
+
+/* ══ ENTREGAS NO MAPA (mesmo visual da rota do DeltaDis): pinos numerados, trajeto, parada atual e só 3 comandos ══ */
+function geVista(v){ GE.vista=v; gePintar(); }
+function geWazeUrl(p){ return (p.lat!=null&&p.lng!=null)?('https://waze.com/ul?ll='+p.lat+','+p.lng+'&navigate=yes'):('https://waze.com/ul?q='+encodeURIComponent([p.rua,p.numero,p.bairro,p.cid].filter(Boolean).join(', '))+'&navigate=yes'); }
+function geAtual(o){ var i,r=null; if(GE.sel){ for(i=0;i<o.pend.length;i++) if(o.pend[i].cod===GE.sel) r=o.pend[i]; } return r||o.pend[0]||null; }
+function geSelPin(cod){ GE.sel=cod; gePintar(); }
+function geMapaHtml(sd){
+  var o=geOrdenar(sd.paradas), at=geAtual(o), tot=sd.paradas.length, ok=tot-o.pend.length, i=o.pend.indexOf(at);
+  var km=GE.linha&&GE.linha.km?GE.linha.km+' km · ~'+GE.linha.min+' min':'';
+  var h='<div class="ge-rt"><div class="mapa-mock full-bleed" style="height:46vh;margin-bottom:0"><div id="ge-slot" style="position:absolute;inset:0"></div>'+
+    '<button class="mapa-resumo" onclick="geVista(\'lista\')">☰ Ver lista</button>'+
+    '<a class="mapa-abrir-maps" href="'+geNavUrl(at)+'" target="_blank" rel="noopener">Google Maps ↗</a><a class="mapa-abrir-waze" href="'+geWazeUrl(at)+'" target="_blank" rel="noopener">Waze ↗</a>'+
+    (km?'<span class="mapa-legenda">'+km+'</span>':'')+'</div>'+
+    '<div class="progresso" style="margin-top:8px"><div class="progresso-topo"><div class="progresso-txt">'+ok+' de '+tot+' entregues</div>'+(sd.troco>0?'<span class="canal-tag" style="background:#FEF3C7;color:#92400E">Vale de troco '+moeda(sd.troco)+'</span>':'')+'</div><div class="meta-barra"><div class="meta-fill" style="width:'+Math.round(ok/tot*100)+'%"></div></div></div>'+
+    '<div class="info-full" style="padding-top:6px"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><span class="parada-tag">Parada '+(i+1)+' de '+o.pend.length+'</span><span class="ge-num">#'+esc(at.num)+'</span></div>'+
+    '<h2 class="end-2l">'+esc([at.rua,at.numero].filter(Boolean).join(', '))+(at.comp?' · '+esc(at.comp):'')+'</h2>'+
+    '<p style="margin:0 0 3px;color:var(--muted2);font-size:13.5px;font-weight:700">'+esc(at.cliente||'')+'</p>'+
+    '<p style="margin:0;color:var(--muted);font-size:11.5px">'+esc((at.bairro||'')+(at.cid?' · '+at.cid:''))+'</p>'+
+    '<div>'+gePagTag(at)+'<span class="ge-tag ge-nu">'+moeda(at.vl)+'</span></div>'+
+    '<div class="ge-ac"><a class="btn sec" href="'+geNavUrl(at)+'" target="_blank" rel="noopener">Navegar</a><button class="btn pri" onclick="geEntregar(\''+esc(at.cod)+'\')">Entregue</button></div>'+
+    '<button class="ge-gh" style="width:100%;text-align:center" onclick="geAusente(\''+esc(at.cod)+'\')">Não consegui entregar</button></div></div>';
+  return h;
+}
+function geMapaMontar(){
+  var slot=el('ge-slot'); if(!slot) return;
+  if(!GE.mapaEl){ GE.mapaEl=document.createElement('div'); GE.mapaEl.style.cssText='position:absolute;inset:0'; }
+  slot.appendChild(GE.mapaEl);
+  rpCarregarMapa(function(){
+    var sd=GE.saida; if(!sd) return; var p0=null; sd.paradas.forEach(function(p){ if(!p0&&p.lat!=null&&p.lng!=null) p0=p; });
+    if(!p0){ slot.innerHTML='<div class="ge-vazio" style="padding-top:60px"><b>Sem localização</b>Os endereços ainda não têm posição no mapa. Use a lista.</div>'; return; }
+    if(!GE.mapa){
+      GE.mapa=new maplibregl.Map({container:GE.mapaEl,style:'https://tiles.openfreemap.org/styles/liberty',center:[p0.lng,p0.lat],zoom:12,attributionControl:false});
+      try{ GE.mapa.addControl(new maplibregl.NavigationControl({showCompass:false}),'top-right'); }catch(e){}
+      GE.mapaOk=false; GE.mapa.on('load',function(){ GE.mapaOk=true; geMapaDesenhar(true); });
+    } else { GE.mapa.resize(); if(GE.mapaOk) geMapaDesenhar(false); }
+  });
+}
+function geMapaDesenhar(ajustar){
+  var m=GE.mapa, sd=GE.saida; if(!m||!GE.mapaOk||!sd) return;
+  var o=geOrdenar(sd.paradas), at=geAtual(o); if(!at) return;
+  GE.marc.forEach(function(x){ x.remove(); }); GE.marc=[];
+  var b=new maplibregl.LngLatBounds(), reta=[], key=o.pend.map(function(p){ return p.cod; }).join(','), e;
+  var base=GE.pos?{lat:GE.pos.lat,lng:GE.pos.lng}:null;
+  if(base){ reta.push([base.lng,base.lat]); b.extend([base.lng,base.lat]); }
+  o.pend.forEach(function(p,i){ if(p.lat==null||p.lng==null) return;
+    e=document.createElement('div'); e.className='rm-pin'+(p.cod===at.cod?' atual':''); e.textContent=String(i+1);
+    e.onclick=function(ev){ ev.stopPropagation(); geSelPin(p.cod); };
+    GE.marc.push(new maplibregl.Marker({element:e}).setLngLat([p.lng,p.lat]).addTo(m)); b.extend([p.lng,p.lat]); reta.push([p.lng,p.lat]); });
+  o.feitos.forEach(function(p){ if(p.lat==null||p.lng==null) return;
+    e=document.createElement('div'); e.className='rm-pin '+(p.st==='entregue'?'st-entregue':'st-ausente'); e.textContent=p.st==='entregue'?'✓':'!';
+    GE.marc.push(new maplibregl.Marker({element:e}).setLngLat([p.lng,p.lat]).addTo(m)); b.extend([p.lng,p.lat]); });
+  if(base){ e=document.createElement('div'); e.className='rm-pin base'; e.textContent='Eu'; e.style.width='auto'; e.style.padding='0 6px'; GE.marc.push(new maplibregl.Marker({element:e}).setLngLat([base.lng,base.lat]).addTo(m)); }
+  var lk=key+'|'+(base?base.lat.toFixed(3)+','+base.lng.toFixed(3):'-'), real=(GE.linha&&GE.linha.key===lk)?GE.linha.l:null;
+  var geo={type:'Feature',geometry:{type:'LineString',coordinates:real||reta}};
+  if(m.getSource('ge-rota')) m.getSource('ge-rota').setData(geo); else { m.addSource('ge-rota',{type:'geojson',data:geo}); m.addLayer({id:'ge-rota-l',type:'line',source:'ge-rota',paint:{'line-color':'#D96D28','line-width':4,'line-opacity':.85}}); }
+  if(ajustar||GE.fitKey!==key){ GE.fitKey=key; if(!b.isEmpty()) m.fitBounds(b,{padding:44,maxZoom:15,duration:0}); }
+  if(!real&&!GE.lbusy&&o.pend.length){
+    var pts=o.pend.filter(function(p){ return p.lat!=null&&p.lng!=null; }).map(function(p){ return {lat:p.lat,lng:p.lng}; });
+    if(pts.length){ GE.lbusy=true;
+      rpApi('/rota/calcular',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({base:base,pontos:pts,minPorParada:2,ordem:pts.map(function(x,k){ return k; })})}).then(function(c){
+        GE.lbusy=false; var mm=c&&c.ok&&c.manual;
+        GE.linha={key:lk,l:(mm&&mm.real&&mm.linha&&mm.linha.length)?mm.linha:reta,km:mm?Math.round(mm.idaKm*10)/10:0,min:mm?Math.round(mm.idaMin):0};
+        if(PAG==='entregas'&&GE.vista==='mapa'&&!document.querySelector('.ge-bg')) gePintar();
+      }).catch(function(){ GE.lbusy=false; GE.linha={key:lk,l:reta,km:0,min:0}; });
+    }
+  }
 }
 function geHomeHtml(){
   var f=GE.fila, n=gePend(GE.saida), box='border:1px solid rgba(255,255,255,.7);border-radius:16px;padding:22px 12px';
@@ -1286,10 +1355,10 @@ function geParadaDe(cod){ var r=null; (GE.saida?GE.saida.paradas:[]).forEach(fun
 /* "Entregue" sempre pede a forma de pagamento (pedido já pago só pede a confirmação) */
 function geEntregar(cod){
   var p=geParadaDe(cod); if(!p) return; var pago=(p.pgp||p.pg==='online'), c=esc(cod);
-  var h='<div class="ge-bg" id="ge-sh"><div class="ge-sheet"><h3>Entregar #'+esc(p.num)+'</h3><p>'+(pago?'Este pedido já está pago. Confirme a entrega.':'Como o cliente pagou? ('+moeda(p.vl)+')')+'</p>';
-  if(pago) h+='<button class="btn pri" style="width:100%" onclick="geConfirma(\''+c+'\',\'pago\')">Confirmar entrega · já estava pago</button>';
-  else h+='<div class="ge-pgs"><button onclick="geConfirma(\''+c+'\',\'dinheiro\')">Dinheiro</button><button onclick="geConfirma(\''+c+'\',\'pix\')">Pix</button><button onclick="geConfirma(\''+c+'\',\'cartao\')">Cartão</button><button onclick="geConfirma(\''+c+'\',\'pago\')">Já estava pago</button></div>';
-  h+='<button class="ge-gh" style="width:100%;text-align:center;margin-top:10px" onclick="geFecharSh()">Cancelar</button></div></div>';
+  if(pago){ geMarcar(cod,'entregue','pago'); return; }   /* pedido que já subiu pago: entrega direta, sem perguntar */
+  var h='<div class="ge-bg" id="ge-sh"><div class="ge-sheet"><h3>Entregar #'+esc(p.num)+'</h3><p>Como o cliente pagou? ('+moeda(p.vl)+')</p>'+
+    '<div class="ge-pgs"><button onclick="geConfirma(\''+c+'\',\'dinheiro\')">Dinheiro</button><button onclick="geConfirma(\''+c+'\',\'pix\')">Pix</button><button style="grid-column:1/3" onclick="geConfirma(\''+c+'\',\'cartao\')">Cartão</button></div>'+
+    '<button class="ge-gh" style="width:100%;text-align:center;margin-top:10px" onclick="geFecharSh()">Cancelar</button></div></div>';
   document.body.insertAdjacentHTML('beforeend',h);
 }
 function geFecharSh(){ var b=el('ge-sh'); if(b) b.remove(); }
@@ -1299,7 +1368,7 @@ function geMarcar(cod,acao,pg){
   if(GE.envio) return; GE.envio=true;
   rpApi('/motoboy/entregue',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cod:cod,acao:acao,pg:pg||''})}).then(function(d){
     GE.envio=false;
-    if(d&&d.ok){ GE.saida=d.saida; GE.erro=''; geBadge(); gePintar(); aviso(acao==='entregue'?'Entrega marcada':(acao==='desfazer'?'Desfeito':'Anotado')); }
+    if(d&&d.ok){ GE.saida=d.saida; GE.sel=null; GE.erro=''; geBadge(); geHomePintar(); gePintar(); aviso(acao==='entregue'?'Entrega marcada':(acao==='desfazer'?'Desfeito':'Anotado')); }
     else aviso((d&&d.mensagem)||'Não consegui salvar. Tente de novo.');
   }).catch(function(){ GE.envio=false; aviso('Sem conexão. Tente de novo.'); });
 }
