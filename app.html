@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <script>/* (208) APK: sem "viewport-fit=cover" o Android empurra o app para dentro das barras dele (cima e botões de baixo) em todas as telas */try{ if(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform()){ var mv=document.querySelector('meta[name=viewport]'); mv.setAttribute('content',mv.getAttribute('content').replace(/,\s*viewport-fit=cover/,'')); } }catch(e){}</script>
-<title>Giro OS — App do Motorista · GIRO-OS-008</title>
+<title>Giro OS — App do Motorista · GIRO-OS-010</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://giro-os-api.nucleofull.workers.dev" crossorigin>
@@ -541,6 +541,12 @@ html.apk div[style*="position:fixed"][style*="left:0"][style*="bottom:0"]{bottom
 .ge-pgs button{border:1.5px solid var(--border2);background:var(--s1);border-radius:14px;padding:16px 8px;font-weight:800;font-size:15px;cursor:pointer;color:var(--text)}
 .ge-pgs button:active{background:var(--s3)}
 .ge-vazio{text-align:center;color:var(--muted2);padding:40px 10px}
+.ge-hm{margin:12px 0;text-align:left}
+.ge-ckbig{width:100%;font-size:20px;font-weight:800;padding:20px 10px;letter-spacing:.5px;border-radius:16px}
+.ge-hm-fila{display:flex;align-items:center;gap:12px;border:2px solid var(--green)}
+.ge-hm-ok{background:linear-gradient(135deg,#16A34A,#22C55E);color:#fff}
+.ge-hm-ok .btn{width:100%;margin-top:12px;background:#fff;color:#15803D;border:0}
+.ge-hmt{font-weight:800;font-size:16px;margin-bottom:4px}
 .ge-ck{margin-bottom:12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .ge-ck:not(.on){display:block}
 .ge-ck.on{border:2px solid var(--green)}
@@ -1163,6 +1169,7 @@ function ir(p){
 }
 
 /* ══ ENTREGAS (delivery) — a saída montada pelo operador aparece aqui; a rota é só sugestão e o motoboy entrega em qualquer ordem ══ */
+var GE_OCULTA_BIPE=true;
 var GE={fila:null,ckBusy:false,saida:null,ordem:'rota',pos:null,timer:null,busy:false,envio:false,erro:'',visUp:false};
 function geVisto(){ try{ return localStorage.getItem('giro_ge_visto')||''; }catch(e){ return ''; } }
 function geMarcarVisto(){ try{ if(GE.saida) localStorage.setItem('giro_ge_visto',GE.saida.id); }catch(e){} }
@@ -1190,8 +1197,8 @@ function geCarregar(manual){
     GE.busy=false; if(!d) return;
     if(!d.ok){ if(d.erro!=='sessao_invalida') GE.erro=d.mensagem||'Não consegui buscar as entregas.'; if(PAG==='entregas'&&!document.querySelector('.ge-bg')) gePintar(); return; }
     GE.erro=''; var novo=d.saida&&d.saida.id!==geVisto()&&PAG!=='entregas';
-    GE.saida=d.saida; geBadge();
-    rpApi('/motoboy/fila').then(function(f){ if(f&&f.ok){ GE.fila=f; if(PAG==='entregas'&&!document.querySelector('.ge-bg')) gePintar(); } }).catch(function(){});
+    GE.saida=d.saida; geBadge(); geHomePintar();
+    rpApi('/motoboy/fila').then(function(f){ if(f&&f.ok){ GE.fila=f; geHomePintar(); if(PAG==='entregas'&&!document.querySelector('.ge-bg')) gePintar(); } }).catch(function(){});
     if(novo) geAviso(d.saida);
     if(PAG==='entregas'&&!document.querySelector('.ge-bg')){ geMarcarVisto(); gePintar(); }
     if(manual) aviso('Atualizado');
@@ -1248,22 +1255,31 @@ function gePintar(){
     } else h+=geCheckinHtml()+'<div class="ge-vazio"><b>Saída concluída</b>Todas as entregas foram marcadas.</div>';
     if(o.feitos.length){ h+='<div style="font-size:12px;font-weight:800;color:var(--muted2);margin:18px 2px 8px">JÁ MARCADOS</div>'; o.feitos.forEach(function(p){ h+=geStopHtml(p,0,false); }); }
   }
-  h+='<div style="text-align:center;font-size:10.5px;color:var(--muted);margin-top:14px">GIRO-OS-008</div>';
+  h+='<div style="text-align:center;font-size:10.5px;color:var(--muted);margin-top:14px">GIRO-OS-010</div>';
   box.innerHTML=h;
 }
+function geHomeHtml(){
+  var f=GE.fila, n=gePend(GE.saida), box='border:1px solid rgba(255,255,255,.7);border-radius:16px;padding:22px 12px';
+  var cab='<div style="font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;opacity:.85;margin-bottom:10px">';
+  var ini='<div class="card" style="margin:0 0 14px;background:var(--grad-arte);color:#fff;border:none;text-align:center;padding:18px 16px">';
+  if(n>0) return ini+cab+'Minha rota</div><div onclick="ir(\'entregas\')" style="'+box+';cursor:pointer"><h3 style="margin:0;font-size:22px;color:#fff;line-height:1.2">Seus pedidos estão prontos pra retirada</h3><div style="font-size:13px;opacity:.9;margin-top:6px">'+n+' entrega'+(n>1?'s':'')+' · toque para ver</div></div></div>';
+  if(f&&f.na_fila) return ini+cab+'Fila de retirada</div><div style="'+box+'"><h3 style="margin:0;font-size:26px;color:#fff">Você é o '+f.pos+'º da fila</h3><div style="font-size:13px;opacity:.9;margin-top:6px">Posição '+f.pos+' de '+f.total+' · aguarde o operador chamar</div></div><button onclick="geCheckin(\'sair\')" style="background:none;border:0;color:#fff;opacity:.85;font-weight:700;font-size:12.5px;text-decoration:underline;margin-top:12px;cursor:pointer">Sair da fila</button></div>';
+  return ini+cab+'Fila de retirada</div><div onclick="geCheckin()" style="'+box+';cursor:pointer;'+(GE.ckBusy?'opacity:.6':'')+'"><h3 style="margin:0;font-size:26px;color:#fff;letter-spacing:.01em">📍 Check-in</h3><div style="font-size:13px;opacity:.9;margin-top:6px">Toque ao chegar no restaurante</div></div></div>';
+}
+function geHomePintar(){ var b=el('ge-home'); if(b) b.innerHTML=geHomeHtml(); }
 function geCheckinHtml(){
   var f=GE.fila, na=f&&f.na_fila;
   if(na) return '<div class="card ge-ck on"><div class="ge-ckn">'+f.pos+'º</div><div><b>Você está na fila</b><div class="ge-cks">Posição '+f.pos+' de '+f.total+'. Aguarde o operador chamar.</div></div><button class="ge-gh" style="margin:0 0 0 auto" onclick="geCheckin(\'sair\')">Sair da fila</button></div>';
   return '<div class="card ge-ck"><button class="btn pri" style="width:100%;font-size:16px;padding:15px" onclick="geCheckin()"'+(GE.ckBusy?' disabled':'')+'>Check-in</button><div class="ge-cks" style="text-align:center;margin-top:8px">Toque ao chegar no restaurante para entrar na fila.</div></div>';
 }
 function geCheckin(acao){
-  if(GE.ckBusy) return; GE.ckBusy=true; gePintar();
+  if(GE.ckBusy) return; GE.ckBusy=true; gePintar(); geHomePintar();
   rpApi('/motoboy/checkin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({acao:acao||'entrar'})}).then(function(d){
     GE.ckBusy=false;
     if(d&&d.ok){ GE.fila={ok:true,na_fila:!!d.na_fila,pos:d.pos||0,total:d.total||0}; aviso(d.na_fila?'Check-in feito: você é o '+d.pos+'º da fila':'Você saiu da fila'); }
     else aviso((d&&d.mensagem)||'Não consegui fazer o check-in.');
-    gePintar(); geCarregar();
-  }).catch(function(){ GE.ckBusy=false; aviso('Sem conexão. Tente de novo.'); gePintar(); });
+    gePintar(); geHomePintar(); geCarregar();
+  }).catch(function(){ GE.ckBusy=false; aviso('Sem conexão. Tente de novo.'); gePintar(); geHomePintar(); });
 }
 function geOrdem(o){ GE.ordem=o; gePintar(); }
 function geParadaDe(cod){ var r=null; (GE.saida?GE.saida.paradas:[]).forEach(function(p){ if(p.cod===cod) r=p; }); return r; }
@@ -3684,9 +3700,10 @@ function renderInicio(){
   }
 
   if(EST==='sem_lote'){
-    h+=rpCardPronta();
+    if(GE_OCULTA_BIPE) h+='<div id="ge-home">'+geHomeHtml()+'</div>'; else h+=rpCardPronta();   /* delivery: o lote vem pronto do operador; a bipagem fica só oculta (GE_OCULTA_BIPE=false volta) */
     var nAb=(BIP_ROTA&&BP.ok)?BP.meus.length:0, nInc=(BIP_ROTA&&BP.ok)?BP.meus.filter(function(m){ return !m.e; }).length:0;
-    if(nAb>0){
+    if(GE_OCULTA_BIPE){ }
+    else if(nAb>0){
       h+='<div class="card" style="padding:18px"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><h3 style="margin:0">Lote em aberto</h3><b style="font-size:20px;color:var(--roxo-esc)">'+nAb+'</b></div>'+
          '<p style="color:var(--muted);font-size:13px;margin:4px 0 '+(nInc?'4':'14')+'px">'+nAb+' pacote'+(nAb===1?'':'s')+' bipado'+(nAb===1?'':'s')+(PT.sel?' · 📍 '+esc(pontoNome(PT.sel.nome)):'')+'</p>'+
          (nInc?'<p style="color:#BE7718;font-weight:700;font-size:13px;margin:0 0 14px">'+nInc+' com endereço incompleto</p>':'')+
