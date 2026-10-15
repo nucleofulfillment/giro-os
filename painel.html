@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Giro OS — Painel do ponto · GIRO-OS-013</title>
+<title>Giro OS — Painel do ponto · GIRO-OS-015</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -365,8 +365,11 @@ a{color:inherit}
 .mp-opbar{position:absolute;left:50%;transform:translateX(-50%);bottom:14px;z-index:6;background:#fff;border:1px solid var(--border2);border-radius:14px;box-shadow:0 4px 16px rgba(41,35,30,.3);padding:10px 12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;max-width:calc(100% - 20px);width:max-content}
 .mp-opbar-txt{font-size:12.5px;line-height:1.4;max-width:340px}
 .mp-opbar select{width:auto;max-width:150px;padding:6px 8px;font-size:12.5px}
-.mp-sempos-btn{position:absolute;top:10px;right:56px;z-index:6;border:1px solid #F59E0B;background:#FFFBEB;color:#92400E;border-radius:9px;padding:7px 11px;font-weight:700;font-size:12px;cursor:pointer}
-.mp-sempos{position:absolute;top:50px;right:56px;z-index:7;background:#fff;border:1px solid var(--border2);border-radius:12px;box-shadow:0 4px 16px rgba(41,35,30,.3);padding:10px;width:270px;max-height:50%;overflow:auto;font-size:12.5px}
+.mp-opmot{position:absolute;top:80px;right:10px;z-index:6;width:230px;max-height:calc(100% - 210px);overflow:auto;padding:2px}
+.mp-opmot .mp-lr{box-shadow:0 2px 8px rgba(41,35,30,.28);margin-bottom:6px;padding:7px 9px}
+.mp-opmot .mp-senha{width:26px;height:26px;font-size:13px}
+.mp-sempos-btn{position:absolute;top:10px;left:56px;z-index:6;border:1px solid #F59E0B;background:#FFFBEB;color:#92400E;border-radius:9px;padding:7px 11px;font-weight:700;font-size:12px;cursor:pointer}
+.mp-sempos{position:absolute;top:50px;left:56px;z-index:7;background:#fff;border:1px solid var(--border2);border-radius:12px;box-shadow:0 4px 16px rgba(41,35,30,.3);padding:10px;width:270px;max-height:50%;overflow:auto;font-size:12.5px}
 .mp-sempos div.it{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px dashed var(--border2)}.mp-sempos div.it span{flex:1}
 .mp-pkw{width:30px;height:35px;position:relative;cursor:pointer}
 .mp-pk{position:absolute;left:1px;top:1px;width:28px;height:28px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--pc,#9CA3AF);border:2.5px solid #fff;box-shadow:0 2px 6px rgba(41,35,30,.5);display:flex;align-items:center;justify-content:center}
@@ -381,6 +384,7 @@ a{color:inherit}
 .mp-conf-lista{overflow:auto;flex:1;min-height:0}
 .mp-conf-it{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px dashed var(--border2);font-size:13px}
 .mp-conf-tot{font-weight:800;margin:12px 0;font-size:14px}
+.pd-ic{border:1px solid var(--border2);background:var(--s1);border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:15px}.pd-ic:hover{background:var(--s3)}
 .mp-conf-btn{display:flex;gap:10px;justify-content:flex-end}
 .mp-lista-cheia{position:fixed!important;inset:0;z-index:95;border-radius:0!important;overflow:auto;background:var(--bg)}
 @media(max-width:820px){.mp-lcols{grid-template-columns:1fr}.mp-lside{position:static}.mp-lcol#mp-l-ped{max-height:none}}
@@ -640,7 +644,7 @@ a{color:inherit}
 
       <!-- PEDIDOS -->
       <section class="page" id="pg-pedidos">
-        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-013</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
+        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-015</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
         <div id="pd-chip"></div>
         <div class="card">
           <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
@@ -659,7 +663,7 @@ a{color:inherit}
           </div>
           <div class="pills" id="pd-pills" style="margin-top:20px;margin-bottom:6px"></div>
           <div class="tb-wrap"><table class="tb">
-            <thead><tr><th>Pedido</th><th>Bairro / cidade</th><th>Origem</th><th>Tempo</th><th>Motorista</th><th>Status</th><th>Valor</th><th>Recebimento</th></tr></thead>
+            <thead><tr><th>Pedido</th><th>Bairro / cidade</th><th>Origem</th><th>Tempo</th><th>Motorista</th><th>Status</th><th>Valor</th><th>Recebimento</th><th></th></tr></thead>
             <tbody id="pd-corpo"></tbody>
           </table></div>
         </div>
@@ -705,7 +709,8 @@ a{color:inherit}
         <div class="card" id="mp-card-mapa">
           <div id="mp-real">
             <div id="mp-wrap" class="mp-wrap"><div id="mp-map" class="mp-mapa"></div><button class="mp-full-btn" id="mp-full-btn" onclick="mpTelaCheia()" title="Tela cheia">⛶</button><button class="mp-3d-btn" id="mp-3d-btn" onclick="mpInclinar()" title="Visão inclinada (3D) / de cima">3D</button>
-              <div class="mp-opbar" id="mp-opbar" style="display:none"><div id="mp-opbar-txt" class="mp-opbar-txt"></div><select class="inp" id="mp-op-mot" onchange="mpMotEscolher(this.value)"></select><button class="btn sec sm" onclick="mpSelLimpar()">Limpar</button><button class="btn pri sm" onclick="mpFecharGrupo()">Fechar grupo</button></div>
+              <div class="mp-opbar" id="mp-opbar" style="display:none"><div id="mp-opbar-txt" class="mp-opbar-txt"></div><button class="btn sec sm" onclick="mpSelLimpar()">Limpar</button><button class="btn pri sm" onclick="mpFecharGrupo()">Fechar grupo</button></div>
+              <div class="mp-opmot" id="mp-opmot" style="display:none"></div>
               <button class="mp-sempos-btn" id="mp-sempos-btn" style="display:none" onclick="mpSemPosAbrir()"></button><div class="mp-sempos" id="mp-sempos" style="display:none"></div></div>
             <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px">
               <span id="mp-status" style="font-size:12.5px;color:var(--muted)"></span><span id="mp-vivo-st" style="font-size:12.5px;color:var(--muted)"></span>
@@ -2882,7 +2887,7 @@ function iconeTransp(t){
 function badgeStatus(st){
   var map={aguardando:['b-nu','Aguardando'],'em rota':['b-in','Em rota'],entregue:['b-ok','Entregue'],tratativa:['b-no','Tratativa'],
     coletado:['b-nu','Na fila'],'tentativa 1':['b-no','Tentativa 1'],'tentativa 2':['b-no','Tentativa 2'],'tentativa 3':['b-no','Tentativa 3'],
-    devolvido:['b-no','Devolvido'],extraviado:['b-no','Extraviado'],'fora de rota':['b-wt','Fora de rota'],'nao localizado':['b-no','Não localizado'],esquecido:['b-wt','Esquecido na base'],
+    devolvido:['b-no','Devolvido'],cancelado:['b-no','Cancelado'],extraviado:['b-no','Extraviado'],'fora de rota':['b-wt','Fora de rota'],'nao localizado':['b-no','Não localizado'],esquecido:['b-wt','Esquecido na base'],
     ativo:['b-ok','ativo'],pendente:['b-wt','pendente'],'na base':['b-nu','Na base'],inativo:['b-no','Inativo'],
     pago:['b-ok','Pago'],recebido:['b-ok','Recebido'],'a revisar':['b-wt','A revisar'],autorizado:['b-in','Autorizado'],recusado:['b-no','Não pagar']};
   var m=map[st]||['b-nu',st];
@@ -3956,7 +3961,7 @@ function filtrarPorTransportadora(id){
 function limparFiltroDash(){ DASH_TR=null; pintarIndicadores(); pintarDashboard(); }
 function limparFiltroTransportadora(){ FILTRO_TR=null; pintarPedidos(); }
 /* ── (GIRO-OS-009) tempo do pedido: verde até 30 min, amarelo 30–60, vermelho acima de 60 (limites guardados em giro_tempo, prontos pra virar configuração) ── */
-var PD_FIM={entregue:1,devolvido:1,extraviado:1};
+var PD_FIM={entregue:1,devolvido:1,extraviado:1,cancelado:1};
 var PD_FORMA={online:'Pago online',pix:'Pix',dinheiro:'Dinheiro',cartao:'Cartão'};
 var PD_ORIGENS=['Pedidos10','WhatsApp','Balcão/telefone','iFood'];
 function pdTempoCfg(){ var c={am:30,ve:60}; try{ var r=JSON.parse(localStorage.getItem('giro_tempo')||'null'); if(r && Number(r.am)>0 && Number(r.ve)>Number(r.am)){ c.am=Number(r.am); c.ve=Number(r.ve); } }catch(e){} return c; }
@@ -3980,6 +3985,31 @@ function pdRecebHtml(p){
   if(PD_FIM[p.st]) return '<span class="badge b-nu">'+esc(nome)+'</span>';
   return '<span class="badge b-wt">Cobrar: '+esc(nome)+'</span>';
 }
+/* cancelar pedido: sai da lista (só aparece no filtro "Cancelados") e some do Mapeamento */
+function pdAcaoHtml(p){
+  if(p.tr!=='gir') return '';
+  if(p.st==='cancelado') return '<button class="pd-ic" title="Restaurar pedido (volta para a fila)" onclick="event.stopPropagation();pdRestaurar(\''+esc(p.cod)+'\')">↩</button>';
+  if(p.st==='entregue'||p.st==='devolvido') return '';
+  return '<button class="pd-ic" title="Cancelar pedido" onclick="event.stopPropagation();pdCancelar(\''+esc(p.cod)+'\')">🚫</button>';
+}
+function pdConfirmar(titulo,corpo,rotulo,fn){
+  var d=el('pd-conf'); if(!d){ d=document.createElement('div'); d.id='pd-conf'; d.className='mp-conf'; document.body.appendChild(d); }
+  d.innerHTML='<div class="mp-conf-box" style="width:min(420px,100%)"><h3>'+titulo+'</h3><div style="font-size:13.5px;line-height:1.5;margin-bottom:14px">'+corpo+'</div><div class="mp-conf-btn"><button class="btn sec" id="pd-conf-no">Voltar</button><button class="btn pri" id="pd-conf-ok">'+rotulo+'</button></div></div>';
+  d.style.display='flex';
+  el('pd-conf-no').onclick=function(){ d.style.display='none'; };
+  el('pd-conf-ok').onclick=function(){ d.style.display='none'; fn(); };
+}
+function pdCancelar(cod){
+  var p=null,i; for(i=0;i<PEDIDOS.length;i++) if(PEDIDOS[i].cod===cod) p=PEDIDOS[i]; if(!p) return;
+  var m=p.st==='em rota'?motorista(p.mt):null;
+  pdConfirmar('Cancelar pedido #'+esc(pdNum(p))+'?','<b>'+esc(p.cliente||'')+'</b> · '+moeda(p.vl)+(m?'<br><span class="mp-aviso">⚠ Este pedido já está em rota com '+esc(m.n)+'.</span>':'')+'<br>Ele sai da lista e só aparece no filtro <b>Cancelados</b>.','Cancelar pedido',function(){
+    p.st='cancelado'; try{ recalcularReal(); }catch(e){} salvarLocal(); repintarTudo(); aviso('Pedido #'+esc(pdNum(p))+' cancelado');
+  });
+}
+function pdRestaurar(cod){
+  var p=null,i; for(i=0;i<PEDIDOS.length;i++) if(PEDIDOS[i].cod===cod) p=PEDIDOS[i]; if(!p) return;
+  p.st='coletado'; p.mt=null; try{ recalcularReal(); }catch(e){} salvarLocal(); repintarTudo(); aviso('Pedido #'+esc(pdNum(p))+' voltou para a fila');
+}
 function limparFiltrosPedidos(){
   ['pd-data-ini','pd-data-fim','pd-ocor','pd-mot','pd-origem','pd-forma'].forEach(function(id){ var x=el(id); if(x) x.value=''; });
   pintarPedidos();
@@ -3991,13 +4021,13 @@ function pintarPedidos(){
   var dIni=(el('pd-data-ini')&&el('pd-data-ini').value)||'', dFim=(el('pd-data-fim')&&el('pd-data-fim').value)||'';
   function passaData(p2){ if(!p2.dia) return !dIni && !dFim; if(dIni && p2.dia<dIni) return false; if(dFim && p2.dia>dFim) return false; return true; }
 
-  var stAll=REAL?['todos','coletado','em rota','devolvido','entregue']:['todos','aguardando','em rota','tratativa','entregue'],i,j,cont={};
+  var stAll=REAL?['todos','coletado','em rota','devolvido','entregue','cancelado']:['todos','aguardando','em rota','tratativa','entregue'],i,j,cont={};
   for(i=0;i<stAll.length;i++) cont[stAll[i]]=0;
-  for(j=0;j<PEDIDOS.length;j++){ var pc=PEDIDOS[j]; if(FILTRO_TR && pc.tr!==FILTRO_TR) continue; if(!passaData(pc)) continue; cont.todos++; if(cont[pc.st]!=null) cont[pc.st]++; }
+  for(j=0;j<PEDIDOS.length;j++){ var pc=PEDIDOS[j]; if(FILTRO_TR && pc.tr!==FILTRO_TR) continue; if(!passaData(pc)) continue; if(pc.st!=='cancelado') cont.todos++; if(cont[pc.st]!=null) cont[pc.st]++; }
   var ocSel=el('pd-ocor'), ocAtual=ocSel.value, ocCont={}, ocN=0, ocH='';
-  for(j=0;j<PEDIDOS.length;j++){ var po=PEDIDOS[j]; if(FILTRO_TR && po.tr!==FILTRO_TR) continue; if(!passaData(po)) continue; if(po.obs && po.obs!=='em aberto' && po.st!=='entregue'){ ocCont[po.obs]=(ocCont[po.obs]||0)+1; } }
+  for(j=0;j<PEDIDOS.length;j++){ var po=PEDIDOS[j]; if(FILTRO_TR && po.tr!==FILTRO_TR) continue; if(!passaData(po)) continue; if(po.obs && po.obs!=='em aberto' && po.st!=='entregue' && po.st!=='cancelado'){ ocCont[po.obs]=(ocCont[po.obs]||0)+1; } }
   var ocLista=Object.keys(ocCont).sort(function(a,b){return ocCont[b]-ocCont[a];}), nSemNum=0, nSemRua=0;
-  for(j=0;j<PEDIDOS.length;j++){ var pe=PEDIDOS[j]; if(FILTRO_TR && pe.tr!==FILTRO_TR) continue; if(!passaData(pe)) continue; if(pe.st==='entregue') continue; var ie=incompletoDe(pe); if(ie==='num') nSemNum++; else if(ie==='rua') nSemRua++; }
+  for(j=0;j<PEDIDOS.length;j++){ var pe=PEDIDOS[j]; if(FILTRO_TR && pe.tr!==FILTRO_TR) continue; if(!passaData(pe)) continue; if(pe.st==='entregue'||pe.st==='cancelado') continue; var ie=incompletoDe(pe); if(ie==='num') nSemNum++; else if(ie==='rua') nSemRua++; }
   ocH='<option value="">Todas as ocorrências</option>';
   if(nSemNum) ocH+='<option value="__semnum">⚠ Endereço sem número ('+nSemNum+')</option>';
   if(nSemRua) ocH+='<option value="__semrua">⚠ Endereço sem nome da rua ('+nSemRua+')</option>';
@@ -4020,7 +4050,7 @@ function pintarPedidos(){
 
   var pills='';
   for(i=0;i<stAll.length;i++){ var qtdP=cont[stAll[i]];
-    pills+='<span class="pill'+(FILTRO_PD===stAll[i]?' on':'')+'" style="position:relative;overflow:visible" onclick="filtrarPedidos(\''+stAll[i]+'\')">'+(stAll[i]==='todos'?'Todos':stAll[i]==='coletado'?'Na fila':stAll[i][0].toUpperCase()+stAll[i].slice(1))+'<span style="position:absolute;top:-7px;right:-7px;min-width:17px;height:17px;padding:0 4px;border-radius:99px;background:'+(qtdP>0?'var(--roxo)':'var(--border2)')+';color:'+(qtdP>0?'#fff':'var(--muted2)')+';font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;line-height:1;box-shadow:0 0 0 2px var(--s1)">'+qtdP+'</span></span>';
+    pills+='<span class="pill'+(FILTRO_PD===stAll[i]?' on':'')+'" style="position:relative;overflow:visible" onclick="filtrarPedidos(\''+stAll[i]+'\')">'+(stAll[i]==='todos'?'Todos':stAll[i]==='coletado'?'Na fila':stAll[i]==='cancelado'?'Cancelados':stAll[i][0].toUpperCase()+stAll[i].slice(1))+'<span style="position:absolute;top:-7px;right:-7px;min-width:17px;height:17px;padding:0 4px;border-radius:99px;background:'+(qtdP>0?'var(--roxo)':'var(--border2)')+';color:'+(qtdP>0?'#fff':'var(--muted2)')+';font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;line-height:1;box-shadow:0 0 0 2px var(--s1)">'+qtdP+'</span></span>';
   }
   el('pd-pills').innerHTML=pills;
 
@@ -4028,6 +4058,7 @@ function pintarPedidos(){
   for(i=0;i<PEDIDOS.length;i++){var p=PEDIDOS[i];
     if(FILTRO_PD==='acao'){ if(!(ehTentativa(p.st)||p.st==='devolvido'||p.st==='extraviado'||p.st==='fora de rota'||p.st==='nao localizado'||p.st==='esquecido')) continue; }
     else if(FILTRO_PD!=='todos' && p.st!==FILTRO_PD) continue;
+    if(p.st==='cancelado' && FILTRO_PD!=='cancelado') continue;   /* cancelado só aparece quando o filtro Cancelados está ligado */
     if(FILTRO_TR && p.tr!==FILTRO_TR) continue;
     if(!passaData(p)) continue;
     if(ocFiltro==='__semnum'){ if(p.st==='entregue'||incompletoDe(p)!=='num') continue; }
@@ -4050,9 +4081,9 @@ function pintarPedidos(){
   var h='', n=achados.length, k;
   for(k=0;k<achados.length && k<LIM;k++){ var p3=achados[k].p, m3=motorista(p3.mt), ender=[(p3.bai||p3.bairro||''),(p3.cid||'')].filter(Boolean).join(' · ');
     h+='<tr onclick="abrirPedido(\''+p3.cod+'\')"><td><b>'+esc(pdNum(p3))+'</b>'+((p3.tr==='gir'&&p3.dia&&p3.dia!==hojeISO())?' <span style="font-size:11px;color:var(--muted)">'+esc(p3.dia.slice(8,10)+'/'+p3.dia.slice(5,7))+'</span>':'')+cpBtn(pdNum(p3))+'<br><span style="color:var(--muted);font-size:11.5px">'+esc(p3.cliente||infoPacote(p3))+'</span>'+((p3.obs&&p3.obs!=='em aberto'&&p3.obs!=='na base'&&p3.st!=='entregue')?'<br><span style="color:var(--amber);font-size:11px;font-weight:600">⚠ '+esc(p3.obs)+'</span>':'')+((p3.st!=='entregue'&&p3.bairro&&(!p3.num||!p3.rua))?'<br><span style="color:var(--amber);font-size:11px;font-weight:600">⚠ '+(!p3.num?'sem número':'sem nome da rua')+'</span>':'')+'</td>'+
-       '<td>'+esc(ender||'—')+'</td><td>'+esc(p3.canal||'—')+'</td><td>'+pdTempoHtml(p3)+'</td><td>'+esc(m3?m3.n:'sem motorista')+'</td><td>'+badgeStatus(p3.st)+'</td><td>'+(p3.vl==null?'—':moeda(p3.vl))+'</td><td>'+pdRecebHtml(p3)+'</td></tr>';}
-  if(n>LIM) h+='<tr><td colspan="8"><div class="empty">Mostrando os primeiros '+LIM+' de '+n+' pedidos — use a busca ou os filtros para ver os outros</div></td></tr>';
-  if(!h) h='<tr><td colspan="8"><div class="empty">Nenhum pedido encontrado'+(tf?' para esta transportadora':'')+'</div></td></tr>';
+       '<td>'+esc(ender||'—')+'</td><td>'+esc(p3.canal||'—')+'</td><td>'+pdTempoHtml(p3)+'</td><td>'+esc(m3?m3.n:'sem motorista')+'</td><td>'+badgeStatus(p3.st)+'</td><td>'+(p3.vl==null?'—':moeda(p3.vl))+'</td><td>'+pdRecebHtml(p3)+'</td><td style="white-space:nowrap">'+pdAcaoHtml(p3)+'</td></tr>';}
+  if(n>LIM) h+='<tr><td colspan="9"><div class="empty">Mostrando os primeiros '+LIM+' de '+n+' pedidos — use a busca ou os filtros para ver os outros</div></td></tr>';
+  if(!h) h='<tr><td colspan="9"><div class="empty">Nenhum pedido encontrado'+(tf?' para esta transportadora':'')+'</div></td></tr>';
   el('pd-corpo').innerHTML=h;
 }
 /* as cores de tempo andam sozinhas: repinta a lista a cada minuto quando ela está aberta */
@@ -5420,9 +5451,9 @@ function mpAplicarModo(){
   el('mp-card-mapa').style.display=(m==='lista')?'none':'block';
   el('mp-card-ent').style.display=(m==='vivo')?'block':'none';
   el('mp-diabar').style.display=(m==='vivo')?'contents':'none';
-  el('mp-opbar').style.display=(m==='mapa')?'flex':'none';
+  el('mp-opbar').style.display=(m==='mapa')?'flex':'none'; el('mp-opmot').style.display='none';
   var rl=el('mp-ritmo'); if(rl&&rl.parentNode) rl.parentNode.style.display=(m==='vivo')?'':'none';
-  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-013';
+  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-015';
   if(m!=='mapa'){ mpPkTodos(false); el('mp-sempos').style.display='none'; el('mp-sempos-btn').style.display='none'; }
   if(m==='vivo'){ MP_ENQ=true; mpBuscar(); } else mpOperador();
 }
@@ -5475,6 +5506,11 @@ function mpMotOrdem(){
 }
 function mpMotFila(){ var fora={}; PEDIDOS.forEach(function(p){ if(p.st==='em rota' && p.mt!=null && p.mt!=='') fora[String(p.mt)]=1; }); return mpMotOrdem().filter(function(m){ return !fora[String(m.id)]; }); }
 function mpMotOpcoes(){ var h='<option value="">Motoboy…</option>',l=mpMotFila(),i; for(i=0;i<l.length;i++) h+='<option value="'+esc(String(l[i].id))+'"'+(String(l[i].id)===MP_MOT?' selected':'')+'>'+(i+1)+' · '+esc(l[i].n)+'</option>'; return h; }
+function mpMotCardsHtml(){
+  var mh='',m,ml=mpMotFila(),i; for(i=0;i<ml.length;i++){ m=ml[i]; var on=String(m.id)===MP_MOT;
+    mh+='<div class="mp-lr mp-mot'+(on?' sel':'')+'" data-mt="'+esc(String(m.id))+'" style="--tc:'+(on?'#F97316':'#9CA3AF')+'"><span class="mp-senha">'+(i+1)+'</span><div class="mp-lr-b"><b>'+esc(m.n)+'</b><small>🏍️ senha '+(i+1)+(on?' · escolhido':'')+'</small></div><span class="mp-grip" title="Arraste para mudar a ordem">⋮⋮</span></div>'; }
+  return mh||'<div class="empty" style="padding:10px">Nenhum motoboy cadastrado</div>';
+}
 function mpListaPintar(){
   var pool=mpPool(), h='', i, p, t, g, n=pool.length;
   el('mp-l-n').textContent=n; el('mp-l-leg').innerHTML=mpLegenda();
@@ -5484,9 +5520,7 @@ function mpListaPintar(){
       (g?'<span class="mp-gtag" style="background:'+g.cor+'">Grupo '+g.n+'</span>':'<span class="badge '+t.cls+'">'+esc(t.txt)+'</span>')+'</div>';
   }
   el('mp-l-ped').innerHTML=h||'<div class="empty"><div class="em">🍕</div>Nenhum pedido na fila.</div>';
-  var mh='',m,ml=mpMotFila(); for(i=0;i<ml.length;i++){ m=ml[i]; var on=String(m.id)===MP_MOT;
-    mh+='<div class="mp-lr mp-mot'+(on?' sel':'')+'" data-mt="'+esc(String(m.id))+'" style="--tc:'+(on?'#F97316':'#9CA3AF')+'"><span class="mp-senha">'+(i+1)+'</span><div class="mp-lr-b"><b>'+esc(m.n)+'</b><small>🏍️ senha '+(i+1)+(on?' · escolhido':'')+'</small></div><span class="mp-grip" title="Arraste para mudar a ordem">⋮⋮</span></div>'; }
-  el('mp-l-mot').innerHTML=(mh||'<div class="empty" style="padding:10px">Nenhum motoboy cadastrado</div>');
+  el('mp-l-mot').innerHTML=mpMotCardsHtml();
   el('mp-l-resumo').innerHTML=mpResumoHtml();
 }
 function mpGrupoListaPintar(){
@@ -5521,7 +5555,7 @@ function mpDesfazerGrupo(id){ mpGrCarregar(); MP_GR=MP_GR.filter(function(g){ re
 /* barra do modo mapa */
 function mpBarraPintar(){
   var bar=el('mp-opbar'); if(!bar) return;
-  el('mp-op-mot').innerHTML=mpMotOpcoes();
+  var pm=el('mp-opmot'); if(pm){ pm.innerHTML=mpMotCardsHtml(); pm.style.display='block'; }
   el('mp-opbar-txt').innerHTML=mpResumoHtml()+'<div class="mp-leg" style="margin:4px 0 0">'+mpLegenda()+'</div>';
   var sp=mpPool().filter(function(p){ return p.lat==null; }), b=el('mp-sempos-btn');
   b.style.display=sp.length?'block':'none'; b.textContent='📍 '+sp.length+' sem posição';
@@ -5591,7 +5625,7 @@ document.addEventListener('keydown',function(ev){ var c=el('mp-lista-card'); if(
 document.addEventListener('click',function(ev){
   var t=ev.target; if(!t||!t.closest) return; var x;
   if((x=t.closest('#mp-l-ped [data-cod]'))) mpSelAlt(x.getAttribute('data-cod'));
-  else if((x=t.closest('#mp-l-mot [data-mt]'))){ if(!MP_ARR && !t.closest('.mp-grip')) mpMotEscolher(x.getAttribute('data-mt')); }
+  else if((x=t.closest('#mp-l-mot [data-mt], #mp-opmot [data-mt]'))){ if(!MP_ARR && !t.closest('.mp-grip')) mpMotEscolher(x.getAttribute('data-mt')); }
   else if((x=t.closest('[data-gdesf]'))) mpDesfazerGrupo(x.getAttribute('data-gdesf'));
   else if((x=t.closest('[data-colocar]'))) mpColocar(x.getAttribute('data-colocar'));
   else if(t.closest('[data-regeo]')){ MP_GEO_TENT={}; mpOperador(); }
