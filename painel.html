@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Giro OS — Painel do ponto · GIRO-OS-008</title>
+<title>Giro OS — Painel do ponto · GIRO-OS-009</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -594,21 +594,24 @@ a{color:inherit}
 
       <!-- PEDIDOS -->
       <section class="page" id="pg-pedidos">
-        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">todos os pacotes recebidos hoje, por status</div></div><span class="vertodos" onclick="manterSoMotorista()" title="Apaga os pedidos de todos, menos de 1 motorista">🧹 Manter só 1 motorista</span> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
+        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-009</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
         <div id="pd-chip"></div>
         <div class="card">
           <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap;margin-bottom:18px">
-            <div class="search" style="margin-bottom:0"><span>🔎</span><input id="pd-busca" placeholder="buscar por código, cliente ou motorista" oninput="pintarPedidos()"></div>
+            <div class="search" style="margin-bottom:0"><span>🔎</span><input id="pd-busca" placeholder="buscar por nome, telefone ou nº do pedido" oninput="pintarPedidos()"></div>
             <div class="fc-filtros" style="margin-bottom:0;gap:10px">
               <select class="inp" id="pd-ocor" onchange="pintarPedidos()" title="Ocorrência" style="width:auto;max-width:230px"></select>
+              <select class="inp" id="pd-mot" onchange="pintarPedidos()" title="Motorista" style="width:auto;max-width:190px"></select>
+              <select class="inp" id="pd-origem" onchange="pintarPedidos()" title="Origem do pedido" style="width:auto;max-width:170px"></select>
+              <select class="inp" id="pd-forma" onchange="pintarPedidos()" title="Forma de recebimento" style="width:auto;max-width:190px"></select>
               <input type="date" id="pd-data-ini" onchange="pintarPedidos()" title="Data inicial">
               <input type="date" id="pd-data-fim" onchange="pintarPedidos()" title="Data final">
-              <span class="vertodos" onclick="document.getElementById('pd-data-ini').value='';document.getElementById('pd-data-fim').value='';document.getElementById('pd-ocor').value='';pintarPedidos()" style="white-space:nowrap">Limpar</span>
+              <span class="vertodos" onclick="limparFiltrosPedidos()" style="white-space:nowrap">Limpar</span>
             </div>
           </div>
           <div class="pills" id="pd-pills" style="margin-top:20px;margin-bottom:6px"></div>
           <div class="tb-wrap"><table class="tb">
-            <thead><tr><th>Pacote</th><th>Transportadora</th><th>Motorista</th><th>Status</th><th>Valor NF</th></tr></thead>
+            <thead><tr><th>Pedido</th><th>Bairro / cidade</th><th>Origem</th><th>Tempo</th><th>Motorista</th><th>Status</th><th>Valor</th><th>Recebimento</th></tr></thead>
             <tbody id="pd-corpo"></tbody>
           </table></div>
         </div>
@@ -942,6 +945,40 @@ a{color:inherit}
     <div style="font-size:11.5px;color:var(--muted);margin:-4px 0 14px;line-height:1.5">O painel reconhece sozinho o arquivo: Anjun (Registros de entrada ou Exportar dados de pacotes) e J&T (Motorista de entrega final). Diálogo: suba o PDF do Romaneio de Entregas.</div>
     <button class="btn pri wide" onclick="enviarPlanilha()">Enviar</button>
     <button class="btn sec wide" id="up-limpar" style="display:none;margin-top:10px" onclick="limparImportados()">Apagar dados importados</button>
+  </div>
+</div>
+
+<!-- ══ MODAL: novo pedido de entrega (manual) ══ -->
+<div class="sheet" id="sh-novo-pedido">
+  <div class="sh-hd"><h3>Novo pedido</h3><button onclick="fecharTudo()">✕</button></div>
+  <div class="sh-bd">
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <div class="field" style="flex:1;min-width:120px"><label>Nº da comanda (opcional)</label><input class="inp" id="np-num" inputmode="numeric" placeholder="ex: 139"></div>
+      <div class="field" style="flex:1;min-width:120px"><label>Hora do pedido</label><input class="inp" type="time" id="np-hora"></div>
+    </div>
+    <div class="field"><label>Origem</label><select class="inp" id="np-origem"><option>WhatsApp</option><option>Balcão/telefone</option><option>Pedidos10</option><option>iFood</option><option>Outro</option></select></div>
+    <div class="field"><label>Nome do cliente</label><input class="inp" id="np-cli" autocomplete="off"></div>
+    <div class="field"><label>Telefone</label><input class="inp" id="np-tel" inputmode="tel" placeholder="47 99999-9999"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <div class="field" style="flex:3;min-width:180px"><label>Rua</label><input class="inp" id="np-rua"></div>
+      <div class="field" style="flex:1;min-width:90px"><label>Número</label><input class="inp" id="np-numero" inputmode="numeric"></div>
+    </div>
+    <div class="field"><label>Complemento / ponto de referência</label><input class="inp" id="np-comp" placeholder="ex: ao lado do galpão cinza"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <div class="field" style="flex:1;min-width:140px"><label>Bairro</label><input class="inp" id="np-bairro"></div>
+      <div class="field" style="flex:1;min-width:140px"><label>Cidade</label><input class="inp" id="np-cid"></div>
+    </div>
+    <div class="field"><label>Itens do pedido</label><textarea class="inp" id="np-itens" rows="3" placeholder="ex: 1 pizza média — 1/3 alcatra, 1/3 carbonara, 1/3 raspas de limão — borda catupiry"></textarea></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <div class="field" style="flex:1;min-width:130px"><label>Total do pedido (R$)</label><input class="inp" id="np-total" inputmode="decimal" placeholder="102,00"></div>
+      <div class="field" style="flex:1;min-width:130px"><label>Taxa de entrega (R$)</label><input class="inp" id="np-taxa" inputmode="decimal" placeholder="7,00"></div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <div class="field" style="flex:1;min-width:150px"><label>Forma de pagamento</label><select class="inp" id="np-forma"><option value="online">Pago online</option><option value="pix">Pix</option><option value="dinheiro">Dinheiro</option><option value="cartao">Cartão</option></select></div>
+      <div class="field" style="flex:1;min-width:150px"><label>Situação</label><select class="inp" id="np-pago"><option value="1">Já pago</option><option value="0">Cobrar na entrega</option></select></div>
+    </div>
+    <div class="field"><label>Atendente (opcional)</label><input class="inp" id="np-atend"></div>
+    <button class="btn pri wide" onclick="salvarNovoPedido()">Colocar na fila</button>
   </div>
 </div>
 
@@ -1399,7 +1436,7 @@ function enviarPedidosServidor(forcar){
     setTimeout(agendarEnvioPedidos,60000);
   });
 }
-function packPed(){ var pc=[],i,p; for(i=0;i<PEDIDOS.length;i++){ p=PEDIDOS[i]; pc.push([p.cod,p.tr,p.mt,p.st,p.dia||'',p.hora||'',p.obs||'',(p.scan&&p.scan!==p.cod)?p.scan:'',p.ent||'',p.cliente||'',p.bairro||'',(p.vl==null?null:p.vl),p.cep||'',p.area||'',p.fechId||null,p.tel||'',p.canal||'',p.vend||'',p.rua||'',p.num||'',p.comp||'',p.bai||'',p.cid||'',p.endOrig||'',p.tam||'']); } return pc; }
+function packPed(){ var pc=[],i,p; for(i=0;i<PEDIDOS.length;i++){ p=PEDIDOS[i]; pc.push([p.cod,p.tr,p.mt,p.st,p.dia||'',p.hora||'',p.obs||'',(p.scan&&p.scan!==p.cod)?p.scan:'',p.ent||'',p.cliente||'',p.bairro||'',(p.vl==null?null:p.vl),p.cep||'',p.area||'',p.fechId||null,p.tel||'',p.canal||'',p.vend||'',p.rua||'',p.num||'',p.comp||'',p.bai||'',p.cid||'',p.endOrig||'',p.tam||'',p.hp||0,p.pg||'',p.pgp?1:0,p.pgr||'',(p.tx==null?null:p.tx),p.itens||'',p.atend||'']); } return pc; }
 function salvarLocal(cb){
   var o; try{ sincStatusFech(); }catch(eSf){}
   if(REAL){
@@ -1420,7 +1457,7 @@ function aplicarSalvo(d){
   if(d.rast){ RASTREADOS={}; d.rast.forEach(function(c){ RASTREADOS[c]=1; }); }
   if(d.ciclos) CICLOS=d.ciclos; else if(d.ciclo && d.ciclo.modo) CICLOS=[{id:'c0',grupo:'todos',modo:d.ciclo.modo,tipo:d.ciclo.tipo,dia:d.ciclo.dia,prazo:d.ciclo.prazo}];
   if((d.pedidos||d.pc) && d.motoristas){
-    if(d.pc){ PEDIDOS=d.pc.map(function(a){ return {cod:a[0], tr:a[1], mt:a[2], cliente:a[9]||'', bairro:a[10]||'', vl:(a[11]==null?null:a[11]), cep:a[12]||'', area:a[13]||'', fechId:a[14]||null, tel:a[15]||'', canal:a[16]||'', vend:a[17]||'', rua:a[18]||'', num:a[19]||'', comp:a[20]||'', bai:a[21]||'', cid:a[22]||'', endOrig:a[23]||'', tam:a[24]||'', st:a[3], t1:'', t2:'', scan:a[7]||a[0], dia:a[4], hora:a[5], obs:a[6], ent:a[8]}; }); }
+    if(d.pc){ PEDIDOS=d.pc.map(function(a){ return {cod:a[0], tr:a[1], mt:a[2], cliente:a[9]||'', bairro:a[10]||'', vl:(a[11]==null?null:a[11]), cep:a[12]||'', area:a[13]||'', fechId:a[14]||null, tel:a[15]||'', canal:a[16]||'', vend:a[17]||'', rua:a[18]||'', num:a[19]||'', comp:a[20]||'', bai:a[21]||'', cid:a[22]||'', endOrig:a[23]||'', tam:a[24]||'', hp:a[25]||0, pg:a[26]||'', pgp:a[27]?1:0, pgr:a[28]||'', tx:(a[29]==null?null:a[29]), itens:a[30]||'', atend:a[31]||'', st:a[3], t1:'', t2:'', scan:a[7]||a[0], dia:a[4], hora:a[5], obs:a[6], ent:a[8]}; }); }
     else PEDIDOS=d.pedidos;
     PEDIDOS.forEach(garantirEndereco);
     MOTORISTAS=d.motoristas; EXTRATO=d.extrato||[];
@@ -1542,7 +1579,7 @@ function srvEnviarDireto(cb){
 /* ══ (70) VÁRIAS TELAS, MESMO LOGIN: antes cada tela guardava a própria cópia e a última a salvar apagava o que as outras tinham feito. Agora:
    • a cada 15 s (aba visível e nada pendente de envio) a tela pergunta ao servidor se algum bloco de pedidos mudou e traz o que mudou;
    • antes de enviar, se outra tela mexeu no mesmo bloco, junta os pedidos (nenhum some) e só então envia. ══ */
-function srvLinhaPed(a){ var p={cod:a[0], tr:a[1], mt:a[2], cliente:a[9]||'', bairro:a[10]||'', vl:(a[11]==null?null:a[11]), cep:a[12]||'', area:a[13]||'', fechId:a[14]||null, tel:a[15]||'', canal:a[16]||'', vend:a[17]||'', rua:a[18]||'', num:a[19]||'', comp:a[20]||'', bai:a[21]||'', cid:a[22]||'', endOrig:a[23]||'', tam:a[24]||'', st:a[3], t1:'', t2:'', scan:a[7]||a[0], dia:a[4], hora:a[5], obs:a[6], ent:a[8]}; try{ garantirEndereco(p); }catch(e){} return p; }
+function srvLinhaPed(a){ var p={cod:a[0], tr:a[1], mt:a[2], cliente:a[9]||'', bairro:a[10]||'', vl:(a[11]==null?null:a[11]), cep:a[12]||'', area:a[13]||'', fechId:a[14]||null, tel:a[15]||'', canal:a[16]||'', vend:a[17]||'', rua:a[18]||'', num:a[19]||'', comp:a[20]||'', bai:a[21]||'', cid:a[22]||'', endOrig:a[23]||'', tam:a[24]||'', hp:a[25]||0, pg:a[26]||'', pgp:a[27]?1:0, pgr:a[28]||'', tx:(a[29]==null?null:a[29]), itens:a[30]||'', atend:a[31]||'', st:a[3], t1:'', t2:'', scan:a[7]||a[0], dia:a[4], hora:a[5], obs:a[6], ent:a[8]}; try{ garantirEndereco(p); }catch(e){} return p; }
 function srvChaveDia(p){ return String(p.dia||'_').replace(/[^0-9A-Za-z_-]/g,'_').slice(0,40); }
 var SRV_FINAL={entregue:1,devolvido:1,extraviado:1};
 /* modo 'servidor': o servidor manda (tela sem nada pendente). modo 'juntar': une local + servidor (local vence, exceto status final vindo do servidor). */
@@ -2783,7 +2820,7 @@ function iconeTransp(t){
 }
 function badgeStatus(st){
   var map={aguardando:['b-nu','Aguardando'],'em rota':['b-in','Em rota'],entregue:['b-ok','Entregue'],tratativa:['b-no','Tratativa'],
-    coletado:['b-nu','Base'],'tentativa 1':['b-no','Tentativa 1'],'tentativa 2':['b-no','Tentativa 2'],'tentativa 3':['b-no','Tentativa 3'],
+    coletado:['b-nu','Na fila'],'tentativa 1':['b-no','Tentativa 1'],'tentativa 2':['b-no','Tentativa 2'],'tentativa 3':['b-no','Tentativa 3'],
     devolvido:['b-no','Devolvido'],extraviado:['b-no','Extraviado'],'fora de rota':['b-wt','Fora de rota'],'nao localizado':['b-no','Não localizado'],esquecido:['b-wt','Esquecido na base'],
     ativo:['b-ok','ativo'],pendente:['b-wt','pendente'],'na base':['b-nu','Na base'],inativo:['b-no','Inativo'],
     pago:['b-ok','Pago'],recebido:['b-ok','Recebido'],'a revisar':['b-wt','A revisar'],autorizado:['b-in','Autorizado'],recusado:['b-no','Não pagar']};
@@ -3760,6 +3797,11 @@ function abrirPedido(cod){
   h+='<div class="sh-row"><span class="k">Motorista</span><span class="v" id="pd-mt-v">'+(m?esc(m.n):'sem motorista')+(m?' <button class="btn sec" title="Ver o motorista" style="padding:3px 9px;font-size:13px;margin-left:8px;min-width:0;font-weight:800" onclick="pdVerMotorista(\''+esc(p.cod)+'\','+m.id+')">+</button>':'')+(REAL?' <button class="btn sec" style="padding:3px 10px;font-size:12px;margin-left:6px;min-width:0" onclick="pdMotEditar(\''+esc(p.cod)+'\')">Alterar</button>':'')+'</span></div>';
   h+='<div class="sh-row"><span class="k">Endereço</span><span class="v">'+esc([[p.rua,p.num].filter(Boolean).join(', ')+(p.comp?' - '+p.comp:''),p.bai||p.bairro,p.cid,(String(p.cep||'').replace(/\D/g,'').length===8?'CEP '+String(p.cep).replace(/\D/g,'').replace(/^(\d{5})(\d{3})$/,'$1-$2'):'')].filter(Boolean).join(' · ')||'—')+(((p.bairro||p.rua) && (!p.num||!p.rua))?'<br><span style="color:var(--amber);font-size:11.5px;font-weight:600">⚠ '+(!p.num?'sem número — não dá pra roteirizar':'sem nome da rua — usar o CEP')+'</span>':'')+'</span></div>';
   h+='<div class="sh-row"><span class="k">Valor da NF</span><span class="v">'+(p.vl==null?'—':moeda(p.vl))+'</span></div>';
+  if(p.tx!=null) h+='<div class="sh-row"><span class="k">Taxa de entrega</span><span class="v">'+moeda(p.tx)+'</span></div>';
+  if(p.pg||p.pgr) h+='<div class="sh-row"><span class="k">Recebimento</span><span class="v">'+pdRecebHtml(p)+'</span></div>';
+  if(p.itens) h+='<div class="sh-row"><span class="k">Itens</span><span class="v" style="white-space:pre-wrap;text-align:right">'+esc(p.itens)+'</span></div>';
+  if(p.hp){ var dHp=new Date(Number(p.hp)); h+='<div class="sh-row"><span class="k">Hora do pedido</span><span class="v">'+('0'+dHp.getHours()).slice(-2)+':'+('0'+dHp.getMinutes()).slice(-2)+' '+pdTempoHtml(p).replace('<br>',' ')+'</span></div>'; }
+  if(p.atend) h+='<div class="sh-row"><span class="k">Atendente</span><span class="v">'+esc(p.atend)+'</span></div>';
   if(p.dia) h+='<div class="sh-row"><span class="k">Entrada no ponto</span><span class="v">'+dataBR(p.dia)+(p.hora?' '+esc(p.hora):'')+'</span></div>';
   if(p.scan && p.scan!==p.cod) h+='<div class="sh-row"><span class="k">Código de escaneamento</span><span class="v">'+esc(p.scan)+cpBtn(p.scan)+'</span></div>';
   if(p.obs) h+='<div class="sh-row"><span class="k">Observação</span><span class="v">'+esc(p.obs)+'</span></div>';
@@ -3769,8 +3811,9 @@ function abrirPedido(cod){
     h+='<div style="display:flex;gap:12px;margin-top:16px"><button class="btn pri" onclick="aviso(\'Aqui reagenda a entrega\')">Reagendar entrega</button><button class="btn sec" onclick="aviso(\'Aqui troca o motorista\')">Trocar motorista</button></div>';
   } else {
     h+='<div style="margin-top:18px;font-weight:700;font-size:13px">Histórico de movimentação</div><div id="hist-mov" style="margin-top:6px;font-size:12.5px">Carregando...</div>';
-    h+='<div style="margin-top:18px;font-weight:700;font-size:13px">Histórico de rastreio</div>';
-    if(p.tr==='pic') h+='<div class="empty" style="padding:8px 0;font-size:12.5px">Pichau: o status vem da planilha.</div>';
+    if(p.tr!=='gir') h+='<div style="margin-top:18px;font-weight:700;font-size:13px">Histórico de rastreio</div>';
+    if(p.tr==='gir'){}
+    else if(p.tr==='pic') h+='<div class="empty" style="padding:8px 0;font-size:12.5px">Pichau: o status vem da planilha.</div>';
     else if(p.tr==='jt') h+='<div class="empty" style="padding:8px 0;font-size:12.5px">J&amp;T: o status vem da planilha. O rastreio automático pede o CPF do cliente, então por enquanto não está ligado.</div>';
     else {
     if(!RASTREADOS[p.cod]) h+='<div style="margin-top:6px"><button class="btn sec" onclick="rastrearPacote(\''+esc(p.cod)+'\')">Acompanhar rastreio deste pacote</button></div>';
@@ -3851,6 +3894,34 @@ function filtrarPorTransportadora(id){
 }
 function limparFiltroDash(){ DASH_TR=null; pintarIndicadores(); pintarDashboard(); }
 function limparFiltroTransportadora(){ FILTRO_TR=null; pintarPedidos(); }
+/* ── (GIRO-OS-009) tempo do pedido: verde até 30 min, amarelo 30–60, vermelho acima de 60 (limites guardados em giro_tempo, prontos pra virar configuração) ── */
+var PD_FIM={entregue:1,devolvido:1,extraviado:1};
+var PD_FORMA={online:'Pago online',pix:'Pix',dinheiro:'Dinheiro',cartao:'Cartão'};
+var PD_ORIGENS=['Pedidos10','WhatsApp','Balcão/telefone','iFood'];
+function pdTempoCfg(){ var c={am:30,ve:60}; try{ var r=JSON.parse(localStorage.getItem('giro_tempo')||'null'); if(r && Number(r.am)>0 && Number(r.ve)>Number(r.am)){ c.am=Number(r.am); c.ve=Number(r.ve); } }catch(e){} return c; }
+function pdHoraMs(p){ if(p.hp) return Number(p.hp); if(p.dia && /^\d{2}:\d{2}/.test(String(p.hora||''))){ var t=new Date(p.dia+'T'+String(p.hora).slice(0,5)+':00').getTime(); return isNaN(t)?0:t; } return 0; }
+function pdMinTxt(min){ return min<60?(min+' min'):(Math.floor(min/60)+'h'+('0'+(min%60)).slice(-2)); }
+function pdTempo(p){
+  if(PD_FIM[p.st]) return null;
+  var ms=pdHoraMs(p); if(!ms) return null;
+  var min=Math.max(0,Math.floor((Date.now()-ms)/60000)), c=pdTempoCfg();
+  var n=min>c.ve?['b-no','Atrasado']:(min>c.am?['b-wt','Atenção']:['b-ok','No prazo']);
+  return {min:min, cls:n[0], rot:n[1]};
+}
+function pdTempoHtml(p){ var t=pdTempo(p); if(!t) return '<span style="color:var(--muted2)">—</span>'; return '<span class="badge '+t.cls+'">'+t.rot+'</span><br><span style="font-size:11px;color:var(--muted)">há '+pdMinTxt(t.min)+'</span>'; }
+function pdForma(p){ return p.pgr||p.pg||''; }
+function pdRecebHtml(p){
+  if(p.pgr) return '<span class="badge b-ok">'+esc(PD_FORMA[p.pgr]||p.pgr)+' ✓</span>';
+  if(!p.pg) return '<span style="color:var(--muted2)">—</span>';
+  var nome=PD_FORMA[p.pg]||p.pg;
+  if(p.pgp||p.pg==='online') return '<span class="badge b-ok">'+esc(nome)+(p.pg==='online'?'':' · pago')+'</span>';
+  if(PD_FIM[p.st]) return '<span class="badge b-nu">'+esc(nome)+'</span>';
+  return '<span class="badge b-wt">Cobrar: '+esc(nome)+'</span>';
+}
+function limparFiltrosPedidos(){
+  ['pd-data-ini','pd-data-fim','pd-ocor','pd-mot','pd-origem','pd-forma'].forEach(function(id){ var x=el(id); if(x) x.value=''; });
+  pintarPedidos();
+}
 function pintarPedidos(){
   var tf=FILTRO_TR?transp(FILTRO_TR):null;
   el('pd-chip').innerHTML = (tf ? ('<div class="chip-filtro">Transportadora: '+esc(tf.n)+' <span onclick="limparFiltroTransportadora()">✕</span></div>') : '') + (FILTRO_PD==='acao' ? '<div class="chip-filtro">Precisa de ação: tentativas, devolvidos e extraviados <span onclick="filtrarPedidos(\'todos\')">✕</span></div>' : '');
@@ -3858,7 +3929,7 @@ function pintarPedidos(){
   var dIni=(el('pd-data-ini')&&el('pd-data-ini').value)||'', dFim=(el('pd-data-fim')&&el('pd-data-fim').value)||'';
   function passaData(p2){ if(!p2.dia) return !dIni && !dFim; if(dIni && p2.dia<dIni) return false; if(dFim && p2.dia>dFim) return false; return true; }
 
-  var stAll=REAL?['todos','coletado','em rota','tentativa 1','tentativa 2','tentativa 3','devolvido','extraviado','fora de rota','nao localizado','esquecido','entregue']:['todos','aguardando','em rota','tratativa','entregue'],i,j,cont={};
+  var stAll=REAL?['todos','coletado','em rota','devolvido','entregue']:['todos','aguardando','em rota','tratativa','entregue'],i,j,cont={};
   for(i=0;i<stAll.length;i++) cont[stAll[i]]=0;
   for(j=0;j<PEDIDOS.length;j++){ var pc=PEDIDOS[j]; if(FILTRO_TR && pc.tr!==FILTRO_TR) continue; if(!passaData(pc)) continue; cont.todos++; if(cont[pc.st]!=null) cont[pc.st]++; }
   var ocSel=el('pd-ocor'), ocAtual=ocSel.value, ocCont={}, ocN=0, ocH='';
@@ -3871,13 +3942,27 @@ function pintarPedidos(){
   for(j=0;j<ocLista.length;j++) ocH+='<option value="'+esc(ocLista[j])+'">'+esc(ocLista[j])+' ('+ocCont[ocLista[j]]+')</option>';
   ocSel.innerHTML=ocH; ocSel.value=((ocCont[ocAtual]||(ocAtual==='__semnum'&&nSemNum)||(ocAtual==='__semrua'&&nSemRua))?ocAtual:'');
   var ocFiltro=ocSel.value;
+
+  /* filtros novos: motorista, origem e forma de recebimento */
+  var mSel=el('pd-mot'), mAtual=mSel.value, mH='<option value="">Todos os motoristas</option><option value="__sem">Sem motorista</option>';
+  for(j=0;j<MOTORISTAS.length;j++) mH+='<option value="'+esc(String(MOTORISTAS[j].id))+'">'+esc(MOTORISTAS[j].n)+'</option>';
+  mSel.innerHTML=mH; mSel.value=mAtual; if(mSel.value!==mAtual) mSel.value='';
+  var oSel=el('pd-origem'), oAtual=oSel.value, oLista=PD_ORIGENS.slice(), oH='<option value="">Todas as origens</option>';
+  for(j=0;j<PEDIDOS.length;j++){ var cn=PEDIDOS[j].canal; if(cn && oLista.indexOf(cn)<0) oLista.push(cn); }
+  for(j=0;j<oLista.length;j++) oH+='<option value="'+esc(oLista[j])+'">'+esc(oLista[j])+'</option>';
+  oSel.innerHTML=oH; oSel.value=oAtual; if(oSel.value!==oAtual) oSel.value='';
+  var fSel=el('pd-forma'), fAtual=fSel.value;
+  fSel.innerHTML='<option value="">Todas as formas de recebimento</option><option value="online">Pago online</option><option value="pix">Pix</option><option value="dinheiro">Dinheiro</option><option value="cartao">Cartão</option>';
+  fSel.value=fAtual; if(fSel.value!==fAtual) fSel.value='';
+  var mFiltro=mSel.value, oFiltro=oSel.value, fFiltro=fSel.value;
+
   var pills='';
   for(i=0;i<stAll.length;i++){ var qtdP=cont[stAll[i]];
-    pills+='<span class="pill'+(FILTRO_PD===stAll[i]?' on':'')+'" style="position:relative;overflow:visible" onclick="filtrarPedidos(\''+stAll[i]+'\')">'+(stAll[i]==='todos'?'Todos':stAll[i]==='coletado'?'Base':stAll[i]==='nao localizado'?'Não localizado':stAll[i][0].toUpperCase()+stAll[i].slice(1))+'<span style="position:absolute;top:-7px;right:-7px;min-width:17px;height:17px;padding:0 4px;border-radius:99px;background:'+(qtdP>0?'var(--roxo)':'var(--border2)')+';color:'+(qtdP>0?'#fff':'var(--muted2)')+';font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;line-height:1;box-shadow:0 0 0 2px var(--s1)">'+qtdP+'</span></span>';
+    pills+='<span class="pill'+(FILTRO_PD===stAll[i]?' on':'')+'" style="position:relative;overflow:visible" onclick="filtrarPedidos(\''+stAll[i]+'\')">'+(stAll[i]==='todos'?'Todos':stAll[i]==='coletado'?'Na fila':stAll[i][0].toUpperCase()+stAll[i].slice(1))+'<span style="position:absolute;top:-7px;right:-7px;min-width:17px;height:17px;padding:0 4px;border-radius:99px;background:'+(qtdP>0?'var(--roxo)':'var(--border2)')+';color:'+(qtdP>0?'#fff':'var(--muted2)')+';font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;line-height:1;box-shadow:0 0 0 2px var(--s1)">'+qtdP+'</span></span>';
   }
   el('pd-pills').innerHTML=pills;
 
-  var busca=(el('pd-busca').value||'').toLowerCase().trim(), h='', n=0, LIM=300;
+  var busca=(el('pd-busca').value||'').toLowerCase().trim(), buscaDig=busca.replace(/\D/g,''), achados=[], LIM=300;
   for(i=0;i<PEDIDOS.length;i++){var p=PEDIDOS[i];
     if(FILTRO_PD==='acao'){ if(!(ehTentativa(p.st)||p.st==='devolvido'||p.st==='extraviado'||p.st==='fora de rota'||p.st==='nao localizado'||p.st==='esquecido')) continue; }
     else if(FILTRO_PD!=='todos' && p.st!==FILTRO_PD) continue;
@@ -3886,24 +3971,69 @@ function pintarPedidos(){
     if(ocFiltro==='__semnum'){ if(p.st==='entregue'||incompletoDe(p)!=='num') continue; }
     else if(ocFiltro==='__semrua'){ if(p.st==='entregue'||incompletoDe(p)!=='rua') continue; }
     else if(ocFiltro && p.obs!==ocFiltro) continue;
+    if(mFiltro==='__sem'){ if(p.mt) continue; } else if(mFiltro && String(p.mt)!==mFiltro) continue;
+    if(oFiltro && p.canal!==oFiltro) continue;
+    if(fFiltro && pdForma(p)!==fFiltro) continue;
     var m=motorista(p.mt);
-    var alvo=(p.cod+' '+p.cliente+' '+(p.scan||'')+' '+(m?m.n:'')).toLowerCase();
-    if(busca && alvo.indexOf(busca)<0) continue;
-    n++; if(n>LIM) continue;
-    var t=transp(p.tr);
-    h+='<tr onclick="abrirPedido(\''+p.cod+'\')"><td><b>'+esc(p.cod)+'</b>'+cpBtn(p.cod)+'<br><span style="color:var(--muted);font-size:11.5px">'+esc(p.cliente||infoPacote(p))+'</span>'+((p.obs&&p.obs!=='em aberto'&&p.obs!=='na base'&&p.st!=='entregue')?'<br><span style="color:var(--amber);font-size:11px;font-weight:600">⚠ '+esc(p.obs)+'</span>':'')+((p.st!=='entregue'&&p.bairro&&(!p.num||!p.rua))?'<br><span style="color:var(--amber);font-size:11px;font-weight:600">⚠ '+(!p.num?'sem número':'sem nome da rua')+'</span>':'')+'</td>'+
-       '<td>'+esc(t?t.n:'—')+'</td><td>'+esc(m?m.n:'sem motorista')+'</td><td>'+badgeStatus(p.st)+'</td><td>'+(p.vl==null?'—':moeda(p.vl))+'</td></tr>';}
-  if(n>LIM) h+='<tr><td colspan="5"><div class="empty">Mostrando os primeiros '+LIM+' de '+n+' pacotes — use a busca ou os filtros para ver os outros</div></td></tr>';
-  if(!h) h='<tr><td colspan="5"><div class="empty">Nenhum pacote encontrado'+(tf?' para esta transportadora':'')+'</div></td></tr>';
+    var alvo=(p.cod+' '+p.cliente+' '+(p.scan||'')+' '+(p.tel||'')+' '+(p.bai||p.bairro||'')+' '+(m?m.n:'')).toLowerCase();
+    if(busca){ var okB=alvo.indexOf(busca)>=0; if(!okB && buscaDig.length>=3 && String(p.tel||'').replace(/\D/g,'').indexOf(buscaDig)>=0) okB=true; if(!okB) continue; }
+    achados.push({p:p,i:i});
+  }
+  /* os mais antigos primeiro (quem espera há mais tempo fica no topo); entregues/devolvidos por último */
+  achados.sort(function(a,b){
+    var fa=PD_FIM[a.p.st]?1:0, fb=PD_FIM[b.p.st]?1:0; if(fa!==fb) return fa-fb;
+    if(!fa){ var ma=pdHoraMs(a.p)||9e15, mb=pdHoraMs(b.p)||9e15; if(ma!==mb) return ma-mb; }
+    return a.i-b.i;
+  });
+  var h='', n=achados.length, k;
+  for(k=0;k<achados.length && k<LIM;k++){ var p3=achados[k].p, m3=motorista(p3.mt), ender=[(p3.bai||p3.bairro||''),(p3.cid||'')].filter(Boolean).join(' · ');
+    h+='<tr onclick="abrirPedido(\''+p3.cod+'\')"><td><b>'+esc(p3.cod)+'</b>'+cpBtn(p3.cod)+'<br><span style="color:var(--muted);font-size:11.5px">'+esc(p3.cliente||infoPacote(p3))+'</span>'+((p3.obs&&p3.obs!=='em aberto'&&p3.obs!=='na base'&&p3.st!=='entregue')?'<br><span style="color:var(--amber);font-size:11px;font-weight:600">⚠ '+esc(p3.obs)+'</span>':'')+((p3.st!=='entregue'&&p3.bairro&&(!p3.num||!p3.rua))?'<br><span style="color:var(--amber);font-size:11px;font-weight:600">⚠ '+(!p3.num?'sem número':'sem nome da rua')+'</span>':'')+'</td>'+
+       '<td>'+esc(ender||'—')+'</td><td>'+esc(p3.canal||'—')+'</td><td>'+pdTempoHtml(p3)+'</td><td>'+esc(m3?m3.n:'sem motorista')+'</td><td>'+badgeStatus(p3.st)+'</td><td>'+(p3.vl==null?'—':moeda(p3.vl))+'</td><td>'+pdRecebHtml(p3)+'</td></tr>';}
+  if(n>LIM) h+='<tr><td colspan="8"><div class="empty">Mostrando os primeiros '+LIM+' de '+n+' pedidos — use a busca ou os filtros para ver os outros</div></td></tr>';
+  if(!h) h='<tr><td colspan="8"><div class="empty">Nenhum pedido encontrado'+(tf?' para esta transportadora':'')+'</div></td></tr>';
   el('pd-corpo').innerHTML=h;
 }
+/* as cores de tempo andam sozinhas: repinta a lista a cada minuto quando ela está aberta */
+setInterval(function(){ try{ if(typeof PAG!=='undefined' && PAG==='pedidos' && !document.querySelector('.sheet.on')) pintarPedidos(); }catch(e){} }, 60000);
 function filtrarPedidos(s){FILTRO_PD=s; pintarPedidos();}
 /* clicou num card do Dashboard: abre Pedidos já filtrado pelo status (limpa transportadora, datas e ocorrência pra bater com o número do card) */
 function dashParaPedidos(st){
   FILTRO_TR=DASH_TR||null; FILTRO_PD=st;
   var a=el('pd-data-ini'), b=el('pd-data-fim'), o=el('pd-ocor'), q=el('pd-busca');
-  if(a) a.value=DASH_G_INI||''; if(b) b.value=DASH_G_FIM||''; if(o) o.value=''; if(q) q.value='';
+  if(a) a.value=DASH_G_INI||''; if(b) b.value=DASH_G_FIM||''; if(o) o.value=''; if(q) q.value=''; ['pd-mot','pd-origem','pd-forma'].forEach(function(id){ var x=el(id); if(x) x.value=''; });
   ir('pedidos'); pintarPedidos();
+}
+
+/* ══ (GIRO-OS-009) NOVO PEDIDO de entrega, digitado pelo conferente (WhatsApp, balcão/telefone...) ══ */
+function npNum(v){ var t=String(v||'').replace(/[^\d,.\-]/g,''); if(!t) return null; if(t.indexOf(',')>=0) t=t.replace(/\./g,'').replace(',','.'); var n=parseFloat(t); return isNaN(n)?null:Math.round(n*100)/100; }
+function abrirNovoPedido(){
+  var d=new Date(), cid=''; try{ cid=localStorage.getItem('giro_cidade')||''; }catch(e){}
+  el('np-hora').value=('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
+  ['np-num','np-cli','np-tel','np-rua','np-numero','np-comp','np-bairro','np-itens','np-total','np-taxa','np-atend'].forEach(function(id){ el(id).value=''; });
+  el('np-cid').value=cid; el('np-origem').value='WhatsApp'; el('np-forma').value='online'; el('np-pago').value='1';
+  abrir('sh-novo-pedido');
+}
+function salvarNovoPedido(){
+  var cli=el('np-cli').value.trim(), tel=el('np-tel').value.trim(), rua=el('np-rua').value.trim(), nr=el('np-numero').value.trim(), bai=el('np-bairro').value.trim(), cid=el('np-cid').value.trim();
+  if(!cli){ aviso('Falta o nome do cliente'); return; }
+  if(tel.replace(/\D/g,'').length<10){ aviso('Telefone incompleto (com DDD)'); return; }
+  if(!rua){ aviso('Falta a rua'); return; }
+  if(!bai){ aviso('Falta o bairro'); return; }
+  var total=npNum(el('np-total').value); if(total==null){ aviso('Falta o total do pedido'); return; }
+  var forma=el('np-forma').value, pago=(forma==='online'||el('np-pago').value==='1')?1:0;
+  var hh=el('np-hora').value||'', hoje=hojeISO(), ms=hh?new Date(hoje+'T'+hh+':00').getTime():Date.now();
+  if(isNaN(ms)||ms>Date.now()) ms=Date.now();
+  var dh=new Date(ms), hora=('0'+dh.getHours()).slice(-2)+':'+('0'+dh.getMinutes()).slice(-2);
+  var pref=hoje.slice(2).replace(/-/g,'')+'-', num=el('np-num').value.replace(/\D/g,''), cod, k, j;
+  if(num) cod=pref+num; else { k=1; while(PEDIDOS.some(function(x){ return x.cod===pref+'M'+k; })) k++; cod=pref+'M'+k; }
+  for(j=0;j<PEDIDOS.length;j++) if(PEDIDOS[j].cod===cod){ aviso('Já existe o pedido '+cod+' hoje'); return; }
+  var ped={cod:cod, tr:'gir', mt:null, cliente:cli, bairro:bai, rua:rua, num:nr, comp:el('np-comp').value.trim(), bai:bai, cid:cid, endOrig:'', vl:total, cep:'', area:'', st:'coletado', t1:'', t2:'', tel:tel, canal:el('np-origem').value, vend:'', scan:cod, dia:hoje, hora:hora, obs:'em aberto', ent:'', fechId:null,
+           tam:'', hp:ms, pg:forma, pgp:pago, pgr:'', tx:npNum(el('np-taxa').value), itens:el('np-itens').value.trim(), atend:el('np-atend').value.trim()};
+  PEDIDOS.push(ped);
+  try{ localStorage.setItem('giro_cidade',cid); }catch(e){}
+  try{ recalcularReal(); }catch(e){}
+  salvarLocal(); fecharTudo(); repintarTudo();
+  aviso('Pedido '+cod+' entrou na fila');
 }
 
 /* ══ upload de planilha (alimenta os pedidos) ══ */
