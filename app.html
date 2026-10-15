@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <script>/* (208) APK: sem "viewport-fit=cover" o Android empurra o app para dentro das barras dele (cima e botões de baixo) em todas as telas */try{ if(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform()){ var mv=document.querySelector('meta[name=viewport]'); mv.setAttribute('content',mv.getAttribute('content').replace(/,\s*viewport-fit=cover/,'')); } }catch(e){}</script>
-<title>Giro OS — App do Motorista · GIRO-OS-013</title>
+<title>Giro OS — App do Motorista · GIRO-OS-014</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://giro-os-api.nucleofull.workers.dev" crossorigin>
@@ -555,6 +555,9 @@ html.apk div[style*="position:fixed"][style*="left:0"][style*="bottom:0"]{bottom
 .ge-rt.ge-exp .progresso,.ge-rt.ge-exp .ge-x{display:none!important}
 .ge-rt.ge-exp .end-2l{font-size:14.5px;margin:0 0 2px;min-height:0;-webkit-line-clamp:1}
 .ge-rt .ge-ac{margin-top:8px}
+.ge-rt .ge-pv .ge-tag{font-size:14px;padding:5px 13px;margin-top:6px}
+.ge-rt .ge-pv .ge-nu{font-size:16px;font-weight:900;color:var(--text)}
+html:has(.ge-rt) #topo{display:none!important}
 .ge-hm{margin:12px 0;text-align:left}
 .ge-ckbig{width:100%;font-size:20px;font-weight:800;padding:20px 10px;letter-spacing:.5px;border-radius:16px}
 .ge-hm-fila{display:flex;align-items:center;gap:12px;border:2px solid var(--green)}
@@ -1292,10 +1295,10 @@ function geMapaHtml(sd){
     '<div class="progresso" style="margin-top:8px"><div class="progresso-topo"><div class="progresso-txt">'+ok+' de '+tot+' entregues</div>'+(sd.troco>0?'<span class="canal-tag" style="background:#FEF3C7;color:#92400E">Vale de troco '+moeda(sd.troco)+'</span>':'')+'</div><div class="meta-barra"><div class="meta-fill" style="width:'+Math.round(ok/tot*100)+'%"></div></div></div>'+
     '<div class="info-full" style="padding-top:0"><div class="sheet-handle" onclick="geAmplia()"><svg class="sh-up" viewBox="0 0 24 12"><path d="M4 9l8-6 8 6"/></svg><svg class="sh-dn" viewBox="0 0 24 12"><path d="M4 3l8 6 8-6"/></svg></div>'+
     '<div class="ge-x" style="display:flex;align-items:center;justify-content:space-between;gap:8px"><span class="parada-tag">Parada '+(i+1)+' de '+o.pend.length+'</span><span class="ge-num">#'+esc(at.num)+'</span></div>'+
-    '<h2 class="end-2l">'+esc([at.rua,at.numero].filter(Boolean).join(', '))+(at.comp?' · '+esc(at.comp):'')+'</h2>'+
-    '<p class="ge-x" style="margin:0 0 3px;color:var(--muted2);font-size:13.5px;font-weight:700">'+esc(at.cliente||'')+'</p>'+
+    '<h2 class="end-2l" style="font-size:21px;font-weight:800;line-height:1.2;min-height:0">'+esc([at.rua,at.numero].filter(Boolean).join(', '))+(at.comp?' · '+esc(at.comp):'')+'</h2>'+
+    '<div class="ge-x" style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 2px"><span style="color:var(--muted2);font-size:12.5px;font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(at.cliente||'')+'</span>'+(geFoneWa(at.tel)?'<a class="ge-tag ge-wa" style="margin:0;padding:5px 14px;font-size:12.5px;flex:none" href="https://wa.me/'+geFoneWa(at.tel)+'?text='+encodeURIComponent('Olá! Sou o entregador do seu pedido #'+at.num+' e estou a caminho.')+'" target="_blank" rel="noopener">Whats</a>':'')+'</div>'+
     '<p class="ge-x" style="margin:0;color:var(--muted);font-size:11.5px">'+esc((at.bairro||'')+(at.cid?' · '+at.cid:''))+'</p>'+
-    '<div class="ge-x">'+gePagTag(at)+'<span class="ge-tag ge-nu">'+moeda(at.vl)+'</span>'+(geFoneWa(at.tel)?'<a class="ge-tag ge-wa" style="padding:6px 14px;font-size:12.5px" href="https://wa.me/'+geFoneWa(at.tel)+'?text='+encodeURIComponent('Olá! Sou o entregador do seu pedido #'+at.num+' e estou a caminho.')+'" target="_blank" rel="noopener">💬 Chamar no WhatsApp</a>':'')+'</div>'+
+    '<div class="ge-x ge-pv">'+gePagTag(at)+'<span class="ge-tag ge-nu">'+moeda(at.vl)+'</span></div>'+
     '<div class="ge-ac"><button class="btn sec" onclick="geAusente(\''+esc(at.cod)+'\')">Devolver</button><button class="btn pri" onclick="geEntregar(\''+esc(at.cod)+'\')">Entregue</button></div></div></div>';
   return h;
 }
@@ -1337,12 +1340,22 @@ function geMapaDesenhar(ajustar){
     var pts=o.pend.filter(function(p){ return p.lat!=null&&p.lng!=null; }).map(function(p){ return {lat:p.lat,lng:p.lng}; });
     if(pts.length){ GE.lbusy=true;
       rpApi('/rota/calcular',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({base:base,pontos:pts,minPorParada:2,ordem:pts.map(function(x,k){ return k; })})}).then(function(c){
-        GE.lbusy=false; var mm=c&&c.ok&&c.manual;
-        GE.linha={key:lk,l:(mm&&mm.real&&mm.linha&&mm.linha.length)?mm.linha:reta,km:mm?Math.round(mm.idaKm*10)/10:0,min:mm?Math.round(mm.idaMin):0};
-        if(PAG==='entregas'&&GE.vista==='mapa'&&!document.querySelector('.ge-bg')) gePintar();
-      }).catch(function(){ GE.lbusy=false; GE.linha={key:lk,l:reta,km:0,min:0}; });
+        var mm=c&&c.ok&&c.manual;
+        if(mm&&mm.real&&mm.linha&&mm.linha.length){ GE.lbusy=false; GE.linha={key:lk,l:mm.linha,km:Math.round(mm.idaKm*10)/10,min:Math.round(mm.idaMin)}; if(PAG==='entregas'&&GE.vista==='mapa'&&!document.querySelector('.ge-bg')) gePintar(); }
+        else geOsrm(base,pts,lk,reta,mm);
+      }).catch(function(){ geOsrm(base,pts,lk,reta,null); });
     }
   }
+}
+function geOsrm(base,pts,lk,reta,mm){
+  var P=(base?[base]:[]).concat(pts), fim=function(l,km,min){ GE.lbusy=false; GE.linha={key:lk,l:l,km:km,min:min}; if(PAG==='entregas'&&GE.vista==='mapa'&&!document.querySelector('.ge-bg')) gePintar(); };
+  if(P.length<2){ fim(reta,0,0); return; }
+  var u='https://router.project-osrm.org/route/v1/driving/'+P.map(function(x){ return x.lng.toFixed(6)+','+x.lat.toFixed(6); }).join(';')+'?overview=full&geometries=geojson';
+  fetch(u).then(function(r){ return r.json(); }).then(function(j){
+    var r0=j&&j.routes&&j.routes[0];
+    if(r0&&r0.geometry&&r0.geometry.coordinates&&r0.geometry.coordinates.length>1) fim(r0.geometry.coordinates,Math.round(r0.distance/100)/10,Math.round(r0.duration/60+pts.length*2));
+    else fim(reta,mm?Math.round(mm.idaKm*10)/10:0,mm?Math.round(mm.idaMin):0);
+  }).catch(function(){ fim(reta,mm?Math.round(mm.idaKm*10)/10:0,mm?Math.round(mm.idaMin):0); });
 }
 function geHomeHtml(){
   var f=GE.fila, n=gePend(GE.saida), box='border:1px solid rgba(255,255,255,.7);border-radius:16px;padding:22px 12px';
