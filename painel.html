@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Giro OS — Painel do ponto · GIRO-OS-019</title>
+<title>Giro OS — Painel do ponto · GIRO-OS-020</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -368,7 +368,7 @@ a{color:inherit}
 .mp-opmot{position:absolute;top:80px;right:10px;z-index:6;width:230px;max-height:calc(100% - 96px);overflow:auto;padding:2px}
 .mp-opcard{background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(41,35,30,.28);padding:10px;margin-top:2px}
 .mp-opcard .mp-resumo{margin:0 0 10px}
-.mp-opcard .btn{width:100%;margin-top:6px}
+.mp-opcard .btn,.mp-lbtns .btn{width:100%;margin-top:6px}
 .mp-opmot .mp-lr{box-shadow:0 2px 8px rgba(41,35,30,.28);margin-bottom:6px;padding:7px 9px}
 .mp-opmot .mp-senha{width:26px;height:26px;font-size:13px}
 .mp-sempos-btn{position:absolute;top:10px;left:56px;z-index:6;border:1px solid #F59E0B;background:#FFFBEB;color:#92400E;border-radius:9px;padding:7px 11px;font-weight:700;font-size:12px;cursor:pointer}
@@ -654,7 +654,7 @@ a{color:inherit}
 
       <!-- PEDIDOS -->
       <section class="page" id="pg-pedidos">
-        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-019</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
+        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-020</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
         <div id="pd-chip"></div>
         <div class="card">
           <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
@@ -712,7 +712,7 @@ a{color:inherit}
             <div class="mp-lcol mp-lside">
               <div id="mp-l-mot"></div>
               <div id="mp-l-resumo" class="mp-resumo"></div>
-              <button class="btn pri wide" onclick="mpFecharGrupo()">Fechar grupo e vincular</button>
+              <div class="mp-lbtns" id="mp-l-btn"></div>
             </div>
           </div>
         </div>
@@ -5440,14 +5440,14 @@ function mpTemp(p){
 function mpNumCurto(p){ var n=pdNum(p), x=Number(n); return (isFinite(x)&&/^\d+$/.test(n))?String(x):String(n).slice(-3); }
 function mpGrCarregar(){ if(MP_GR) return; MP_GR=[]; try{ localStorage.removeItem('giro_grupos'); }catch(e){} }   /* (012) grupo fechado agora já sai em rota: não existe mais "grupo guardado" */
 function mpGrSalvar(){ try{ localStorage.setItem('giro_grupos',JSON.stringify(MP_GR)); }catch(e){} }
+var MP_RASC={};   /* rascunho: pedido -> motoboy. Dá pra distribuir os pedidos entre vários motoboys e fechar tudo de uma vez */
 function mpGrLimpar(){
-  mpGrCarregar(); var ok={},i,g,k; mpPool().forEach(function(p){ ok[p.cod]=1; });
-  var mud=false;
-  for(i=MP_GR.length-1;i>=0;i--){ g=MP_GR[i]; var nc=g.cods.filter(function(c){ return ok[c]; }); if(nc.length!==g.cods.length){ g.cods=nc; mud=true; } if(!nc.length){ MP_GR.splice(i,1); mud=true; } }
+  var ok={},k,fila={}; mpPool().forEach(function(p){ ok[p.cod]=1; }); mpMotFila().forEach(function(m){ fila[String(m.id)]=1; });
   for(k in MP_SEL) if(!ok[k]) delete MP_SEL[k];
-  if(mud) mpGrSalvar();
+  for(k in MP_RASC) if(!ok[k]||!fila[String(MP_RASC[k])]) delete MP_RASC[k];
 }
-function mpGrupoDe(cod){ mpGrCarregar(); for(var i=0;i<MP_GR.length;i++) if(MP_GR[i].cods.indexOf(cod)>=0) return MP_GR[i]; return null; }
+function mpMotCor(mt){ var l=mpMotFila(),i; for(i=0;i<l.length;i++) if(String(l[i].id)===String(mt)) return MP_GCORES[i%MP_GCORES.length]; return '#64748B'; }
+function mpGrupoDe(cod){ var mt=MP_RASC[cod]; if(mt==null) return null; var m=motorista(mt)||motorista(Number(mt)); return {mt:mt,nome:m?m.n:'',cor:mpMotCor(mt)}; }
 function mpSelPeds(){ var out=[]; mpPool().forEach(function(p){ if(MP_SEL[p.cod]) out.push(p); }); return out; }
 function mpModo(m){
   if(m!==MP_MODO){ if(el('mp-wrap').classList.contains('cheio')) mpTelaCheia(); var lc=el('mp-lista-card'); if(lc.classList.contains('mp-lista-cheia')) mpListaCheia(); }
@@ -5464,7 +5464,7 @@ function mpAplicarModo(){
   el('mp-diabar').style.display=(m==='vivo')?'contents':'none';
   el('mp-opbar').style.display=(m==='mapa')?'flex':'none'; el('mp-opmot').style.display='none'; el('mp-vivo').style.display=(m==='mapa')?'':'none';
   var rl=el('mp-ritmo'); if(rl&&rl.parentNode) rl.parentNode.style.display=(m==='vivo')?'':'none';
-  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-019';
+  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-020';
   if(m!=='mapa'){ mpPkTodos(false); el('mp-sempos').style.display='none'; el('mp-sempos-btn').style.display='none'; }
   if(m==='vivo'){ MP_ENQ=true; mpBuscar(); } else mpOperador();
 }
@@ -5489,22 +5489,45 @@ function mpGeoPendentes(){
   }).catch(function(){ MP_GEO_BUSY=false; mpOperador(); });
 }
 function mpSelAlt(cod){
-  if(mpGrupoDe(cod)) return;
-  if(MP_SEL[cod]) delete MP_SEL[cod]; else MP_SEL[cod]=1;
+  if(MP_RASC[cod]!=null) delete MP_RASC[cod];   /* tocar num pedido já atribuído tira ele do motoboy */
+  else if(MP_SEL[cod]) delete MP_SEL[cod]; else MP_SEL[cod]=1;
   if(MP_MODO==='lista') mpListaPintar(); else { mpPkEstiloTodos(); mpBarraPintar(); }
 }
-function mpSelLimpar(){ MP_SEL={}; if(MP_MODO==='lista') mpListaPintar(); else { mpPkEstiloTodos(); mpBarraPintar(); } }
+function mpSelLimpar(){ MP_SEL={}; MP_RASC={}; if(MP_MODO==='lista') mpListaPintar(); else { mpPkEstiloTodos(); mpBarraPintar(); } }
+function mpAtribuir(){
+  var sel=mpSelPeds(), fila=mpMotFila(), i, prox='';
+  sel.forEach(function(p){ MP_RASC[p.cod]=MP_MOT; });
+  MP_SEL={};
+  var usados={}; for(var k in MP_RASC) usados[String(MP_RASC[k])]=1;
+  for(i=0;i<fila.length;i++) if(!usados[String(fila[i].id)]){ prox=String(fila[i].id); break; }   /* já deixa escolhido o próximo motoboy da fila */
+  MP_MOT=prox;
+}
+function mpAtribuirClique(){
+  if(!mpSelPeds().length){ aviso('Escolha os pedidos'); return; }
+  if(!MP_MOT){ aviso('Escolha o motoboy'); return; }
+  mpAtribuir(); if(MP_MODO==='lista') mpListaPintar(); else { mpPkEstiloTodos(); mpBarraPintar(); }
+}
+function mpBotoesHtml(){
+  var sel=mpSelPeds().length, m=MP_MOT?(motorista(MP_MOT)||motorista(Number(MP_MOT))):null, mots={}, k, ras=0;
+  for(k in MP_RASC){ ras++; mots[String(MP_RASC[k])]=1; }
+  var tot=ras+((sel&&m)?sel:0); if(sel&&m) mots[String(m.id)]=1; var nm=Object.keys(mots).length;
+  return '<button class="btn sec" onclick="mpAtribuirClique()">'+(sel&&m?'Atribuir '+sel+' a '+esc(m.n):'Atribuir seleção ao motoboy')+'</button>'+
+    '<button class="btn pri" onclick="mpFecharGrupo()">Fechar saídas'+(tot?' ('+tot+' pedido'+(tot>1?'s':'')+' · '+nm+' motoboy'+(nm>1?'s':'')+')':'')+'</button>'+
+    '<button class="btn sec" onclick="mpSelLimpar()">Limpar escolha</button>';
+}
 function mpMotEscolher(v){ MP_MOT=v; if(MP_MODO==='lista') mpListaPintar(); else mpBarraPintar(); }
 function mpResumoHtml(){
   var sel=mpSelPeds(), pool=mpPool(), cfg=pdTempoCfg(), h='';
-  if(!sel.length) h='Nenhum pedido escolhido.';
-  else{
+  if(sel.length){
     var tot=0; sel.forEach(function(p){ tot+=Number(p.vl||0); });
     var velho=sel[0], t=mpTemp(velho);
-    h='<b>'+sel.length+' pedido(s)</b> · '+moeda(tot)+'<br>Mais antigo: <b>#'+esc(pdNum(velho))+'</b> '+esc(t.txt);
-  }
-  var fora=pool.filter(function(p){ var t=mpTemp(p); return t.min!=null && t.min>cfg.ve && !MP_SEL[p.cod] && !mpGrupoDe(p.cod); });
-  if(fora.length) h+='<br><span class="mp-aviso">⚠ '+fora.length+' pedido(s) atrasado(s) fora do grupo: '+fora.slice(0,6).map(function(p){ return '#'+esc(pdNum(p)); }).join(', ')+(fora.length>6?'…':'')+'</span>';
+    h='<b>'+sel.length+' selecionado(s)</b> · '+moeda(tot)+'<br>Mais antigo: <b>#'+esc(pdNum(velho))+'</b> '+esc(t.txt);
+  } else h='Nenhum pedido selecionado.';
+  var cont={},k,nomes=[]; for(k in MP_RASC) cont[MP_RASC[k]]=(cont[MP_RASC[k]]||0)+1;
+  mpMotFila().forEach(function(m){ if(cont[String(m.id)]) nomes.push('<span style="color:'+mpMotCor(m.id)+';font-weight:800">'+esc(m.n)+' '+cont[String(m.id)]+'</span>'); });
+  if(nomes.length) h+='<br>Atribuídos: '+nomes.join(' · ');
+  var fora=pool.filter(function(p){ var t=mpTemp(p); return t.min!=null && t.min>cfg.ve && !MP_SEL[p.cod] && MP_RASC[p.cod]==null; });
+  if(fora.length) h+='<br><span class="mp-aviso">⚠ '+fora.length+' pedido(s) atrasado(s) fora das saídas: '+fora.slice(0,6).map(function(p){ return '#'+esc(pdNum(p)); }).join(', ')+(fora.length>6?'…':'')+'</span>';
   return h;
 }
 function mpLegenda(){ var c=pdTempoCfg(); return '<span><i style="background:#16A34A"></i>até '+c.am+' min</span><span><i style="background:#F59E0B"></i>'+c.am+'–'+c.ve+' min</span><span><i style="background:#DC2626"></i>+'+c.ve+' min</span>'; }
@@ -5518,8 +5541,9 @@ function mpMotOrdem(){
 function mpMotFila(){ var fora={}; PEDIDOS.forEach(function(p){ if(p.st==='em rota' && p.mt!=null && p.mt!=='') fora[String(p.mt)]=1; }); return mpMotOrdem().filter(function(m){ return !fora[String(m.id)]; }); }
 function mpMotOpcoes(){ var h='<option value="">Motoboy…</option>',l=mpMotFila(),i; for(i=0;i<l.length;i++) h+='<option value="'+esc(String(l[i].id))+'"'+(String(l[i].id)===MP_MOT?' selected':'')+'>'+(i+1)+' · '+esc(l[i].n)+'</option>'; return h; }
 function mpMotCardsHtml(){
-  var mh='',m,ml=mpMotFila(),i; for(i=0;i<ml.length;i++){ m=ml[i]; var on=String(m.id)===MP_MOT;
-    mh+='<div class="mp-lr mp-mot'+(on?' sel':'')+'" data-mt="'+esc(String(m.id))+'" style="--tc:'+(on?'#F97316':'#9CA3AF')+'"><span class="mp-senha">'+(i+1)+'</span><div class="mp-lr-b"><b>'+esc(m.n)+'</b><small>🏍️ senha '+(i+1)+(on?' · escolhido':'')+'</small></div><span class="mp-grip" title="Arraste para mudar a ordem">⋮⋮</span></div>'; }
+  var mh='',m,ml=mpMotFila(),i,cont={},k; for(k in MP_RASC) cont[MP_RASC[k]]=(cont[MP_RASC[k]]||0)+1;
+  for(i=0;i<ml.length;i++){ m=ml[i]; var on=String(m.id)===MP_MOT, n=cont[String(m.id)]||0, cor=MP_GCORES[i%MP_GCORES.length];
+    mh+='<div class="mp-lr mp-mot'+(on?' sel':'')+'" data-mt="'+esc(String(m.id))+'" style="--tc:'+(n?cor:(on?'#F97316':'#9CA3AF'))+'"><span class="mp-senha"'+(n?' style="background:'+cor+'"':'')+'>'+(i+1)+'</span><div class="mp-lr-b"><b>'+esc(m.n)+'</b><small>🏍️ senha '+(i+1)+(n?' · '+n+' pedido'+(n>1?'s':''):'')+(on?' · escolhido':'')+'</small></div><span class="mp-grip" title="Arraste para mudar a ordem">⋮⋮</span></div>'; }
   return mh||'<div class="empty" style="padding:10px">Nenhum motoboy cadastrado</div>';
 }
 function mpListaPintar(){
@@ -5528,11 +5552,11 @@ function mpListaPintar(){
   for(i=0;i<n;i++){ p=pool[i]; t=mpTemp(p); g=mpGrupoDe(p.cod);
     h+='<div class="mp-lr'+(MP_SEL[p.cod]?' sel':'')+(g?' grp':'')+'" data-cod="'+esc(p.cod)+'" style="--tc:'+t.cor+'"><span class="mp-ck">'+(MP_SEL[p.cod]?'✓':'')+'</span>'+
       '<div class="mp-lr-b"><b>#'+esc(pdNum(p))+'</b> · '+esc(p.cliente||'—')+'<small>'+esc((p.bairro||p.bai||'—')+' · '+(p.canal||'—')+' · '+moeda(p.vl))+(p.lat==null?' · sem posição':'')+'</small></div>'+
-      (g?'<span class="mp-gtag" style="background:'+g.cor+'">Grupo '+g.n+'</span>':'<span class="badge '+t.cls+'">'+esc(t.txt)+'</span>')+'</div>';
+      (g?'<span class="mp-gtag" style="background:'+g.cor+'">'+esc(g.nome)+'</span>':'<span class="badge '+t.cls+'">'+esc(t.txt)+'</span>')+'</div>';
   }
   el('mp-l-ped').innerHTML=h||'<div class="empty"><div class="em">🍕</div>Nenhum pedido na fila.</div>';
   el('mp-l-mot').innerHTML=mpMotCardsHtml();
-  el('mp-l-resumo').innerHTML=mpResumoHtml();
+  el('mp-l-resumo').innerHTML=mpResumoHtml(); el('mp-l-btn').innerHTML=mpBotoesHtml();
 }
 function mpGrupoListaPintar(){
   mpGrCarregar(); var h='',i,g,m;
@@ -5541,33 +5565,39 @@ function mpGrupoListaPintar(){
 }
 function mpFecharGrupo(){
   var sel=mpSelPeds();
-  if(!sel.length){ aviso('Escolha ao menos um pedido'); return; }
-  if(!MP_MOT){ aviso('Escolha o motoboy do grupo'); return; }
-  var m=motorista(MP_MOT)||motorista(Number(MP_MOT)); if(!m){ aviso('Motoboy não encontrado'); return; }
-  var fila=mpMotFila(), pos=0,i; for(i=0;i<fila.length;i++) if(String(fila[i].id)===String(m.id)) pos=i+1;
+  if(sel.length){ if(!MP_MOT){ aviso('Escolha o motoboy dos pedidos selecionados'); return; } mpAtribuir(); }
+  mpGrLimpar();
+  var cods=Object.keys(MP_RASC); if(!cods.length){ aviso('Escolha os pedidos e o motoboy'); return; }
+  var por={}; cods.forEach(function(c){ var p=mpAcharPed(c); if(p){ (por[MP_RASC[c]]=por[MP_RASC[c]]||[]).push(p); } });
   var d=el('mp-conf'); if(!d){ d=document.createElement('div'); d.id='mp-conf'; d.className='mp-conf'; }
   var alvo=document.fullscreenElement||document.webkitFullscreenElement||document.body; if(d.parentNode!==alvo) alvo.appendChild(d);   /* em tela cheia só aparece o que está dentro dela */
-  var tot=0, h='<div class="mp-conf-box"><h3>Confirmar saída para entrega</h3><div class="mp-conf-mot"><span class="mp-senha">'+(pos||'•')+'</span><div><b>'+esc(m.n)+'</b><small>🏍️ '+(pos?'senha '+pos:'motoboy')+'</small></div></div><div class="mp-conf-lista">';
-  sel.forEach(function(p){ tot+=Number(p.vl||0); h+='<div class="mp-conf-it"><div class="mp-lr-b"><b>#'+esc(pdNum(p))+'</b> · '+esc(p.cliente||'—')+'<small>'+esc([p.rua,p.num,p.bairro||p.bai].filter(Boolean).join(', '))+'</small></div><div style="text-align:right;font-size:12.5px"><b>'+moeda(p.vl)+'</b><br>'+pdRecebHtml(p)+'</div></div>'; });
-  h+='</div><div class="mp-conf-tot">'+sel.length+' pedido(s) · '+moeda(tot)+'</div><div class="mp-conf-btn"><button class="btn sec" onclick="mpConfFechar()">Cancelar</button><button class="btn pri" onclick="mpConfirmarSaida()">Confirmar saída</button></div></div>';
+  var fila=mpMotFila(), tot=0, np=0, nm=0, h='<div class="mp-conf-box"><h3>Confirmar saída para entrega</h3><div class="mp-conf-lista">';
+  fila.forEach(function(m,i){ var l=por[String(m.id)]; if(!l||!l.length) return; nm++;
+    l.sort(function(a,b){ return (pdHoraMs(a)||9e15)-(pdHoraMs(b)||9e15); });
+    var sub=0; l.forEach(function(p){ sub+=Number(p.vl||0); }); tot+=sub; np+=l.length;
+    h+='<div class="mp-conf-mot" style="margin-top:6px"><span class="mp-senha" style="background:'+MP_GCORES[i%MP_GCORES.length]+'">'+(i+1)+'</span><div style="flex:1"><b>'+esc(m.n)+'</b><small>🏍️ senha '+(i+1)+' · '+l.length+' pedido'+(l.length>1?'s':'')+' · '+moeda(sub)+'</small></div></div>';
+    l.forEach(function(p){ h+='<div class="mp-conf-it"><div class="mp-lr-b"><b>#'+esc(pdNum(p))+'</b> · '+esc(p.cliente||'—')+'<small>'+esc([p.rua,p.num,p.bairro||p.bai].filter(Boolean).join(', '))+'</small></div><div style="text-align:right;font-size:12.5px"><b>'+moeda(p.vl)+'</b><br>'+pdRecebHtml(p)+'</div></div>'; });
+  });
+  h+='</div><div class="mp-conf-tot">'+np+' pedido(s) · '+nm+' motoboy'+(nm>1?'s':'')+' · '+moeda(tot)+'</div><div class="mp-conf-btn"><button class="btn sec" onclick="mpConfFechar()">Cancelar</button><button class="btn pri" onclick="mpConfirmarSaida()">Confirmar saída</button></div></div>';
   d.innerHTML=h; d.style.display='flex';
+  if(MP_MODO==='lista') mpListaPintar(); else { mpPkEstiloTodos(); mpBarraPintar(); }
 }
 function mpConfFechar(){ var d=el('mp-conf'); if(d) d.style.display='none'; }
-/* confirmou: os pedidos saem da fila do Mapeamento e passam a "Em rota" no menu Pedidos, com o motoboy */
+/* confirmou: os pedidos saem da fila do Mapeamento e passam a "Em rota" no menu Pedidos, cada um com o seu motoboy */
 function mpConfirmarSaida(){
-  var sel=mpSelPeds(), m=motorista(MP_MOT)||motorista(Number(MP_MOT)); if(!sel.length||!m){ mpConfFechar(); return; }
-  sel.forEach(function(p){ p.st='em rota'; p.mt=m.id; });
-  MP_SEL={}; MP_MOT=''; mpConfFechar();
+  var cods=Object.keys(MP_RASC), n=0, mots={}; 
+  cods.forEach(function(c){ var p=mpAcharPed(c), m=motorista(MP_RASC[c])||motorista(Number(MP_RASC[c])); if(p&&m&&p.st==='coletado'){ p.st='em rota'; p.mt=m.id; n++; mots[m.id]=1; } });
+  MP_RASC={}; MP_SEL={}; MP_MOT=''; mpConfFechar();
   try{ recalcularReal(); }catch(e){}
   salvarLocal(); repintarTudo();
-  aviso(sel.length+' pedido(s) em rota com '+esc(m.n));
+  var nm=Object.keys(mots).length; aviso(n+' pedido(s) em rota com '+nm+' motoboy'+(nm>1?'s':''));
   mpOperador();
 }
 function mpDesfazerGrupo(id){ mpGrCarregar(); MP_GR=MP_GR.filter(function(g){ return String(g.id)!==String(id); }); mpGrSalvar(); mpOperador(); if(MP_MODO==='mapa') mpPkEstiloTodos(); }
 /* barra do modo mapa */
 function mpBarraPintar(){
   var bar=el('mp-opbar'); if(!bar) return;
-  var pm=el('mp-opmot'); if(pm){ pm.innerHTML=mpMotCardsHtml()+'<div class="mp-opcard"><div class="mp-resumo">'+mpResumoHtml()+'</div><button class="btn pri" onclick="mpFecharGrupo()">Fechar grupo e vincular</button><button class="btn sec" onclick="mpSelLimpar()">Limpar escolha</button></div>'; pm.style.display='block'; }
+  var pm=el('mp-opmot'); if(pm){ pm.innerHTML=mpMotCardsHtml()+'<div class="mp-opcard"><div class="mp-resumo">'+mpResumoHtml()+'</div>'+mpBotoesHtml()+'</div>'; pm.style.display='block'; }
   el('mp-opbar-txt').innerHTML='<div class="mp-leg" style="margin:0">'+mpLegenda()+'</div>';
   var sp=mpPool().filter(function(p){ return p.lat==null; }), b=el('mp-sempos-btn');
   b.style.display=sp.length?'block':'none'; b.textContent='📍 '+sp.length+' sem posição';
@@ -5589,7 +5619,7 @@ var MP_AJ='';   /* pedido em "ajuste de posição": só ele pode ser arrastado *
 function mpPkEstilo(p){
   var o=MP_PK[p.cod]; if(!o) return; var t=mpTemp(p);
   o.in.className='mp-pk'+(MP_SEL[p.cod]?' sel':'')+(MP_AJ===p.cod?' aj':''); o.el.classList.toggle('conf',p.gq===1);
-  o.in.style.setProperty('--pc',t.cor); o.dot.style.background=t.cor; o.n.textContent=mpNumCurto(p);
+  var g=mpGrupoDe(p.cod); o.in.style.setProperty('--pc',g?g.cor:t.cor); o.dot.style.background=g?g.cor:t.cor; o.n.textContent=mpNumCurto(p);
   o.el.style.zIndex=(MP_SEL[p.cod]||MP_AJ===p.cod)?30:(1+Math.min(20,Math.floor((t.min||0)/10)));   /* o mais atrasado fica por cima */
   o.in.title='#'+pdNum(p)+' · '+(p.cliente||'')+' · '+t.txt+(p.gq===1?' · conferir posição':'');
   try{ o.mk.setDraggable(MP_AJ===p.cod); }catch(e){}
