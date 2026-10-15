@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Giro OS — Painel do ponto · GIRO-OS-011</title>
+<title>Giro OS — Painel do ponto · GIRO-OS-012</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -354,8 +354,10 @@ a{color:inherit}
 .mp-lr.sel .mp-ck{background:#F97316;border-color:#F97316}
 .mp-lr-b{flex:1;min-width:0;font-size:13px}.mp-lr-b small{color:var(--muted);font-size:11.5px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mp-gtag{font-size:10.5px;font-weight:800;color:#fff;border-radius:99px;padding:2px 8px}
-.mp-mot{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--border2);border-radius:10px;background:var(--s1);margin-bottom:6px;cursor:pointer;font-size:13px}
-.mp-mot.on{border-color:#F97316;background:#FFF3E6;font-weight:700}
+.mp-senha{width:30px;height:30px;border-radius:50%;background:var(--text);color:#fff;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;flex:none}
+.mp-mot.sel .mp-senha{background:#F97316}
+.mp-grip{font-size:18px;color:var(--muted);cursor:grab;padding:4px 6px;touch-action:none;user-select:none;letter-spacing:-3px}
+.mp-mot.arrastando{opacity:.85;box-shadow:0 6px 18px rgba(41,35,30,.35);position:relative;z-index:5}
 .mp-resumo{font-size:12.5px;margin:10px 0;color:var(--muted2);line-height:1.5}
 .mp-aviso{color:#B91C1C;font-weight:700}
 .mp-grp{display:flex;align-items:center;gap:8px;font-size:12.5px;padding:6px 0;border-bottom:1px dashed var(--border2)}
@@ -628,7 +630,7 @@ a{color:inherit}
 
       <!-- PEDIDOS -->
       <section class="page" id="pg-pedidos">
-        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-011</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
+        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-012</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
         <div id="pd-chip"></div>
         <div class="card">
           <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
@@ -5411,7 +5413,7 @@ function mpAplicarModo(){
   el('mp-diabar').style.display=(m==='vivo')?'contents':'none';
   el('mp-opbar').style.display=(m==='mapa')?'flex':'none';
   var rl=el('mp-ritmo'); if(rl&&rl.parentNode) rl.parentNode.style.display=(m==='vivo')?'':'none';
-  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-011';
+  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-012';
   if(m!=='mapa'){ mpPkTodos(false); el('mp-sempos').style.display='none'; el('mp-sempos-btn').style.display='none'; }
   if(m==='vivo'){ MP_ENQ=true; mpBuscar(); } else mpOperador();
 }
@@ -5455,7 +5457,14 @@ function mpResumoHtml(){
   return h;
 }
 function mpLegenda(){ var c=pdTempoCfg(); return '<span><i style="background:#16A34A"></i>até '+c.am+' min</span><span><i style="background:#F59E0B"></i>'+c.am+'–'+c.ve+' min</span><span><i style="background:#DC2626"></i>+'+c.ve+' min</span>'; }
-function mpMotOpcoes(){ var h='<option value="">Motoboy…</option>',i; for(i=0;i<MOTORISTAS.length;i++) h+='<option value="'+esc(String(MOTORISTAS[i].id))+'"'+(String(MOTORISTAS[i].id)===MP_MOT?' selected':'')+'>'+esc(MOTORISTAS[i].n)+'</option>'; return h; }
+/* ordem de chegada dos motoboys (a senha é a posição na fila). O dono pode reordenar arrastando; fica salva neste navegador até a 5C levar pro servidor */
+function mpMotOrdem(){
+  var ord=[]; try{ ord=JSON.parse(localStorage.getItem('giro_ordem_mot')||'[]')||[]; }catch(e){}
+  var out=[],usados={},i,m; ord.forEach(function(id){ for(i=0;i<MOTORISTAS.length;i++) if(String(MOTORISTAS[i].id)===String(id) && !usados[id]){ out.push(MOTORISTAS[i]); usados[id]=1; } });
+  for(i=0;i<MOTORISTAS.length;i++){ m=MOTORISTAS[i]; if(!usados[String(m.id)]) out.push(m); }
+  return out;
+}
+function mpMotOpcoes(){ var h='<option value="">Motoboy…</option>',l=mpMotOrdem(),i; for(i=0;i<l.length;i++) h+='<option value="'+esc(String(l[i].id))+'"'+(String(l[i].id)===MP_MOT?' selected':'')+'>'+(i+1)+' · '+esc(l[i].n)+'</option>'; return h; }
 function mpListaPintar(){
   var pool=mpPool(), h='', i, p, t, g, n=pool.length;
   el('mp-l-n').textContent=n; el('mp-l-leg').innerHTML=mpLegenda();
@@ -5465,8 +5474,9 @@ function mpListaPintar(){
       (g?'<span class="mp-gtag" style="background:'+g.cor+'">Grupo '+g.n+'</span>':'<span class="badge '+t.cls+'">'+esc(t.txt)+'</span>')+'</div>';
   }
   el('mp-l-ped').innerHTML=h||'<div class="empty"><div class="em">🍕</div>Nenhum pedido na fila.</div>';
-  var mh='',m; for(i=0;i<MOTORISTAS.length;i++){ m=MOTORISTAS[i]; mh+='<div class="mp-mot'+(String(m.id)===MP_MOT?' on':'')+'" data-mt="'+esc(String(m.id))+'">🏍️ '+esc(m.n)+'</div>'; }
-  el('mp-l-mot').innerHTML=(mh||'<div class="empty" style="padding:10px">Nenhum motoboy cadastrado</div>')+'<div style="font-size:11px;color:var(--muted);margin-top:4px">A fila por ordem de chegada (senha) entra na próxima etapa.</div>';
+  var mh='',m,ml=mpMotOrdem(); for(i=0;i<ml.length;i++){ m=ml[i]; var on=String(m.id)===MP_MOT;
+    mh+='<div class="mp-lr mp-mot'+(on?' sel':'')+'" data-mt="'+esc(String(m.id))+'" style="--tc:'+(on?'#F97316':'#9CA3AF')+'"><span class="mp-senha">'+(i+1)+'</span><div class="mp-lr-b"><b>'+esc(m.n)+'</b><small>🏍️ senha '+(i+1)+(on?' · escolhido':'')+'</small></div><span class="mp-grip" title="Arraste para mudar a ordem">⋮⋮</span></div>'; }
+  el('mp-l-mot').innerHTML=(mh||'<div class="empty" style="padding:10px">Nenhum motoboy cadastrado</div>')+'<div style="font-size:11px;color:var(--muted);margin-top:4px">Arraste pelo ⋮⋮ para mudar a ordem. A senha automática (gerada no app) entra na próxima etapa.</div>';
   el('mp-l-resumo').innerHTML=mpResumoHtml();
   mpGrupoListaPintar();
 }
@@ -5548,10 +5558,29 @@ document.addEventListener('keydown',function(ev){ var c=el('mp-lista-card'); if(
 document.addEventListener('click',function(ev){
   var t=ev.target; if(!t||!t.closest) return; var x;
   if((x=t.closest('#mp-l-ped [data-cod]'))) mpSelAlt(x.getAttribute('data-cod'));
-  else if((x=t.closest('#mp-l-mot [data-mt]'))) mpMotEscolher(x.getAttribute('data-mt'));
+  else if((x=t.closest('#mp-l-mot [data-mt]'))){ if(!MP_ARR && !t.closest('.mp-grip')) mpMotEscolher(x.getAttribute('data-mt')); }
   else if((x=t.closest('[data-gdesf]'))) mpDesfazerGrupo(x.getAttribute('data-gdesf'));
   else if((x=t.closest('[data-colocar]'))) mpColocar(x.getAttribute('data-colocar'));
   else if(t.closest('[data-regeo]')){ MP_GEO_TENT={}; mpOperador(); }
+});
+/* arrastar motoboy pra mudar a ordem (mouse e toque) */
+document.addEventListener('pointerdown',function(ev){
+  var g=ev.target.closest&&ev.target.closest('.mp-grip'); if(!g) return;
+  var card=g.closest('.mp-mot'), box=card&&card.parentNode; if(!box) return;
+  ev.preventDefault(); card.classList.add('arrastando'); try{ g.setPointerCapture(ev.pointerId); }catch(e){}
+  var mover=function(e){
+    var cards=[].slice.call(box.querySelectorAll('.mp-mot')),i,r;
+    for(i=0;i<cards.length;i++){ if(cards[i]===card) continue; r=cards[i].getBoundingClientRect();
+      if(e.clientY>r.top && e.clientY<r.bottom){ var meio=r.top+r.height/2; if(e.clientY<meio) box.insertBefore(card,cards[i]); else box.insertBefore(card,cards[i].nextSibling); break; } }
+  };
+  var fim=function(){
+    document.removeEventListener('pointermove',mover); document.removeEventListener('pointerup',fim); document.removeEventListener('pointercancel',fim);
+    card.classList.remove('arrastando');
+    var ids=[].slice.call(box.querySelectorAll('.mp-mot')).map(function(c){ return c.getAttribute('data-mt'); });
+    try{ localStorage.setItem('giro_ordem_mot',JSON.stringify(ids)); }catch(e){}
+    MP_ARR=true; setTimeout(function(){ MP_ARR=false; },350); mpOperador();
+  };
+  document.addEventListener('pointermove',mover); document.addEventListener('pointerup',fim); document.addEventListener('pointercancel',fim);
 });
 /* as cores de tempo se atualizam sozinhas a cada minuto */
 setInterval(function(){ if(PAG==='mapeamento' && MP_MODO!=='vivo' && !document.hidden) mpOperador(); },60000);
