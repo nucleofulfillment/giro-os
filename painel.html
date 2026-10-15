@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Giro OS — Painel do ponto · GIRO-OS-024</title>
+<title>Giro OS — Painel do ponto · GIRO-OS-025</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -655,7 +655,7 @@ a{color:inherit}
 
       <!-- PEDIDOS -->
       <section class="page" id="pg-pedidos">
-        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-024</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
+        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-025</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
         <div id="pd-chip"></div>
         <div class="card">
           <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
@@ -5465,7 +5465,7 @@ function mpAplicarModo(){
   el('mp-diabar').style.display=(m==='vivo')?'contents':'none';
   el('mp-opbar').style.display=(m==='mapa')?'flex':'none'; el('mp-opmot').style.display='none'; el('mp-vivo').style.display=(m==='mapa')?'':'none';
   var rl=el('mp-ritmo'); if(rl&&rl.parentNode) rl.parentNode.style.display=(m==='vivo')?'':'none';
-  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-024';
+  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-025';
   if(m!=='mapa'){ mpPkTodos(false); el('mp-sempos').style.display='none'; el('mp-sempos-btn').style.display='none'; }
   if(m==='vivo'){ MP_ENQ=true; mpBuscar(); } else mpOperador();
 }
@@ -5482,7 +5482,7 @@ function mpAchouRua(p){ if(!p.ga) return true; var r=mpNormT(p.rua), a=mpNormT(p
 function mpAjustarPin(cod){ if(MP_INFO){ try{ MP_INFO.remove(); }catch(e){} MP_INFO=null; } MP_AJ=cod; mpEspalhar(); mpPkEstiloTodos(); aviso('Arraste o pin #'+pdNum(mpAcharPed(cod))+' até o endereço certo'); }
 function mpGeoPendentes(){
   if(MP_GEO_BUSY||!REAL||!DD_TOKEN) return;
-  var pend=mpPool().filter(function(p){ return (p.lat==null||(p.gq===0&&!p.ga)) && p.rua && p.cid && !MP_GEO_TENT[p.cod]; });
+  var pend=mpPool().filter(function(p){ return (p.lat==null||(p.gq!==2&&!p.ga)) && p.rua && p.cid && !MP_GEO_TENT[p.cod]; });
   if(!pend.length) return;
   var lote=pend.slice(0,12); MP_GEO_BUSY=true; lote.forEach(function(p){ MP_GEO_TENT[p.cod]=1; });
   fetch(DELTADIS_API+'/rota/localizar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({itens:lote.map(function(p){ return {cod:p.cod,rua:p.rua,num:p.num,comp:p.comp,bai:p.bai,cid:p.cid,cep:p.cep}; })})})
