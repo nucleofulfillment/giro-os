@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <script>/* (208) APK: sem "viewport-fit=cover" o Android empurra o app para dentro das barras dele (cima e botões de baixo) em todas as telas */try{ if(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform()){ var mv=document.querySelector('meta[name=viewport]'); mv.setAttribute('content',mv.getAttribute('content').replace(/,\s*viewport-fit=cover/,'')); } }catch(e){}</script>
-<title>Giro OS — App do Motorista · GIRO-OS-014</title>
+<title>Giro OS — App do Motorista · GIRO-OS-015</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://giro-os-api.nucleofull.workers.dev" crossorigin>
@@ -1234,7 +1234,7 @@ function geOrdenar(par){
   }
   return {pend:por,feitos:feitos};
 }
-var GE_PGN={dinheiro:'Dinheiro',pix:'Pix',cartao:'Cartão',pago:'Pago online',online:'Pago online'};
+var GE_PGN={dinheiro:'Dinheiro',pix:'Pix',cartao:'Cartão',cartao_deb:'Cartão débito',cartao_cred:'Cartão crédito',pago:'Pago online',online:'Pago online'};
 function gePagTag(p){
   if(p.st==='entregue') return '<span class="ge-tag ge-ok">Entregue · '+esc(GE_PGN[p.pgr]||p.pgr)+'</span>';
   if(p.st==='ausente') return '<span class="ge-tag ge-nu">Não entregue</span>';
@@ -1397,7 +1397,7 @@ function geEntregar(cod){
   var p=geParadaDe(cod); if(!p) return; var pago=(p.pgp||p.pg==='online'), c=esc(cod);
   if(pago){ geMarcar(cod,'entregue','pago'); return; }   /* pedido que já subiu pago: entrega direta, sem perguntar */
   var h='<div class="ge-bg" id="ge-sh"><div class="ge-sheet"><h3>Entregar #'+esc(p.num)+'</h3><p>Como o cliente pagou? ('+moeda(p.vl)+')</p>'+
-    '<div class="ge-pgs"><button onclick="geConfirma(\''+c+'\',\'dinheiro\')">Dinheiro</button><button onclick="geConfirma(\''+c+'\',\'pix\')">Pix</button><button style="grid-column:1/3" onclick="geConfirma(\''+c+'\',\'cartao\')">Cartão</button></div>'+
+    '<div class="ge-pgs"><button onclick="geConfirma(\''+c+'\',\'dinheiro\')">Dinheiro</button><button onclick="geConfirma(\''+c+'\',\'pix\')">Pix</button><button onclick="geConfirma(\''+c+'\',\'cartao_deb\')">Cartão débito</button><button onclick="geConfirma(\''+c+'\',\'cartao_cred\')">Cartão crédito</button></div>'+
     '<button class="ge-gh" style="width:100%;text-align:center;margin-top:10px" onclick="geFecharSh()">Cancelar</button></div></div>';
   document.body.insertAdjacentHTML('beforeend',h);
 }

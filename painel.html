@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Giro OS — Painel do ponto · GIRO-OS-043</title>
+<title>Giro OS — Painel do ponto · GIRO-OS-044</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -662,7 +662,7 @@ a{color:inherit}
 
       <!-- PEDIDOS -->
       <section class="page" id="pg-pedidos">
-        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-043</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
+        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-044</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
         <div id="pd-chip"></div>
         <div class="card">
           <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
@@ -782,6 +782,18 @@ a{color:inherit}
       <!-- FINANCEIRO (GMV mora aqui) -->
       <section class="page" id="pg-financeiro">
         <div class="pghd"><div><h1>Financeiro</h1><div class="sub">movimento do ponto de distribuição</div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" style="background:#fff;border:1.5px solid var(--roxo);color:var(--roxo)" onclick="abrirCustos()">+ Custo Operacional</button></div></div>
+        <div class="card" id="cc-bloco" style="margin-bottom:16px">
+          <h3 style="margin-bottom:10px"><span class="lft">Conciliação financeira</span><span style="margin-left:auto"><button class="btn sec" onclick="ccExcel()">⬇ Excel</button></span></h3>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
+            <select class="inp" id="cc-mt" onchange="ccMudou()" style="width:200px;max-width:60vw"><option value="">Todos os motoristas</option></select>
+            <input type="date" class="inp" id="cc-ini" onchange="ccMudou()" style="width:150px"><span style="color:var(--muted);font-size:12px">até</span><input type="date" class="inp" id="cc-fim" onchange="ccMudou()" style="width:150px">
+            <span class="vertodos" onclick="ccAtalho('hoje')">Hoje</span><span class="vertodos" onclick="ccAtalho('7')">7 dias</span><span class="vertodos" onclick="ccAtalho('mes')">Mês</span>
+            <span class="vertodos" onclick="ccCarregar(true)">↻</span>
+          </div>
+          <div class="finrow" id="cc-cards" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))"></div>
+          <div class="finrow" id="cc-extra" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr));margin-top:10px"></div>
+          <div id="cc-aviso" style="font-size:12px;color:var(--muted);margin-top:8px"></div>
+        </div>
         <div class="finrow" id="fin-resumo"></div>
         <div class="duo"><div class="kpi"><div class="lb">TOTAL MOVIMENTADO</div><div class="vl" id="fin-mov">R$ 0,00</div></div><div class="saldo"><div class="lb">Saldo em conta</div><div class="vl" id="fin-saldo">R$ 0</div><div class="lb" id="fin-saldo-info" style="margin-top:8px;font-weight:500;opacity:.85">Conectando ao Asaas...</div><div style="margin-top:10px;display:flex;gap:16px;font-size:12.5px;font-weight:700"><span style="cursor:pointer;text-decoration:underline" onclick="carregarSaldoAsaas(false)">atualizar</span><span style="cursor:pointer;text-decoration:underline" onclick="abrirExtratoAsaas()">ver extrato</span></div></div></div>
         <div class="card" id="fin-repasse-card" style="margin-bottom:16px">
@@ -3996,7 +4008,7 @@ function limparFiltroDash(){ DASH_TR=null; pintarIndicadores(); pintarDashboard(
 function limparFiltroTransportadora(){ FILTRO_TR=null; pintarPedidos(); }
 /* ── (GIRO-OS-009) tempo do pedido: verde até 30 min, amarelo 30–60, vermelho acima de 60 (limites guardados em giro_tempo, prontos pra virar configuração) ── */
 var PD_FIM={entregue:1,devolvido:1,extraviado:1,cancelado:1};
-var PD_FORMA={online:'Pago online',pix:'Pix',dinheiro:'Dinheiro',cartao:'Cartão'};
+var PD_FORMA={online:'Pago online',pix:'Pix',dinheiro:'Dinheiro',cartao:'Cartão',cartao_deb:'Cartão débito',cartao_cred:'Cartão crédito'};
 var PD_ORIGENS=['Pedidos10','WhatsApp','Balcão/telefone','iFood'];
 function pdTempoCfg(){ var c={am:30,ve:60}; try{ var r=JSON.parse(localStorage.getItem('giro_tempo')||'null'); if(r && Number(r.am)>0 && Number(r.ve)>Number(r.am)){ c.am=Number(r.am); c.ve=Number(r.ve); } }catch(e){} return c; }
 function pdHoraMs(p){ if(p.hp) return Number(p.hp); if(p.dia && /^\d{2}:\d{2}/.test(String(p.hora||''))){ var t=new Date(p.dia+'T'+String(p.hora).slice(0,5)+':00').getTime(); return isNaN(t)?0:t; } return 0; }
@@ -5565,7 +5577,7 @@ function mpAplicarModo(){
   el('mp-diabar').style.display=(m==='vivo')?'contents':'none';
   el('mp-opbar').style.display=(m==='mapa')?'flex':'none'; el('mp-opmot').style.display='none'; el('mp-vivo').style.display=(m==='mapa')?'':'none';
   var rl=el('mp-ritmo'); if(rl&&rl.parentNode) rl.parentNode.style.display=(m==='vivo')?'':'none';
-  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-043';
+  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-044';
   if(m!=='mapa'){ mpPkTodos(false); el('mp-sempos').style.display='none'; el('mp-sempos-btn').style.display='none'; }
   if(m==='vivo'){ MP_ENQ=true; mpBuscar(); } else mpOperador();
 }
@@ -6234,8 +6246,80 @@ function pintarFinanceiroReal(){
   if(semValor){ var lst=[], kx; for(kx in areasSem) lst.push(kx+' ('+areasSem[kx]+')'); msg+=semValor+' entregue(s) sem valor de motorista casando. Em aberto: '+lst.slice(0,6).join(', ')+'.'; }
   if(av) av.textContent=msg;
 }
+
+/* ══ (GIRO-OS-044) CONCILIAÇÃO FINANCEIRA consolidada: entradas por forma de pagamento (do que o motoboy marcou no app) × saídas do Fluxo de Caixa ══ */
+var CC={ini:'',fim:'',mt:'',linhas:[],ts:0,busy:false,erro:''};
+function ccAtalho(t){
+  var h=hojeISO(), d=new Date(); 
+  if(t==='hoje'){ CC.ini=h; CC.fim=h; }
+  else if(t==='7'){ d.setDate(d.getDate()-6); CC.ini=isoDe(d); CC.fim=h; }
+  else { CC.ini=inicioMesISO(); CC.fim=h; }
+  ccCarregar(true);
+}
+function ccMudou(){ CC.ini=el('cc-ini').value||''; CC.fim=el('cc-fim').value||''; CC.mt=el('cc-mt').value||''; ccCarregar(true); }
+function ccIniciar(){
+  if(!CC.ini&&!CC.fim){ CC.ini=hojeISO(); CC.fim=hojeISO(); }
+  var sel=el('cc-mt'); if(sel){ var atual=CC.mt, h='<option value="">Todos os motoristas</option>', i, m;
+    for(i=0;i<MOTORISTAS.length;i++){ m=MOTORISTAS[i]; h+='<option value="'+esc(String(m.id))+'">'+esc(m.n)+'</option>'; }
+    if(sel.options.length!==MOTORISTAS.length+1){ sel.innerHTML=h; sel.value=atual; } }
+  if(el('cc-ini')) el('cc-ini').value=CC.ini; if(el('cc-fim')) el('cc-fim').value=CC.fim;
+  if(Date.now()-CC.ts>30000) ccCarregar(true); else ccPintar();
+}
+function ccCarregar(forcar){
+  if(CC.busy&&!forcar) return; CC.busy=true;
+  var q='?de='+encodeURIComponent(CC.ini||'')+'&ate='+encodeURIComponent(CC.fim||'')+'&mt='+encodeURIComponent(CC.mt||'');
+  fetch(DELTADIS_API+'/painel/conciliacao'+q).then(function(r){ return r.json(); }).then(function(d){
+    CC.busy=false; if(d&&d.ok){ CC.linhas=d.linhas||[]; CC.ts=Date.now(); CC.erro=''; } else CC.erro=(d&&d.mensagem)||'Não consegui buscar as entregas agora.';
+    ccPintar();
+  }).catch(function(){ CC.busy=false; CC.erro='Sem conexão com o serviço agora.'; ccPintar(); });
+}
+function ccSaidas(){   /* saídas do Fluxo de Caixa no período (e do motorista, se filtrado) */
+  var r={tot:0,pago:0,aberto:0,n:0}, i, l;
+  for(i=0;i<EXTRATO.length;i++){ l=EXTRATO[i]; if(l.tp!=='out'||l.status==='cancelado') continue;
+    var d=String(l.data||'').slice(0,10); if((CC.ini&&d<CC.ini)||(CC.fim&&d>CC.fim)) continue;
+    if(CC.mt && !(l.fech && String(l.fech.m)===CC.mt)) continue;
+    var v=Math.abs(Number(l.vl)||0); r.tot+=v; r.n++; if(l.status==='pago') r.pago+=v; else r.aberto+=v; }
+  return r;
+}
+function ccTotais(){
+  var t={ent:0,n:0,dinheiro:0,debito:0,credito:0,pix:0,online:0,pix_whats:0,cartao_sem_tipo:0,outro:0,cupom:0,frete:0}, i, l;
+  for(i=0;i<CC.linhas.length;i++){ l=CC.linhas[i]; t.n++; t.ent+=l.vl; t.cupom+=l.cupom||0; t.frete+=l.tx||0; if(t[l.tipo]!=null) t[l.tipo]+=l.vl; else t.outro+=l.vl; }
+  return t;
+}
+function ccPintar(){
+  var c=el('cc-cards'); if(!c) return;
+  var t=ccTotais(), sd=ccSaidas();
+  var k=function(rot,v,sub,cor){ return '<div class="kpi"><div class="lb '+(cor||'')+'">'+rot+'</div><div class="vl '+(cor?('v'+cor.slice(1)):'')+'">'+moeda(v)+'</div><div class="dl">'+sub+'</div></div>'; };
+  var qtd=function(tp){ var n=0,i; for(i=0;i<CC.linhas.length;i++) if(CC.linhas[i].tipo===tp) n++; return n+' entrega(s)'; };
+  c.innerHTML=k('Entrada Total',t.ent,t.n+' entrega(s)','cg')+k('Dinheiro',t.dinheiro,qtd('dinheiro'))+k('Cartão débito',t.debito,qtd('debito'))+k('Cartão crédito',t.credito,qtd('credito'))+k('PIX',t.pix,qtd('pix')+' · recebido pelo motoboy')+k('Cupom',t.cupom,'bonificação / brinde (reservado)')+k('Saídas Total',sd.tot,sd.n+' lançamento(s) · pagas '+moeda(sd.pago)+' · a pagar '+moeda(sd.aberto),'cr');
+  var ex=k('Pago no app Pedidos10',t.online,qtd('online')+' · online, direto no app')+k('Pix de compra no WhatsApp',t.pix_whats,qtd('pix_whats')+' · pago antes da entrega');
+  if(t.cartao_sem_tipo>0) ex+=k('Cartão (sem tipo)',t.cartao_sem_tipo,qtd('cartao_sem_tipo')+' · marcado antes de separar débito/crédito');
+  if(t.outro>0) ex+=k('Outros',t.outro,qtd('outro'));
+  ex+=k('Fretes (taxas)',t.frete,'já incluídos nas entradas');
+  el('cc-extra').innerHTML=ex;
+  var soma=t.dinheiro+t.debito+t.credito+t.pix+t.online+t.pix_whats+t.cartao_sem_tipo+t.outro, dif=Math.round((t.ent-soma)*100)/100;
+  el('cc-aviso').textContent=CC.erro||('Conferência: Dinheiro + Cartões + PIX + Pago no app + Pix WhatsApp = '+moeda(soma)+(dif===0?' ✓ bate com a Entrada Total':' · diferença '+moeda(dif))+'. Período: '+dataBR(CC.ini||hojeISO())+' a '+dataBR(CC.fim||hojeISO())+(CC.mt?' · um motorista':'')+'. Só entram entregas concluídas.');
+}
+function ccExcel(){
+  if(typeof XLSX==='undefined'){ aviso('O gerador de Excel não carregou. Confira a internet e recarregue a página.'); return; }
+  var t=ccTotais(), sd=ccSaidas(), nomes={dinheiro:'Dinheiro',debito:'Cartão débito',credito:'Cartão crédito',cartao_sem_tipo:'Cartão (sem tipo)',pix:'PIX (motoboy)',online:'Pago no app Pedidos10',pix_whats:'Pix WhatsApp',outro:'Outro'}, i, l, dt, ln=[];
+  var mtn=''; if(CC.mt){ for(i=0;i<MOTORISTAS.length;i++) if(String(MOTORISTAS[i].id)===CC.mt) mtn=MOTORISTAS[i].n; }
+  var res=[['Conciliação financeira'],['Período',dataBR(CC.ini||hojeISO())+' a '+dataBR(CC.fim||hojeISO())],['Motorista',mtn||'Todos'],[],['Item','Valor (R$)'],
+    ['Entrada Total',t.ent],['Dinheiro',t.dinheiro],['Cartão débito',t.debito],['Cartão crédito',t.credito],['Cartão (sem tipo)',t.cartao_sem_tipo],['PIX (recebido pelo motoboy)',t.pix],['Pago no app Pedidos10',t.online],['Pix de compra no WhatsApp',t.pix_whats],['Cupom',t.cupom],['Fretes (já nas entradas)',t.frete],['Saídas Total',sd.tot],['  saídas pagas',sd.pago],['  saídas a pagar',sd.aberto],['Saldo (Entrada − Saídas)',Math.round((t.ent-sd.tot)*100)/100]];
+  for(i=0;i<CC.linhas.length;i++){ l=CC.linhas[i]; dt=new Date(l.q);
+    ln.push([dataBR(ymdLocal(dt)),('0'+dt.getHours()).slice(-2)+':'+('0'+dt.getMinutes()).slice(-2),l.num||l.cod,l.cliente||'',l.canal||'',l.mtn||'',nomes[l.tipo]||l.tipo,l.vl,l.tx,l.cupom||0]); }
+  try{
+    var w1=XLSX.utils.aoa_to_sheet(res), w2=XLSX.utils.aoa_to_sheet([['Data','Hora','Pedido','Cliente','Canal','Motorista','Forma recebida','Valor (R$)','Frete (R$)','Cupom (R$)']].concat(ln)), r, c0, cel;
+    w1['!cols']=[{wch:32},{wch:20}]; w2['!cols']=[12,7,10,26,14,20,22,12,12,12].map(function(x){return {wch:x};});
+    for(r=5;r<res.length;r++){ cel=w1[XLSX.utils.encode_cell({r:r,c:1})]; if(cel&&typeof cel.v==='number') cel.z='"R$" #,##0.00'; }
+    for(r=1;r<=ln.length;r++) for(c0=7;c0<=9;c0++){ cel=w2[XLSX.utils.encode_cell({r:r,c:c0})]; if(cel&&typeof cel.v==='number') cel.z='"R$" #,##0.00'; }
+    var wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,w1,'Resumo'); XLSX.utils.book_append_sheet(wb,w2,'Entregas');
+    XLSX.writeFile(wb,'GIRO-conciliacao-'+(CC.ini||hojeISO())+'_a_'+(CC.fim||hojeISO())+(mtn?('-'+mtn.replace(/\s+/g,'_')):'')+'.xlsx');
+  }catch(e){ aviso('Não consegui gerar o Excel.'); }
+}
 function pintarFinanceiro(){
   fatCarregar(); veFcCarregar();
+  try{ ccIniciar(); }catch(e){}
   if(REAL) pintarFinanceiroReal();
   var gmv=0,repasse=0,i;
   for(i=0;i<PEDIDOS.length;i++) gmv+=PEDIDOS[i].vl;
