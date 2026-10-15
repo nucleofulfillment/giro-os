@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <script>/* (208) APK: sem "viewport-fit=cover" o Android empurra o app para dentro das barras dele (cima e botões de baixo) em todas as telas */try{ if(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform()){ var mv=document.querySelector('meta[name=viewport]'); mv.setAttribute('content',mv.getAttribute('content').replace(/,\s*viewport-fit=cover/,'')); } }catch(e){}</script>
-<title>Giro OS — App do Motorista · GIRO-OS-012</title>
+<title>Giro OS — App do Motorista · GIRO-OS-013</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://giro-os-api.nucleofull.workers.dev" crossorigin>
@@ -541,6 +541,20 @@ html.apk div[style*="position:fixed"][style*="left:0"][style*="bottom:0"]{bottom
 .ge-pgs button{border:1.5px solid var(--border2);background:var(--s1);border-radius:14px;padding:16px 8px;font-weight:800;font-size:15px;cursor:pointer;color:var(--text)}
 .ge-pgs button:active{background:var(--s3)}
 .ge-vazio{text-align:center;color:var(--muted2);padding:40px 10px}
+.conteudo:has(.ge-rt){padding-bottom:0;overflow:hidden;display:flex;flex-direction:column}
+.conteudo:has(.ge-rt) #pg-entregas.on{display:flex;flex-direction:column;flex:1;min-height:0}
+#ge-conteudo:has(.ge-rt){flex:1;min-height:0;display:flex;flex-direction:column}
+.ge-rt{flex:1;min-height:0;display:flex;flex-direction:column}
+.ge-rt .mapa-mock{flex:1 1 auto;min-height:110px;margin-bottom:0}
+.ge-rt .progresso,.ge-rt .info-full{flex:none}
+.ge-rt .info-full{padding-bottom:12px}
+.ge-rt .mapa-abrir-maps{bottom:46px}.ge-rt .mapa-abrir-waze{bottom:90px}
+.ge-rt .sheet-handle{height:22px;margin:0}
+.ge-rt .sheet-handle svg{width:34px;height:14px;fill:none;stroke:rgba(217,109,40,.55);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ge-rt .sheet-handle .sh-up{display:none}.ge-rt.ge-exp .sheet-handle .sh-up{display:block}.ge-rt.ge-exp .sheet-handle .sh-dn{display:none}
+.ge-rt.ge-exp .progresso,.ge-rt.ge-exp .ge-x{display:none!important}
+.ge-rt.ge-exp .end-2l{font-size:14.5px;margin:0 0 2px;min-height:0;-webkit-line-clamp:1}
+.ge-rt .ge-ac{margin-top:8px}
 .ge-hm{margin:12px 0;text-align:left}
 .ge-ckbig{width:100%;font-size:20px;font-weight:800;padding:20px 10px;letter-spacing:.5px;border-radius:16px}
 .ge-hm-fila{display:flex;align-items:center;gap:12px;border:2px solid var(--green)}
@@ -1170,7 +1184,7 @@ function ir(p){
 
 /* ══ ENTREGAS (delivery) — a saída montada pelo operador aparece aqui; a rota é só sugestão e o motoboy entrega em qualquer ordem ══ */
 var GE_OCULTA_BIPE=true;
-var GE={vista:'mapa',sel:null,mapa:null,mapaEl:null,mapaOk:false,marc:[],linha:null,lbusy:false,fitKey:'',fila:null,ckBusy:false,saida:null,ordem:'rota',pos:null,timer:null,busy:false,envio:false,erro:'',visUp:false};
+var GE={exp:false,vista:'mapa',sel:null,mapa:null,mapaEl:null,mapaOk:false,marc:[],linha:null,lbusy:false,fitKey:'',fila:null,ckBusy:false,saida:null,ordem:'rota',pos:null,timer:null,busy:false,envio:false,erro:'',visUp:false};
 function geVisto(){ try{ return localStorage.getItem('giro_ge_visto')||''; }catch(e){ return ''; } }
 function geMarcarVisto(){ try{ if(GE.saida) localStorage.setItem('giro_ge_visto',GE.saida.id); }catch(e){} }
 function geIniciar(){
@@ -1204,7 +1218,7 @@ function geCarregar(manual){
     if(manual) aviso('Atualizado');
   }).catch(function(){ GE.busy=false; GE.erro='Sem conexão com o servidor.'; if(PAG==='entregas'&&!document.querySelector('.ge-bg')) gePintar(); });
 }
-function geAbrir(){ geMarcarVisto(); var b=el('ge-banner'); if(b) b.classList.remove('on'); gePintar(); geCarregar(); geGps(); }
+function geAbrir(){ GE.exp=false; geMarcarVisto(); var b=el('ge-banner'); if(b) b.classList.remove('on'); gePintar(); geCarregar(); geGps(); }
 function geDist(a,b){ var r=Math.PI/180, dx=(b.lng-a.lng)*Math.cos((a.lat+b.lat)/2*r), dy=b.lat-a.lat; return Math.sqrt(dx*dx+dy*dy); }
 function geOrdenar(par){
   var pend=par.filter(function(p){ return p.st==='pendente'; }), feitos=par.filter(function(p){ return p.st!=='pendente'; });
@@ -1257,28 +1271,31 @@ function gePintar(){
     } else h+=geCheckinHtml()+'<div class="ge-vazio"><b>Saída concluída</b>Todas as entregas foram marcadas.</div>';
     if(o.feitos.length){ h+='<div style="font-size:12px;font-weight:800;color:var(--muted2);margin:18px 2px 8px">JÁ MARCADOS</div>'; o.feitos.forEach(function(p){ h+=geStopHtml(p,0,false); }); }
   }
-  h+='<div style="text-align:center;font-size:10.5px;color:var(--muted);margin-top:14px">GIRO-OS-012</div>';
+  h+='<div style="text-align:center;font-size:10.5px;color:var(--muted);margin-top:14px">GIRO-OS-013</div>';
   box.innerHTML=h;
 }
 
 /* ══ ENTREGAS NO MAPA (mesmo visual da rota do DeltaDis): pinos numerados, trajeto, parada atual e só 3 comandos ══ */
 function geVista(v){ GE.vista=v; gePintar(); }
+function geAmplia(){ GE.exp=!GE.exp; var t=document.querySelector('.ge-rt'); if(t) t.classList.toggle('ge-exp',GE.exp); setTimeout(function(){ try{ if(GE.mapa) GE.mapa.resize(); }catch(e){} },80); }
 function geWazeUrl(p){ return (p.lat!=null&&p.lng!=null)?('https://waze.com/ul?ll='+p.lat+','+p.lng+'&navigate=yes'):('https://waze.com/ul?q='+encodeURIComponent([p.rua,p.numero,p.bairro,p.cid].filter(Boolean).join(', '))+'&navigate=yes'); }
 function geAtual(o){ var i,r=null; if(GE.sel){ for(i=0;i<o.pend.length;i++) if(o.pend[i].cod===GE.sel) r=o.pend[i]; } return r||o.pend[0]||null; }
 function geSelPin(cod){ GE.sel=cod; gePintar(); }
 function geMapaHtml(sd){
   var o=geOrdenar(sd.paradas), at=geAtual(o), tot=sd.paradas.length, ok=tot-o.pend.length, i=o.pend.indexOf(at);
   var km=GE.linha&&GE.linha.km?GE.linha.km+' km · ~'+GE.linha.min+' min':'';
-  var h='<div class="ge-rt"><div class="mapa-mock full-bleed" style="height:46vh;margin-bottom:0"><div id="ge-slot" style="position:absolute;inset:0"></div>'+
+  var lg='<img src="https://www.google.com/s2/favicons?domain=maps.google.com&sz=64" alt="" style="width:18px;height:18px;border-radius:4px" onerror="this.style.display=\'none\'">', lw='<img src="https://www.google.com/s2/favicons?domain=waze.com&sz=64" alt="" style="width:18px;height:18px;border-radius:4px" onerror="this.style.display=\'none\'">';
+  var h='<div class="ge-rt'+(GE.exp?' ge-exp':'')+'"><div class="mapa-mock full-bleed"><div id="ge-slot" style="position:absolute;inset:0"></div>'+
     '<button class="mapa-resumo" onclick="geVista(\'lista\')">☰ Ver lista</button>'+
-    '<a class="mapa-abrir-maps" href="'+geNavUrl(at)+'" target="_blank" rel="noopener">Google Maps ↗</a><a class="mapa-abrir-waze" href="'+geWazeUrl(at)+'" target="_blank" rel="noopener">Waze ↗</a>'+
+    '<a class="mapa-abrir-maps" href="'+geNavUrl(at)+'" target="_blank" rel="noopener">'+lg+'Google Maps ↗</a><a class="mapa-abrir-waze" href="'+geWazeUrl(at)+'" target="_blank" rel="noopener">'+lw+'Waze ↗</a>'+
     (km?'<span class="mapa-legenda">'+km+'</span>':'')+'</div>'+
     '<div class="progresso" style="margin-top:8px"><div class="progresso-topo"><div class="progresso-txt">'+ok+' de '+tot+' entregues</div>'+(sd.troco>0?'<span class="canal-tag" style="background:#FEF3C7;color:#92400E">Vale de troco '+moeda(sd.troco)+'</span>':'')+'</div><div class="meta-barra"><div class="meta-fill" style="width:'+Math.round(ok/tot*100)+'%"></div></div></div>'+
-    '<div class="info-full" style="padding-top:6px"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><span class="parada-tag">Parada '+(i+1)+' de '+o.pend.length+'</span><span class="ge-num">#'+esc(at.num)+'</span></div>'+
+    '<div class="info-full" style="padding-top:0"><div class="sheet-handle" onclick="geAmplia()"><svg class="sh-up" viewBox="0 0 24 12"><path d="M4 9l8-6 8 6"/></svg><svg class="sh-dn" viewBox="0 0 24 12"><path d="M4 3l8 6 8-6"/></svg></div>'+
+    '<div class="ge-x" style="display:flex;align-items:center;justify-content:space-between;gap:8px"><span class="parada-tag">Parada '+(i+1)+' de '+o.pend.length+'</span><span class="ge-num">#'+esc(at.num)+'</span></div>'+
     '<h2 class="end-2l">'+esc([at.rua,at.numero].filter(Boolean).join(', '))+(at.comp?' · '+esc(at.comp):'')+'</h2>'+
-    '<p style="margin:0 0 3px;color:var(--muted2);font-size:13.5px;font-weight:700">'+esc(at.cliente||'')+'</p>'+
-    '<p style="margin:0;color:var(--muted);font-size:11.5px">'+esc((at.bairro||'')+(at.cid?' · '+at.cid:''))+'</p>'+
-    '<div>'+gePagTag(at)+'<span class="ge-tag ge-nu">'+moeda(at.vl)+'</span>'+(geFoneWa(at.tel)?'<a class="ge-tag ge-wa" style="padding:6px 14px;font-size:12.5px" href="https://wa.me/'+geFoneWa(at.tel)+'?text='+encodeURIComponent('Olá! Sou o entregador do seu pedido #'+at.num+' e estou a caminho.')+'" target="_blank" rel="noopener">💬 Chamar no WhatsApp</a>':'')+'</div>'+
+    '<p class="ge-x" style="margin:0 0 3px;color:var(--muted2);font-size:13.5px;font-weight:700">'+esc(at.cliente||'')+'</p>'+
+    '<p class="ge-x" style="margin:0;color:var(--muted);font-size:11.5px">'+esc((at.bairro||'')+(at.cid?' · '+at.cid:''))+'</p>'+
+    '<div class="ge-x">'+gePagTag(at)+'<span class="ge-tag ge-nu">'+moeda(at.vl)+'</span>'+(geFoneWa(at.tel)?'<a class="ge-tag ge-wa" style="padding:6px 14px;font-size:12.5px" href="https://wa.me/'+geFoneWa(at.tel)+'?text='+encodeURIComponent('Olá! Sou o entregador do seu pedido #'+at.num+' e estou a caminho.')+'" target="_blank" rel="noopener">💬 Chamar no WhatsApp</a>':'')+'</div>'+
     '<div class="ge-ac"><button class="btn sec" onclick="geAusente(\''+esc(at.cod)+'\')">Devolver</button><button class="btn pri" onclick="geEntregar(\''+esc(at.cod)+'\')">Entregue</button></div></div></div>';
   return h;
 }
@@ -1286,6 +1303,7 @@ function geMapaMontar(){
   var slot=el('ge-slot'); if(!slot) return;
   if(!GE.mapaEl){ GE.mapaEl=document.createElement('div'); GE.mapaEl.style.cssText='position:absolute;inset:0'; }
   slot.appendChild(GE.mapaEl);
+  setTimeout(function(){ try{ if(GE.mapa) GE.mapa.resize(); }catch(e){} },80);
   rpCarregarMapa(function(){
     var sd=GE.saida; if(!sd) return; var p0=null; sd.paradas.forEach(function(p){ if(!p0&&p.lat!=null&&p.lng!=null) p0=p; });
     if(!p0){ slot.innerHTML='<div class="ge-vazio" style="padding-top:60px"><b>Sem localização</b>Os endereços ainda não têm posição no mapa. Use a lista.</div>'; return; }
