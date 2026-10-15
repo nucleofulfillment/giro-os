@@ -3,7 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Giro OS — Mesa · GIRO-OS-005</title>
+<title>Giro OS — Mesa · GIRO-OS-008</title>
+<script>try{ if(localStorage.getItem('dd_jwt')) document.documentElement.classList.add('dd-ret'); }catch(e){}</script>
+<style>html.dd-ret #login{display:none!important}</style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -231,7 +233,7 @@
     <div class="field"><label>Senha</label><input class="inp" id="lg-senha" type="password" placeholder="••••••••"></div>
     <button class="btn pri" style="width:100%" onclick="entrar()">Entrar</button>
     <p class="lg-demo" id="lg-msg" style="min-height:16px"></p>
-    <p class="lg-demo" style="opacity:.55;font-size:10.5px">GIRO-OS-005</p>
+    <p class="lg-demo" style="opacity:.55;font-size:10.5px">GIRO-OS-008</p>
   </div>
 </div>
 
@@ -499,6 +501,7 @@ function salvarSessao(){
   }catch(e){}
 }
 function restaurarSessao(){
+  return;   /* (GIRO-OS-007) bipagem de entrega escondida: não retoma contagem antiga */
   try{
     var raw=localStorage.getItem(SESS_KEY); if(!raw) return;
     var d=JSON.parse(raw), m=MOT, i;
@@ -530,7 +533,7 @@ function carregarMotoristas(){
     el('mot-lista').innerHTML=h; motAquiOpcoes();
     s.placeholder=MOTS.length?'digite ou escolha o motorista':'Nenhum motorista cadastrado no painel';
     if(!ATIVA) restaurarSessao();
-    if(!ATIVA&&!MODO){ MODO='entrada'; ajustarModoTela(); pintarCards(); abrirMesa('del'); }   /* (GIRO-OS-004) já abre em Entregas: só falta escolher o motorista */
+    /* (GIRO-OS-007) sem a tela inicial de bipagem: a Mesa abre direto na Comanda (a bipagem de entrega fica só escondida) */   /* (GIRO-OS-004) já abre em Entregas: só falta escolher o motorista */
   }).catch(function(){ el('mot-sel').placeholder='Não consegui carregar os motoristas'; });
 }
 function escolherMotorista(){
@@ -722,7 +725,7 @@ function encerrar(){
 
 /* ══ (35) MODOS DA MESA: Entrega · Devolução · XML da NF · OS sem NF · Esquecido ══ */
 var MODO='', DEV_MOT='';
-var MODOS=[{id:'entrada',n:'📦 Entregas'},{id:'devolucao',n:'↩ Devolução'},{id:'esquecido',n:'🕘 Esquecido'}];   /* (GIRO-OS-003) delivery: só Entregas, Devolução e Esquecido (sem XML, CT-e e OS) */
+var MODOS=[{id:'devolucao',n:'↩ Devolução'},{id:'esquecido',n:'🕘 Esquecido'}];   /* (GIRO-OS-003) delivery: só Entregas, Devolução e Esquecido (sem XML, CT-e e OS) */
 function pintarModos(){
   var b=el('modo-bar'); if(!b) return; var h='', i;
   for(i=0;i<MODOS.length;i++) h+='<button class="'+(MODO===MODOS[i].id?'on':'')+'" onclick="trocarModo(\''+MODOS[i].id+'\')">'+MODOS[i].n+'</button>';
@@ -750,7 +753,7 @@ function ajustarModoTela(){
   el('mot-box').style.display='none'; el('mesa-cards').style.display='none';   /* (GIRO-OS-004) sem cartões de transportadora */
   el('mot-sel').readOnly=esq;   /* esquecido: o motorista é preenchido sozinho */
   var v=el('scan-vazio').querySelector('span');
-  if(v) v.textContent=(MODO===''?'Escolha uma operação acima para começar: Entregas, Devolução ou Esquecido.':MODO==='devolucao'?'Escolha o motivo e bipe os pacotes. A transportadora e o motorista o sistema já sabe.':(MODO==='cte'?'Escolha a transportadora; depois bipe a chave do CT-e (DACTE) e informe o valor do frete.':MODO==='xml'?'Escolha a transportadora; depois bipe a chave da NF.':(MODO==='os'?'Escolha a transportadora; depois digite o número da OS.':'Escolha o motorista para começar a bipar.')));
+  if(v) v.textContent=(MODO===''?'Escolha uma operação acima para começar: Devolução ou Esquecido.':MODO==='devolucao'?'Escolha o motivo e bipe os pacotes. A transportadora e o motorista o sistema já sabe.':(MODO==='cte'?'Escolha a transportadora; depois bipe a chave do CT-e (DACTE) e informe o valor do frete.':MODO==='xml'?'Escolha a transportadora; depois bipe a chave da NF.':(MODO==='os'?'Escolha a transportadora; depois digite o número da OS.':'Escolha o motorista para começar a bipar.')));
 }
 function modoPreparar(){
   var ex=el('mo-extra'), xm=(MODO==='xml'); motAquiMostrar();
@@ -1548,7 +1551,7 @@ function mostrarApp(){
 }
 function sairLogin(msg){
   DD_TOKEN=''; DD_USER=null; try{ localStorage.removeItem('dd_jwt'); localStorage.removeItem('dd_user'); }catch(e){}
-  fecharCamera(); el('app').style.display='none'; el('login').style.display='flex';
+  try{ document.documentElement.classList.remove('dd-ret'); }catch(e){} try{ cmFechar(); }catch(e){} fecharCamera(); el('app').style.display='none'; el('login').style.display='flex';
   var m=el('lg-msg'); if(m) m.textContent=msg||'';
 }
 /* (45) a lista de transportadoras vem do painel (Configurações → Precificação): nome, site/logo e as novas que forem cadastradas */
@@ -1588,8 +1591,9 @@ function entrar(){
 /* se o painel já estava logado neste navegador, entra direto */
 function tentarSessao(){
   if(!DD_TOKEN) return;
+  mostrarApp();   /* já estava logado: entra direto, sem piscar a tela de login */
   fetch(DELTADIS_API+'/auth/me',{headers:{'Authorization':'Bearer '+DD_TOKEN}}).then(function(r){ return r.json(); }).then(function(d){
-    if(d&&d.ok) mostrarApp();
+    if(d&&!d.ok&&(d.erro==='sessao_invalida'||d.erro==='Nao autenticado')) sairLogin('Sua sessão acabou. Entre de novo.');
   }).catch(function(){});
 }
 document.addEventListener('DOMContentLoaded',function(){
@@ -1621,6 +1625,10 @@ document.addEventListener('DOMContentLoaded',function(){
 @keyframes cmgira{to{transform:rotate(360deg)}}
 #cm-form{flex:1;min-height:0;display:none;flex-direction:column;background:var(--bg,#FBF4EF);color:var(--text,#29231E)}
 #cm-fcorpo{flex:1;min-height:0;overflow-y:auto;padding:14px 16px}
+.cm-urg{display:flex;gap:10px;align-items:flex-start;border:2px solid #E8D9CC;border-radius:12px;padding:10px 12px;margin:0 0 14px;background:#fff;cursor:pointer}
+.cm-urg input{width:22px;height:22px;margin-top:2px;flex:none;accent-color:#DC2626}
+.cm-urg b{font-size:15px}.cm-urg small{display:block;font-size:11.5px;color:var(--muted2,#6b5d51);margin-top:2px;line-height:1.35}
+.cm-urg.on{border-color:#DC2626;background:#FEE2E2}
 #cm-fcorpo h4{margin:0 0 4px;font-size:15px}
 #cm-fcorpo p.sub{margin:0 0 12px;font-size:12.5px;color:var(--muted,#8a7b6e)}
 .cm-g{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -1632,9 +1640,15 @@ document.addEventListener('DOMContentLoaded',function(){
 #cm-fbot{display:flex;gap:10px;padding:12px 16px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--border,#EEE);background:var(--s1,#fff);flex:none}
 #cm-fbot .btn{padding:14px 10px;font-size:15px}
 #cm-fbot .btn.sec{flex:0 0 36%}
+#cm-msg{position:absolute;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.6);padding:24px}
+.cm-msg-box{background:#fff;color:#29231E;border-radius:20px;padding:26px 22px 22px;width:min(340px,100%);text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.cm-msg-ic{width:68px;height:68px;border-radius:50%;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:38px;font-weight:800;color:#fff}
+#cm-msg.erro .cm-msg-ic{background:#DC2626}#cm-msg.ok .cm-msg-ic{background:#16A34A}
+.cm-msg-box h3{margin:0 0 6px;font-size:20px}.cm-msg-box p{margin:0 0 16px;font-size:14.5px;line-height:1.4;color:#6b5d51}
+.cm-msg-box .btn{width:100%;padding:14px;font-size:16px}
 </style>
 <div id="cm-tela">
-  <div id="cm-top"><b>📷 Lançar comanda</b><button onclick="cmFechar()">✕ Fechar</button></div>
+  <div id="cm-top"><b>📷 Lançar comanda</b><button onclick="cmFechar()">↩ Devolução / Esquecido</button></div>
   <div id="cm-cam">
     <div id="cm-vwrap"><video id="cm-video" autoplay playsinline muted></video><div id="cm-guia"></div><div id="cm-dica">Enquadre a comanda inteira, de perto e com boa luz</div><div id="cm-aviso"></div></div>
     <div id="cm-botoes"><label class="btn sec" style="cursor:pointer">🖼 Galeria<input type="file" accept="image/*" id="cm-arq" style="display:none" onchange="cmArquivo(this)"></label><button class="btn pri" id="cm-foto" onclick="cmFotografar()">📸 Fotografar</button></div>
@@ -1642,6 +1656,7 @@ document.addEventListener('DOMContentLoaded',function(){
   <div id="cm-lendo"><img id="cm-prev" alt=""><div class="cm-spin"></div><div id="cm-lendo-t" style="font-weight:700">Lendo a comanda…</div></div>
   <div id="cm-form">
     <div id="cm-fcorpo">
+      <label class="cm-urg" id="cm-urg-l"><input type="checkbox" id="cm-urg" onchange="this.parentNode.classList.toggle('on',this.checked)"><span><b>🔥 Pedido urgente</b><small>Vai pro topo da fila do Mapeamento, com etiqueta vermelha, pra o operador despachar primeiro.</small></span></label>
       <h4>Confira os dados da comanda</h4><p class="sub">A IA leu a foto. Corrija o que estiver errado antes de lançar.</p>
       <div class="cm-g">
         <div class="cm-f"><label>Nº da comanda</label><input class="inp" id="cm-com"></div>
@@ -1672,6 +1687,23 @@ document.addEventListener('DOMContentLoaded',function(){
 <script>
 var CM={stream:null,dia:'',endBruto:'',busy:false};
 function cmNum(v){ var t=String(v==null?'':v).replace(/[^\d,.\-]/g,''); if(!t) return null; if(t.indexOf(',')>=0) t=t.replace(/\./g,'').replace(',','.'); var n=parseFloat(t); return isNaN(n)?null:Math.round(n*100)/100; }
+var CM_AC=null;
+function cmSom(t){
+  try{ var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return; if(!CM_AC) CM_AC=new AC(); if(CM_AC.state==='suspended') CM_AC.resume();
+    var seq=(t==='ok')?[[880,0,.12],[1320,.13,.2]]:[[220,0,.22],[165,.25,.35]], tp=(t==='ok')?'sine':'sawtooth';
+    seq.forEach(function(n){ var o=CM_AC.createOscillator(), g=CM_AC.createGain(), t0=CM_AC.currentTime+n[1]; o.type=tp; o.frequency.value=n[0]; g.gain.setValueAtTime(0.0001,t0); g.gain.exponentialRampToValueAtTime(t==='ok'?0.35:0.5,t0+.02); g.gain.exponentialRampToValueAtTime(0.0001,t0+n[2]); o.connect(g); g.connect(CM_AC.destination); o.start(t0); o.stop(t0+n[2]+.05); });
+    if(t!=='ok'){ try{ navigator.vibrate&&navigator.vibrate([200,80,200]); }catch(e){} }
+  }catch(e){}
+}
+function cmAviso(tipo,titulo,texto,depois){
+  cmSom(tipo==='ok'?'ok':'erro');
+  var d=el('cm-msg'); if(!d){ d=document.createElement('div'); d.id='cm-msg'; el('cm-tela').appendChild(d); }
+  d.className=tipo==='ok'?'ok':'erro';
+  d.innerHTML='<div class="cm-msg-box"><div class="cm-msg-ic">'+(tipo==='ok'?'✓':'⚠')+'</div><h3>'+esc(titulo)+'</h3><p>'+esc(texto)+'</p>'+(tipo==='ok'?'':'<button class="btn pri" id="cm-msg-ok">OK</button>')+'</div>';
+  d.style.display='flex';
+  function fecha(){ d.style.display='none'; if(depois) depois(); }
+  if(tipo==='ok') setTimeout(fecha,1400); else el('cm-msg-ok').onclick=fecha;
+}
 function cmMostrar(q){ el('cm-cam').style.display=(q==='cam')?'flex':'none'; el('cm-lendo').style.display=(q==='lendo')?'flex':'none'; el('cm-form').style.display=(q==='form')?'flex':'none'; }
 function cmAbrir(){ el('cm-tela').classList.add('on'); cmMostrar('cam'); cmCamera(); }
 function cmFechar(){ cmParar(); el('cm-tela').classList.remove('on'); }
@@ -1686,8 +1718,8 @@ function cmCamera(){
 }
 function cmSemCamera(t){ var av=el('cm-aviso'); av.textContent=t; av.style.display='block'; el('cm-guia').style.display='none'; el('cm-dica').style.display='none'; el('cm-foto').disabled=true; el('cm-foto').style.opacity=.5; }
 function cmReduz(origem,w,h,fim){
-  var m=1600, k=Math.min(1,m/Math.max(w,h)), c=document.createElement('canvas'); c.width=Math.round(w*k); c.height=Math.round(h*k);
-  c.getContext('2d').drawImage(origem,0,0,c.width,c.height); fim(c.toDataURL('image/jpeg',0.85));
+  var m=1400, k=Math.min(1,m/Math.max(w,h)), c=document.createElement('canvas'); c.width=Math.round(w*k); c.height=Math.round(h*k);
+  c.getContext('2d').drawImage(origem,0,0,c.width,c.height); fim(c.toDataURL('image/jpeg',0.8));
 }
 function cmFotografar(){ var v=el('cm-video'); if(!v||!v.videoWidth){ aviso('A câmera ainda não abriu'); return; } cmReduz(v,v.videoWidth,v.videoHeight,cmLer); }
 function cmArquivo(inp){
@@ -1699,6 +1731,7 @@ function cmLer(dataUrl){
   api('/painel/comanda-ler',{method:'POST',body:JSON.stringify({imagem:dataUrl})}).then(function(d){
     CM.busy=false;
     if(!d||!d.ok){ aviso((d&&d.mensagem)||'Não consegui ler a comanda'); cmMostrar('cam'); cmCamera(); return; }
+    if(d.duplicada){ var dd=d.dados||{}; cmAviso('erro','Comanda já lançada','A comanda '+(dd.com?'#'+String(dd.com).replace(/^#/,'')+' ':'')+(dd.nome?'de '+dd.nome+' ':'')+'já foi lançada antes. Não precisa lançar de novo.',function(){ cmRefazer(); }); return; }
     cmPreencher(d.dados||{}); cmMostrar('form');
   }).catch(function(){ CM.busy=false; aviso('Sem resposta do servidor. Tente de novo.'); cmMostrar('cam'); cmCamera(); });
 }
@@ -1706,6 +1739,7 @@ var CM_IDS=['com','atn','hora','nome','fone','rua','numero','comp','ref','bairro
 function cmPreencher(d){
   CM_IDS.forEach(function(k){ var e=el('cm-'+k); if(e) e.value=(d[k]==null?'':d[k]); });
   ['taxa','total','pago','apagar'].forEach(function(k){ el('cm-'+k).value=(d[k]==null?'':String(d[k]).replace('.',',')); });
+  el('cm-urg').checked=false; el('cm-urg-l').classList.remove('on');
   el('cm-forma').value=d.forma||'online'; el('cm-origem').value=d.origem||'Pedidos10';
   CM.dia=d.dia||''; CM.endBruto=d.endBruto||''; CM.prazoTxt=d.prazoTxt||'';
   document.querySelectorAll('#cm-form .cm-f.err').forEach(function(e){ e.classList.remove('err'); });
@@ -1719,15 +1753,16 @@ function cmLancar(){
   if(falta.length){ aviso('Falta ou está errado: '+falta.map(function(k){ return {nome:'nome',fone:'telefone (com DDD)',rua:'rua',bairro:'bairro',total:'total'}[k]; }).join(', ')); return; }
   var b=el('cm-lancar'); if(b.dataset.busy==='1') return; b.dataset.busy='1'; b.textContent='Lançando…';
   var dia=CM.dia||'', hr=v('hora');
-  var dados={com:v('com'),atn:v('atn'),dia:dia,hora:hr,nome:v('nome'),fone:v('fone').replace(/\D/g,''),tipo:v('tipo'),prazo:v('prazo'),prazoTxt:CM.prazoTxt||'',rua:v('rua'),numero:v('numero'),comp:v('comp'),bairro:v('bairro'),cid:v('cid'),ref:v('ref'),endBruto:CM.endBruto||'',itens:v('itens'),obs:v('obs'),taxa:cmNum(v('taxa')),total:cmNum(v('total')),pago:cmNum(v('pago')),apagar:cmNum(v('apagar')),forma:v('forma'),origem:v('origem')};
+  var dados={com:v('com'),atn:v('atn'),dia:dia,hora:hr,nome:v('nome'),fone:v('fone').replace(/\D/g,''),tipo:v('tipo'),prazo:v('prazo'),prazoTxt:CM.prazoTxt||'',rua:v('rua'),numero:v('numero'),comp:v('comp'),bairro:v('bairro'),cid:v('cid'),ref:v('ref'),endBruto:CM.endBruto||'',itens:v('itens'),obs:v('obs'),taxa:cmNum(v('taxa')),total:cmNum(v('total')),pago:cmNum(v('pago')),apagar:cmNum(v('apagar')),forma:v('forma'),origem:v('origem'),urg:el('cm-urg').checked?1:0};
   api('/painel/comanda-lancar',{method:'POST',body:JSON.stringify({dados:dados})}).then(function(d){
     b.dataset.busy=''; b.textContent='Lançar pedido';
-    if(d&&d.ok){ aviso('Comanda '+(dados.com?'#'+String(dados.com).replace(/^#/,'')+' ':'')+'lançada — já vai pro painel'); cmRefazer(); }
-    else aviso((d&&d.mensagem)||'Não consegui lançar');
+    if(d&&d.ok){ cmAviso('ok','Comanda '+(dados.com?'#'+String(dados.com).replace(/^#/,'')+' ':'')+'lançada','Já vai pro painel.',null); cmRefazer(); }
+    else if(d&&d.erro==='duplicada'){ cmAviso('erro','Comanda já lançada','Esta comanda já foi lançada antes.',function(){ cmRefazer(); }); }
+    else { cmSom('erro'); aviso((d&&d.mensagem)||'Não consegui lançar'); }
   }).catch(function(){ b.dataset.busy=''; b.textContent='Lançar pedido'; aviso('Sem resposta do servidor. Tente de novo (ela não foi lançada).'); });
 }
 (function(){
-  var ma=mostrarApp; mostrarApp=function(){ ma(); setTimeout(cmAbrir,500); };
+  var ma=mostrarApp; mostrarApp=function(){ ma(); cmAbrir(); };
   var pm=pintarModos; pintarModos=function(){ pm(); var b=el('modo-bar'); if(b){ var x=document.createElement('button'); x.textContent='📷 Comanda'; x.onclick=cmAbrir; b.insertBefore(x,b.firstChild); } };
 })();
 </script>
