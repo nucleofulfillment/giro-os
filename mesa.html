@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Giro OS — Mesa · GIRO-OS-009</title>
+<title>Giro OS — Mesa · GIRO-OS-010</title>
 <script>try{ if(localStorage.getItem('dd_jwt')) document.documentElement.classList.add('dd-ret'); }catch(e){}</script>
 <style>html.dd-ret #login{display:none!important}</style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -233,7 +233,7 @@
     <div class="field"><label>Senha</label><input class="inp" id="lg-senha" type="password" placeholder="••••••••"></div>
     <button class="btn pri" style="width:100%" onclick="entrar()">Entrar</button>
     <p class="lg-demo" id="lg-msg" style="min-height:16px"></p>
-    <p class="lg-demo" style="opacity:.55;font-size:10.5px">GIRO-OS-009</p>
+    <p class="lg-demo" style="opacity:.55;font-size:10.5px">GIRO-OS-010</p>
   </div>
 </div>
 
@@ -1744,19 +1744,23 @@ function cmPreencher(d){
   CM.dia=d.dia||''; CM.endBruto=d.endBruto||''; CM.prazoTxt=d.prazoTxt||'';
   document.querySelectorAll('#cm-form .cm-f.err').forEach(function(e){ e.classList.remove('err'); });
   el('cm-fcorpo').scrollTop=0;
+  /* cidade vazia ou quebrada pela leitura ("G · Aspar"): usa a última cidade lançada */
+  try{ var ult=localStorage.getItem('giro_cid_mesa')||'', c=el('cm-cid'), ln=function(t){ return String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z]/g,''); }, nc=ln(c.value), nu=ln(ult);
+    if(ult && (!nc || nc===nu || (nc.length>=3 && nu.length>nc.length && nu.slice(-nc.length)===nc))) c.value=ult; }catch(e){}
+  ['rua','cid'].forEach(function(k){ var f=el('cm-'+k).closest('.cm-f'), t=String(el('cm-'+k).value||'').trim(); if(f) f.classList.toggle('err',t.length<3); });
 }
 function cmRefazer(){ cmMostrar('cam'); el('cm-foto').disabled=false; el('cm-foto').style.opacity=1; cmCamera(); }
 function cmLancar(){
   var v=function(k){ return String(el('cm-'+k).value||'').trim(); }, falta=[];
   function marca(k,ruim){ var f=el('cm-'+k).closest('.cm-f'); if(f) f.classList.toggle('err',!!ruim); if(ruim) falta.push(k); }
-  marca('nome',!v('nome')); marca('fone',v('fone').replace(/\D/g,'').length<10); marca('rua',!v('rua')); marca('bairro',!v('bairro')); marca('total',cmNum(v('total'))==null);
-  if(falta.length){ aviso('Falta ou está errado: '+falta.map(function(k){ return {nome:'nome',fone:'telefone (com DDD)',rua:'rua',bairro:'bairro',total:'total'}[k]; }).join(', ')); return; }
+  marca('nome',!v('nome')); marca('fone',v('fone').replace(/\D/g,'').length<10); marca('rua',v('rua').length<3); marca('cid',v('cid').length<3); marca('bairro',!v('bairro')); marca('total',cmNum(v('total'))==null);
+  if(falta.length){ aviso('Falta ou está errado: '+falta.map(function(k){ return {nome:'nome',fone:'telefone (com DDD)',rua:'rua',cid:'cidade',bairro:'bairro',total:'total'}[k]; }).join(', ')); return; }
   var b=el('cm-lancar'); if(b.dataset.busy==='1') return; b.dataset.busy='1'; b.textContent='Lançando…';
   var dia=CM.dia||'', hr=v('hora');
   var dados={com:v('com'),atn:v('atn'),dia:dia,hora:hr,nome:v('nome'),fone:v('fone').replace(/\D/g,''),tipo:v('tipo'),prazo:v('prazo'),prazoTxt:CM.prazoTxt||'',rua:v('rua'),numero:v('numero'),comp:v('comp'),bairro:v('bairro'),cid:v('cid'),ref:v('ref'),endBruto:CM.endBruto||'',itens:v('itens'),obs:v('obs'),taxa:cmNum(v('taxa')),total:cmNum(v('total')),pago:cmNum(v('pago')),apagar:cmNum(v('apagar')),forma:v('forma'),origem:v('origem'),urg:el('cm-urg').checked?1:0};
   api('/painel/comanda-lancar',{method:'POST',body:JSON.stringify({dados:dados})}).then(function(d){
     b.dataset.busy=''; b.textContent='Lançar pedido';
-    if(d&&d.ok){ cmAviso('ok','Comanda '+(dados.com?'#'+String(dados.com).replace(/^#/,'')+' ':'')+'lançada','Já vai pro painel.',null); cmRefazer(); }
+    if(d&&d.ok){ try{ localStorage.setItem('giro_cid_mesa',dados.cid); }catch(e){} cmAviso('ok','Comanda '+(dados.com?'#'+String(dados.com).replace(/^#/,'')+' ':'')+'lançada','Já vai pro painel.',null); cmRefazer(); }
     else if(d&&d.erro==='duplicada'){ cmAviso('erro','Comanda já lançada','Esta comanda já foi lançada antes.',function(){ cmRefazer(); }); }
     else { cmSom('erro'); aviso((d&&d.mensagem)||'Não consegui lançar'); }
   }).catch(function(){ b.dataset.busy=''; b.textContent='Lançar pedido'; aviso('Sem resposta do servidor. Tente de novo (ela não foi lançada).'); });

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Giro OS — Painel do ponto · GIRO-OS-039</title>
+<title>Giro OS — Painel do ponto · GIRO-OS-040</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -662,7 +662,7 @@ a{color:inherit}
 
       <!-- PEDIDOS -->
       <section class="page" id="pg-pedidos">
-        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-039</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
+        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-040</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
         <div id="pd-chip"></div>
         <div class="card">
           <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
@@ -5539,7 +5539,7 @@ function mpAplicarModo(){
   el('mp-diabar').style.display=(m==='vivo')?'contents':'none';
   el('mp-opbar').style.display=(m==='mapa')?'flex':'none'; el('mp-opmot').style.display='none'; el('mp-vivo').style.display=(m==='mapa')?'':'none';
   var rl=el('mp-ritmo'); if(rl&&rl.parentNode) rl.parentNode.style.display=(m==='vivo')?'':'none';
-  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-039';
+  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-040';
   if(m!=='mapa'){ mpPkTodos(false); el('mp-sempos').style.display='none'; el('mp-sempos-btn').style.display='none'; }
   if(m==='vivo'){ MP_ENQ=true; mpBuscar(); } else mpOperador();
 }
@@ -5740,9 +5740,27 @@ function mpBarraPintar(){
 function mpSemPosAbrir(){ var s=el('mp-sempos'); s.style.display=(s.style.display==='none')?'block':'none'; if(s.style.display==='block') mpSemPosPintar(); }
 function mpSemPosPintar(){
   var sp=mpPool().filter(function(p){ return p.lat==null; }), h='<b>Sem posição no mapa</b><div style="color:var(--muted);margin:2px 0 6px">Coloque no mapa e arraste o pin até o lugar certo.</div>';
-  sp.forEach(function(p){ h+='<div class="it"><span>#'+esc(pdNum(p))+' '+esc(p.cliente||'')+'<br><small style="color:var(--muted)">'+esc([p.rua,p.num,p.bairro||p.bai].filter(Boolean).join(', ')||'sem endereço')+'</small></span><button class="btn sec sm" data-colocar="'+esc(p.cod)+'">Colocar</button></div>'; });
+  sp.forEach(function(p){ h+='<div class="it"><span>#'+esc(pdNum(p))+' '+esc(p.cliente||'')+'<br><small style="color:var(--muted)">'+esc([p.rua,p.num,p.bairro||p.bai].filter(Boolean).join(', ')||'sem endereço')+'</small></span><span style="display:flex;gap:6px"><button class="btn sec sm" data-editar="'+esc(p.cod)+'">✎ Editar</button><button class="btn sec sm" data-colocar="'+esc(p.cod)+'">Colocar</button></span></div>'; });
   h+='<button class="btn sec sm wide" style="margin-top:8px" data-regeo="1">Tentar localizar de novo</button>';
   el('mp-sempos').innerHTML=h;
+}
+/* editar o endereço do pedido (rua, número, bairro, cidade) e localizar de novo */
+function mpEditarEnd(cod){
+  var p=mpAcharPed(cod); if(!p) return; if(MP_INFO){ try{ MP_INFO.remove(); }catch(e){} MP_INFO=null; }
+  var o=document.getElementById('mp-ed'); if(o) o.remove();
+  o=document.createElement('div'); o.id='mp-ed'; o.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+  function cp(id,rot,val,ex){ return '<div style="'+(ex||'')+'"><label style="font-size:12px;color:var(--muted);font-weight:600">'+rot+'</label><input class="inp" id="mped-'+id+'" value="'+esc(val||'')+'" style="width:100%;box-sizing:border-box"></div>'; }
+  o.innerHTML='<div style="background:#fff;border-radius:16px;padding:18px;width:100%;max-width:420px;box-shadow:0 12px 40px rgba(0,0,0,.3)"><b style="font-size:16px">Editar endereço · #'+esc(pdNum(p))+' '+esc(p.cliente||'')+'</b><div style="display:grid;grid-template-columns:3fr 1fr;gap:10px;margin-top:12px">'+cp('rua','Rua',p.rua)+cp('num','Número',p.num)+'</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">'+cp('bai','Bairro',p.bai||p.bairro)+cp('cid','Cidade',p.cid)+'</div><div style="display:flex;gap:10px;margin-top:16px"><button class="btn sec" style="flex:1" id="mped-x">Cancelar</button><button class="btn pri" style="flex:1" id="mped-ok">Salvar e localizar</button></div></div>';
+  document.body.appendChild(o);
+  document.getElementById('mped-x').onclick=function(){ o.remove(); };
+  document.getElementById('mped-ok').onclick=function(){
+    var g=function(k){ return String(document.getElementById('mped-'+k).value||'').trim(); };
+    if(!g('rua')||g('cid').length<3){ aviso('Preencha a rua e a cidade'); return; }
+    p.rua=g('rua'); p.num=g('num'); p.bai=g('bai'); p.bairro=g('bai'); p.cid=g('cid');
+    p.lat=null; p.lng=null; p.gq=0; p.ga=''; delete MP_GEO_TENT[p.cod];
+    try{ localStorage.setItem('giro_cidade',p.cid); }catch(e){}
+    salvarLocal(); o.remove(); aviso('Endereço salvo. Localizando…'); mpOperador();
+  };
 }
 function mpColocar(cod){
   var p=mpAcharPed(cod); if(!p||!MP_MAP) return; var c=MP_MAP.getCenter();
@@ -5759,7 +5777,7 @@ function mpInfoPin(cod){
     '<div class="mp-info-n">'+esc(p.cliente||'—')+'</div>'+
     '<div class="mp-info-s">'+esc(p.bairro||p.bai||'—')+'</div>'+
     (tel?'<div style="margin-top:5px"><a class="mp-info-wa" href="tel:'+esc(tel.replace(/[^\d+]/g,''))+'">'+esc(tel)+'</a></div>':'')+
-    '<div class="mp-info-aj"><a href="#" onclick="mpAjustarPin(\''+esc(p.cod)+'\');return false">ajustar posição</a></div>'+
+    '<div class="mp-info-aj"><a href="#" onclick="mpEditarEnd(\''+esc(p.cod)+'\');return false">editar endereço</a> · <a href="#" onclick="mpAjustarPin(\''+esc(p.cod)+'\');return false">ajustar posição</a></div>'+
     (p.ga?'<div class="mp-info-ga" title="'+esc(p.ga)+'">'+esc(p.ga)+'</div>':'')+'</div>';
   MP_INFO=new maplibregl.Popup({closeButton:true,closeOnClick:true,maxWidth:'260px',offset:[(o.dx||0),-38+(o.dy||0)]}).setLngLat([p.lng,p.lat]).setHTML(h).addTo(MP_MAP);
 }
@@ -5837,6 +5855,7 @@ document.addEventListener('click',function(ev){
   if((x=t.closest('#mp-l-ped [data-cod]'))) mpSelAlt(x.getAttribute('data-cod'));
   else if((x=t.closest('#mp-l-mot [data-mt], #mp-opmot [data-mt]'))){ if(!MP_ARR && !t.closest('.mp-grip')) mpMotAtribuir(x.getAttribute('data-mt')); }
   else if((x=t.closest('[data-gdesf]'))) mpDesfazerGrupo(x.getAttribute('data-gdesf'));
+  else if((x=t.closest('[data-editar]'))) mpEditarEnd(x.getAttribute('data-editar'));
   else if((x=t.closest('[data-colocar]'))) mpColocar(x.getAttribute('data-colocar'));
   else if(t.closest('[data-regeo]')){ MP_GEO_TENT={}; mpOperador(); }
 });
