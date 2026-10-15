@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Giro OS — Mesa · GIRO-OS-012</title>
+<title>Giro OS — Mesa · GIRO-OS-013</title>
 <script>try{ if(localStorage.getItem('dd_jwt')) document.documentElement.classList.add('dd-ret'); }catch(e){}</script>
 <style>html.dd-ret #login{display:none!important}</style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -233,7 +233,7 @@
     <div class="field"><label>Senha</label><input class="inp" id="lg-senha" type="password" placeholder="••••••••"></div>
     <button class="btn pri" style="width:100%" onclick="entrar()">Entrar</button>
     <p class="lg-demo" id="lg-msg" style="min-height:16px"></p>
-    <p class="lg-demo" style="opacity:.55;font-size:10.5px">GIRO-OS-012</p>
+    <p class="lg-demo" style="opacity:.55;font-size:10.5px">GIRO-OS-013</p>
   </div>
 </div>
 
@@ -1843,7 +1843,8 @@ function fmDetalhe(){
   var m=FM.atual, r=m.resumo; el('fm-tit').textContent='💰 '+(m.mtn||'Motoboy');
   var h='<div class="fm-sec"><h4>Recebido nas entregas</h4>'+
     '<div class="fm-r"><span>Dinheiro</span><b>'+fmMoeda(r.dinheiro)+'</b></div><div class="fm-r"><span>Pix</span><b>'+fmMoeda(r.pix)+'</b></div><div class="fm-r"><span>Cartão</span><b>'+fmMoeda(r.cartao)+'</b></div><div class="fm-r"><span>Já pago online</span><b>'+fmMoeda(r.online)+'</b></div>'+
-    '<div class="fm-r t"><span>Total das entregas</span><span>'+fmMoeda(r.total)+'</span></div></div>';
+    '<div class="fm-r t"><span>Total das entregas</span><span>'+fmMoeda(r.total)+'</span></div>'+
+    '<div class="fm-r" style="margin-top:6px"><span>🏍️ Frete do motoboy ('+r.n_ent+' entrega(s))</span><b>'+fmMoeda(r.frete)+'</b></div><div class="fm-r t"><span>A pagar ao motoboy</span><span id="fm-liq2"></span></div></div>';
   h+='<div class="fm-sec"><h4>Dinheiro que ele devolve</h4><div class="fm-r"><span>Troco adiantado</span><b>'+fmMoeda(r.troco)+'</b></div><div class="fm-r"><span>+ Dinheiro recebido</span><b>'+fmMoeda(r.dinheiro)+'</b></div><div class="fm-r t"><span>Esperado de volta</span><span>'+fmMoeda(r.esperado)+'</span></div>'+
     '<div class="fm-aj"><span style="font-size:13px;font-weight:700">Devolveu:</span><input class="inp" inputmode="decimal" placeholder="R$ 0,00" value="'+fmEsc(FM.dev)+'" oninput="FM.dev=this.value;fmAtualiza()" style="width:130px"></div><div id="fm-dif" style="margin-top:8px;font-size:13.5px;font-weight:700"></div></div>';
   h+='<div class="fm-sec"><h4>Entregas ('+r.n_ent+')</h4>'; r.linhas.forEach(function(l){ if(l.st!=='entregue') return; h+='<div class="fm-ent"><div><b>#'+fmEsc(l.num||l.cod)+'</b> '+fmEsc(l.cliente||'')+'<small>'+fmEsc({dinheiro:'Dinheiro',pix:'Pix',cartao:'Cartão',cartao_deb:'Cartão débito',cartao_cred:'Cartão crédito',pago:'Pago online'}[l.pgr]||l.pgr)+' · frete '+fmMoeda(l.tx)+'</small></div><b>'+fmMoeda(l.vl)+'</b></div>'; }); h+='</div>';
@@ -1858,7 +1859,7 @@ function fmDetalhe(){
 function fmAtualiza(){
   var d=fmDif(), e=el('fm-dif'); if(e){ if(d===null) e.textContent=''; else if(d===0){ e.style.color='#047857'; e.textContent='✓ Bateu certinho'; } else { e.style.color=d<0?'#B91C1C':'#047857'; e.textContent=(d<0?'Faltou ':'Sobrou ')+fmMoeda(Math.abs(d)); } }
   var f=el('fm-falta'); if(f) f.innerHTML=(d!==null&&d<0&&!FM.aj.some(function(a){ return a.auto; }))?'<button class="btn sec" style="margin-top:8px;width:100%" onclick="fmDescontaFalta()">Descontar a falta ('+fmMoeda(Math.abs(d))+') do pagamento</button>':'';
-  var l=el('fm-liq'); if(l){ var v=fmLiquido(); l.textContent=fmMoeda(v); l.style.color=v<0?'#B91C1C':''; }
+  var l=el('fm-liq'); if(l){ var v=fmLiquido(); l.textContent=fmMoeda(v); l.style.color=v<0?'#B91C1C':''; var l2=el('fm-liq2'); if(l2){ l2.textContent=fmMoeda(v); l2.style.color=v<0?'#B91C1C':''; } }
 }
 function fmDescontaFalta(){ var d=fmDif(); if(d===null||d>=0) return; FM.aj.push({tp:'ded',v:String(Math.abs(d)).replace('.',','),obs:'Falta de dinheiro na devolução',auto:1}); fmAjsPinta(); fmAtualiza(); }
 function fmAdd(tp){ FM.aj.push({tp:tp,v:'',obs:''}); fmAjsPinta(); fmAtualiza(); }
