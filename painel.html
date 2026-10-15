@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Giro OS — Painel do ponto · GIRO-OS-022</title>
+<title>Giro OS — Painel do ponto · GIRO-OS-023</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -387,7 +387,7 @@ a{color:inherit}
 .mp-pkl{display:none;position:absolute;left:15px;top:35px;height:2px;margin-top:-1px;background:rgba(41,35,30,.65);transform-origin:0 50%;pointer-events:none;border-radius:2px}
 .mp-pkdot{display:none;position:absolute;left:11px;top:31px;width:8px;height:8px;border-radius:50%;background:#29231E;border:1.5px solid #fff;pointer-events:none}
 .mp-pkw.esp .mp-pkl,.mp-pkw.esp .mp-pkdot{display:block}
-.mp-info{font-size:12.5px;line-height:1.5;min-width:190px}.mp-info-t{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-bottom:2px;font-size:14px}.mp-info-n{font-weight:800;font-size:14px}
+.maplibregl-popup{z-index:60;font-family:var(--fbody)}.maplibregl-popup-content{padding:10px 12px;border-radius:12px;font-family:var(--fbody)}.mp-info{font-size:12.5px;line-height:1.45;min-width:170px;max-width:220px}.mp-info-t{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-bottom:3px;font-size:13.5px}.mp-info-n{font-weight:700;font-size:13.5px;font-family:var(--fbody)}.mp-info-s{color:var(--muted)}.mp-info-aj{margin-top:5px;font-size:11px}.mp-info-aj a{color:var(--muted2);text-decoration:underline}.mp-info-ga{margin-top:3px;font-size:10px;color:var(--muted2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.8}
 .mp-conf{position:fixed;inset:0;z-index:130;background:rgba(41,35,30,.45);display:none;align-items:center;justify-content:center;padding:16px}
 .mp-conf-box{background:var(--s1);border-radius:16px;box-shadow:0 12px 40px rgba(41,35,30,.4);width:min(520px,100%);max-height:90vh;display:flex;flex-direction:column;padding:18px}
 .mp-conf-box h3{margin:0 0 12px}
@@ -655,7 +655,7 @@ a{color:inherit}
 
       <!-- PEDIDOS -->
       <section class="page" id="pg-pedidos">
-        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-022</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
+        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-023</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
         <div id="pd-chip"></div>
         <div class="card">
           <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
@@ -5465,7 +5465,7 @@ function mpAplicarModo(){
   el('mp-diabar').style.display=(m==='vivo')?'contents':'none';
   el('mp-opbar').style.display=(m==='mapa')?'flex':'none'; el('mp-opmot').style.display='none'; el('mp-vivo').style.display=(m==='mapa')?'':'none';
   var rl=el('mp-ritmo'); if(rl&&rl.parentNode) rl.parentNode.style.display=(m==='vivo')?'':'none';
-  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-022';
+  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-023';
   if(m!=='mapa'){ mpPkTodos(false); el('mp-sempos').style.display='none'; el('mp-sempos-btn').style.display='none'; }
   if(m==='vivo'){ MP_ENQ=true; mpBuscar(); } else mpOperador();
 }
@@ -5614,17 +5614,13 @@ var MP_INFO=null;
 function mpInfoPin(cod){
   var p=mpAcharPed(cod), o=MP_PK[cod]; if(!p||!o||!MP_MAP) return;
   if(MP_INFO){ try{ MP_INFO.remove(); }catch(e){} MP_INFO=null; }
-  var t=mpTemp(p), tel=String(p.tel||'').trim(), g=mpGrupoDe(cod);
+  var t=mpTemp(p), tel=String(p.tel||'').trim();
   var h='<div class="mp-info"><div class="mp-info-t"><b>#'+esc(pdNum(p))+'</b><span class="badge '+t.cls+'">'+esc(t.txt)+'</span></div>'+
     '<div class="mp-info-n">'+esc(p.cliente||'—')+'</div>'+
-    '<div>📍 '+esc([p.rua,p.num].filter(Boolean).join(', ')||'sem endereço')+'<br><span style="color:var(--muted)">'+esc((p.bairro||p.bai||'—')+(p.cid?' · '+p.cid:''))+'</span></div>'+
-    (tel?'<div>📞 <a href="tel:'+esc(tel.replace(/[^\d+]/g,''))+'">'+esc(tel)+'</a></div>':'')+
-    '<div style="color:var(--muted2)">'+moeda(p.vl)+' · '+pdRecebHtml(p)+'</div>'+
-    (g?'<div style="font-weight:800;color:'+g.cor+'">Com '+esc(g.nome)+' (toque no alfinete para liberar)</div>':'')+
-    (p.ga?'<div style="font-size:11px;color:var(--muted2);margin-top:3px">Mapa entendeu: '+esc(p.ga)+'</div>':'')+
-    (p.gq===1?'<div class="mp-aviso" style="font-weight:600">⚠ Posição aproximada.</div>':'')+
-    (p.gq===2?'<div style="font-size:11px;color:var(--muted2)">Posição ajustada por você.</div>':'')+
-    '<button class="btn sec" style="margin-top:6px;width:100%;padding:6px" onclick="mpAjustarPin(\''+esc(p.cod)+'\')">📍 Ajustar posição</button></div>';
+    '<div class="mp-info-s">'+esc(p.bairro||p.bai||'—')+'</div>'+
+    (tel?'<div class="mp-info-s"><a href="tel:'+esc(tel.replace(/[^\d+]/g,''))+'">'+esc(tel)+'</a></div>':'')+
+    '<div class="mp-info-aj"><a href="#" onclick="mpAjustarPin(\''+esc(p.cod)+'\');return false">ajustar posição</a></div>'+
+    (p.ga?'<div class="mp-info-ga" title="'+esc(p.ga)+'">'+esc(p.ga)+'</div>':'')+'</div>';
   MP_INFO=new maplibregl.Popup({closeButton:true,closeOnClick:true,maxWidth:'260px',offset:[(o.dx||0),-38+(o.dy||0)]}).setLngLat([p.lng,p.lat]).setHTML(h).addTo(MP_MAP);
 }
 var MP_AJ='';   /* pedido em "ajuste de posição": só ele pode ser arrastado */
