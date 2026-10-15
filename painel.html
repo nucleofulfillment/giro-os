@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Giro OS — Painel do ponto · GIRO-OS-042</title>
+<title>Giro OS — Painel do ponto · GIRO-OS-043</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -662,7 +662,7 @@ a{color:inherit}
 
       <!-- PEDIDOS -->
       <section class="page" id="pg-pedidos">
-        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-042</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
+        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-043</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
         <div id="pd-chip"></div>
         <div class="card">
           <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
@@ -2727,6 +2727,8 @@ function abrirDetalheFechamento(mid,fid){
   el('fc-data').textContent=dataBR(f.dataPagamento)||'—';
   el('fc-valor').textContent=moeda(f.valor);
   var ajH='', ja; if(f.ajustes&&f.ajustes.length){ ajH='<div class="sh-row"><span class="k">Valor dos pacotes</span><span class="v">'+moeda(f.bruto)+'</span></div>'; for(ja=0;ja<f.ajustes.length;ja++){ var x=f.ajustes[ja]; ajH+='<div class="sh-row" style="align-items:flex-start"><span class="k">'+(x.tp==='cred'?'+ Crédito':'− Dedução')+' · '+esc(x.obs)+'</span><span class="v" style="color:'+(x.tp==='cred'?'#047857':'#B91C1C')+'">'+(x.tp==='cred'?'+':'−')+' '+moeda(x.valor)+'</span></div>'; } }
+  if(f.rel){ var rl=f.rel, lin=function(k,v,cor){ return '<div class="sh-row"><span class="k">'+k+'</span><span class="v"'+(cor?' style="color:'+cor+'"':'')+'>'+v+'</span></div>'; };
+    ajH=lin('Entregas ('+(rl.nEnt||0)+(rl.nAus?' · '+rl.nAus+' ausente(s)':'')+')','')+lin('Recebido em dinheiro',moeda(rl.dinheiro))+lin('Recebido em Pix',moeda(rl.pix))+lin('Recebido em cartão',moeda(rl.cartao))+lin('Já pago online',moeda(rl.online))+lin('Troco adiantado',moeda(rl.troco))+lin('Dinheiro esperado de volta',moeda(rl.esperado))+(rl.devolvido!=null?lin('Dinheiro devolvido',moeda(rl.devolvido))+lin('Diferença',moeda(rl.dif),rl.dif<0?'#B91C1C':(rl.dif>0?'#047857':'')):'')+(rl.obs?lin('Obs',esc(rl.obs)):'')+'<div class="sh-row" style="margin-top:6px"><span class="k"><b>Pagamento ao motoboy</b></span><span class="v"></span></div>'+ajH; }
   el('fc-aj').innerHTML=ajH;
   el('fc-btn-del').style.display=(f.status==='pago'||trav0(f))?'none':'block'; el('fc-btn-del').textContent='🗑 Excluir este fechamento';
   var lz=f.lancId?achaLanc(f.lancId):null, trav=travadoPix(lz), mp=motorista(mid);
@@ -4213,6 +4215,30 @@ function comandasSincronizar(){
   }).catch(function(){ CM_BUSY=false; });
 }
 setInterval(comandasSincronizar,10000); setTimeout(comandasSincronizar,4000);
+/* ══ fechamento do motoboy feito na Mesa: vira fechamento do motorista + saída pendente no Fluxo de Caixa ══ */
+var FM_BUSY=false;
+function fechamentosSincronizar(){
+  if(!REAL||!DD_TOKEN||document.hidden||FM_BUSY) return;
+  FM_BUSY=true;
+  fetch(DELTADIS_API+'/painel/fechamentos',{headers:{'Authorization':'Bearer '+DD_TOKEN}}).then(function(r){ return r.json(); }).then(function(d){
+    FM_BUSY=false; if(!d||!d.ok||!d.fechamentos||!d.fechamentos.length) return;
+    d.fechamentos.forEach(function(fc){
+      var m=motorista(Number(fc.mt))||motorista(fc.mt); if(!m){ aviso('Fechamento da Mesa: motoboy não encontrado no painel ('+esc(fc.mtn||fc.mt)+')'); return; }
+      m.fechamentos=m.fechamentos||[];
+      var ja=m.fechamentos.some(function(x){ return x.fcid===fc.id; });
+      if(!ja){
+        var rs=fc.resumo||{}, fid='f'+Date.now()+Math.floor(Math.random()*1000);
+        var f={id:fid, fcid:fc.id, origem:'mesa', cicloIni:fc.dia, cicloFim:fc.dia, dataPagamento:hojeISO(), bruto:Number(rs.frete)||0, ajustes:(fc.ajustes||[]).map(function(a){ return {tp:a.tp==='cred'?'cred':'ded', valor:a.valor, obs:a.obs}; }), valor:Number(fc.liquido)||0, status:'pendente', pedidos:[],
+          rel:{dinheiro:rs.dinheiro||0, pix:rs.pix||0, cartao:rs.cartao||0, online:rs.online||0, troco:rs.troco||0, esperado:rs.esperado||0, devolvido:fc.devolvido, dif:fc.dif, obs:fc.obs||'', nEnt:rs.n_ent||0, nAus:rs.n_aus||0}};
+        (rs.linhas||[]).forEach(function(l){ if(l.st!=='entregue') return; f.pedidos.push({cod:l.cod, cliente:l.cliente||'', valor:Number(l.tx)||0}); var p=mpAcharPed(l.cod); if(p) p.fechId=fid; });
+        m.fechamentos.push(f); lancDoFechamento(m,f); salvarLocal(); try{ pintarFluxoCaixa(); }catch(e){}
+        aviso('Fechamento de '+m.n+' vindo da Mesa: '+moeda(f.valor)+' lançado no Fluxo de Caixa');
+      }
+      fetch(DELTADIS_API+'/painel/fechamento-ok',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+DD_TOKEN},body:JSON.stringify({id:fc.id})}).catch(function(){});
+    });
+  }).catch(function(){ FM_BUSY=false; });
+}
+setInterval(fechamentosSincronizar,12000); setTimeout(fechamentosSincronizar,6000);
 
 /* ══ upload de planilha (alimenta os pedidos) ══ */
 var UP_TRANSP=null;
@@ -5539,7 +5565,7 @@ function mpAplicarModo(){
   el('mp-diabar').style.display=(m==='vivo')?'contents':'none';
   el('mp-opbar').style.display=(m==='mapa')?'flex':'none'; el('mp-opmot').style.display='none'; el('mp-vivo').style.display=(m==='mapa')?'':'none';
   var rl=el('mp-ritmo'); if(rl&&rl.parentNode) rl.parentNode.style.display=(m==='vivo')?'':'none';
-  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-042';
+  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-043';
   if(m!=='mapa'){ mpPkTodos(false); el('mp-sempos').style.display='none'; el('mp-sempos-btn').style.display='none'; }
   if(m==='vivo'){ MP_ENQ=true; mpBuscar(); } else mpOperador();
 }

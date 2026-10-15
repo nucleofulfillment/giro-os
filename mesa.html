@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Giro OS — Mesa · GIRO-OS-010</title>
+<title>Giro OS — Mesa · GIRO-OS-011</title>
 <script>try{ if(localStorage.getItem('dd_jwt')) document.documentElement.classList.add('dd-ret'); }catch(e){}</script>
 <style>html.dd-ret #login{display:none!important}</style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -233,7 +233,7 @@
     <div class="field"><label>Senha</label><input class="inp" id="lg-senha" type="password" placeholder="••••••••"></div>
     <button class="btn pri" style="width:100%" onclick="entrar()">Entrar</button>
     <p class="lg-demo" id="lg-msg" style="min-height:16px"></p>
-    <p class="lg-demo" style="opacity:.55;font-size:10.5px">GIRO-OS-010</p>
+    <p class="lg-demo" style="opacity:.55;font-size:10.5px">GIRO-OS-011</p>
   </div>
 </div>
 
@@ -1648,7 +1648,7 @@ document.addEventListener('DOMContentLoaded',function(){
 .cm-msg-box .btn{width:100%;padding:14px;font-size:16px}
 </style>
 <div id="cm-tela">
-  <div id="cm-top"><b>📷 Lançar comanda</b><button onclick="cmFechar()">↩ Devolução / Esquecido</button></div>
+  <div id="cm-top"><b>📷 Lançar comanda</b><button onclick="hmAbrir()">← Início</button></div>
   <div id="cm-cam">
     <div id="cm-vwrap"><video id="cm-video" autoplay playsinline muted></video><div id="cm-guia"></div><div id="cm-dica">Enquadre a comanda inteira, de perto e com boa luz</div><div id="cm-aviso"></div></div>
     <div id="cm-botoes"><label class="btn sec" style="cursor:pointer">🖼 Galeria<input type="file" accept="image/*" id="cm-arq" style="display:none" onchange="cmArquivo(this)"></label><button class="btn pri" id="cm-foto" onclick="cmFotografar()">📸 Fotografar</button></div>
@@ -1766,9 +1766,121 @@ function cmLancar(){
   }).catch(function(){ b.dataset.busy=''; b.textContent='Lançar pedido'; aviso('Sem resposta do servidor. Tente de novo (ela não foi lançada).'); });
 }
 (function(){
-  var ma=mostrarApp; mostrarApp=function(){ ma(); cmAbrir(); };
-  var pm=pintarModos; pintarModos=function(){ pm(); var b=el('modo-bar'); if(b){ var x=document.createElement('button'); x.textContent='📷 Comanda'; x.onclick=cmAbrir; b.insertBefore(x,b.firstChild); } };
+  var ma=mostrarApp; mostrarApp=function(){ ma(); hmAbrir(); };
+  var pm=pintarModos; pintarModos=function(){ pm(); var b=el('modo-bar'); if(b){ var x=document.createElement('button'); x.textContent='🏠 Início'; x.onclick=hmAbrir; b.insertBefore(x,b.firstChild); } };
 })();
+</script>
+<style>
+#hm-tela,#fm-tela{position:fixed;inset:0;z-index:8900;display:none;flex-direction:column;font-family:inherit}
+#hm-tela.on,#fm-tela.on{display:flex}
+#hm-tela{background:#1c1713;color:#fff;align-items:center;justify-content:center;gap:16px;padding:24px}
+#hm-tela h2{margin:0 0 4px;font-size:22px}
+#hm-tela .hm-b{width:min(420px,100%);border:0;border-radius:18px;padding:26px 18px;font-size:20px;font-weight:800;cursor:pointer;color:#fff;font-family:inherit}
+#hm-tela .hm-b small{display:block;font-size:13px;font-weight:500;opacity:.85;margin-top:4px}
+#hm-tela .hm-b.a{background:linear-gradient(135deg,#F97316,#FBBF24)}
+#hm-tela .hm-b.b{background:linear-gradient(135deg,#16A34A,#4ADE80)}
+#hm-tela .hm-b.c{background:rgba(255,255,255,.14);font-size:15px;padding:16px}
+#fm-tela{background:var(--bg,#FBF4EF);color:var(--text,#29231E)}
+#fm-top{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#1c1713;color:#fff;flex:none}
+#fm-top b{font-size:16px}
+#fm-top button{background:rgba(255,255,255,.15);border:0;color:#fff;border-radius:10px;padding:8px 14px;font-weight:700;font-size:13.5px;cursor:pointer}
+#fm-corpo{flex:1;min-height:0;overflow-y:auto;padding:14px 16px 24px}
+.fm-card{background:#fff;border:1.5px solid #E8D9CC;border-radius:14px;padding:14px;margin-bottom:10px;cursor:pointer}
+.fm-card.off{opacity:.55;cursor:default}
+.fm-card b{font-size:16px}.fm-card small{display:block;color:#6b5d51;margin-top:3px;font-size:12.5px}
+.fm-sec{background:#fff;border:1.5px solid #E8D9CC;border-radius:14px;padding:12px 14px;margin-bottom:12px}
+.fm-sec h4{margin:0 0 8px;font-size:14px}
+.fm-r{display:flex;justify-content:space-between;gap:10px;padding:5px 0;font-size:14px;border-bottom:1px dashed #EFE3D8}
+.fm-r:last-child{border-bottom:0}
+.fm-r.t{font-weight:800;font-size:15.5px}
+.fm-ent{display:flex;justify-content:space-between;gap:10px;padding:6px 0;font-size:13px;border-bottom:1px dashed #EFE3D8}
+.fm-ent small{color:#6b5d51;display:block}
+.fm-aj{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:8px}
+.fm-aj .inp{padding:9px 10px;border-radius:10px;border:1.5px solid #E8D9CC;font-size:14px;font-family:inherit;background:#fff;box-sizing:border-box}
+#fm-fbot{display:flex;gap:10px;padding:12px 16px calc(12px + env(safe-area-inset-bottom));border-top:1px solid #EEE;background:#fff;flex:none}
+#fm-fbot .btn{padding:14px 10px;font-size:15px;flex:1}
+</style>
+<div id="hm-tela">
+  <h2>Mesa</h2>
+  <button class="hm-b a" onclick="hmCam()">📷 Lançar pedido<small>Abre a câmera para fotografar a comanda</small></button>
+  <button class="hm-b b" onclick="fmAbrir()">💰 Fechamento<small>Fechar o dia do motoboy</small></button>
+  <button class="hm-b c" onclick="hmFechar()">↩ Devolução / Esquecido</button>
+</div>
+<div id="fm-tela">
+  <div id="fm-top"><b id="fm-tit">💰 Fechamento</b><button onclick="fmVoltar()">← Início</button></div>
+  <div id="fm-corpo"></div>
+  <div id="fm-fbot" style="display:none"></div>
+</div>
+<script>
+var FM={lista:[],atual:null,aj:[],dev:'',obs:'',busy:false,arm:false};
+function hmAbrir(){ try{ cmParar(); }catch(e){} el('cm-tela').classList.remove('on'); el('fm-tela').classList.remove('on'); el('hm-tela').classList.add('on'); }
+function hmFechar(){ el('hm-tela').classList.remove('on'); }
+function hmCam(){ hmFechar(); cmAbrir(); }
+function fmMoeda(v){ return 'R$ '+(Number(v)||0).toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.'); }
+function fmEsc(t){ return String(t==null?'':t).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+function fmAbrir(){ hmFechar(); el('fm-tela').classList.add('on'); FM.atual=null; fmCarregar(); }
+function fmVoltar(){ if(FM.atual){ FM.atual=null; fmCarregar(); } else hmAbrir(); }
+function fmCarregar(){
+  el('fm-tit').textContent='💰 Fechamento'; el('fm-fbot').style.display='none';
+  el('fm-corpo').innerHTML='<div style="text-align:center;padding:30px;color:#6b5d51">Carregando…</div>';
+  api('/painel/fechamento-previa').then(function(d){
+    if(!d||!d.ok){ el('fm-corpo').innerHTML='<div style="padding:20px;color:#B91C1C">'+fmEsc((d&&d.mensagem)||'Não consegui carregar.')+'</div>'; return; }
+    FM.lista=d.motoboys||[]; fmLista();
+  }).catch(function(){ el('fm-corpo').innerHTML='<div style="padding:20px;color:#B91C1C">Sem resposta do servidor. Tente de novo.</div>'; });
+}
+function fmLista(){
+  var h='<p style="margin:0 0 12px;font-size:13px;color:#6b5d51">Escolha o motoboy para fechar o dia.</p>';
+  FM.lista.forEach(function(m,i){ var r=m.resumo, off=m.abertas>0;
+    h+='<div class="fm-card'+(off?' off':'')+'" '+(off?'':'onclick="fmEscolher('+i+')"')+'><b>🏍️ '+fmEsc(m.mtn||('Motoboy '+m.mt))+'</b><small>'+r.n_ent+' entrega(s)'+(r.n_aus?' · '+r.n_aus+' ausente(s)':'')+' · frete '+fmMoeda(r.frete)+'</small>'+(off?'<small style="color:#B45309">Ainda está em rota — feche depois que ele terminar.</small>':'')+'</div>'; });
+  if(!FM.lista.length) h+='<div style="text-align:center;padding:30px;color:#6b5d51">Nenhum motoboy com entregas para fechar.</div>';
+  el('fm-corpo').innerHTML=h;
+}
+function fmEscolher(i){ FM.atual=FM.lista[i]; FM.aj=[]; FM.dev=''; FM.obs=''; FM.arm=false; fmDetalhe(); }
+function fmN(v){ var t=String(v==null?'':v).replace(/[^\d,.\-]/g,''); if(!t) return 0; if(t.indexOf(',')>=0) t=t.replace(/\./g,'').replace(',','.'); var n=parseFloat(t); return isNaN(n)?0:n; }
+function fmLiquido(){ var r=FM.atual.resumo, t=r.frete; FM.aj.forEach(function(a){ var v=fmN(a.v); t+=(a.tp==='cred'?v:-v); }); return Math.round(t*100)/100; }
+function fmDif(){ return FM.dev===''?null:Math.round((fmN(FM.dev)-FM.atual.resumo.esperado)*100)/100; }
+function fmDetalhe(){
+  var m=FM.atual, r=m.resumo; el('fm-tit').textContent='💰 '+(m.mtn||'Motoboy');
+  var h='<div class="fm-sec"><h4>Recebido nas entregas</h4>'+
+    '<div class="fm-r"><span>Dinheiro</span><b>'+fmMoeda(r.dinheiro)+'</b></div><div class="fm-r"><span>Pix</span><b>'+fmMoeda(r.pix)+'</b></div><div class="fm-r"><span>Cartão</span><b>'+fmMoeda(r.cartao)+'</b></div><div class="fm-r"><span>Já pago online</span><b>'+fmMoeda(r.online)+'</b></div>'+
+    '<div class="fm-r t"><span>Total das entregas</span><span>'+fmMoeda(r.total)+'</span></div></div>';
+  h+='<div class="fm-sec"><h4>Dinheiro que ele devolve</h4><div class="fm-r"><span>Troco adiantado</span><b>'+fmMoeda(r.troco)+'</b></div><div class="fm-r"><span>+ Dinheiro recebido</span><b>'+fmMoeda(r.dinheiro)+'</b></div><div class="fm-r t"><span>Esperado de volta</span><span>'+fmMoeda(r.esperado)+'</span></div>'+
+    '<div class="fm-aj"><span style="font-size:13px;font-weight:700">Devolveu:</span><input class="inp" inputmode="decimal" placeholder="R$ 0,00" value="'+fmEsc(FM.dev)+'" oninput="FM.dev=this.value;fmAtualiza()" style="width:130px"></div><div id="fm-dif" style="margin-top:8px;font-size:13.5px;font-weight:700"></div></div>';
+  h+='<div class="fm-sec"><h4>Entregas ('+r.n_ent+')</h4>'; r.linhas.forEach(function(l){ if(l.st!=='entregue') return; h+='<div class="fm-ent"><div><b>#'+fmEsc(l.num||l.cod)+'</b> '+fmEsc(l.cliente||'')+'<small>'+fmEsc({dinheiro:'Dinheiro',pix:'Pix',cartao:'Cartão',pago:'Pago online'}[l.pgr]||l.pgr)+' · frete '+fmMoeda(l.tx)+'</small></div><b>'+fmMoeda(l.vl)+'</b></div>'; }); h+='</div>';
+  h+='<div class="fm-sec"><h4>Pagamento ao motoboy</h4><div class="fm-r"><span>Frete das entregas</span><b>'+fmMoeda(r.frete)+'</b></div><div id="fm-ajs"></div>'+
+    '<div class="fm-aj"><button class="btn sec" style="flex:1" onclick="fmAdd(\'cred\')">+ Crédito</button><button class="btn sec" style="flex:1" onclick="fmAdd(\'ded\')">− Dedução</button></div><div id="fm-falta"></div>'+
+    '<div class="fm-r t" style="margin-top:10px"><span>A pagar</span><span id="fm-liq"></span></div></div>';
+  h+='<div class="fm-sec"><h4>Observação do fechamento</h4><input class="inp" placeholder="Opcional" value="'+fmEsc(FM.obs)+'" oninput="FM.obs=this.value" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid #E8D9CC;font-size:14px;box-sizing:border-box"></div>';
+  el('fm-corpo').innerHTML=h; el('fm-fbot').style.display='flex';
+  el('fm-fbot').innerHTML='<button class="btn sec" style="flex:0 0 34%" onclick="fmVoltar()">Cancelar</button><button class="btn pri" id="fm-ok" onclick="fmFechar()" style="background:#16A34A">Fechar dia</button>';
+  fmAjsPinta(); fmAtualiza();
+}
+function fmAtualiza(){
+  var d=fmDif(), e=el('fm-dif'); if(e){ if(d===null) e.textContent=''; else if(d===0){ e.style.color='#047857'; e.textContent='✓ Bateu certinho'; } else { e.style.color=d<0?'#B91C1C':'#047857'; e.textContent=(d<0?'Faltou ':'Sobrou ')+fmMoeda(Math.abs(d)); } }
+  var f=el('fm-falta'); if(f) f.innerHTML=(d!==null&&d<0&&!FM.aj.some(function(a){ return a.auto; }))?'<button class="btn sec" style="margin-top:8px;width:100%" onclick="fmDescontaFalta()">Descontar a falta ('+fmMoeda(Math.abs(d))+') do pagamento</button>':'';
+  var l=el('fm-liq'); if(l){ var v=fmLiquido(); l.textContent=fmMoeda(v); l.style.color=v<0?'#B91C1C':''; }
+}
+function fmDescontaFalta(){ var d=fmDif(); if(d===null||d>=0) return; FM.aj.push({tp:'ded',v:String(Math.abs(d)).replace('.',','),obs:'Falta de dinheiro na devolução',auto:1}); fmAjsPinta(); fmAtualiza(); }
+function fmAdd(tp){ FM.aj.push({tp:tp,v:'',obs:''}); fmAjsPinta(); fmAtualiza(); }
+function fmDel(i){ FM.aj.splice(i,1); fmAjsPinta(); fmAtualiza(); }
+function fmSet(i,k,v){ FM.aj[i][k]=v; if(k==='v') fmAtualiza(); }
+function fmAjsPinta(){
+  var h=''; FM.aj.forEach(function(a,i){ h+='<div class="fm-aj"><b style="width:78px;font-size:12.5px;color:'+(a.tp==='cred'?'#047857':'#B91C1C')+'">'+(a.tp==='cred'?'+ Crédito':'− Dedução')+'</b><input class="inp" inputmode="decimal" placeholder="Valor R$" value="'+fmEsc(a.v)+'" oninput="fmSet('+i+',\'v\',this.value)" style="width:100px"><input class="inp" placeholder="Motivo (obrigatório)" value="'+fmEsc(a.obs)+'" oninput="fmSet('+i+',\'obs\',this.value)" style="flex:1;min-width:120px"><button class="btn sec" onclick="fmDel('+i+')" style="padding:8px 12px;width:auto;flex:none">✕</button></div>'; });
+  el('fm-ajs').innerHTML=h;
+}
+function fmFechar(){
+  var m=FM.atual; if(!m||FM.busy) return;
+  var aj=[],i,a,v; for(i=0;i<FM.aj.length;i++){ a=FM.aj[i]; v=fmN(a.v); if(!(v>0)){ aviso('Preencha o valor da '+(a.tp==='cred'?'crédito':'dedução')+' ou remova a linha'); return; } if(!String(a.obs||'').trim()){ aviso('Escreva o motivo da '+(a.tp==='cred'?'crédito':'dedução')); return; } aj.push({tp:a.tp,valor:v,obs:String(a.obs).trim()}); }
+  if(FM.dev===''&&m.resumo.esperado>0){ aviso('Informe quanto de dinheiro ele devolveu (0 se não devolveu nada)'); return; }
+  var b=el('fm-ok');
+  if(!FM.arm){ FM.arm=true; b.textContent='Confirmar: '+fmMoeda(fmLiquido()); setTimeout(function(){ FM.arm=false; var x=el('fm-ok'); if(x) x.textContent='Fechar dia'; },5000); return; }
+  FM.busy=true; b.textContent='Fechando…';
+  api('/painel/fechamento',{method:'POST',body:JSON.stringify({mt:m.mt,mtn:m.mtn,saidas:m.ids,devolvido:FM.dev===''?null:fmN(FM.dev),ajustes:aj,obs:FM.obs})}).then(function(d){
+    FM.busy=false; FM.arm=false;
+    if(d&&d.ok){ cmSom('ok'); aviso('Dia de '+(m.mtn||'motoboy')+' fechado: '+fmMoeda(d.liquido)+' vai pro Fluxo de Caixa'); FM.atual=null; fmCarregar(); }
+    else { cmSom('erro'); aviso((d&&d.mensagem)||'Não consegui fechar'); b.textContent='Fechar dia'; }
+  }).catch(function(){ FM.busy=false; FM.arm=false; b.textContent='Fechar dia'; aviso('Sem resposta do servidor. Tente de novo (não foi fechado).'); });
+}
 </script>
 </body>
 </html>
