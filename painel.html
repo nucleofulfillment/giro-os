@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Giro OS — Painel do ponto · GIRO-OS-038</title>
+<title>Giro OS — Painel do ponto · GIRO-OS-039</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -662,7 +662,7 @@ a{color:inherit}
 
       <!-- PEDIDOS -->
       <section class="page" id="pg-pedidos">
-        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-038</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
+        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-039</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
         <div id="pd-chip"></div>
         <div class="card">
           <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
@@ -5539,7 +5539,7 @@ function mpAplicarModo(){
   el('mp-diabar').style.display=(m==='vivo')?'contents':'none';
   el('mp-opbar').style.display=(m==='mapa')?'flex':'none'; el('mp-opmot').style.display='none'; el('mp-vivo').style.display=(m==='mapa')?'':'none';
   var rl=el('mp-ritmo'); if(rl&&rl.parentNode) rl.parentNode.style.display=(m==='vivo')?'':'none';
-  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-038';
+  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-039';
   if(m!=='mapa'){ mpPkTodos(false); el('mp-sempos').style.display='none'; el('mp-sempos-btn').style.display='none'; }
   if(m==='vivo'){ MP_ENQ=true; mpBuscar(); } else mpOperador();
 }
@@ -5564,7 +5564,7 @@ function mpGeoPendentes(){
   fetch(DELTADIS_API+'/rota/localizar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({itens:lote.map(function(p){ return {cod:p.cod,rua:p.rua,num:p.num,comp:p.comp,bai:p.bai,cid:p.cid,cep:p.cep}; })})})
   .then(function(r){ return r.json(); }).then(function(d){
     MP_GEO_BUSY=false;
-    if(d&&d.ok&&d.itens){ var mud=false, nok=0, perr=''; d.itens.forEach(function(it){ var p=mpAcharPed(it.cod); if(p && it.lat!=null && it.lng!=null){ p.lat=Number(it.lat); p.lng=Number(it.lng); p.ga=String(it.achado||'').slice(0,160); p.gq=(it.precisao==='numero'&&!(it.flags&&it.flags.length)&&mpAchouRua(p))?0:1; mud=true; nok++; } else if(p && !perr) perr=String(it.erro||it.precisao||'sem resultado'); }); if(mud) salvarLocal(); aviso(nok?('Posição refeita: '+nok+' pedido(s)'):('Mapa não respondeu: '+perr)); }
+    if(d&&d.ok&&d.itens){ var mud=false, nok=0, perr=''; d.itens.forEach(function(it){ var p=mpAcharPed(it.cod); if(p && it.cid && it.cid!==p.cid) p.cid=String(it.cid); if(p && it.lat!=null && it.lng!=null){ p.lat=Number(it.lat); p.lng=Number(it.lng); p.ga=String(it.achado||'').slice(0,160); p.gq=(it.precisao==='numero'&&!(it.flags&&it.flags.length)&&mpAchouRua(p))?0:1; mud=true; nok++; } else if(p && !perr) perr=String(it.erro||it.precisao||'sem resultado'); }); if(mud) salvarLocal(); aviso(nok?('Posição refeita: '+nok+' pedido(s)'):('Mapa não respondeu: '+perr)); }
     else aviso('Mapa não respondeu: '+(d&&d.erro||'erro'));
     mpOperador();
   }).catch(function(){ MP_GEO_BUSY=false; aviso('Mapa não respondeu (sem conexão com o servidor)'); mpOperador(); });
