@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Giro OS — Painel do ponto · GIRO-OS-026</title>
+<title>Giro OS — Painel do ponto · GIRO-OS-027</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -655,7 +655,7 @@ a{color:inherit}
 
       <!-- PEDIDOS -->
       <section class="page" id="pg-pedidos">
-        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-026</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
+        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-027</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
         <div id="pd-chip"></div>
         <div class="card">
           <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
@@ -1449,6 +1449,7 @@ var REAL=true;
 var CICLOS=[];   /* regras de ciclo de repasse (Configurações): {id,grupo:'todos'|id do grupo,modo:'auto'|'manual',tipo,dia,prazo} */
 var RASTREADOS={};   /* códigos já registrados no rastreio automático (só pacotes com problema entram) */
 var RASTREIO_DIAS=2;   /* pacote não entregue há mais de N dias entra no rastreio */
+var FILA={modo:'auto',ordem:[]};   /* fila de chegada dos motoboys: ordem das senhas e se é automática ou manual (o dono do restaurante escolhe) */
 var GRUPOS=[];   /* grupos de motoristas: {id,nome,ids:[id do motorista]} — base pra regras/repasses por grupo no futuro */
 var AREAS=[];   /* áreas de entrega: {nome,valor} por nome  ou  {ini,fim,valor} por faixa de CEP */
 var PRECOS={};   /* id da transportadora → {recebe: R$ por pacote que ela paga ao ponto, paga: R$ por pacote pago ao motorista} */
@@ -1518,7 +1519,7 @@ function salvarLocal(cb){
   var o; try{ sincStatusFech(); }catch(eSf){}
   if(REAL){
     var pc=packPed();
-    o={real:true, v:2, cli:cliAtual(), pc:pc, motoristas:MOTORISTAS, extrato:EXTRATO, precos:PRECOS, transps:packTransp(), areas:AREAS, grupos:GRUPOS, ciclos:CICLOS, rast:Object.keys(RASTREADOS)};
+    o={real:true, v:2, cli:cliAtual(), pc:pc, motoristas:MOTORISTAS, extrato:EXTRATO, precos:PRECOS, transps:packTransp(), areas:AREAS, grupos:GRUPOS, ciclos:CICLOS, rast:Object.keys(RASTREADOS), fila:FILA};
   } else o={real:false, precos:PRECOS};
   try{ localStorage.setItem(LS_KEY, JSON.stringify({real:false, precos:PRECOS, idb:true})); }catch(e){}
   idbGravar(o,function(ok){ if(cb) cb(ok); });
@@ -1531,6 +1532,7 @@ function aplicarSalvo(d){
   if(d.transps) aplicarTransps(d.transps);
   if(d.areas) AREAS=d.areas;
   if(d.grupos) GRUPOS=d.grupos;
+  if(d.fila && d.fila.ordem) FILA={modo:(d.fila.modo==='manual'?'manual':'auto'),ordem:d.fila.ordem.map(String)};
   if(d.rast){ RASTREADOS={}; d.rast.forEach(function(c){ RASTREADOS[c]=1; }); }
   if(d.ciclos) CICLOS=d.ciclos; else if(d.ciclo && d.ciclo.modo) CICLOS=[{id:'c0',grupo:'todos',modo:d.ciclo.modo,tipo:d.ciclo.tipo,dia:d.ciclo.dia,prazo:d.ciclo.prazo}];
   if((d.pedidos||d.pc) && d.motoristas){
@@ -1589,7 +1591,8 @@ function srvBlocos(){
   mots=MOTORISTAS.map(function(m){ if(m&&typeof m.foto==='string'&&m.foto.length>900000){ var c={},q; for(q in m) c[q]=m[q]; c.foto=null; return c; } return m; });
   arr(est,'motoristas',mots); arr(est,'extrato',EXTRATO); arr(est,'areas',AREAS); arr(est,'grupos',GRUPOS); arr(est,'ciclos',CICLOS); arr(est,'rast',Object.keys(RASTREADOS));
   var tp=JSON.stringify(PRECOS); est.precos={t:tp,h:srvH(tp)};
-  var tq=JSON.stringify(packTransp()); est.transps={t:tq,h:srvH(tq)};   /* (54) transportadoras (nome, logo, site) ficam salvas */
+  var tq=JSON.stringify(packTransp()); est.transps={t:tq,h:srvH(tq)};
+  var tf=JSON.stringify(FILA); est.fila={t:tf,h:srvH(tf)};   /* (54) transportadoras (nome, logo, site) ficam salvas */
   for(i=0;i<pc.length;i++){ k=String(pc[i][4]||'_').replace(/[^0-9A-Za-z_-]/g,'_').slice(0,40); (g[k]=g[k]||[]).push(pc[i]); }
   for(k in g) arr(ped,k,g[k]);
   return {est:est,ped:ped};
@@ -1688,6 +1691,7 @@ function srvAplicarEst(d,bases){
     else if(b==='ciclos'){ CICLOS=srvJuntar(e,'ciclos'); mud++; }
     else if(b==='rast'){ RASTREADOS={}; srvJuntar(e,'rast').forEach(function(c){ RASTREADOS[c]=1; }); mud++; }
     else if(b==='precos' && e.precos && e.precos.d){ PRECOS=e.precos.d; mud++; }
+    else if(b==='fila' && e.fila && e.fila.d && e.fila.d.ordem){ FILA={modo:(e.fila.d.modo==='manual'?'manual':'auto'),ordem:e.fila.d.ordem.map(String)}; mud++; }
     else if(b==='transps' && e.transps && e.transps.d){ try{ aplicarTransps(e.transps.d); }catch(x){} mud++; }
   });
   return mud;
@@ -1785,7 +1789,7 @@ function srvCarregar(){
     Object.keys(bases).sort().forEach(function(b){ pc=pc.concat(srvJuntar(d.ped,b)); });
     var e=d.est, prec=(e.precos&&e.precos.d)||null;
     srvLimparMemoria();
-    aplicarSalvo({real:true,v:2,pc:pc,motoristas:srvJuntar(e,'motoristas'),extrato:srvJuntar(e,'extrato'),precos:prec,transps:(e.transps&&e.transps.d)||null,areas:srvJuntar(e,'areas'),grupos:srvJuntar(e,'grupos'),ciclos:srvJuntar(e,'ciclos'),rast:srvJuntar(e,'rast')});
+    aplicarSalvo({real:true,v:2,pc:pc,motoristas:srvJuntar(e,'motoristas'),extrato:srvJuntar(e,'extrato'),precos:prec,transps:(e.transps&&e.transps.d)||null,areas:srvJuntar(e,'areas'),grupos:srvJuntar(e,'grupos'),ciclos:srvJuntar(e,'ciclos'),rast:srvJuntar(e,'rast'),fila:(e.fila&&e.fila.d)||null});
     LOCAL_CLI=cli; SRV.pronto=true; srvPend(false);
     salvarLocal(); repintarTudo(); srvStatus('☁ salvo');
   }).catch(function(){
@@ -2081,7 +2085,7 @@ function srvMigrar(){
 }
 function baixarBackup(){
   try{
-    var o={real:true, v:2, cli:cliAtual(), pc:packPed(), motoristas:MOTORISTAS, extrato:EXTRATO, precos:PRECOS, transps:packTransp(), areas:AREAS, grupos:GRUPOS, ciclos:CICLOS, rast:Object.keys(RASTREADOS)};
+    var o={real:true, v:2, cli:cliAtual(), pc:packPed(), motoristas:MOTORISTAS, extrato:EXTRATO, precos:PRECOS, transps:packTransp(), areas:AREAS, grupos:GRUPOS, ciclos:CICLOS, rast:Object.keys(RASTREADOS), fila:FILA};
     var blob=new Blob([JSON.stringify(o)],{type:'application/json'}), a=document.createElement('a'), d=new Date();
     a.href=URL.createObjectURL(blob); a.download='deltadis-backup-'+d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2)+'.json';
     document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },1500);
@@ -5465,7 +5469,7 @@ function mpAplicarModo(){
   el('mp-diabar').style.display=(m==='vivo')?'contents':'none';
   el('mp-opbar').style.display=(m==='mapa')?'flex':'none'; el('mp-opmot').style.display='none'; el('mp-vivo').style.display=(m==='mapa')?'':'none';
   var rl=el('mp-ritmo'); if(rl&&rl.parentNode) rl.parentNode.style.display=(m==='vivo')?'':'none';
-  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-026';
+  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-027';
   if(m!=='mapa'){ mpPkTodos(false); el('mp-sempos').style.display='none'; el('mp-sempos-btn').style.display='none'; }
   if(m==='vivo'){ MP_ENQ=true; mpBuscar(); } else mpOperador();
 }
@@ -5528,7 +5532,7 @@ function mpResumoHtml(){
 function mpLegenda(){ var c=pdTempoCfg(); return '<span><i style="background:#16A34A"></i>até '+c.am+' min</span><span><i style="background:#F59E0B"></i>'+c.am+'–'+c.ve+' min</span><span><i style="background:#DC2626"></i>+'+c.ve+' min</span>'; }
 /* ordem de chegada dos motoboys (a senha é a posição na fila). O dono pode reordenar arrastando; fica salva neste navegador até a 5C levar pro servidor */
 function mpMotOrdem(){
-  var ord=[]; try{ ord=JSON.parse(localStorage.getItem('giro_ordem_mot')||'[]')||[]; }catch(e){}
+  var ord=FILA.ordem||[]; if(!ord.length){ try{ ord=JSON.parse(localStorage.getItem('giro_ordem_mot')||'[]')||[]; }catch(e){} }
   var out=[],usados={},i,m; ord.forEach(function(id){ for(i=0;i<MOTORISTAS.length;i++) if(String(MOTORISTAS[i].id)===String(id) && !usados[id]){ out.push(MOTORISTAS[i]); usados[id]=1; } });
   for(i=0;i<MOTORISTAS.length;i++){ m=MOTORISTAS[i]; if(!usados[String(m.id)]) out.push(m); }
   return out;
@@ -5709,7 +5713,7 @@ document.addEventListener('pointerdown',function(ev){
     document.removeEventListener('pointermove',mover); document.removeEventListener('pointerup',fim); document.removeEventListener('pointercancel',fim);
     card.classList.remove('arrastando');
     var ids=[].slice.call(box.querySelectorAll('.mp-mot')).map(function(c){ return c.getAttribute('data-mt'); });
-    try{ var ant=JSON.parse(localStorage.getItem('giro_ordem_mot')||'[]')||[]; ant.forEach(function(x){ if(ids.indexOf(String(x))<0) ids.push(String(x)); }); localStorage.setItem('giro_ordem_mot',JSON.stringify(ids)); }catch(e){}
+    (FILA.ordem||[]).forEach(function(x){ if(ids.indexOf(String(x))<0) ids.push(String(x)); }); FILA.ordem=ids; salvarLocal();
     MP_ARR=true; setTimeout(function(){ MP_ARR=false; },350); mpOperador();
   };
   document.addEventListener('pointermove',mover); document.addEventListener('pointerup',fim); document.addEventListener('pointercancel',fim);
