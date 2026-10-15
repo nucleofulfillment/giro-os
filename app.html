@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <script>/* (208) APK: sem "viewport-fit=cover" o Android empurra o app para dentro das barras dele (cima e botões de baixo) em todas as telas */try{ if(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform()){ var mv=document.querySelector('meta[name=viewport]'); mv.setAttribute('content',mv.getAttribute('content').replace(/,\s*viewport-fit=cover/,'')); } }catch(e){}</script>
-<title>Giro OS — App do Motorista · GIRO-OS-011</title>
+<title>Giro OS — App do Motorista · GIRO-OS-012</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://giro-os-api.nucleofull.workers.dev" crossorigin>
@@ -1235,7 +1235,7 @@ function geStopHtml(p,i,prox){
     '<div class="ge-ad">'+esc([p.rua,p.numero].filter(Boolean).join(', '))+(p.comp?' · '+esc(p.comp):'')+'<br>'+esc((p.bairro||'')+(p.cid?' · '+p.cid:''))+'</div></div><div class="ge-num">#'+esc(p.num)+'</div></div>'+
     '<div>'+gePagTag(p)+'<span class="ge-tag ge-nu">'+moeda(p.vl)+'</span>'+(p.tel?'<a class="ge-tag ge-wa" href="https://wa.me/'+wa+'" target="_blank">WhatsApp</a><a class="ge-tag ge-nu" href="tel:'+esc(String(p.tel).replace(/[^\d+]/g,''))+'">Ligar</a>':'')+'</div>'+
     (p.itens?'<div class="ge-it">'+esc(p.itens)+'</div>':'')+(p.atend?'<div class="ge-it"><b>Obs:</b> '+esc(p.atend)+'</div>':'');
-  if(!feito) h+='<div class="ge-ac"><a class="btn sec" href="'+geNavUrl(p)+'" target="_blank">Navegar</a><button class="btn pri" onclick="geEntregar(\''+cod+'\')">Entregue</button></div><button class="ge-gh" onclick="geAusente(\''+cod+'\')">Não consegui entregar</button>';
+  if(!feito) h+='<div class="ge-ac"><a class="btn sec" href="'+geNavUrl(p)+'" target="_blank">Navegar</a><button class="btn pri" onclick="geEntregar(\''+cod+'\')">Entregue</button></div><button class="ge-gh" onclick="geAusente(\''+cod+'\')">Devolver</button>';
   else h+='<button class="ge-gh" onclick="geMarcar(\''+cod+'\',\'desfazer\')">Desfazer</button>';
   return h+'</div>';
 }
@@ -1257,7 +1257,7 @@ function gePintar(){
     } else h+=geCheckinHtml()+'<div class="ge-vazio"><b>Saída concluída</b>Todas as entregas foram marcadas.</div>';
     if(o.feitos.length){ h+='<div style="font-size:12px;font-weight:800;color:var(--muted2);margin:18px 2px 8px">JÁ MARCADOS</div>'; o.feitos.forEach(function(p){ h+=geStopHtml(p,0,false); }); }
   }
-  h+='<div style="text-align:center;font-size:10.5px;color:var(--muted);margin-top:14px">GIRO-OS-011</div>';
+  h+='<div style="text-align:center;font-size:10.5px;color:var(--muted);margin-top:14px">GIRO-OS-012</div>';
   box.innerHTML=h;
 }
 
@@ -1278,9 +1278,8 @@ function geMapaHtml(sd){
     '<h2 class="end-2l">'+esc([at.rua,at.numero].filter(Boolean).join(', '))+(at.comp?' · '+esc(at.comp):'')+'</h2>'+
     '<p style="margin:0 0 3px;color:var(--muted2);font-size:13.5px;font-weight:700">'+esc(at.cliente||'')+'</p>'+
     '<p style="margin:0;color:var(--muted);font-size:11.5px">'+esc((at.bairro||'')+(at.cid?' · '+at.cid:''))+'</p>'+
-    '<div>'+gePagTag(at)+'<span class="ge-tag ge-nu">'+moeda(at.vl)+'</span></div>'+
-    '<div class="ge-ac"><a class="btn sec" href="'+geNavUrl(at)+'" target="_blank" rel="noopener">Navegar</a><button class="btn pri" onclick="geEntregar(\''+esc(at.cod)+'\')">Entregue</button></div>'+
-    '<button class="ge-gh" style="width:100%;text-align:center" onclick="geAusente(\''+esc(at.cod)+'\')">Não consegui entregar</button></div></div>';
+    '<div>'+gePagTag(at)+'<span class="ge-tag ge-nu">'+moeda(at.vl)+'</span>'+(geFoneWa(at.tel)?'<a class="ge-tag ge-wa" style="padding:6px 14px;font-size:12.5px" href="https://wa.me/'+geFoneWa(at.tel)+'?text='+encodeURIComponent('Olá! Sou o entregador do seu pedido #'+at.num+' e estou a caminho.')+'" target="_blank" rel="noopener">💬 Chamar no WhatsApp</a>':'')+'</div>'+
+    '<div class="ge-ac"><button class="btn sec" onclick="geAusente(\''+esc(at.cod)+'\')">Devolver</button><button class="btn pri" onclick="geEntregar(\''+esc(at.cod)+'\')">Entregue</button></div></div></div>';
   return h;
 }
 function geMapaMontar(){
@@ -1342,13 +1341,23 @@ function geCheckinHtml(){
   return '<div class="card ge-ck"><button class="btn pri" style="width:100%;font-size:16px;padding:15px" onclick="geCheckin()"'+(GE.ckBusy?' disabled':'')+'>Check-in</button><div class="ge-cks" style="text-align:center;margin-top:8px">Toque ao chegar no restaurante para entrar na fila.</div></div>';
 }
 function geCheckin(acao){
-  if(GE.ckBusy) return; GE.ckBusy=true; gePintar(); geHomePintar();
-  rpApi('/motoboy/checkin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({acao:acao||'entrar'})}).then(function(d){
-    GE.ckBusy=false;
-    if(d&&d.ok){ GE.fila={ok:true,na_fila:!!d.na_fila,pos:d.pos||0,total:d.total||0}; aviso(d.na_fila?'Check-in feito: você é o '+d.pos+'º da fila':'Você saiu da fila'); }
-    else aviso((d&&d.mensagem)||'Não consegui fazer o check-in.');
-    gePintar(); geHomePintar(); geCarregar();
-  }).catch(function(){ GE.ckBusy=false; aviso('Sem conexão. Tente de novo.'); gePintar(); geHomePintar(); });
+  if(GE.ckBusy) return;
+  var envia=function(pos){
+    rpApi('/motoboy/checkin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({acao:acao||'entrar',lat:pos?pos.latitude:null,lng:pos?pos.longitude:null,prec:pos?pos.accuracy:null})}).then(function(d){
+      GE.ckBusy=false;
+      if(d&&d.ok){ GE.fila={ok:true,na_fila:!!d.na_fila,pos:d.pos||0,total:d.total||0}; aviso(d.na_fila?'Check-in feito: você é o '+d.pos+'º da fila':'Você saiu da fila'); }
+      else aviso((d&&d.mensagem)||'Não consegui fazer o check-in.');
+      gePintar(); geHomePintar(); geCarregar();
+    }).catch(function(){ GE.ckBusy=false; aviso('Sem conexão. Tente de novo.'); gePintar(); geHomePintar(); });
+  };
+  GE.ckBusy=true; gePintar(); geHomePintar();
+  if(acao==='sair'){ envia(null); return; }
+  /* o check-in só vale no restaurante: pega a posição do celular e o servidor confere a distância até o ponto de coleta */
+  if(!navigator.geolocation){ GE.ckBusy=false; aviso('Este celular não informa a localização.'); gePintar(); geHomePintar(); return; }
+  aviso('Conferindo a sua localização…');
+  navigator.geolocation.getCurrentPosition(function(p){ envia(p.coords); },function(er){
+    GE.ckBusy=false; aviso(er&&er.code===1?'Ative a localização do celular e permita para este app, para fazer o check-in.':'Não consegui pegar a sua localização. Tente de novo ao ar livre.'); gePintar(); geHomePintar();
+  },{enableHighAccuracy:true,timeout:20000,maximumAge:0});
 }
 function geOrdem(o){ GE.ordem=o; gePintar(); }
 function geParadaDe(cod){ var r=null; (GE.saida?GE.saida.paradas:[]).forEach(function(p){ if(p.cod===cod) r=p; }); return r; }
@@ -1363,7 +1372,7 @@ function geEntregar(cod){
 }
 function geFecharSh(){ var b=el('ge-sh'); if(b) b.remove(); }
 function geConfirma(cod,pg){ geFecharSh(); geMarcar(cod,'entregue',pg); }
-function geAusente(cod){ if(confirm('Marcar que não conseguiu entregar este pedido?')) geMarcar(cod,'ausente'); }
+function geAusente(cod){ var p=geParadaDe(cod); if(confirm('Devolver o pedido'+(p?' #'+p.num:'')+'? Ele volta para o restaurante.')) geMarcar(cod,'ausente'); }
 function geMarcar(cod,acao,pg){
   if(GE.envio) return; GE.envio=true;
   rpApi('/motoboy/entregue',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cod:cod,acao:acao,pg:pg||''})}).then(function(d){
