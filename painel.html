@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Giro OS — Painel do ponto · GIRO-OS-028</title>
+<title>Giro OS — Painel do ponto · GIRO-OS-029</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -655,7 +655,7 @@ a{color:inherit}
 
       <!-- PEDIDOS -->
       <section class="page" id="pg-pedidos">
-        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-028</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
+        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-029</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
         <div id="pd-chip"></div>
         <div class="card">
           <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
@@ -5469,7 +5469,7 @@ function mpAplicarModo(){
   el('mp-diabar').style.display=(m==='vivo')?'contents':'none';
   el('mp-opbar').style.display=(m==='mapa')?'flex':'none'; el('mp-opmot').style.display='none'; el('mp-vivo').style.display=(m==='mapa')?'':'none';
   var rl=el('mp-ritmo'); if(rl&&rl.parentNode) rl.parentNode.style.display=(m==='vivo')?'':'none';
-  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-028';
+  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-029';
   if(m!=='mapa'){ mpPkTodos(false); el('mp-sempos').style.display='none'; el('mp-sempos-btn').style.display='none'; }
   if(m==='vivo'){ MP_ENQ=true; mpBuscar(); } else mpOperador();
 }
@@ -5671,7 +5671,13 @@ function mpPinosPedidos(enq){
       var mk=new maplibregl.Marker({element:d,anchor:'bottom'}).setLngLat([p.lng,p.lat]).addTo(MP_MAP);
       MP_PK[p.cod]={mk:mk,el:d,in:ii,n:nn,dd:dd,ln:ln,dot:dt};
       (function(cod,dd,mm){
-        ii.addEventListener('click',function(ev){ ev.stopPropagation(); if(MP_ARR||MP_AJ===cod) return; mpSelAlt(cod); mpInfoPin(cod); });
+        (function(){ var tm=null, x0=0, y0=0, longo=false;
+          ii.addEventListener('pointerdown',function(ev){ longo=false; x0=ev.clientX; y0=ev.clientY; if(tm) clearTimeout(tm); tm=setTimeout(function(){ tm=null; if(MP_AJ===cod) return; longo=true; mpInfoPin(cod); },450); });
+          ii.addEventListener('pointermove',function(ev){ if(tm && Math.hypot(ev.clientX-x0,ev.clientY-y0)>8){ clearTimeout(tm); tm=null; } });
+          ['pointerup','pointercancel','pointerleave'].forEach(function(n){ ii.addEventListener(n,function(){ if(tm){ clearTimeout(tm); tm=null; } }); });
+          ii.addEventListener('contextmenu',function(ev){ ev.preventDefault(); });
+          ii.addEventListener('click',function(ev){ ev.stopPropagation(); if(longo){ longo=false; return; } if(MP_ARR||MP_AJ===cod) return; if(MP_INFO){ try{ MP_INFO.remove(); }catch(e){} MP_INFO=null; } mpSelAlt(cod); });
+        })();
         qq.addEventListener('click',function(ev){ ev.stopPropagation(); MP_AJ=(MP_AJ===cod)?'':cod; mpEspalhar(); mpPkEstiloTodos(); if(MP_AJ) aviso('Arraste o pin #'+pdNum(mpAcharPed(cod))+' até o endereço certo'); });
         mm.on('dragend',function(){ var q=mpAcharPed(cod), ll=mm.getLngLat(); if(!q) return; q.lat=ll.lat; q.lng=ll.lng; q.gq=2; MP_AJ=''; MP_ARR=true; setTimeout(function(){ MP_ARR=false; },350); salvarLocal(); mpPkEstiloTodos(); mpEspalhar(); });
       })(p.cod,d,mk);
