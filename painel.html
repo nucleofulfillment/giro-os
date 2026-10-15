@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Giro OS — Painel do ponto · GIRO-OS-021</title>
+<title>Giro OS — Painel do ponto · GIRO-OS-022</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -655,7 +655,7 @@ a{color:inherit}
 
       <!-- PEDIDOS -->
       <section class="page" id="pg-pedidos">
-        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-021</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
+        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-022</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
         <div id="pd-chip"></div>
         <div class="card">
           <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
@@ -1513,7 +1513,7 @@ function enviarPedidosServidor(forcar){
     setTimeout(agendarEnvioPedidos,60000);
   });
 }
-function packPed(){ var pc=[],i,p; for(i=0;i<PEDIDOS.length;i++){ p=PEDIDOS[i]; pc.push([p.cod,p.tr,p.mt,p.st,p.dia||'',p.hora||'',p.obs||'',(p.scan&&p.scan!==p.cod)?p.scan:'',p.ent||'',p.cliente||'',p.bairro||'',(p.vl==null?null:p.vl),p.cep||'',p.area||'',p.fechId||null,p.tel||'',p.canal||'',p.vend||'',p.rua||'',p.num||'',p.comp||'',p.bai||'',p.cid||'',p.endOrig||'',p.tam||'',p.hp||0,p.pg||'',p.pgp?1:0,p.pgr||'',(p.tx==null?null:p.tx),p.itens||'',p.atend||'',(p.lat==null?null:p.lat),(p.lng==null?null:p.lng),p.gq||0]); } return pc; }
+function packPed(){ var pc=[],i,p; for(i=0;i<PEDIDOS.length;i++){ p=PEDIDOS[i]; pc.push([p.cod,p.tr,p.mt,p.st,p.dia||'',p.hora||'',p.obs||'',(p.scan&&p.scan!==p.cod)?p.scan:'',p.ent||'',p.cliente||'',p.bairro||'',(p.vl==null?null:p.vl),p.cep||'',p.area||'',p.fechId||null,p.tel||'',p.canal||'',p.vend||'',p.rua||'',p.num||'',p.comp||'',p.bai||'',p.cid||'',p.endOrig||'',p.tam||'',p.hp||0,p.pg||'',p.pgp?1:0,p.pgr||'',(p.tx==null?null:p.tx),p.itens||'',p.atend||'',(p.lat==null?null:p.lat),(p.lng==null?null:p.lng),p.gq||0,p.ga||'']); } return pc; }
 function salvarLocal(cb){
   var o; try{ sincStatusFech(); }catch(eSf){}
   if(REAL){
@@ -1534,7 +1534,7 @@ function aplicarSalvo(d){
   if(d.rast){ RASTREADOS={}; d.rast.forEach(function(c){ RASTREADOS[c]=1; }); }
   if(d.ciclos) CICLOS=d.ciclos; else if(d.ciclo && d.ciclo.modo) CICLOS=[{id:'c0',grupo:'todos',modo:d.ciclo.modo,tipo:d.ciclo.tipo,dia:d.ciclo.dia,prazo:d.ciclo.prazo}];
   if((d.pedidos||d.pc) && d.motoristas){
-    if(d.pc){ PEDIDOS=d.pc.map(function(a){ return {cod:a[0], tr:a[1], mt:a[2], cliente:a[9]||'', bairro:a[10]||'', vl:(a[11]==null?null:a[11]), cep:a[12]||'', area:a[13]||'', fechId:a[14]||null, tel:a[15]||'', canal:a[16]||'', vend:a[17]||'', rua:a[18]||'', num:a[19]||'', comp:a[20]||'', bai:a[21]||'', cid:a[22]||'', endOrig:a[23]||'', tam:a[24]||'', hp:a[25]||0, pg:a[26]||'', pgp:a[27]?1:0, pgr:a[28]||'', tx:(a[29]==null?null:a[29]), itens:a[30]||'', atend:a[31]||'', lat:(a[32]==null?null:a[32]), lng:(a[33]==null?null:a[33]), gq:a[34]||0, st:a[3], t1:'', t2:'', scan:a[7]||a[0], dia:a[4], hora:a[5], obs:a[6], ent:a[8]}; }); }
+    if(d.pc){ PEDIDOS=d.pc.map(function(a){ return {cod:a[0], tr:a[1], mt:a[2], cliente:a[9]||'', bairro:a[10]||'', vl:(a[11]==null?null:a[11]), cep:a[12]||'', area:a[13]||'', fechId:a[14]||null, tel:a[15]||'', canal:a[16]||'', vend:a[17]||'', rua:a[18]||'', num:a[19]||'', comp:a[20]||'', bai:a[21]||'', cid:a[22]||'', endOrig:a[23]||'', tam:a[24]||'', hp:a[25]||0, pg:a[26]||'', pgp:a[27]?1:0, pgr:a[28]||'', tx:(a[29]==null?null:a[29]), itens:a[30]||'', atend:a[31]||'', lat:(a[32]==null?null:a[32]), lng:(a[33]==null?null:a[33]), gq:a[34]||0, ga:a[35]||'', st:a[3], t1:'', t2:'', scan:a[7]||a[0], dia:a[4], hora:a[5], obs:a[6], ent:a[8]}; }); }
     else PEDIDOS=d.pedidos;
     PEDIDOS.forEach(garantirEndereco);
     MOTORISTAS=d.motoristas; EXTRATO=d.extrato||[];
@@ -1656,7 +1656,7 @@ function srvEnviarDireto(cb){
 /* ══ (70) VÁRIAS TELAS, MESMO LOGIN: antes cada tela guardava a própria cópia e a última a salvar apagava o que as outras tinham feito. Agora:
    • a cada 15 s (aba visível e nada pendente de envio) a tela pergunta ao servidor se algum bloco de pedidos mudou e traz o que mudou;
    • antes de enviar, se outra tela mexeu no mesmo bloco, junta os pedidos (nenhum some) e só então envia. ══ */
-function srvLinhaPed(a){ var p={cod:a[0], tr:a[1], mt:a[2], cliente:a[9]||'', bairro:a[10]||'', vl:(a[11]==null?null:a[11]), cep:a[12]||'', area:a[13]||'', fechId:a[14]||null, tel:a[15]||'', canal:a[16]||'', vend:a[17]||'', rua:a[18]||'', num:a[19]||'', comp:a[20]||'', bai:a[21]||'', cid:a[22]||'', endOrig:a[23]||'', tam:a[24]||'', hp:a[25]||0, pg:a[26]||'', pgp:a[27]?1:0, pgr:a[28]||'', tx:(a[29]==null?null:a[29]), itens:a[30]||'', atend:a[31]||'', lat:(a[32]==null?null:a[32]), lng:(a[33]==null?null:a[33]), gq:a[34]||0, st:a[3], t1:'', t2:'', scan:a[7]||a[0], dia:a[4], hora:a[5], obs:a[6], ent:a[8]}; try{ garantirEndereco(p); }catch(e){} return p; }
+function srvLinhaPed(a){ var p={cod:a[0], tr:a[1], mt:a[2], cliente:a[9]||'', bairro:a[10]||'', vl:(a[11]==null?null:a[11]), cep:a[12]||'', area:a[13]||'', fechId:a[14]||null, tel:a[15]||'', canal:a[16]||'', vend:a[17]||'', rua:a[18]||'', num:a[19]||'', comp:a[20]||'', bai:a[21]||'', cid:a[22]||'', endOrig:a[23]||'', tam:a[24]||'', hp:a[25]||0, pg:a[26]||'', pgp:a[27]?1:0, pgr:a[28]||'', tx:(a[29]==null?null:a[29]), itens:a[30]||'', atend:a[31]||'', lat:(a[32]==null?null:a[32]), lng:(a[33]==null?null:a[33]), gq:a[34]||0, ga:a[35]||'', st:a[3], t1:'', t2:'', scan:a[7]||a[0], dia:a[4], hora:a[5], obs:a[6], ent:a[8]}; try{ garantirEndereco(p); }catch(e){} return p; }
 function srvChaveDia(p){ return String(p.dia||'_').replace(/[^0-9A-Za-z_-]/g,'_').slice(0,40); }
 var SRV_FINAL={entregue:1,devolvido:1,extraviado:1};
 /* modo 'servidor': o servidor manda (tela sem nada pendente). modo 'juntar': une local + servidor (local vence, exceto status final vindo do servidor). */
@@ -5465,7 +5465,7 @@ function mpAplicarModo(){
   el('mp-diabar').style.display=(m==='vivo')?'contents':'none';
   el('mp-opbar').style.display=(m==='mapa')?'flex':'none'; el('mp-opmot').style.display='none'; el('mp-vivo').style.display=(m==='mapa')?'':'none';
   var rl=el('mp-ritmo'); if(rl&&rl.parentNode) rl.parentNode.style.display=(m==='vivo')?'':'none';
-  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-021';
+  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-022';
   if(m!=='mapa'){ mpPkTodos(false); el('mp-sempos').style.display='none'; el('mp-sempos-btn').style.display='none'; }
   if(m==='vivo'){ MP_ENQ=true; mpBuscar(); } else mpOperador();
 }
@@ -5477,15 +5477,18 @@ function mpOperador(){
   else if(MP_MODO==='mapa'){ mpBarraPintar(); mpDesenhar([]); mpPinosPedidos(false); }
 }
 /* acha a posição dos pedidos que ainda não têm (até 12 por vez) usando a rota /rota/localizar do Worker */
+function mpNormT(t){ return String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\b(rua|r|av|avenida|estrada|est|rod|rodovia|travessa|tv|alameda|al)\b\.?/g,' ').replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim(); }
+function mpAchouRua(p){ if(!p.ga) return true; var r=mpNormT(p.rua), a=mpNormT(p.ga); if(!r) return true; var ps=r.split(' ').filter(function(w){ return w.length>3; }); if(!ps.length) return true; var ok=0; ps.forEach(function(w){ if(a.indexOf(w)>=0) ok++; }); return ok>=Math.ceil(ps.length*0.6); }
+function mpAjustarPin(cod){ if(MP_INFO){ try{ MP_INFO.remove(); }catch(e){} MP_INFO=null; } MP_AJ=cod; mpEspalhar(); mpPkEstiloTodos(); aviso('Arraste o pin #'+pdNum(mpAcharPed(cod))+' até o endereço certo'); }
 function mpGeoPendentes(){
   if(MP_GEO_BUSY||!REAL||!DD_TOKEN) return;
-  var pend=mpPool().filter(function(p){ return p.lat==null && p.rua && p.cid && !MP_GEO_TENT[p.cod]; });
+  var pend=mpPool().filter(function(p){ return (p.lat==null||(p.gq===0&&!p.ga)) && p.rua && p.cid && !MP_GEO_TENT[p.cod]; });
   if(!pend.length) return;
   var lote=pend.slice(0,12); MP_GEO_BUSY=true; lote.forEach(function(p){ MP_GEO_TENT[p.cod]=1; });
   fetch(DELTADIS_API+'/rota/localizar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({itens:lote.map(function(p){ return {cod:p.cod,rua:p.rua,num:p.num,comp:p.comp,bai:p.bai,cid:p.cid,cep:p.cep}; })})})
   .then(function(r){ return r.json(); }).then(function(d){
     MP_GEO_BUSY=false;
-    if(d&&d.ok&&d.itens){ var mud=false; d.itens.forEach(function(it){ var p=mpAcharPed(it.cod); if(p && it.lat!=null && it.lng!=null){ p.lat=Number(it.lat); p.lng=Number(it.lng); p.gq=(it.precisao==='numero'&&!(it.flags&&it.flags.length))?0:1; mud=true; } }); if(mud) salvarLocal(); }
+    if(d&&d.ok&&d.itens){ var mud=false; d.itens.forEach(function(it){ var p=mpAcharPed(it.cod); if(p && it.lat!=null && it.lng!=null){ p.lat=Number(it.lat); p.lng=Number(it.lng); p.ga=String(it.achado||'').slice(0,160); p.gq=(it.precisao==='numero'&&!(it.flags&&it.flags.length)&&mpAchouRua(p))?0:1; mud=true; } }); if(mud) salvarLocal(); }
     mpOperador();
   }).catch(function(){ MP_GEO_BUSY=false; mpOperador(); });
 }
@@ -5618,7 +5621,10 @@ function mpInfoPin(cod){
     (tel?'<div>📞 <a href="tel:'+esc(tel.replace(/[^\d+]/g,''))+'">'+esc(tel)+'</a></div>':'')+
     '<div style="color:var(--muted2)">'+moeda(p.vl)+' · '+pdRecebHtml(p)+'</div>'+
     (g?'<div style="font-weight:800;color:'+g.cor+'">Com '+esc(g.nome)+' (toque no alfinete para liberar)</div>':'')+
-    (p.gq===1?'<div class="mp-aviso" style="font-weight:600">⚠ Posição aproximada. Toque no ? do alfinete para ajustar.</div>':'')+'</div>';
+    (p.ga?'<div style="font-size:11px;color:var(--muted2);margin-top:3px">Mapa entendeu: '+esc(p.ga)+'</div>':'')+
+    (p.gq===1?'<div class="mp-aviso" style="font-weight:600">⚠ Posição aproximada.</div>':'')+
+    (p.gq===2?'<div style="font-size:11px;color:var(--muted2)">Posição ajustada por você.</div>':'')+
+    '<button class="btn sec" style="margin-top:6px;width:100%;padding:6px" onclick="mpAjustarPin(\''+esc(p.cod)+'\')">📍 Ajustar posição</button></div>';
   MP_INFO=new maplibregl.Popup({closeButton:true,closeOnClick:true,maxWidth:'260px',offset:[(o.dx||0),-38+(o.dy||0)]}).setLngLat([p.lng,p.lat]).setHTML(h).addTo(MP_MAP);
 }
 var MP_AJ='';   /* pedido em "ajuste de posição": só ele pode ser arrastado */
