@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Giro OS — Painel do ponto · GIRO-OS-046</title>
+<title>Giro OS — Painel do ponto · GIRO-OS-047</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -663,7 +663,7 @@ a{color:inherit}
 
       <!-- PEDIDOS -->
       <section class="page" id="pg-pedidos">
-        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-046</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
+        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-047</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
         <div id="pd-chip"></div>
         <div class="card">
           <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
@@ -747,7 +747,7 @@ a{color:inherit}
         <div class="card" id="mp-card-ent" style="margin-top:16px">
           <h3><span class="lft">Entregas do dia (registradas pelo app) <span class="n" id="mp-entregues-n">0</span></span></h3>
           <div class="tb-wrap"><table class="tb">
-            <thead><tr><th>Cliente</th><th>Canal</th><th>Transportadora</th><th>Data/Hora</th><th>Entregador</th></tr></thead>
+            <thead><tr><th>Cliente</th><th>Canal</th><th>Pagamento</th><th>Data/Hora</th><th>Entregador</th></tr></thead>
             <tbody id="mp-entregues-corpo"></tbody>
           </table></div>
           <button class="btn sec wide" id="mp-mais" style="display:none;margin-top:10px" onclick="MP_LIM+=50;mpRender()">Ver mais</button>
@@ -3560,12 +3560,13 @@ function statsSla(lst){
   for(i=0;i<n;i++){ soma+=a[i]; if(a[i]<=24) d24++; if(a[i]<=48) d48++; }
   return {n:n, media:n?soma/n:0, mediana:n?(n%2?a[(n-1)/2]:(a[n/2-1]+a[n/2])/2):0, p24:n?Math.round(d24/n*100):0, p48:n?Math.round(d48/n*100):0, pmais:n?100-Math.round(d48/n*100):0};
 }
+function nomeMotoSla(p){ var m=(p.mt!=null&&p.mt!=='')?(motorista(p.mt)||motorista(Number(p.mt))):null; return m?m.n:'Sem motoboy'; }
 function pintarSlaDash(){
   var alvo=el('db-sla'); if(!alvo) return;
   var por={}, todas=[], ent=0, i, p, h, k;
   for(i=0;i<PEDIDOS.length;i++){ p=PEDIDOS[i]; if(DASH_TR && p.tr!==DASH_TR) continue;
     if(p.st==='entregue') ent++;
-    h=horasEntrega(p); if(h==null) continue; todas.push(h); (por[p.tr]=por[p.tr]||[]).push(h); }
+    h=horasEntrega(p); if(h==null) continue; todas.push(h); (por[nomeMotoSla(p)]=por[nomeMotoSla(p)]||[]).push(h); }
   var t=DASH_TR?transp(DASH_TR):null;
   var cab='<h3><span class="lft">SLA de entrega'+(t?' · '+esc(t.n):' · consolidado')+'</span></h3>';
   if(!todas.length){ alvo.innerHTML=cab+'<div class="empty" style="padding:8px 0;font-size:12.5px">Sem dados ainda: o SLA usa pacotes entregues que tenham data e hora de entrada e de entrega na planilha.</div>'; return; }
@@ -3589,12 +3590,12 @@ function pintarSlaDash(){
   if(!DASH_TR){
     var ks=Object.keys(por).sort(function(a,b){return por[b].length-por[a].length;});
     if(ks.length>1){
-      lin='<div class="sla-tb"><div class="sla-row h"><span>Transportadora</span><span>Pacotes</span><span>Tempo médio</span><span>Até 24h</span><span>24h a 48h</span><span>Acima de 48h</span></div>';
-      for(i=0;i<ks.length;i++){ var s2=statsSla(por[ks[i]]), tn=transp(ks[i]); lin+='<div class="sla-row"><b>'+esc(tn?tn.n:ks[i])+'</b><span>'+s2.n+'</span><span>'+fmtDur(s2.media)+'</span><span>'+s2.p24+'%</span><span>'+Math.max(0,s2.p48-s2.p24)+'%</span><span>'+s2.pmais+'%</span></div>'; }
+      lin='<div class="sla-tb"><div class="sla-row h"><span>Motoboy</span><span>Pacotes</span><span>Tempo médio</span><span>Até 24h</span><span>24h a 48h</span><span>Acima de 48h</span></div>';
+      for(i=0;i<ks.length;i++){ var s2=statsSla(por[ks[i]]); lin+='<div class="sla-row"><b>'+esc(ks[i])+'</b><span>'+s2.n+'</span><span>'+fmtDur(s2.media)+'</span><span>'+s2.p24+'%</span><span>'+Math.max(0,s2.p48-s2.p24)+'%</span><span>'+s2.pmais+'%</span></div>'; }
       lin+='</div>';
     }
   }
-  alvo.innerHTML=cab+h2+lin+'<div style="font-size:11.5px;color:var(--muted);margin-top:10px">Base: '+todas.length+' de '+ent+' entregues com data e hora dos dois lados. A entrada é a da planilha de cada transportadora (J&amp;T: saída pra entrega · Pichau: criação do pedido). Relógio: mostra o tempo médio como horas e minutos (ex.: 21h07).</div>';
+  alvo.innerHTML=cab+h2+lin+'<div style="font-size:11.5px;color:var(--muted);margin-top:10px">Base: '+todas.length+' de '+ent+' entregues com data e hora dos dois lados. Tempo contado da entrada do pedido até a entrega marcada pelo motoboy. Relógio: mostra o tempo médio como horas e minutos (ex.: 21h07).</div>';
   animarSla();
 }
 /* anima o ponteiro do relógio e as barrinhas até o valor */
@@ -3702,8 +3703,9 @@ function pathSuave(pts){
 /* reparte o total do dia entre as transportadoras, proporcional ao peso de cada uma (com uma variação leve por dia) */
 function distribuicaoPorTransportadora(iso,total){
   if(REAL){
-    var dd=DIAS[iso], lista=[], k, q;
-    for(k=0;k<TRANSPORTADORAS.length;k++){ q=(dd&&dd.por[TRANSPORTADORAS[k].id])||0; if(q) lista.push({t:TRANSPORTADORAS[k], qtd:q}); }
+    var lista=[], k, cnt={}, nm;
+    for(k=0;k<PEDIDOS.length;k++){ if(PEDIDOS[k].dia!==iso) continue; nm=nomeMotoSla(PEDIDOS[k]); cnt[nm]=(cnt[nm]||0)+1; }
+    for(nm in cnt) lista.push({t:{n:nm}, qtd:cnt[nm]});
     lista.sort(function(a,b){return b.qtd-a.qtd;});
     return lista;
   }
@@ -4062,7 +4064,7 @@ function limparFiltrosPedidos(){
 }
 function pintarPedidos(){
   var tf=FILTRO_TR?transp(FILTRO_TR):null;
-  el('pd-chip').innerHTML = (tf ? ('<div class="chip-filtro">Transportadora: '+esc(tf.n)+' <span onclick="limparFiltroTransportadora()">✕</span></div>') : '') + (FILTRO_PD==='acao' ? '<div class="chip-filtro">Precisa de ação: tentativas, devolvidos e extraviados <span onclick="filtrarPedidos(\'todos\')">✕</span></div>' : '');
+  el('pd-chip').innerHTML = (tf ? ('<div class="chip-filtro">Filtro: '+esc(tf.n)+' <span onclick="limparFiltroTransportadora()">✕</span></div>') : '') + (FILTRO_PD==='acao' ? '<div class="chip-filtro">Precisa de ação: tentativas, devolvidos e extraviados <span onclick="filtrarPedidos(\'todos\')">✕</span></div>' : '');
 
   var dIni=(el('pd-data-ini')&&el('pd-data-ini').value)||'', dFim=(el('pd-data-fim')&&el('pd-data-fim').value)||'';
   function passaData(p2){ if(!p2.dia) return !dIni && !dFim; if(dIni && p2.dia<dIni) return false; if(dFim && p2.dia>dFim) return false; return true; }
@@ -5297,7 +5299,7 @@ function desenharPinsMapeamento(){
       '<td>'+dataBR(hojeISO())+' '+esc(e2.dataHora)+'</td>'+
       '<td>'+esc(m2?m2.n:'—')+'</td></tr>';
   }
-  el('mp-entregues-corpo').innerHTML = hTab || '<tr><td colspan="5"><div class="empty">'+(REAL?'A planilha de entrada não traz o horário nem o local da entrega — isso vem da baixa da transportadora.':'Nenhuma entrega finalizada ainda')+'</div></td></tr>';
+  el('mp-entregues-corpo').innerHTML = hTab || '<tr><td colspan="5"><div class="empty">'+(REAL?'A planilha de entrada não traz o horário nem o local da entrega — isso vem da entrega marcada pelo motoboy no app.':'Nenhuma entrega finalizada ainda')+'</div></td></tr>';
   var lbl2=el('mp-entregues-n'); if(lbl2) lbl2.textContent=n;
 }
 
@@ -5344,7 +5346,7 @@ function mpRender(){
     if(i>=MP_LIM) continue;
     p=idx[e.cod]||{}; m=motorista(e.mt)||motorista(Number(e.mt));
     var cn=p.canal||'—', cs=CANAL_STYLE_MAPA[cn]||{bg:'var(--s3)',cor:'var(--muted2)'}, tn=TRANSPORTADORAS.filter(function(t){return t.id===p.tr;})[0];
-    h+='<tr><td>'+esc(p.cliente||e.cli||e.cod)+'</td><td><span class="canal-tag" style="background:'+cs.bg+';color:'+cs.cor+'">'+esc(cn)+'</span></td><td>'+esc(tn?tn.n:(p.tr||'—'))+'</td><td>'+dataBR(MP_DIA)+' '+mpHora(e.t)+'</td><td>'+esc(m?m.n:(e.mtn||'—'))+'</td></tr>';
+    h+='<tr><td>'+esc(p.cliente||e.cli||e.cod)+'</td><td><span class="canal-tag" style="background:'+cs.bg+';color:'+cs.cor+'">'+esc(cn)+'</span></td><td>'+esc(PD_FORMA[p.pgr]||p.pgr||'—')+'</td><td>'+dataBR(MP_DIA)+' '+mpHora(e.t)+'</td><td>'+esc(m?m.n:(e.mtn||'—'))+'</td></tr>';
   }
   el('mp-entregues-corpo').innerHTML=h||'<tr><td colspan="5"><div class="empty">Nenhuma entrega registrada pelo app em '+dataBR(MP_DIA)+'.</div></td></tr>';
   el('mp-entregues-n').textContent=n;
@@ -5577,7 +5579,7 @@ function mpAplicarModo(){
   el('mp-diabar').style.display=(m==='vivo')?'contents':'none';
   el('mp-opbar').style.display=(m==='mapa')?'flex':'none'; el('mp-opmot').style.display='none'; el('mp-vivo').style.display=(m==='mapa')?'':'none';
   var rl=el('mp-ritmo'); if(rl&&rl.parentNode) rl.parentNode.style.display=(m==='vivo')?'':'none';
-  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-046';
+  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-047';
   if(m!=='mapa'){ mpPkTodos(false); el('mp-sempos').style.display='none'; el('mp-sempos-btn').style.display='none'; }
   if(m==='vivo'){ MP_ENQ=true; mpBuscar(); } else mpOperador();
 }
@@ -5981,7 +5983,7 @@ function abrirMotorista(id,volta){
   if(gm.length) h+='<div class="sh-row"><span class="k">Grupos</span><span class="v">'+esc(gm.join(', '))+'</span></div>';
   h+='<div class="sh-row"><span class="k">Contrato</span><span class="v">'+badgeStatus(m.contrato)+'</span></div>';
   var lgn=m.logins||{};
-  h+='<div class="sh-row" style="flex-direction:column;align-items:stretch;gap:8px"><span class="k">Nome nas planilhas<br><span style="font-size:10.5px;font-weight:500">como ele aparece na planilha da transportadora (apelido). Ao subir a planilha, esse nome vira este motorista</span></span>'+
+  h+='<div class="sh-row" style="flex-direction:column;align-items:stretch;gap:8px"><span class="k">Nome nas planilhas<br><span style="font-size:10.5px;font-weight:500">como ele aparece nas planilhas (apelido). Ao subir a planilha, esse nome vira este motorista</span></span>'+
     '<input class="inp" style="width:100%" placeholder="Nome na Anjun" id="mt-lga-'+m.id+'" value="'+esc(lgn.anj||'')+'">'+
     '<input class="inp" style="width:100%" placeholder="Nome na J&amp;T" id="mt-lgj-'+m.id+'" value="'+esc(lgn.jt||'')+'">'+
     '<input class="inp" style="width:100%" placeholder="Nome na Pichau" id="mt-lgp-'+m.id+'" value="'+esc(lgn.pic||'')+'">'+
@@ -6193,7 +6195,7 @@ function abrirListaFin(tipo){
   }
   var h='', n=Math.min(lst.length,300), st, todas=[], xl=[], gm={}, gt={}, tn, rc, rp, gk;
   for(i=0;i<lst.length;i++){ p=lst[i]; m=p.mt?motorista(p.mt):null; st=(tipo==='repasse')?(p.fechId?'fechado':'a fechar'):p.st;
-    rc=Number(precoTransp(p.tr).recebe)||0; rp=m?valorMotorista(m,p):0; tn=transp(p.tr); tn=tn?tn.n:'—';
+    rc=Number(precoTransp(p.tr).recebe)||0; rp=m?valorMotorista(m,p):0; tn=p.canal||'—';
     todas.push([p.cod,p.cliente||'—',m?m.n:'—',st,moeda(rc),moeda(rp)]);
     xl.push([p.cod,p.cliente||'—',tn,m?m.n:'—',st,(p.dia?dataBR(p.dia)+(p.hora?' '+p.hora:''):''),(String(p.ent||'').length>=10?dataBR(String(p.ent).slice(0,10))+String(p.ent).slice(10,16):''),rc,rp]);
     gk=m?m.n:'sem motorista'; gm[gk]=gm[gk]||{q:0,rc:0,rp:0}; gm[gk].q++; gm[gk].rc+=rc; gm[gk].rp+=rp;
@@ -6205,8 +6207,8 @@ function abrirListaFin(tipo){
     h+='<tr><td>'+esc(p.cod)+cpBtn(p.cod)+'</td><td>'+esc(p.cliente||'—')+'</td><td>'+esc(m?m.n:'—')+'</td><td>'+esc(st)+'</td><td>'+moeda(precoTransp(p.tr).recebe)+'</td><td>'+moeda(m?valorMotorista(m,p):0)+'</td></tr>';
   }
   FIN_LISTA_DADOS={titulo:tit, info:'Financeiro', cols:['Código','Cliente','Motorista',(tipo==='repasse')?'Fechamento':'Status','Recebe','Repasse'], linhas:todas, resumo:lst.length+' pacote(s) · recebe '+moeda(tr)+' · repasse '+moeda(tp),
-    grupos:[{titulo:'Por motorista',cols:['Motorista','Pacotes','Recebe','Repasse'],linhas:grM},{titulo:'Por transportadora',cols:['Transportadora','Pacotes','Recebe'],linhas:grT}],
-    arquivo:tipo, xlCols:['Código','Cliente','Transportadora','Motorista',(tipo==='repasse')?'Fechamento':'Status','Entrada no ponto','Entrega','Recebe (R$)','Repasse (R$)'], xl:xl};
+    grupos:[{titulo:'Por motorista',cols:['Motorista','Pacotes','Recebe','Repasse'],linhas:grM},{titulo:'Por canal',cols:['Canal','Pacotes','Recebe'],linhas:grT}],
+    arquivo:tipo, xlCols:['Código','Cliente','Canal','Motorista',(tipo==='repasse')?'Fechamento':'Status','Entrada no ponto','Entrega','Recebe (R$)','Repasse (R$)'], xl:xl};
   el('fl-titulo').textContent=tit;
   el('fl-resumo').textContent=lst.length+' pacote(s) · recebe '+moeda(tr)+' · repasse '+moeda(tp)+(lst.length>n?(' · mostrando os primeiros '+n):'');
   el('fl-th-st').textContent=(tipo==='repasse')?'Fechamento':'Status';
@@ -6247,7 +6249,7 @@ function pintarFinanceiroReal(){
   if(av) av.textContent=msg;
 }
 
-/* ══ (GIRO-OS-046) CONCILIAÇÃO FINANCEIRA consolidada: entradas por forma de pagamento (do que o motoboy marcou no app) × saídas do Fluxo de Caixa ══ */
+/* ══ (GIRO-OS-047) CONCILIAÇÃO FINANCEIRA consolidada: entradas por forma de pagamento (do que o motoboy marcou no app) × saídas do Fluxo de Caixa ══ */
 var CC={ini:'',fim:'',mt:'',linhas:[],ts:0,busy:false,erro:''};
 function ccAtalho(t){
   var h=hojeISO(), d=new Date(); 
