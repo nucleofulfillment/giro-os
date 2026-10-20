@@ -1187,6 +1187,7 @@ function ir(p){
 
 /* ══ ENTREGAS (delivery) — a saída montada pelo operador aparece aqui; a rota é só sugestão e o motoboy entrega em qualquer ordem ══ */
 var GE_OCULTA_BIPE=true;
+var GE_CHECKIN_OCULTO=true;   /* check-in do entregador oculto por enquanto (teste): GE_CHECKIN_OCULTO=false religa */
 var GE={exp:false,vista:'mapa',sel:null,mapa:null,mapaEl:null,mapaOk:false,marc:[],linha:null,lbusy:false,fitKey:'',fila:null,ckBusy:false,saida:null,ordem:'rota',pos:null,timer:null,busy:false,envio:false,erro:'',visUp:false};
 function geVisto(){ try{ return localStorage.getItem('giro_ge_visto')||''; }catch(e){ return ''; } }
 function geMarcarVisto(){ try{ if(GE.saida) localStorage.setItem('giro_ge_visto',GE.saida.id); }catch(e){} }
@@ -1363,10 +1364,12 @@ function geHomeHtml(){
   var ini='<div class="card" style="margin:0 0 14px;background:var(--grad-arte);color:#fff;border:none;text-align:center;padding:18px 16px">';
   if(n>0) return ini+cab+'Minha rota</div><div onclick="ir(\'entregas\')" style="'+box+';cursor:pointer"><h3 style="margin:0;font-size:22px;color:#fff;line-height:1.2">Seus pedidos estão prontos pra retirada</h3><div style="font-size:13px;opacity:.9;margin-top:6px">'+n+' entrega'+(n>1?'s':'')+' · toque para ver</div></div></div>';
   if(f&&f.na_fila) return ini+cab+'Fila de retirada</div><div style="'+box+'"><h3 style="margin:0;font-size:26px;color:#fff">Você é o '+f.pos+'º da fila</h3><div style="font-size:13px;opacity:.9;margin-top:6px">Posição '+f.pos+' de '+f.total+' · aguarde o operador chamar</div></div><button onclick="geCheckin(\'sair\')" style="background:none;border:0;color:#fff;opacity:.85;font-weight:700;font-size:12.5px;text-decoration:underline;margin-top:12px;cursor:pointer">Sair da fila</button></div>';
+  if(GE_CHECKIN_OCULTO) return ini+cab+'Minha rota</div><div style="'+box+'"><h3 style="margin:0;font-size:22px;color:#fff;line-height:1.2">Aguardando o seu lote</h3><div style="font-size:13px;opacity:.9;margin-top:6px">Quando o operador montar, aparece aqui · sem check-in</div></div></div>';
   return ini+cab+'Fila de retirada</div><div onclick="geCheckin()" style="'+box+';cursor:pointer;'+(GE.ckBusy?'opacity:.6':'')+'"><h3 style="margin:0;font-size:26px;color:#fff;letter-spacing:.01em">📍 Check-in</h3><div style="font-size:13px;opacity:.9;margin-top:6px">Toque ao chegar no restaurante</div></div></div>';
 }
 function geHomePintar(){ var b=el('ge-home'); if(b) b.innerHTML=geHomeHtml(); }
 function geCheckinHtml(){
+  if(GE_CHECKIN_OCULTO) return '';
   var f=GE.fila, na=f&&f.na_fila;
   if(na) return '<div class="card ge-ck on"><div class="ge-ckn">'+f.pos+'º</div><div><b>Você está na fila</b><div class="ge-cks">Posição '+f.pos+' de '+f.total+'. Aguarde o operador chamar.</div></div><button class="ge-gh" style="margin:0 0 0 auto" onclick="geCheckin(\'sair\')">Sair da fila</button></div>';
   return '<div class="card ge-ck"><button class="btn pri" style="width:100%;font-size:16px;padding:15px" onclick="geCheckin()"'+(GE.ckBusy?' disabled':'')+'>Check-in</button><div class="ge-cks" style="text-align:center;margin-top:8px">Toque ao chegar no restaurante para entrar na fila.</div></div>';
