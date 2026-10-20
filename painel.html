@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Giro OS — Painel do ponto · GIRO-OS-047</title>
+<title>Giro OS — Painel do ponto · GIRO-OS-048</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -663,7 +663,7 @@ a{color:inherit}
 
       <!-- PEDIDOS -->
       <section class="page" id="pg-pedidos">
-        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-047</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
+        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-048</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
         <div id="pd-chip"></div>
         <div class="card">
           <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
@@ -2530,7 +2530,8 @@ function recalcularReal(){
     if(p.dia){ var d=DIAS[p.dia]||(DIAS[p.dia]={tot:0,por:{}}); d.tot++; d.por[p.tr]=(d.por[p.tr]||0)+1; }
   }
   for(i=0;i<MOTORISTAS.length;i++){ m=MOTORISTAS[i];
-    m.st=m.emrota>0?'em rota':'na base';
+    var _ck=(typeof CHK_POS!=='undefined'&&CHK_POS&&CHK_POS[String(m.id)]);   /* (048) quem fez check-in no app voltou pra base: fica disponível */
+    m.st=(m.emrota>0&&!_ck)?'em rota':'na base';
     m.local=m.emrota>0?(m.emrota+' pacote'+(m.emrota>1?'s':'')+' em rota'):'Sem pacotes em rota';
   }
   DASH_AGG=agg;
@@ -5579,7 +5580,7 @@ function mpAplicarModo(){
   el('mp-diabar').style.display=(m==='vivo')?'contents':'none';
   el('mp-opbar').style.display=(m==='mapa')?'flex':'none'; el('mp-opmot').style.display='none'; el('mp-vivo').style.display=(m==='mapa')?'':'none';
   var rl=el('mp-ritmo'); if(rl&&rl.parentNode) rl.parentNode.style.display=(m==='vivo')?'':'none';
-  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-047';
+  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-048';
   if(m!=='mapa'){ mpPkTodos(false); el('mp-sempos').style.display='none'; el('mp-sempos-btn').style.display='none'; }
   if(m==='vivo'){ MP_ENQ=true; mpBuscar(); } else mpOperador();
 }
@@ -5658,12 +5659,12 @@ function checkinSincronizar(){
   fetch(DELTADIS_API+'/painel/checkin').then(function(r){ return r.json(); }).then(function(d){
     CHK_LEU=false; if(!d||!d.ok||!d.fila) return;
     var np={}; d.fila.forEach(function(x,i){ np[String(x.mt)]=i+1; });
-    var mudou=JSON.stringify(np)!==JSON.stringify(CHK_POS)||!CHK_OK; CHK_POS=np; CHK_OK=true;
+    var mudou=JSON.stringify(np)!==JSON.stringify(CHK_POS)||!CHK_OK; CHK_POS=np; CHK_OK=true; if(mudou){ try{ recalcularReal(); }catch(e){} }
     if(mudou && PAG==='mapeamento' && el('mp-l-mot') && !MP_ARR){ el('mp-l-mot').innerHTML=mpMotCardsHtml(); }
   }).catch(function(){ CHK_LEU=false; });
 }
 setInterval(checkinSincronizar,8000); setTimeout(checkinSincronizar,2500);
-function mpMotFila(){ var fora={}; PEDIDOS.forEach(function(p){ if(p.st==='em rota' && p.mt!=null && p.mt!=='') fora[String(p.mt)]=1; }); return mpMotOrdem().filter(function(m){ return !fora[String(m.id)]; }); }
+function mpMotFila(){ var fora={}; PEDIDOS.forEach(function(p){ if(p.st==='em rota' && p.mt!=null && p.mt!=='') fora[String(p.mt)]=1; }); return mpMotOrdem().filter(function(m){ return !fora[String(m.id)] || (mpChkAtivo() && !!CHK_POS[String(m.id)]); }); }   /* (048) check-in = disponível, mesmo com pedido antigo em rota */
 function mpMotOpcoes(){ var h='<option value="">Motoboy…</option>',l=mpMotFila(),i; for(i=0;i<l.length;i++) h+='<option value="'+esc(String(l[i].id))+'"'+(String(l[i].id)===MP_MOT?' selected':'')+'>'+(i+1)+' · '+esc(l[i].n)+'</option>'; return h; }
 function mpMotCardsHtml(){
   var mh='',m,ml=mpMotFila(),i,cont={},k; for(k in MP_RASC) cont[MP_RASC[k]]=(cont[MP_RASC[k]]||0)+1;
