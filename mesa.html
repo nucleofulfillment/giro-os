@@ -1730,10 +1730,10 @@ function cmLer(dataUrl){
   if(CM.busy) return; CM.busy=true; cmParar(); el('cm-prev').src=dataUrl; el('cm-lendo-t').textContent='Lendo a comanda…'; cmMostrar('lendo');
   api('/painel/comanda-ler',{method:'POST',body:JSON.stringify({imagem:dataUrl})}).then(function(d){
     CM.busy=false;
-    if(!d||!d.ok){ aviso((d&&d.mensagem)||'Não consegui ler a comanda'); cmMostrar('cam'); cmCamera(); return; }
+    if(!d||!d.ok){ cmAviso('erro','Não consegui ler a comanda',((d&&d.mensagem)||'Sem detalhe')+' [código: '+((d&&d.erro)||'sem_codigo')+'] · diag-1',function(){ cmMostrar('cam'); cmCamera(); }); return; }
     if(d.duplicada){ var dd=d.dados||{}; cmAviso('erro','Comanda já lançada','A comanda '+(dd.com?'#'+String(dd.com).replace(/^#/,'')+' ':'')+(dd.nome?'de '+dd.nome+' ':'')+'já foi lançada antes. Não precisa lançar de novo.',function(){ cmRefazer(); }); return; }
     cmPreencher(d.dados||{}); el('cm-sub').textContent='A IA leu a foto'+(d.ms?' em '+(d.ms/1000).toFixed(1).replace('.',',')+' s':'')+'. Corrija o que estiver errado antes de lançar.'; cmMostrar('form');
-  }).catch(function(){ CM.busy=false; aviso('Sem resposta do servidor. Tente de novo.'); cmMostrar('cam'); cmCamera(); });
+  }).catch(function(e){ CM.busy=false; cmAviso('erro','Sem resposta do servidor','Erro: '+String(e&&e.message||e).slice(0,120)+' · diag-1',function(){ cmMostrar('cam'); cmCamera(); }); });
 }
 var CM_IDS=['com','atn','hora','nome','fone','rua','numero','comp','ref','bairro','cid','tipo','prazo','itens','obs'];
 function cmPreencher(d){
