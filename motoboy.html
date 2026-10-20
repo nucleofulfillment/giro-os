@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#F97316">
+<title>Giro OS — Motoboy · GIRO-OS-M01</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FBF7F5; --s1:#FFFFFF; --s3:#FBF3EE; --border:#F2DED2;
+  --text:#29231E; --muted:#9E9084; --muted2:#6C6055;
+  --roxo:#D96D28; --grad:linear-gradient(120deg,#F97316,#FDB022);
+  --green:#16A34A; --wa:#25D366; --red:#DC2626; --amber:#B08A00;
+  --f:'Manrope',-apple-system,sans-serif;
+  --sh:0 10px 26px -10px rgba(41,35,30,.18);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:var(--f);-webkit-font-smoothing:antialiased}
+button,input{font-family:var(--f)}
+a{color:inherit}
+.top{position:sticky;top:0;z-index:5;background:var(--s1);border-bottom:1px solid var(--border);padding:calc(10px + env(safe-area-inset-top)) 16px 10px;display:flex;align-items:center;gap:10px}
+.top b{font-size:16px;font-weight:800}
+.top small{color:var(--muted);font-size:11px;display:block;font-weight:600}
+.top .sp{flex:1}
+.ib{border:1px solid var(--border);background:var(--s1);border-radius:10px;padding:8px 11px;font-weight:700;font-size:12.5px;color:var(--muted2);cursor:pointer}
+.wrap{padding:14px 16px 90px;max-width:560px;margin:0 auto}
+.card{background:var(--s1);border:1px solid var(--border);border-radius:16px;box-shadow:var(--sh);padding:14px;margin-bottom:12px}
+.btn{border:0;border-radius:12px;font-weight:800;font-size:14.5px;padding:13px 16px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.pri{background:var(--grad);color:#fff}
+.sec{background:var(--s3);color:var(--text);border:1px solid var(--border)}
+.wide{width:100%}
+.inp{width:100%;padding:13px 14px;border-radius:12px;border:1.5px solid var(--border);background:#fff;font-size:16px;color:var(--text)}
+.lbl{font-size:12px;font-weight:700;color:var(--muted2);margin:10px 0 5px;display:block}
+.login{max-width:380px;margin:12vh auto 0;padding:0 20px}
+.login h1{font-size:24px;margin:0 0 4px;font-weight:800}
+.login p{color:var(--muted);margin:0 0 18px;font-size:13.5px}
+.err{color:var(--red);font-size:13px;font-weight:700;margin-top:10px;min-height:18px}
+.resumo{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.resumo .n{font-size:22px;font-weight:800}
+.resumo .t{font-size:12px;color:var(--muted2);font-weight:700}
+.troco{background:#FEF3C7;color:#92400E;border-radius:10px;padding:7px 11px;font-size:12.5px;font-weight:800;margin-top:10px;display:inline-block}
+.seg{display:flex;gap:6px;margin:12px 0}
+.seg button{flex:1;border:1px solid var(--border);background:var(--s1);border-radius:99px;padding:8px 6px;font-weight:700;font-size:12.5px;color:var(--muted2);cursor:pointer}
+.seg button.on{background:#29231E;color:#fff;border-color:#29231E}
+.stop{position:relative}
+.stop.prox{border:2px solid var(--roxo)}
+.stop.feito{opacity:.62;background:var(--s3);box-shadow:none}
+.sq{width:30px;height:30px;border-radius:50%;background:#29231E;color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex:none}
+.stop.prox .sq{background:var(--roxo)}
+.stop.feito .sq{background:var(--green)}
+.hd{display:flex;gap:10px;align-items:flex-start}
+.hd .nm{font-weight:800;font-size:15.5px;line-height:1.2}
+.hd .ad{font-size:13px;color:var(--muted2);margin-top:2px}
+.hd .num{margin-left:auto;font-size:12px;font-weight:800;color:var(--muted);flex:none}
+.tag{display:inline-block;border-radius:99px;font-size:11.5px;font-weight:800;padding:3px 10px;margin:8px 6px 0 0}
+.t-ok{background:#DCFCE7;color:#15803D}
+.t-wt{background:#FEF3C7;color:#92400E}
+.t-wa{background:var(--wa);color:#fff;text-decoration:none}
+.t-nu{background:var(--s3);color:var(--muted2)}
+.it{font-size:12.5px;color:var(--muted2);margin-top:8px;white-space:pre-wrap}
+.ac{display:flex;gap:8px;margin-top:12px}
+.ac .btn{flex:1;padding:12px 8px;font-size:14px}
+.ghost{background:none;border:0;color:var(--muted2);font-weight:700;font-size:12.5px;text-decoration:underline;cursor:pointer;padding:8px 0}
+.sheet-bg{position:fixed;inset:0;background:rgba(41,35,30,.45);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--s1);width:100%;max-width:560px;border-radius:20px 20px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom))}
+.sheet h3{margin:0 0 4px;font-size:17px;font-weight:800}
+.sheet p{margin:0 0 14px;color:var(--muted2);font-size:13.5px}
+.pgs{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pgs button{border:1.5px solid var(--border);background:var(--s1);border-radius:14px;padding:16px 8px;font-weight:800;font-size:15px;cursor:pointer}
+.pgs button:active{background:var(--s3)}
+.vazio{text-align:center;color:var(--muted2);padding:40px 10px}
+.vazio b{display:block;font-size:17px;color:var(--text);margin-bottom:6px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#29231E;color:#fff;padding:11px 16px;border-radius:12px;font-weight:700;font-size:13.5px;z-index:30;max-width:90vw}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+var API='https://giro-os-api.nucleofull.workers.dev';
+var TK='giro_mt_jwt', NM='giro_mt_nome';
+var S={saida:null, nome:'', ordem:'rota', pos:null, ult:0, erro:''};
+function $(id){ return document.getElementById(id); }
+function esc(t){ return String(t==null?'':t).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function moeda(v){ return 'R$ '+Number(v||0).toFixed(2).replace('.',','); }
+function tok(){ try{ return localStorage.getItem(TK)||''; }catch(e){ return ''; } }
+function toast(t){ var d=document.createElement('div'); d.className='toast'; d.textContent=t; document.body.appendChild(d); setTimeout(function(){ d.remove(); },2600); }
+function api(path,opt){
+  opt=opt||{}; var h={'Content-Type':'application/json'}; if(tok()) h.Authorization='Bearer '+tok();
+  return fetch(API+path,{method:opt.method||'GET',headers:h,body:opt.body?JSON.stringify(opt.body):undefined}).then(function(r){
+    return r.json().then(function(d){ if(r.status===401){ sair(); } return d; });
+  });
+}
+function sair(){ try{ localStorage.removeItem(TK); }catch(e){} S.saida=null; telaLogin(); }
+
+/* ── login ── */
+function telaLogin(msg){
+  $('app').innerHTML='<div class="login"><h1>Giro OS</h1><p>Entrada do motoboy</p>'+
+    '<label class="lbl">Celular (com DDD)</label><input class="inp" id="lg-tel" inputmode="tel" placeholder="47 99999-9999" autocomplete="tel">'+
+    '<label class="lbl">PIN</label><input class="inp" id="lg-pin" type="password" inputmode="numeric" placeholder="Seu PIN" autocomplete="current-password">'+
+    '<div class="err" id="lg-err">'+esc(msg||'')+'</div>'+
+    '<button class="btn pri wide" id="lg-ok" style="margin-top:6px">Entrar</button></div>';
+  $('lg-ok').onclick=entrar; $('lg-pin').onkeydown=function(e){ if(e.key==='Enter') entrar(); };
+}
+function entrar(){
+  var tel=$('lg-tel').value.trim(), pin=$('lg-pin').value.trim();
+  if(!tel||!pin){ $('lg-err').textContent='Preencha o celular e o PIN'; return; }
+  $('lg-ok').disabled=true; $('lg-err').textContent='';
+  fetch(API+'/auth/login-motorista',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({telefone:tel,pin:pin})})
+  .then(function(r){ return r.json(); }).then(function(d){
+    $('lg-ok').disabled=false;
+    if(!d||!d.ok){ $('lg-err').textContent=(d&&d.mensagem)||'Não consegui entrar'; return; }
+    try{ localStorage.setItem(TK,d.token); localStorage.setItem(NM,(d.usuario&&d.usuario.nome)||''); }catch(e){}
+    S.nome=(d.usuario&&d.usuario.nome)||''; iniciar();
+  }).catch(function(){ $('lg-ok').disabled=false; $('lg-err').textContent='Sem conexão. Tente de novo.'; });
+}
+
+/* ── rota sugerida: vizinho mais próximo, partindo de onde o motoboy está (GPS) ── */
+function dist(a,b){ var r=Math.PI/180, dx=(b.lng-a.lng)*Math.cos((a.lat+b.lat)/2*r), dy=b.lat-a.lat; return Math.sqrt(dx*dx+dy*dy); }
+function ordenar(par){
+  var pend=par.filter(function(p){ return p.st==='pendente'; }), feitos=par.filter(function(p){ return p.st!=='pendente'; });
+  var por=pend.slice().sort(function(a,b){ return (a.hp||0)-(b.hp||0); });
+  if(S.ordem==='rota'){
+    var com=por.filter(function(p){ return p.lat!=null&&p.lng!=null; }), sem=por.filter(function(p){ return p.lat==null||p.lng==null; });
+    var cur=S.pos||(com[0]?{lat:com[0].lat,lng:com[0].lng}:null), out=[];
+    while(com.length&&cur){ var bi=0,bd=1e9,i; for(i=0;i<com.length;i++){ var d=dist(cur,com[i]); if(d<bd){ bd=d; bi=i; } } var x=com.splice(bi,1)[0]; out.push(x); cur=x; }
+    por=out.concat(com,sem);
+  }
+  return {pend:por, feitos:feitos};
+}
+
+/* ── tela da saída ── */
+function pagTag(p){
+  if(p.st==='entregue') return '<span class="tag t-ok">Entregue · '+esc(({dinheiro:'Dinheiro',pix:'Pix',cartao:'Cartão',pago:'Pago online'})[p.pgr]||p.pgr)+'</span>';
+  if(p.st==='ausente') return '<span class="tag t-nu">Não entregue</span>';
+  var f=({online:'Pago online',pix:'Pix',dinheiro:'Dinheiro',cartao:'Cartão'})[p.pg]||p.pg||'—';
+  if(p.pgp||p.pg==='online') return '<span class="tag t-ok">'+esc(f)+(p.pg==='online'?'':' · pago')+'</span>';
+  return '<span class="tag t-wt">Cobrar: '+esc(f)+'</span>';
+}
+function foneWa(t){ var d=String(t||'').replace(/\D/g,''); if(d.length<10) return ''; return d.length<=11?'55'+d:d; }
+function navUrl(p){
+  if(p.lat!=null&&p.lng!=null) return 'https://www.google.com/maps/dir/?api=1&destination='+p.lat+','+p.lng+'&travelmode=driving';
+  return 'https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent([p.rua,p.numero,p.bairro,p.cid].filter(Boolean).join(', '))+'&travelmode=driving';
+}
+function rotaUrl(lista){
+  var ps=lista.slice(0,10); if(!ps.length) return '';
+  function pt(p){ return (p.lat!=null&&p.lng!=null)?(p.lat+','+p.lng):encodeURIComponent([p.rua,p.numero,p.bairro,p.cid].filter(Boolean).join(', ')); }
+  var dest=pt(ps[ps.length-1]), way=ps.slice(0,-1).map(pt).join('|');
+  return 'https://www.google.com/maps/dir/?api=1&destination='+dest+(way?'&waypoints='+way:'')+'&travelmode=driving';
+}
+function stopHtml(p,idx,prox){
+  var wa=foneWa(p.tel), feito=p.st!=='pendente';
+  var h='<div class="card stop'+(prox?' prox':'')+(feito?' feito':'')+'"><div class="hd"><div class="sq">'+(feito?'✓':idx)+'</div><div><div class="nm">'+esc(p.cliente||'—')+'</div>'+
+    '<div class="ad">'+esc([p.rua,p.numero].filter(Boolean).join(', '))+(p.comp?' · '+esc(p.comp):'')+'<br>'+esc((p.bairro||'')+(p.cid?' · '+p.cid:''))+'</div></div><div class="num">#'+esc(p.num)+'</div></div>'+
+    '<div>'+pagTag(p)+'<span class="tag t-nu">'+moeda(p.vl)+'</span>'+(p.tel?'<a class="tag t-wa" href="https://wa.me/'+wa+'" target="_blank">WhatsApp</a><a class="tag t-nu" href="tel:'+esc(String(p.tel).replace(/[^\d+]/g,''))+'">Ligar</a>':'')+'</div>'+
+    (p.itens?'<div class="it">'+esc(p.itens)+'</div>':'')+(p.atend?'<div class="it"><b>Obs:</b> '+esc(p.atend)+'</div>':'');
+  if(!feito) h+='<div class="ac"><a class="btn sec" href="'+navUrl(p)+'" target="_blank" style="text-decoration:none">Navegar</a><button class="btn pri" data-ent="'+esc(p.cod)+'">Entregue</button></div><button class="ghost" data-aus="'+esc(p.cod)+'">Não consegui entregar</button>';
+  else h+='<button class="ghost" data-des="'+esc(p.cod)+'">Desfazer</button>';
+  return h+'</div>';
+}
+function pintar(){
+  var sd=S.saida, h='<div class="top"><div><b>'+esc(S.nome||'Motoboy')+'</b><small>GIRO-OS-M01 · sem GPS</small></div><div class="sp"></div><button class="ib" id="b-atu">Atualizar</button><button class="ib" id="b-sair">Sair</button></div><div class="wrap">';
+  if(S.erro) h+='<div class="card" style="color:var(--red);font-weight:700;font-size:13px">'+esc(S.erro)+'</div>';
+  if(!sd){
+    h+='<div class="vazio"><b>Sem saída agora</b>Quando o operador fechar a sua saída, os pedidos aparecem aqui.</div>';
+  } else {
+    var o=ordenar(sd.paradas), tot=sd.paradas.length, ok=sd.paradas.filter(function(p){ return p.st!=='pendente'; }).length;
+    h+='<div class="card"><div class="resumo"><div><div class="n">'+ok+' / '+tot+'</div><div class="t">entregas feitas</div></div>'+
+       '<div style="margin-left:auto;text-align:right"><div class="n">'+o.pend.length+'</div><div class="t">faltam</div></div></div>'+
+       (sd.troco>0?'<div class="troco">Vale de troco: '+moeda(sd.troco)+'</div>':'')+'</div>';
+    if(o.pend.length){
+      h+='<div class="seg"><button data-ord="rota" class="'+(S.ordem==='rota'?'on':'')+'">Rota sugerida</button><button data-ord="pedido" class="'+(S.ordem==='pedido'?'on':'')+'">Ordem dos pedidos</button></div>';
+      var ru=rotaUrl(o.pend); if(ru) h+='<a class="btn sec wide" href="'+ru+'" target="_blank" style="text-decoration:none;margin-bottom:12px">Abrir rota completa no mapa</a>';
+      h+='<div style="font-size:12px;color:var(--muted2);margin:0 0 10px;font-weight:600">A ordem é só uma sugestão: você pode entregar em qualquer ordem.</div>';
+      o.pend.forEach(function(p,i){ h+=stopHtml(p,i+1,i===0); });
+    } else h+='<div class="vazio"><b>Saída concluída</b>Todas as entregas foram marcadas.</div>';
+    if(o.feitos.length){ h+='<div style="font-size:12px;font-weight:800;color:var(--muted2);margin:18px 0 8px">JÁ MARCADOS</div>'; o.feitos.forEach(function(p){ h+=stopHtml(p,0,false); }); }
+  }
+  $('app').innerHTML=h+'</div>';
+  $('b-atu').onclick=function(){ carregar(true); }; $('b-sair').onclick=sair;
+}
+
+/* ── pagamento obrigatório ao marcar Entregue ── */
+document.addEventListener('click',function(e){
+  var t=e.target.closest('[data-ent],[data-aus],[data-des],[data-ord],[data-pg],[data-fecha]'); if(!t) return;
+  if(t.hasAttribute('data-ord')){ S.ordem=t.getAttribute('data-ord'); pintar(); return; }
+  if(t.hasAttribute('data-ent')){ abrirPg(t.getAttribute('data-ent')); return; }
+  if(t.hasAttribute('data-aus')){ if(confirm('Marcar que não conseguiu entregar este pedido?')) marcar(t.getAttribute('data-aus'),'ausente'); return; }
+  if(t.hasAttribute('data-des')){ marcar(t.getAttribute('data-des'),'desfazer'); return; }
+  if(t.hasAttribute('data-fecha')){ var b=$('sh'); if(b) b.remove(); return; }
+});
+function paradaDe(cod){ var r=null; (S.saida?S.saida.paradas:[]).forEach(function(p){ if(p.cod===cod) r=p; }); return r; }
+function abrirPg(cod){
+  var p=paradaDe(cod); if(!p) return;
+  var pago=(p.pgp||p.pg==='online');
+  var h='<div class="sheet-bg" id="sh"><div class="sheet"><h3>Entregar #'+esc(p.num)+'</h3>'+
+    '<p>'+(pago?'Este pedido já está pago. Confirme a entrega.':'Como o cliente pagou? ('+moeda(p.vl)+')')+'</p>';
+  if(pago) h+='<button class="btn pri wide" data-pg="pago" data-cod="'+esc(cod)+'">Confirmar entrega · já estava pago</button>';
+  else h+='<div class="pgs"><button data-pg="dinheiro" data-cod="'+esc(cod)+'">Dinheiro</button><button data-pg="pix" data-cod="'+esc(cod)+'">Pix</button><button data-pg="cartao" data-cod="'+esc(cod)+'">Cartão</button><button data-pg="pago" data-cod="'+esc(cod)+'">Já estava pago</button></div>';
+  h+='<button class="ghost wide" data-fecha="1" style="margin-top:10px">Cancelar</button></div></div>';
+  document.body.insertAdjacentHTML('beforeend',h);
+}
+document.addEventListener('click',function(e){
+  var t=e.target.closest('[data-pg]'); if(!t||!t.getAttribute('data-cod')) return;
+  var b=$('sh'); if(b) b.remove(); marcar(t.getAttribute('data-cod'),'entregue',t.getAttribute('data-pg'));
+});
+var BUSY=false;
+function marcar(cod,acao,pg){
+  if(BUSY) return; BUSY=true;
+  api('/motoboy/entregue',{method:'POST',body:{cod:cod,acao:acao,pg:pg||''}}).then(function(d){
+    BUSY=false;
+    if(d&&d.ok){ S.saida=d.saida; S.erro=''; pintar(); toast(acao==='entregue'?'Entrega marcada':(acao==='desfazer'?'Desfeito':'Anotado')); }
+    else toast((d&&d.mensagem)||'Não consegui salvar. Tente de novo.');
+  }).catch(function(){ BUSY=false; toast('Sem conexão. Tente de novo.'); });
+}
+
+/* ── carregar / iniciar ── */
+function carregar(manual){
+  api('/motoboy/rota').then(function(d){
+    if(!d) return;
+    if(d.ok){ S.saida=d.saida; S.erro=''; if(d.nome) S.nome=d.nome; }
+    else if(d.erro!=='sessao_invalida') S.erro=d.mensagem||'Não consegui buscar a rota.';
+    if(!document.querySelector('.sheet-bg')) pintar();
+    if(manual) toast('Atualizado');
+  }).catch(function(){ S.erro='Sem conexão com o servidor.'; if(!document.querySelector('.sheet-bg')) pintar(); });
+}
+var GPS_ATIVO=false;   /* GPS oculto por enquanto (teste): troque para true pra religar */
+function gps(){ if(!GPS_ATIVO) return; try{ navigator.geolocation&&navigator.geolocation.getCurrentPosition(function(p){ S.pos={lat:p.coords.latitude,lng:p.coords.longitude}; if(S.saida&&!document.querySelector('.sheet-bg')) pintar(); },function(){},{maximumAge:60000,timeout:8000}); }catch(e){} }
+function iniciar(){ S.nome=S.nome||(function(){ try{ return localStorage.getItem(NM)||''; }catch(e){ return ''; } })(); pintar(); gps(); carregar(); }
+if(tok()) iniciar(); else telaLogin();
+setInterval(function(){ if(tok()&&!document.hidden){ carregar(); } },20000);
+setInterval(function(){ if(tok()&&!document.hidden) gps(); },60000);
+</script>
+</body>
+</html>
