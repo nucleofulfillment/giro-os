@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Giro OS — Painel do ponto · GIRO-OS-053</title>
+<title>Giro OS — Painel do ponto · GIRO-OS-054</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -663,7 +663,7 @@ a{color:inherit}
 
       <!-- PEDIDOS -->
       <section class="page" id="pg-pedidos">
-        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-053</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
+        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-054</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
         <div id="pd-chip"></div>
         <div class="card">
           <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
@@ -782,7 +782,7 @@ a{color:inherit}
 
       <!-- CARDÁPIO (1A): produtos, categorias e adicionais do restaurante -->
       <section class="page" id="pg-cardapio">
-        <div class="pghd"><div><h1>Cardápio</h1><div class="sub">produtos do seu restaurante · <span style="opacity:.6">GIRO-OS-053</span></div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn sec" onclick="cdAbrirCats()">Categorias</button><button class="btn sec" onclick="cdLinkCardapio()">🔗 Link do cardápio</button><button class="btn sec" onclick="cdAbrirOfertas()">▶ Ofertas</button><button class="btn sec" onclick="cdAbrirImport()">Importar planilha</button><button class="btn pri" onclick="cdNovo()">+ Novo produto</button></div></div>
+        <div class="pghd"><div><h1>Cardápio</h1><div class="sub">produtos do seu restaurante · <span style="opacity:.6">GIRO-OS-054</span></div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn sec" onclick="cdAbrirCats()">Categorias</button><button class="btn sec" onclick="cdLinkCardapio()">🔗 Link do cardápio</button><button class="btn sec" onclick="cdAbrirOfertas()">▶ Ofertas</button><button class="btn sec" onclick="cdAbrirImport()">Importar planilha</button><button class="btn pri" onclick="cdNovo()">+ Novo produto</button></div></div>
         <div class="card">
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px"><input class="inp" id="cd-busca" placeholder="Buscar produto" oninput="cdPintar()" style="flex:1;min-width:200px"><select class="inp" id="cd-fcat" onchange="cdPintar()" style="width:210px;max-width:100%"></select></div>
           <div id="cd-selbar" style="display:none;align-items:center;gap:10px;flex-wrap:wrap;background:var(--s2);border-radius:12px;padding:8px 12px;margin-bottom:10px;font-size:13px"><span id="cd-seltxt" style="font-weight:700"></span><button class="btn pri sm" onclick="cdExibirOferta()">▶ Exibir oferta</button><button class="btn sec sm" onclick="cdLimparSel()">Limpar</button></div>
@@ -1244,6 +1244,17 @@ a{color:inherit}
   <div style="flex-shrink:0;border-top:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--s1);border-radius:0 0 18px 18px"><button class="btn pri" id="cd-salvar" onclick="cdSalvar()">Salvar</button><button class="btn sec" id="cd-dup" onclick="cdDuplicarAberto()">Duplicar</button><button class="btn sec" id="cd-apagar" onclick="cdApagarAberto()" style="color:var(--red);margin-left:auto">Apagar</button></div>
 </div>
 
+<style>
+.ov{position:absolute;left:0;right:0;display:flex;flex-direction:column;gap:.5em;padding:0 1.2em;pointer-events:none;z-index:4;color:var(--ov-cor,#fff);font-family:inherit}
+.ov.p-base{bottom:var(--ov-b,0)}.ov.p-topo{top:var(--ov-t,0)}.ov.p-centro{top:50%;transform:translateY(-50%)}
+.ov.a-esq{align-items:flex-start;text-align:left}.ov.a-centro{align-items:center;text-align:center}.ov.a-dir{align-items:flex-end;text-align:right}
+.ov-apoio{font-size:calc(.85em*var(--ov-apoio,1));font-weight:700;letter-spacing:.12em;text-transform:uppercase;opacity:.92;text-shadow:0 1px .5em #0008}
+.ov-tit{font-size:calc(1.9em*var(--ov-tit,1));font-weight:900;line-height:1.08;text-shadow:0 .1em .6em #0008;overflow-wrap:anywhere}
+.ov-btn{pointer-events:auto;display:inline-block;margin-top:.3em;text-decoration:none;font-weight:800;font-size:calc(1em*var(--ov-btn,1));padding:.7em 1.4em;border-radius:calc(var(--ov-raio,14)*.0625em);cursor:pointer}
+.ov-btn.cheio{background:var(--ov-bf,#f97316);color:var(--ov-bt,#fff)}
+.ov-btn.contorno{border:.15em solid var(--ov-bt,#fff);color:var(--ov-bt,#fff);background:transparent}
+.ov-btn.link{color:var(--ov-bt,#fff);padding:.2em 0;text-decoration:underline}
+</style>
 <div class="sheet wide" id="sh-ofertas">
   <div class="sh-hd"><h3>Ofertas com vídeo</h3><button onclick="fecharTudo()">✕</button></div>
   <div class="sh-bd">
@@ -1263,6 +1274,32 @@ a{color:inherit}
     <video id="cd-of-vid" controls playsinline muted style="display:none;width:100%;max-height:300px;background:#000;border-radius:12px;margin:6px 0"></video>
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0 12px"><button class="btn sec sm" id="cd-of-vbtn" type="button" onclick="el('cd-of-file').click()">Escolher vídeo</button><span id="cd-of-vinfo" style="font-size:12px;color:var(--muted)"></span></div>
     <input type="file" id="cd-of-file" accept="video/mp4,video/webm,video/quicktime" style="display:none" onchange="cdOfVideo(this)">
+    <label style="font-size:12px;font-weight:700;color:var(--muted2)">Texto e botão sobre o vídeo <span style="font-weight:500">(opcional)</span></label>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;margin:6px 0 14px">
+      <div id="cd-ov-prev" style="width:150px;height:267px;flex:none;border-radius:14px;background:#111;position:relative;overflow:hidden;font-size:6.2px">
+        <video id="cd-ov-pv" muted playsinline preload="metadata" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"></video>
+        <div id="cd-ov-mask" style="position:absolute;inset:0"></div><div id="cd-ov-box"></div>
+      </div>
+      <div style="flex:1;min-width:230px">
+        <input class="inp" id="cd-ov-apoio" maxlength="80" placeholder="Texto pequeno (ex: só hoje)" oninput="cdOvPrev()" style="margin-bottom:6px">
+        <input class="inp" id="cd-ov-titulo" maxlength="120" placeholder="Título grande (ex: Pizza Gigante por R$ 99)" oninput="cdOvPrev()" style="margin-bottom:6px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px"><input class="inp" id="cd-ov-botao" maxlength="30" placeholder="Texto do botão (ex: Pedir agora)" oninput="cdOvPrev()"><input class="inp" id="cd-ov-link" maxlength="300" placeholder="Link ou WhatsApp com DDD" oninput="cdOvPrev()"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px"><select class="inp" id="cd-ov-pos" onchange="cdOvPrev()"><option value="base">Posição: embaixo</option><option value="centro">Posição: centro</option><option value="topo">Posição: topo</option></select><select class="inp" id="cd-ov-alin" onchange="cdOvPrev()"><option value="esq">Alinhado à esquerda</option><option value="centro">Centralizado</option><option value="dir">Alinhado à direita</option></select></div>
+        <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;cursor:pointer"><input type="checkbox" id="cd-ov-masc" checked onchange="cdOvPrev()"> Escurecer o vídeo para o texto ficar legível</label>
+        <details style="margin-top:8px"><summary style="font-size:12.5px;font-weight:700;cursor:pointer">Cores e tamanhos</summary>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;font-size:11.5px;color:var(--muted)">
+            <label>Cor do texto<input type="color" id="cd-ov-cor" value="#ffffff" oninput="cdOvPrev()" style="width:100%;height:34px"></label>
+            <label>Escurecer (%)<input type="range" id="cd-ov-mf" min="5" max="90" value="45" oninput="cdOvPrev()" style="width:100%"></label>
+            <label>Tamanho do título<input type="range" id="cd-ov-et" min="50" max="250" value="100" oninput="cdOvPrev()" style="width:100%"></label>
+            <label>Tamanho do texto pequeno<input type="range" id="cd-ov-ea" min="50" max="250" value="100" oninput="cdOvPrev()" style="width:100%"></label>
+            <label>Botão: estilo<select class="inp" id="cd-ov-be" onchange="cdOvPrev()" style="margin-top:2px"><option value="cheio">Cheio</option><option value="contorno">Contorno</option><option value="link">Só texto</option></select></label>
+            <label>Botão: tamanho<input type="range" id="cd-ov-bes" min="60" max="200" value="100" oninput="cdOvPrev()" style="width:100%"></label>
+            <label>Botão: cor de fundo<input type="color" id="cd-ov-bf" value="#f97316" oninput="cdOvPrev()" style="width:100%;height:34px"></label>
+            <label>Botão: cor do texto<input type="color" id="cd-ov-bt" value="#ffffff" oninput="cdOvPrev()" style="width:100%;height:34px"></label>
+            <label>Botão: arredondado<input type="range" id="cd-ov-br" min="0" max="40" value="14" oninput="cdOvPrev()" style="width:100%"></label>
+          </div></details>
+      </div>
+    </div>
     <label style="font-size:12px;font-weight:700;color:var(--muted2)">Produtos que aparecem com esse vídeo <span id="cd-of-nprod" style="font-weight:500"></span></label>
     <input class="inp" id="cd-of-busca" placeholder="🔎 buscar produto" oninput="cdOfPintarProds()" style="margin:4px 0 6px">
     <div id="cd-of-prods" style="max-height:240px;overflow:auto;border:1px solid var(--border);border-radius:10px;padding:2px 8px"></div>
@@ -5672,7 +5709,7 @@ function mpAplicarModo(){
   el('mp-diabar').style.display=(m==='vivo')?'contents':'none';
   el('mp-opbar').style.display=(m==='mapa')?'flex':'none'; el('mp-opmot').style.display='none'; el('mp-vivo').style.display=(m==='mapa')?'':'none';
   var rl=el('mp-ritmo'); if(rl&&rl.parentNode) rl.parentNode.style.display=(m==='vivo')?'':'none';
-  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-053';
+  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-054';
   if(m!=='mapa'){ mpPkTodos(false); el('mp-sempos').style.display='none'; el('mp-sempos-btn').style.display='none'; }
   if(m==='vivo'){ MP_ENQ=true; mpBuscar(); } else mpOperador();
 }
@@ -7058,6 +7095,34 @@ function cdSabFoto(inp){
   };
   rd.readAsDataURL(f); inp.value='';
 }
+/* texto e botão sobre o vídeo (mesmo desenho da tela do cliente) */
+function ofOverlay(t){
+  t=t||{}; if(!(t.apoio||t.titulo||t.botao)) return null;
+  var v='--ov-cor:'+(t.cor||'#ffffff')+';--ov-tit:'+((t.escTitulo||100)/100)+';--ov-apoio:'+((t.escApoio||100)/100)+';--ov-btn:'+((t.btnEsc||100)/100)+';--ov-raio:'+(t.btnRaio==null?14:t.btnRaio)+';--ov-bf:'+(t.btnFundo||'#f97316')+';--ov-bt:'+(t.btnTexto||'#ffffff');
+  var h='<div class="ov p-'+(t.pos||'base')+' a-'+(t.alin||'esq')+'" style="'+v+'">'
+    +(t.apoio?'<div class="ov-apoio">'+esc(t.apoio)+'</div>':'')+(t.titulo?'<div class="ov-tit">'+esc(t.titulo)+'</div>':'')
+    +(t.botao?'<a class="ov-btn '+(t.btnEstilo||'cheio')+'"'+(t.link?' href="'+esc(t.link)+'" target="_blank" rel="noopener"':'')+'>'+esc(t.botao)+'</a>':'')+'</div>';
+  return h;
+}
+function ofMascara(t){ if(!t||t.mascara===false) return ''; var f=t.mascaraForca||45; return 'linear-gradient(180deg,rgba(0,0,0,'+(f*0.0022).toFixed(3)+'),rgba(0,0,0,'+(f/100).toFixed(2)+'))'; }
+function cdOvColher(){
+  var g=function(i){ return el(i).value; };
+  return {apoio:g('cd-ov-apoio').trim(),titulo:g('cd-ov-titulo').trim(),botao:g('cd-ov-botao').trim(),link:g('cd-ov-link').trim(),pos:g('cd-ov-pos'),alin:g('cd-ov-alin'),mascara:el('cd-ov-masc').checked,mascaraForca:+g('cd-ov-mf'),cor:g('cd-ov-cor'),escTitulo:+g('cd-ov-et'),escApoio:+g('cd-ov-ea'),btnEstilo:g('cd-ov-be'),btnEsc:+g('cd-ov-bes'),btnFundo:g('cd-ov-bf'),btnTexto:g('cd-ov-bt'),btnRaio:+g('cd-ov-br')};
+}
+function cdOvPreencher(t){
+  t=t||{}; var s=function(i,v){ el(i).value=v; };
+  s('cd-ov-apoio',t.apoio||''); s('cd-ov-titulo',t.titulo||''); s('cd-ov-botao',t.botao||''); s('cd-ov-link',t.link||''); s('cd-ov-pos',t.pos||'base'); s('cd-ov-alin',t.alin||'esq');
+  el('cd-ov-masc').checked=t.mascara!==false; s('cd-ov-mf',t.mascaraForca||45); s('cd-ov-cor',t.cor||'#ffffff'); s('cd-ov-et',t.escTitulo||100); s('cd-ov-ea',t.escApoio||100);
+  s('cd-ov-be',t.btnEstilo||'cheio'); s('cd-ov-bes',t.btnEsc||100); s('cd-ov-bf',t.btnFundo||'#f97316'); s('cd-ov-bt',t.btnTexto||'#ffffff'); s('cd-ov-br',t.btnRaio==null?14:t.btnRaio);
+  cdOvPrev();
+}
+function cdOvPrev(){
+  var t=cdOvColher(), pv=el('cd-ov-pv'), src=CD.of&&CD.of.prev?CD.of.prev:'';
+  if(src){ if(pv.getAttribute('data-s')!==src){ pv.setAttribute('data-s',src); pv.src=src+'#t=0.6'; } } else { pv.removeAttribute('src'); pv.removeAttribute('data-s'); }
+  el('cd-ov-mask').style.background=ofMascara(t);
+  var h=ofOverlay(t); var b=el('cd-ov-box'); b.innerHTML=h||'';
+  var o=b.firstChild; if(o){ o.style.setProperty('--ov-t','26px'); o.style.setProperty('--ov-b','70px'); }
+}
 /* ── link público do cardápio do cliente ── */
 function cdLinkUrl(){ var b=location.href.split('#')[0].split('?')[0]; b=b.slice(0,b.lastIndexOf('/')+1); return b+'livefood.html?c='+encodeURIComponent(CD.cli||''); }
 function cdLinkCardapio(){
@@ -7133,7 +7198,7 @@ function cdOfAbrirForm(){
   el('cd-of-tit').textContent=o.id?'Editar oferta':'Nova oferta';
   el('cd-of-nome').value=o.nome; el('cd-of-ativo').checked=o.ativo!==false; el('cd-of-erro').textContent=''; el('cd-of-busca').value='';
   el('cd-of-dup').style.display=o.id?'':'none'; el('cd-of-apagar').style.display=o.id?'':'none';
-  cdOfPintarVideo(); cdOfPintarProds(); abrir('sh-oferta');
+  cdOfPintarVideo(); cdOfPintarProds(); cdOvPreencher(o.txt); abrir('sh-oferta');
 }
 function cdOfPintarVideo(){
   var o=CD.of, v=el('cd-of-vid');
@@ -7174,16 +7239,18 @@ function cdOfEnviar(f,dur){
     s.disabled=false; b.disabled=false; var d={}; try{ d=JSON.parse(x.responseText); }catch(e){}
     if(x.status!==200||!d.ok){ er.textContent='Não enviou: '+(d.mensagem||('erro '+x.status)); cdOfPintarVideo(); return; }
     CD.of.vid=d.vid; CD.of.vdur=dur; CD.of.vtam=f.size; CD.of.vtipo=f.type; CD.cli=d.cli||CD.cli;
-    CD.of.prev=URL.createObjectURL(f); cdOfPintarVideo();
+    CD.of.prev=URL.createObjectURL(f); cdOfPintarVideo(); cdOvPrev();
   };
   x.onerror=function(){ s.disabled=false; b.disabled=false; er.textContent='A internet caiu durante o envio. Tente de novo.'; cdOfPintarVideo(); };
   pg.textContent='Enviando vídeo… 0%'; x.send(f);
 }
-function cdOfColher(){ var o=CD.of; return {id:o.id||undefined,ordem:o.ordem,nome:el('cd-of-nome').value.trim(),vid:o.vid,vdur:o.vdur,vtam:o.vtam,vtipo:o.vtipo,produtos:o.produtos,ativo:el('cd-of-ativo').checked}; }
+function cdOfColher(){ var o=CD.of; return {id:o.id||undefined,ordem:o.ordem,nome:el('cd-of-nome').value.trim(),vid:o.vid,vdur:o.vdur,vtam:o.vtam,vtipo:o.vtipo,produtos:o.produtos,txt:cdOvColher(),ativo:el('cd-of-ativo').checked}; }
 function cdOfSalvar(){
   var it=cdOfColher(), er=el('cd-of-erro'); if(!it.nome){ er.textContent='Falta o nome da oferta.'; return; }
   if(!it.vid){ er.textContent='Escolha o vídeo da oferta.'; return; }
   if(!it.produtos.length){ er.textContent='Marque pelo menos um produto.'; return; }
+  var lk=it.txt.link; if(lk&&!/^(https?:\/\/|tel:|mailto:)/i.test(lk)&&!/^\+?[\d(][\d\s().-]{9,16}$/.test(lk)){ er.textContent='O link do botão precisa começar com https:// (ou ser só o número do WhatsApp com DDD).'; return; }
+  if(it.txt.botao&&!lk){ er.textContent='O botão precisa de um link (ou o número do WhatsApp).'; return; }
   if(!it.id) it.ordem=Date.now();
   var b=el('cd-of-salvar'); b.disabled=true; b.textContent='Salvando…'; er.textContent='';
   cdOfSalvarApi(it).then(function(){ b.disabled=false; b.textContent='Salvar'; CD.sel={}; return cdOfRecarregar(); }).then(function(){ aviso('Oferta salva'); cdAbrirOfertas(); })

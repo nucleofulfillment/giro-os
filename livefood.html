@@ -50,15 +50,26 @@ html,body{margin:0;height:100%;background:#000;color:var(--tx);font-family:Inter
 .ln{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--line);font-size:14.5px}
 .ln b{color:var(--pri2)}.ln span small{display:block;color:var(--mut);font-size:11.5px;margin-top:2px}
 .nt{font-size:12px;color:var(--mut);margin-top:14px;line-height:1.5}
+.ov{position:absolute;left:0;right:0;display:flex;flex-direction:column;gap:.5em;padding:0 1.2em;pointer-events:none;z-index:4;color:var(--ov-cor,#fff);font-family:inherit}
+.ov.p-base{bottom:var(--ov-b,0)}.ov.p-topo{top:var(--ov-t,0)}.ov.p-centro{top:50%;transform:translateY(-50%)}
+.ov.a-esq{align-items:flex-start;text-align:left}.ov.a-centro{align-items:center;text-align:center}.ov.a-dir{align-items:flex-end;text-align:right}
+.ov-apoio{font-size:calc(.85em*var(--ov-apoio,1));font-weight:700;letter-spacing:.12em;text-transform:uppercase;opacity:.92;text-shadow:0 1px .5em #0008}
+.ov-tit{font-size:calc(1.9em*var(--ov-tit,1));font-weight:900;line-height:1.08;text-shadow:0 .1em .6em #0008;overflow-wrap:anywhere}
+.ov-btn{pointer-events:auto;display:inline-block;margin-top:.3em;text-decoration:none;font-weight:800;font-size:calc(1em*var(--ov-btn,1));padding:.7em 1.4em;border-radius:calc(var(--ov-raio,14)*.0625em);cursor:pointer}
+.ov-btn.cheio{background:var(--ov-bf,#f97316);color:var(--ov-bt,#fff)}
+.ov-btn.contorno{border:.15em solid var(--ov-bt,#fff);color:var(--ov-bt,#fff);background:transparent}
+.ov-btn.link{color:var(--ov-bt,#fff);padding:.2em 0;text-decoration:underline}
+#stage .ov{--ov-t:calc(84px + env(safe-area-inset-top));--ov-b:calc(172px + env(safe-area-inset-bottom));font-size:16px}
+#omask{position:absolute;inset:0;pointer-events:none;z-index:3}
 </style>
 </head>
 <body>
 <div id="stage">
   <video class="vd" id="v0" muted playsinline preload="auto"></video>
   <video class="vd" id="v1" muted playsinline preload="auto"></video>
-  <div class="shade-t"></div><div class="shade-b"></div>
+  <div id="omask"></div><div class="shade-t"></div><div class="shade-b"></div>
   <div id="top"><div id="segs"></div><div id="bar"><div id="emp"></div><button class="rb" id="bSom" title="Som" onclick="alternaSom()">🔇</button></div></div>
-  <div id="oft"></div>
+  <div id="ovbox"></div><div id="oft"></div>
   <button id="som" onclick="alternaSom()">🔊 Toque para ativar o som</button>
   <div id="cards"></div>
   <div id="vazio"><h2 id="vzT">Cardápio em breve</h2><p id="vzP">Ainda não há ofertas no ar. Volte daqui a pouco.</p></div>
@@ -113,7 +124,8 @@ function tocar(i,primeira){
   vs.forEach(function(x){ x.classList.toggle('on',x===v); });
   outro.pause();
   if(ordem.length>1){ var prox=ordem[(idx+1)%ordem.length]; prepara(outro,prox); }
-  $('oft').textContent=o.nome||'';
+  var ovh=ofOverlay(o.txt); $('ovbox').innerHTML=ovh||''; $('omask').style.background=ovh?ofMascara(o.txt):'';
+  $('oft').textContent=ovh?'':(o.nome||'');
   cartoes(o);
   for(var k=0;k<ordem.length;k++){ var b=$('sg'+k); if(b) b.style.width=(k<idx?'100%':'0'); }
   v.onended=function(){ proximo(); };
@@ -141,6 +153,16 @@ function cartoes(o){
   $('cards').innerHTML=h; $('cards').scrollLeft=0;
 }
 
+/* texto e botão sobre o vídeo (mesmo desenho do painel) */
+function ofOverlay(t){
+  t=t||{}; if(!(t.apoio||t.titulo||t.botao)) return null;
+  var v='--ov-cor:'+(t.cor||'#ffffff')+';--ov-tit:'+((t.escTitulo||100)/100)+';--ov-apoio:'+((t.escApoio||100)/100)+';--ov-btn:'+((t.btnEsc||100)/100)+';--ov-raio:'+(t.btnRaio==null?14:t.btnRaio)+';--ov-bf:'+(t.btnFundo||'#f97316')+';--ov-bt:'+(t.btnTexto||'#ffffff');
+  return '<div class="ov p-'+(t.pos||'base')+' a-'+(t.alin||'esq')+'" style="'+v+'">'
+    +(t.apoio?'<div class="ov-apoio">'+esc(t.apoio)+'</div>':'')+(t.titulo?'<div class="ov-tit">'+esc(t.titulo)+'</div>':'')
+    +(t.botao?'<a class="ov-btn '+(t.btnEstilo||'cheio')+'"'+(t.link?' href="'+esc(t.link)+'" target="_blank" rel="noopener"':'')+'>'+esc(t.botao)+'</a>':'')+'</div>';
+}
+function ofMascara(t){ if(!t||t.mascara===false) return ''; var f=t.mascaraForca||45; return 'linear-gradient(180deg,rgba(0,0,0,'+(f*0.0022).toFixed(3)+'),rgba(0,0,0,'+(f/100).toFixed(2)+'))'; }
+
 /* ── som ── */
 function atualizaSom(){ $('bSom').textContent=somOn?'🔊':'🔇'; $('som').style.display=somOn?'none':'block'; }
 function alternaSom(){ somOn=!somOn; vs.forEach(function(x){ x.muted=!somOn; }); var v=vs[cur]; if(v.paused) v.play().catch(function(){}); atualizaSom(); }
@@ -159,7 +181,7 @@ function abreSheet(id){
 function fechaSheet(){ $('sheet').classList.remove('on'); $('ovl').style.display='none'; }
 
 /* toque no vídeo: pula pra próxima oferta */
-$('stage').addEventListener('click',function(e){ if(e.target.closest('#cards')||e.target.closest('.rb')||e.target.closest('#som')) return; if(ordem.length>1){ cur=1-cur; tocar(idx+1); } });
+$('stage').addEventListener('click',function(e){ if(e.target.closest('#cards')||e.target.closest('.rb')||e.target.closest('#som')||e.target.closest('.ov-btn')) return; if(ordem.length>1){ cur=1-cur; tocar(idx+1); } });
 document.addEventListener('visibilitychange',function(){ var v=vs[cur]; if(!document.hidden&&v&&v.paused&&ordem.length) v.play().catch(function(){}); });
 carregar(true); setInterval(function(){ carregar(false); },60000);
 </script>
