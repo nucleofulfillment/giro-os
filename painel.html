@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Giro OS — Painel do ponto · GIRO-OS-048</title>
+<title>Giro OS — Painel do ponto · GIRO-OS-049</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -663,7 +663,7 @@ a{color:inherit}
 
       <!-- PEDIDOS -->
       <section class="page" id="pg-pedidos">
-        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-048</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
+        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-049</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
         <div id="pd-chip"></div>
         <div class="card">
           <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
@@ -777,6 +777,15 @@ a{color:inherit}
             <thead><tr><th>Modelo</th><th>Cor</th><th>Ano</th><th>Multa</th><th>IPVA</th><th>Licenciamento</th></tr></thead>
             <tbody id="ve-corpo"></tbody>
           </table></div>
+        </div>
+      </section>
+
+      <!-- CARDÁPIO (1A): produtos, categorias e adicionais do restaurante -->
+      <section class="page" id="pg-cardapio">
+        <div class="pghd"><div><h1>Cardápio</h1><div class="sub">produtos do seu restaurante · <span style="opacity:.6">GIRO-OS-049</span></div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn sec" onclick="cdAbrirCats()">Categorias</button><button class="btn pri" onclick="cdNovo()">+ Novo produto</button></div></div>
+        <div class="card">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px"><input class="inp" id="cd-busca" placeholder="Buscar produto" oninput="cdPintar()" style="flex:1;min-width:200px"><select class="inp" id="cd-fcat" onchange="cdPintar()" style="width:210px;max-width:100%"></select></div>
+          <div id="cd-lista"></div>
         </div>
       </section>
 
@@ -1193,6 +1202,41 @@ a{color:inherit}
     <button class="btn sec wide" id="gr-cancelar" style="display:none;margin-top:8px" onclick="abrirGrupo()">Cancelar edição</button>
     <h4 style="margin:18px 0 6px;font-size:13px">Grupos criados</h4>
     <div id="gr-existentes"></div>
+  </div>
+</div>
+
+<div class="sheet wide" id="sh-produto">
+  <div class="sh-hd"><h3 id="cd-tit">Novo produto</h3><button onclick="fecharTudo()">✕</button></div>
+  <div class="sh-bd">
+    <div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:14px">
+      <div id="cd-foto-box" onclick="el('cd-foto-file').click()" style="width:96px;height:96px;flex:none;border-radius:14px;border:1.5px dashed var(--border2);background:var(--s2) center/cover no-repeat;display:flex;align-items:center;justify-content:center;text-align:center;font-size:11.5px;color:var(--muted);cursor:pointer;line-height:1.3">+ Foto</div>
+      <input type="file" id="cd-foto-file" accept="image/*" style="display:none" onchange="cdFoto(this)">
+      <div style="flex:1;min-width:0">
+        <label style="font-size:12px;font-weight:700;color:var(--muted2)">Nome do produto</label>
+        <input class="inp" id="cd-nome" placeholder="Ex: X-Salada" maxlength="80" style="margin:4px 0 10px">
+        <label style="font-size:12px;font-weight:700;color:var(--muted2)">Preço (R$)</label>
+        <input class="inp" id="cd-preco" inputmode="decimal" placeholder="0,00" style="margin-top:4px">
+      </div>
+    </div>
+    <label style="font-size:12px;font-weight:700;color:var(--muted2)">Categoria</label>
+    <div style="display:flex;gap:8px;margin:4px 0 12px"><select class="inp" id="cd-cat"></select><button class="btn sec sm" type="button" onclick="cdNovaCatRapida()" style="white-space:nowrap">+ nova</button></div>
+    <label style="font-size:12px;font-weight:700;color:var(--muted2)">Descrição <span style="font-weight:500">(opcional)</span></label>
+    <textarea class="inp" id="cd-desc" rows="2" maxlength="300" placeholder="Ingredientes, tamanho..." style="margin:4px 0 12px;resize:vertical"></textarea>
+    <label style="font-size:12px;font-weight:700;color:var(--muted2)">Adicionais <span style="font-weight:500">(opcional · ex: bacon extra, borda)</span></label>
+    <div id="cd-ads" style="margin:6px 0"></div>
+    <button class="btn sec sm" type="button" onclick="cdAddAd()">+ adicional</button>
+    <label style="display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13px;font-weight:700;cursor:pointer"><input type="checkbox" id="cd-ativo" checked> Produto ativo (aparece no cardápio)</label>
+    <div id="cd-erro" style="color:var(--red);font-size:12.5px;margin-top:10px"></div>
+  </div>
+  <div style="flex-shrink:0;border-top:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--s1);border-radius:0 0 18px 18px"><button class="btn pri" id="cd-salvar" onclick="cdSalvar()">Salvar</button><button class="btn sec" id="cd-dup" onclick="cdDuplicarAberto()">Duplicar</button><button class="btn sec" id="cd-apagar" onclick="cdApagarAberto()" style="color:var(--red);margin-left:auto">Apagar</button></div>
+</div>
+
+<div class="sheet" id="sh-cats">
+  <div class="sh-hd"><h3>Categorias</h3><button onclick="fecharTudo()">✕</button></div>
+  <div class="sh-bd">
+    <div id="cd-cats-lista"></div>
+    <div style="display:flex;gap:8px;margin-top:12px"><input class="inp" id="cd-cat-nova" placeholder="Nova categoria (ex: Lanches)" maxlength="60"><button class="btn pri" onclick="cdAddCat()">Adicionar</button></div>
+    <div id="cd-cats-erro" style="color:var(--red);font-size:12.5px;margin-top:8px"></div>
   </div>
 </div>
 
@@ -3143,6 +3187,7 @@ var NAV_DESKTOP=[
   {id:'pedidos',    lb:'Pedidos',    ic:'<rect x="3" y="8" width="18" height="12" rx="1.5"/><path d="M3 8L12 3L21 8"/>'},
   {id:'mesa',       lb:'Mesa',       ic:'<rect x="3" y="4" width="18" height="16" rx="1.5"/><path d="M7 4V2M17 4V2M7 10H17M7 14H14"/>'},
   {id:'mapeamento', lb:'Mapeamento', ic:'<path d="M12 21s7-6.2 7-11.2A7 7 0 105 9.8C5 14.8 12 21 12 21z"/><circle cx="12" cy="9.8" r="2.6"/>'},
+  {id:'cardapio',   lb:'Cardápio',   ic:'<path d="M6 3v8a2 2 0 002 2v8M10 3v8M8 3v8M16 21V3c-2 1-3 4-3 8h3"/>'},
   {id:'motoristas', lb:'Motoristas', ic:'<rect x="1" y="7" width="15" height="10" rx="1.5"/><path d="M16 10h3l3 3v4h-6z"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="19" r="2"/>'},
   {id:'veiculos',   lb:'Veículos',   ic:'<path d="M5 17h14M5 17a2 2 0 110-4M19 17a2 2 0 100-4M3 13l2-6h14l2 6M7 10h10"/>'},
   {id:'mensagens',  lb:'Mensagens',  ic:'<path d="M21 11.5a8.4 8.4 0 01-8.9 8.4 8.6 8.6 0 01-3.7-.9L3 20l1.2-4.9a8.4 8.4 0 1116.8-3.6z"/>'},
@@ -3227,6 +3272,7 @@ function ir(p){
   var bs=document.querySelectorAll('.side button,.tabbar button');
   for(i=0;i<bs.length;i++) bs[i].classList.toggle('on', bs[i].getAttribute('data-p')===p);
   if(p==='veiculos') veCarregar();
+  if(p==='cardapio') cdCarregar();
   if(p==='mapeamento'&&VIVO_ON) setTimeout(function(){ vivoBuscar(); },800);
   if(p==='mensagens') msgAbrirTela(); else clearInterval(MSG.timer);
   if(p==='cte') cteAbrirTela();
@@ -5580,7 +5626,7 @@ function mpAplicarModo(){
   el('mp-diabar').style.display=(m==='vivo')?'contents':'none';
   el('mp-opbar').style.display=(m==='mapa')?'flex':'none'; el('mp-opmot').style.display='none'; el('mp-vivo').style.display=(m==='mapa')?'':'none';
   var rl=el('mp-ritmo'); if(rl&&rl.parentNode) rl.parentNode.style.display=(m==='vivo')?'':'none';
-  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-048';
+  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-049';
   if(m!=='mapa'){ mpPkTodos(false); el('mp-sempos').style.display='none'; el('mp-sempos-btn').style.display='none'; }
   if(m==='vivo'){ MP_ENQ=true; mpBuscar(); } else mpOperador();
 }
@@ -6763,6 +6809,155 @@ document.addEventListener('DOMContentLoaded',function(){
   var le=el('lg-email'); if(le) le.addEventListener('keydown',function(ev){ if(ev.key==='Enter') el('lg-senha').focus(); });
   retomarSessao();
 });
+
+/* ══ CARDÁPIO (1A) — produtos, categorias e adicionais; tudo guardado por cliente no Worker (/painel/cardapio*) ══ */
+var CD={cats:[],prods:[],carregou:false,edit:null,foto:''};
+function cdHdr(){ return {'Content-Type':'application/json','Authorization':'Bearer '+DD_TOKEN}; }
+function cdPreco(v){ var n=Number(String(v==null?'':v).replace(/\./g,'').replace(',','.')); if(String(v).indexOf(',')<0&&String(v).indexOf('.')>=0) n=Number(String(v)); return isFinite(n)&&n>=0?n:0; }
+function cdCarregar(){
+  var l=el('cd-lista'); if(l&&!CD.carregou) l.innerHTML='<div style="padding:24px;text-align:center;color:var(--muted)">Carregando…</div>';
+  fetch(DELTADIS_API+'/painel/cardapio',{headers:cdHdr()}).then(function(r){ return r.json(); }).then(function(d){
+    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'não deu');
+    CD.cats=d.cats||[]; CD.prods=d.prods||[]; CD.carregou=true; cdPintar();
+  }).catch(function(e){ if(l) l.innerHTML='<div style="padding:24px;text-align:center;color:var(--red)">Não consegui abrir o cardápio: '+esc(e.message)+'</div>'; });
+}
+function cdNomeCat(id){ var i; for(i=0;i<CD.cats.length;i++) if(CD.cats[i].id===id) return CD.cats[i].nome; return ''; }
+function cdPintar(){
+  var fc=el('cd-fcat'), atual=fc.value, h='<option value="">Todas as categorias</option>', i;
+  for(i=0;i<CD.cats.length;i++) h+='<option value="'+esc(CD.cats[i].id)+'">'+esc(CD.cats[i].nome)+'</option>';
+  fc.innerHTML=h; fc.value=atual;
+  var q=(el('cd-busca').value||'').toLowerCase().trim(), cat=fc.value, out='', n=0;
+  for(i=0;i<CD.prods.length;i++){
+    var p=CD.prods[i];
+    if(q&&(p.nome||'').toLowerCase().indexOf(q)<0) continue;
+    if(cat&&p.cat!==cat) continue;
+    n++;
+    var nad=(p.adicionais||[]).length;
+    out+='<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--border);'+(p.ativo===false?'opacity:.55':'')+'">'
+      +'<div style="width:56px;height:56px;flex:none;border-radius:12px;background:var(--s3) center/cover no-repeat;'+(p.foto?'background-image:url('+p.foto+')':'')+'"></div>'
+      +'<div style="flex:1;min-width:0"><div style="font-weight:800;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(p.nome)+'</div>'
+      +'<div style="font-size:12px;color:var(--muted)">'+esc(cdNomeCat(p.cat)||'Sem categoria')+(nad?' · '+nad+' adicional'+(nad>1?'is':''):'')+'</div></div>'
+      +'<div style="font-weight:800;font-size:14px;white-space:nowrap">'+moeda(p.preco)+'</div>'
+      +'<button class="btn sec sm" onclick="cdAlternar(\''+p.id+'\')" title="Clique para ativar/pausar">'+(p.ativo===false?'Pausado':'Ativo')+'</button>'
+      +'<button class="btn sec sm" onclick="cdEditar(\''+p.id+'\')">Editar</button>'
+      +'<button class="btn sec sm" onclick="cdDuplicar(\''+p.id+'\')" title="Duplicar">⧉</button>'
+      +'</div>';
+  }
+  if(!n) out='<div style="padding:28px;text-align:center;color:var(--muted)">'+(CD.prods.length?'Nenhum produto encontrado.':'Nenhum produto ainda. Clique em <b>+ Novo produto</b> para começar.')+'</div>';
+  el('cd-lista').innerHTML=out;
+}
+function cdProd(id){ var i; for(i=0;i<CD.prods.length;i++) if(CD.prods[i].id===id) return CD.prods[i]; return null; }
+function cdSalvarApi(tipo,item){
+  return fetch(DELTADIS_API+'/painel/cardapio-salvar',{method:'POST',headers:cdHdr(),body:JSON.stringify({tipo:tipo,item:item})}).then(function(r){ return r.json(); }).then(function(d){ if(!d||!d.ok) throw new Error((d&&d.mensagem)||'não salvou'); return d; });
+}
+function cdAlternar(id){
+  var p=cdProd(id); if(!p) return;
+  var c=JSON.parse(JSON.stringify(p)); c.ativo=(p.ativo===false);
+  cdSalvarApi('prod',c).then(function(){ p.ativo=c.ativo; cdPintar(); }).catch(function(e){ aviso('Não salvou: '+esc(e.message)); });
+}
+function cdOpcoesCat(sel){
+  var h='<option value="">Sem categoria</option>', i;
+  for(i=0;i<CD.cats.length;i++) h+='<option value="'+esc(CD.cats[i].id)+'">'+esc(CD.cats[i].nome)+'</option>';
+  el('cd-cat').innerHTML=h; el('cd-cat').value=sel||'';
+}
+function cdFotoBox(){ var b=el('cd-foto-box'); if(CD.foto){ b.style.backgroundImage='url('+CD.foto+')'; b.textContent=''; } else { b.style.backgroundImage=''; b.textContent='+ Foto'; } }
+function cdAdLinha(a){
+  var d=document.createElement('div'); d.className='cd-ad'; d.style.cssText='display:grid;grid-template-columns:1fr 100px 34px;gap:8px;margin-bottom:6px';
+  d.innerHTML='<input class="inp cd-ad-n" placeholder="Nome (ex: Bacon extra)" maxlength="60"><input class="inp cd-ad-p" inputmode="decimal" placeholder="R$ 0,00"><button class="btn sec sm" type="button" onclick="this.parentNode.remove()" title="Remover">✕</button>';
+  d.querySelector('.cd-ad-n').value=(a&&a.nome)||''; d.querySelector('.cd-ad-p').value=(a&&a.preco)?String(a.preco).replace('.',','):'';
+  el('cd-ads').appendChild(d);
+}
+function cdAddAd(){ cdAdLinha(null); }
+function cdAbrirForm(p){
+  CD.edit=p?p.id:null; CD.foto=(p&&p.foto)||'';
+  el('cd-tit').textContent=p?'Editar produto':'Novo produto';
+  el('cd-nome').value=p?p.nome:''; el('cd-preco').value=(p&&p.preco)?String(p.preco).replace('.',','):'';
+  el('cd-desc').value=(p&&p.desc)||''; el('cd-ativo').checked=!p||p.ativo!==false; el('cd-erro').textContent='';
+  cdOpcoesCat(p&&p.cat); cdFotoBox();
+  el('cd-ads').innerHTML=''; var ad=(p&&p.adicionais)||[], i; for(i=0;i<ad.length;i++) cdAdLinha(ad[i]);
+  el('cd-dup').style.display=p?'':'none'; el('cd-apagar').style.display=p?'':'none';
+  abrir('sh-produto'); setTimeout(function(){ if(!p) el('cd-nome').focus(); },50);
+}
+function cdNovo(){ cdAbrirForm(null); }
+function cdEditar(id){ var p=cdProd(id); if(p) cdAbrirForm(p); }
+function cdFoto(inp){
+  var f=inp.files&&inp.files[0]; if(!f) return;
+  var rd=new FileReader();
+  rd.onload=function(){
+    var im=new Image();
+    im.onload=function(){
+      var m=700, w=im.width, h=im.height, k=Math.min(1,m/Math.max(w,h)), cv=document.createElement('canvas');
+      cv.width=Math.round(w*k); cv.height=Math.round(h*k);
+      cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);
+      var q=0.8, out=cv.toDataURL('image/jpeg',q);
+      while(out.length>420000&&q>0.35){ q-=0.1; out=cv.toDataURL('image/jpeg',q); }
+      CD.foto=out; cdFotoBox();
+    };
+    im.onerror=function(){ el('cd-erro').textContent='Não consegui ler essa imagem.'; };
+    im.src=rd.result;
+  };
+  rd.readAsDataURL(f); inp.value='';
+}
+function cdColher(){
+  var ads=[], ls=document.querySelectorAll('#cd-ads .cd-ad'), i;
+  for(i=0;i<ls.length;i++){ var n=ls[i].querySelector('.cd-ad-n').value.trim(); if(n) ads.push({nome:n,preco:cdPreco(ls[i].querySelector('.cd-ad-p').value)}); }
+  return {nome:el('cd-nome').value.trim(),preco:cdPreco(el('cd-preco').value),cat:el('cd-cat').value,desc:el('cd-desc').value.trim(),foto:CD.foto,adicionais:ads,ativo:el('cd-ativo').checked};
+}
+function cdSalvar(){
+  var it=cdColher(); if(!it.nome){ el('cd-erro').textContent='Falta o nome do produto.'; return; }
+  if(CD.edit){ it.id=CD.edit; var o=cdProd(CD.edit); if(o) it.ordem=o.ordem; }
+  var b=el('cd-salvar'); b.disabled=true; b.textContent='Salvando…'; el('cd-erro').textContent='';
+  cdSalvarApi('prod',it).then(function(){ b.disabled=false; b.textContent='Salvar'; fecharTudo(); aviso('Produto salvo'); cdCarregar(); })
+    .catch(function(e){ b.disabled=false; b.textContent='Salvar'; el('cd-erro').textContent='Não salvou: '+e.message; });
+}
+function cdDuplicar(id){
+  var p=cdProd(id); if(!p) return;
+  var c=JSON.parse(JSON.stringify(p)); delete c.id; delete c.ordem; c.nome=(p.nome+' (cópia)').slice(0,80);
+  cdSalvarApi('prod',c).then(function(d){ return fetch(DELTADIS_API+'/painel/cardapio',{headers:cdHdr()}).then(function(r){ return r.json(); }).then(function(x){ CD.cats=x.cats||[]; CD.prods=x.prods||[]; cdPintar(); var n=cdProd(d.id); if(n) cdAbrirForm(n); }); })
+    .catch(function(e){ aviso('Não duplicou: '+esc(e.message)); });
+}
+function cdDuplicarAberto(){ if(CD.edit){ var id=CD.edit; fecharTudo(); setTimeout(function(){ cdDuplicar(id); },80); } }
+function cdApagarAberto(){
+  var p=cdProd(CD.edit); if(!p) return;
+  if(!window.confirm('Apagar "'+p.nome+'" do cardápio? Isso não dá pra desfazer.')) return;
+  fetch(DELTADIS_API+'/painel/cardapio-apagar',{method:'POST',headers:cdHdr(),body:JSON.stringify({tipo:'prod',id:p.id})}).then(function(r){ return r.json(); }).then(function(d){
+    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'não apagou'); fecharTudo(); aviso('Produto apagado'); cdCarregar();
+  }).catch(function(e){ el('cd-erro').textContent='Não apagou: '+e.message; });
+}
+/* categorias */
+function cdAbrirCats(){ el('cd-cats-erro').textContent=''; cdPintarCats(); abrir('sh-cats'); }
+function cdPintarCats(){
+  var h='', i;
+  for(i=0;i<CD.cats.length;i++){
+    var c=CD.cats[i], n=0, j; for(j=0;j<CD.prods.length;j++) if(CD.prods[j].cat===c.id) n++;
+    h+='<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--border)"><div style="flex:1;font-weight:700;font-size:13.5px">'+esc(c.nome)+' <span style="font-weight:500;color:var(--muted);font-size:12px">· '+n+' produto'+(n===1?'':'s')+'</span></div>'
+      +'<button class="btn sec sm" onclick="cdRenCat(\''+c.id+'\')">Renomear</button><button class="btn sec sm" onclick="cdDelCat(\''+c.id+'\')" style="color:var(--red)">Apagar</button></div>';
+  }
+  el('cd-cats-lista').innerHTML=h||'<div style="color:var(--muted);font-size:13px">Nenhuma categoria ainda.</div>';
+}
+function cdRecarregarCats(){ return fetch(DELTADIS_API+'/painel/cardapio',{headers:cdHdr()}).then(function(r){ return r.json(); }).then(function(x){ if(x&&x.ok){ CD.cats=x.cats||[]; CD.prods=x.prods||[]; } cdPintar(); cdPintarCats(); }); }
+function cdAddCat(){
+  var nm=el('cd-cat-nova').value.trim(); if(!nm) return;
+  cdSalvarApi('cat',{nome:nm}).then(function(){ el('cd-cat-nova').value=''; return cdRecarregarCats(); }).catch(function(e){ el('cd-cats-erro').textContent='Não salvou: '+e.message; });
+}
+function cdRenCat(id){
+  var i, c=null; for(i=0;i<CD.cats.length;i++) if(CD.cats[i].id===id) c=CD.cats[i];
+  if(!c) return; var nm=window.prompt('Novo nome da categoria:',c.nome); if(!nm||!nm.trim()) return;
+  cdSalvarApi('cat',{id:c.id,ordem:c.ordem,nome:nm.trim()}).then(cdRecarregarCats).catch(function(e){ el('cd-cats-erro').textContent='Não salvou: '+e.message; });
+}
+function cdDelCat(id){
+  var i, c=null, n=0; for(i=0;i<CD.cats.length;i++) if(CD.cats[i].id===id) c=CD.cats[i];
+  for(i=0;i<CD.prods.length;i++) if(CD.prods[i].cat===id) n++;
+  if(!c) return;
+  if(n){ el('cd-cats-erro').textContent='Essa categoria ainda tem '+n+' produto(s). Mude a categoria deles antes de apagar.'; return; }
+  if(!window.confirm('Apagar a categoria "'+c.nome+'"?')) return;
+  fetch(DELTADIS_API+'/painel/cardapio-apagar',{method:'POST',headers:cdHdr(),body:JSON.stringify({tipo:'cat',id:id})}).then(function(r){ return r.json(); }).then(function(d){ if(!d||!d.ok) throw new Error((d&&d.mensagem)||'não apagou'); return cdRecarregarCats(); }).catch(function(e){ el('cd-cats-erro').textContent='Não apagou: '+e.message; });
+}
+function cdNovaCatRapida(){
+  var nm=window.prompt('Nome da nova categoria (ex: Lanches):'); if(!nm||!nm.trim()) return;
+  cdSalvarApi('cat',{nome:nm.trim()}).then(function(d){ return fetch(DELTADIS_API+'/painel/cardapio',{headers:cdHdr()}).then(function(r){ return r.json(); }).then(function(x){ CD.cats=x.cats||[]; CD.prods=x.prods||[]; cdOpcoesCat(d.id); cdPintar(); }); })
+    .catch(function(e){ el('cd-erro').textContent='Não criou a categoria: '+e.message; });
+}
 </script>
 </body>
 </html>
