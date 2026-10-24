@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Giro OS — Painel do ponto · GIRO-OS-050</title>
+<title>Giro OS — Painel do ponto · GIRO-OS-051</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -663,7 +663,7 @@ a{color:inherit}
 
       <!-- PEDIDOS -->
       <section class="page" id="pg-pedidos">
-        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-050</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
+        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-051</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
         <div id="pd-chip"></div>
         <div class="card">
           <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
@@ -782,7 +782,7 @@ a{color:inherit}
 
       <!-- CARDÁPIO (1A): produtos, categorias e adicionais do restaurante -->
       <section class="page" id="pg-cardapio">
-        <div class="pghd"><div><h1>Cardápio</h1><div class="sub">produtos do seu restaurante · <span style="opacity:.6">GIRO-OS-050</span></div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn sec" onclick="cdAbrirCats()">Categorias</button><button class="btn pri" onclick="cdNovo()">+ Novo produto</button></div></div>
+        <div class="pghd"><div><h1>Cardápio</h1><div class="sub">produtos do seu restaurante · <span style="opacity:.6">GIRO-OS-051</span></div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn sec" onclick="cdAbrirCats()">Categorias</button><button class="btn sec" onclick="cdAbrirImport()">Importar planilha</button><button class="btn pri" onclick="cdNovo()">+ Novo produto</button></div></div>
         <div class="card">
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px"><input class="inp" id="cd-busca" placeholder="Buscar produto" oninput="cdPintar()" style="flex:1;min-width:200px"><select class="inp" id="cd-fcat" onchange="cdPintar()" style="width:210px;max-width:100%"></select></div>
           <div id="cd-lista"></div>
@@ -1227,7 +1227,9 @@ a{color:inherit}
     <div id="cd-tams" style="margin:6px 0"></div>
     <button class="btn sec sm" type="button" onclick="cdAddTam()">+ tamanho</button>
     <label style="display:block;font-size:12px;font-weight:700;color:var(--muted2);margin-top:16px">Sabores <span style="font-weight:500">(opcional · cada um com foto)</span></label>
-    <div style="font-size:11.5px;color:var(--muted);margin:2px 0 6px">Preço do sabor em branco = vale o preço do tamanho.</div>
+    <div style="font-size:11.5px;color:var(--muted);margin:2px 0 6px">Preço do sabor em branco = vale o preço do tamanho. "Adicional por 1/4" = valor somado ao preço do tamanho por cada quarto da pizza com esse sabor (vazio = sem adicional).</div>
+    <input class="inp" id="cd-sab-busca" placeholder="🔎 buscar sabor" oninput="cdRenderSab()" style="margin:4px 0 6px;display:none">
+    <datalist id="cd-grupos"></datalist>
     <div id="cd-sabs" style="margin:6px 0"></div>
     <input type="file" id="cd-sab-file" accept="image/*" style="display:none" onchange="cdSabFoto(this)">
     <button class="btn sec sm" type="button" onclick="cdAddSab()">+ sabor</button>
@@ -1239,6 +1241,11 @@ a{color:inherit}
     <div id="cd-erro" style="color:var(--red);font-size:12.5px;margin-top:10px"></div>
   </div>
   <div style="flex-shrink:0;border-top:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--s1);border-radius:0 0 18px 18px"><button class="btn pri" id="cd-salvar" onclick="cdSalvar()">Salvar</button><button class="btn sec" id="cd-dup" onclick="cdDuplicarAberto()">Duplicar</button><button class="btn sec" id="cd-apagar" onclick="cdApagarAberto()" style="color:var(--red);margin-left:auto">Apagar</button></div>
+</div>
+
+<div class="sheet wide" id="sh-import">
+  <div class="sh-hd"><h3>Importar cardápio por planilha</h3><button onclick="fecharTudo()">✕</button></div>
+  <div class="sh-bd" id="cd-imp-corpo"></div>
 </div>
 
 <div class="sheet" id="sh-cats">
@@ -5636,7 +5643,7 @@ function mpAplicarModo(){
   el('mp-diabar').style.display=(m==='vivo')?'contents':'none';
   el('mp-opbar').style.display=(m==='mapa')?'flex':'none'; el('mp-opmot').style.display='none'; el('mp-vivo').style.display=(m==='mapa')?'':'none';
   var rl=el('mp-ritmo'); if(rl&&rl.parentNode) rl.parentNode.style.display=(m==='vivo')?'':'none';
-  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-050';
+  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-051';
   if(m!=='mapa'){ mpPkTodos(false); el('mp-sempos').style.display='none'; el('mp-sempos-btn').style.display='none'; }
   if(m==='vivo'){ MP_ENQ=true; mpBuscar(); } else mpOperador();
 }
@@ -6885,7 +6892,7 @@ function cdAbrirForm(p){
   el('cd-desc').value=(p&&p.desc)||''; el('cd-ativo').checked=!p||p.ativo!==false; el('cd-erro').textContent='';
   cdOpcoesCat(p&&p.cat); cdFotoBox();
   el('cd-ads').innerHTML=''; var ad=(p&&p.adicionais)||[], i; for(i=0;i<ad.length;i++) cdAdLinha(ad[i]);
-  CD.tam=JSON.parse(JSON.stringify((p&&p.tamanhos)||[])); CD.sab=JSON.parse(JSON.stringify((p&&p.sabores)||[])); cdRenderTam(); cdRenderSab();
+  CD.tam=JSON.parse(JSON.stringify((p&&p.tamanhos)||[])); CD.sab=JSON.parse(JSON.stringify((p&&p.sabores)||[])); cdRenderTam(); el('cd-sab-busca').value=''; cdRenderSab(); cdCarregarFotos(p);
   el('cd-dup').style.display=p?'':'none'; el('cd-apagar').style.display=p?'':'none';
   abrir('sh-produto'); setTimeout(function(){ if(!p) el('cd-nome').focus(); },50);
 }
@@ -6914,7 +6921,7 @@ function cdColher(){
   for(i=0;i<ls.length;i++){ var n=ls[i].querySelector('.cd-ad-n').value.trim(); if(n) ads.push({nome:n,preco:cdPreco(ls[i].querySelector('.cd-ad-p').value)}); }
   var tms=[], sbs=[], j;
   for(j=0;j<CD.tam.length;j++){ var t=CD.tam[j]; if((t.nome||'').trim()) tms.push({id:t.id,nome:t.nome.trim(),preco:cdPreco(t.preco),max:parseInt(t.max,10)||1}); }
-  for(j=0;j<CD.sab.length;j++){ var sb=CD.sab[j]; if((sb.nome||'').trim()){ var pr={},k; for(k in (sb.precos||{})){ var pv=cdPreco(sb.precos[k]); if(pv>0) pr[k]=pv; } sbs.push({id:sb.id,nome:sb.nome.trim(),desc:(sb.desc||'').trim(),foto:sb.foto||'',precos:pr}); } }
+  for(j=0;j<CD.sab.length;j++){ var sb=CD.sab[j]; if((sb.nome||'').trim()){ var pr={},k; for(k in (sb.precos||{})){ var pv=cdPreco(sb.precos[k]); if(pv>0) pr[k]=pv; } sbs.push({id:sb.id,nome:sb.nome.trim(),desc:(sb.desc||'').trim(),grupo:(sb.grupo||'').trim(),extra4:cdPreco(sb.extra4),novidade:!!sb.novidade,balcao:!!sb.balcao,foto:sb._mud?(sb.foto||''):(sb.foto?'1':''),precos:pr}); } }
   return {nome:el('cd-nome').value.trim(),preco:cdPreco(el('cd-preco').value),cat:el('cd-cat').value,desc:el('cd-desc').value.trim(),foto:CD.foto,adicionais:ads,tamanhos:tms,sabores:sbs,ativo:el('cd-ativo').checked};
 }
 function cdSalvar(){
@@ -6926,7 +6933,7 @@ function cdSalvar(){
 }
 function cdDuplicar(id){
   var p=cdProd(id); if(!p) return;
-  var c=JSON.parse(JSON.stringify(p)); delete c.id; delete c.ordem; c.nome=(p.nome+' (cópia)').slice(0,80);
+  var c=JSON.parse(JSON.stringify(p)); delete c.id; delete c.ordem; c.nome=(p.nome+' (cópia)').slice(0,80); c.fotos_de=p.id;
   cdSalvarApi('prod',c).then(function(d){ return fetch(DELTADIS_API+'/painel/cardapio',{headers:cdHdr()}).then(function(r){ return r.json(); }).then(function(x){ CD.cats=x.cats||[]; CD.prods=x.prods||[]; cdPintar(); var n=cdProd(d.id); if(n) cdAbrirForm(n); }); })
     .catch(function(e){ aviso('Não duplicou: '+esc(e.message)); });
 }
@@ -6960,25 +6967,43 @@ function cdRenderTam(){
   }
   el('cd-tams').innerHTML=h;
 }
-function cdAddSab(){ CD.sab.push({id:cdRid('s'),nome:'',desc:'',foto:'',precos:{}}); cdRenderSab(); }
+function cdAddSab(){ CD.sab.push({id:cdRid('s'),nome:'',desc:'',grupo:'',extra4:'',novidade:false,balcao:false,foto:'',precos:{}}); el('cd-sab-busca').value=''; cdRenderSab(); }
 function cdDelSab(i){ CD.sab.splice(i,1); cdRenderSab(); }
 function cdSabSet(i,campo,v){ CD.sab[i][campo]=v; }
 function cdSabPreco(i,tid,v){ if(!CD.sab[i].precos) CD.sab[i].precos={}; CD.sab[i].precos[tid]=v; }
+function cdCarregarFotos(p){
+  if(!p||!(p.sabores||[]).some(function(x){ return x.foto; })) return;
+  fetch(DELTADIS_API+'/painel/cardapio-fotos?prod='+encodeURIComponent(p.id),{headers:cdHdr()}).then(function(r){ return r.json(); }).then(function(d){
+    if(!d||!d.ok||CD.edit!==p.id) return;
+    var i; for(i=0;i<CD.sab.length;i++){ var f=d.fotos&&d.fotos[CD.sab[i].id]; if(f&&!CD.sab[i]._mud) CD.sab[i].foto=f; }
+    cdRenderSab();
+  }).catch(function(){});
+}
 function cdRenderSab(){
-  var h='', i, j, tams=CD.tam.filter(function(t){ return (t.nome||'').trim(); });
+  var h='', i, j, tams=CD.tam.filter(function(t){ return (t.nome||'').trim(); }), gs={}, gl='';
+  var bq=el('cd-sab-busca'), q=cdNorm(bq.value||''); bq.style.display=CD.sab.length>8?'':'none';
+  for(i=0;i<CD.sab.length;i++) if((CD.sab[i].grupo||'').trim()) gs[CD.sab[i].grupo.trim()]=1;
+  for(j in gs) gl+='<option value="'+esc(j)+'">';
+  el('cd-grupos').innerHTML=gl;
   for(i=0;i<CD.sab.length;i++){
     var sb=CD.sab[i], pr=sb.precos||{}, ps='';
+    if(q&&cdNorm((sb.nome||'')+' '+(sb.grupo||'')).indexOf(q)<0) continue;
     if(tams.length){
       for(j=0;j<tams.length;j++){ var tv=pr[tams[j].id]; ps+='<label style="font-size:11px;color:var(--muted)">'+esc(tams[j].nome)+'<input class="inp" inputmode="decimal" placeholder="= tamanho" style="margin-top:2px;padding:7px 9px" value="'+esc(tv?String(tv).replace('.',','):'')+'" oninput="cdSabPreco('+i+',\''+tams[j].id+'\',this.value)"></label>'; }
     } else {
       var tv0=pr['_']; ps='<label style="font-size:11px;color:var(--muted)">Preço (opcional)<input class="inp" inputmode="decimal" placeholder="= produto" style="margin-top:2px;padding:7px 9px" value="'+esc(tv0?String(tv0).replace('.',','):'')+'" oninput="cdSabPreco('+i+',\'_\',this.value)"></label>';
     }
+    var fi=(typeof sb.foto==='string'&&sb.foto.indexOf('data:')===0), ex4=sb.extra4?String(sb.extra4).replace('.',','):'';
     h+='<div style="border:1px solid var(--border);border-radius:12px;padding:10px;margin-bottom:8px">'
       +'<div style="display:flex;gap:10px;align-items:center">'
-      +'<div onclick="cdSabEscolher('+i+')" style="width:52px;height:52px;flex:none;border-radius:10px;border:1.5px dashed var(--border2);background:var(--s2) center/cover no-repeat;'+(sb.foto?'background-image:url('+sb.foto+');border-style:solid':'')+';display:flex;align-items:center;justify-content:center;font-size:10.5px;color:var(--muted);cursor:pointer;text-align:center">'+(sb.foto?'':'+ foto')+'</div>'
+      +'<div onclick="cdSabEscolher('+i+')" style="width:52px;height:52px;flex:none;border-radius:10px;border:1.5px dashed var(--border2);background:var(--s2) center/cover no-repeat;'+(fi?'background-image:url('+sb.foto+');border-style:solid':'')+';display:flex;align-items:center;justify-content:center;font-size:10.5px;color:var(--muted);cursor:pointer;text-align:center">'+(fi?'':(sb.foto?'foto ✓':'+ foto'))+'</div>'
       +'<div style="flex:1;min-width:0"><input class="inp" placeholder="Nome do sabor (ex: Calabresa)" maxlength="60" value="'+esc(sb.nome)+'" oninput="cdSabSet('+i+',\'nome\',this.value)"><input class="inp" placeholder="Descrição (opcional)" maxlength="200" style="margin-top:6px;padding:8px 11px;font-size:12.5px" value="'+esc(sb.desc||'')+'" oninput="cdSabSet('+i+',\'desc\',this.value)"></div>'
       +'<button class="btn sec sm" type="button" onclick="cdDelSab('+i+')" title="Remover sabor">✕</button></div>'
-      +'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(86px,1fr));gap:8px;margin-top:8px">'+ps+'</div></div>';
+      +'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(86px,1fr));gap:8px;margin-top:8px">'+ps+'</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 110px;gap:8px;margin-top:8px">'
+      +'<label style="font-size:11px;color:var(--muted)">Grupo<input class="inp" list="cd-grupos" maxlength="40" placeholder="ex: Tradicionais" style="margin-top:2px;padding:7px 9px" value="'+esc(sb.grupo||'')+'" oninput="cdSabSet('+i+',\'grupo\',this.value)"></label>'
+      +'<label style="font-size:11px;color:var(--muted)">Adic. por 1/4<input class="inp" inputmode="decimal" placeholder="0,00" style="margin-top:2px;padding:7px 9px" value="'+esc(ex4)+'" oninput="cdSabSet('+i+',\'extra4\',this.value)"></label></div>'
+      +'<div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;font-size:12px"><label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" '+(sb.novidade?'checked ':'')+'onchange="cdSabSet('+i+',\'novidade\',this.checked)"> Novidade</label><label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" '+(sb.balcao?'checked ':'')+'onchange="cdSabSet('+i+',\'balcao\',this.checked)"> Só retirada no balcão</label></div></div>';
   }
   el('cd-sabs').innerHTML=h;
 }
@@ -6995,11 +7020,122 @@ function cdSabFoto(inp){
       var q=0.75, out=cv.toDataURL('image/jpeg',q);
       while(out.length>55000&&q>0.3){ q-=0.08; out=cv.toDataURL('image/jpeg',q); }
       if(out.length>59000){ el('cd-erro').textContent='Essa foto do sabor ficou pesada demais. Tente outra.'; return; }
-      CD.sab[i].foto=out; cdRenderSab();
+      CD.sab[i].foto=out; CD.sab[i]._mud=1; cdRenderSab();
     };
     im.src=rd.result;
   };
   rd.readAsDataURL(f); inp.value='';
+}
+/* ── importar cardápio por planilha (Excel) ── */
+function cdNorm(s){ return String(s==null?'':s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim(); }
+function cdSim(v){ return /^(s|sim|x|1|true|verdadeiro)\b/.test(cdNorm(v)); }
+function cdAbaLinhas(wb,nomes){
+  var k; for(k=0;k<wb.SheetNames.length;k++){ if(nomes.indexOf(cdNorm(wb.SheetNames[k]))>=0){
+    return XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[k]],{defval:''}).map(function(r){ var o={},c; for(c in r) o[cdNorm(c)]=r[c]; return o; });
+  } }
+  return [];
+}
+function cdCol(r,nomes){ var i; for(i=0;i<nomes.length;i++){ var v=r[nomes[i]]; if(v!==undefined&&String(v).trim()!=='') return v; } return ''; }
+function cdAbrirImport(){
+  CD.imp=null;
+  el('cd-imp-corpo').innerHTML='<p style="margin:0 0 12px;font-size:13px;line-height:1.55;color:var(--muted2)">Envie a planilha do cardápio e o sistema cria todos os produtos, tamanhos, sabores e adicionais de uma vez. Antes de gravar, você confere um resumo. Se já existir um produto com o mesmo nome, ele é <b>atualizado</b> (as fotos dos sabores com o mesmo nome continuam).</p>'
+    +'<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px"><button class="btn sec" type="button" onclick="cdBaixarModelo()">Baixar planilha modelo</button><button class="btn pri" type="button" onclick="el(\'cd-imp-file\').click()">Escolher planilha (.xlsx)</button></div>'
+    +'<input type="file" id="cd-imp-file" accept=".xlsx,.xls" style="display:none" onchange="cdLerPlanilha(this)"><div id="cd-imp-res"></div>';
+  abrir('sh-import');
+}
+function cdBaixarModelo(){
+  var wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(cdLeiaMe()),'Leia-me');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['Produto','Categoria','Preço','Descrição','Ativo'],['Pizza','Pizzas','','Todas acompanham borda de catupiry','Sim'],['X-Salada','Lanches',24.9,'Pão, hambúrguer, queijo, alface e tomate','Sim']]),'Produtos');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['Produto','Tamanho','Preço','Máx. sabores'],['Pizza','Broto',73,2],['Pizza','Média',95,3],['Pizza','Grande',105,4],['Pizza','Gigante',129,4]]),'Tamanhos');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['Produto','Grupo','Sabor','Descrição','Adicional por 1/4','Novidade','Só balcão'],['Pizza','Tradicionais','Calabresa','Molho de tomate / mussarela / calabresa / orégano',0,'Não','Não'],['Pizza','Especiais','Camarão','Molho de tomate / mussarela / camarão / catupiry',10,'Sim','Não']]),'Sabores');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['Produto','Adicional','Preço'],['Pizza','Borda de cheddar premium',10],['X-Salada','Bacon extra',5]]),'Adicionais');
+  XLSX.writeFile(wb,'modelo-cardapio.xlsx');
+}
+function cdLeiaMe(){ return [
+  ['COMO PREENCHER A PLANILHA DO CARDÁPIO'],[''],
+  ['Apague as linhas de exemplo e preencha com os seus produtos. Não mude o nome das abas nem dos títulos das colunas.'],[''],
+  ['Aba Produtos','Uma linha por produto: Produto, Categoria, Preço (só se não tiver tamanhos), Descrição e Ativo (Sim/Não).'],
+  ['Aba Tamanhos','Opcional. Uma linha por tamanho: Produto (igual ao da aba Produtos), Tamanho, Preço e Máx. sabores (quantos sabores cabem).'],
+  ['Aba Sabores','Opcional. Uma linha por sabor: Produto, Grupo (ex: Tradicionais), Sabor, Descrição, Adicional por 1/4 (R$ somado por cada quarto da pizza com esse sabor; 0 se não tem), Novidade (Sim/Não) e Só balcão (Sim/Não).'],
+  ['Aba Adicionais','Opcional. Uma linha por adicional: Produto, Adicional (ex: Borda de cheddar), Preço.'],[''],
+  ['Fotos','As fotos não vão na planilha: depois de importar, abra o produto e coloque a foto de cada sabor.'],
+  ['Preço final da pizza','Preço do tamanho + (Adicional por 1/4 de cada sabor × quartos que ele ocupa).']
+]; }
+function cdLerPlanilha(inp){
+  var f=inp.files&&inp.files[0]; if(!f) return; var res=el('cd-imp-res'); res.innerHTML='<div style="padding:12px;color:var(--muted)">Lendo a planilha…</div>';
+  var rd=new FileReader();
+  rd.onload=function(ev){
+    var wb; try{ wb=XLSX.read(ev.target.result,{type:'array'}); }catch(err){ res.innerHTML='<div style="color:var(--red);padding:12px">Não consegui abrir esse arquivo. Envie a planilha no modelo (.xlsx).</div>'; return; }
+    var pr=cdAbaLinhas(wb,['produtos','produto']), tm=cdAbaLinhas(wb,['tamanhos']), sb=cdAbaLinhas(wb,['sabores']), ad=cdAbaLinhas(wb,['adicionais']), av=[], mp={}, lista=[], i;
+    for(i=0;i<pr.length;i++){
+      var nm=String(cdCol(pr[i],['produto','nome'])).trim(); if(!nm) continue; var kk=cdNorm(nm);
+      if(mp[kk]){ av.push('Produto repetido na aba Produtos: '+nm+' (usei a primeira linha).'); continue; }
+      var at=cdCol(pr[i],['ativo']); var o={nome:nm.slice(0,80),cat:String(cdCol(pr[i],['categoria'])).trim().slice(0,60),preco:cdPreco(cdCol(pr[i],['preco'])),desc:String(cdCol(pr[i],['descricao'])).trim().slice(0,300),ativo:at===''?true:cdSim(at),tams:[],sabs:[],ads:[]};
+      mp[kk]=o; lista.push(o);
+    }
+    if(!lista.length){ res.innerHTML='<div style="color:var(--red);padding:12px">Não achei produtos. Confira se a aba se chama <b>Produtos</b> e se tem a coluna <b>Produto</b>.</div>'; return; }
+    function dono(r,aba){ var k=cdNorm(cdCol(r,['produto'])); if(!k) return null; if(!mp[k]){ var m='Aba '+aba+': produto "'+String(cdCol(r,['produto'])).trim()+'" não existe na aba Produtos (linha ignorada).'; if(av.indexOf(m)<0) av.push(m); return null; } return mp[k]; }
+    for(i=0;i<tm.length;i++){ var o1=dono(tm[i],'Tamanhos'); if(!o1) continue; var tn=String(cdCol(tm[i],['tamanho','nome'])).trim(); if(!tn) continue; o1.tams.push({nome:tn.slice(0,40),preco:cdPreco(cdCol(tm[i],['preco'])),max:Math.max(1,Math.min(6,parseInt(cdCol(tm[i],['max sabores','maximo de sabores','sabores']),10)||1))}); }
+    for(i=0;i<sb.length;i++){ var o2=dono(sb[i],'Sabores'); if(!o2) continue; var sn=String(cdCol(sb[i],['sabor','nome'])).trim(); if(!sn) continue; o2.sabs.push({nome:sn.slice(0,60),desc:String(cdCol(sb[i],['descricao'])).trim().slice(0,200),grupo:String(cdCol(sb[i],['grupo'])).trim().slice(0,40),extra4:cdPreco(cdCol(sb[i],['adicional por 1 4','adicional 1 4','adicional por quarto'])),novidade:cdSim(cdCol(sb[i],['novidade'])),balcao:cdSim(cdCol(sb[i],['so balcao','somente balcao','balcao']))}); }
+    for(i=0;i<ad.length;i++){ var o3=dono(ad[i],'Adicionais'); if(!o3) continue; var an=String(cdCol(ad[i],['adicional','nome'])).trim(); if(!an) continue; o3.ads.push({nome:an.slice(0,60),preco:cdPreco(cdCol(ad[i],['preco']))}); }
+    lista.forEach(function(o){
+      if(o.tams.length>10){ av.push(o.nome+': só os 10 primeiros tamanhos entram.'); o.tams=o.tams.slice(0,10); }
+      if(o.sabs.length>200){ av.push(o.nome+': só os 200 primeiros sabores entram.'); o.sabs=o.sabs.slice(0,200); }
+      if(o.ads.length>30){ av.push(o.nome+': só os 30 primeiros adicionais entram.'); o.ads=o.ads.slice(0,30); }
+      if(!o.tams.length&&!o.preco) av.push(o.nome+': sem preço e sem tamanhos (vai ficar com preço zero).');
+      if(!o.cat) av.push(o.nome+': sem categoria.');
+    });
+    CD.imp=lista; cdPintarImport(av);
+  };
+  rd.readAsArrayBuffer(f); inp.value='';
+}
+function cdPintarImport(av){
+  var res=el('cd-imp-res'), h='<div style="font-weight:800;font-size:14px;margin:6px 0">Confira antes de importar</div>', i;
+  for(i=0;i<CD.imp.length;i++){
+    var o=CD.imp[i], ex=false, j; for(j=0;j<CD.prods.length;j++) if(cdNorm(CD.prods[j].nome)===cdNorm(o.nome)) ex=true;
+    var gr={}; o.sabs.forEach(function(x){ var g=x.grupo||'Sem grupo'; gr[g]=(gr[g]||0)+1; });
+    var gtxt=Object.keys(gr).map(function(g){ return esc(g)+' ('+gr[g]+')'; }).join(' · ');
+    h+='<div style="border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:8px"><div style="display:flex;justify-content:space-between;gap:8px"><b>'+esc(o.nome)+'</b><span style="font-size:11.5px;font-weight:800;color:'+(ex?'var(--amber,#b7791f)':'var(--green,#2f855a)')+'">'+(ex?'ATUALIZA':'NOVO')+'</span></div>'
+      +'<div style="font-size:12px;color:var(--muted);margin-top:3px">'+esc(o.cat||'Sem categoria')+' · '+o.tams.length+' tamanho'+(o.tams.length==1?'':'s')+' · '+o.sabs.length+' sabor'+(o.sabs.length==1?'':'es')+' · '+o.ads.length+(o.ads.length==1?' adicional':' adicionais')+'</div>'
+      +(gtxt?'<div style="font-size:11.5px;color:var(--muted);margin-top:3px">Grupos: '+gtxt+'</div>':'')
+      +(o.tams.length?'<div style="font-size:11.5px;color:var(--muted);margin-top:3px">'+o.tams.map(function(t){ return esc(t.nome)+' R$ '+String(t.preco.toFixed(2)).replace('.',',')+' (até '+t.max+')'; }).join(' · ')+'</div>':'')+'</div>';
+  }
+  if(av.length) h+='<div style="background:var(--s2);border-radius:10px;padding:10px 12px;font-size:12px;margin:8px 0"><b>Avisos</b><ul style="margin:6px 0 0 16px;padding:0">'+av.map(function(x){ return '<li>'+esc(x)+'</li>'; }).join('')+'</ul></div>';
+  h+='<div style="font-size:11.5px;color:var(--muted);margin:6px 0">Produto que já existe: tamanhos, sabores e adicionais passam a ser os da planilha (o que não estiver nela sai). Fotos de sabores com o mesmo nome ficam.</div>'
+    +'<div id="cd-imp-erro" style="color:var(--red);font-size:12.5px;margin:6px 0"></div><button class="btn pri wide" id="cd-imp-go" onclick="cdImportar()">Importar '+CD.imp.length+' produto'+(CD.imp.length==1?'':'s')+'</button>';
+  res.innerHTML=h;
+}
+function cdImportar(){
+  var lista=CD.imp; if(!lista||!lista.length) return; var b=el('cd-imp-go'), er=el('cd-imp-erro'); b.disabled=true; er.textContent='';
+  var catId={}, k; CD.cats.forEach(function(c){ catId[cdNorm(c.nome)]=c.id; });
+  var feitos=0;
+  function prog(t){ b.textContent=t; }
+  function catDe(nome){
+    if(!nome) return Promise.resolve('');
+    var kk=cdNorm(nome); if(catId[kk]) return Promise.resolve(catId[kk]);
+    return cdSalvarApi('cat',{nome:nome}).then(function(d){ catId[kk]=d.id; return d.id; });
+  }
+  function um(i){
+    if(i>=lista.length) return Promise.resolve();
+    var o=lista[i]; prog('Importando '+(i+1)+' de '+lista.length+'…');
+    return catDe(o.cat).then(function(cid){
+      var ex=null, j; for(j=0;j<CD.prods.length;j++) if(cdNorm(CD.prods[j].nome)===cdNorm(o.nome)) ex=CD.prods[j];
+      var tams=[], tmap={}, ids={}, sabs=[];
+      o.tams.forEach(function(t,ti){ var e=null; if(ex) (ex.tamanhos||[]).forEach(function(x){ if(cdNorm(x.nome)===cdNorm(t.nome)) e=x; }); var id=e?e.id:('t'+(ti+1)+Math.random().toString(36).slice(2,4)); tmap[id]=e; tams.push({id:id,nome:t.nome,preco:t.preco,max:t.max}); });
+      o.sabs.forEach(function(sx,si){
+        var e=null; if(ex) (ex.sabores||[]).forEach(function(x){ if(!e&&cdNorm(x.nome)===cdNorm(sx.nome)&&!ids[x.id]) e=x; });
+        var id=e?e.id:('s'+si+Math.random().toString(36).slice(2,5)); ids[id]=1;
+        var pr={}; if(e&&e.precos){ tams.forEach(function(t){ if(tmap[t.id]&&e.precos[t.id]) pr[t.id]=e.precos[t.id]; }); if(!tams.length&&e.precos['_']) pr['_']=e.precos['_']; }
+        sabs.push({id:id,nome:sx.nome,desc:sx.desc,grupo:sx.grupo,extra4:sx.extra4,novidade:sx.novidade,balcao:sx.balcao,foto:(e&&e.foto)?'1':'',precos:pr});
+      });
+      var it={nome:o.nome,preco:o.preco,cat:cid,desc:o.desc,foto:(ex&&ex.foto)||'',adicionais:o.ads,tamanhos:tams,sabores:sabs,ativo:o.ativo};
+      if(ex){ it.id=ex.id; it.ordem=ex.ordem; }
+      return cdSalvarApi('prod',it).then(function(){ feitos++; });
+    }).then(function(){ return um(i+1); });
+  }
+  um(0).then(function(){ fecharTudo(); aviso('Importado: '+feitos+' produto'+(feitos==1?'':'s')); cdCarregar(); })
+    .catch(function(e){ b.disabled=false; prog('Tentar de novo'); er.textContent='Parou no meio: '+e.message+'. O que já foi importado ficou salvo; é só importar de novo (os produtos viram "atualiza").'; cdCarregar(); });
 }
 /* categorias */
 function cdAbrirCats(){ el('cd-cats-erro').textContent=''; cdPintarCats(); abrir('sh-cats'); }
