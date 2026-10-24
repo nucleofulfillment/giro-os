@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0b0d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Cardápio · LiveFood</title>
+<style>
+:root{--bg:#0b0b0d;--tx:#fff;--mut:rgba(255,255,255,.68);--pri:#f97316;--pri2:#fbbf24;--glass:rgba(18,18,22,.62);--line:rgba(255,255,255,.16)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:#000;color:var(--tx);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;overflow:hidden}
+#stage{position:fixed;inset:0;margin:0 auto;max-width:520px;background:var(--bg);overflow:hidden}
+.vd{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .45s ease;background:#000}
+.vd.on{opacity:1}
+.shade-t{position:absolute;left:0;right:0;top:0;height:150px;background:linear-gradient(#000a,#0000);pointer-events:none}
+.shade-b{position:absolute;left:0;right:0;bottom:0;height:60%;background:linear-gradient(#0000,#000d 70%);pointer-events:none}
+#top{position:absolute;left:0;right:0;top:0;padding:calc(10px + env(safe-area-inset-top)) 14px 0;z-index:5}
+#segs{display:flex;gap:4px;margin-bottom:10px}
+#segs i{flex:1;height:3px;border-radius:3px;background:rgba(255,255,255,.28);overflow:hidden;position:relative}
+#segs i b{position:absolute;left:0;top:0;bottom:0;width:0;background:#fff;border-radius:3px}
+#bar{display:flex;align-items:center;gap:10px}
+#emp{font-weight:800;font-size:15px;letter-spacing:.2px;text-shadow:0 1px 8px #0008;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#emp small{display:inline-block;margin-left:8px;font-size:10.5px;font-weight:800;letter-spacing:1px;background:var(--pri);padding:3px 7px;border-radius:99px;vertical-align:2px}
+.rb{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--glass);backdrop-filter:blur(8px);color:#fff;font-size:17px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+#oft{position:absolute;left:16px;right:16px;bottom:calc(158px + env(safe-area-inset-bottom));z-index:4;font-size:22px;font-weight:900;line-height:1.15;text-shadow:0 2px 14px #000a}
+#cards{position:absolute;left:0;right:0;bottom:0;z-index:5;padding:0 0 calc(16px + env(safe-area-inset-bottom));display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding-left:14px;padding-right:14px;scrollbar-width:none}
+#cards::-webkit-scrollbar{display:none}
+.cd{flex:0 0 min(78%,300px);scroll-snap-align:start;display:flex;gap:12px;align-items:center;padding:10px;border-radius:18px;background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--line);cursor:pointer;animation:up .45s ease both}
+@keyframes up{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.cd .ph{width:72px;height:72px;border-radius:14px;flex:none;background:#2a2a30 center/cover no-repeat}
+.cd .nm{font-weight:800;font-size:14.5px;line-height:1.2;max-height:36px;overflow:hidden}
+.cd .pr{margin-top:5px;font-weight:900;font-size:15px;color:var(--pri2)}
+.cd .pr small{font-size:10.5px;font-weight:700;color:var(--mut);margin-right:4px}
+.cd .ds{font-size:11.5px;color:var(--mut);margin-top:2px;max-height:28px;overflow:hidden}
+#som{position:absolute;z-index:6;left:50%;top:46%;transform:translate(-50%,-50%);padding:12px 18px;border-radius:99px;background:var(--glass);backdrop-filter:blur(10px);border:1px solid var(--line);font-weight:800;font-size:14px;cursor:pointer;display:none;white-space:nowrap}
+#vazio{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px;gap:8px;z-index:7;background:radial-gradient(circle at 50% 30%,#2a1608,#0b0b0d 70%)}
+#vazio h2{margin:0;font-size:22px}#vazio p{margin:0;color:var(--mut);font-size:14px;max-width:300px;line-height:1.5}
+#ovl{position:fixed;inset:0;background:#0008;z-index:20;display:none}
+#sheet{position:fixed;left:0;right:0;bottom:0;margin:0 auto;max-width:520px;max-height:82%;overflow:auto;z-index:21;background:#16161a;border-radius:24px 24px 0 0;padding:0 0 calc(22px + env(safe-area-inset-bottom));transform:translateY(105%);transition:transform .32s cubic-bezier(.2,.8,.2,1)}
+#sheet.on{transform:none}
+#sheet .fh{height:220px;background:#222 center/cover no-repeat;border-radius:24px 24px 0 0;position:relative}
+#sheet .x{position:absolute;right:12px;top:12px}
+#sheet .bd{padding:16px 18px 4px}
+#sheet h3{margin:0 0 4px;font-size:21px}
+#sheet .dd{color:var(--mut);font-size:13.5px;line-height:1.5;margin:6px 0 12px}
+#sheet h4{margin:16px 0 6px;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--mut)}
+.ln{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--line);font-size:14.5px}
+.ln b{color:var(--pri2)}.ln span small{display:block;color:var(--mut);font-size:11.5px;margin-top:2px}
+.nt{font-size:12px;color:var(--mut);margin-top:14px;line-height:1.5}
+</style>
+</head>
+<body>
+<div id="stage">
+  <video class="vd" id="v0" muted playsinline preload="auto"></video>
+  <video class="vd" id="v1" muted playsinline preload="auto"></video>
+  <div class="shade-t"></div><div class="shade-b"></div>
+  <div id="top"><div id="segs"></div><div id="bar"><div id="emp"></div><button class="rb" id="bSom" title="Som" onclick="alternaSom()">🔇</button></div></div>
+  <div id="oft"></div>
+  <button id="som" onclick="alternaSom()">🔊 Toque para ativar o som</button>
+  <div id="cards"></div>
+  <div id="vazio"><h2 id="vzT">Cardápio em breve</h2><p id="vzP">Ainda não há ofertas no ar. Volte daqui a pouco.</p></div>
+</div>
+<div id="ovl" onclick="fechaSheet()"></div>
+<div id="sheet"></div>
+
+<script>
+var API='https://giro-os-api.nucleofull.workers.dev';
+var Q=new URLSearchParams(location.search), CLI=(Q.get('c')||Q.get('loja')||'').replace(/[^A-Za-z0-9_-]/g,'');
+var D={ofertas:[],produtos:{},empresa:''}, ordem=[], idx=-1, cur=0, vs=[document.getElementById('v0'),document.getElementById('v1')], somOn=false, tick=null, novoD=null;
+function $(i){return document.getElementById(i);}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function brl(n){return 'R$ '+Number(n||0).toFixed(2).replace('.',',');}
+function minPreco(p){ var t=(p.tamanhos||[]).map(function(x){return x.preco;}).filter(function(x){return x>0;}); if(t.length) return {min:Math.min.apply(null,t),de:t.length>1}; return {min:p.preco||0,de:false}; }
+
+/* ── instalar como app (manifest feito na hora, com o nome do restaurante) ── */
+function manifesto(){
+  try{
+    var svg="data:image/svg+xml;utf8,"+encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='110' fill='#f97316'/><text x='256' y='330' font-size='260' text-anchor='middle'>🍕</text></svg>");
+    var m={name:D.empresa||'Cardápio',short_name:(D.empresa||'Cardápio').slice(0,12),start_url:location.href,display:'standalone',background_color:'#0b0b0d',theme_color:'#0b0b0d',icons:[{src:svg,sizes:'any',type:'image/svg+xml',purpose:'any'}]};
+    var l=document.createElement('link'); l.rel='manifest'; l.href=URL.createObjectURL(new Blob([JSON.stringify(m)],{type:'application/manifest+json'})); document.head.appendChild(l);
+  }catch(e){}
+}
+
+function carregar(primeira){
+  if(!CLI){ vazio('Link incompleto','Falta o código do restaurante no endereço (?c=...).'); return Promise.resolve(); }
+  return fetch(API+'/food/cardapio/'+encodeURIComponent(CLI)).then(function(r){return r.json();}).then(function(d){
+    if(!d||!d.ok){ if(primeira) vazio('Cardápio não encontrado',(d&&d.mensagem)||'Confira o link.'); return; }
+    if(primeira){ D=d; document.title=(d.empresa||'Cardápio'); $('emp').innerHTML=esc(d.empresa)+'<small>AO VIVO</small>'; manifesto(); iniciar(); }
+    else novoD=d;
+  }).catch(function(){ if(primeira) vazio('Sem conexão','Não consegui abrir o cardápio. Tente de novo.'); });
+}
+function vazio(t,p){ $('vzT').textContent=t; $('vzP').textContent=p; $('vazio').style.display='flex'; }
+
+function iniciar(){
+  ordem=D.ofertas.slice();
+  if(!ordem.length){ vazio('Cardápio em breve','Ainda não há ofertas no ar. Volte daqui a pouco.'); return; }
+  $('vazio').style.display='none';
+  segs(); idx=-1; cur=0; tocar(0,true);
+}
+function segs(){ var h='',i; for(i=0;i<ordem.length;i++) h+='<i><b id="sg'+i+'"></b></i>'; $('segs').innerHTML=h; }
+
+function prepara(el,o){ if(el.getAttribute('data-o')===o.id&&el.getAttribute('src')) return; el.setAttribute('data-o',o.id); el.src=o.video; el.load(); }
+
+function tocar(i,primeira){
+  if(!ordem.length) return;
+  idx=((i%ordem.length)+ordem.length)%ordem.length;
+  var o=ordem[idx], v=vs[cur], outro=vs[1-cur];
+  prepara(v,o); v.loop=(ordem.length===1); v.currentTime=0; v.muted=!somOn;
+  var go=v.play(); if(go&&go.catch) go.catch(function(){ v.muted=true; somOn=false; atualizaSom(); v.play().catch(function(){}); });
+  vs.forEach(function(x){ x.classList.toggle('on',x===v); });
+  outro.pause();
+  if(ordem.length>1){ var prox=ordem[(idx+1)%ordem.length]; prepara(outro,prox); }
+  $('oft').textContent=o.nome||'';
+  cartoes(o);
+  for(var k=0;k<ordem.length;k++){ var b=$('sg'+k); if(b) b.style.width=(k<idx?'100%':'0'); }
+  v.onended=function(){ proximo(); };
+  v.onerror=function(){ setTimeout(proximo,600); };
+  atualizaSom();
+}
+function proximo(){
+  if(novoD&&(idx+1)%ordem.length===0){ D=novoD; novoD=null; ordem=D.ofertas.slice(); segs(); if(!ordem.length){ vs.forEach(function(x){x.pause();}); vazio('Cardápio em breve','Ainda não há ofertas no ar.'); return; } cur=1-cur; tocar(0); return; }
+  cur=1-cur; tocar(idx+1);
+}
+setInterval(function(){
+  var v=vs[cur], b=$('sg'+idx); if(b&&v&&v.duration>0) b.style.width=Math.min(100,(v.currentTime/v.duration)*100)+'%';
+},200);
+
+function cartoes(o){
+  var h='';
+  o.produtos.forEach(function(id,k){
+    var p=D.produtos[id]; if(!p) return; var pr=minPreco(p);
+    h+='<div class="cd" style="animation-delay:'+(k*80)+'ms" onclick="abreSheet(\''+esc(id)+'\')">'
+      +'<div class="ph" style="'+(p.foto?'background-image:url('+p.foto+')':'')+'"></div>'
+      +'<div style="min-width:0"><div class="nm">'+esc(p.nome)+'</div>'
+      +(p.desc?'<div class="ds">'+esc(p.desc)+'</div>':'')
+      +'<div class="pr">'+(pr.de?'<small>a partir de</small>':'')+brl(pr.min)+'</div></div></div>';
+  });
+  $('cards').innerHTML=h; $('cards').scrollLeft=0;
+}
+
+/* ── som ── */
+function atualizaSom(){ $('bSom').textContent=somOn?'🔊':'🔇'; $('som').style.display=somOn?'none':'block'; }
+function alternaSom(){ somOn=!somOn; vs.forEach(function(x){ x.muted=!somOn; }); var v=vs[cur]; if(v.paused) v.play().catch(function(){}); atualizaSom(); }
+
+/* ── detalhe do produto ── */
+function abreSheet(id){
+  var p=D.produtos[id]; if(!p) return;
+  var h='<div class="fh" style="'+(p.foto?'background-image:url('+p.foto+')':'')+'"><button class="rb x" onclick="fechaSheet()">✕</button></div><div class="bd"><h3>'+esc(p.nome)+'</h3>'+(p.desc?'<div class="dd">'+esc(p.desc)+'</div>':'');
+  if((p.tamanhos||[]).length){ h+='<h4>Tamanhos</h4>'; p.tamanhos.forEach(function(t){ h+='<div class="ln"><span>'+esc(t.nome)+(t.max>1?'<small>até '+t.max+' sabores</small>':'')+'</span><b>'+brl(t.preco)+'</b></div>'; }); }
+  else h+='<div class="ln"><span>Preço</span><b>'+brl(p.preco)+'</b></div>';
+  if(p.sabores) h+='<div class="nt">'+p.sabores+' sabores disponíveis — peça pelo atendimento do restaurante.</div>';
+  if((p.adicionais||[]).length){ h+='<h4>Adicionais</h4>'; p.adicionais.forEach(function(a){ h+='<div class="ln"><span>'+esc(a.nome)+'</span><b>+ '+brl(a.preco)+'</b></div>'; }); }
+  h+='</div>';
+  $('sheet').innerHTML=h; $('ovl').style.display='block'; requestAnimationFrame(function(){ $('sheet').classList.add('on'); });
+}
+function fechaSheet(){ $('sheet').classList.remove('on'); $('ovl').style.display='none'; }
+
+/* toque no vídeo: pula pra próxima oferta */
+$('stage').addEventListener('click',function(e){ if(e.target.closest('#cards')||e.target.closest('.rb')||e.target.closest('#som')) return; if(ordem.length>1){ cur=1-cur; tocar(idx+1); } });
+document.addEventListener('visibilitychange',function(){ var v=vs[cur]; if(!document.hidden&&v&&v.paused&&ordem.length) v.play().catch(function(){}); });
+carregar(true); setInterval(function(){ carregar(false); },60000);
+</script>
+</body>
+</html>
