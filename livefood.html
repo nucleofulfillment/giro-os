@@ -61,6 +61,21 @@ html,body{margin:0;height:100%;background:#000;color:var(--tx);font-family:Inter
 .ov-btn.link{color:var(--ov-bt,#fff);padding:.2em 0;text-decoration:underline}
 #stage .ov{--ov-t:calc(84px + env(safe-area-inset-top));--ov-b:calc(172px + env(safe-area-inset-bottom));font-size:16px}
 #omask{position:absolute;inset:0;pointer-events:none;z-index:3}
+.ov.e-cair .ov-apoio,.ov.e-cair .ov-tit,.ov.e-cair .ov-btn{animation:ovCair .85s cubic-bezier(.2,1.3,.4,1) both}
+.ov.e-lateral{--ox:-130%}.ov.e-lateral.a-dir{--ox:130%}
+.ov.e-lateral .ov-apoio,.ov.e-lateral .ov-tit,.ov.e-lateral .ov-btn{animation:ovLado .7s cubic-bezier(.2,.9,.25,1) both}
+.ov.e-zoom .ov-apoio,.ov.e-zoom .ov-tit,.ov.e-zoom .ov-btn{animation:ovZoom .65s cubic-bezier(.2,1.5,.4,1) both}
+.ov.e-cair .ov-apoio,.ov.e-lateral .ov-apoio,.ov.e-zoom .ov-apoio{animation-delay:.05s}
+.ov.e-cair .ov-tit,.ov.e-lateral .ov-tit,.ov.e-zoom .ov-tit{animation-delay:.25s}
+.ov.e-cair .ov-btn,.ov.e-lateral .ov-btn,.ov.e-zoom .ov-btn{animation-delay:.5s}
+.ov.pulso .ov-btn:not(.link){position:relative}
+.ov.pulso .ov-btn:not(.link)::after{content:'';position:absolute;inset:0;border-radius:inherit;border:.18em solid var(--ov-bf,#f97316);animation:ovAnel 1.7s ease-out 1.4s infinite;pointer-events:none}
+.ov.pulso .ov-btn.contorno::after{border-color:var(--ov-bt,#fff)}
+@keyframes ovCair{0%{transform:translateY(-160%);opacity:0}55%{transform:translateY(10%);opacity:1}75%{transform:translateY(-4%)}100%{transform:none;opacity:1}}
+@keyframes ovLado{from{transform:translateX(var(--ox,-130%));opacity:0}to{transform:none;opacity:1}}
+@keyframes ovZoom{0%{transform:scale(.2);opacity:0}65%{transform:scale(1.1);opacity:1}100%{transform:none}}
+@keyframes ovAnel{0%{transform:scale(1);opacity:.85}100%{transform:scale(1.45,1.7);opacity:0}}
+@media (prefers-reduced-motion:reduce){.ov *,.ov *::after{animation:none!important}}
 </style>
 </head>
 <body>
@@ -80,7 +95,7 @@ html,body{margin:0;height:100%;background:#000;color:var(--tx);font-family:Inter
 <script>
 var API='https://giro-os-api.nucleofull.workers.dev';
 var Q=new URLSearchParams(location.search), CLI=(Q.get('c')||Q.get('loja')||'').replace(/[^A-Za-z0-9_-]/g,'');
-var D={ofertas:[],produtos:{},empresa:''}, ordem=[], idx=-1, cur=0, vs=[document.getElementById('v0'),document.getElementById('v1')], somOn=false, tick=null, novoD=null;
+var LT=0, D={ofertas:[],produtos:{},empresa:''}, ordem=[], idx=-1, cur=0, vs=[document.getElementById('v0'),document.getElementById('v1')], somOn=false, tick=null, novoD=null;
 function $(i){return document.getElementById(i);}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function brl(n){return 'R$ '+Number(n||0).toFixed(2).replace('.',',');}
@@ -137,7 +152,7 @@ function proximo(){
   cur=1-cur; tocar(idx+1);
 }
 setInterval(function(){
-  var v=vs[cur], b=$('sg'+idx); if(b&&v&&v.duration>0) b.style.width=Math.min(100,(v.currentTime/v.duration)*100)+'%';
+  var v=vs[cur], b=$('sg'+idx); if(v&&ordem.length===1&&v.currentTime<LT-0.5){ var oo=ordem[0], hh=ofOverlay(oo.txt); if(hh) $('ovbox').innerHTML=hh; } LT=v?v.currentTime:0; if(b&&v&&v.duration>0) b.style.width=Math.min(100,(v.currentTime/v.duration)*100)+'%';
 },200);
 
 function cartoes(o){
@@ -157,7 +172,7 @@ function cartoes(o){
 function ofOverlay(t){
   t=t||{}; if(!(t.apoio||t.titulo||t.botao)) return null;
   var v='--ov-cor:'+(t.cor||'#ffffff')+';--ov-tit:'+((t.escTitulo||100)/100)+';--ov-apoio:'+((t.escApoio||100)/100)+';--ov-btn:'+((t.btnEsc||100)/100)+';--ov-raio:'+(t.btnRaio==null?14:t.btnRaio)+';--ov-bf:'+(t.btnFundo||'#f97316')+';--ov-bt:'+(t.btnTexto||'#ffffff');
-  return '<div class="ov p-'+(t.pos||'base')+' a-'+(t.alin||'esq')+'" style="'+v+'">'
+  return '<div class="ov p-'+(t.pos||'base')+' a-'+(t.alin||'esq')+' e-'+(t.efeito||'nenhum')+(t.pulso?' pulso':'')+'" style="'+v+'">'
     +(t.apoio?'<div class="ov-apoio">'+esc(t.apoio)+'</div>':'')+(t.titulo?'<div class="ov-tit">'+esc(t.titulo)+'</div>':'')
     +(t.botao?'<a class="ov-btn '+(t.btnEstilo||'cheio')+'"'+(t.link?' href="'+esc(t.link)+'" target="_blank" rel="noopener"':'')+'>'+esc(t.botao)+'</a>':'')+'</div>';
 }

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Giro OS — Painel do ponto · GIRO-OS-054</title>
+<title>Giro OS — Painel do ponto · GIRO-OS-055</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -663,7 +663,7 @@ a{color:inherit}
 
       <!-- PEDIDOS -->
       <section class="page" id="pg-pedidos">
-        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-054</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
+        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-055</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
         <div id="pd-chip"></div>
         <div class="card">
           <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
@@ -782,7 +782,7 @@ a{color:inherit}
 
       <!-- CARDÁPIO (1A): produtos, categorias e adicionais do restaurante -->
       <section class="page" id="pg-cardapio">
-        <div class="pghd"><div><h1>Cardápio</h1><div class="sub">produtos do seu restaurante · <span style="opacity:.6">GIRO-OS-054</span></div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn sec" onclick="cdAbrirCats()">Categorias</button><button class="btn sec" onclick="cdLinkCardapio()">🔗 Link do cardápio</button><button class="btn sec" onclick="cdAbrirOfertas()">▶ Ofertas</button><button class="btn sec" onclick="cdAbrirImport()">Importar planilha</button><button class="btn pri" onclick="cdNovo()">+ Novo produto</button></div></div>
+        <div class="pghd"><div><h1>Cardápio</h1><div class="sub">produtos do seu restaurante · <span style="opacity:.6">GIRO-OS-055</span></div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn sec" onclick="cdAbrirCats()">Categorias</button><button class="btn sec" onclick="cdLinkCardapio()">🔗 Link do cardápio</button><button class="btn sec" onclick="cdAbrirOfertas()">▶ Ofertas</button><button class="btn sec" onclick="cdAbrirImport()">Importar planilha</button><button class="btn pri" onclick="cdNovo()">+ Novo produto</button></div></div>
         <div class="card">
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px"><input class="inp" id="cd-busca" placeholder="Buscar produto" oninput="cdPintar()" style="flex:1;min-width:200px"><select class="inp" id="cd-fcat" onchange="cdPintar()" style="width:210px;max-width:100%"></select></div>
           <div id="cd-selbar" style="display:none;align-items:center;gap:10px;flex-wrap:wrap;background:var(--s2);border-radius:12px;padding:8px 12px;margin-bottom:10px;font-size:13px"><span id="cd-seltxt" style="font-weight:700"></span><button class="btn pri sm" onclick="cdExibirOferta()">▶ Exibir oferta</button><button class="btn sec sm" onclick="cdLimparSel()">Limpar</button></div>
@@ -1254,6 +1254,21 @@ a{color:inherit}
 .ov-btn.cheio{background:var(--ov-bf,#f97316);color:var(--ov-bt,#fff)}
 .ov-btn.contorno{border:.15em solid var(--ov-bt,#fff);color:var(--ov-bt,#fff);background:transparent}
 .ov-btn.link{color:var(--ov-bt,#fff);padding:.2em 0;text-decoration:underline}
+.ov.e-cair .ov-apoio,.ov.e-cair .ov-tit,.ov.e-cair .ov-btn{animation:ovCair .85s cubic-bezier(.2,1.3,.4,1) both}
+.ov.e-lateral{--ox:-130%}.ov.e-lateral.a-dir{--ox:130%}
+.ov.e-lateral .ov-apoio,.ov.e-lateral .ov-tit,.ov.e-lateral .ov-btn{animation:ovLado .7s cubic-bezier(.2,.9,.25,1) both}
+.ov.e-zoom .ov-apoio,.ov.e-zoom .ov-tit,.ov.e-zoom .ov-btn{animation:ovZoom .65s cubic-bezier(.2,1.5,.4,1) both}
+.ov.e-cair .ov-apoio,.ov.e-lateral .ov-apoio,.ov.e-zoom .ov-apoio{animation-delay:.05s}
+.ov.e-cair .ov-tit,.ov.e-lateral .ov-tit,.ov.e-zoom .ov-tit{animation-delay:.25s}
+.ov.e-cair .ov-btn,.ov.e-lateral .ov-btn,.ov.e-zoom .ov-btn{animation-delay:.5s}
+.ov.pulso .ov-btn:not(.link){position:relative}
+.ov.pulso .ov-btn:not(.link)::after{content:'';position:absolute;inset:0;border-radius:inherit;border:.18em solid var(--ov-bf,#f97316);animation:ovAnel 1.7s ease-out 1.4s infinite;pointer-events:none}
+.ov.pulso .ov-btn.contorno::after{border-color:var(--ov-bt,#fff)}
+@keyframes ovCair{0%{transform:translateY(-160%);opacity:0}55%{transform:translateY(10%);opacity:1}75%{transform:translateY(-4%)}100%{transform:none;opacity:1}}
+@keyframes ovLado{from{transform:translateX(var(--ox,-130%));opacity:0}to{transform:none;opacity:1}}
+@keyframes ovZoom{0%{transform:scale(.2);opacity:0}65%{transform:scale(1.1);opacity:1}100%{transform:none}}
+@keyframes ovAnel{0%{transform:scale(1);opacity:.85}100%{transform:scale(1.45,1.7);opacity:0}}
+@media (prefers-reduced-motion:reduce){.ov *,.ov *::after{animation:none!important}}
 </style>
 <div class="sheet wide" id="sh-ofertas">
   <div class="sh-hd"><h3>Ofertas com vídeo</h3><button onclick="fecharTudo()">✕</button></div>
@@ -1285,13 +1300,14 @@ a{color:inherit}
         <input class="inp" id="cd-ov-titulo" maxlength="120" placeholder="Título grande (ex: Pizza Gigante por R$ 99)" oninput="cdOvPrev()" style="margin-bottom:6px">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px"><input class="inp" id="cd-ov-botao" maxlength="30" placeholder="Texto do botão (ex: Pedir agora)" oninput="cdOvPrev()"><input class="inp" id="cd-ov-link" maxlength="300" placeholder="Link ou WhatsApp com DDD" oninput="cdOvPrev()"></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px"><select class="inp" id="cd-ov-pos" onchange="cdOvPrev()"><option value="base">Posição: embaixo</option><option value="centro">Posição: centro</option><option value="topo">Posição: topo</option></select><select class="inp" id="cd-ov-alin" onchange="cdOvPrev()"><option value="esq">Alinhado à esquerda</option><option value="centro">Centralizado</option><option value="dir">Alinhado à direita</option></select></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px"><label style="font-size:11.5px;color:var(--muted)">Tamanho do título<input type="range" id="cd-ov-et" min="50" max="250" value="100" oninput="cdOvPrev()" style="width:100%"></label><label style="font-size:11.5px;color:var(--muted)">Tamanho do texto pequeno<input type="range" id="cd-ov-ea" min="50" max="250" value="100" oninput="cdOvPrev()" style="width:100%"></label></div>
+        <div style="display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center;margin-bottom:8px"><select class="inp" id="cd-ov-ef" onchange="cdOvPrev()"><option value="nenhum">Efeito: sem efeito</option><option value="cair">Efeito: cai de cima</option><option value="lateral">Efeito: entra pela lateral</option><option value="zoom">Efeito: surge com zoom</option></select><button class="btn sec sm" type="button" onclick="cdOvPrev()" title="Ver o efeito de novo">↻ rever</button></div>
+        <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;cursor:pointer;margin-bottom:6px"><input type="checkbox" id="cd-ov-pu" onchange="cdOvPrev()"> Botão pulsando (chama atenção)</label>
         <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;cursor:pointer"><input type="checkbox" id="cd-ov-masc" checked onchange="cdOvPrev()"> Escurecer o vídeo para o texto ficar legível</label>
         <details style="margin-top:8px"><summary style="font-size:12.5px;font-weight:700;cursor:pointer">Cores e tamanhos</summary>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;font-size:11.5px;color:var(--muted)">
             <label>Cor do texto<input type="color" id="cd-ov-cor" value="#ffffff" oninput="cdOvPrev()" style="width:100%;height:34px"></label>
             <label>Escurecer (%)<input type="range" id="cd-ov-mf" min="5" max="90" value="45" oninput="cdOvPrev()" style="width:100%"></label>
-            <label>Tamanho do título<input type="range" id="cd-ov-et" min="50" max="250" value="100" oninput="cdOvPrev()" style="width:100%"></label>
-            <label>Tamanho do texto pequeno<input type="range" id="cd-ov-ea" min="50" max="250" value="100" oninput="cdOvPrev()" style="width:100%"></label>
             <label>Botão: estilo<select class="inp" id="cd-ov-be" onchange="cdOvPrev()" style="margin-top:2px"><option value="cheio">Cheio</option><option value="contorno">Contorno</option><option value="link">Só texto</option></select></label>
             <label>Botão: tamanho<input type="range" id="cd-ov-bes" min="60" max="200" value="100" oninput="cdOvPrev()" style="width:100%"></label>
             <label>Botão: cor de fundo<input type="color" id="cd-ov-bf" value="#f97316" oninput="cdOvPrev()" style="width:100%;height:34px"></label>
@@ -5709,7 +5725,7 @@ function mpAplicarModo(){
   el('mp-diabar').style.display=(m==='vivo')?'contents':'none';
   el('mp-opbar').style.display=(m==='mapa')?'flex':'none'; el('mp-opmot').style.display='none'; el('mp-vivo').style.display=(m==='mapa')?'':'none';
   var rl=el('mp-ritmo'); if(rl&&rl.parentNode) rl.parentNode.style.display=(m==='vivo')?'':'none';
-  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-054';
+  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-055';
   if(m!=='mapa'){ mpPkTodos(false); el('mp-sempos').style.display='none'; el('mp-sempos-btn').style.display='none'; }
   if(m==='vivo'){ MP_ENQ=true; mpBuscar(); } else mpOperador();
 }
@@ -7099,7 +7115,7 @@ function cdSabFoto(inp){
 function ofOverlay(t){
   t=t||{}; if(!(t.apoio||t.titulo||t.botao)) return null;
   var v='--ov-cor:'+(t.cor||'#ffffff')+';--ov-tit:'+((t.escTitulo||100)/100)+';--ov-apoio:'+((t.escApoio||100)/100)+';--ov-btn:'+((t.btnEsc||100)/100)+';--ov-raio:'+(t.btnRaio==null?14:t.btnRaio)+';--ov-bf:'+(t.btnFundo||'#f97316')+';--ov-bt:'+(t.btnTexto||'#ffffff');
-  var h='<div class="ov p-'+(t.pos||'base')+' a-'+(t.alin||'esq')+'" style="'+v+'">'
+  var h='<div class="ov p-'+(t.pos||'base')+' a-'+(t.alin||'esq')+' e-'+(t.efeito||'nenhum')+(t.pulso?' pulso':'')+'" style="'+v+'">'
     +(t.apoio?'<div class="ov-apoio">'+esc(t.apoio)+'</div>':'')+(t.titulo?'<div class="ov-tit">'+esc(t.titulo)+'</div>':'')
     +(t.botao?'<a class="ov-btn '+(t.btnEstilo||'cheio')+'"'+(t.link?' href="'+esc(t.link)+'" target="_blank" rel="noopener"':'')+'>'+esc(t.botao)+'</a>':'')+'</div>';
   return h;
@@ -7107,12 +7123,12 @@ function ofOverlay(t){
 function ofMascara(t){ if(!t||t.mascara===false) return ''; var f=t.mascaraForca||45; return 'linear-gradient(180deg,rgba(0,0,0,'+(f*0.0022).toFixed(3)+'),rgba(0,0,0,'+(f/100).toFixed(2)+'))'; }
 function cdOvColher(){
   var g=function(i){ return el(i).value; };
-  return {apoio:g('cd-ov-apoio').trim(),titulo:g('cd-ov-titulo').trim(),botao:g('cd-ov-botao').trim(),link:g('cd-ov-link').trim(),pos:g('cd-ov-pos'),alin:g('cd-ov-alin'),mascara:el('cd-ov-masc').checked,mascaraForca:+g('cd-ov-mf'),cor:g('cd-ov-cor'),escTitulo:+g('cd-ov-et'),escApoio:+g('cd-ov-ea'),btnEstilo:g('cd-ov-be'),btnEsc:+g('cd-ov-bes'),btnFundo:g('cd-ov-bf'),btnTexto:g('cd-ov-bt'),btnRaio:+g('cd-ov-br')};
+  return {apoio:g('cd-ov-apoio').trim(),titulo:g('cd-ov-titulo').trim(),botao:g('cd-ov-botao').trim(),link:g('cd-ov-link').trim(),pos:g('cd-ov-pos'),alin:g('cd-ov-alin'),mascara:el('cd-ov-masc').checked,mascaraForca:+g('cd-ov-mf'),cor:g('cd-ov-cor'),efeito:g('cd-ov-ef'),pulso:el('cd-ov-pu').checked,escTitulo:+g('cd-ov-et'),escApoio:+g('cd-ov-ea'),btnEstilo:g('cd-ov-be'),btnEsc:+g('cd-ov-bes'),btnFundo:g('cd-ov-bf'),btnTexto:g('cd-ov-bt'),btnRaio:+g('cd-ov-br')};
 }
 function cdOvPreencher(t){
   t=t||{}; var s=function(i,v){ el(i).value=v; };
   s('cd-ov-apoio',t.apoio||''); s('cd-ov-titulo',t.titulo||''); s('cd-ov-botao',t.botao||''); s('cd-ov-link',t.link||''); s('cd-ov-pos',t.pos||'base'); s('cd-ov-alin',t.alin||'esq');
-  el('cd-ov-masc').checked=t.mascara!==false; s('cd-ov-mf',t.mascaraForca||45); s('cd-ov-cor',t.cor||'#ffffff'); s('cd-ov-et',t.escTitulo||100); s('cd-ov-ea',t.escApoio||100);
+  el('cd-ov-masc').checked=t.mascara!==false; s('cd-ov-mf',t.mascaraForca||45); s('cd-ov-cor',t.cor||'#ffffff'); s('cd-ov-ef',t.efeito||(t.titulo||t.apoio||t.botao?'nenhum':'cair')); el('cd-ov-pu').checked=!!t.pulso; s('cd-ov-et',t.escTitulo||100); s('cd-ov-ea',t.escApoio||100);
   s('cd-ov-be',t.btnEstilo||'cheio'); s('cd-ov-bes',t.btnEsc||100); s('cd-ov-bf',t.btnFundo||'#f97316'); s('cd-ov-bt',t.btnTexto||'#ffffff'); s('cd-ov-br',t.btnRaio==null?14:t.btnRaio);
   cdOvPrev();
 }
