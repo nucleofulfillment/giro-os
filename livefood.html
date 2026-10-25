@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Cardápio · LiveFood</title>
 <style>
-:root{--bg:#0b0b0d;--tx:#fff;--mut:rgba(255,255,255,.68);--pri:#f97316;--pri2:#fbbf24;--glass:rgba(18,18,22,.62);--line:rgba(255,255,255,.16)}
+:root{--bg:#0b0b0d;--tx:#fff;--mut:rgba(255,255,255,.68);--pri:#f97316;--pri2:#f97316;--glass:rgba(18,18,22,.62);--line:rgba(255,255,255,.16)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;background:#000;color:var(--tx);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;overflow:hidden}
 #stage{position:fixed;inset:0;margin:0 auto;max-width:520px;background:var(--bg);overflow:hidden}
@@ -22,6 +22,11 @@ html,body{margin:0;height:100%;background:#000;color:var(--tx);font-family:Inter
 #segs i{flex:1;height:3px;border-radius:3px;background:rgba(255,255,255,.28);overflow:hidden;position:relative}
 #segs i b{position:absolute;left:0;top:0;bottom:0;width:0;background:#fff;border-radius:3px}
 #emp .lg{height:36px;max-width:150px;object-fit:contain;object-position:left;vertical-align:middle;filter:drop-shadow(0 1px 6px #0009)}
+#cards{right:96px;padding-right:0}
+#mnb{position:absolute;right:12px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:5;width:76px;height:88px;border-radius:18px;background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--line);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;font:inherit}
+#mnb span{font-size:10px;font-weight:800;letter-spacing:.8px}
+#somc{position:absolute;z-index:6;left:50%;top:46%;transform:translate(-50%,-50%) scale(.85);width:78px;height:78px;border-radius:50%;border:0;background:#0009;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;cursor:pointer}
+#somc.on{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
 #bar{display:flex;align-items:center;gap:10px}
 #emp{font-weight:800;font-size:15px;letter-spacing:.2px;text-shadow:0 1px 8px #0008;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #emp small{display:inline-block;margin-left:8px;font-size:10.5px;font-weight:800;letter-spacing:1px;background:var(--pri);padding:3px 7px;border-radius:99px;vertical-align:2px}
@@ -79,13 +84,15 @@ html,body{margin:0;height:100%;background:#000;color:var(--tx);font-family:Inter
 .art .sv{position:relative;flex:1 1 58%;min-width:0}
 .art svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 .art .al{position:relative;z-index:2;flex:0 0 38%;max-width:170px;padding:12px 4px 58px 14px;overflow:auto;font-size:12.5px;line-height:1.3;display:flex;flex-direction:column;gap:7px}
-.art.big{flex-direction:column}.art.big .sv{order:1;flex:1 1 auto;min-height:0}.art.big .al{order:2;flex:0 0 auto;max-width:none;width:100%;display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;max-height:118px;padding:8px 14px 12px 56px}
+.art.big{flex-direction:column}.art.big .sv{order:1;flex:1 1 auto;min-height:0}.art.big .al{order:2;flex:0 0 auto;max-width:none;width:100%;display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;gap:4px 0;max-height:118px;padding:8px 14px 12px 58px}.art.big .li{border-left:0;padding-left:0}.art.big .li:not(:last-child):after{content:'|';color:var(--pri);margin:0 10px;font-weight:300}
 .art .li{display:flex;align-items:flex-start;color:#fff;padding-left:9px;border-left:2px solid var(--pri)}.art .li .t{min-width:0;overflow-wrap:anywhere}
 .art .li.nw{animation:lin .5s cubic-bezier(.2,1.3,.4,1) both}@keyframes lin{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:none}}
 .art .ai0{color:var(--mut);font-size:12px}
 .art .infb{position:absolute;left:12px;bottom:10px;z-index:3;width:34px;height:34px;border-radius:50%;border:1.5px solid var(--pri);background:#0008;color:var(--pri2);font-size:20px;font-weight:800;cursor:pointer;}
 .art .infp{display:none;position:absolute;left:10px;right:10px;bottom:52px;z-index:4;background:#000e;border:1px solid var(--pri);border-radius:12px;padding:10px 12px;font-size:12.5px;line-height:1.45}
 .wz .bk{width:38px;height:38px;margin-left:-6px;background:none;border:0;padding:0;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.wz .lmp{margin-left:auto;background:none;border:1px solid var(--line);color:#fff;border-radius:99px;padding:8px 14px;font-weight:700;font-size:12.5px;cursor:pointer}.wz .lmp.cf{background:#dc2626;border-color:#dc2626}
+.wz .sx{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:none;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
 .wz .hp{font-weight:900;font-size:19px;color:var(--pri2);white-space:nowrap;}
 .wz .wb.fm{flex:0 0 auto;padding-top:10px}
 .art .gl{filter:none}
@@ -145,9 +152,11 @@ html,body{margin:0;height:100%;background:#000;color:var(--tx);font-family:Inter
   <video class="vd" id="v0" muted playsinline preload="auto"></video>
   <video class="vd" id="v1" muted playsinline preload="auto"></video>
   <div id="omask"></div><div class="shade-t"></div><div class="shade-b"></div>
-  <div id="top"><div id="segs"></div><div id="bar"><div id="emp"></div><button class="rb" id="bMenu" title="Cardápio" onclick="abreMenu()"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M8.5 10h7M8.5 14h7M8.5 18h4"/></svg></button><button class="rb" id="bSac" title="Sacola" onclick="abreSacola()"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l-1 12H6Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><span class="bg" id="nSac"></span></button><button class="rb" id="bSom" title="Som" onclick="alternaSom()"></button></div></div>
+  <div id="top"><div id="segs"></div><div id="bar"><div id="emp"></div><button class="rb" id="bMenu" style="display:none" title="Cardápio" onclick="abreMenu()"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M8.5 10h7M8.5 14h7M8.5 18h4"/></svg></button><button class="rb" id="bSac" title="Sacola" onclick="abreSacola()"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l-1 12H6Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><span class="bg" id="nSac"></span></button></div></div>
   <div id="ovbox"></div><div id="oft"></div>
   <div id="cards"></div>
+  <button id="somc" onclick="alternaSom()"></button>
+  <button id="mnb" onclick="abreMenu()"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M8.5 10h7M8.5 14h7M8.5 18h4"/></svg><span>CARDÁPIO</span></button>
   <div id="vazio"><h2 id="vzT">Cardápio em breve</h2><p id="vzP">Ainda não há ofertas no ar. Volte daqui a pouco.</p></div>
 </div>
 <div id="ovl" onclick="fechaSheet()"></div>
@@ -184,7 +193,7 @@ function vazio(t,p){ $('vzT').textContent=t; $('vzP').textContent=p; $('vazio').
 function iniciar(){
   ordem=D.ofertas.slice();
   if(!ordem.length){ vazio('Cardápio em breve','Ainda não há ofertas no ar. Volte daqui a pouco.'); return; }
-  $('vazio').style.display='none';
+  $('vazio').style.display='none'; mostraSom();
   segs(); idx=-1; cur=0; tocar(0,true);
 }
 function segs(){ var h='',i; for(i=0;i<ordem.length;i++) h+='<i><b id="sg'+i+'"></b></i>'; $('segs').innerHTML=h; }
@@ -241,8 +250,10 @@ function ofMascara(t){ if(!t||t.mascara===false) return ''; var f=t.mascaraForca
 
 /* ── som ── */
 var IC_ON='<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5Z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></svg>', IC_OFF='<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5Z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></svg>';
-function atualizaSom(){ $('bSom').innerHTML=somOn?IC_ON:IC_OFF; }
-function alternaSom(){ somOn=!somOn; vs.forEach(function(x){ x.muted=!somOn; }); var v=vs[cur]; if(v.paused) v.play().catch(function(){}); atualizaSom(); }
+var ST=null;
+function atualizaSom(){ $('somc').innerHTML=(somOn?IC_ON:IC_OFF).replace(/width="19" height="19"/,'width="38" height="38"'); }
+function mostraSom(){ $('somc').classList.add('on'); clearTimeout(ST); ST=setTimeout(function(){ $('somc').classList.remove('on'); },3000); }
+function alternaSom(){ somOn=!somOn; vs.forEach(function(x){ x.muted=!somOn; }); var v=vs[cur]; if(v.paused) v.play().catch(function(){}); atualizaSom(); mostraSom(); }
 
 /* ── fotos, sacola (guardada no aparelho) ── */
 function fotoUrl(p,sb){ return API+'/food/foto/'+encodeURIComponent(D.cli||CLI)+'/'+encodeURIComponent(p.id)+(sb?'/'+encodeURIComponent(sb.id):'')+'?v='+(p.v||0); }
@@ -258,8 +269,8 @@ function fechaSheet(){ $('sheet').classList.remove('on'); $('ovl').style.display
 /* ── passo a passo do produto (estilo iFood) ── */
 var W=null;
 /* ── desenho em contorno neon (monta junto com as escolhas) ── */
-var TC1='#fb923c', TC2='#fbbf24';
-function aplicaTema(){ var c=(D.cfg&&D.cfg.cor)||''; if(!/^#[0-9a-fA-F]{6}$/.test(c)) return; TC1=c; var n=parseInt(c.slice(1),16), r=(n>>16)&255, g=(n>>8)&255, b=n&255, m=function(x){return Math.round(x+(255-x)*.38).toString(16).padStart(2,'0');}; TC2='#'+m(r)+m(g)+m(b); var s=document.documentElement.style; s.setProperty('--pri',c); s.setProperty('--pri2',TC2); }
+var TC1='#f97316', TC2='#f97316';
+function aplicaTema(){ var c=(D.cfg&&D.cfg.cor)||''; if(!/^#[0-9a-fA-F]{6}$/.test(c)) return; TC1=c; TC2=c; var s=document.documentElement.style; s.setProperty('--pri',c); s.setProperty('--pri2',c); }
 var NEON=['#fb923c','#22d3ee','#a78bfa','#f472b6','#4ade80','#facc15'];
 function corGrupo(g){ var h=0,i; g=g||''; for(i=0;i<g.length;i++) h=(h*31+g.charCodeAt(i))>>>0; return NEON[h%NEON.length]; }
 function icoSvg(k,c,s){
@@ -345,7 +356,7 @@ function wMax(){ var t=wTam(); return t&&t.max>0?t.max:1; }
 function wUnit(){
   var p=W.p, t=wTam(), n=W.sab.length, base=t?t.preco:(p.preco||0), ex=0;
   if(n){
-    var ps=[]; W.sab.forEach(function(id){ var sb=sabPorId(id); if(!sb) return; var pr=sb.precos&&(sb.precos[t?t.id:'_']); ps.push(pr>0?pr:null); ex+=(sb.extra4||0)*(4/n); });
+    var ps=[]; W.sab.forEach(function(id){ var sb=sabPorId(id); if(!sb) return; var pr=sb.precos&&(sb.precos[t?t.id:'_']); ps.push(pr>0?pr:null); ex+=(sb.extra4||0)*Math.max(1,Math.round(4/n)); });
     var com=ps.filter(function(x){return x;}); if(com.length) base=ps.reduce(function(a,x){return a+(x||base);},0)/n;
   }
   var v=base+ex; if(W.borda!=null){ var bd=bordas()[W.borda]; if(bd) v+=bd.preco; }
@@ -450,14 +461,17 @@ function wAdd2(){
 /* ── sacola ── */
 function itemDesc(i){ var n=i.sab.length,l=[]; if(i.tam) l.push(esc(i.tam)); i.sab.forEach(function(s){ l.push((n>1?'1/'+n+' ':'')+esc(s)); }); if(i.borda) l.push('Borda: '+esc(i.borda)); i.adds.forEach(function(a){ l.push('+ '+esc(a)); }); if(i.obs) l.push('Obs: '+esc(i.obs)); return l.join('<br>'); }
 function sacTotal(){ var t=0; SAC.forEach(function(i){ t+=i.unit*i.qty; }); return Math.round(t*100)/100; }
+var XI='<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg>', XP='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg>';
 function abreSacola(){
-  var h='<div class="wh"><button class="bk" onclick="fechaSheet()"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg></button><b>Sua sacola</b></div><div class="wb">';
+  var h='<div class="wh"><button class="bk" onclick="fechaSheet()">'+XI+'</button><b>Sua sacola</b>'+(SAC.length?'<button class="lmp" id="lmp" onclick="sacLimpa()">Limpar sacola</button>':'')+'</div><div class="wb">';
   if(!SAC.length) h+='<div class="nt" style="text-align:center;padding:30px 0">Sua sacola está vazia.<br>Toque num produto para começar.</div>';
-  SAC.forEach(function(i,j){ h+='<div class="sc"><div class="i"><b>'+esc(i.nome)+'</b><small>'+itemDesc(i)+'</small><div style="color:var(--pri2);font-weight:800;margin-top:4px">'+brl(i.unit*i.qty)+'</div></div><div class="qt"><button onclick="sacQ('+j+',-1)">−</button><span>'+i.qty+'</span><button onclick="sacQ('+j+',1)">+</button></div></div>'; });
+  SAC.forEach(function(i,j){ h+='<div class="sc"><div class="i"><b>'+esc(i.nome)+'</b><small>'+itemDesc(i)+'</small><div style="color:var(--pri);font-weight:800;margin-top:4px">'+brl(i.unit*i.qty)+'</div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px"><button class="sx" onclick="sacQ('+j+',-999)" title="Remover">'+XP+'</button><div class="qt"><button onclick="sacQ('+j+',-1)">−</button><span>'+i.qty+'</span><button onclick="sacQ('+j+',1)">+</button></div></div></div>'; });
   h+='</div>';
-  if(SAC.length) h+='<div class="rod" style="flex-direction:column;align-items:stretch;gap:8px"><div class="tt" style="padding:0"><span>Subtotal</span><span>'+brl(sacTotal())+'</span></div><button class="bt c" onclick="toast(\'Finalizar pedido: chega no próximo passo\')">Continuar</button></div>';
+  if(SAC.length) h+='<div class="rod" style="flex-direction:column;align-items:stretch;gap:8px"><div class="tt" style="padding:0"><span>Subtotal</span><span>'+brl(sacTotal())+'</span></div><button class="bt c" style="flex:none;width:100%" onclick="toast(\'Finalizar pedido: chega no próximo passo\')">Continuar</button></div>';
   abreFolha(h,true);
 }
+var LMP=null;
+function sacLimpa(){ var b=$('lmp'); if(!b) return; if(!LMP){ b.textContent='Confirmar?'; b.classList.add('cf'); LMP=setTimeout(function(){ LMP=null; var c=$('lmp'); if(c){ c.textContent='Limpar sacola'; c.classList.remove('cf'); } },3000); return; } clearTimeout(LMP); LMP=null; SAC=[]; sacGrava(); abreSacola(); }
 function sacQ(j,d){ SAC[j].qty+=d; if(SAC[j].qty<=0) SAC.splice(j,1); else SAC[j].qty=Math.min(50,SAC[j].qty); sacGrava(); abreSacola(); }
 
 /* ── cardápio completo ── */
@@ -471,7 +485,7 @@ function abreMenu(){
 }
 
 /* toque no vídeo: pula pra próxima oferta */
-$('stage').addEventListener('click',function(e){ if(e.target.closest('#cards')||e.target.closest('.rb')||e.target.closest('#som')||e.target.closest('.ov-btn')) return; if(ordem.length>1){ cur=1-cur; tocar(idx+1); } });
+$('stage').addEventListener('click',function(e){ if(e.target.closest('#cards')||e.target.closest('.rb')||e.target.closest('#somc')||e.target.closest('#mnb')||e.target.closest('.ov-btn')) return; var x=e.clientX-$('stage').getBoundingClientRect().left, w=$('stage').clientWidth; if(ordem.length>1&&x>w*0.7){ cur=1-cur; tocar(idx+1); } else if(ordem.length>1&&x<w*0.3){ cur=1-cur; tocar(idx-1); } else mostraSom(); });
 document.addEventListener('visibilitychange',function(){ var v=vs[cur]; if(!document.hidden&&v&&v.paused&&ordem.length) v.play().catch(function(){}); });
 carregar(true); setInterval(function(){ carregar(false); },60000);
 </script>
