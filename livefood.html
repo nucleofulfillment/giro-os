@@ -656,7 +656,7 @@ function ctPedeCodigo(){
   var b=$('ct-bt'); if(b){ b.disabled=true; b.textContent='Enviando…'; } ctErro('');
   ctApi('/food/conta/codigo',{fone:d}).then(function(r){
     if(r.ok){ CT.fone=d; CT.conhecido=!!r.conhecido; ctCodigo(45); }
-    else { if(b){ b.disabled=false; b.textContent='Receber código'; } if(r.erro==='aguarde'){ CT.fone=d; CT.conhecido=true; ctCodigo(r.espera||45); ctErro('Já enviamos um código. Digite-o abaixo.'); } else ctErro(r.mensagem||'Não consegui enviar.'); }
+    else { if(b){ b.disabled=false; b.textContent='Receber código'; } if(r.erro==='aguarde'){ CT.fone=d; CT.conhecido=true; ctCodigo(r.espera||45); ctErro('Já enviamos um código. Digite-o abaixo.'); } else ctErro((r.mensagem||'Não consegui enviar.')+(r.detalhe?' [detalhe: '+r.detalhe+']':'')); }
   });
 }
 function ctCodigo(seg){
