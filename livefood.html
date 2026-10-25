@@ -115,6 +115,10 @@ html.claro #sheet .bt:not(:disabled):not([style*="transparent"]),html.claro #she
 /* quadro da montagem (desenho/vídeo + lista de itens) continua escuro no tema claro */
 html.claro #sheet .art{filter:invert(1) hue-rotate(180deg)}
 html.claro #sheet .art img,html.claro #sheet .art video,html.claro #sheet .art svg image,html.claro #sheet .art [style*="url("]{filter:none}
+#wzp{display:none;position:fixed;left:12px;right:12px;bottom:calc(72px + env(safe-area-inset-bottom));margin:0 auto;max-width:496px;z-index:26;background:#16161af2;border:1.5px solid var(--pri);border-radius:16px;align-items:center;box-shadow:0 8px 24px #0009;overflow:hidden}
+#wzp .go{flex:1;background:none;border:0;color:#fff;text-align:left;padding:11px 14px;cursor:pointer;min-width:0}#wzp .go b{display:block;font-size:14px;color:var(--pri)}#wzp .go small{display:block;font-size:12.5px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#wzp .x{flex:none;background:none;border:0;border-left:1px solid var(--line);color:var(--mut);width:46px;align-self:stretch;font-size:16px;cursor:pointer}
+html.claro #wzp{filter:invert(1) hue-rotate(180deg)}
 #nav{position:fixed;left:0;right:0;bottom:0;margin:0 auto;max-width:520px;height:calc(60px + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);z-index:30;display:flex;background:#111114f2;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line)}
 #nav button{flex:1;background:none;border:0;color:#9ca3af;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:10.5px;font-weight:700;position:relative;cursor:pointer}
 #nav button.on{color:var(--pri)}
@@ -249,6 +253,7 @@ html.claro #sheet .art img,html.claro #sheet .art video,html.claro #sheet .art s
 <nav id="nav"><button id="nv-inicio" onclick="navIr('inicio')"><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1Z"/></svg><span>Início</span></button><button id="nv-busca" onclick="navIr('busca')"><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><span>Busca</span></button><button id="nv-pedidos" onclick="navIr('pedidos')"><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg><span>Pedidos</span></button><button id="nv-sac" onclick="navIr('sac')"><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l-1 12H6Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><span>Sacola</span><i class="bg" id="nSac"></i></button><button id="nv-conta" onclick="navIr('conta')"><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg><span>Conta</span></button></nav>
 <div id="giro"><div>📱<br><b>Gire o celular</b><br><small>O cardápio funciona em pé</small></div></div>
 <div id="obsm" onclick="if(event.target===this)wObsFecha()"><div class="obc"><b>Deseja alguma observação no seu pedido?</b><textarea id="obs-tx" maxlength="200" placeholder="Ex.: sem cebola, ponto da carne…" oninput="wObsBt()"></textarea><button class="bt c" id="obs-bt" style="flex:none;width:100%" onclick="wObsOk()">Não, obrigado</button></div></div>
+<div id="wzp"></div>
 <div id="ovl" onclick="fechaSheet()"></div>
 <div id="sheet"></div><div id="toast"></div>
 
@@ -277,7 +282,7 @@ function carregar(primeira){
   if(!CLI){ vazio('Link incompleto','Falta o código do restaurante no endereço (?c=...).'); return Promise.resolve(); }
   return fetch(API+'/food/cardapio/'+encodeURIComponent(CLI)).then(function(r){return r.json();}).then(function(d){
     if(!d||!d.ok){ if(primeira) vazio('Cardápio não encontrado',(d&&d.mensagem)||'Confira o link.'); return; }
-    if(primeira){ D=d; sacLer(); aplicaTema(); navOn('inicio'); temaAplica(); document.title=(d.empresa||'Cardápio'); $('emp').innerHTML=((d.cfg&&d.cfg.logo)?'<img class="lg" src="'+API+'/food/foto/'+encodeURIComponent(d.cli||CLI)+'/_logo?v='+(d.cfg.v||0)+'" alt="'+esc(d.empresa)+'" onerror="this.outerHTML=\''+esc(d.empresa).replace(/'/g,'')+'\'">':esc(d.empresa))+'<small id="stt"></small>'; pintaStatus(); try{ if(!estaAberto()&&!sessionStorage.getItem('lf_fcm_'+(d.cli||CLI))){ sessionStorage.setItem('lf_fcm_'+(d.cli||CLI),'1'); setTimeout(abreFechado,600); } }catch(e){} manifesto(); iniciar(); }
+    if(primeira){ D=d; sacLer(); aplicaTema(); navOn('inicio'); temaAplica(); wizPill(); document.title=(d.empresa||'Cardápio'); $('emp').innerHTML=((d.cfg&&d.cfg.logo)?'<img class="lg" src="'+API+'/food/foto/'+encodeURIComponent(d.cli||CLI)+'/_logo?v='+(d.cfg.v||0)+'" alt="'+esc(d.empresa)+'" onerror="this.outerHTML=\''+esc(d.empresa).replace(/'/g,'')+'\'">':esc(d.empresa))+'<small id="stt"></small>'; pintaStatus(); try{ if(!estaAberto()&&!sessionStorage.getItem('lf_fcm_'+(d.cli||CLI))){ sessionStorage.setItem('lf_fcm_'+(d.cli||CLI),'1'); setTimeout(abreFechado,600); } }catch(e){} manifesto(); iniciar(); }
     else novoD=d;
   }).catch(function(){ if(primeira) vazio('Sem conexão','Não consegui abrir o cardápio. Tente de novo.'); });
 }
@@ -366,8 +371,8 @@ function sacGrava(){ try{ localStorage.setItem(lsk(),JSON.stringify(SAC)); }catc
 function sacQtd(){ var n=0; SAC.forEach(function(i){ n+=i.qty; }); return n; }
 function sacMarca(){ var n=sacQtd(), b=$('nSac'); b.textContent=n; b.style.display=n?'flex':'none'; }
 function toast(t){ var e=$('toast'); e.textContent=t; e.style.display='block'; clearTimeout(toast._t); toast._t=setTimeout(function(){ e.style.display='none'; },2200); }
-function abreFolha(h,wz,full){ var s=$('sheet'); s.className=(wz?'wz ':'')+(full===true?'fz ':'')+(full==='fx'?'fx ':'')+(s.classList.contains('on')?'on':''); s.innerHTML=h; $('ovl').style.display='block'; requestAnimationFrame(function(){ s.classList.add('on'); }); }
-function fechaSheet(){ CK.on=0; CK.open=0; $('sheet').classList.remove('on'); $('ovl').style.display='none'; navOn('inicio'); }
+function abreFolha(h,wz,full){ var s=$('sheet'); var pl=$('wzp'); if(pl) pl.style.display='none'; s.className=(wz?'wz ':'')+(full===true?'fz ':'')+(full==='fx'?'fx ':'')+(s.classList.contains('on')?'on':''); s.innerHTML=h; $('ovl').style.display='block'; requestAnimationFrame(function(){ s.classList.add('on'); }); }
+function fechaSheet(){ CK.on=0; CK.open=0; $('sheet').classList.remove('on'); $('ovl').style.display='none'; navOn('inicio'); wizPill(); }
 
 /* ── passo a passo do produto (estilo iFood) ── */
 var W=null;
@@ -580,7 +585,18 @@ function abreSheet(id){
   var p=D.produtos[id]; if(!p) return;
   W={p:p,tam:null,sab:[],borda:null,add:[],qty:1,obs:'',passo:0,q:''};
   if((p.tamanhos||[]).length===1) W.tam=p.tamanhos[0].id;
+  var dr=wizLer(); if(dr&&dr.p===id){ W.tam=dr.tam!=null?dr.tam:W.tam; W.sab=(dr.sab||[]).filter(function(s){ return (p.sabores||[]).some(function(x){return x.id===s;}); }); W.borda=dr.borda; W.add=(dr.add||[]).filter(function(j){ return outros()[j]; }); W.qty=dr.qty||1; W.obs=dr.obs||''; if(W.borda!=null&&!bordas()[W.borda]) W.borda=null; if(W.tam&&!(p.tamanhos||[]).some(function(x){return x.id===W.tam;})) W.tam=((p.tamanhos||[]).length===1?p.tamanhos[0].id:null); toast('Continuando de onde você parou'); }
   W.passos=wPassos(); wPinta(true);
+}
+/* ── rascunho da montagem: volta de onde parou ── */
+function wizK(){ return 'lf_wiz_'+(D.cli||CLI); }
+function wizLer(){ try{ var d=JSON.parse(localStorage.getItem(wizK())||'null'); if(d&&d.t&&Date.now()-d.t<3*3600000&&D.produtos[d.p]) return d; }catch(e){} return null; }
+function wizSalva(){ if(!W||!W.p||W.edK!=null) return; var vazio=!W.tam&&!W.sab.length&&W.borda==null&&!W.add.length&&W.qty===1&&!W.obs; if(vazio&&(W.p.tamanhos||[]).length!==1){ return; } try{ localStorage.setItem(wizK(),JSON.stringify({p:W.p.id,tam:W.tam,sab:W.sab,borda:W.borda,add:W.add,qty:W.qty,obs:W.obs,t:Date.now()})); }catch(e){} }
+function wizLimpa(){ try{ localStorage.removeItem(wizK()); }catch(e){} wizPill(); }
+function wizPill(){
+  var e=$('wzp'); if(!e) return; var d=wizLer(), aberto=$('sheet').classList.contains('on');
+  if(!d||aberto){ e.style.display='none'; return; }
+  e.innerHTML='<button class="go" onclick="abreSheet(\''+esc(d.p)+'\')"><b>Continuar montando</b><small>'+esc(D.produtos[d.p].nome)+'</small></button><button class="x" title="Descartar" onclick="wizLimpa()">✕</button>'; e.style.display='flex';
 }
 function wTitulo(k){ return {tam:'Escolha o tamanho',sab:'Escolha os sabores',borda:'Escolha a borda',add:'Adicionais',fim:'Revise seu pedido'}[k]; }
 function wPode(k){ if(k==='opc'){ var q=W.p; if((q.tamanhos||[]).length&&!W.tam) return false; if((q.sabores||[]).length&&W.sab.length<1) return false; return true; } if(k==='tam') return !!W.tam; if(k==='sab') return W.sab.length>=1; return true; }
@@ -625,7 +641,7 @@ function wResumo(){
 }
 function wRod(){
   var k=W.passos[W.passo], last=W.passo===W.passos.length-1, b=$('wbt'); if(!b) return;
-  b.disabled=!wPode(k); $('wq').textContent=W.qty; artPreco();
+  b.disabled=!wPode(k); $('wq').textContent=W.qty; artPreco(); wizSalva();
   b.innerHTML=last?'<span>'+(W.edK!=null?'Salvar alterações':'Adicionar')+'</span><span>'+brl(wUnit()*W.qty)+'</span>':'<span>Avançar</span>';
 }
 function wTamSel(id){ W.tam=id; var mx=wMax(); if(W.sab.length>mx) W.sab=W.sab.slice(0,mx); wRef(); }
@@ -633,13 +649,13 @@ function wBorda(j){ W.borda=j; wRef(); }
 function wAdd(j){ var i=W.add.indexOf(j); if(i>=0) W.add.splice(i,1); else W.add.push(j); wRef(); }
 function wQtd(d){ W.qty=Math.max(1,Math.min(50,W.qty+d)); wRod(); }
 function wVolta(){ W.passo=Math.max(0,W.passo-1); wPinta(); }
-function wAvanca(){ var k=W.passos[W.passo]; if(!wPode(k)) return; if(W.passo<W.passos.length-1){ W.passo++; wPinta(); } else if(k==='fim') wAdd2(); else wObsAbre(); }
+function wAvanca(){ var k=W.passos[W.passo]; if(!wPode(k)) return; if(W.passo<W.passos.length-1){ W.passo++; wPinta(); } else if(k==='fim'){ wAdd2(); wizLimpa(); } else wObsAbre(); }
 function obsAjusta(){ var m=$('obsm'), vv=window.visualViewport; if(!m||m.style.display!=='flex'||!vv) return; m.style.top=vv.offsetTop+'px'; m.style.height=vv.height+'px'; m.style.bottom='auto'; }
 if(window.visualViewport){ visualViewport.addEventListener('resize',function(){ obsAjusta(); }); visualViewport.addEventListener('scroll',function(){ obsAjusta(); }); }
 function wObsAbre(){ var m=$('obsm'); $('obs-tx').value=W.obs||''; m.style.display='flex'; obsAjusta(); wObsBt(); setTimeout(function(){ $('obs-tx').focus(); obsAjusta(); },120); setTimeout(obsAjusta,450); }
 function wObsBt(){ var v=$('obs-tx').value.trim(); $('obs-bt').textContent=v?'Enviar':'Não, obrigado'; }
 function wObsFecha(){ var m=$('obsm'); m.style.display='none'; m.style.height=''; m.style.top=''; }
-function wObsOk(){ W.obs=$('obs-tx').value.trim().slice(0,200); wObsFecha(); wAdd2(); }
+function wObsOk(){ W.obs=$('obs-tx').value.trim().slice(0,200); wObsFecha(); wAdd2(); wizLimpa(); }
 function wSab(id){
   var i=W.sab.indexOf(id), mx=wMax();
   if(i>=0) W.sab.splice(i,1);
