@@ -715,7 +715,8 @@ function ctSalvaLista(l,fn){
   });
 }
 /* ── 5C: resumo do pedido, Pix e confirmação ── */
-var CK={ped:null,tmr:null};
+var CK={ped:null,tmr:null,pg:'pix'};
+function ckPg(m){ CK.pg=m; var c=$('ck-cpf'), o=$('ck-obs'), cv=c?c.value:'', ov=o?o.value:'', tv=$('ck-tr')?$('ck-tr').value:''; ckResumo(); if($('ck-cpf')) $('ck-cpf').value=cv; if($('ck-obs')) $('ck-obs').value=ov; if($('ck-tr')) $('ck-tr').value=tv; }
 function ckCpfFmt(e){ var d=e.value.replace(/\D/g,'').slice(0,11); e.value=d.length>9?d.slice(0,3)+'.'+d.slice(3,6)+'.'+d.slice(6,9)+'-'+d.slice(9):d.length>6?d.slice(0,3)+'.'+d.slice(3,6)+'.'+d.slice(6):d.length>3?d.slice(0,3)+'.'+d.slice(3):d; }
 function ckDesc(sub,pg){ var g=D.cfg&&D.cfg.programado, r={db:0,bri:''}; if(pg&&g){ if(g.tipo==='pct') r.db=Math.round(sub*g.valor)/100; else if(g.tipo==='val') r.db=Math.min(sub,g.valor); else if(g.tipo==='item'&&D.produtos[g.item]) r.bri=D.produtos[g.item].nome; } return r; }
 function ckResumo(){
@@ -725,22 +726,23 @@ function ckResumo(){
   if(d.bri) h+='<div class="rsm"><div class="tx"><b>1× '+esc(d.bri)+'</b><small>Brinde do pedido programado</small></div><div class="vl" style="color:#4ade80">Grátis</div></div>';
   h+='<div class="ad on" style="cursor:default;margin-top:14px"><div class="tx"><b>'+(EN.modo==='retirada'?'🏪 Retirada no balcão':'🛵 Entrega')+'</b>'+(EN.modo==='entrega'&&en?'<small>'+ctEndTxt(en)+'</small>':'')+'</div><div class="ac"><button class="lk" onclick="ctEntrega()">Alterar</button></div></div>';
   if(fechado) h+=pg?'<div class="ad on" style="cursor:default"><div class="tx"><b>🕒 Pedido agendado</b><small>'+esc(progFmt(pg))+'</small></div><div class="ac"><button class="lk" onclick="abreAgenda()">Alterar</button></div></div>':'<div class="ad" style="cursor:default;border-color:#f87171"><div class="tx"><b>Estamos fechados agora</b><small>Agende o pedido para um horário em que estaremos abertos.</small></div></div>';
-  if(!c.cpf) h+='<label class="cl">Seu CPF (necessário para gerar o Pix)</label><input class="cin" id="ck-cpf" type="tel" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" oninput="ckCpfFmt(this)">';
-  else h+='<div class="nt">CPF do Pix: '+esc(c.cpf)+'</div>';
+  if(CK.pg==='pix'&&!c.cpf) h+='<label class="cl">Seu CPF (necessário para gerar o Pix)</label><input class="cin" id="ck-cpf" type="tel" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" oninput="ckCpfFmt(this)">';
+  else if(CK.pg==='pix') h+='<div class="nt">CPF do Pix: '+esc(c.cpf)+'</div>';
   h+='<label class="cl">Observação do pedido (opcional)</label><textarea id="ck-obs" maxlength="300" placeholder="Ex.: tocar a campainha"></textarea>';
-  h+='<label class="cl">Forma de pagamento</label><div class="ad on" style="cursor:default"><div class="rd"></div><div class="tx"><b>Pix</b><small>Aprovação na hora</small></div></div><div class="ad" style="cursor:default;opacity:.5"><div class="rd"></div><div class="tx"><b>Cartão de crédito</b><small>Em breve</small></div></div>';
+  h+='<label class="cl">Forma de pagamento</label><div class="ad'+(CK.pg==='pix'?' on':'')+'" onclick="ckPg(\'pix\')"><div class="rd"></div><div class="tx"><b>Pix</b><small>Aprovação na hora</small></div></div><div class="ad'+(CK.pg==='dinheiro'?' on':'')+'" onclick="ckPg(\'dinheiro\')"><div class="rd"></div><div class="tx"><b>Dinheiro</b><small>'+(EN.modo==='retirada'?'Pague na retirada':'Pague ao entregador')+'</small></div></div><div class="ad" style="cursor:default;opacity:.5"><div class="rd"></div><div class="tx"><b>Cartão de crédito</b><small>Em breve</small></div></div>';
+  if(CK.pg==='dinheiro') h+='<label class="cl">Precisa de troco? Troco para quanto (opcional)</label><input class="cin" id="ck-tr" type="tel" inputmode="decimal" placeholder="Ex.: 50" maxlength="8">';
   h+='<div style="margin-top:14px;font-size:13.5px"><div class="tt" style="padding:2px 0;font-size:14px;font-weight:600"><span>Subtotal</span><span>'+brl(sub)+'</span></div>'+(d.db>0?'<div class="tt" style="padding:2px 0;font-size:14px;font-weight:600;color:#4ade80"><span>Desconto do pedido programado</span><span>− '+brl(d.db)+'</span></div>':'')+'<div class="tt" style="padding:6px 0 0"><span>Total</span><span>'+brl(tot)+'</span></div></div><div class="ce" id="ct-erro"></div></div>';
-  h+='<div class="rod"><button class="bt c" id="ct-bt" onclick="ckPaga()">'+(fechado&&!pg?'Agendar pedido':'Pagar '+brl(tot)+' com Pix')+'</button></div>';
+  h+='<div class="rod"><button class="bt c" id="ct-bt" onclick="ckPaga()">'+(fechado&&!pg?'Agendar pedido':(CK.pg==='dinheiro'?'Finalizar pedido · '+brl(tot):'Pagar '+brl(tot)+' com Pix'))+'</button></div>';
   abreFolha(h,true);
 }
 function ckPaga(){
   var fechado=!estaAberto(), pg=fechado?progLer():null; if(fechado&&!pg){ abreAgenda(); return; }
-  var ce=$('ck-cpf'), cpf=ce?ce.value.replace(/\D/g,''):''; if(ce&&cpf.length!==11){ ctErro('Digite os 11 números do CPF.'); return; }
-  var b=$('ct-bt'); b.disabled=true; b.textContent='Gerando o Pix…'; ctErro('');
-  ctApi('/food/pedido',{itens:SAC.map(function(i){ return {p:i.p,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs,qty:i.qty}; }),modo:EN.modo,end:EN.end,obs:($('ck-obs')||{value:''}).value,cpf:cpf||undefined,prog:pg||undefined}).then(function(r){
-    if(r.ok){ CK.ped=r.pedido; ckPix(); }
+  var ce=$('ck-cpf'), cpf=ce?ce.value.replace(/\D/g,''):''; if(CK.pg==='pix'&&ce&&cpf.length!==11){ ctErro('Digite os 11 números do CPF.'); return; }
+  var b=$('ct-bt'), din=CK.pg==='dinheiro', trc=din&&$('ck-tr')?parseFloat($('ck-tr').value.replace(',','.')):0; b.disabled=true; b.textContent=din?'Enviando o pedido…':'Gerando o Pix…'; ctErro('');
+  ctApi('/food/pedido',{itens:SAC.map(function(i){ return {p:i.p,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs,qty:i.qty}; }),modo:EN.modo,end:EN.end,obs:($('ck-obs')||{value:''}).value,cpf:cpf||undefined,prog:pg||undefined,pagto:CK.pg,troco:(trc>0?trc:undefined)}).then(function(r){
+    if(r.ok){ CK.ped=r.pedido; if(din) ckOk(r.pedido); else ckPix(); }
     else if(r._http===401){ CT.tok=''; ctLogin(); }
-    else { b.disabled=false; b.textContent='Pagar com Pix'; ctErro(r.mensagem||'Não consegui criar o pedido.'); }
+    else { b.disabled=false; b.textContent=din?'Finalizar pedido':'Pagar com Pix'; ctErro(r.mensagem||'Não consegui criar o pedido.'); }
   });
 }
 function ckPix(){
@@ -759,7 +761,7 @@ function ckConfere(){
 }
 function ckOk(p){
   SAC=[]; sacGrava(); try{ localStorage.removeItem('lf_prog_'+(D.cli||CLI)); }catch(e){}
-  abreFolha('<div class="wb" style="text-align:center;padding:36px 20px 24px"><svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg><div style="font-size:22px;font-weight:800;margin-top:14px">Pedido #'+p.num+' confirmado!</div><div style="margin-top:8px;color:var(--mut);font-size:14.5px;line-height:1.5">Pagamento recebido: <b style="color:#fff">'+brl(p.total)+'</b>.<br>'+(p.prog_dia?'Agendado para <b style="color:#fff">'+esc(progFmt({dia:p.prog_dia,hora:p.prog_hora}))+'</b>, com prioridade na fila.':(p.modo==='retirada'?'Avisaremos quando estiver pronto para retirar.':'Já estamos preparando o seu pedido.'))+'</div></div><div class="rod"><button class="bt c" onclick="fechaSheet()">Voltar ao cardápio</button></div>',true);
+  abreFolha('<div class="wb" style="text-align:center;padding:36px 20px 24px"><svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg><div style="font-size:22px;font-weight:800;margin-top:14px">Pedido #'+p.num+(p.pagto==='dinheiro'?' enviado!':' confirmado!')+'</div><div style="margin-top:8px;color:var(--mut);font-size:14.5px;line-height:1.5">'+(p.pagto==='dinheiro'?'Pague <b style="color:#fff">'+brl(p.total)+'</b> em dinheiro '+(p.modo==='retirada'?'na retirada':'ao entregador')+'.':'Pagamento recebido: <b style="color:#fff">'+brl(p.total)+'</b>.')+'<br>'+(p.prog_dia?'Agendado para <b style="color:#fff">'+esc(progFmt({dia:p.prog_dia,hora:p.prog_hora}))+'</b>, com prioridade na fila.':(p.modo==='retirada'?'Avisaremos quando estiver pronto para retirar.':'Já estamos preparando o seu pedido.'))+'</div></div><div class="rod"><button class="bt c" onclick="fechaSheet()">Voltar ao cardápio</button></div>',true);
 }
 var LMP=null;
 function sacLimpa(){ var b=$('lmp'); if(!b) return; if(!LMP){ b.textContent='Confirmar?'; b.classList.add('cf'); LMP=setTimeout(function(){ LMP=null; var c=$('lmp'); if(c){ c.textContent='Limpar sacola'; c.classList.remove('cf'); } },3000); return; } clearTimeout(LMP); LMP=null; SAC=[]; sacGrava(); abreSacola(); }
