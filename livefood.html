@@ -29,6 +29,7 @@ html,body{margin:0;height:100%;background:#000;color:var(--tx);font-family:Inter
 #somc.on{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
 #bar{display:flex;align-items:center;gap:10px}
 #emp{font-weight:800;font-size:15px;letter-spacing:.2px;text-shadow:0 1px 8px #0008;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#emp small.fc{background:#b91c1c}#emp small.ab{background:#15803d}
 #emp small{display:inline-block;margin-left:8px;font-size:10.5px;font-weight:800;letter-spacing:1px;background:var(--pri);padding:3px 7px;border-radius:99px;vertical-align:2px}
 .rb{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--glass);backdrop-filter:blur(8px);color:#fff;font-size:17px;display:flex;align-items:center;justify-content:center;cursor:pointer}
 #oft{position:absolute;left:16px;right:16px;bottom:calc(158px + env(safe-area-inset-bottom));z-index:4;font-size:22px;font-weight:900;line-height:1.15;text-shadow:0 2px 14px #000a}
@@ -70,6 +71,7 @@ html,body{margin:0;height:100%;background:#000;color:var(--tx);font-family:Inter
 .qt{display:flex;align-items:center;gap:2px;border:1px solid var(--line);border-radius:12px}.qt button{width:36px;height:42px;background:none;border:0;color:var(--pri2);font-size:20px;font-weight:800;cursor:pointer}.qt span{min-width:22px;text-align:center;font-weight:800}
 .bt{flex:1;height:48px;border:0;border-radius:12px;background:var(--pri);color:#fff;font-weight:800;font-size:15px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:0 16px}.bt:disabled{background:#3a3a42;color:#888}
 .bt.c{justify-content:center}
+.tg{display:inline-block;margin-top:5px;background:var(--pri);color:#fff;font-size:10.5px;font-weight:800;letter-spacing:.4px;border-radius:6px;padding:3px 8px;text-transform:uppercase}
 .sed{margin-top:8px;background:transparent;border:1px solid var(--pri);color:var(--pri);border-radius:8px;padding:5px 14px;font-size:12.5px;font-weight:700;cursor:pointer}
 .wz textarea{width:100%;border-radius:12px;border:1px solid var(--line);background:#ffffff0f;color:#fff;padding:10px;font:inherit;font-size:14px;min-height:64px}
 .rs{font-size:13px;color:var(--mut);line-height:1.6;border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:12px}.rs b{color:#fff}
@@ -190,7 +192,7 @@ function carregar(primeira){
   if(!CLI){ vazio('Link incompleto','Falta o código do restaurante no endereço (?c=...).'); return Promise.resolve(); }
   return fetch(API+'/food/cardapio/'+encodeURIComponent(CLI)).then(function(r){return r.json();}).then(function(d){
     if(!d||!d.ok){ if(primeira) vazio('Cardápio não encontrado',(d&&d.mensagem)||'Confira o link.'); return; }
-    if(primeira){ D=d; sacLer(); aplicaTema(); document.title=(d.empresa||'Cardápio'); $('emp').innerHTML=((d.cfg&&d.cfg.logo)?'<img class="lg" src="'+API+'/food/foto/'+encodeURIComponent(d.cli||CLI)+'/_logo?v='+(d.cfg.v||0)+'" alt="'+esc(d.empresa)+'" onerror="this.outerHTML=\''+esc(d.empresa).replace(/'/g,'')+'\'">':esc(d.empresa))+'<small>AO VIVO</small>'; manifesto(); iniciar(); }
+    if(primeira){ D=d; sacLer(); aplicaTema(); document.title=(d.empresa||'Cardápio'); $('emp').innerHTML=((d.cfg&&d.cfg.logo)?'<img class="lg" src="'+API+'/food/foto/'+encodeURIComponent(d.cli||CLI)+'/_logo?v='+(d.cfg.v||0)+'" alt="'+esc(d.empresa)+'" onerror="this.outerHTML=\''+esc(d.empresa).replace(/'/g,'')+'\'">':esc(d.empresa))+'<small id="stt"></small>'; pintaStatus(); manifesto(); iniciar(); }
     else novoD=d;
   }).catch(function(){ if(primeira) vazio('Sem conexão','Não consegui abrir o cardápio. Tente de novo.'); });
 }
@@ -612,6 +614,17 @@ function menuGrupos(){
   var sem={id:'_',nome:g.length?'Outros':'Produtos',ps:[]}; Object.keys(D.produtos).forEach(function(id){ var p=D.produtos[id]; if(p.cat&&cats[p.cat]) cats[p.cat].ps.push(p); else sem.ps.push(p); });
   g.push(sem); return g.filter(function(x){ return x.ps.length; });
 }
+function estaAberto(){
+  var h=D&&D.cfg&&D.cfg.horarios; if(!h||h.length!==7) return true;
+  var n=new Date(Date.now()-3*3600000), d=n.getUTCDay(), m=n.getUTCHours()*60+n.getUTCMinutes();
+  function mm(s){ var a=String(s||'').split(':'); return (+a[0])*60+(+a[1]||0); }
+  var t=h[d]; if(t&&t.on){ var ab=mm(t.ab), fe=mm(t.fe); if(ab<fe){ if(m>=ab&&m<fe) return true; } else if(ab>fe){ if(m>=ab) return true; } }
+  var y=h[(d+6)%7]; if(y&&y.on){ var ab2=mm(y.ab), fe2=mm(y.fe); if(ab2>fe2&&m<fe2) return true; }
+  return false;
+}
+function pintaStatus(){ var e=$('stt'); if(!e) return; var a=estaAberto(); e.textContent=a?'ABERTO':'FECHADO'; e.className=a?'ab':'fc'; }
+setInterval(function(){ try{ pintaStatus(); }catch(e){} },60000);
+function promoTag(p){ var d=p.promo; if(!d||!(d.valor>0)) return ''; return '<div><span class="tg">'+(d.tipo==='pct'?String(d.valor).replace('.',',')+'% OFF':'− '+brl(d.valor))+'</span></div>'; }
 function menuMin(ps){ var m=0; ps.forEach(function(p){ var v=minPreco(p).min; if(v>0&&(!m||v<m)) m=v; }); return m; }
 function menuFoto(g){
   var u=''; if(g.foto) u=API+'/food/foto/'+encodeURIComponent(D.cli||CLI)+'/_cat/'+encodeURIComponent(g.id)+'?v='+(g.v||0);
@@ -622,14 +635,14 @@ function menuFoto(g){
 function abreMenu(){
   var h='<div class="wh"><button class="bk" onclick="fechaSheet()">'+XI+'</button><b>Cardápio</b></div><div class="wb">';
   menuGrupos().forEach(function(g){ var mn=menuMin(g.ps);
-    h+='<div class="mp" onclick="abreCat(\''+esc(g.id)+'\')">'+menuFoto(g)+'<div style="flex:1;min-width:0"><b style="font-size:15.5px">'+esc(g.nome)+'</b><div style="font-size:12.5px;color:var(--mut);margin-top:3px">'+g.ps.length+' ite'+(g.ps.length===1?'m':'ns')+(mn?' · a partir de '+brl(mn):'')+'</div></div><span style="color:var(--mut);font-size:22px">›</span></div>'; });
+    h+='<div class="mp" onclick="abreCat(\''+esc(g.id)+'\')">'+menuFoto(g)+'<div style="flex:1;min-width:0"><b style="font-size:15.5px">'+esc(g.nome)+'</b><div style="font-size:12.5px;color:var(--mut);margin-top:3px">'+g.ps.length+' ite'+(g.ps.length===1?'m':'ns')+(mn?' · a partir de '+brl(mn):'')+'</div>'+(g.ps.some(function(p){return p.promo&&p.promo.valor>0;})?'<div><span class="tg">Promoção</span></div>':'')+'</div><span style="color:var(--mut);font-size:22px">›</span></div>'; });
   h+='</div>'; abreFolha(h,true);
 }
 function abreCat(id){
   var g=null; menuGrupos().forEach(function(x){ if(x.id===id) g=x; }); if(!g){ abreMenu(); return; }
   var h='<div class="wh"><button class="bk" onclick="abreMenu()">'+BKI+'</button><b>'+esc(g.nome)+'</b></div><div class="wb">';
   g.ps.forEach(function(p){ var pr=minPreco(p), ft=p.foto?'<div class="th" style="width:56px;height:56px;border-radius:10px;background:#2a2a30 center/cover url('+fotoUrl(p)+');flex:none"></div>':'<div style="width:56px;height:56px;border-radius:10px;background:#2a2a30;flex:none;display:flex;align-items:center;justify-content:center;">'+icone(tipoDesenho(p),28)+'</div>';
-    h+='<div class="mp" onclick="abreSheet(\''+esc(p.id)+'\')">'+ft+'<div style="flex:1;min-width:0"><b style="font-size:14.5px">'+esc(p.nome)+'</b></div><span class="vl" style="color:var(--pri2);font-weight:800;font-size:13.5px;text-align:right">'+(pr.de?'a partir de ':'')+(pr.orig>pr.min?'<s class="de">'+brl(pr.orig)+'</s> ':'')+brl(pr.min)+'</span></div>'; });
+    h+='<div class="mp" onclick="abreSheet(\''+esc(p.id)+'\')">'+ft+'<div style="flex:1;min-width:0"><b style="font-size:14.5px">'+esc(p.nome)+'</b>'+promoTag(p)+'</div><span class="vl" style="color:var(--pri2);font-weight:800;font-size:13.5px;text-align:right">'+(pr.de?'a partir de ':'')+(pr.orig>pr.min?'<s class="de">'+brl(pr.orig)+'</s> ':'')+brl(pr.min)+'</span></div>'; });
   h+='</div>'; abreFolha(h,true);
 }
 

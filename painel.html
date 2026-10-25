@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Giro OS — Painel do ponto · GIRO-OS-060</title>
+<title>Giro OS — Painel do ponto · GIRO-OS-062</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -663,7 +663,7 @@ a{color:inherit}
 
       <!-- PEDIDOS -->
       <section class="page" id="pg-pedidos">
-        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-060</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
+        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-062</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
         <div id="pd-chip"></div>
         <div class="card">
           <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
@@ -782,7 +782,7 @@ a{color:inherit}
 
       <!-- CARDÁPIO (1A): produtos, categorias e adicionais do restaurante -->
       <section class="page" id="pg-cardapio">
-        <div class="pghd"><div><h1>Cardápio</h1><div class="sub">produtos do seu restaurante · <span style="opacity:.6">GIRO-OS-060</span></div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn sec" onclick="cdAbrirCats()">Categorias</button><button class="btn sec" onclick="cdLinkCardapio()">🔗 Link do cardápio</button><button class="btn sec" onclick="cdAparencia()">🎨 Aparência</button><button class="btn sec" onclick="cdAbrirOfertas()">▶ Ofertas</button><button class="btn sec" onclick="cdAbrirImport()">Importar planilha</button><button class="btn pri" onclick="cdNovo()">+ Novo produto</button></div></div>
+        <div class="pghd"><div><h1>Cardápio</h1><div class="sub">produtos do seu restaurante · <span style="opacity:.6">GIRO-OS-062</span></div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn sec" onclick="cdAbrirCats()">Categorias</button><button class="btn sec" onclick="cdLinkCardapio()">🔗 Link do cardápio</button><button class="btn sec" onclick="cdAparencia()">🎨 Aparência</button><button class="btn sec" onclick="cdHorario()">🕒 Horário</button><button class="btn sec" onclick="cdAbrirOfertas()">▶ Ofertas</button><button class="btn sec" onclick="cdAbrirImport()">Importar planilha</button><button class="btn pri" onclick="cdNovo()">+ Novo produto</button></div></div>
         <div class="card">
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px"><input class="inp" id="cd-busca" placeholder="Buscar produto" oninput="cdPintar()" style="flex:1;min-width:200px"><select class="inp" id="cd-fcat" onchange="cdPintar()" style="width:210px;max-width:100%"></select></div>
           <div id="cd-selbar" style="display:none;align-items:center;gap:10px;flex-wrap:wrap;background:var(--s2);border-radius:12px;padding:8px 12px;margin-bottom:10px;font-size:13px"><span id="cd-seltxt" style="font-weight:700"></span><button class="btn pri sm" onclick="cdExibirOferta()">▶ Exibir oferta</button><button class="btn sec sm" onclick="cdLimparSel()">Limpar</button></div>
@@ -5732,7 +5732,7 @@ function mpAplicarModo(){
   el('mp-diabar').style.display=(m==='vivo')?'contents':'none';
   el('mp-opbar').style.display=(m==='mapa')?'flex':'none'; el('mp-opmot').style.display='none'; el('mp-vivo').style.display=(m==='mapa')?'':'none';
   var rl=el('mp-ritmo'); if(rl&&rl.parentNode) rl.parentNode.style.display=(m==='vivo')?'':'none';
-  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-060';
+  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-062';
   if(m!=='mapa'){ mpPkTodos(false); el('mp-sempos').style.display='none'; el('mp-sempos-btn').style.display='none'; }
   if(m==='vivo'){ MP_ENQ=true; mpBuscar(); } else mpOperador();
 }
@@ -6928,6 +6928,16 @@ function cdCarregar(){
   }).catch(function(e){ if(l) l.innerHTML='<div style="padding:24px;text-align:center;color:var(--red)">Não consegui abrir o cardápio: '+esc(e.message)+'</div>'; });
 }
 function cdNomeCat(id){ var i; for(i=0;i<CD.cats.length;i++) if(CD.cats[i].id===id) return CD.cats[i].nome; return ''; }
+function cdDscTag(p){
+  var d=p.desconto; if(!d||!(d.valor>0)) return '';
+  var now=new Date(Date.now()-3*3600000).toISOString().slice(0,16), de=d.de||'', ate=d.ate||'';
+  var v=d.tipo==='pct'?(String(d.valor).replace('.',',')+'% OFF'):('R$ '+Number(d.valor).toFixed(2).replace('.',',')+' OFF');
+  function fm(s){ var m=/^(\d{4})-(\d\d)-(\d\d)T(\d\d:\d\d)/.exec(s||''); return m?(m[3]+'/'+m[2]+' '+m[4]):''; }
+  var st='font-size:10.5px;font-weight:800;border-radius:6px;padding:2px 7px;margin-left:8px;vertical-align:middle;white-space:nowrap;';
+  if(ate&&now>ate) return '<span style="'+st+'background:var(--s3);color:var(--muted)" title="O desconto já terminou">Desconto encerrado</span>';
+  if(de&&now<de) return '<span style="'+st+'background:#fef3c7;color:#92400e" title="Começa em '+fm(de)+'">⏰ '+v+' · começa '+fm(de)+'</span>';
+  return '<span style="'+st+'background:#dc2626;color:#fff" title="'+(ate?'Até '+fm(ate):'Sem data para terminar')+'">🏷 '+v+(ate?' · até '+fm(ate):'')+'</span>';
+}
 function cdPintar(){
   var fc=el('cd-fcat'), atual=fc.value, h='<option value="">Todas as categorias</option>', i;
   for(i=0;i<CD.cats.length;i++) h+='<option value="'+esc(CD.cats[i].id)+'">'+esc(CD.cats[i].nome)+'</option>';
@@ -6944,7 +6954,7 @@ function cdPintar(){
     out+='<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--border);'+(p.ativo===false?'opacity:.55':'')+'">'
       +'<input type="checkbox" '+(CD.sel[p.id]?'checked ':'')+'onchange="cdSelProd(\''+p.id+'\',this.checked)" title="Selecionar para exibir oferta" style="width:18px;height:18px;flex:none;cursor:pointer">'
       +'<div style="width:56px;height:56px;flex:none;border-radius:12px;background:var(--s3) center/cover no-repeat;'+(p.foto?'background-image:url('+p.foto+')':'')+'"></div>'
-      +'<div style="flex:1;min-width:0"><div style="font-weight:800;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(comOf[p.id]?'<span title="Este produto tem oferta com vídeo" style="color:var(--pri,#f97316);margin-right:6px">▶</span>':'')+esc(p.nome)+'</div>'
+      +'<div style="flex:1;min-width:0"><div style="font-weight:800;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(comOf[p.id]?'<span title="Este produto tem oferta com vídeo" style="color:var(--pri,#f97316);margin-right:6px">▶</span>':'')+esc(p.nome)+cdDscTag(p)+'</div>'
       +'<div style="font-size:12px;color:var(--muted)">'+esc(cdNomeCat(p.cat)||'Sem categoria')+((p.tamanhos||[]).length?' · '+p.tamanhos.length+' tamanho'+(p.tamanhos.length>1?'s':''):'')+((p.sabores||[]).length?' · '+p.sabores.length+' sabor'+(p.sabores.length>1?'es':''):'')+(nad?' · '+nad+' adicional'+(nad>1?'is':''):'')+'</div></div>'
       +'<div style="font-weight:800;font-size:14px;white-space:nowrap">'+cdPrecoLista(p)+'</div>'
       +'<button class="btn sec sm" onclick="cdAlternar(\''+p.id+'\')" title="Clique para ativar/pausar">'+(p.ativo===false?'Pausado':'Ativo')+'</button>'
@@ -7180,6 +7190,31 @@ function cdApLogo(f){
 function cdApSalvar(){
   fetch(DELTADIS_API+'/painel/cardapio-config',{method:'POST',headers:cdHdr(),body:JSON.stringify({cor:CDAP.cor,logo:CDAP.logo})}).then(function(r){return r.json();}).then(function(d){
     if(!d||!d.ok) throw new Error((d&&d.mensagem)||'não salvou'); aviso('Aparência salva'); fecharTudo();
+  }).catch(function(e){ aviso(e.message||'Não salvou'); });
+}
+/* ── horário de atendimento (062) ── */
+var CDHR=null, CDDIAS=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+function cdHorario(){
+  el('cd-imp-corpo').innerHTML='<div style="font-size:13px;color:var(--muted)">Carregando…</div>';
+  el('sh-import').querySelector('h3').textContent='Horário de atendimento'; abrir('sh-import');
+  fetch(DELTADIS_API+'/painel/cardapio-config',{headers:cdHdr()}).then(function(r){return r.json();}).then(function(d){
+    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'erro');
+    CDHR=(d.horarios&&d.horarios.length===7)?d.horarios:CDDIAS.map(function(){ return {on:true,ab:'18:00',fe:'23:00'}; });
+    cdHrPintar();
+  }).catch(function(e){ el('cd-imp-corpo').innerHTML='<div style="color:#f87171;font-size:13px">'+esc(e.message||'Não consegui abrir.')+'</div>'; });
+}
+function cdHrPintar(){
+  var h='<div style="font-size:13px;color:var(--muted2);line-height:1.5;margin-bottom:12px">Defina quando o restaurante está <b>aberto</b>. Fora desse horário, o app do cliente mostra <b>FECHADO</b>. Se fechar depois da meia-noite (ex.: 18:00 às 02:00), é só colocar 02:00.</div>';
+  CDDIAS.forEach(function(n,i){ var x=CDHR[i];
+    h+='<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--border);'+(x.on?'':'opacity:.55')+'"><label style="display:flex;align-items:center;gap:8px;width:116px;font-weight:700;font-size:13.5px"><input type="checkbox" '+(x.on?'checked ':'')+'onchange="CDHR['+i+'].on=this.checked;cdHrPintar()" style="width:18px;height:18px">'+n+'</label>'
+      +(x.on?'<input type="time" class="inp" value="'+x.ab+'" onchange="CDHR['+i+'].ab=this.value" style="width:110px"><span style="color:var(--muted)">às</span><input type="time" class="inp" value="'+x.fe+'" onchange="CDHR['+i+'].fe=this.value" style="width:110px">':'<span style="color:var(--muted);font-size:13px">Fechado o dia todo</span>')+'</div>'; });
+  h+='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px"><button class="btn sec" type="button" onclick="cdHrTodos()">Copiar a 1ª linha ativa para todos</button><button class="btn pri" type="button" onclick="cdHrSalvar()">Salvar horário</button></div>';
+  el('cd-imp-corpo').innerHTML=h;
+}
+function cdHrTodos(){ var i, b=null; for(i=0;i<7;i++) if(CDHR[i].on){ b=CDHR[i]; break; } if(!b) return; for(i=0;i<7;i++) CDHR[i]={on:true,ab:b.ab,fe:b.fe}; cdHrPintar(); }
+function cdHrSalvar(){
+  fetch(DELTADIS_API+'/painel/cardapio-config',{method:'POST',headers:cdHdr(),body:JSON.stringify({horarios:CDHR})}).then(function(r){return r.json();}).then(function(d){
+    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'não salvou'); aviso('Horário salvo'); fecharTudo();
   }).catch(function(e){ aviso(e.message||'Não salvou'); });
 }
 /* ── link público do cardápio do cliente ── */
