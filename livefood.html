@@ -33,13 +33,13 @@ html,body{margin:0;height:100%;background:#000;color:var(--tx);font-family:Inter
 .ckh,.ckm{transform-origin:32px 32px;animation:ckA 2.6s cubic-bezier(.25,.8,.25,1) .3s both}.ckm{animation-duration:2.6s}
 @keyframes slR{to{transform:rotate(360deg)}}
 .slg{transform-origin:50px 50px;animation:slR 14s linear infinite}
-.selo{position:absolute;top:12px;right:12px;width:92px;height:92px;border-radius:50%;background:var(--pri);box-shadow:0 4px 16px #0006;transform:rotate(8deg)}.selo svg{display:block}
+.selo{position:absolute;top:4px;right:8px;width:106px;height:106px;border-radius:50%;background:var(--pri);box-shadow:0 4px 16px #0006;transform:rotate(8deg)}.selo svg{display:block}
 .hbig{font-size:44px;font-weight:900;color:var(--pri2);line-height:1.05;letter-spacing:1px}
 .tk{position:relative;margin-top:16px;padding:14px 14px 16px;border-radius:14px;background:linear-gradient(135deg,var(--pri),var(--pri2));color:#fff;box-shadow:0 6px 20px #0005}
 .tk:before,.tk:after{content:'';position:absolute;top:50%;width:18px;height:18px;margin-top:6px;border-radius:50%;background:#16161a}.tk:before{left:-9px}.tk:after{right:-9px}
 .tkp{font-size:13px;font-weight:700;opacity:.95;margin-bottom:8px}.tkr{display:flex;align-items:center;justify-content:center;gap:12px;border-top:2px dashed #ffffff77;padding-top:10px}
 .tkq{font-size:12px;font-weight:700;text-align:left;opacity:.95}.tkb{font-size:26px;font-weight:900;line-height:1.1;text-align:left}
-.pgd,.pgh{display:flex;gap:8px;flex-wrap:wrap}.pgd{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px}
+.pgd,.pgh{display:flex;gap:8px;flex-wrap:wrap}.pgd{flex-wrap:nowrap;overflow-x:auto;padding:2px 16px 4px 0;scrollbar-width:none;scroll-behavior:smooth;-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent);mask-image:linear-gradient(90deg,#000 88%,transparent)}.pgd::-webkit-scrollbar{display:none}
 .pgc{flex:none;background:#26262c;border:1px solid #ffffff22;color:#fff;border-radius:10px;padding:10px 13px;font-weight:700;font-size:13.5px;cursor:pointer}.pgh .pgc{width:calc(25% - 6px);padding:10px 0}
 .pgc.on{background:var(--pri);border-color:var(--pri)}
 #emp small.fc{background:#b91c1c}#emp small.ab{background:#15803d}
@@ -580,7 +580,7 @@ function wLista(){
 function wAdd2(){
   var t=wTam(), p=W.p, it={p:p.id,nome:p.nome,tam:t?t.nome:'',sab:W.sab.map(function(id){var s=sabPorId(id);return s?s.nome:'';}),
     borda:W.borda!=null?bordas()[W.borda].nome:'',adds:W.add.map(function(j){return outros()[j].nome;}),obs:(W.obs||'').trim().slice(0,200),
-    qty:W.qty,unit:wUnit(),kind:((p.tamanhos||[]).length||(p.sabores||[]).length)?'pizza':'item',tipo:tipoDesenho(p),balcao:W.sab.some(function(id){var s=sabPorId(id);return s&&s.balcao;})};
+    qty:W.qty,unit:wUnit(),orig:(function(){ var pm=p.promo; p.promo=null; var u0=wUnit(); p.promo=pm; return u0; })(),promo:p.promo?{tipo:p.promo.tipo,valor:p.promo.valor}:null,kind:((p.tamanhos||[]).length||(p.sabores||[]).length)?'pizza':'item',tipo:tipoDesenho(p),balcao:W.sab.some(function(id){var s=sabPorId(id);return s&&s.balcao;})};
   it.k=JSON.stringify([it.p,it.tam,it.sab,it.borda,it.adds,it.obs]);
   if(W.edK!=null&&SAC[W.edK]){
     var oj=W.edK; SAC[oj]=it; var dup=-1; SAC.forEach(function(x,j){ if(j!==oj&&x.k===it.k) dup=j; });
@@ -606,15 +606,16 @@ function sacEdit(j){
 
 /* ── sacola ── */
 function itemDesc(i){ var n=i.sab.length,l=[]; if(i.tam) l.push(esc(i.tam)); i.sab.forEach(function(s){ l.push((n>1?'1/'+n+' ':'')+esc(s)); }); if(i.borda) l.push('Borda: '+esc(i.borda)); i.adds.forEach(function(a){ l.push('+ '+esc(a)); }); if(i.obs) l.push('Obs: '+esc(i.obs)); return l.join('<br>'); }
+function sacEcon(){ var t=0; SAC.forEach(function(i){ if(i.orig>i.unit) t+=(i.orig-i.unit)*i.qty; }); return Math.round(t*100)/100; }
 function sacTotal(){ var t=0; SAC.forEach(function(i){ t+=i.unit*i.qty; }); return Math.round(t*100)/100; }
 var XI='<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg>', XP='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg>';
 function abreSacola(){
   var h='<div class="wh"><button class="bk" onclick="fechaSheet()">'+XI+'</button><b>Sua sacola</b>'+(SAC.length?'<button class="lmp" id="lmp" onclick="sacLimpa()">Limpar sacola</button>':'')+'</div><div class="wb">';
   if(!SAC.length) h+='<div class="nt" style="text-align:center;padding:30px 0">Sua sacola está vazia.<br>Toque num produto para começar.</div>';
-  SAC.forEach(function(i,j){ h+='<div class="sc"><div class="i"><b>'+esc(i.nome)+'</b><small>'+itemDesc(i)+'</small><div style="color:var(--pri);font-weight:800;margin-top:4px">'+brl(i.unit*i.qty)+'</div><button class="sed" onclick="sacEdit('+j+')">Editar</button></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px"><button class="sx" onclick="sacQ('+j+',-999)" title="Remover">'+XP+'</button><div class="qt"><button onclick="sacQ('+j+',-1)">−</button><span>'+i.qty+'</span><button onclick="sacQ('+j+',1)">+</button></div></div></div>'; });
+  SAC.forEach(function(i,j){ h+='<div class="sc"><div class="i"><b>'+esc(i.nome)+'</b><small>'+itemDesc(i)+'</small>'+(i.orig>i.unit&&i.promo?'<div style="margin-top:6px"><span class="tg" style="margin:0">'+(i.promo.tipo==='pct'?String(i.promo.valor).replace('.',',')+'% OFF':'− '+brl(i.promo.valor))+'</span></div>':'')+'<div style="margin-top:4px;font-weight:800;color:var(--pri)">'+(i.orig>i.unit?'<s style="color:var(--mut);font-weight:600;font-size:12.5px;margin-right:6px">'+brl(i.orig*i.qty)+'</s>':'')+brl(i.unit*i.qty)+'</div>'+(i.orig>i.unit?'<div style="font-size:12px;color:#4ade80;margin-top:2px">Você economiza '+brl((i.orig-i.unit)*i.qty)+'</div>':'')+'<button class="sed" onclick="sacEdit('+j+')">Editar</button></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px"><button class="sx" onclick="sacQ('+j+',-999)" title="Remover">'+XP+'</button><div class="qt"><button onclick="sacQ('+j+',-1)">−</button><span>'+i.qty+'</span><button onclick="sacQ('+j+',1)">+</button></div></div></div>'; });
   h+='</div>';
   if(SAC.length&&!estaAberto()){ var pg=progLer(); h+='<div class="nt" style="text-align:center;padding:10px 16px 0;color:var(--pri2)">'+(pg?'🕒 Pedido programado para '+progFmt(pg)+' · <u onclick="abreAgenda()" style="cursor:pointer">alterar</u>':'🕒 Estamos fechados. <u onclick="abreAgenda()" style="cursor:pointer">Agendar este pedido</u>')+'</div>'; }
-  if(SAC.length) h+='<div class="rod" style="flex-direction:column;align-items:stretch;gap:8px"><div class="tt" style="padding:0"><span>Subtotal</span><span>'+brl(sacTotal())+'</span></div><button class="bt c" style="flex:none;width:100%" onclick="toast(\'Finalizar pedido: chega no próximo passo\')">Continuar</button></div>';
+  if(SAC.length) h+='<div class="rod" style="flex-direction:column;align-items:stretch;gap:8px">'+(sacEcon()>0?'<div class="tt" style="padding:0;font-size:13px;color:#4ade80"><span>Desconto aplicado</span><span>− '+brl(sacEcon())+'</span></div>':'')+'<div class="tt" style="padding:0"><span>Subtotal</span><span>'+brl(sacTotal())+'</span></div><button class="bt c" style="flex:none;width:100%" onclick="toast(\'Finalizar pedido: chega no próximo passo\')">Continuar</button><button class="bt c" style="flex:none;width:100%;background:transparent;border:2px solid var(--pri);color:var(--pri)" onclick="abreMenu()">Continuar comprando</button></div>';
   abreFolha(h,true);
 }
 var LMP=null;
@@ -685,11 +686,12 @@ function abreFechado(){
   if(q){ var a=q.hora.split(':'); hB=((+a[0])%12+(+a[1])/60)*30; if(hB<hA) hB+=360; mB=(+a[1])*6+1080; }
   var clock='<svg viewBox="0 0 64 64" width="76" height="76" fill="none" stroke="var(--pri)" stroke-width="2.6" stroke-linecap="round"><circle cx="32" cy="32" r="28"/>'+[0,90,180,270].map(function(r){ return '<path d="M32 7v4" transform="rotate('+r+' 32 32)" stroke-width="2"/>'; }).join('')
     +'<g class="ckh" style="--a0:'+hA.toFixed(1)+'deg;--a1:'+hB.toFixed(1)+'deg"><path d="M32 32V19" stroke-width="3.2"/></g><g class="ckm" style="--a0:'+mA+'deg;--a1:'+mB+'deg"><path d="M32 32V12"/></g><circle cx="32" cy="32" r="2.4" fill="var(--pri)" stroke="none"/></svg>';
-  var selo=q?'<div class="selo"><svg viewBox="0 0 100 100" width="92" height="92"><defs><path id="slc" d="M50 50m-37 0a37 37 0 1 1 74 0a37 37 0 1 1-74 0"/></defs><g class="slg"><text font-size="10.5" font-weight="800" letter-spacing="1.2" fill="#fff"><textPath href="#slc" textLength="228" lengthAdjust="spacing">ABRE ÀS • ABRE ÀS • ABRE ÀS • ABRE ÀS • </textPath></text></g><text x="50" y="58" text-anchor="middle" font-size="26" font-weight="900" fill="#fff">'+esc(hh(q.hora))+'</text></svg></div>':'';
+  var lab=q?('ABRE '+q.txt.replace(/^na /,'').toUpperCase()+' ÀS'):'', rot=''; if(q){ var nn=Math.max(2,Math.round(40/(lab.length+3))), z; for(z=0;z<nn;z++) rot+=lab+' • '; }
+  var selo=q?'<div class="selo"><svg viewBox="0 0 100 100" width="106" height="106"><defs><path id="slc" d="M50 50m-37 0a37 37 0 1 1 74 0a37 37 0 1 1-74 0"/></defs><g class="slg"><text font-size="10.5" font-weight="800" letter-spacing="1.2" fill="#fff"><textPath href="#slc" textLength="228" lengthAdjust="spacing">'+esc(rot)+'</textPath></text></g><text x="50" y="58" text-anchor="middle" font-size="26" font-weight="900" fill="#fff">'+esc(hh(q.hora))+'</text></svg></div>':'';
   var tk=b?'<div class="tk"><div class="tkp">Reserve seu pedido agora e</div><div class="tkr"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 0 0 6v3h18v-3a2 2 0 0 1 0-6V6H3z"/><path d="M14 6v2.5M14 11v2M14 15.5V18"/></svg><div><div class="tkq">'+esc(b.pre)+'</div><div class="tkb">'+esc(b.big)+'</div></div></div></div>':'<div class="tk"><div class="tkp" style="margin:0">Agende seu pedido e entre na frente da fila</div></div>';
   var h='<div class="wb fcm" style="text-align:center;padding:26px 20px 22px;position:relative">'+selo+clock
    +'<div style="font-size:20px;font-weight:800;margin-top:8px">Estamos fechados agora</div>'
-   +(q?'<div class="nt" style="margin-top:6px">Abrimos '+esc(q.txt)+' a partir das</div><div class="hbig">'+esc(q.hora)+'</div>':'')
+   
    +tk+'<div class="nt" style="margin-top:10px;font-size:13px">Pedido programado entra com <b>prioridade na fila</b> assim que abrirmos.</div>'
    +'<div style="display:flex;flex-direction:column;gap:10px;margin-top:16px"><button class="bt c" style="flex:none;width:100%" onclick="abreAgenda()">Reservar meu pedido</button><button class="bt c" style="flex:none;width:100%;background:transparent;border:2px solid #ffffff44;color:#fff" onclick="fechaSheet()">Só ver o cardápio</button></div></div>';
   abreFolha(h);
@@ -699,6 +701,7 @@ function abreAgenda(){
   var at=progLer(); PGD={dia:at?at.dia:ds[0].key,hora:at?at.hora:''}; pintaAgenda();
 }
 function pintaAgenda(){
+  var oldp=document.querySelector('.pgd'), sx=oldp?oldp.scrollLeft:0;
   var ds=progDias(), cur=null; ds.forEach(function(d){ if(d.key===PGD.dia) cur=d; }); if(!cur){ cur=ds[0]; PGD.dia=cur.key; PGD.hora=''; }
   var h='<div class="wh"><button class="bk" onclick="abreFechado()">'+BKI+'</button><b>Agendar pedido</b></div><div class="wb"><div class="nt" style="margin-bottom:8px">Escolha o dia</div><div class="pgd">';
   ds.forEach(function(d){ h+='<button class="pgc'+(d.key===PGD.dia?' on':'')+'" onclick="PGD.dia=\''+d.key+'\';PGD.hora=\'\';pintaAgenda()">'+esc(d.lab)+'</button>'; });
@@ -706,6 +709,7 @@ function pintaAgenda(){
   cur.sl.forEach(function(x){ h+='<button class="pgc'+(x===PGD.hora?' on':'')+'" onclick="PGD.hora=\''+x+'\';pintaAgenda()">'+x+'</button>'; });
   h+='</div>'+(progTxt()?'<div class="nt" style="margin-top:16px;color:var(--pri2)">🎟 Ao agendar, '+esc(progTxt())+'.</div>':'')+'</div><div class="rod"><button class="bt c" '+(PGD.hora?'':'disabled ')+'onclick="progSim()">'+(PGD.hora?'Confirmar agendamento':'Escolha um horário')+'</button></div>';
   abreFolha(h,true);
+  var np=document.querySelector('.pgd'); if(np){ np.style.scrollBehavior='auto'; np.scrollLeft=sx; var on=np.querySelector('.pgc.on'); if(on){ var l0=on.offsetLeft-np.offsetLeft, r0=l0+on.offsetWidth; if(l0<np.scrollLeft+8||r0>np.scrollLeft+np.clientWidth-30){ np.style.scrollBehavior='smooth'; np.scrollLeft=Math.max(0,l0-np.clientWidth/2+on.offsetWidth/2); } } setTimeout(function(){ np.style.scrollBehavior=''; },400); }
 }
 function progSim(){ if(!PGD||!PGD.hora) return; try{ localStorage.setItem('lf_prog_'+(D.cli||CLI),JSON.stringify({dia:PGD.dia,hora:PGD.hora})); }catch(e){} toast('Pedido agendado para '+progFmt(PGD)); fechaSheet(); setTimeout(abreMenu,350); }
 function pintaStatus(){ var e=$('stt'); if(!e) return; var a=estaAberto(); e.textContent=a?'ABERTO':'FECHADO'; e.className=a?'ab':'fc'; }
