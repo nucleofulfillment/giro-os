@@ -87,6 +87,14 @@ html,body{margin:0;height:100%;background:#000;color:var(--tx);font-family:Inter
 .bt.c{justify-content:center}
 .tg{display:inline-block;margin-top:5px;background:var(--pri);color:#fff;font-size:10.5px;font-weight:800;letter-spacing:.4px;border-radius:6px;padding:3px 8px;text-transform:uppercase}
 .sed{margin-top:8px;background:transparent;border:1px solid var(--pri);color:var(--pri);border-radius:8px;padding:5px 14px;font-size:12.5px;font-weight:700;cursor:pointer}
+.wz .cl{display:block;margin:14px 0 6px;font-size:12px;font-weight:700;color:var(--mut)}
+.wz .cin{width:100%;border-radius:12px;border:1px solid var(--line);background:#ffffff0f;color:#fff;padding:12px;font:inherit;font-size:15px}
+.wz .ce{color:#f87171;font-size:13px;min-height:18px;margin-top:10px}
+.wz .lk{background:none;border:0;color:var(--pri2);font:inherit;font-size:13px;font-weight:700;cursor:pointer;padding:0;text-decoration:underline}.wz .lk:disabled{color:var(--mut);text-decoration:none;cursor:default}
+.wz .seg{display:flex;gap:8px;margin-top:12px}.wz .seg button{flex:1;height:46px;border-radius:12px;border:1px solid var(--line);background:transparent;color:#fff;font:inherit;font-weight:700;font-size:14px;cursor:pointer}.wz .seg button.on{border:2px solid var(--pri);color:var(--pri)}
+.wz .ad{display:flex;gap:12px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px;cursor:pointer}.wz .ad.on{border:2px solid var(--pri)}
+.wz .ad .rd{flex:none;width:20px;height:20px;border-radius:50%;border:2px solid var(--mut)}.wz .ad.on .rd{border-color:var(--pri);background:radial-gradient(var(--pri) 45%,transparent 50%)}
+.wz .ad .tx{flex:1;min-width:0}.wz .ad small{display:block;color:var(--mut);font-size:12.5px;line-height:1.4;margin-top:2px}
 .wz textarea{width:100%;border-radius:12px;border:1px solid var(--line);background:#ffffff0f;color:#fff;padding:10px;font:inherit;font-size:14px;min-height:64px}
 .rs{font-size:13px;color:var(--mut);line-height:1.6;border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:12px}.rs b{color:#fff}
 .bg{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:9px;background:var(--pri);font-size:11px;font-weight:800;display:none;align-items:center;justify-content:center;padding:0 4px}
@@ -616,8 +624,94 @@ function abreSacola(){
   SAC.forEach(function(i,j){ h+='<div class="sc"><div class="i"><b>'+esc(i.nome)+'</b><small>'+itemDesc(i)+'</small>'+(i.orig>i.unit&&i.promo?'<div style="margin-top:6px"><span class="tg" style="margin:0">'+(i.promo.tipo==='pct'?String(i.promo.valor).replace('.',',')+'% OFF':'− '+brl(i.promo.valor))+'</span></div>':'')+'<div style="margin-top:4px;font-weight:800;color:var(--pri)">'+(i.orig>i.unit?'<s style="color:var(--mut);font-weight:600;font-size:12.5px;margin-right:6px">'+brl(i.orig*i.qty)+'</s>':'')+brl(i.unit*i.qty)+'</div>'+(i.orig>i.unit?'<div style="font-size:12px;color:#4ade80;margin-top:2px">Você economiza '+brl((i.orig-i.unit)*i.qty)+'</div>':'')+'<button class="sed" onclick="sacEdit('+j+')">Editar</button></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px"><button class="sx" onclick="sacQ('+j+',-999)" title="Remover">'+XP+'</button><div class="qt"><button onclick="sacQ('+j+',-1)">−</button><span>'+i.qty+'</span><button onclick="sacQ('+j+',1)">+</button></div></div></div>'; });
   h+='</div>';
   if(SAC.length&&!estaAberto()){ var pg=progLer(); h+='<div class="nt" style="text-align:center;padding:10px 16px 0;color:var(--pri2)">'+(pg?'🕒 Pedido programado para '+progFmt(pg)+' · <u onclick="abreAgenda()" style="cursor:pointer">alterar</u>':'🕒 Estamos fechados. <u onclick="abreAgenda()" style="cursor:pointer">Agendar este pedido</u>')+'</div>'; }
-  if(SAC.length) h+='<div class="rod" style="flex-direction:column;align-items:stretch;gap:8px">'+(sacEcon()>0?'<div class="tt" style="padding:0;font-size:13px;color:#4ade80"><span>Desconto aplicado</span><span>− '+brl(sacEcon())+'</span></div>':'')+'<div class="tt" style="padding:0"><span>Subtotal</span><span>'+brl(sacTotal())+'</span></div><button class="bt c" style="flex:none;width:100%" onclick="toast(\'Finalizar pedido: chega no próximo passo\')">Continuar</button><button class="bt c" style="flex:none;width:100%;background:transparent;border:2px solid var(--pri);color:var(--pri)" onclick="abreMenu()">Continuar comprando</button></div>';
+  if(SAC.length) h+='<div class="rod" style="flex-direction:column;align-items:stretch;gap:8px">'+(sacEcon()>0?'<div class="tt" style="padding:0;font-size:13px;color:#4ade80"><span>Desconto aplicado</span><span>− '+brl(sacEcon())+'</span></div>':'')+'<div class="tt" style="padding:0"><span>Subtotal</span><span>'+brl(sacTotal())+'</span></div><button class="bt c" style="flex:none;width:100%" onclick="sacContinuar()">Continuar</button><button class="bt c" style="flex:none;width:100%;background:transparent;border:2px solid var(--pri);color:var(--pri)" onclick="abreMenu()">Continuar comprando</button></div>';
   abreFolha(h,true);
+}
+/* ── conta do cliente (5B): entra pelo WhatsApp com código, guarda nome e endereços ── */
+var CT={tok:'',conta:null,fone:'',conhecido:false,tmr:null,edit:null}, EN={modo:'entrega',end:''};
+function ctk(){ return 'lf_conta_'+(D.cli||CLI); }
+function ctLer(){ try{ var v=JSON.parse(localStorage.getItem(ctk())||'null'); if(v&&v.tok){ CT.tok=v.tok; CT.conta=v.conta||null; } }catch(e){} try{ var e=JSON.parse(localStorage.getItem('lf_entrega_'+(D.cli||CLI))||'null'); if(e&&e.modo) EN=e; }catch(x){} }
+function ctGrava(){ try{ localStorage.setItem(ctk(),JSON.stringify({tok:CT.tok,conta:CT.conta})); localStorage.setItem('lf_entrega_'+(D.cli||CLI),JSON.stringify(EN)); }catch(e){} }
+function ctSair(){ CT.tok=''; CT.conta=null; try{ localStorage.removeItem(ctk()); }catch(e){} ctLogin(); }
+function ctApi(rota,corpo,get){
+  var o={method:get?'GET':'POST',headers:{'Content-Type':'application/json'}}; if(CT.tok) o.headers.Authorization='Bearer '+CT.tok;
+  if(!get) o.body=JSON.stringify(Object.assign({cli:D.cli||CLI},corpo||{}));
+  return fetch(API+rota,o).then(function(r){ return r.json().catch(function(){ return {ok:false,mensagem:'Erro de conexão. Tente de novo.'}; }).then(function(d){ d._http=r.status; return d; }); }).catch(function(){ return {ok:false,_http:0,mensagem:'Sem conexão. Tente de novo.'}; });
+}
+function ctCab(t,volta){ return '<div class="wh"><button class="bk" onclick="'+volta+'">'+BKI+'</button><b>'+t+'</b></div>'; }
+function ctFoneFmt(d){ d=String(d||'').replace(/\D/g,'').replace(/^55(?=\d{10,11}$)/,''); return d.length>=11?'('+d.slice(0,2)+') '+d.slice(2,7)+'-'+d.slice(7,11):d.length>=10?'('+d.slice(0,2)+') '+d.slice(2,6)+'-'+d.slice(6,10):d; }
+function ctMask(e){ var d=e.value.replace(/\D/g,'').slice(0,11); e.value=d.length>7?'('+d.slice(0,2)+') '+d.slice(2,d.length>10?7:6)+'-'+d.slice(d.length>10?7:6):d.length>2?'('+d.slice(0,2)+') '+d.slice(2):d; }
+function ctErro(m){ var e=$('ct-erro'); if(e) e.textContent=m||''; }
+function sacContinuar(){
+  if(!SAC.length) return; ctLer(); if(!CT.tok) return ctLogin();
+  ctApi('/food/conta',null,true).then(function(d){
+    if(d.ok){ CT.conta=d.conta; ctGrava(); ctEntrega(); } else if(d._http===401){ CT.tok=''; CT.conta=null; ctLogin(); } else if(CT.conta) ctEntrega(); else ctLogin();
+  });
+}
+function ctLogin(){
+  abreFolha(ctCab('Entrar','abreSacola()')+'<div class="wb"><div class="nt" style="margin-top:12px;font-size:14px;color:#fff">Informe seu WhatsApp. Vamos enviar um código de 6 números para confirmar que é você.</div><label class="cl">Seu WhatsApp</label><input class="cin" id="ct-fone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(47) 99999-9999" maxlength="16" oninput="ctMask(this)"><div class="ce" id="ct-erro"></div></div><div class="rod"><button class="bt c" id="ct-bt" onclick="ctPedeCodigo()">Receber código</button></div>',true);
+}
+function ctPedeCodigo(){
+  var d=($('ct-fone')||{value:CT.fone}).value.replace(/\D/g,''); if(d.length<10||d.length>11){ ctErro('Confira o número: DDD + número.'); return; }
+  var b=$('ct-bt'); if(b){ b.disabled=true; b.textContent='Enviando…'; } ctErro('');
+  ctApi('/food/conta/codigo',{fone:d}).then(function(r){
+    if(r.ok){ CT.fone=d; CT.conhecido=!!r.conhecido; ctCodigo(45); }
+    else { if(b){ b.disabled=false; b.textContent='Receber código'; } if(r.erro==='aguarde'){ CT.fone=d; CT.conhecido=true; ctCodigo(r.espera||45); ctErro('Já enviamos um código. Digite-o abaixo.'); } else ctErro(r.mensagem||'Não consegui enviar.'); }
+  });
+}
+function ctCodigo(seg){
+  abreFolha(ctCab('Código','ctLogin()')+'<div class="wb"><div class="nt" style="margin-top:12px;font-size:14px;color:#fff">Enviamos um código para o WhatsApp <b>'+esc(ctFoneFmt(CT.fone))+'</b>.</div><label class="cl">Código de 6 números</label><input class="cin" id="ct-cod" type="tel" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000" style="letter-spacing:6px;font-size:22px;text-align:center" oninput="this.value=this.value.replace(/\\D/g,\'\')">'+(CT.conhecido?'':'<label class="cl">Como podemos te chamar?</label><input class="cin" id="ct-nome" type="text" autocomplete="name" maxlength="60" placeholder="Seu nome">')+'<div class="ce" id="ct-erro"></div><div style="margin-top:14px;font-size:13px"><button class="lk" id="ct-re" onclick="ctPedeCodigo()" disabled></button> · <button class="lk" onclick="ctLogin()">Trocar número</button></div></div><div class="rod"><button class="bt c" id="ct-bt" onclick="ctEntrar()">Entrar</button></div>',true);
+  clearInterval(CT.tmr); var n=seg||45; function tk(){ var b=$('ct-re'); if(!b){ clearInterval(CT.tmr); return; } if(n>0){ b.disabled=true; b.textContent='Reenviar em '+n+'s'; n--; } else { b.disabled=false; b.textContent='Reenviar código'; clearInterval(CT.tmr); } } tk(); CT.tmr=setInterval(tk,1000);
+}
+function ctEntrar(){
+  var cod=$('ct-cod').value, nm=$('ct-nome')?$('ct-nome').value.trim():''; if(cod.length!==6){ ctErro('Digite os 6 números do código.'); return; } if(!CT.conhecido&&nm.length<2){ ctErro('Diga seu nome.'); return; }
+  var b=$('ct-bt'); b.disabled=true; b.textContent='Entrando…'; ctErro('');
+  ctApi('/food/conta/entrar',{fone:CT.fone,codigo:cod,nome:nm}).then(function(r){
+    if(r.ok){ clearInterval(CT.tmr); CT.tok=r.token; CT.conta=r.conta; ctGrava(); ctEntrega(); } else { b.disabled=false; b.textContent='Entrar'; ctErro(r.mensagem||'Não deu certo.'); }
+  });
+}
+function ctEndTxt(e){ return esc(e.rua)+', '+esc(e.numero)+(e.compl?' · '+esc(e.compl):'')+'<br>'+esc(e.bairro)+' · '+esc(e.cidade)+(e.uf?'/'+esc(e.uf):''); }
+function ctEntrega(){
+  var c=CT.conta||{nome:'',enderecos:[]}, ends=c.enderecos||[];
+  if(EN.modo==='entrega'&&!ends.some(function(e){return e.id===EN.end;})) EN.end=ends.length?ends[0].id:'';
+  var h=ctCab('Entrega','abreSacola()')+'<div class="wb"><div style="margin:12px 0 4px;font-size:15px">Olá, <b>'+esc(c.nome||'')+'</b>! <button class="lk" onclick="ctSair()">Não sou eu</button></div>'
+    +'<div class="seg"><button class="'+(EN.modo==='entrega'?'on':'')+'" onclick="ctModo(\'entrega\')">🛵 Entrega</button><button class="'+(EN.modo==='retirada'?'on':'')+'" onclick="ctModo(\'retirada\')">🏪 Retirada</button></div>';
+  if(EN.modo==='retirada') h+='<div class="nt" style="font-size:14px;color:#fff;margin-top:14px">Você retira o pedido no balcão do restaurante. Avisamos pelo WhatsApp quando estiver pronto.</div>';
+  else {
+    ends.forEach(function(e){ h+='<div class="ad'+(e.id===EN.end?' on':'')+'" onclick="ctSelEnd(\''+esc(e.id)+'\')"><div class="rd"></div><div class="tx"><b>'+esc(e.apelido||'Endereço')+'</b><small>'+ctEndTxt(e)+'</small></div><div class="ac"><button class="lk" onclick="event.stopPropagation();ctEndForm(\''+esc(e.id)+'\')">Editar</button></div></div>'; });
+    h+='<button class="bt c" style="flex:none;width:100%;margin-top:12px;background:transparent;border:2px solid var(--pri);color:var(--pri)" onclick="ctEndForm(\'novo\')">+ '+(ends.length?'Outro endereço':'Cadastrar endereço')+'</button>';
+  }
+  h+='<div class="ce" id="ct-erro"></div></div><div class="rod"><button class="bt c" id="ct-bt" onclick="ctSegue()">Continuar</button></div>';
+  abreFolha(h,true);
+}
+function ctModo(m){ EN.modo=m; ctGrava(); ctEntrega(); }
+function ctSelEnd(id){ EN.end=id; ctGrava(); ctEntrega(); }
+function ctSegue(){
+  if(EN.modo==='entrega'&&!EN.end){ ctErro('Cadastre ou escolha um endereço de entrega.'); return; } ctGrava();
+  toast('Dados salvos! O pagamento (Pix e cartão) chega no próximo passo.');
+}
+function ctEndForm(id){
+  var e={id:'',apelido:'',cep:'',rua:'',numero:'',compl:'',bairro:'',cidade:'',uf:'',ref:''}; if(id!=='novo'){ ((CT.conta||{}).enderecos||[]).forEach(function(x){ if(x.id===id) e=x; }); } CT.edit=id;
+  function f(k,l,ph,ex){ return '<label class="cl">'+l+'</label><input class="cin" id="ce-'+k+'" value="'+esc(e[k])+'" placeholder="'+ph+'" '+(ex||'')+'>'; }
+  abreFolha(ctCab(id==='novo'?'Novo endereço':'Editar endereço','ctEntrega()')+'<div class="wb">'+f('cep','CEP','00000-000','inputmode="numeric" maxlength="9" oninput="ctCep(this)"')+f('rua','Rua','Rua / avenida')+'<div style="display:flex;gap:10px"><div style="flex:1">'+f('numero','Número','123')+'</div><div style="flex:2">'+f('compl','Complemento','Apto, bloco (opcional)')+'</div></div>'+f('bairro','Bairro','Bairro')+'<div style="display:flex;gap:10px"><div style="flex:3">'+f('cidade','Cidade','Cidade')+'</div><div style="flex:1">'+f('uf','UF','SC','maxlength="2"')+'</div></div>'+f('ref','Ponto de referência','Opcional: portão azul, próximo à praça')+f('apelido','Nome do endereço','Casa, Trabalho (opcional)')+'<div class="ce" id="ct-erro"></div>'+(id!=='novo'?'<div style="margin-top:12px"><button class="lk" style="color:#f87171" onclick="ctEndDel(\''+esc(id)+'\')">Excluir este endereço</button></div>':'')+'</div><div class="rod"><button class="bt c" id="ct-bt" onclick="ctEndSalva()">Salvar endereço</button></div>',true);
+}
+function ctCep(i){
+  var d=i.value.replace(/\D/g,'').slice(0,8); i.value=d.length>5?d.slice(0,5)+'-'+d.slice(5):d;
+  if(d.length===8) fetch('https://viacep.com.br/ws/'+d+'/json/').then(function(r){return r.json();}).then(function(v){ if(!v||v.erro) return; [['rua','logradouro'],['bairro','bairro'],['cidade','localidade'],['uf','uf']].forEach(function(p){ var x=$('ce-'+p[0]); if(x&&v[p[1]]) x.value=v[p[1]]; }); var n=$('ce-numero'); if(n) n.focus(); }).catch(function(){});
+}
+function ctEndSalva(){
+  var e={id:CT.edit==='novo'?'':CT.edit}; ['cep','rua','numero','compl','bairro','cidade','uf','ref','apelido'].forEach(function(k){ e[k]=$('ce-'+k).value.trim(); });
+  if(!e.rua||!e.numero||!e.bairro||!e.cidade){ ctErro('Preencha rua, número, bairro e cidade.'); return; }
+  var l=((CT.conta||{}).enderecos||[]).slice(), ok=false; l=l.map(function(x){ if(x.id===e.id){ ok=true; return e; } return x; }); if(!ok) l.push(e);
+  ctSalvaLista(l,function(nv){ if(nv){ var novo=nv.filter(function(x){ return !((CT.conta||{}).enderecos||[]).some(function(o){return o.id===x.id;}); })[0]; EN.modo='entrega'; EN.end=(novo||{}).id||e.id||EN.end; } });
+}
+function ctEndDel(id){ ctSalvaLista(((CT.conta||{}).enderecos||[]).filter(function(x){return x.id!==id;}),function(){ if(EN.end===id) EN.end=''; }); }
+function ctSalvaLista(l,fn){
+  var b=$('ct-bt'); if(b){ b.disabled=true; b.textContent='Salvando…'; } ctErro('');
+  ctApi('/food/conta/salvar',{nome:(CT.conta||{}).nome,enderecos:l}).then(function(r){
+    if(r.ok){ var antes=(CT.conta||{}).enderecos||[]; CT.conta=r.conta; fn(r.conta.enderecos); ctGrava(); ctEntrega(); }
+    else if(r._http===401){ CT.tok=''; ctLogin(); } else { if(b){ b.disabled=false; b.textContent='Salvar endereço'; } ctErro(r.mensagem||'Não salvou.'); }
+  });
 }
 var LMP=null;
 function sacLimpa(){ var b=$('lmp'); if(!b) return; if(!LMP){ b.textContent='Confirmar?'; b.classList.add('cf'); LMP=setTimeout(function(){ LMP=null; var c=$('lmp'); if(c){ c.textContent='Limpar sacola'; c.classList.remove('cf'); } },3000); return; } clearTimeout(LMP); LMP=null; SAC=[]; sacGrava(); abreSacola(); }
