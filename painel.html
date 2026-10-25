@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Giro OS — Painel do ponto · GIRO-OS-064</title>
+<title>Giro OS — Painel do ponto · GIRO-OS-065</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -663,7 +663,7 @@ a{color:inherit}
 
       <!-- PEDIDOS -->
       <section class="page" id="pg-pedidos">
-        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-064</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
+        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-065</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
         <div id="pd-chip"></div>
         <div class="card">
           <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
@@ -782,7 +782,7 @@ a{color:inherit}
 
       <!-- CARDÁPIO (1A): produtos, categorias e adicionais do restaurante -->
       <section class="page" id="pg-cardapio">
-        <div class="pghd"><div><h1>Cardápio</h1><div class="sub">produtos do seu restaurante · <span style="opacity:.6">GIRO-OS-064</span></div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn sec" onclick="cdAbrirCats()">Categorias</button><button class="btn sec" onclick="cdLinkCardapio()">🔗 Link do cardápio</button><button class="btn sec" onclick="cdAparencia()">🎨 Aparência</button><button class="btn sec" onclick="cdHorario()">🕒 Horário</button><button class="btn sec" onclick="cdAbrirOfertas()">▶ Ofertas</button><button class="btn sec" onclick="cdAbrirImport()">Importar planilha</button><button class="btn pri" onclick="cdNovo()">+ Novo produto</button></div></div>
+        <div class="pghd"><div><h1>Cardápio</h1><div class="sub">produtos do seu restaurante · <span style="opacity:.6">GIRO-OS-065</span></div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn sec" onclick="cdAbrirCats()">Categorias</button><button class="btn sec" onclick="cdLinkCardapio()">🔗 Link do cardápio</button><button class="btn sec" onclick="cdAparencia()">🎨 Aparência</button><button class="btn sec" onclick="cdHorario()">🕒 Horário</button><button class="btn sec" onclick="cdPagamento()">💳 Pagamento</button><button class="btn sec" onclick="cdAbrirOfertas()">▶ Ofertas</button><button class="btn sec" onclick="cdAbrirImport()">Importar planilha</button><button class="btn pri" onclick="cdNovo()">+ Novo produto</button></div></div>
         <div class="card">
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px"><input class="inp" id="cd-busca" placeholder="Buscar produto" oninput="cdPintar()" style="flex:1;min-width:200px"><select class="inp" id="cd-fcat" onchange="cdPintar()" style="width:210px;max-width:100%"></select></div>
           <div id="cd-selbar" style="display:none;align-items:center;gap:10px;flex-wrap:wrap;background:var(--s2);border-radius:12px;padding:8px 12px;margin-bottom:10px;font-size:13px"><span id="cd-seltxt" style="font-weight:700"></span><button class="btn pri sm" onclick="cdExibirOferta()">▶ Exibir oferta</button><button class="btn sec sm" onclick="cdLimparSel()">Limpar</button></div>
@@ -5739,7 +5739,7 @@ function mpAplicarModo(){
   el('mp-diabar').style.display=(m==='vivo')?'contents':'none';
   el('mp-opbar').style.display=(m==='mapa')?'flex':'none'; el('mp-opmot').style.display='none'; el('mp-vivo').style.display=(m==='mapa')?'':'none';
   var rl=el('mp-ritmo'); if(rl&&rl.parentNode) rl.parentNode.style.display=(m==='vivo')?'':'none';
-  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-064';
+  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-065';
   if(m!=='mapa'){ mpPkTodos(false); el('mp-sempos').style.display='none'; el('mp-sempos-btn').style.display='none'; }
   if(m==='vivo'){ MP_ENQ=true; mpBuscar(); } else mpOperador();
 }
@@ -7224,6 +7224,36 @@ function cdHrSalvar(){
     if(!d||!d.ok) throw new Error((d&&d.mensagem)||'não salvou'); aviso('Horário salvo'); fecharTudo();
   }).catch(function(e){ aviso(e.message||'Não salvou'); });
 }
+/* ── pagamento: conta Asaas do restaurante (065) ── */
+function cdPagamento(){
+  el('cd-imp-corpo').innerHTML='<div style="font-size:13px;color:var(--muted)">Carregando…</div>';
+  el('sh-import').querySelector('h3').textContent='Pagamento (Asaas)'; abrir('sh-import');
+  fetch(DELTADIS_API+'/painel/pagamento',{headers:cdHdr()}).then(function(r){return r.json();}).then(function(d){
+    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'erro'); cdPgPintar(d);
+  }).catch(function(e){ el('cd-imp-corpo').innerHTML='<div style="color:#f87171;font-size:13px">'+esc(e.message||'Não consegui abrir.')+'</div>'; });
+}
+function cdPgPintar(d){
+  var h='<div style="font-size:13px;color:var(--muted2);line-height:1.5;margin-bottom:12px">Os pedidos do app serão pagos na <b>conta Asaas do seu restaurante</b> (Pix e cartão). No Asaas, a chave fica em <b>Integrações &gt; Chave de API</b>. Ela fica guardada com segurança e nunca aparece de novo aqui.</div>';
+  if(d.configurado) h+='<div style="padding:10px 12px;border:1px solid var(--border);border-radius:10px;margin-bottom:12px;font-size:13.5px">✅ Conta conectada · chave terminada em <b>'+esc(d.final)+'</b> · '+(d.ambiente==='sandbox'?'<b>sandbox (teste)</b>':'produção')+'</div>';
+  h+='<label style="font-size:12px;font-weight:700;color:var(--muted2)">'+(d.configurado?'Trocar a chave':'Chave de API do Asaas')+'</label>'
+    +'<select class="inp" id="cd-pgt-amb" style="margin:6px 0"><option value="producao"'+(d.ambiente!=='sandbox'?' selected':'')+'>Produção (dinheiro real)</option><option value="sandbox"'+(d.ambiente==='sandbox'?' selected':'')+'>Sandbox (só teste)</option></select>'
+    +'<input class="inp" id="cd-pgt-chave" type="password" autocomplete="off" placeholder="Cole a chave aqui" style="margin-bottom:8px">'
+    +'<div id="cd-pgt-msg" style="font-size:12.5px;min-height:18px;margin-bottom:8px"></div>'
+    +'<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn pri" type="button" onclick="cdPgtSalvar()">Salvar e testar</button>'
+    +(d.configurado?'<button class="btn sec" type="button" onclick="cdPgtTestar()">Testar conexão</button><button class="btn sec" type="button" onclick="cdPgtRemover()" style="color:var(--red)">Remover</button>':'')+'</div>';
+  el('cd-imp-corpo').innerHTML=h;
+}
+function cdPgtMsg(t,ok){ var m=el('cd-pgt-msg'); if(m){ m.style.color=ok?'#4ade80':'#f87171'; m.textContent=t; } }
+function cdPgtChama(corpo,ok){
+  cdPgtMsg('Falando com o Asaas…',true);
+  fetch(DELTADIS_API+'/painel/pagamento',{method:'POST',headers:cdHdr(),body:JSON.stringify(corpo)}).then(function(r){return r.json();}).then(function(d){
+    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'não deu certo'); ok(d);
+  }).catch(function(e){ cdPgtMsg(e.message||'Não deu certo',false); });
+}
+function cdPgtSalvar(){ var c=el('cd-pgt-chave').value.trim(); if(!c){ cdPgtMsg('Cole a chave primeiro.',false); return; }
+  cdPgtChama({chave:c,ambiente:el('cd-pgt-amb').value},function(d){ cdPgPintar(d); cdPgtMsg('Conectado! Saldo na conta: R$ '+Number(d.saldo||0).toFixed(2).replace('.',','),true); }); }
+function cdPgtTestar(){ cdPgtChama({testar:true},function(d){ cdPgtMsg('Conexão ok! Saldo na conta: R$ '+Number(d.saldo||0).toFixed(2).replace('.',','),true); }); }
+function cdPgtRemover(){ if(!window.confirm('Remover a conta Asaas deste restaurante? Os pedidos pelo app deixam de aceitar pagamento online.')) return; cdPgtChama({remover:true},function(){ cdPgPintar({configurado:false,ambiente:'producao'}); aviso('Conta removida'); }); }
 /* ── link público do cardápio do cliente ── */
 function cdLinkUrl(){ var b=location.href.split('#')[0].split('?')[0]; b=b.slice(0,b.lastIndexOf('/')+1); return b+'livefood.html?c='+encodeURIComponent(CD.cli||''); }
 function cdLinkCardapio(){
