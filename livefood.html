@@ -774,7 +774,7 @@ function ctEntrar(){
   });
 }
 function ctEndTxt(e){ return esc(e.rua)+', '+esc(e.numero)+(e.compl?' · '+esc(e.compl):'')+'<br>'+esc(e.bairro)+' · '+esc(e.cidade)+(e.uf?'/'+esc(e.uf):''); }
-function ckKeep(){ var v={}; ['ck-cpf','ck-obs','ck-tr'].forEach(function(i){ var e=$(i); if(e) v[i]=e.value; }); ckResumo(); Object.keys(v).forEach(function(i){ var e=$(i); if(e) e.value=v[i]; }); }
+function ckKeep(){ var v={}; ['ck-cpf','ck-obs','ck-tr','ck-cn','ck-cnome','ck-cval','ck-ccv','ck-cmail','ck-ccep','ck-cnum'].forEach(function(i){ var e=$(i); if(e) v[i]=e.value; }); ckResumo(); Object.keys(v).forEach(function(i){ var e=$(i); if(e) e.value=v[i]; }); }
 function ctEntrega(){ if(CT.ctx==='conta') contaTela(); else ckKeep(); }
 function ctModo(m){ EN.modo=m; ctGrava(); ctEntrega(); }
 function ctSelEnd(id){ EN.end=id; ctGrava(); ctEntrega(); }
@@ -838,6 +838,31 @@ function ckFrete(sub){
   return {ok:true,valor:v,ativo:1};
 }
 function ckPg(m){ CK.pg=m; ckKeep(); }
+function ctCartaoDel(id){ ctApi('/food/conta/cartao-del',{id:id}).then(function(r){ if(r.ok){ CT.conta=r.conta; if(CK.cid===id) CK.cid=undefined; contaTela(); toast('Cartão removido'); } else toast(r.mensagem||'Não consegui remover'); }); }
+function ckCid(id){ CK.cid=id; ckKeep(); }
+function ckCardNum(e){ var d=e.value.replace(/\D/g,'').slice(0,19); e.value=d.replace(/(\d{4})(?=\d)/g,'$1 '); }
+function ckCardVal(e){ var d=e.value.replace(/\D/g,'').slice(0,4); e.value=d.length>2?d.slice(0,2)+'/'+d.slice(2):d; }
+function ckLuhn(n){ var s=0,alt=false,i,d; for(i=n.length-1;i>=0;i--){ d=+n[i]; if(alt){ d*=2; if(d>9) d-=9; } s+=d; alt=!alt; } return s%10===0; }
+function ckCartaoHtml(c){
+  var cs=c.cartoes||[], h='', e=null, i;
+  if(CK.cid===undefined) CK.cid=cs.length?cs[0].id:'';
+  if(CK.cid&&!cs.some(function(k){return k.id===CK.cid;})) CK.cid=cs.length?cs[0].id:'';
+  (c.enderecos||[]).forEach(function(x){ if(x.id===EN.end) e=x; });
+  cs.forEach(function(k){ h+='<div class="ad'+(CK.cid===k.id?' on':'')+'" onclick="ckCid(\''+esc(k.id)+'\')"><div class="rd"></div><div class="tx"><b>'+esc(k.bandeira||'Cartão')+' •••• '+esc(k.final||'')+'</b><small>Cartão salvo · crédito à vista</small></div></div>'; });
+  if(cs.length) h+='<div class="ad'+(!CK.cid?' on':'')+'" onclick="ckCid(\'\')"><div class="rd"></div><div class="tx"><b>Usar outro cartão</b></div></div>';
+  if(!CK.cid){
+    var ml=''; try{ ml=localStorage.getItem('lf_mail')||''; }catch(x){}
+    h+='<div style="margin-top:6px"><input class="cin" id="ck-cn" type="tel" inputmode="numeric" autocomplete="cc-number" maxlength="23" placeholder="Número do cartão" oninput="ckCardNum(this)"><input class="cin" id="ck-cnome" autocomplete="cc-name" maxlength="60" placeholder="Nome como está no cartão" style="margin-top:8px"><div style="display:flex;gap:8px;margin-top:8px"><input class="cin" id="ck-cval" type="tel" inputmode="numeric" autocomplete="cc-exp" maxlength="5" placeholder="MM/AA" oninput="ckCardVal(this)" style="flex:1"><input class="cin" id="ck-ccv" type="tel" inputmode="numeric" autocomplete="cc-csc" maxlength="4" placeholder="CVV" style="flex:1"></div>'
+      +'<input class="cin" id="ck-cmail" type="email" inputmode="email" autocomplete="email" maxlength="90" placeholder="Seu e-mail" value="'+esc(ml)+'" style="margin-top:8px"><div style="display:flex;gap:8px;margin-top:8px"><input class="cin" id="ck-ccep" type="tel" inputmode="numeric" maxlength="9" placeholder="CEP da fatura" value="'+esc(e?e.cep:'')+'" style="flex:2"><input class="cin" id="ck-cnum" maxlength="12" placeholder="Nº" value="'+esc(e?e.numero:'')+'" style="flex:1"></div>'
+      +'<label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:14px"><input type="checkbox" id="ck-csv" style="width:18px;height:18px"> Salvar este cartão para os próximos pedidos</label><div class="nt" style="font-size:12.5px;margin-top:6px">Pagamento à vista no crédito. Não guardamos o número do cartão: só a bandeira e os 4 últimos dígitos.</div></div>';
+  }
+  return h;
+}
+function ckAguarda(p){
+  CK.ped=p;
+  abreFolha(ctCab('Confirmando pagamento','fechaSheet()')+'<div class="wb" style="text-align:center"><div style="margin:14px 0 4px;font-size:15px">Pedido <b>#'+p.num+'</b> · <b>'+brl(p.total)+'</b></div><div class="nt" id="ck-st" style="font-size:14px;color:#fff">Aguardando a confirmação do cartão…</div></div>',true);
+  clearInterval(CK.tmr); CK.tmr=setInterval(ckConfere,4000);
+}
 function ckCpfFmt(e){ var d=e.value.replace(/\D/g,'').slice(0,11); e.value=d.length>9?d.slice(0,3)+'.'+d.slice(3,6)+'.'+d.slice(6,9)+'-'+d.slice(9):d.length>6?d.slice(0,3)+'.'+d.slice(3,6)+'.'+d.slice(6):d.length>3?d.slice(0,3)+'.'+d.slice(3):d; }
 function ckDesc(sub,pg){ var g=D.cfg&&D.cfg.programado, r={db:0,bri:''}; if(pg&&g){ if(g.tipo==='pct') r.db=Math.round(sub*g.valor)/100; else if(g.tipo==='val') r.db=Math.min(sub,g.valor); else if(g.tipo==='item'&&D.produtos[g.item]) r.bri=D.produtos[g.item].nome; } return r; }
 function ckItens(){ var e=$('ck-its'),b=$('ck-vi'); if(!e) return; var ab=e.style.maxHeight==='0px'; e.style.maxHeight=ab?'1400px':'0px'; e.style.opacity=ab?1:0; CK.open=ab; b.textContent=ab?'− esconder itens':'+ ver meus itens'; }
@@ -857,13 +882,14 @@ function ckResumo(){
   else { ends.forEach(function(e){ h+='<div class="ad'+(e.id===EN.end?' on':'')+'" onclick="ctSelEnd(\''+esc(e.id)+'\')"><div class="rd"></div><div class="tx"><b>'+esc(e.apelido||'Endereço')+'</b><small>'+ctEndTxt(e)+'</small></div><div class="ac"><button class="lk" onclick="event.stopPropagation();ctEndForm(\''+esc(e.id)+'\')">Editar</button></div></div>'; });
     h+='<button class="bt c" style="flex:none;width:100%;margin-top:12px;background:transparent;border:2px solid var(--pri);color:#fff" onclick="ctEndForm(\'novo\')">+ '+(ends.length?'Outro endereço':'Cadastrar endereço')+'</button>'; }
   if(fechado) h+=pg?'<div class="ad on" style="cursor:default"><div class="tx"><b>🕒 Pedido agendado</b><small>'+esc(progFmt(pg))+'</small></div><div class="ac"><button class="lk" onclick="abreAgenda()">Alterar</button></div></div>':'<div class="ad" style="cursor:default;border-color:#f87171"><div class="tx"><b>Estamos fechados agora</b><small>Agende o pedido para um horário em que estaremos abertos.</small></div></div>';
-  if(CK.pg==='pix'&&!c.cpf) h+='<label class="cl">Seu CPF (necessário para gerar o Pix)</label><input class="cin" id="ck-cpf" type="tel" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" oninput="ckCpfFmt(this)">';
-  else if(CK.pg==='pix') h+='<div class="nt">CPF do Pix: '+esc(c.cpf)+'</div>';
+  if((CK.pg==='pix'||CK.pg==='cartao')&&!c.cpf) h+='<label class="cl">Seu CPF (necessário para gerar o Pix)</label><input class="cin" id="ck-cpf" type="tel" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" oninput="ckCpfFmt(this)">';
+  else if(CK.pg==='pix'||CK.pg==='cartao') h+='<div class="nt">CPF do pagamento: '+esc(c.cpf)+'</div>';
   h+='<label class="cl">Observação do pedido (opcional)</label><textarea id="ck-obs" maxlength="300" placeholder="Ex.: tocar a campainha"></textarea>';
-  h+='<label class="cl">Forma de pagamento</label><div class="ad'+(CK.pg==='pix'?' on':'')+'" onclick="ckPg(\'pix\')"><div class="rd"></div><div class="tx"><b>Pix</b><small>Aprovação na hora</small></div></div><div class="ad'+(CK.pg==='dinheiro'?' on':'')+'" onclick="ckPg(\'dinheiro\')"><div class="rd"></div><div class="tx"><b>Dinheiro</b><small>'+(EN.modo==='retirada'?'Pague na retirada':'Pague ao entregador')+'</small></div></div><div class="ad" style="cursor:default;opacity:.5"><div class="rd"></div><div class="tx"><b>Cartão de crédito</b><small>Em breve</small></div></div>';
+  h+='<label class="cl">Forma de pagamento</label><div class="ad'+(CK.pg==='pix'?' on':'')+'" onclick="ckPg(\'pix\')"><div class="rd"></div><div class="tx"><b>Pix</b><small>Aprovação na hora</small></div></div><div class="ad'+(CK.pg==='dinheiro'?' on':'')+'" onclick="ckPg(\'dinheiro\')"><div class="rd"></div><div class="tx"><b>Dinheiro</b><small>'+(EN.modo==='retirada'?'Pague na retirada':'Pague ao entregador')+'</small></div></div><div class="ad'+(CK.pg==='cartao'?' on':'')+'" onclick="ckPg(\'cartao\')"><div class="rd"></div><div class="tx"><b>Cartão de crédito</b><small>À vista · pague agora</small></div></div>';
+  if(CK.pg==='cartao') h+=ckCartaoHtml(c);
   if(CK.pg==='dinheiro') h+='<label class="cl">Precisa de troco? Troco para quanto (opcional)</label><input class="cin" id="ck-tr" type="tel" inputmode="decimal" placeholder="Ex.: 50" maxlength="8">';
   h+='<div style="margin-top:14px;font-size:13.5px"><div class="tt" style="padding:2px 0;font-size:14px;font-weight:600"><span>Subtotal</span><span>'+brl(sub)+'</span></div>'+(d.db>0?'<div class="tt" style="padding:2px 0;font-size:14px;font-weight:600;color:#4ade80"><span>Desconto do pedido programado</span><span>− '+brl(d.db)+'</span></div>':'')+(EN.modo==='entrega'?'<div class="tt" style="padding:2px 0;font-size:14px;font-weight:600"><span>Entrega</span>'+(!fq.ok?'<span style="color:#f87171">Fora da área de entrega</span>':fq.valor>0?'<span>'+brl(fq.valor)+'</span>':'<span style="color:#4ade80">Grátis</span>')+'</div>':'')+'<div class="tt" style="padding:6px 0 0"><span>Total</span><span>'+brl(tot)+'</span></div></div><div class="ce" id="ct-erro"></div></div>';
-  h+='<div class="rod"><button class="bt c" id="ct-bt" '+(!fq.ok?'disabled ':'')+'onclick="ckPaga()">'+(!fq.ok?'Fora da área de entrega':fechado&&!pg?'Agendar pedido':(CK.pg==='dinheiro'?'Finalizar pedido · '+brl(tot):'Pagar '+brl(tot)+' com Pix'))+'</button></div>';
+  h+='<div class="rod"><button class="bt c" id="ct-bt" '+(!fq.ok?'disabled ':'')+'onclick="ckPaga()">'+(!fq.ok?'Fora da área de entrega':fechado&&!pg?'Agendar pedido':(CK.pg==='dinheiro'?'Finalizar pedido · '+brl(tot):CK.pg==='cartao'?'Pagar '+brl(tot)+' no cartão':'Pagar '+brl(tot)+' com Pix'))+'</button></div>';
   abreFolha(h,true);
   if(CK.anim){ CK.anim=0; var ei=$('ck-its'),sm=$('ck-sm'); if(ei) void ei.offsetHeight; requestAnimationFrame(function(){ if(ei){ ei.style.maxHeight='0px'; ei.style.opacity=0; } if(sm) sm.style.display='flex'; }); }
 }
@@ -871,12 +897,28 @@ function ckPaga(){
   var fechado=!estaAberto(), pg=fechado?progLer():null; if(fechado&&!pg){ abreAgenda(); return; }
   if(!ckFrete(sacTotal()).ok){ ctErro('Ainda não entregamos nesse endereço. Escolha outro endereço ou retire no balcão.'); return; }
   if(EN.modo==='entrega'&&!EN.end){ ctErro('Cadastre ou escolha um endereço de entrega.'); return; } ctGrava();
-  var ce=$('ck-cpf'), cpf=ce?ce.value.replace(/\D/g,''):''; if(CK.pg==='pix'&&ce&&cpf.length!==11){ ctErro('Digite os 11 números do CPF.'); return; }
-  var b=$('ct-bt'), din=CK.pg==='dinheiro', trc=din&&$('ck-tr')?parseFloat($('ck-tr').value.replace(',','.')):0; b.disabled=true; b.textContent=din?'Enviando o pedido…':'Gerando o Pix…'; ctErro('');
-  ctApi('/food/pedido',{itens:SAC.map(function(i){ return {p:i.p,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs,qty:i.qty}; }),modo:EN.modo,end:EN.end,obs:($('ck-obs')||{value:''}).value,cpf:cpf||undefined,prog:pg||undefined,pagto:CK.pg,troco:(trc>0?trc:undefined)}).then(function(r){
-    if(r.ok){ CK.ped=r.pedido; if(din) ckOk(r.pedido); else ckPix(); }
+  var ce=$('ck-cpf'), cpf=ce?ce.value.replace(/\D/g,''):''; if((CK.pg==='pix'||CK.pg==='cartao')&&ce&&cpf.length!==11){ ctErro('Digite os 11 números do CPF.'); return; }
+  var cardB=null;
+  if(CK.pg==='cartao'){
+    if(CK.cid){ cardB={cartao_id:CK.cid}; }
+    else {
+      var gv=function(i){ var x=$(i); return x?x.value.trim():''; }, nm=gv('ck-cn').replace(/\D/g,''), vl=gv('ck-cval').split('/'), mail=gv('ck-cmail');
+      if(nm.length<13||!ckLuhn(nm)){ ctErro('Confira o número do cartão.'); return; }
+      if(gv('ck-cnome').length<3){ ctErro('Digite o nome como está no cartão.'); return; }
+      if(vl.length!==2||vl[0].length!==2||vl[1].length!==2){ ctErro('Digite a validade no formato MM/AA.'); return; }
+      if(gv('ck-ccv').length<3){ ctErro('Digite o CVV do cartão (3 ou 4 números).'); return; }
+      if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(mail)){ ctErro('Digite um e-mail válido.'); return; }
+      if(gv('ck-ccep').replace(/\D/g,'').length!==8||!gv('ck-cnum')){ ctErro('Informe o CEP e o número da fatura do cartão.'); return; }
+      try{ localStorage.setItem('lf_mail',mail); }catch(x){}
+      cardB={cartao:{numero:nm,nome:gv('ck-cnome'),mes:vl[0],ano:vl[1],ccv:gv('ck-ccv')},email:mail,cep:gv('ck-ccep'),numero_end:gv('ck-cnum'),salvar:!!($('ck-csv')&&$('ck-csv').checked)};
+    }
+  }
+  var b=$('ct-bt'), din=CK.pg==='dinheiro', trc=din&&$('ck-tr')?parseFloat($('ck-tr').value.replace(',','.')):0; b.disabled=true; b.textContent=din?'Enviando o pedido…':(CK.pg==='cartao'?'Processando o cartão…':'Gerando o Pix…'); ctErro('');
+  ctApi('/food/pedido',{itens:SAC.map(function(i){ return {p:i.p,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs,qty:i.qty}; }),modo:EN.modo,end:EN.end,obs:($('ck-obs')||{value:''}).value,cpf:cpf||undefined,prog:pg||undefined,pagto:CK.pg,troco:(trc>0?trc:undefined),cartao:cardB&&cardB.cartao,cartao_id:cardB&&cardB.cartao_id,email:cardB&&cardB.email,cep:cardB&&cardB.cep,numero_end:cardB&&cardB.numero_end,salvar:cardB&&cardB.salvar||undefined}).then(function(r){
+    cardB=null;
+    if(r.ok){ CK.ped=r.pedido; if(din) ckOk(r.pedido); else if(CK.pg==='cartao'){ if(r.pedido.status==='pago') ckOk(r.pedido); else ckAguarda(r.pedido); } else ckPix(); }
     else if(r._http===401){ CT.tok=''; ctLogin(); }
-    else { b.disabled=false; b.textContent=din?'Finalizar pedido':'Pagar com Pix'; ctErro(r.mensagem||'Não consegui criar o pedido.'); }
+    else { b.disabled=false; b.textContent=din?'Finalizar pedido':(CK.pg==='cartao'?'Pagar no cartão':'Pagar com Pix'); ctErro(r.mensagem||'Não consegui criar o pedido.'); }
   });
 }
 function ckPix(){
@@ -914,7 +956,10 @@ function contaTela(){
     h+='<div class="cl" style="margin-top:22px">Aparência</div><div class="seg"><button class="'+(temaLer()==='escuro'?'on':'')+'" onclick="setTema(\'escuro\')">🌙 Escuro</button><button class="'+(temaLer()==='claro'?'on':'')+'" onclick="setTema(\'claro\')">☀️ Claro</button></div>';
     h+='<div style="margin:24px 0 8px;text-align:center"><button class="lk" onclick="ctSair()">Sair da conta</button></div>';
   } else if(ab==='pagto'){
-    h+='<div class="cl" style="margin-top:16px">Meus cartões</div><div class="ad" style="cursor:default;opacity:.8"><div class="tx"><b>Nenhum cartão salvo</b><small>Em breve você poderá pagar com cartão e guardar para os próximos pedidos. Guardamos só a bandeira e os 4 últimos números, nunca o número completo.</small></div></div>';
+    h+='<div class="cl" style="margin-top:16px">Meus cartões</div>';
+    var cts=c.cartoes||[];
+    if(!cts.length) h+='<div class="ad" style="cursor:default"><div class="tx"><b>Nenhum cartão salvo</b><small>No checkout, escolha Cartão de crédito e marque "Salvar este cartão". Guardamos só a bandeira e os 4 últimos números, nunca o número completo.</small></div></div>';
+    cts.forEach(function(k){ h+='<div class="ad" style="cursor:default"><div class="tx"><b>'+esc(k.bandeira||'Cartão')+' •••• '+esc(k.final||'')+'</b><small>Crédito à vista</small></div><div class="ac"><button class="lk" style="color:#f87171" onclick="ctCartaoDel(\''+esc(k.id)+'\')">Remover</button></div></div>'; });
   } else {
     h+='<div class="cl" style="margin-top:16px">Histórico de pedidos</div><div id="cc-hist"><div class="nt" style="font-size:13px">Carregando…</div></div>';
   }
