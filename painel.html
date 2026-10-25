@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Giro OS — Painel do ponto · GIRO-OS-058</title>
+<title>Giro OS — Painel do ponto · GIRO-OS-059</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -663,7 +663,7 @@ a{color:inherit}
 
       <!-- PEDIDOS -->
       <section class="page" id="pg-pedidos">
-        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-058</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
+        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-059</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
         <div id="pd-chip"></div>
         <div class="card">
           <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
@@ -782,7 +782,7 @@ a{color:inherit}
 
       <!-- CARDÁPIO (1A): produtos, categorias e adicionais do restaurante -->
       <section class="page" id="pg-cardapio">
-        <div class="pghd"><div><h1>Cardápio</h1><div class="sub">produtos do seu restaurante · <span style="opacity:.6">GIRO-OS-058</span></div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn sec" onclick="cdAbrirCats()">Categorias</button><button class="btn sec" onclick="cdLinkCardapio()">🔗 Link do cardápio</button><button class="btn sec" onclick="cdAparencia()">🎨 Aparência</button><button class="btn sec" onclick="cdAbrirOfertas()">▶ Ofertas</button><button class="btn sec" onclick="cdAbrirImport()">Importar planilha</button><button class="btn pri" onclick="cdNovo()">+ Novo produto</button></div></div>
+        <div class="pghd"><div><h1>Cardápio</h1><div class="sub">produtos do seu restaurante · <span style="opacity:.6">GIRO-OS-059</span></div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn sec" onclick="cdAbrirCats()">Categorias</button><button class="btn sec" onclick="cdLinkCardapio()">🔗 Link do cardápio</button><button class="btn sec" onclick="cdAparencia()">🎨 Aparência</button><button class="btn sec" onclick="cdAbrirOfertas()">▶ Ofertas</button><button class="btn sec" onclick="cdAbrirImport()">Importar planilha</button><button class="btn pri" onclick="cdNovo()">+ Novo produto</button></div></div>
         <div class="card">
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px"><input class="inp" id="cd-busca" placeholder="Buscar produto" oninput="cdPintar()" style="flex:1;min-width:200px"><select class="inp" id="cd-fcat" onchange="cdPintar()" style="width:210px;max-width:100%"></select></div>
           <div id="cd-selbar" style="display:none;align-items:center;gap:10px;flex-wrap:wrap;background:var(--s2);border-radius:12px;padding:8px 12px;margin-bottom:10px;font-size:13px"><span id="cd-seltxt" style="font-weight:700"></span><button class="btn pri sm" onclick="cdExibirOferta()">▶ Exibir oferta</button><button class="btn sec sm" onclick="cdLimparSel()">Limpar</button></div>
@@ -5732,7 +5732,7 @@ function mpAplicarModo(){
   el('mp-diabar').style.display=(m==='vivo')?'contents':'none';
   el('mp-opbar').style.display=(m==='mapa')?'flex':'none'; el('mp-opmot').style.display='none'; el('mp-vivo').style.display=(m==='mapa')?'':'none';
   var rl=el('mp-ritmo'); if(rl&&rl.parentNode) rl.parentNode.style.display=(m==='vivo')?'':'none';
-  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-058';
+  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-059';
   if(m!=='mapa'){ mpPkTodos(false); el('mp-sempos').style.display='none'; el('mp-sempos-btn').style.display='none'; }
   if(m==='vivo'){ MP_ENQ=true; mpBuscar(); } else mpOperador();
 }
@@ -7337,10 +7337,11 @@ function cdAbrirImport(){
     +'<input type="file" id="cd-imp-file" accept=".xlsx,.xls" style="display:none" onchange="cdLerPlanilha(this)"><div id="cd-imp-res"></div>';
   abrir('sh-import');
 }
+function cdDes(v){ var k=cdNorm(String(v||'')); var m={'pizza':'pizza','hamburguer':'hamburguer','bebida':'bebida','porcao':'porcao','sobremesa':'sobremesa','acai':'acai','outro':'outro'}; return m[k]||''; }
 function cdBaixarModelo(){
   var wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(cdLeiaMe()),'Leia-me');
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['Produto','Categoria','Preço','Descrição','Ativo'],['Pizza','Pizzas','','Todas acompanham borda de catupiry','Sim'],['X-Salada','Lanches',24.9,'Pão, hambúrguer, queijo, alface e tomate','Sim']]),'Produtos');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['Produto','Categoria','Preço','Descrição','Desenho','Ativo'],['Pizza','Pizzas','','Todas acompanham borda de catupiry','Pizza','Sim'],['X-Salada','Lanches',24.9,'Pão, hambúrguer, queijo, alface e tomate','Hambúrguer','Sim']]),'Produtos');
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['Produto','Tamanho','Preço','Máx. sabores'],['Pizza','Broto',73,2],['Pizza','Média',95,3],['Pizza','Grande',105,4],['Pizza','Gigante',129,4]]),'Tamanhos');
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['Produto','Grupo','Sabor','Descrição','Adicional por 1/4','Novidade','Só balcão'],['Pizza','Tradicionais','Calabresa','Molho de tomate / mussarela / calabresa / orégano',0,'Não','Não'],['Pizza','Especiais','Camarão','Molho de tomate / mussarela / camarão / catupiry',10,'Sim','Não']]),'Sabores');
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['Produto','Adicional','Preço'],['Pizza','Borda de cheddar premium',10],['X-Salada','Bacon extra',5]]),'Adicionais');
@@ -7349,7 +7350,7 @@ function cdBaixarModelo(){
 function cdLeiaMe(){ return [
   ['COMO PREENCHER A PLANILHA DO CARDÁPIO'],[''],
   ['Apague as linhas de exemplo e preencha com os seus produtos. Não mude o nome das abas nem dos títulos das colunas.'],[''],
-  ['Aba Produtos','Uma linha por produto: Produto, Categoria, Preço (só se não tiver tamanhos), Descrição e Ativo (Sim/Não).'],
+  ['Aba Produtos','Uma linha por produto: Produto, Categoria, Preço (só se não tiver tamanhos), Descrição, Desenho (opcional: Pizza, Hambúrguer, Bebida, Porção, Sobremesa, Açaí ou Outro; vazio = automático) e Ativo (Sim/Não).'],
   ['Aba Tamanhos','Opcional. Uma linha por tamanho: Produto (igual ao da aba Produtos), Tamanho, Preço e Máx. sabores (quantos sabores cabem).'],
   ['Aba Sabores','Opcional. Uma linha por sabor: Produto, Grupo (ex: Tradicionais), Sabor, Descrição, Adicional por 1/4 (R$ somado por cada quarto da pizza com esse sabor; 0 se não tem), Novidade (Sim/Não) e Só balcão (Sim/Não).'],
   ['Aba Adicionais','Opcional. Uma linha por adicional: Produto, Adicional (ex: Borda de cheddar), Preço.'],[''],
@@ -7365,7 +7366,7 @@ function cdLerPlanilha(inp){
     for(i=0;i<pr.length;i++){
       var nm=String(cdCol(pr[i],['produto','nome'])).trim(); if(!nm) continue; var kk=cdNorm(nm);
       if(mp[kk]){ av.push('Produto repetido na aba Produtos: '+nm+' (usei a primeira linha).'); continue; }
-      var at=cdCol(pr[i],['ativo']); var o={nome:nm.slice(0,80),cat:String(cdCol(pr[i],['categoria'])).trim().slice(0,60),preco:cdPreco(cdCol(pr[i],['preco'])),desc:String(cdCol(pr[i],['descricao'])).trim().slice(0,300),ativo:at===''?true:cdSim(at),tams:[],sabs:[],ads:[]};
+      var at=cdCol(pr[i],['ativo']); var o={nome:nm.slice(0,80),cat:String(cdCol(pr[i],['categoria'])).trim().slice(0,60),preco:cdPreco(cdCol(pr[i],['preco'])),desc:String(cdCol(pr[i],['descricao'])).trim().slice(0,300),des:cdDes(cdCol(pr[i],['desenho'])),ativo:at===''?true:cdSim(at),tams:[],sabs:[],ads:[]};
       mp[kk]=o; lista.push(o);
     }
     if(!lista.length){ res.innerHTML='<div style="color:var(--red);padding:12px">Não achei produtos. Confira se a aba se chama <b>Produtos</b> e se tem a coluna <b>Produto</b>.</div>'; return; }
@@ -7423,7 +7424,7 @@ function cdImportar(){
         var pr={}; if(e&&e.precos){ tams.forEach(function(t){ if(tmap[t.id]&&e.precos[t.id]) pr[t.id]=e.precos[t.id]; }); if(!tams.length&&e.precos['_']) pr['_']=e.precos['_']; }
         sabs.push({id:id,nome:sx.nome,desc:sx.desc,grupo:sx.grupo,extra4:sx.extra4,novidade:sx.novidade,balcao:sx.balcao,foto:(e&&e.foto)?'1':'',precos:pr});
       });
-      var it={nome:o.nome,preco:o.preco,cat:cid,desc:o.desc,desenho:(ex&&ex.desenho)||'',desconto:(ex&&ex.desconto)||null,foto:(ex&&ex.foto)||'',adicionais:o.ads,tamanhos:tams,sabores:sabs,ativo:o.ativo};
+      var it={nome:o.nome,preco:o.preco,cat:cid,desc:o.desc,desenho:o.des||(ex&&ex.desenho)||'',desconto:(ex&&ex.desconto)||null,foto:(ex&&ex.foto)||'',adicionais:o.ads,tamanhos:tams,sabores:sabs,ativo:o.ativo};
       if(ex){ it.id=ex.id; it.ordem=ex.ordem; }
       return cdSalvarApi('prod',it).then(function(){ feitos++; });
     }).then(function(){ return um(i+1); });
