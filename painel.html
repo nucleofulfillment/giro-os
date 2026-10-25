@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Giro OS — Painel do ponto · GIRO-OS-062</title>
+<title>Giro OS — Painel do ponto · GIRO-OS-064</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -663,7 +663,7 @@ a{color:inherit}
 
       <!-- PEDIDOS -->
       <section class="page" id="pg-pedidos">
-        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-062</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
+        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-064</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
         <div id="pd-chip"></div>
         <div class="card">
           <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
@@ -782,7 +782,7 @@ a{color:inherit}
 
       <!-- CARDÁPIO (1A): produtos, categorias e adicionais do restaurante -->
       <section class="page" id="pg-cardapio">
-        <div class="pghd"><div><h1>Cardápio</h1><div class="sub">produtos do seu restaurante · <span style="opacity:.6">GIRO-OS-062</span></div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn sec" onclick="cdAbrirCats()">Categorias</button><button class="btn sec" onclick="cdLinkCardapio()">🔗 Link do cardápio</button><button class="btn sec" onclick="cdAparencia()">🎨 Aparência</button><button class="btn sec" onclick="cdHorario()">🕒 Horário</button><button class="btn sec" onclick="cdAbrirOfertas()">▶ Ofertas</button><button class="btn sec" onclick="cdAbrirImport()">Importar planilha</button><button class="btn pri" onclick="cdNovo()">+ Novo produto</button></div></div>
+        <div class="pghd"><div><h1>Cardápio</h1><div class="sub">produtos do seu restaurante · <span style="opacity:.6">GIRO-OS-064</span></div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn sec" onclick="cdAbrirCats()">Categorias</button><button class="btn sec" onclick="cdLinkCardapio()">🔗 Link do cardápio</button><button class="btn sec" onclick="cdAparencia()">🎨 Aparência</button><button class="btn sec" onclick="cdHorario()">🕒 Horário</button><button class="btn sec" onclick="cdAbrirOfertas()">▶ Ofertas</button><button class="btn sec" onclick="cdAbrirImport()">Importar planilha</button><button class="btn pri" onclick="cdNovo()">+ Novo produto</button></div></div>
         <div class="card">
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px"><input class="inp" id="cd-busca" placeholder="Buscar produto" oninput="cdPintar()" style="flex:1;min-width:200px"><select class="inp" id="cd-fcat" onchange="cdPintar()" style="width:210px;max-width:100%"></select></div>
           <div id="cd-selbar" style="display:none;align-items:center;gap:10px;flex-wrap:wrap;background:var(--s2);border-radius:12px;padding:8px 12px;margin-bottom:10px;font-size:13px"><span id="cd-seltxt" style="font-weight:700"></span><button class="btn pri sm" onclick="cdExibirOferta()">▶ Exibir oferta</button><button class="btn sec sm" onclick="cdLimparSel()">Limpar</button></div>
@@ -1281,6 +1281,13 @@ a{color:inherit}
   <div class="sh-hd"><h3>Ofertas com vídeo</h3><button onclick="fecharTudo()">✕</button></div>
   <div class="sh-bd">
     <p style="margin:0 0 6px;font-size:12.5px;color:var(--muted);line-height:1.5">Cada oferta é um vídeo com os produtos que aparecem enquanto ele toca. Use ↑ ↓ para escolher a ordem em que rodam.</p>
+    <div style="border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:12px">
+      <div style="font-weight:800;font-size:13.5px;margin-bottom:4px">🎁 Benefício do pedido programado</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:8px">Quando o restaurante está fechado, o cliente pode agendar o pedido e ganha este benefício.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><select class="inp" id="cd-pg-t" onchange="cdPgMostra()" style="flex:1;min-width:150px"><option value="">Sem benefício</option><option value="pct">Cupom de % OFF</option><option value="val">Cupom de R$ OFF</option><option value="item">Item grátis do cardápio</option></select><input class="inp" id="cd-pg-v" inputmode="decimal" placeholder="0" style="width:90px"></div>
+      <select class="inp" id="cd-pg-i" style="margin-top:8px;display:none"></select>
+      <button class="btn sec sm" style="margin-top:10px" onclick="cdPgSalvar()">Salvar benefício</button>
+    </div>
     <div id="cd-of-tot" style="font-size:12px;font-weight:700;margin-bottom:8px"></div>
     <div id="cd-of-lista"></div>
     <button class="btn pri wide" style="margin-top:12px" onclick="cdOfNova([])">+ Nova oferta</button>
@@ -1305,7 +1312,7 @@ a{color:inherit}
       <div style="flex:1;min-width:230px">
         <input class="inp" id="cd-ov-apoio" maxlength="80" placeholder="Texto pequeno (ex: só hoje)" oninput="cdOvPrev()" style="margin-bottom:6px">
         <input class="inp" id="cd-ov-titulo" maxlength="120" placeholder="Título grande (ex: Pizza Gigante por R$ 99)" oninput="cdOvPrev()" style="margin-bottom:6px">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px"><input class="inp" id="cd-ov-botao" maxlength="30" placeholder="Texto do botão (ex: Pedir agora)" oninput="cdOvPrev()"><input class="inp" id="cd-ov-link" maxlength="300" placeholder="Link ou WhatsApp com DDD" oninput="cdOvPrev()"></div>
+        <div style="margin-bottom:6px"><input class="inp" id="cd-ov-botao" maxlength="30" placeholder="Texto do botão (ex: Pedir agora) — leva direto ao produto da oferta" oninput="cdOvPrev()"></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px"><select class="inp" id="cd-ov-pos" onchange="cdOvPrev()"><option value="base">Posição: embaixo</option><option value="centro">Posição: centro</option><option value="topo">Posição: topo</option></select><select class="inp" id="cd-ov-alin" onchange="cdOvPrev()"><option value="esq">Alinhado à esquerda</option><option value="centro">Centralizado</option><option value="dir">Alinhado à direita</option></select></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px"><label style="font-size:11.5px;color:var(--muted)">Tamanho do título<input type="range" id="cd-ov-et" min="50" max="250" value="100" oninput="cdOvPrev()" style="width:100%"></label><label style="font-size:11.5px;color:var(--muted)">Tamanho do texto pequeno<input type="range" id="cd-ov-ea" min="50" max="250" value="100" oninput="cdOvPrev()" style="width:100%"></label></div>
         <div style="display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center;margin-bottom:8px"><select class="inp" id="cd-ov-ef" onchange="cdOvPrev()"><option value="nenhum">Efeito: sem efeito</option><option value="cair">Efeito: cai de cima</option><option value="lateral">Efeito: entra pela lateral</option><option value="zoom">Efeito: surge com zoom</option></select><button class="btn sec sm" type="button" onclick="cdOvPrev()" title="Ver o efeito de novo">↻ rever</button></div>
@@ -5732,7 +5739,7 @@ function mpAplicarModo(){
   el('mp-diabar').style.display=(m==='vivo')?'contents':'none';
   el('mp-opbar').style.display=(m==='mapa')?'flex':'none'; el('mp-opmot').style.display='none'; el('mp-vivo').style.display=(m==='mapa')?'':'none';
   var rl=el('mp-ritmo'); if(rl&&rl.parentNode) rl.parentNode.style.display=(m==='vivo')?'':'none';
-  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-062';
+  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-064';
   if(m!=='mapa'){ mpPkTodos(false); el('mp-sempos').style.display='none'; el('mp-sempos-btn').style.display='none'; }
   if(m==='vivo'){ MP_ENQ=true; mpBuscar(); } else mpOperador();
 }
@@ -7134,17 +7141,17 @@ function ofOverlay(t){
   var v='--ov-cor:'+(t.cor||'#ffffff')+';--ov-tit:'+((t.escTitulo||100)/100)+';--ov-apoio:'+((t.escApoio||100)/100)+';--ov-btn:'+((t.btnEsc||100)/100)+';--ov-raio:'+(t.btnRaio==null?14:t.btnRaio)+';--ov-bf:'+(t.btnFundo||'#f97316')+';--ov-bt:'+(t.btnTexto||'#ffffff');
   var h='<div class="ov p-'+(t.pos||'base')+' a-'+(t.alin||'esq')+' e-'+(t.efeito||'nenhum')+(t.pulso?' pulso':'')+'" style="'+v+'">'
     +(t.apoio?'<div class="ov-apoio">'+esc(t.apoio)+'</div>':'')+(t.titulo?'<div class="ov-tit">'+esc(t.titulo)+'</div>':'')
-    +(t.botao?'<a class="ov-btn '+(t.btnEstilo||'cheio')+'"'+(t.link?' href="'+esc(t.link)+'" target="_blank" rel="noopener"':'')+'>'+esc(t.botao)+'</a>':'')+'</div>';
+    +(t.botao?'<a class="ov-btn '+(t.btnEstilo||'cheio')+'"'+''+'>'+esc(t.botao)+'</a>':'')+'</div>';
   return h;
 }
 function ofMascara(t){ if(!t||t.mascara===false) return ''; var f=t.mascaraForca||45; return 'linear-gradient(180deg,rgba(0,0,0,'+(f*0.0022).toFixed(3)+'),rgba(0,0,0,'+(f/100).toFixed(2)+'))'; }
 function cdOvColher(){
   var g=function(i){ return el(i).value; };
-  return {apoio:g('cd-ov-apoio').trim(),titulo:g('cd-ov-titulo').trim(),botao:g('cd-ov-botao').trim(),link:g('cd-ov-link').trim(),pos:g('cd-ov-pos'),alin:g('cd-ov-alin'),mascara:el('cd-ov-masc').checked,mascaraForca:+g('cd-ov-mf'),cor:g('cd-ov-cor'),efeito:g('cd-ov-ef'),pulso:el('cd-ov-pu').checked,escTitulo:+g('cd-ov-et'),escApoio:+g('cd-ov-ea'),btnEstilo:g('cd-ov-be'),btnEsc:+g('cd-ov-bes'),btnFundo:g('cd-ov-bf'),btnTexto:g('cd-ov-bt'),btnRaio:+g('cd-ov-br')};
+  return {apoio:g('cd-ov-apoio').trim(),titulo:g('cd-ov-titulo').trim(),botao:g('cd-ov-botao').trim(),link:'',pos:g('cd-ov-pos'),alin:g('cd-ov-alin'),mascara:el('cd-ov-masc').checked,mascaraForca:+g('cd-ov-mf'),cor:g('cd-ov-cor'),efeito:g('cd-ov-ef'),pulso:el('cd-ov-pu').checked,escTitulo:+g('cd-ov-et'),escApoio:+g('cd-ov-ea'),btnEstilo:g('cd-ov-be'),btnEsc:+g('cd-ov-bes'),btnFundo:g('cd-ov-bf'),btnTexto:g('cd-ov-bt'),btnRaio:+g('cd-ov-br')};
 }
 function cdOvPreencher(t){
   t=t||{}; var s=function(i,v){ el(i).value=v; };
-  s('cd-ov-apoio',t.apoio||''); s('cd-ov-titulo',t.titulo||''); s('cd-ov-botao',t.botao||''); s('cd-ov-link',t.link||''); s('cd-ov-pos',t.pos||'base'); s('cd-ov-alin',t.alin||'esq');
+  s('cd-ov-apoio',t.apoio||''); s('cd-ov-titulo',t.titulo||''); s('cd-ov-botao',t.botao||''); s('cd-ov-pos',t.pos||'base'); s('cd-ov-alin',t.alin||'esq');
   el('cd-ov-masc').checked=t.mascara!==false; s('cd-ov-mf',t.mascaraForca||45); s('cd-ov-cor',t.cor||'#ffffff'); s('cd-ov-ef',t.efeito||(t.titulo||t.apoio||t.botao?'nenhum':'cair')); el('cd-ov-pu').checked=!!t.pulso; s('cd-ov-et',t.escTitulo||100); s('cd-ov-ea',t.escApoio||100);
   s('cd-ov-be',t.btnEstilo||'cheio'); s('cd-ov-bes',t.btnEsc||100); s('cd-ov-bf',t.btnFundo||'#f97316'); s('cd-ov-bt',t.btnTexto||'#ffffff'); s('cd-ov-br',t.btnRaio==null?14:t.btnRaio);
   cdOvPrev();
@@ -7240,7 +7247,23 @@ function cdExibirOferta(){
 }
 function cdOfSorted(){ return CD.ofs.slice().sort(function(a,b){ return (a.ordem||0)-(b.ordem||0); }); }
 function cdNomeProd(id){ var p=cdProd(id); return p?p.nome:'(produto apagado)'; }
-function cdAbrirOfertas(){ fecharTudo(); cdPintarOfertas(); abrir('sh-ofertas'); }
+function cdAbrirOfertas(){ fecharTudo(); cdPintarOfertas(); cdPgCarrega(); abrir('sh-ofertas'); }
+function cdPgMostra(){ var t=el('cd-pg-t').value; el('cd-pg-v').style.display=(t==='pct'||t==='val')?'':'none'; el('cd-pg-i').style.display=t==='item'?'':'none'; el('cd-pg-v').placeholder=t==='pct'?'% (ex: 10)':'R$ (ex: 10)'; }
+function cdPgCarrega(){
+  var o='<option value="">Escolha o item grátis…</option>'; CD.prods.forEach(function(x){ o+='<option value="'+esc(x.id)+'">'+esc(x.nome)+'</option>'; }); el('cd-pg-i').innerHTML=o;
+  el('cd-pg-t').value=''; el('cd-pg-v').value=''; cdPgMostra();
+  fetch(DELTADIS_API+'/painel/cardapio-config',{headers:cdHdr()}).then(function(r){return r.json();}).then(function(d){
+    var g=d&&d.programado; if(!g) return; el('cd-pg-t').value=g.tipo; el('cd-pg-v').value=g.valor?String(g.valor).replace('.',','):''; el('cd-pg-i').value=g.item||''; cdPgMostra();
+  }).catch(function(){});
+}
+function cdPgSalvar(){
+  var t=el('cd-pg-t').value, v=cdPreco(el('cd-pg-v').value), it=el('cd-pg-i').value, g=null;
+  if(t==='pct'||t==='val'){ if(!(v>0)){ aviso('Informe o valor do cupom'); return; } g={tipo:t,valor:v}; }
+  else if(t==='item'){ if(!it){ aviso('Escolha o item grátis'); return; } g={tipo:'item',valor:0,item:it}; }
+  fetch(DELTADIS_API+'/painel/cardapio-config',{method:'POST',headers:cdHdr(),body:JSON.stringify({programado:g||{}})}).then(function(r){return r.json();}).then(function(d){
+    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'não salvou'); aviso(g?'Benefício salvo':'Benefício removido');
+  }).catch(function(e){ aviso(e.message||'Não salvou'); });
+}
 function cdFmtDur(s){ s=Math.round(s||0); return Math.floor(s/60)+':'+('0'+(s%60)).slice(-2); }
 function cdPintarOfertas(){
   var l=cdOfSorted(), h='', i, tot=0;

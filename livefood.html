@@ -29,6 +29,19 @@ html,body{margin:0;height:100%;background:#000;color:var(--tx);font-family:Inter
 #somc.on{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
 #bar{display:flex;align-items:center;gap:10px}
 #emp{font-weight:800;font-size:15px;letter-spacing:.2px;text-shadow:0 1px 8px #0008;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@keyframes ckA{from{transform:rotate(var(--a0))}to{transform:rotate(var(--a1))}}
+.ckh,.ckm{transform-origin:32px 32px;animation:ckA 2.6s cubic-bezier(.25,.8,.25,1) .3s both}.ckm{animation-duration:2.6s}
+@keyframes slR{to{transform:rotate(360deg)}}
+.slg{transform-origin:50px 50px;animation:slR 14s linear infinite}
+.selo{position:absolute;top:12px;right:12px;width:92px;height:92px;border-radius:50%;background:var(--pri);box-shadow:0 4px 16px #0006;transform:rotate(8deg)}.selo svg{display:block}
+.hbig{font-size:44px;font-weight:900;color:var(--pri2);line-height:1.05;letter-spacing:1px}
+.tk{position:relative;margin-top:16px;padding:14px 14px 16px;border-radius:14px;background:linear-gradient(135deg,var(--pri),var(--pri2));color:#fff;box-shadow:0 6px 20px #0005}
+.tk:before,.tk:after{content:'';position:absolute;top:50%;width:18px;height:18px;margin-top:6px;border-radius:50%;background:#16161a}.tk:before{left:-9px}.tk:after{right:-9px}
+.tkp{font-size:13px;font-weight:700;opacity:.95;margin-bottom:8px}.tkr{display:flex;align-items:center;justify-content:center;gap:12px;border-top:2px dashed #ffffff77;padding-top:10px}
+.tkq{font-size:12px;font-weight:700;text-align:left;opacity:.95}.tkb{font-size:26px;font-weight:900;line-height:1.1;text-align:left}
+.pgd,.pgh{display:flex;gap:8px;flex-wrap:wrap}.pgd{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px}
+.pgc{flex:none;background:#26262c;border:1px solid #ffffff22;color:#fff;border-radius:10px;padding:10px 13px;font-weight:700;font-size:13.5px;cursor:pointer}.pgh .pgc{width:calc(25% - 6px);padding:10px 0}
+.pgc.on{background:var(--pri);border-color:var(--pri)}
 #emp small.fc{background:#b91c1c}#emp small.ab{background:#15803d}
 #emp small{display:inline-block;margin-left:8px;font-size:10.5px;font-weight:800;letter-spacing:1px;background:var(--pri);padding:3px 7px;border-radius:99px;vertical-align:2px}
 .rb{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--glass);backdrop-filter:blur(8px);color:#fff;font-size:17px;display:flex;align-items:center;justify-content:center;cursor:pointer}
@@ -131,7 +144,7 @@ html,body{margin:0;height:100%;background:#000;color:var(--tx);font-family:Inter
 .ov-tit{font-size:calc(1.9em*var(--ov-tit,1));font-weight:900;line-height:1.08;text-shadow:0 .1em .6em #0008;overflow-wrap:anywhere}
 .ov-btn{pointer-events:auto;display:inline-block;margin-top:.3em;text-decoration:none;font-weight:800;font-size:calc(1em*var(--ov-btn,1));padding:.7em 1.4em;border-radius:calc(var(--ov-raio,14)*.0625em);cursor:pointer}
 .ov-btn.cheio{background:var(--ov-bf,#f97316);color:var(--ov-bt,#fff)}
-.ov-btn.contorno{border:.15em solid var(--ov-bt,#fff);color:var(--ov-bt,#fff);background:transparent}
+.ov-btn.contorno{border:.09em solid var(--ov-bt,#fff);color:var(--ov-bt,#fff);background:transparent}
 .ov-btn.link{color:var(--ov-bt,#fff);padding:.2em 0;text-decoration:underline}
 #stage .ov{--ov-t:calc(84px + env(safe-area-inset-top));--ov-b:calc(172px + env(safe-area-inset-bottom));font-size:16px}
 #omask{position:absolute;inset:0;pointer-events:none;z-index:3}
@@ -217,7 +230,7 @@ function tocar(i,primeira){
   vs.forEach(function(x){ x.classList.toggle('on',x===v); });
   outro.pause();
   if(ordem.length>1){ var prox=ordem[(idx+1)%ordem.length]; prepara(outro,prox); }
-  var ovh=ofOverlay(o.txt); $('ovbox').innerHTML=ovh||''; $('omask').style.background=ovh?ofMascara(o.txt):'';
+  var ovh=ofOverlay(o.txt,o.id); $('ovbox').innerHTML=ovh||''; $('omask').style.background=ovh?ofMascara(o.txt):'';
   $('oft').textContent=ovh?'':(o.nome||'');
   cartoes(o);
   for(var k=0;k<ordem.length;k++){ var b=$('sg'+k); if(b) b.style.width=(k<idx?'100%':'0'); }
@@ -230,7 +243,7 @@ function proximo(){
   cur=1-cur; tocar(idx+1);
 }
 setInterval(function(){
-  var v=vs[cur], b=$('sg'+idx); if(v&&ordem.length===1&&v.currentTime<LT-0.5){ var oo=ordem[0], hh=ofOverlay(oo.txt); if(hh) $('ovbox').innerHTML=hh; } LT=v?v.currentTime:0; if(b&&v&&v.duration>0) b.style.width=Math.min(100,(v.currentTime/v.duration)*100)+'%';
+  var v=vs[cur], b=$('sg'+idx); if(v&&ordem.length===1&&v.currentTime<LT-0.5){ var oo=ordem[0], hh=ofOverlay(oo.txt,oo.id); if(hh) $('ovbox').innerHTML=hh; } LT=v?v.currentTime:0; if(b&&v&&v.duration>0) b.style.width=Math.min(100,(v.currentTime/v.duration)*100)+'%';
 },200);
 
 function cartoes(o){
@@ -247,12 +260,22 @@ function cartoes(o){
 }
 
 /* texto e botão sobre o vídeo (mesmo desenho do painel) */
-function ofOverlay(t){
+function ofOverlay(t,oid){
   t=t||{}; if(!(t.apoio||t.titulo||t.botao)) return null;
   var v='--ov-cor:'+(t.cor||'#ffffff')+';--ov-tit:'+((t.escTitulo||100)/100)+';--ov-apoio:'+((t.escApoio||100)/100)+';--ov-btn:'+((t.btnEsc||100)/100)+';--ov-raio:'+(t.btnRaio==null?14:t.btnRaio)+';--ov-bf:'+(t.btnFundo||'#f97316')+';--ov-bt:'+(t.btnTexto||'#ffffff');
   return '<div class="ov p-'+(t.pos||'base')+' a-'+(t.alin||'esq')+' e-'+(t.efeito||'nenhum')+(t.pulso?' pulso':'')+'" style="'+v+'">'
     +(t.apoio?'<div class="ov-apoio">'+esc(t.apoio)+'</div>':'')+(t.titulo?'<div class="ov-tit">'+esc(t.titulo)+'</div>':'')
-    +(t.botao?'<a class="ov-btn '+(t.btnEstilo||'cheio')+'"'+(t.link?' href="'+esc(t.link)+'" target="_blank" rel="noopener"':'')+'>'+esc(t.botao)+'</a>':'')+'</div>';
+    +(t.botao?'<a class="ov-btn '+(t.btnEstilo||'cheio')+'" onclick="ofPedir(\''+esc(oid||'')+'\')">'+esc(t.botao)+'</a>':'')+'</div>';
+}
+function ofPedir(oid){
+  var o=null; (D.ofertas||[]).forEach(function(x){ if(x.id===oid) o=x; });
+  var ids=((o&&o.produtos)||[]).filter(function(id){ return D.produtos[id]; });
+  if(ids.length===1){ abreSheet(ids[0]); return; }
+  if(!ids.length){ abreMenu(); return; }
+  var h='<div class="wh"><button class="bk" onclick="fechaSheet()">'+XI+'</button><b>'+esc((o&&o.nome)||'Oferta')+'</b></div><div class="wb">';
+  ids.forEach(function(id){ var p=D.produtos[id], pr=minPreco(p), ft=p.foto?'<div class="th" style="width:56px;height:56px;border-radius:10px;background:#2a2a30 center/cover url('+fotoUrl(p)+');flex:none"></div>':'<div style="width:56px;height:56px;border-radius:10px;background:#2a2a30;flex:none;display:flex;align-items:center;justify-content:center">'+icone(tipoDesenho(p),28)+'</div>';
+    h+='<div class="mp" onclick="abreSheet(\''+esc(p.id)+'\')">'+ft+'<div style="flex:1;min-width:0"><b style="font-size:14.5px">'+esc(p.nome)+'</b>'+promoTag(p)+'</div><span class="vl" style="color:var(--pri2);font-weight:800;font-size:13.5px;text-align:right">'+(pr.de?'a partir de ':'')+brl(pr.min)+'</span></div>'; });
+  h+='</div>'; abreFolha(h,true);
 }
 function ofMascara(t){ if(!t||t.mascara===false) return ''; var f=t.mascaraForca||45; return 'linear-gradient(180deg,rgba(0,0,0,'+(f*0.0022).toFixed(3)+'),rgba(0,0,0,'+(f/100).toFixed(2)+'))'; }
 
@@ -590,7 +613,7 @@ function abreSacola(){
   if(!SAC.length) h+='<div class="nt" style="text-align:center;padding:30px 0">Sua sacola está vazia.<br>Toque num produto para começar.</div>';
   SAC.forEach(function(i,j){ h+='<div class="sc"><div class="i"><b>'+esc(i.nome)+'</b><small>'+itemDesc(i)+'</small><div style="color:var(--pri);font-weight:800;margin-top:4px">'+brl(i.unit*i.qty)+'</div><button class="sed" onclick="sacEdit('+j+')">Editar</button></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px"><button class="sx" onclick="sacQ('+j+',-999)" title="Remover">'+XP+'</button><div class="qt"><button onclick="sacQ('+j+',-1)">−</button><span>'+i.qty+'</span><button onclick="sacQ('+j+',1)">+</button></div></div></div>'; });
   h+='</div>';
-  if(SAC.length&&!estaAberto()) h+='<div class="nt" style="text-align:center;padding:10px 16px 0;color:var(--pri2)">🕒 Pedido programado: entra com prioridade na fila e rende cupom de '+PROG_PCT+'% OFF</div>';
+  if(SAC.length&&!estaAberto()){ var pg=progLer(); h+='<div class="nt" style="text-align:center;padding:10px 16px 0;color:var(--pri2)">'+(pg?'🕒 Pedido programado para '+progFmt(pg)+' · <u onclick="abreAgenda()" style="cursor:pointer">alterar</u>':'🕒 Estamos fechados. <u onclick="abreAgenda()" style="cursor:pointer">Agendar este pedido</u>')+'</div>'; }
   if(SAC.length) h+='<div class="rod" style="flex-direction:column;align-items:stretch;gap:8px"><div class="tt" style="padding:0"><span>Subtotal</span><span>'+brl(sacTotal())+'</span></div><button class="bt c" style="flex:none;width:100%" onclick="toast(\'Finalizar pedido: chega no próximo passo\')">Continuar</button></div>';
   abreFolha(h,true);
 }
@@ -623,24 +646,68 @@ function estaAberto(){
   var y=h[(d+6)%7]; if(y&&y.on){ var ab2=mm(y.ab), fe2=mm(y.fe); if(ab2>fe2&&m<fe2) return true; }
   return false;
 }
-var PROG_PCT=10, DSEM=['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
+var DSEM=['domingo','segunda','terça','quarta','quinta','sexta','sábado'], DABR=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+function mmH(s){ var a=String(s||'').split(':'); return (+a[0])*60+(+a[1]||0); }
 function proxAbertura(){
-  var h=D&&D.cfg&&D.cfg.horarios; if(!h||h.length!==7) return '';
+  var h=D&&D.cfg&&D.cfg.horarios; if(!h||h.length!==7) return null;
   var n=new Date(Date.now()-3*3600000), d=n.getUTCDay(), m=n.getUTCHours()*60+n.getUTCMinutes(), k, t;
-  function mm(s){ var a=String(s||'').split(':'); return (+a[0])*60+(+a[1]||0); }
-  for(k=0;k<=7;k++){ t=h[(d+k)%7]; if(!t||!t.on) continue; if(k===0&&mm(t.ab)<=m) continue; return (k===0?'hoje':(k===1?'amanhã':'na '+DSEM[(d+k)%7]))+' a partir das '+t.ab; }
-  return '';
+  for(k=0;k<=7;k++){ t=h[(d+k)%7]; if(!t||!t.on) continue; if(k===0&&mmH(t.ab)<=m) continue; return {hora:t.ab,txt:(k===0?'hoje':(k===1?'amanhã':'na '+DSEM[(d+k)%7]))}; }
+  return null;
 }
+function hh(s){ var a=String(s||'').split(':'); return (+a[0])+'h'+((+a[1])?a[1]:''); }
+function progBenef(){
+  var g=D&&D.cfg&&D.cfg.programado; if(!g) return null;
+  if(g.tipo==='pct') return {pre:'ganhe um cupom de',big:String(g.valor).replace('.',',')+'% OFF'};
+  if(g.tipo==='val') return {pre:'ganhe um cupom de',big:brl(g.valor)+' OFF'};
+  if(g.tipo==='item'&&D.produtos[g.item]) return {pre:'ganhe de brinde',big:'1 '+D.produtos[g.item].nome};
+  return null;
+}
+function progTxt(){ var g=progBenef(); return g?(g.pre+' '+g.big):''; }
+/* dias e horários em que dá pra agendar (só dentro do horário de funcionamento) */
+function progDias(){
+  var h=D&&D.cfg&&D.cfg.horarios, out=[]; if(!h||h.length!==7) return out;
+  var base=Date.now()-3*3600000, nm=new Date(base).getUTCHours()*60+new Date(base).getUTCMinutes(), k;
+  for(k=0;k<7;k++){
+    var dt=new Date(base+k*86400000), t=h[dt.getUTCDay()]; if(!t||!t.on) continue;
+    var ab=mmH(t.ab), fe=mmH(t.fe); if(fe<=ab) fe+=1440; var sl=[], x;
+    for(x=ab;x<=fe-30;x+=15){ if(k===0&&x<nm+30) continue; var hhh=Math.floor(x/60)%24, mi=x%60; sl.push(('0'+hhh).slice(-2)+':'+('0'+mi).slice(-2)); }
+    if(sl.length) out.push({key:dt.toISOString().slice(0,10),lab:(k===0?'Hoje':(k===1?'Amanhã':DABR[dt.getUTCDay()]))+' · '+('0'+dt.getUTCDate()).slice(-2)+'/'+('0'+(dt.getUTCMonth()+1)).slice(-2),sl:sl});
+  }
+  return out;
+}
+function progLer(){ try{ var v=JSON.parse(localStorage.getItem('lf_prog_'+(D.cli||CLI))||'null'); if(v&&v.dia&&v.hora){ var ok=false; progDias().forEach(function(d){ if(d.key===v.dia&&d.sl.indexOf(v.hora)>=0) ok=true; }); return ok?v:null; } }catch(e){} return null; }
+function progFmt(v){ var a=v.dia.split('-'); return a[2]+'/'+a[1]+' às '+v.hora; }
+var PGD=null;
 function abreFechado(){
-  var q=proxAbertura();
-  var h='<div class="wb" style="text-align:center;padding:26px 20px 22px"><svg viewBox="0 0 24 24" width="46" height="46" fill="none" stroke="var(--pri)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6.5V12l3.5 2"/></svg>'
-   +'<div style="font-size:19px;font-weight:800;margin-top:10px">Estamos fechados agora</div>'
-   +(q?'<div class="nt" style="margin-top:4px">Abrimos '+esc(q)+'.</div>':'')
-   +'<div style="margin-top:16px;padding:14px;border:1px dashed var(--pri);border-radius:12px;background:#ffffff08"><b style="color:var(--pri2)">Reserve seu pedido agora e ganhe um cupom de '+PROG_PCT+'% OFF</b><div class="nt" style="margin-top:6px;font-size:13px">Pedido programado entra com <b>prioridade na fila</b> assim que abrirmos.</div></div>'
-   +'<div style="display:flex;flex-direction:column;gap:10px;margin-top:18px"><button class="bt c" style="flex:none;width:100%" onclick="progSim()">Reservar meu pedido</button><button class="bt c" style="flex:none;width:100%;background:transparent;border:2px solid #ffffff44;color:#fff" onclick="fechaSheet()">Só ver o cardápio</button></div></div>';
+  var q=proxAbertura(), b=progBenef();
+  var now=new Date(Date.now()-3*3600000), h0=now.getUTCHours()%12+now.getUTCMinutes()/60, m0=now.getUTCMinutes();
+  var hA=h0*30, mA=m0*6, hB=hA, mB=mA+1080, sel='';
+  if(q){ var a=q.hora.split(':'); hB=((+a[0])%12+(+a[1])/60)*30; if(hB<hA) hB+=360; mB=(+a[1])*6+1080; }
+  var clock='<svg viewBox="0 0 64 64" width="76" height="76" fill="none" stroke="var(--pri)" stroke-width="2.6" stroke-linecap="round"><circle cx="32" cy="32" r="28"/>'+[0,90,180,270].map(function(r){ return '<path d="M32 7v4" transform="rotate('+r+' 32 32)" stroke-width="2"/>'; }).join('')
+    +'<g class="ckh" style="--a0:'+hA.toFixed(1)+'deg;--a1:'+hB.toFixed(1)+'deg"><path d="M32 32V19" stroke-width="3.2"/></g><g class="ckm" style="--a0:'+mA+'deg;--a1:'+mB+'deg"><path d="M32 32V12"/></g><circle cx="32" cy="32" r="2.4" fill="var(--pri)" stroke="none"/></svg>';
+  var selo=q?'<div class="selo"><svg viewBox="0 0 100 100" width="92" height="92"><defs><path id="slc" d="M50 50m-37 0a37 37 0 1 1 74 0a37 37 0 1 1-74 0"/></defs><g class="slg"><text font-size="10.5" font-weight="800" letter-spacing="1.2" fill="#fff"><textPath href="#slc" textLength="228" lengthAdjust="spacing">ABRE ÀS • ABRE ÀS • ABRE ÀS • ABRE ÀS • </textPath></text></g><text x="50" y="58" text-anchor="middle" font-size="26" font-weight="900" fill="#fff">'+esc(hh(q.hora))+'</text></svg></div>':'';
+  var tk=b?'<div class="tk"><div class="tkp">Reserve seu pedido agora e</div><div class="tkr"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 0 0 6v3h18v-3a2 2 0 0 1 0-6V6H3z"/><path d="M14 6v2.5M14 11v2M14 15.5V18"/></svg><div><div class="tkq">'+esc(b.pre)+'</div><div class="tkb">'+esc(b.big)+'</div></div></div></div>':'<div class="tk"><div class="tkp" style="margin:0">Agende seu pedido e entre na frente da fila</div></div>';
+  var h='<div class="wb fcm" style="text-align:center;padding:26px 20px 22px;position:relative">'+selo+clock
+   +'<div style="font-size:20px;font-weight:800;margin-top:8px">Estamos fechados agora</div>'
+   +(q?'<div class="nt" style="margin-top:6px">Abrimos '+esc(q.txt)+' a partir das</div><div class="hbig">'+esc(q.hora)+'</div>':'')
+   +tk+'<div class="nt" style="margin-top:10px;font-size:13px">Pedido programado entra com <b>prioridade na fila</b> assim que abrirmos.</div>'
+   +'<div style="display:flex;flex-direction:column;gap:10px;margin-top:16px"><button class="bt c" style="flex:none;width:100%" onclick="abreAgenda()">Reservar meu pedido</button><button class="bt c" style="flex:none;width:100%;background:transparent;border:2px solid #ffffff44;color:#fff" onclick="fechaSheet()">Só ver o cardápio</button></div></div>';
   abreFolha(h);
 }
-function progSim(){ try{ localStorage.setItem('lf_prog_'+(D.cli||CLI),'1'); }catch(e){} fechaSheet(); abreMenu(); }
+function abreAgenda(){
+  var ds=progDias(); if(!ds.length){ fechaSheet(); abreMenu(); return; }
+  var at=progLer(); PGD={dia:at?at.dia:ds[0].key,hora:at?at.hora:''}; pintaAgenda();
+}
+function pintaAgenda(){
+  var ds=progDias(), cur=null; ds.forEach(function(d){ if(d.key===PGD.dia) cur=d; }); if(!cur){ cur=ds[0]; PGD.dia=cur.key; PGD.hora=''; }
+  var h='<div class="wh"><button class="bk" onclick="abreFechado()">'+BKI+'</button><b>Agendar pedido</b></div><div class="wb"><div class="nt" style="margin-bottom:8px">Escolha o dia</div><div class="pgd">';
+  ds.forEach(function(d){ h+='<button class="pgc'+(d.key===PGD.dia?' on':'')+'" onclick="PGD.dia=\''+d.key+'\';PGD.hora=\'\';pintaAgenda()">'+esc(d.lab)+'</button>'; });
+  h+='</div><div class="nt" style="margin:16px 0 8px">Escolha o horário <span style="opacity:.7">(dentro do nosso funcionamento)</span></div><div class="pgh">';
+  cur.sl.forEach(function(x){ h+='<button class="pgc'+(x===PGD.hora?' on':'')+'" onclick="PGD.hora=\''+x+'\';pintaAgenda()">'+x+'</button>'; });
+  h+='</div>'+(progTxt()?'<div class="nt" style="margin-top:16px;color:var(--pri2)">🎟 Ao agendar, '+esc(progTxt())+'.</div>':'')+'</div><div class="rod"><button class="bt c" '+(PGD.hora?'':'disabled ')+'onclick="progSim()">'+(PGD.hora?'Confirmar agendamento':'Escolha um horário')+'</button></div>';
+  abreFolha(h,true);
+}
+function progSim(){ if(!PGD||!PGD.hora) return; try{ localStorage.setItem('lf_prog_'+(D.cli||CLI),JSON.stringify({dia:PGD.dia,hora:PGD.hora})); }catch(e){} toast('Pedido agendado para '+progFmt(PGD)); fechaSheet(); setTimeout(abreMenu,350); }
 function pintaStatus(){ var e=$('stt'); if(!e) return; var a=estaAberto(); e.textContent=a?'ABERTO':'FECHADO'; e.className=a?'ab':'fc'; }
 setInterval(function(){ try{ pintaStatus(); }catch(e){} },60000);
 function promoTag(p){ var d=p.promo; if(!d||!(d.valor>0)) return ''; return '<div><span class="tg">'+(d.tipo==='pct'?String(d.valor).replace('.',',')+'% OFF':'− '+brl(d.valor))+'</span></div>'; }
