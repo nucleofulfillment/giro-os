@@ -100,6 +100,8 @@ html,body{margin:0;height:100%;background:#000;color:var(--tx);font-family:Inter
 .rs{font-size:13px;color:var(--mut);line-height:1.6;border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:12px}.rs b{color:#fff}
 .bg{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:9px;background:var(--pri);font-size:11px;font-weight:800;display:none;align-items:center;justify-content:center;padding:0 4px}
 #bSac,#bMenu{position:relative}
+#giro{display:none;position:fixed;inset:0;z-index:99;background:#0b0b0d;color:#fff;align-items:center;justify-content:center;text-align:center;font-size:42px;line-height:1.5}#giro b{font-size:20px}#giro small{font-size:14px;color:#9ca3af}
+@media (orientation:landscape) and (max-height:520px){#giro{display:flex}}
 #nav{position:fixed;left:0;right:0;bottom:0;margin:0 auto;max-width:520px;height:calc(60px + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);z-index:30;display:flex;background:#111114f2;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line)}
 #nav button{flex:1;background:none;border:0;color:#9ca3af;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:10.5px;font-weight:700;position:relative;cursor:pointer}
 #nav button.on{color:var(--pri)}
@@ -207,6 +209,7 @@ html,body{margin:0;height:100%;background:#000;color:var(--tx);font-family:Inter
   <div id="vazio"><h2 id="vzT">Cardápio em breve</h2><p id="vzP">Ainda não há ofertas no ar. Volte daqui a pouco.</p></div>
 </div>
 <nav id="nav"><button id="nv-inicio" onclick="navIr('inicio')"><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1Z"/></svg><span>Início</span></button><button id="nv-busca" onclick="navIr('busca')"><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><span>Busca</span></button><button id="nv-pedidos" onclick="navIr('pedidos')"><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg><span>Pedidos</span></button><button id="nv-sac" onclick="navIr('sac')"><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l-1 12H6Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><span>Sacola</span><i class="bg" id="nSac"></i></button><button id="nv-conta" onclick="navIr('conta')"><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg><span>Conta</span></button></nav>
+<div id="giro"><div>📱<br><b>Gire o celular</b><br><small>O cardápio funciona em pé</small></div></div>
 <div id="ovl" onclick="fechaSheet()"></div>
 <div id="sheet"></div><div id="toast"></div>
 
@@ -226,7 +229,7 @@ function minPreco0(p){ var t=(p.tamanhos||[]).map(function(x){return x.preco;}).
 function manifesto(){
   try{
     var svg="data:image/svg+xml;utf8,"+encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='110' fill='#f97316'/><text x='256' y='330' font-size='260' text-anchor='middle'>🍕</text></svg>");
-    var m={name:D.empresa||'Cardápio',short_name:(D.empresa||'Cardápio').slice(0,12),start_url:location.href,display:'standalone',background_color:'#0b0b0d',theme_color:'#0b0b0d',icons:[{src:svg,sizes:'any',type:'image/svg+xml',purpose:'any'}]};
+    var m={name:D.empresa||'Cardápio',short_name:(D.empresa||'Cardápio').slice(0,12),start_url:location.href,display:'standalone',display_override:['fullscreen','standalone'],orientation:'portrait',background_color:'#0b0b0d',theme_color:'#0b0b0d',icons:[{src:svg,sizes:'any',type:'image/svg+xml',purpose:'any'}]};
     var l=document.createElement('link'); l.rel='manifest'; l.href=URL.createObjectURL(new Blob([JSON.stringify(m)],{type:'application/manifest+json'})); document.head.appendChild(l);
   }catch(e){}
 }
@@ -325,7 +328,7 @@ function sacQtd(){ var n=0; SAC.forEach(function(i){ n+=i.qty; }); return n; }
 function sacMarca(){ var n=sacQtd(), b=$('nSac'); b.textContent=n; b.style.display=n?'flex':'none'; }
 function toast(t){ var e=$('toast'); e.textContent=t; e.style.display='block'; clearTimeout(toast._t); toast._t=setTimeout(function(){ e.style.display='none'; },2200); }
 function abreFolha(h,wz,full){ var s=$('sheet'); s.className=(wz?'wz ':'')+(full===true?'fz ':'')+(full==='fx'?'fx ':'')+(s.classList.contains('on')?'on':''); s.innerHTML=h; $('ovl').style.display='block'; requestAnimationFrame(function(){ s.classList.add('on'); }); }
-function fechaSheet(){ $('sheet').classList.remove('on'); $('ovl').style.display='none'; navOn('inicio'); }
+function fechaSheet(){ CK.on=0; CK.open=0; $('sheet').classList.remove('on'); $('ovl').style.display='none'; navOn('inicio'); }
 
 /* ── passo a passo do produto (estilo iFood) ── */
 var W=null;
@@ -649,10 +652,14 @@ function sacThumb(i){
   var p=D.produtos[i.p], u=''; if(p){ if(p.foto) u=fotoUrl(p); else { var sb=(p.sabores||[]).filter(function(x){ return x.foto&&i.sab.indexOf(x.nome)>=0; })[0]; if(sb) u=fotoUrl(p,sb); } }
   return '<div class="th">'+(u?'<img loading="lazy" alt="" src="'+esc(u)+'">':icone(i.tipo||'outro',26))+'</div>';
 }
-function abreSacola(){ navOn('sac');
+function sacLista(){
+  var h=''; SAC.forEach(function(i,j){ h+='<div class="sc">'+sacThumb(i)+'<div class="i"><b>'+esc(i.nome)+'</b><small>'+itemDesc(i)+'</small>'+(i.orig>i.unit&&i.promo?'<div style="margin-top:6px"><span class="tg" style="margin:0">'+(i.promo.tipo==='pct'?String(i.promo.valor).replace('.',',')+'% OFF':'− '+brl(i.promo.valor))+'</span></div>':'')+'<div style="margin-top:4px;font-weight:800;color:var(--pri)">'+(i.orig>i.unit?'<s style="color:var(--mut);font-weight:600;font-size:12.5px;margin-right:6px">'+brl(i.orig*i.qty)+'</s>':'')+brl(i.unit*i.qty)+'</div>'+(i.orig>i.unit?'<div style="font-size:12px;color:#4ade80;margin-top:2px">Você economiza '+brl((i.orig-i.unit)*i.qty)+'</div>':'')+'<button class="sed" onclick="sacEdit('+j+')">Editar</button></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px"><button class="sx" onclick="sacQ('+j+',-999)" title="Remover">'+XP+'</button><div class="qt"><button onclick="sacQ('+j+',-1)">−</button><span>'+i.qty+'</span><button onclick="sacQ('+j+',1)">+</button></div></div></div>'; });
+  return h;
+}
+function abreSacola(){ navOn('sac'); CK.on=0; CK.open=0;
   var h='<div class="wh"><button class="bk" onclick="fechaSheet()">'+XI+'</button><b>Sua sacola</b>'+(SAC.length?'<button class="lmp" id="lmp" onclick="sacLimpa()">Limpar sacola</button>':'')+'</div><div class="wb">';
   if(!SAC.length) h+='<div class="nt" style="text-align:center;padding:30px 0">Sua sacola está vazia.<br>Toque num produto para começar.</div>';
-  SAC.forEach(function(i,j){ h+='<div class="sc">'+sacThumb(i)+'<div class="i"><b>'+esc(i.nome)+'</b><small>'+itemDesc(i)+'</small>'+(i.orig>i.unit&&i.promo?'<div style="margin-top:6px"><span class="tg" style="margin:0">'+(i.promo.tipo==='pct'?String(i.promo.valor).replace('.',',')+'% OFF':'− '+brl(i.promo.valor))+'</span></div>':'')+'<div style="margin-top:4px;font-weight:800;color:var(--pri)">'+(i.orig>i.unit?'<s style="color:var(--mut);font-weight:600;font-size:12.5px;margin-right:6px">'+brl(i.orig*i.qty)+'</s>':'')+brl(i.unit*i.qty)+'</div>'+(i.orig>i.unit?'<div style="font-size:12px;color:#4ade80;margin-top:2px">Você economiza '+brl((i.orig-i.unit)*i.qty)+'</div>':'')+'<button class="sed" onclick="sacEdit('+j+')">Editar</button></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px"><button class="sx" onclick="sacQ('+j+',-999)" title="Remover">'+XP+'</button><div class="qt"><button onclick="sacQ('+j+',-1)">−</button><span>'+i.qty+'</span><button onclick="sacQ('+j+',1)">+</button></div></div></div>'; });
+  h+=sacLista();
   h+='</div>';
   if(SAC.length&&!estaAberto()){ var pg=progLer(); h+='<div class="nt" style="text-align:center;padding:10px 16px 0;color:var(--pri2)">'+(pg?'🕒 Pedido programado para '+progFmt(pg)+' · <u onclick="abreAgenda()" style="cursor:pointer">alterar</u>':'🕒 Estamos fechados. <u onclick="abreAgenda()" style="cursor:pointer">Agendar este pedido</u>')+'</div>'; }
   if(SAC.length) h+='<div class="rod" style="flex-direction:column;align-items:stretch;gap:8px">'+(sacEcon()>0?'<div class="tt" style="padding:0;font-size:13px;color:#4ade80"><span>Desconto aplicado</span><span>− '+brl(sacEcon())+'</span></div>':'')+'<div class="tt" style="padding:0"><span>Subtotal</span><span>'+brl(sacTotal())+'</span></div><button class="bt c" style="flex:none;width:100%" onclick="sacContinuar()">Continuar</button><button class="bt c" style="flex:none;width:100%;background:transparent;border:2px solid var(--pri);color:var(--pri)" onclick="abreMenu()">Continuar comprando</button></div>';
@@ -675,9 +682,9 @@ function ctMask(e){ var d=e.value.replace(/\D/g,'').slice(0,11); e.value=d.lengt
 function ctErro(m){ var e=$('ct-erro'); if(e) e.textContent=m||''; }
 function sacContinuar(){
   if(!SAC.length) return; CT.ctx='ck'; ctLer(); if(!CT.tok) return ctLogin();
-  if(CT.conta){ CK.anim=1; ctEntrega(); ctApi('/food/conta',null,true).then(function(d){ if(d.ok){ CT.conta=d.conta; ctGrava(); } else if(d._http===401){ CT.tok=''; CT.conta=null; ctLogin(); } }); return; }
+  if(CT.conta){ CK.anim=1; CK.open=0; ctEntrega(); ctApi('/food/conta',null,true).then(function(d){ if(d.ok){ CT.conta=d.conta; ctGrava(); } else if(d._http===401){ CT.tok=''; CT.conta=null; ctLogin(); } }); return; }
   ctApi('/food/conta',null,true).then(function(d){
-    if(d.ok){ CT.conta=d.conta; ctGrava(); CK.anim=1; ctEntrega(); } else if(d._http===401){ CT.tok=''; CT.conta=null; ctLogin(); } else ctLogin();
+    if(d.ok){ CT.conta=d.conta; ctGrava(); CK.anim=1; CK.open=0; ctEntrega(); } else if(d._http===401){ CT.tok=''; CT.conta=null; ctLogin(); } else ctLogin();
   });
 }
 function ctLogin(){
@@ -735,20 +742,21 @@ function ctSalvaLista(l,fn){
   });
 }
 /* ── 5C: resumo do pedido, Pix e confirmação ── */
-var CK={ped:null,tmr:null,pg:'pix',anim:0};
+var CK={ped:null,tmr:null,pg:'pix',anim:0,on:0,open:0};
 function ckPg(m){ CK.pg=m; ckKeep(); }
 function ckCpfFmt(e){ var d=e.value.replace(/\D/g,'').slice(0,11); e.value=d.length>9?d.slice(0,3)+'.'+d.slice(3,6)+'.'+d.slice(6,9)+'-'+d.slice(9):d.length>6?d.slice(0,3)+'.'+d.slice(3,6)+'.'+d.slice(6):d.length>3?d.slice(0,3)+'.'+d.slice(3):d; }
 function ckDesc(sub,pg){ var g=D.cfg&&D.cfg.programado, r={db:0,bri:''}; if(pg&&g){ if(g.tipo==='pct') r.db=Math.round(sub*g.valor)/100; else if(g.tipo==='val') r.db=Math.min(sub,g.valor); else if(g.tipo==='item'&&D.produtos[g.item]) r.bri=D.produtos[g.item].nome; } return r; }
-function ckItens(){ var e=$('ck-its'),b=$('ck-vi'); if(!e) return; var ab=e.style.maxHeight==='0px'||!e.style.maxHeight; e.style.maxHeight=ab?'900px':'0px'; b.textContent=ab?'− esconder itens':'+ ver meus itens'; }
+function ckItens(){ var e=$('ck-its'),b=$('ck-vi'); if(!e) return; var ab=e.style.maxHeight==='0px'; e.style.maxHeight=ab?'1400px':'0px'; e.style.opacity=ab?1:0; CK.open=ab; b.textContent=ab?'− esconder itens':'+ ver meus itens'; }
 function ckResumo(){
   var c=CT.conta||{}, sub=sacTotal(), fechado=!estaAberto(), pg=fechado?progLer():null, d=ckDesc(sub,pg), tot=Math.round((sub-d.db)*100)/100, h;
   var ends=c.enderecos||[]; if(EN.modo==='entrega'&&!ends.some(function(e){return e.id===EN.end;})) EN.end=ends.length?ends[0].id:'';
-  h=ctCab('Sua sacola','abreSacola()')+'<div class="wb"><div style="margin:12px 0 0;font-size:15px">Olá, <b>'+esc(c.nome||'')+'</b>! <button class="lk" onclick="ctSair()">Não sou eu</button></div>';
+  CK.on=1;
+  h='<div class="wh"><button class="bk" onclick="fechaSheet()">'+XI+'</button><b>Sua sacola</b></div><div class="wb">';
   var nIt=SAC.reduce(function(a,i){ return a+i.qty; },0);
-  h+='<div class="rsm" style="align-items:center"><div class="tx"><b>'+nIt+(nIt>1?' itens':' item')+'</b><small>Subtotal '+brl(sub)+'</small></div><button class="lk" id="ck-vi" onclick="ckItens()">+ ver meus itens</button></div><div id="ck-its" style="overflow:hidden;transition:max-height .45s ease;max-height:'+(CK.anim?'900px':'0')+'">';
-  SAC.forEach(function(i){ h+='<div class="rsm"><div class="tx"><b>'+i.qty+'× '+esc(i.nome)+'</b><small>'+itemDesc(i)+'</small></div><div class="vl">'+brl(i.unit*i.qty)+'</div></div>'; });
+  h+='<div id="ck-its" style="overflow:hidden;transition:max-height .5s ease,opacity .4s ease;max-height:'+((CK.anim||CK.open)?'1400px':'0')+';opacity:'+((CK.anim||CK.open)?1:0)+'">'+sacLista();
   if(d.bri) h+='<div class="rsm"><div class="tx"><b>1× '+esc(d.bri)+'</b><small>Brinde do pedido programado</small></div><div class="vl" style="color:#4ade80">Grátis</div></div>';
-  h+='</div>';
+  h+='</div><div class="rsm" id="ck-sm" style="align-items:center;'+(CK.anim?'display:none':'')+'"><div class="tx"><b>'+nIt+(nIt>1?' itens':' item')+'</b><small>Subtotal '+brl(sub)+'</small></div><button class="lk" id="ck-vi" onclick="ckItens()">'+(CK.open?'− esconder itens':'+ ver meus itens')+'</button></div>';
+  h+='<div style="margin:12px 0 0;font-size:15px">Olá, <b>'+esc(c.nome||'')+'</b>! <button class="lk" onclick="ctSair()">Não sou eu</button></div>';
   h+='<div class="seg"><button class="'+(EN.modo==='entrega'?'on':'')+'" onclick="ctModo(\'entrega\')">🛵 Entrega</button><button class="'+(EN.modo==='retirada'?'on':'')+'" onclick="ctModo(\'retirada\')">🏪 Retirada</button></div>';
   if(EN.modo==='retirada') h+='<div class="nt" style="font-size:14px;color:#fff;margin-top:12px">Você retira o pedido no balcão do restaurante. Avisamos pelo WhatsApp quando estiver pronto.</div>';
   else { ends.forEach(function(e){ h+='<div class="ad'+(e.id===EN.end?' on':'')+'" onclick="ctSelEnd(\''+esc(e.id)+'\')"><div class="rd"></div><div class="tx"><b>'+esc(e.apelido||'Endereço')+'</b><small>'+ctEndTxt(e)+'</small></div><div class="ac"><button class="lk" onclick="event.stopPropagation();ctEndForm(\''+esc(e.id)+'\')">Editar</button></div></div>'; });
@@ -762,7 +770,7 @@ function ckResumo(){
   h+='<div style="margin-top:14px;font-size:13.5px"><div class="tt" style="padding:2px 0;font-size:14px;font-weight:600"><span>Subtotal</span><span>'+brl(sub)+'</span></div>'+(d.db>0?'<div class="tt" style="padding:2px 0;font-size:14px;font-weight:600;color:#4ade80"><span>Desconto do pedido programado</span><span>− '+brl(d.db)+'</span></div>':'')+(EN.modo==='entrega'?'<div class="tt" style="padding:2px 0;font-size:14px;font-weight:600"><span>Entrega</span><span style="color:#4ade80">Grátis</span></div>':'')+'<div class="tt" style="padding:6px 0 0"><span>Total</span><span>'+brl(tot)+'</span></div></div><div class="ce" id="ct-erro"></div></div>';
   h+='<div class="rod"><button class="bt c" id="ct-bt" onclick="ckPaga()">'+(fechado&&!pg?'Agendar pedido':(CK.pg==='dinheiro'?'Finalizar pedido · '+brl(tot):'Pagar '+brl(tot)+' com Pix'))+'</button></div>';
   abreFolha(h,true);
-  if(CK.anim){ CK.anim=0; var ei=$('ck-its'),bi=$('ck-vi'); if(bi) bi.textContent='− esconder itens'; setTimeout(function(){ if(ei){ ei.style.maxHeight='0px'; if(bi) bi.textContent='+ ver meus itens'; } },650); }
+  if(CK.anim){ CK.anim=0; var ei=$('ck-its'),sm=$('ck-sm'); setTimeout(function(){ if(ei){ ei.style.maxHeight='0px'; ei.style.opacity=0; } if(sm) sm.style.display='flex'; },380); }
 }
 function ckPaga(){
   var fechado=!estaAberto(), pg=fechado?progLer():null; if(fechado&&!pg){ abreAgenda(); return; }
@@ -871,9 +879,23 @@ function pedRepete(i){
   W=sv; sacGrava(); if(!n){ toast('Esses itens não estão mais no cardápio'); return; } abreSacola(); toast(perd?'Adicionado (alguns itens saíram do cardápio)':'Itens adicionados à sacola');
 }
 var PEDS=[];
+
+/* tela cheia + trava em pé (celular): navegador só permite depois do 1º toque */
+(function(){
+  var mob=('ontouchstart' in window)&&Math.min(screen.width,screen.height)<=820, feito=false;
+  function trava(){ try{ if(screen.orientation&&screen.orientation.lock) screen.orientation.lock('portrait').catch(function(){}); }catch(e){} }
+  trava();
+  if(!mob) return;
+  function tenta(){
+    if(feito) return; feito=true;
+    var el=document.documentElement, rq=el.requestFullscreen||el.webkitRequestFullscreen;
+    if(rq&&!document.fullscreenElement&&!window.matchMedia('(display-mode: standalone)').matches){ try{ var p=rq.call(el,{navigationUI:'hide'}); if(p&&p.then) p.then(trava).catch(function(){}); else trava(); }catch(e){} } else trava();
+  }
+  document.addEventListener('pointerup',tenta,{once:true,passive:true});
+})();
 var LMP=null;
 function sacLimpa(){ var b=$('lmp'); if(!b) return; if(!LMP){ b.textContent='Confirmar?'; b.classList.add('cf'); LMP=setTimeout(function(){ LMP=null; var c=$('lmp'); if(c){ c.textContent='Limpar sacola'; c.classList.remove('cf'); } },3000); return; } clearTimeout(LMP); LMP=null; SAC=[]; sacGrava(); abreSacola(); }
-function sacQ(j,d){ SAC[j].qty+=d; if(SAC[j].qty<=0) SAC.splice(j,1); else SAC[j].qty=Math.min(50,SAC[j].qty); sacGrava(); abreSacola(); }
+function sacQ(j,d){ SAC[j].qty+=d; if(SAC[j].qty<=0) SAC.splice(j,1); else SAC[j].qty=Math.min(50,SAC[j].qty); sacGrava(); if(CK.on&&SAC.length) ckKeep(); else abreSacola(); }
 
 /* ── cardápio: categorias (pai) → itens (filhos) ── */
 var ICO={
