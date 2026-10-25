@@ -70,6 +70,7 @@ html,body{margin:0;height:100%;background:#000;color:var(--tx);font-family:Inter
 .qt{display:flex;align-items:center;gap:2px;border:1px solid var(--line);border-radius:12px}.qt button{width:36px;height:42px;background:none;border:0;color:var(--pri2);font-size:20px;font-weight:800;cursor:pointer}.qt span{min-width:22px;text-align:center;font-weight:800}
 .bt{flex:1;height:48px;border:0;border-radius:12px;background:var(--pri);color:#fff;font-weight:800;font-size:15px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:0 16px}.bt:disabled{background:#3a3a42;color:#888}
 .bt.c{justify-content:center}
+.sed{margin-top:8px;background:transparent;border:1px solid var(--pri);color:var(--pri);border-radius:8px;padding:5px 14px;font-size:12.5px;font-weight:700;cursor:pointer}
 .wz textarea{width:100%;border-radius:12px;border:1px solid var(--line);background:#ffffff0f;color:#fff;padding:10px;font:inherit;font-size:14px;min-height:64px}
 .rs{font-size:13px;color:var(--mut);line-height:1.6;border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:12px}.rs b{color:#fff}
 .bg{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:9px;background:var(--pri);font-size:11px;font-weight:800;display:none;align-items:center;justify-content:center;padding:0 4px}
@@ -520,7 +521,7 @@ function wResumo(){
 function wRod(){
   var k=W.passos[W.passo], last=W.passo===W.passos.length-1, b=$('wbt'); if(!b) return;
   b.disabled=!wPode(k); $('wq').textContent=W.qty; artPreco();
-  b.innerHTML=last?'<span>Adicionar</span><span>'+brl(wUnit()*W.qty)+'</span>':'<span>Avançar</span>';
+  b.innerHTML=last?'<span>'+(W.edK!=null?'Salvar alterações':'Adicionar')+'</span><span>'+brl(wUnit()*W.qty)+'</span>':'<span>Avançar</span>';
 }
 function wTamSel(id){ W.tam=id; var mx=wMax(); if(W.sab.length>mx) W.sab=W.sab.slice(0,mx); wPinta(); }
 function wBorda(j){ W.borda=j; wPinta(); }
@@ -556,8 +557,26 @@ function wAdd2(){
     borda:W.borda!=null?bordas()[W.borda].nome:'',adds:W.add.map(function(j){return outros()[j].nome;}),obs:(W.obs||'').trim().slice(0,200),
     qty:W.qty,unit:wUnit(),kind:((p.tamanhos||[]).length||(p.sabores||[]).length)?'pizza':'item',tipo:tipoDesenho(p),balcao:W.sab.some(function(id){var s=sabPorId(id);return s&&s.balcao;})};
   it.k=JSON.stringify([it.p,it.tam,it.sab,it.borda,it.adds,it.obs]);
+  if(W.edK!=null&&SAC[W.edK]){
+    var oj=W.edK; SAC[oj]=it; var dup=-1; SAC.forEach(function(x,j){ if(j!==oj&&x.k===it.k) dup=j; });
+    if(dup>=0){ SAC[dup].qty=Math.min(50,SAC[dup].qty+it.qty); SAC.splice(oj,1); }
+    sacGrava(); abreSacola(); toast('Item atualizado'); return;
+  }
   var ex=SAC.filter(function(x){return x.k===it.k;})[0]; if(ex) ex.qty=Math.min(50,ex.qty+it.qty); else SAC.push(it);
-  sacGrava(); fechaSheet(); toast('Adicionado à sacola');
+  sacGrava(); sacPos();
+}
+function sacPos(){
+  var h='<div class="wb" style="text-align:center;padding:28px 20px 24px"><svg viewBox="0 0 24 24" width="46" height="46" fill="none" stroke="var(--pri)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg><div style="font-size:18px;font-weight:800;margin-top:10px">Adicionado à sacola!</div><div class="nt" style="margin-top:4px">O que você quer fazer agora?</div><div style="display:flex;flex-direction:column;gap:10px;margin-top:20px"><button class="bt c" style="flex:none;width:100%" onclick="abreSacola()">Finalizar pedido · '+brl(sacTotal())+'</button><button class="bt c" style="flex:none;width:100%;background:transparent;border:2px solid var(--pri);color:var(--pri)" onclick="abreMenu()">+ Adicionar mais itens</button></div></div>';
+  abreFolha(h);
+}
+function sacEdit(j){
+  var it=SAC[j]; if(!it) return; var p=D.produtos[it.p]; if(!p){ toast('Este produto não está mais disponível'); return; }
+  W={p:p,tam:null,sab:[],borda:null,add:[],qty:it.qty,obs:it.obs||'',passo:0,q:'',edK:j};
+  var tm=(p.tamanhos||[]).filter(function(t){return t.nome===it.tam;})[0]; if(tm) W.tam=tm.id; else if((p.tamanhos||[]).length===1) W.tam=p.tamanhos[0].id;
+  it.sab.forEach(function(n){ var s=(p.sabores||[]).filter(function(x){return x.nome===n;})[0]; if(s) W.sab.push(s.id); });
+  var bi=bordas().map(function(a){return a.nome;}).indexOf(it.borda); W.borda=(it.borda&&bi>=0)?bi:null;
+  var os=outros().map(function(a){return a.nome;}); it.adds.forEach(function(n){ var k=os.indexOf(n); if(k>=0) W.add.push(k); });
+  W.passos=wPassos(); W.passo=W.passos.length-1; wPinta(true);
 }
 
 /* ── sacola ── */
@@ -567,7 +586,7 @@ var XI='<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#fff
 function abreSacola(){
   var h='<div class="wh"><button class="bk" onclick="fechaSheet()">'+XI+'</button><b>Sua sacola</b>'+(SAC.length?'<button class="lmp" id="lmp" onclick="sacLimpa()">Limpar sacola</button>':'')+'</div><div class="wb">';
   if(!SAC.length) h+='<div class="nt" style="text-align:center;padding:30px 0">Sua sacola está vazia.<br>Toque num produto para começar.</div>';
-  SAC.forEach(function(i,j){ h+='<div class="sc"><div class="i"><b>'+esc(i.nome)+'</b><small>'+itemDesc(i)+'</small><div style="color:var(--pri);font-weight:800;margin-top:4px">'+brl(i.unit*i.qty)+'</div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px"><button class="sx" onclick="sacQ('+j+',-999)" title="Remover">'+XP+'</button><div class="qt"><button onclick="sacQ('+j+',-1)">−</button><span>'+i.qty+'</span><button onclick="sacQ('+j+',1)">+</button></div></div></div>'; });
+  SAC.forEach(function(i,j){ h+='<div class="sc"><div class="i"><b>'+esc(i.nome)+'</b><small>'+itemDesc(i)+'</small><div style="color:var(--pri);font-weight:800;margin-top:4px">'+brl(i.unit*i.qty)+'</div><button class="sed" onclick="sacEdit('+j+')">Editar</button></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px"><button class="sx" onclick="sacQ('+j+',-999)" title="Remover">'+XP+'</button><div class="qt"><button onclick="sacQ('+j+',-1)">−</button><span>'+i.qty+'</span><button onclick="sacQ('+j+',1)">+</button></div></div></div>'; });
   h+='</div>';
   if(SAC.length) h+='<div class="rod" style="flex-direction:column;align-items:stretch;gap:8px"><div class="tt" style="padding:0"><span>Subtotal</span><span>'+brl(sacTotal())+'</span></div><button class="bt c" style="flex:none;width:100%" onclick="toast(\'Finalizar pedido: chega no próximo passo\')">Continuar</button></div>';
   abreFolha(h,true);
