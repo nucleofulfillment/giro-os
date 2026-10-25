@@ -129,7 +129,16 @@ html,body{margin:0;height:100%;background:#000;color:var(--tx);font-family:Inter
 .art.big{flex:1 1 auto;min-height:300px}
 .art:before{content:"";position:absolute;inset:0;background-image:linear-gradient(#ffffff08 1px,transparent 1px),linear-gradient(90deg,#ffffff08 1px,transparent 1px);background-size:26px 26px;mask-image:radial-gradient(circle at 70% 50%,#000 20%,transparent 75%);-webkit-mask-image:radial-gradient(circle at 70% 50%,#000 20%,transparent 75%);pointer-events:none}
 .art .sv{position:relative;flex:1 1 58%;min-width:0}
-.art .pv{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000}
+.art.hv{flex-direction:row!important}
+.art.hv .pv{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000;z-index:0}
+.art.hv:before{display:none}
+.art.hv .sv{display:none}
+.art.hv .al{position:absolute;left:0;top:0;bottom:0;flex:none!important;width:auto!important;max-width:62%!important;order:0!important;flex-direction:column!important;flex-wrap:nowrap!important;align-items:flex-start!important;justify-content:flex-start!important;z-index:2;padding:12px 4px 58px 12px!important;background:none;overflow:auto}
+.art.hv .li{background:#000c;border:1.5px solid var(--pri);border-radius:999px;padding:5px 12px;width:fit-content;max-width:100%}
+.art.hv .ai0{display:none}
+.art.hv .infb{left:auto;right:12px}
+.art.hv .infp{left:10px;right:10px}
+
 .art svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 .art .al{position:relative;z-index:2;flex:0 0 38%;max-width:170px;padding:12px 4px 58px 14px;overflow:auto;font-size:12.5px;line-height:1.3;display:flex;flex-direction:column;gap:7px}
 .art.big{flex-direction:column}.art.big .sv{order:1;flex:1 1 auto;min-height:0}.art.big .al{order:2;flex:0 0 auto;max-width:none;width:100%;display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px;max-height:120px;padding:8px 14px 12px 56px}.art.big .li{border:1px solid var(--pri);border-radius:99px;padding:5px 12px;font-size:12.5px}
@@ -552,7 +561,7 @@ function wPinta(novo){
   var p=W.p, k=W.passos[W.passo], last=W.passo===W.passos.length-1, h='', i;
   h+='<div class="wh"><button class="bk" onclick="'+(W.passo?'wVolta()':'fechaSheet()')+'">'+(W.passo?'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 5l-7 7 7 7"/></svg>':'<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg>')+'</button><b>'+esc(p.nome)+'</b><span class="hp" id="artPr"></span></div>';
   h+='<div class="pg">'; for(i=0;i<W.passos.length;i++) h+='<i class="'+(i<=W.passo?'on':'')+'"></i>'; h+='</div>';
-  h+='<div class="art'+(k==='fim'?' big':'')+'"><div class="al">'+artLista()+'</div><div class="sv">'+(p.vid&&k!=='sab'?'<video class="pv" src="'+API+'/food/video/'+encodeURIComponent(D.cli||CLI)+'/'+encodeURIComponent(p.vid)+'" autoplay muted loop playsinline preload="auto"></video>':artSvg())+'</div>'+(p.desc?'<button class="infb" onclick="var q=document.getElementById(\'infp\');q.style.display=q.style.display===\'block\'?\'none\':\'block\'">+</button><div class="infp" id="infp" onclick="this.style.display=\'none\'">'+esc(p.desc)+'</div>':'')+'</div>';
+  h+='<div class="art'+(k==='fim'?' big':'')+(p.vid&&k!=='sab'?' hv':'')+'">'+(p.vid&&k!=='sab'?'<video class="pv" src="'+API+'/food/video/'+encodeURIComponent(D.cli||CLI)+'/'+encodeURIComponent(p.vid)+'" autoplay muted loop playsinline preload="auto"></video>':'')+'<div class="al">'+artLista()+'</div><div class="sv">'+(p.vid&&k!=='sab'?'':artSvg())+'</div>'+(p.desc?'<button class="infb" onclick="var q=document.getElementById(\'infp\');q.style.display=q.style.display===\'block\'?\'none\':\'block\'">+</button><div class="infp" id="infp" onclick="this.style.display=\'none\'">'+esc(p.desc)+'</div>':'')+'</div>';
   h+='<div class="wb'+(k==='fim'?' fm':'')+'" id="wb">';
   if(k==='tam'){
     h+='<div class="gt"><div><h4>Tamanho</h4><small>Escolha 1 opção</small></div><span class="tg ob">OBRIGATÓRIO</span></div>';
