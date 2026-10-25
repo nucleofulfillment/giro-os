@@ -192,7 +192,7 @@ function carregar(primeira){
   if(!CLI){ vazio('Link incompleto','Falta o código do restaurante no endereço (?c=...).'); return Promise.resolve(); }
   return fetch(API+'/food/cardapio/'+encodeURIComponent(CLI)).then(function(r){return r.json();}).then(function(d){
     if(!d||!d.ok){ if(primeira) vazio('Cardápio não encontrado',(d&&d.mensagem)||'Confira o link.'); return; }
-    if(primeira){ D=d; sacLer(); aplicaTema(); document.title=(d.empresa||'Cardápio'); $('emp').innerHTML=((d.cfg&&d.cfg.logo)?'<img class="lg" src="'+API+'/food/foto/'+encodeURIComponent(d.cli||CLI)+'/_logo?v='+(d.cfg.v||0)+'" alt="'+esc(d.empresa)+'" onerror="this.outerHTML=\''+esc(d.empresa).replace(/'/g,'')+'\'">':esc(d.empresa))+'<small id="stt"></small>'; pintaStatus(); manifesto(); iniciar(); }
+    if(primeira){ D=d; sacLer(); aplicaTema(); document.title=(d.empresa||'Cardápio'); $('emp').innerHTML=((d.cfg&&d.cfg.logo)?'<img class="lg" src="'+API+'/food/foto/'+encodeURIComponent(d.cli||CLI)+'/_logo?v='+(d.cfg.v||0)+'" alt="'+esc(d.empresa)+'" onerror="this.outerHTML=\''+esc(d.empresa).replace(/'/g,'')+'\'">':esc(d.empresa))+'<small id="stt"></small>'; pintaStatus(); try{ if(!estaAberto()&&!sessionStorage.getItem('lf_fcm_'+(d.cli||CLI))){ sessionStorage.setItem('lf_fcm_'+(d.cli||CLI),'1'); setTimeout(abreFechado,600); } }catch(e){} manifesto(); iniciar(); }
     else novoD=d;
   }).catch(function(){ if(primeira) vazio('Sem conexão','Não consegui abrir o cardápio. Tente de novo.'); });
 }
@@ -590,6 +590,7 @@ function abreSacola(){
   if(!SAC.length) h+='<div class="nt" style="text-align:center;padding:30px 0">Sua sacola está vazia.<br>Toque num produto para começar.</div>';
   SAC.forEach(function(i,j){ h+='<div class="sc"><div class="i"><b>'+esc(i.nome)+'</b><small>'+itemDesc(i)+'</small><div style="color:var(--pri);font-weight:800;margin-top:4px">'+brl(i.unit*i.qty)+'</div><button class="sed" onclick="sacEdit('+j+')">Editar</button></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px"><button class="sx" onclick="sacQ('+j+',-999)" title="Remover">'+XP+'</button><div class="qt"><button onclick="sacQ('+j+',-1)">−</button><span>'+i.qty+'</span><button onclick="sacQ('+j+',1)">+</button></div></div></div>'; });
   h+='</div>';
+  if(SAC.length&&!estaAberto()) h+='<div class="nt" style="text-align:center;padding:10px 16px 0;color:var(--pri2)">🕒 Pedido programado: entra com prioridade na fila e rende cupom de '+PROG_PCT+'% OFF</div>';
   if(SAC.length) h+='<div class="rod" style="flex-direction:column;align-items:stretch;gap:8px"><div class="tt" style="padding:0"><span>Subtotal</span><span>'+brl(sacTotal())+'</span></div><button class="bt c" style="flex:none;width:100%" onclick="toast(\'Finalizar pedido: chega no próximo passo\')">Continuar</button></div>';
   abreFolha(h,true);
 }
@@ -622,6 +623,24 @@ function estaAberto(){
   var y=h[(d+6)%7]; if(y&&y.on){ var ab2=mm(y.ab), fe2=mm(y.fe); if(ab2>fe2&&m<fe2) return true; }
   return false;
 }
+var PROG_PCT=10, DSEM=['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
+function proxAbertura(){
+  var h=D&&D.cfg&&D.cfg.horarios; if(!h||h.length!==7) return '';
+  var n=new Date(Date.now()-3*3600000), d=n.getUTCDay(), m=n.getUTCHours()*60+n.getUTCMinutes(), k, t;
+  function mm(s){ var a=String(s||'').split(':'); return (+a[0])*60+(+a[1]||0); }
+  for(k=0;k<=7;k++){ t=h[(d+k)%7]; if(!t||!t.on) continue; if(k===0&&mm(t.ab)<=m) continue; return (k===0?'hoje':(k===1?'amanhã':'na '+DSEM[(d+k)%7]))+' a partir das '+t.ab; }
+  return '';
+}
+function abreFechado(){
+  var q=proxAbertura();
+  var h='<div class="wb" style="text-align:center;padding:26px 20px 22px"><svg viewBox="0 0 24 24" width="46" height="46" fill="none" stroke="var(--pri)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6.5V12l3.5 2"/></svg>'
+   +'<div style="font-size:19px;font-weight:800;margin-top:10px">Estamos fechados agora</div>'
+   +(q?'<div class="nt" style="margin-top:4px">Abrimos '+esc(q)+'.</div>':'')
+   +'<div style="margin-top:16px;padding:14px;border:1px dashed var(--pri);border-radius:12px;background:#ffffff08"><b style="color:var(--pri2)">Reserve seu pedido agora e ganhe um cupom de '+PROG_PCT+'% OFF</b><div class="nt" style="margin-top:6px;font-size:13px">Pedido programado entra com <b>prioridade na fila</b> assim que abrirmos.</div></div>'
+   +'<div style="display:flex;flex-direction:column;gap:10px;margin-top:18px"><button class="bt c" style="flex:none;width:100%" onclick="progSim()">Reservar meu pedido</button><button class="bt c" style="flex:none;width:100%;background:transparent;border:2px solid #ffffff44;color:#fff" onclick="fechaSheet()">Só ver o cardápio</button></div></div>';
+  abreFolha(h);
+}
+function progSim(){ try{ localStorage.setItem('lf_prog_'+(D.cli||CLI),'1'); }catch(e){} fechaSheet(); abreMenu(); }
 function pintaStatus(){ var e=$('stt'); if(!e) return; var a=estaAberto(); e.textContent=a?'ABERTO':'FECHADO'; e.className=a?'ab':'fc'; }
 setInterval(function(){ try{ pintaStatus(); }catch(e){} },60000);
 function promoTag(p){ var d=p.promo; if(!d||!(d.valor>0)) return ''; return '<div><span class="tg">'+(d.tipo==='pct'?String(d.valor).replace('.',',')+'% OFF':'− '+brl(d.valor))+'</span></div>'; }
