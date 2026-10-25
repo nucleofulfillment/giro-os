@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Giro OS — Painel do ponto · GIRO-OS-065</title>
+<title>Giro OS — Painel do ponto · GIRO-OS-067</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -663,7 +663,7 @@ a{color:inherit}
 
       <!-- PEDIDOS -->
       <section class="page" id="pg-pedidos">
-        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-065</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
+        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega, por status · <span style="opacity:.6">GIRO-OS-067</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
         <div id="pd-chip"></div>
         <div class="card">
           <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
@@ -782,7 +782,7 @@ a{color:inherit}
 
       <!-- CARDÁPIO (1A): produtos, categorias e adicionais do restaurante -->
       <section class="page" id="pg-cardapio">
-        <div class="pghd"><div><h1>Cardápio</h1><div class="sub">produtos do seu restaurante · <span style="opacity:.6">GIRO-OS-065</span></div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn sec" onclick="cdAbrirCats()">Categorias</button><button class="btn sec" onclick="cdLinkCardapio()">🔗 Link do cardápio</button><button class="btn sec" onclick="cdAparencia()">🎨 Aparência</button><button class="btn sec" onclick="cdHorario()">🕒 Horário</button><button class="btn sec" onclick="cdPagamento()">💳 Pagamento</button><button class="btn sec" onclick="cdAbrirOfertas()">▶ Ofertas</button><button class="btn sec" onclick="cdAbrirImport()">Importar planilha</button><button class="btn pri" onclick="cdNovo()">+ Novo produto</button></div></div>
+        <div class="pghd"><div><h1>Cardápio</h1><div class="sub">produtos do seu restaurante · <span style="opacity:.6">GIRO-OS-067</span></div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn sec" onclick="cdAbrirCats()">Categorias</button><button class="btn sec" onclick="cdLinkCardapio()">🔗 Link do cardápio</button><button class="btn sec" onclick="cdAparencia()">🎨 Aparência</button><button class="btn sec" onclick="cdHorario()">🕒 Horário</button><button class="btn sec" onclick="cdAbrirOfertas()">▶ Ofertas</button><button class="btn sec" onclick="cdAbrirImport()">Importar planilha</button><button class="btn pri" onclick="cdNovo()">+ Novo produto</button></div></div>
         <div class="card">
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px"><input class="inp" id="cd-busca" placeholder="Buscar produto" oninput="cdPintar()" style="flex:1;min-width:200px"><select class="inp" id="cd-fcat" onchange="cdPintar()" style="width:210px;max-width:100%"></select></div>
           <div id="cd-selbar" style="display:none;align-items:center;gap:10px;flex-wrap:wrap;background:var(--s2);border-radius:12px;padding:8px 12px;margin-bottom:10px;font-size:13px"><span id="cd-seltxt" style="font-weight:700"></span><button class="btn pri sm" onclick="cdExibirOferta()">▶ Exibir oferta</button><button class="btn sec sm" onclick="cdLimparSel()">Limpar</button></div>
@@ -842,6 +842,7 @@ a{color:inherit}
           <div class="cfgcard" style="cursor:pointer;display:none" onclick="abrirCiclo()"><div class="ic">🔁</div><h4>Ciclo de repasse</h4><p>Define como o fechamento dos motoristas é feito: automático (semanal, quinzenal ou mensal) ou manual.</p><span class="badge b-in">configurar</span></div>
           <div class="cfgcard" style="cursor:pointer" onclick="abrirAreas()"><div class="ic">🗺️</div><h4>Áreas de entrega (regiões)</h4><p>Valor pago ao motorista por região (nome) ou por faixa de CEP. As regiões da planilha aparecem sozinhas.</p><span class="badge b-in">configurar</span></div>
           <div class="cfgcard"><div class="ic">💬</div><h4>WhatsApp</h4><p>Módulo opcional de conversa automática com motoristas e destinatários.</p><div style="display:flex;align-items:center;gap:10px"><label class="wa-sw" title="Ligar ou desligar o WhatsApp desta empresa"><input type="checkbox" id="wa-chk" onchange="waAlternar(this.checked)" disabled><span class="wa-bl"></span></label><span class="badge b-wt" id="wa-badge">carregando…</span></div></div>
+          <div class="cfgcard" style="cursor:pointer" onclick="cdPagamento()"><div class="ic">💳</div><h4>Configurar checkout</h4><p>Conecte a conta Asaas do restaurante para receber pedidos do cardápio digital por Pix e cartão. Cole a chave de API e teste a conexão.</p><span class="badge b-in">configurar</span></div>
         </div>
       </section>
 
@@ -5739,7 +5740,7 @@ function mpAplicarModo(){
   el('mp-diabar').style.display=(m==='vivo')?'contents':'none';
   el('mp-opbar').style.display=(m==='mapa')?'flex':'none'; el('mp-opmot').style.display='none'; el('mp-vivo').style.display=(m==='mapa')?'':'none';
   var rl=el('mp-ritmo'); if(rl&&rl.parentNode) rl.parentNode.style.display=(m==='vivo')?'':'none';
-  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-065';
+  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-067';
   if(m!=='mapa'){ mpPkTodos(false); el('mp-sempos').style.display='none'; el('mp-sempos-btn').style.display='none'; }
   if(m==='vivo'){ MP_ENQ=true; mpBuscar(); } else mpOperador();
 }
@@ -7227,7 +7228,7 @@ function cdHrSalvar(){
 /* ── pagamento: conta Asaas do restaurante (065) ── */
 function cdPagamento(){
   el('cd-imp-corpo').innerHTML='<div style="font-size:13px;color:var(--muted)">Carregando…</div>';
-  el('sh-import').querySelector('h3').textContent='Pagamento (Asaas)'; abrir('sh-import');
+  el('sh-import').querySelector('h3').textContent='Configurar checkout'; abrir('sh-import');
   fetch(DELTADIS_API+'/painel/pagamento',{headers:cdHdr()}).then(function(r){return r.json();}).then(function(d){
     if(!d||!d.ok) throw new Error((d&&d.mensagem)||'erro'); cdPgPintar(d);
   }).catch(function(e){ el('cd-imp-corpo').innerHTML='<div style="color:#f87171;font-size:13px">'+esc(e.message||'Não consegui abrir.')+'</div>'; });
@@ -7396,8 +7397,6 @@ function cdOfSalvar(){
   var it=cdOfColher(), er=el('cd-of-erro'); if(!it.nome){ er.textContent='Falta o nome da oferta.'; return; }
   if(!it.vid){ er.textContent='Escolha o vídeo da oferta.'; return; }
   if(!it.produtos.length){ er.textContent='Marque pelo menos um produto.'; return; }
-  var lk=it.txt.link; if(lk&&!/^(https?:\/\/|tel:|mailto:)/i.test(lk)&&!/^\+?[\d(][\d\s().-]{9,16}$/.test(lk)){ er.textContent='O link do botão precisa começar com https:// (ou ser só o número do WhatsApp com DDD).'; return; }
-  if(it.txt.botao&&!lk){ er.textContent='O botão precisa de um link (ou o número do WhatsApp).'; return; }
   if(!it.id) it.ordem=Date.now();
   var b=el('cd-of-salvar'); b.disabled=true; b.textContent='Salvando…'; er.textContent='';
   cdOfSalvarApi(it).then(function(){ b.disabled=false; b.textContent='Salvar'; CD.sel={}; return cdOfRecarregar(); }).then(function(){ aviso('Oferta salva'); cdAbrirOfertas(); })
