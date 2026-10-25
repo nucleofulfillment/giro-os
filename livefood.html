@@ -715,12 +715,16 @@ var CK={ped:null,tmr:null,pg:'pix'};
 function ckPg(m){ CK.pg=m; ckKeep(); }
 function ckCpfFmt(e){ var d=e.value.replace(/\D/g,'').slice(0,11); e.value=d.length>9?d.slice(0,3)+'.'+d.slice(3,6)+'.'+d.slice(6,9)+'-'+d.slice(9):d.length>6?d.slice(0,3)+'.'+d.slice(3,6)+'.'+d.slice(6):d.length>3?d.slice(0,3)+'.'+d.slice(3):d; }
 function ckDesc(sub,pg){ var g=D.cfg&&D.cfg.programado, r={db:0,bri:''}; if(pg&&g){ if(g.tipo==='pct') r.db=Math.round(sub*g.valor)/100; else if(g.tipo==='val') r.db=Math.min(sub,g.valor); else if(g.tipo==='item'&&D.produtos[g.item]) r.bri=D.produtos[g.item].nome; } return r; }
+function ckItens(){ var e=$('ck-its'),b=$('ck-vi'); if(!e) return; var ab=e.style.display==='none'; e.style.display=ab?'block':'none'; b.textContent=ab?'− esconder itens':'+ ver meus itens'; }
 function ckResumo(){
   var c=CT.conta||{}, sub=sacTotal(), fechado=!estaAberto(), pg=fechado?progLer():null, d=ckDesc(sub,pg), tot=Math.round((sub-d.db)*100)/100, h;
   var ends=c.enderecos||[]; if(EN.modo==='entrega'&&!ends.some(function(e){return e.id===EN.end;})) EN.end=ends.length?ends[0].id:'';
   h=ctCab('Finalizar pedido','abreSacola()')+'<div class="wb"><div style="margin:12px 0 0;font-size:15px">Olá, <b>'+esc(c.nome||'')+'</b>! <button class="lk" onclick="ctSair()">Não sou eu</button></div>';
+  var nIt=SAC.reduce(function(a,i){ return a+i.qty; },0);
+  h+='<div class="rsm" style="align-items:center"><div class="tx"><b>'+nIt+(nIt>1?' itens':' item')+'</b><small>Subtotal '+brl(sub)+'</small></div><button class="lk" id="ck-vi" onclick="ckItens()">+ ver meus itens</button></div><div id="ck-its" style="display:none">';
   SAC.forEach(function(i){ h+='<div class="rsm"><div class="tx"><b>'+i.qty+'× '+esc(i.nome)+'</b><small>'+itemDesc(i)+'</small></div><div class="vl">'+brl(i.unit*i.qty)+'</div></div>'; });
   if(d.bri) h+='<div class="rsm"><div class="tx"><b>1× '+esc(d.bri)+'</b><small>Brinde do pedido programado</small></div><div class="vl" style="color:#4ade80">Grátis</div></div>';
+  h+='</div>';
   h+='<div class="seg"><button class="'+(EN.modo==='entrega'?'on':'')+'" onclick="ctModo(\'entrega\')">🛵 Entrega</button><button class="'+(EN.modo==='retirada'?'on':'')+'" onclick="ctModo(\'retirada\')">🏪 Retirada</button></div>';
   if(EN.modo==='retirada') h+='<div class="nt" style="font-size:14px;color:#fff;margin-top:12px">Você retira o pedido no balcão do restaurante. Avisamos pelo WhatsApp quando estiver pronto.</div>';
   else { ends.forEach(function(e){ h+='<div class="ad'+(e.id===EN.end?' on':'')+'" onclick="ctSelEnd(\''+esc(e.id)+'\')"><div class="rd"></div><div class="tx"><b>'+esc(e.apelido||'Endereço')+'</b><small>'+ctEndTxt(e)+'</small></div><div class="ac"><button class="lk" onclick="event.stopPropagation();ctEndForm(\''+esc(e.id)+'\')">Editar</button></div></div>'; });
@@ -731,7 +735,7 @@ function ckResumo(){
   h+='<label class="cl">Observação do pedido (opcional)</label><textarea id="ck-obs" maxlength="300" placeholder="Ex.: tocar a campainha"></textarea>';
   h+='<label class="cl">Forma de pagamento</label><div class="ad'+(CK.pg==='pix'?' on':'')+'" onclick="ckPg(\'pix\')"><div class="rd"></div><div class="tx"><b>Pix</b><small>Aprovação na hora</small></div></div><div class="ad'+(CK.pg==='dinheiro'?' on':'')+'" onclick="ckPg(\'dinheiro\')"><div class="rd"></div><div class="tx"><b>Dinheiro</b><small>'+(EN.modo==='retirada'?'Pague na retirada':'Pague ao entregador')+'</small></div></div><div class="ad" style="cursor:default;opacity:.5"><div class="rd"></div><div class="tx"><b>Cartão de crédito</b><small>Em breve</small></div></div>';
   if(CK.pg==='dinheiro') h+='<label class="cl">Precisa de troco? Troco para quanto (opcional)</label><input class="cin" id="ck-tr" type="tel" inputmode="decimal" placeholder="Ex.: 50" maxlength="8">';
-  h+='<div style="margin-top:14px;font-size:13.5px"><div class="tt" style="padding:2px 0;font-size:14px;font-weight:600"><span>Subtotal</span><span>'+brl(sub)+'</span></div>'+(d.db>0?'<div class="tt" style="padding:2px 0;font-size:14px;font-weight:600;color:#4ade80"><span>Desconto do pedido programado</span><span>− '+brl(d.db)+'</span></div>':'')+'<div class="tt" style="padding:6px 0 0"><span>Total</span><span>'+brl(tot)+'</span></div></div><div class="ce" id="ct-erro"></div></div>';
+  h+='<div style="margin-top:14px;font-size:13.5px"><div class="tt" style="padding:2px 0;font-size:14px;font-weight:600"><span>Subtotal</span><span>'+brl(sub)+'</span></div>'+(d.db>0?'<div class="tt" style="padding:2px 0;font-size:14px;font-weight:600;color:#4ade80"><span>Desconto do pedido programado</span><span>− '+brl(d.db)+'</span></div>':'')+(EN.modo==='entrega'?'<div class="tt" style="padding:2px 0;font-size:14px;font-weight:600"><span>Entrega</span><span style="color:#4ade80">Grátis</span></div>':'')+'<div class="tt" style="padding:6px 0 0"><span>Total</span><span>'+brl(tot)+'</span></div></div><div class="ce" id="ct-erro"></div></div>';
   h+='<div class="rod"><button class="bt c" id="ct-bt" onclick="ckPaga()">'+(fechado&&!pg?'Agendar pedido':(CK.pg==='dinheiro'?'Finalizar pedido · '+brl(tot):'Pagar '+brl(tot)+' com Pix'))+'</button></div>';
   abreFolha(h,true);
 }
@@ -766,20 +770,26 @@ function ckOk(p){
 }
 
 /* ── Minha conta: dados, endereços, formas de pagamento e histórico de pedidos ── */
-function abreConta(){ CT.ctx='conta'; ctLer(); if(!CT.tok) return ctLogin(); ctApi('/food/conta',null,true).then(function(d){ if(d.ok){ CT.conta=d.conta; ctGrava(); contaTela(); } else if(d._http===401){ CT.tok=''; CT.conta=null; ctLogin(); } else if(CT.conta) contaTela(); else ctLogin(); }); }
+function abreConta(){ CT.ctx='conta'; CT.aba='pedidos'; ctLer(); if(!CT.tok) return ctLogin(); ctApi('/food/conta',null,true).then(function(d){ if(d.ok){ CT.conta=d.conta; ctGrava(); contaTela(); } else if(d._http===401){ CT.tok=''; CT.conta=null; ctLogin(); } else if(CT.conta) contaTela(); else ctLogin(); }); }
 var ST_PED={aguardando_pagto:['Aguardando pagamento','#fbbf24'],pago:['Pago','#4ade80'],novo:['Enviado','#4ade80'],expirado:['Pix expirado','#f87171'],cancelado:['Cancelado','#f87171']};
+function contaAba(a){ CT.aba=a; contaTela(); }
 function contaTela(){
-  var c=CT.conta||{nome:'',enderecos:[],cpf:''}, ends=c.enderecos||[], h=ctCab('Minha conta','fechaSheet()')+'<div class="wb">';
-  h+='<div class="cl" style="margin-top:16px">Meus dados</div><input class="cin" id="cc-nome" value="'+esc(c.nome||'')+'" maxlength="60" placeholder="Seu nome"><div class="nt" style="margin-top:8px;font-size:13px">WhatsApp: <b style="color:#fff">'+esc(ctFoneFmt(c.fone||CT.fone))+'</b></div><label class="cl">CPF'+(c.cpf?' (cadastrado: '+esc(c.cpf)+')':'')+'</label><input class="cin" id="cc-cpf" type="tel" inputmode="numeric" maxlength="14" placeholder="'+(c.cpf?'Digite só para trocar':'000.000.000-00')+'" oninput="ckCpfFmt(this)"><button class="bt c" style="flex:none;width:100%;margin-top:12px" id="cc-sv" onclick="contaSalva()">Salvar meus dados</button><div class="ce" id="ct-erro"></div>';
-  h+='<div class="cl" style="margin-top:22px">Meus endereços</div>';
-  if(!ends.length) h+='<div class="nt" style="font-size:13px">Nenhum endereço cadastrado.</div>';
-  ends.forEach(function(e){ h+='<div class="ad" style="cursor:default"><div class="tx"><b>'+esc(e.apelido||'Endereço')+'</b><small>'+ctEndTxt(e)+'</small></div><div class="ac"><button class="lk" onclick="ctEndForm(\''+esc(e.id)+'\')">Editar</button></div></div>'; });
-  h+='<button class="bt c" style="flex:none;width:100%;margin-top:12px;background:transparent;border:2px solid var(--pri);color:#fff" onclick="ctEndForm(\'novo\')">+ '+(ends.length?'Outro endereço':'Cadastrar endereço')+'</button>';
-  h+='<div class="cl" style="margin-top:22px">Formas de pagamento</div><div class="ad" style="cursor:default"><div class="tx"><b>Pix</b><small>Disponível em todos os pedidos</small></div></div><div class="ad" style="cursor:default"><div class="tx"><b>Dinheiro</b><small>Pague na entrega ou na retirada</small></div></div><div class="ad" style="cursor:default;opacity:.7"><div class="tx"><b>Cartões salvos</b><small>Nenhum cartão salvo. Em breve você poderá pagar com cartão e guardar para os próximos pedidos (guardamos só a bandeira e os 4 últimos números, nunca o número completo).</small></div></div>';
-  h+='<div class="cl" style="margin-top:22px">Histórico de pedidos</div><div id="cc-hist"><div class="nt" style="font-size:13px">Carregando…</div></div>';
-  h+='<div style="margin:24px 0 8px;text-align:center"><button class="lk" onclick="ctSair()">Sair da conta</button></div></div>';
-  abreFolha(h,true);
-  ctApi('/food/pedidos',null,true).then(function(r){ var e=$('cc-hist'); if(!e) return; if(!r.ok){ e.innerHTML='<div class="nt" style="font-size:13px">Não consegui carregar agora.</div>'; return; } if(!r.pedidos.length){ e.innerHTML='<div class="nt" style="font-size:13px">Você ainda não fez pedidos aqui.</div>'; return; }
+  var c=CT.conta||{nome:'',enderecos:[],cpf:''}, ends=c.enderecos||[], ab=CT.aba||'pedidos', h=ctCab('Minha conta','fechaSheet()')+'<div class="wb">';
+  h+='<div class="seg" style="margin-top:14px">'+[['pedidos','Pedidos'],['dados','Meus dados'],['pagto','Pagamento']].map(function(x){ return '<button class="'+(ab===x[0]?'on':'')+'" onclick="contaAba(\''+x[0]+'\')">'+x[1]+'</button>'; }).join('')+'</div>';
+  if(ab==='dados'){
+    h+='<div class="cl" style="margin-top:16px">Nome</div><input class="cin" id="cc-nome" value="'+esc(c.nome||'')+'" maxlength="60" placeholder="Seu nome"><div class="nt" style="margin-top:8px;font-size:13px">WhatsApp: <b style="color:#fff">'+esc(ctFoneFmt(c.fone||CT.fone))+'</b></div><label class="cl">CPF'+(c.cpf?' (cadastrado: '+esc(c.cpf)+')':'')+'</label><input class="cin" id="cc-cpf" type="tel" inputmode="numeric" maxlength="14" placeholder="'+(c.cpf?'Digite só para trocar':'000.000.000-00')+'" oninput="ckCpfFmt(this)"><button class="bt c" style="flex:none;width:100%;margin-top:12px" id="cc-sv" onclick="contaSalva()">Salvar meus dados</button><div class="ce" id="ct-erro"></div>';
+    h+='<div class="cl" style="margin-top:22px">Meus endereços</div>';
+    if(!ends.length) h+='<div class="nt" style="font-size:13px">Nenhum endereço cadastrado.</div>';
+    ends.forEach(function(e){ h+='<div class="ad" style="cursor:default"><div class="tx"><b>'+esc(e.apelido||'Endereço')+'</b><small>'+ctEndTxt(e)+'</small></div><div class="ac"><button class="lk" onclick="ctEndForm(\''+esc(e.id)+'\')">Editar</button></div></div>'; });
+    h+='<button class="bt c" style="flex:none;width:100%;margin-top:12px;background:transparent;border:2px solid var(--pri);color:#fff" onclick="ctEndForm(\'novo\')">+ '+(ends.length?'Outro endereço':'Cadastrar endereço')+'</button>';
+    h+='<div style="margin:24px 0 8px;text-align:center"><button class="lk" onclick="ctSair()">Sair da conta</button></div>';
+  } else if(ab==='pagto'){
+    h+='<div class="cl" style="margin-top:16px">Formas de pagamento</div><div class="ad" style="cursor:default"><div class="tx"><b>Pix</b><small>Disponível em todos os pedidos</small></div></div><div class="ad" style="cursor:default"><div class="tx"><b>Dinheiro</b><small>Pague na entrega ou na retirada</small></div></div><div class="ad" style="cursor:default;opacity:.7"><div class="tx"><b>Cartões salvos</b><small>Nenhum cartão salvo. Em breve você poderá pagar com cartão e guardar para os próximos pedidos (guardamos só a bandeira e os 4 últimos números, nunca o número completo).</small></div></div>';
+  } else {
+    h+='<div class="cl" style="margin-top:16px">Histórico de pedidos</div><div id="cc-hist"><div class="nt" style="font-size:13px">Carregando…</div></div>';
+  }
+  h+='</div>'; abreFolha(h,true);
+  if(ab==='pedidos') ctApi('/food/pedidos',null,true).then(function(r){ var e=$('cc-hist'); if(!e) return; if(!r.ok){ e.innerHTML='<div class="nt" style="font-size:13px">Não consegui carregar agora.</div>'; return; } if(!r.pedidos.length){ e.innerHTML='<div class="nt" style="font-size:13px">Você ainda não fez pedidos aqui.</div>'; return; }
     var x='';
     r.pedidos.forEach(function(p){ var st=ST_PED[p.status]||[p.status,'#9ca3af'], d=new Date(p.criado), dt=('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2)+' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
       x+='<div class="rsm"><div class="tx"><b>Pedido #'+p.num+'</b> <span style="color:'+st[1]+';font-size:12.5px;font-weight:700">· '+esc(st[0])+'</span><small>'+esc(dt)+' · '+(p.modo==='retirada'?'Retirada':'Entrega')+' · '+(p.pagto==='dinheiro'?'Dinheiro':'Pix')+(p.prog_dia?' · agendado '+esc(progFmt({dia:p.prog_dia,hora:p.prog_hora})):'')+'</small><small>'+esc(p.itens)+'</small></div><div class="vl">'+brl(p.total)+'</div></div>'; });
