@@ -95,6 +95,7 @@ html,body{margin:0;height:100%;background:#000;color:var(--tx);font-family:Inter
 .wz .ad{display:flex;gap:12px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px;cursor:pointer}.wz .ad.on{border:2px solid var(--pri)}
 .wz .ad .rd{flex:none;width:20px;height:20px;border-radius:50%;border:2px solid var(--mut)}.wz .ad.on .rd{border-color:var(--pri);background:radial-gradient(var(--pri) 45%,transparent 50%)}
 .wz .ad .tx{flex:1;min-width:0}.wz .ad small{display:block;color:var(--mut);font-size:12.5px;line-height:1.4;margin-top:2px}
+.wz .rsm{display:flex;gap:12px;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--line)}.wz .rsm .tx{flex:1;min-width:0}.wz .rsm small{display:block;color:var(--mut);font-size:12.5px;line-height:1.4;margin-top:2px}.wz .rsm .vl{font-weight:800;white-space:nowrap}
 .wz textarea{width:100%;border-radius:12px;border:1px solid var(--line);background:#ffffff0f;color:#fff;padding:10px;font:inherit;font-size:14px;min-height:64px}
 .rs{font-size:13px;color:var(--mut);line-height:1.6;border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:12px}.rs b{color:#fff}
 .bg{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:9px;background:var(--pri);font-size:11px;font-weight:800;display:none;align-items:center;justify-content:center;padding:0 4px}
@@ -688,7 +689,7 @@ function ctModo(m){ EN.modo=m; ctGrava(); ctEntrega(); }
 function ctSelEnd(id){ EN.end=id; ctGrava(); ctEntrega(); }
 function ctSegue(){
   if(EN.modo==='entrega'&&!EN.end){ ctErro('Cadastre ou escolha um endereço de entrega.'); return; } ctGrava();
-  toast('Dados salvos! O pagamento (Pix e cartão) chega no próximo passo.');
+  ckResumo();
 }
 function ctEndForm(id){
   var e={id:'',apelido:'',cep:'',rua:'',numero:'',compl:'',bairro:'',cidade:'',uf:'',ref:''}; if(id!=='novo'){ ((CT.conta||{}).enderecos||[]).forEach(function(x){ if(x.id===id) e=x; }); } CT.edit=id;
@@ -712,6 +713,53 @@ function ctSalvaLista(l,fn){
     if(r.ok){ var antes=(CT.conta||{}).enderecos||[]; CT.conta=r.conta; fn(r.conta.enderecos); ctGrava(); ctEntrega(); }
     else if(r._http===401){ CT.tok=''; ctLogin(); } else { if(b){ b.disabled=false; b.textContent='Salvar endereço'; } ctErro(r.mensagem||'Não salvou.'); }
   });
+}
+/* ── 5C: resumo do pedido, Pix e confirmação ── */
+var CK={ped:null,tmr:null};
+function ckCpfFmt(e){ var d=e.value.replace(/\D/g,'').slice(0,11); e.value=d.length>9?d.slice(0,3)+'.'+d.slice(3,6)+'.'+d.slice(6,9)+'-'+d.slice(9):d.length>6?d.slice(0,3)+'.'+d.slice(3,6)+'.'+d.slice(6):d.length>3?d.slice(0,3)+'.'+d.slice(3):d; }
+function ckDesc(sub,pg){ var g=D.cfg&&D.cfg.programado, r={db:0,bri:''}; if(pg&&g){ if(g.tipo==='pct') r.db=Math.round(sub*g.valor)/100; else if(g.tipo==='val') r.db=Math.min(sub,g.valor); else if(g.tipo==='item'&&D.produtos[g.item]) r.bri=D.produtos[g.item].nome; } return r; }
+function ckResumo(){
+  var c=CT.conta||{}, sub=sacTotal(), fechado=!estaAberto(), pg=fechado?progLer():null, d=ckDesc(sub,pg), tot=Math.round((sub-d.db)*100)/100, h, en=((c.enderecos||[]).filter(function(e){return e.id===EN.end;})[0]);
+  h=ctCab('Resumo do pedido','ctEntrega()')+'<div class="wb">';
+  SAC.forEach(function(i){ h+='<div class="rsm"><div class="tx"><b>'+i.qty+'× '+esc(i.nome)+'</b><small>'+itemDesc(i)+'</small></div><div class="vl">'+brl(i.unit*i.qty)+'</div></div>'; });
+  if(d.bri) h+='<div class="rsm"><div class="tx"><b>1× '+esc(d.bri)+'</b><small>Brinde do pedido programado</small></div><div class="vl" style="color:#4ade80">Grátis</div></div>';
+  h+='<div class="ad on" style="cursor:default;margin-top:14px"><div class="tx"><b>'+(EN.modo==='retirada'?'🏪 Retirada no balcão':'🛵 Entrega')+'</b>'+(EN.modo==='entrega'&&en?'<small>'+ctEndTxt(en)+'</small>':'')+'</div><div class="ac"><button class="lk" onclick="ctEntrega()">Alterar</button></div></div>';
+  if(fechado) h+=pg?'<div class="ad on" style="cursor:default"><div class="tx"><b>🕒 Pedido agendado</b><small>'+esc(progFmt(pg))+'</small></div><div class="ac"><button class="lk" onclick="abreAgenda()">Alterar</button></div></div>':'<div class="ad" style="cursor:default;border-color:#f87171"><div class="tx"><b>Estamos fechados agora</b><small>Agende o pedido para um horário em que estaremos abertos.</small></div></div>';
+  if(!c.cpf) h+='<label class="cl">Seu CPF (necessário para gerar o Pix)</label><input class="cin" id="ck-cpf" type="tel" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" oninput="ckCpfFmt(this)">';
+  else h+='<div class="nt">CPF do Pix: '+esc(c.cpf)+'</div>';
+  h+='<label class="cl">Observação do pedido (opcional)</label><textarea id="ck-obs" maxlength="300" placeholder="Ex.: tocar a campainha"></textarea>';
+  h+='<label class="cl">Forma de pagamento</label><div class="ad on" style="cursor:default"><div class="rd"></div><div class="tx"><b>Pix</b><small>Aprovação na hora</small></div></div><div class="ad" style="cursor:default;opacity:.5"><div class="rd"></div><div class="tx"><b>Cartão de crédito</b><small>Em breve</small></div></div>';
+  h+='<div style="margin-top:14px;font-size:13.5px"><div class="tt" style="padding:2px 0;font-size:14px;font-weight:600"><span>Subtotal</span><span>'+brl(sub)+'</span></div>'+(d.db>0?'<div class="tt" style="padding:2px 0;font-size:14px;font-weight:600;color:#4ade80"><span>Desconto do pedido programado</span><span>− '+brl(d.db)+'</span></div>':'')+'<div class="tt" style="padding:6px 0 0"><span>Total</span><span>'+brl(tot)+'</span></div></div><div class="ce" id="ct-erro"></div></div>';
+  h+='<div class="rod"><button class="bt c" id="ct-bt" onclick="ckPaga()">'+(fechado&&!pg?'Agendar pedido':'Pagar '+brl(tot)+' com Pix')+'</button></div>';
+  abreFolha(h,true);
+}
+function ckPaga(){
+  var fechado=!estaAberto(), pg=fechado?progLer():null; if(fechado&&!pg){ abreAgenda(); return; }
+  var ce=$('ck-cpf'), cpf=ce?ce.value.replace(/\D/g,''):''; if(ce&&cpf.length!==11){ ctErro('Digite os 11 números do CPF.'); return; }
+  var b=$('ct-bt'); b.disabled=true; b.textContent='Gerando o Pix…'; ctErro('');
+  ctApi('/food/pedido',{itens:SAC.map(function(i){ return {p:i.p,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs,qty:i.qty}; }),modo:EN.modo,end:EN.end,obs:($('ck-obs')||{value:''}).value,cpf:cpf||undefined,prog:pg||undefined}).then(function(r){
+    if(r.ok){ CK.ped=r.pedido; ckPix(); }
+    else if(r._http===401){ CT.tok=''; ctLogin(); }
+    else { b.disabled=false; b.textContent='Pagar com Pix'; ctErro(r.mensagem||'Não consegui criar o pedido.'); }
+  });
+}
+function ckPix(){
+  var p=CK.ped; if(!p) return;
+  abreFolha(ctCab('Pagar com Pix','fechaSheet()')+'<div class="wb" style="text-align:center"><div style="margin:14px 0 4px;font-size:15px">Pedido <b>#'+p.num+'</b> · <b>'+brl(p.total)+'</b></div>'+(p.pix_qr?'<img alt="QR Code Pix" src="data:image/png;base64,'+esc(p.pix_qr)+'" style="width:220px;height:220px;background:#fff;padding:8px;border-radius:14px;margin:10px auto;display:block">':'')+'<div class="nt" style="font-size:13.5px;color:#fff">Abra o app do seu banco, escolha <b>Pix</b> e leia o QR Code, ou use o código abaixo.</div><textarea id="ck-cod" readonly rows="3" style="margin-top:12px;font-size:12px">'+esc(p.pix_copia)+'</textarea><button class="bt c" style="flex:none;width:100%;margin-top:10px" onclick="ckCopia()">Copiar código Pix</button><div id="ck-st" style="margin-top:16px;font-size:14px;color:var(--pri2)">⏳ Aguardando o pagamento… confirmamos aqui sozinho.</div></div>',true);
+  clearInterval(CK.tmr); CK.tmr=setInterval(ckConfere,4000);
+}
+function ckCopia(){ var t=$('ck-cod'); if(!t) return; t.select(); var ok=false; try{ ok=document.execCommand('copy'); }catch(e){} if(navigator.clipboard&&!ok){ navigator.clipboard.writeText(t.value).then(function(){ toast('Código copiado'); },function(){}); return; } toast(ok?'Código copiado':'Segure e copie o código'); }
+function ckConfere(){
+  if(!$('ck-st')||!CK.ped){ clearInterval(CK.tmr); return; }
+  ctApi('/food/pedido/'+CK.ped.id,null,true).then(function(r){
+    if(!r.ok||!$('ck-st')) return;
+    if(r.pedido.status==='pago'){ clearInterval(CK.tmr); ckOk(r.pedido); }
+    else if(r.pedido.status==='expirado'){ clearInterval(CK.tmr); $('ck-st').innerHTML='O tempo do Pix acabou. <button class="lk" onclick="ckResumo()">Gerar um novo</button>'; }
+  });
+}
+function ckOk(p){
+  SAC=[]; sacGrava(); try{ localStorage.removeItem('lf_prog_'+(D.cli||CLI)); }catch(e){}
+  abreFolha('<div class="wb" style="text-align:center;padding:36px 20px 24px"><svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg><div style="font-size:22px;font-weight:800;margin-top:14px">Pedido #'+p.num+' confirmado!</div><div style="margin-top:8px;color:var(--mut);font-size:14.5px;line-height:1.5">Pagamento recebido: <b style="color:#fff">'+brl(p.total)+'</b>.<br>'+(p.prog_dia?'Agendado para <b style="color:#fff">'+esc(progFmt({dia:p.prog_dia,hora:p.prog_hora}))+'</b>, com prioridade na fila.':(p.modo==='retirada'?'Avisaremos quando estiver pronto para retirar.':'Já estamos preparando o seu pedido.'))+'</div></div><div class="rod"><button class="bt c" onclick="fechaSheet()">Voltar ao cardápio</button></div>',true);
 }
 var LMP=null;
 function sacLimpa(){ var b=$('lmp'); if(!b) return; if(!LMP){ b.textContent='Confirmar?'; b.classList.add('cf'); LMP=setTimeout(function(){ LMP=null; var c=$('lmp'); if(c){ c.textContent='Limpar sacola'; c.classList.remove('cf'); } },3000); return; } clearTimeout(LMP); LMP=null; SAC=[]; sacGrava(); abreSacola(); }
