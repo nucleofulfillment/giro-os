@@ -513,7 +513,7 @@ function artSvg(){
         h+='<defs>'+defs+'</defs>'+cont+top;
       }
     }
-  } else if(W.passos[W.passo]==='fim'&&p.foto){
+  } else if((W.passos[W.passo]==='fim'||(W.passos[W.passo]==='opc'&&!(p.sabores||[]).length))&&p.foto){
     var Rf=104, an0=!P.f; nx.f=1;
     h+='<g class="orb"><circle cx="'+cx+'" cy="'+cy+'" r="'+(Rf+15)+'" fill="none" stroke="#ffffff26" stroke-width="1" stroke-dasharray="3 8"/></g>'
       +'<g class="gl"><circle class="dr'+(an0?' an':'')+'" pathLength="1" cx="'+cx+'" cy="'+cy+'" r="'+Rf+'" fill="'+TC1+'14" stroke="'+TC1+'" stroke-width="2.6" transform="rotate(-90 '+cx+' '+cy+')"/><circle class="dr'+(an0?' an':'')+'" pathLength="1" cx="'+cx+'" cy="'+cy+'" r="'+(Rf-12)+'" fill="none" stroke="'+TC2+'" stroke-width="1.4" opacity=".8" transform="rotate(-90 '+cx+' '+cy+')"/></g>'
@@ -547,11 +547,8 @@ function sabPorId(id){ return (W.p.sabores||[]).filter(function(s){return s.id==
 function bordas(){ return (W.p.adicionais||[]).filter(ehBorda); }
 function outros(){ return (W.p.adicionais||[]).filter(function(a){return !ehBorda(a);}); }
 function wPassos(){
-  var p=W.p, s=[];
-  if((p.tamanhos||[]).length) s.push('tam');
-  if((p.sabores||[]).length) s.push('sab');
-  if(bordas().length) s.push('borda');
-  if(outros().length) s.push('add');
+  var p=W.p, s=[], hT=(p.tamanhos||[]).length, hS=(p.sabores||[]).length;
+  if(hS||hT||bordas().length||outros().length) s.push('opc');
   if(!s.length) s.push('fim'); return s;
 }
 function abreSheet(id){
@@ -561,34 +558,40 @@ function abreSheet(id){
   W.passos=wPassos(); wPinta(true);
 }
 function wTitulo(k){ return {tam:'Escolha o tamanho',sab:'Escolha os sabores',borda:'Escolha a borda',add:'Adicionais',fim:'Revise seu pedido'}[k]; }
-function wPode(k){ if(k==='tam') return !!W.tam; if(k==='sab') return W.sab.length>=1; return true; }
-function wPinta(novo){
-  var p=W.p, k=W.passos[W.passo], last=W.passo===W.passos.length-1, h='', i;
-  h+='<div class="wh"><button class="bk" onclick="'+(W.passo?'wVolta()':'fechaSheet()')+'">'+(W.passo?'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 5l-7 7 7 7"/></svg>':'<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg>')+'</button><b>'+esc(p.nome)+'</b><span class="hp" id="artPr"></span></div>';
-  h+='<div class="pg">'; for(i=0;i<W.passos.length;i++) h+='<i class="'+(i<=W.passo?'on':'')+'"></i>'; h+='</div>';
-  h+='<div class="art'+(k==='fim'?' big':'')+(p.vid&&k!=='sab'?' hv':'')+'">'+(p.vid&&k!=='sab'?'<video class="pv" src="'+API+'/food/video/'+encodeURIComponent(D.cli||CLI)+'/'+encodeURIComponent(p.vid)+'" autoplay muted loop playsinline preload="auto"></video>':'')+'<div class="al">'+artLista()+'</div><div class="sv">'+(p.vid&&k!=='sab'?'':artSvg())+'</div>'+(p.desc?'<button class="infb" onclick="var q=document.getElementById(\'infp\');q.style.display=q.style.display===\'block\'?\'none\':\'block\'">+</button><div class="infp" id="infp" onclick="this.style.display=\'none\'">'+esc(p.desc)+'</div>':'')+'</div>';
-  h+='<div class="wb'+(k==='fim'?' fm':'')+'" id="wb">';
-  if(k==='tam'){
+function wPode(k){ if(k==='opc'){ var q=W.p; if((q.tamanhos||[]).length&&!W.tam) return false; if((q.sabores||[]).length&&W.sab.length<1) return false; return true; } if(k==='tam') return !!W.tam; if(k==='sab') return W.sab.length>=1; return true; }
+function wCorpo(k){
+  var p=W.p, h='';
+  if(k==='tam'||(k==='opc'&&(p.tamanhos||[]).length)){ if(h&&k==='opc') h+='<div style="height:18px"></div>';
     h+='<div class="gt"><div><h4>Tamanho</h4><small>Escolha 1 opção</small></div><span class="tg ob">OBRIGATÓRIO</span></div>';
     p.tamanhos.forEach(function(t){ h+='<div class="op rd'+(W.tam===t.id?' on':'')+'" onclick="wTamSel(\''+esc(t.id)+'\')"><div class="nm2">'+esc(t.nome)+(t.max>1?'<small>até '+t.max+' sabores</small>':'')+'</div><span class="vl">'+precoHtml(p,t.preco)+'</span><span class="ck">'+(W.tam===t.id?'✓':'')+'</span></div>'; });
   }
-  if(k==='sab'){
+  if(k==='sab'||(k==='opc'&&(p.sabores||[]).length)){ if(h&&k==='opc') h+='<div style="height:18px"></div>';
     var mx=wMax();
     h+='<div class="gt"><div><h4>Sabores</h4><small>Escolha de 1 até '+mx+(mx>1?' · dividimos a pizza igualmente':'')+'</small></div><span class="tg ob" id="sbc">'+W.sab.length+' / '+mx+'</span></div>';
-    h+='<input class="busca" id="sbq" placeholder="Buscar sabor…" value="'+esc(W.q)+'" oninput="W.q=this.value;wLista()"><div id="sbl"></div>';
+    h+='<input class="busca" id="sbq" placeholder="Buscar sabor…" value="'+esc(W.q)+'" oninput="W.q=this.value;wLista()"><div id="sbl"'+(k==='opc'?' style="max-height:340px;overflow:auto;-webkit-overflow-scrolling:touch;border-radius:12px"':'')+'></div>';
   }
-  if(k==='borda'){
+  if(k==='borda'||(k==='opc'&&bordas().length)){ if(h&&k==='opc') h+='<div style="height:18px"></div>';
     h+='<div class="gt"><div><h4>Borda</h4><small>Escolha 1 opção</small></div><span class="tg">OPCIONAL</span></div>';
     h+='<div class="op rd'+(W.borda==null?' on':'')+'" onclick="wBorda(null)"><div class="nm2">Sem borda recheada</div><span class="ck">'+(W.borda==null?'✓':'')+'</span></div>';
     bordas().forEach(function(a,j){ h+='<div class="op rd'+(W.borda===j?' on':'')+'" onclick="wBorda('+j+')"><div class="nm2">'+esc(a.nome)+'</div><span class="vl">+ '+brl(a.preco)+'</span><span class="ck">'+(W.borda===j?'✓':'')+'</span></div>'; });
   }
-  if(k==='add'){
+  if(k==='add'||(k==='opc'&&outros().length)){ if(h&&k==='opc') h+='<div style="height:18px"></div>';
     h+='<div class="gt"><div><h4>Adicionais</h4><small>Escolha quantos quiser</small></div><span class="tg">OPCIONAL</span></div>';
     outros().forEach(function(a,j){ var on=W.add.indexOf(j)>=0; h+='<div class="op cb'+(on?' on':'')+'" onclick="wAdd('+j+')"><div class="nm2">'+esc(a.nome)+'</div><span class="vl">+ '+brl(a.preco)+'</span><span class="ck">'+(on?'✓':'')+'</span></div>'; });
   }
   if(k==='fim') h+=wResumo();
+  return h;
+}
+function wRef(){ var wb=$('wb'); if(!wb){ wPinta(); return; } var k=W.passos[W.passo], st=wb.scrollTop; wb.innerHTML=wCorpo(k); wb.scrollTop=st; if((W.p.sabores||[]).length&&$('sbl')) wLista(); artAtual(); wRod(); }
+function wPinta(novo){
+  var p=W.p, k=W.passos[W.passo], last=W.passo===W.passos.length-1, h='', i;
+  h+='<div class="wh"><button class="bk" onclick="'+(W.passo?'wVolta()':'fechaSheet()')+'">'+(W.passo?'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 5l-7 7 7 7"/></svg>':'<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg>')+'</button><b>'+esc(p.nome)+'</b><span class="hp" id="artPr"></span></div>';
+  h+='<div class="pg">'; for(i=0;i<W.passos.length;i++) h+='<i class="'+(i<=W.passo?'on':'')+'"></i>'; h+='</div>';
+  h+='<div class="art'+(k==='fim'?' big':'')+(p.vid&&!(p.sabores||[]).length?' hv':'')+'">'+(p.vid&&!(p.sabores||[]).length?'<video class="pv" src="'+API+'/food/video/'+encodeURIComponent(D.cli||CLI)+'/'+encodeURIComponent(p.vid)+'" autoplay muted loop playsinline preload="auto"></video>':'')+'<div class="al">'+artLista()+'</div><div class="sv">'+(p.vid&&!(p.sabores||[]).length?'':artSvg())+'</div>'+(p.desc?'<button class="infb" onclick="var q=document.getElementById(\'infp\');q.style.display=q.style.display===\'block\'?\'none\':\'block\'">+</button><div class="infp" id="infp" onclick="this.style.display=\'none\'">'+esc(p.desc)+'</div>':'')+'</div>';
+  h+='<div class="wb'+(k==='fim'?' fm':'')+'" id="wb">';
+  h+=wCorpo(k);
   h+='</div><div class="rod"><button class="vlt" type="button" onclick="'+(W.passo?'wVolta()':'fechaSheet()')+'">‹ Voltar</button><div class="qt"><button onclick="wQtd(-1)">−</button><span id="wq">'+W.qty+'</span><button onclick="wQtd(1)">+</button></div><button class="bt'+(last?'':' c')+'" id="wbt" onclick="wAvanca()"></button></div>';
-  abreFolha(h,true,true); W.prev=W.prevNx; W.prevL=W.nxL; if(k==='sab') wLista(); wRod();
+  abreFolha(h,true,true); W.prev=W.prevNx; W.prevL=W.nxL; if(k==='sab'||(k==='opc'&&(p.sabores||[]).length)) wLista(); wRod();
 }
 function wResumo(){
   var r='<textarea placeholder="Alguma observação? Ex.: sem cebola" oninput="W.obs=this.value">'+esc(W.obs)+'</textarea>';
@@ -600,9 +603,9 @@ function wRod(){
   b.disabled=!wPode(k); $('wq').textContent=W.qty; artPreco();
   b.innerHTML=last?'<span>'+(W.edK!=null?'Salvar alterações':'Adicionar')+'</span><span>'+brl(wUnit()*W.qty)+'</span>':'<span>Avançar</span>';
 }
-function wTamSel(id){ W.tam=id; var mx=wMax(); if(W.sab.length>mx) W.sab=W.sab.slice(0,mx); wPinta(); }
-function wBorda(j){ W.borda=j; wPinta(); }
-function wAdd(j){ var i=W.add.indexOf(j); if(i>=0) W.add.splice(i,1); else W.add.push(j); wPinta(); var wb=$('wb'); }
+function wTamSel(id){ W.tam=id; var mx=wMax(); if(W.sab.length>mx) W.sab=W.sab.slice(0,mx); wRef(); }
+function wBorda(j){ W.borda=j; wRef(); }
+function wAdd(j){ var i=W.add.indexOf(j); if(i>=0) W.add.splice(i,1); else W.add.push(j); wRef(); }
 function wQtd(d){ W.qty=Math.max(1,Math.min(50,W.qty+d)); wRod(); }
 function wVolta(){ W.passo=Math.max(0,W.passo-1); wPinta(); }
 function wAvanca(){ var k=W.passos[W.passo]; if(!wPode(k)) return; if(W.passo<W.passos.length-1){ W.passo++; wPinta(); } else if(k==='fim') wAdd2(); else wObsAbre(); }
@@ -839,7 +842,7 @@ function contaTela(){
   } else {
     h+='<div class="cl" style="margin-top:16px">Histórico de pedidos</div><div id="cc-hist"><div class="nt" style="font-size:13px">Carregando…</div></div>';
   }
-  h+='</div>'; abreFolha(h,true);
+  h+='</div>'; abreFolha(h,true,'fx');
   if(ab==='pedidos') ctApi('/food/pedidos',null,true).then(function(r){ var e=$('cc-hist'); if(!e) return; if(!r.ok){ e.innerHTML='<div class="nt" style="font-size:13px">Não consegui carregar agora.</div>'; return; } if(!r.pedidos.length){ e.innerHTML='<div class="nt" style="font-size:13px">Você ainda não fez pedidos aqui.</div>'; return; }
     var x=''; PEDS=r.pedidos;
     r.pedidos.forEach(function(p,i){ var st=ST_PED[p.status]||[p.status,'#9ca3af'], d=new Date(p.criado), dt=('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2)+' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2), ls=p.linhas||[], p0=ls[0]&&D.produtos[ls[0].p], im='';
