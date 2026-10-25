@@ -111,6 +111,7 @@ html,body{margin:0;height:100%;background:#000;color:var(--tx);font-family:Inter
 html.claro #sheet,html.claro #nav,html.claro #obsm .obc{filter:invert(1) hue-rotate(180deg)}
 html.claro #sheet img,html.claro #sheet video,html.claro #sheet [style*="url("],html.claro #sheet svg image,html.claro #sheet .pv,html.claro #obsm .obc img{filter:invert(1) hue-rotate(180deg)}
 html.claro #ovl{background:#0006}
+html.claro #sheet .bt:not(:disabled):not([style*="transparent"]),html.claro #sheet .acp,html.claro #sheet .tl .st.ok .dt,html.claro #nav .bg,html.claro #obsm .bt{color:#000!important}
 /* quadro da montagem (desenho/vídeo + lista de itens) continua escuro no tema claro */
 html.claro #sheet .art{filter:invert(1) hue-rotate(180deg)}
 html.claro #sheet .art img,html.claro #sheet .art video,html.claro #sheet .art svg image,html.claro #sheet .art [style*="url("]{filter:none}
@@ -143,6 +144,7 @@ html.claro #sheet .art img,html.claro #sheet .art video,html.claro #sheet .art s
 .art.big{flex:1 1 auto;min-height:300px}
 .art:before{content:"";position:absolute;inset:0;background-image:linear-gradient(#ffffff08 1px,transparent 1px),linear-gradient(90deg,#ffffff08 1px,transparent 1px);background-size:26px 26px;mask-image:radial-gradient(circle at 70% 50%,#000 20%,transparent 75%);-webkit-mask-image:radial-gradient(circle at 70% 50%,#000 20%,transparent 75%);pointer-events:none}
 .art .sv{position:relative;flex:1 1 58%;min-width:0}
+.art:not(.hv):not(.big) .sv{position:absolute;right:0;top:0;bottom:0;width:80%;flex:none}
 .art.hv{flex-direction:row!important}
 .art.hv .pv{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000;z-index:0}
 .art.hv:before{display:none}
@@ -500,7 +502,7 @@ function artSvg(){
   for(i=0;i<8;i++){ var tx=[18,240,30,250,120,200,10,262][i], ty=[30,40,230,240,10,262,140,150][i]; h+='<circle class="tw" cx="'+tx+'" cy="'+ty+'" r="1.3" fill="#fff" style="animation-delay:'+(i*.3)+'s"/>'; }
   var n=W.sab.length, r=0, idx=-1, ts=(p.tamanhos||[]).slice().sort(function(a,b){return a.preco-b.preco;});
   if(pizza){
-    if(t){ idx=ts.map(function(x){return x.id;}).indexOf(t.id); r=ts.length>1?76+30*(idx/(ts.length-1)):102; } else r=90;
+    if(t){ idx=ts.map(function(x){return x.id;}).indexOf(t.id); r=ts.length>1?84+30*(idx/(ts.length-1)):110; } else r=98;
     var sigT=t?t.id:'-', anT=sigT!==P.t; nx.t=sigT;
     h+='<g class="orb"><circle cx="'+cx+'" cy="'+cy+'" r="'+(r+15)+'" fill="none" stroke="#ffffff26" stroke-width="1" stroke-dasharray="3 8"/></g>';
     if(!t) h+='<circle class="pz" cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="#ffffff55" stroke-width="2" stroke-dasharray="6 7"/><text x="'+cx+'" y="'+(cy+11)+'" text-anchor="middle" fill="#ffffff66" font-size="32" font-weight="800">?</text>';
@@ -573,7 +575,7 @@ function wCorpo(k){
   var p=W.p, h='';
   if(k==='tam'||(k==='opc'&&(p.tamanhos||[]).length)){ if(h&&k==='opc') h+='<div style="height:18px"></div>';
     h+='<div class="gt"><div><h4>Tamanho</h4><small>Escolha 1 opção</small></div><span class="tg ob">OBRIGATÓRIO</span></div>';
-    p.tamanhos.forEach(function(t){ h+='<div class="op rd'+(W.tam===t.id?' on':'')+'" onclick="wTamSel(\''+esc(t.id)+'\')"><div class="nm2">'+esc(t.nome)+(t.max>1?'<small>até '+t.max+' sabores</small>':'')+'</div><span class="vl">'+precoHtml(p,t.preco)+'</span><span class="ck">'+(W.tam===t.id?'✓':'')+'</span></div>'; });
+    p.tamanhos.forEach(function(t){ h+='<div class="op rd'+(W.tam===t.id?' on':'')+'" onclick="wTamSel(\''+esc(t.id)+'\')"><div class="nm2">'+esc(t.nome)+((t.med||t.max>1)?'<small>'+(t.med?esc(t.med):'')+(t.med&&t.max>1?' · ':'')+(t.max>1?'até '+t.max+' sabores':'')+'</small>':'')+'</div><span class="vl">'+precoHtml(p,t.preco)+'</span><span class="ck">'+(W.tam===t.id?'✓':'')+'</span></div>'; });
   }
   if(k==='sab'||(k==='opc'&&(p.sabores||[]).length)){ if(h&&k==='opc') h+='<div style="height:18px"></div>';
     var mx=wMax();
@@ -754,7 +756,22 @@ function ctSegue(){
 function ctEndForm(id){
   var e={id:'',apelido:'',cep:'',rua:'',numero:'',compl:'',bairro:'',cidade:'',uf:'',ref:''}; if(id!=='novo'){ ((CT.conta||{}).enderecos||[]).forEach(function(x){ if(x.id===id) e=x; }); } CT.edit=id;
   function f(k,l,ph,ex){ return '<label class="cl">'+l+'</label><input class="cin" id="ce-'+k+'" value="'+esc(e[k])+'" placeholder="'+ph+'" '+(ex||'')+'>'; }
-  abreFolha(ctCab(id==='novo'?'Novo endereço':'Editar endereço','ctEntrega()')+'<div class="wb">'+f('cep','CEP','00000-000','inputmode="numeric" maxlength="9" oninput="ctCep(this)"')+f('rua','Rua','Rua / avenida')+'<div style="display:flex;gap:10px"><div style="flex:1">'+f('numero','Número','123')+'</div><div style="flex:2">'+f('compl','Complemento','Apto, bloco (opcional)')+'</div></div>'+f('bairro','Bairro','Bairro')+'<div style="display:flex;gap:10px"><div style="flex:3">'+f('cidade','Cidade','Cidade')+'</div><div style="flex:1">'+f('uf','UF','SC','maxlength="2"')+'</div></div>'+f('ref','Ponto de referência','Opcional: portão azul, próximo à praça')+f('apelido','Nome do endereço','Casa, Trabalho (opcional)')+'<div class="ce" id="ct-erro"></div>'+(id!=='novo'?'<div style="margin-top:12px"><button class="lk" style="color:#f87171" onclick="ctEndDel(\''+esc(id)+'\')">Excluir este endereço</button></div>':'')+'</div><div class="rod"><button class="bt c" id="ct-bt" onclick="ctEndSalva()">Salvar endereço</button></div>',true);
+  abreFolha(ctCab(id==='novo'?'Novo endereço':'Editar endereço','ctEntrega()')+'<div class="wb">'+(id==='novo'?'<div class="ad on" style="cursor:default;margin-top:12px;flex-direction:column;align-items:stretch;gap:8px"><div class="tx"><b>Usar sua localização atual?</b><small>Preenchemos o endereço para você. É só conferir o número.</small></div><button class="bt c" id="ct-loc" type="button" style="flex:none;width:100%" onclick="ctLocUsar()">📍 Usar minha localização atual</button></div>':'')+f('cep','CEP','00000-000','inputmode="numeric" maxlength="9" oninput="ctCep(this)"')+f('rua','Rua','Rua / avenida')+'<div style="display:flex;gap:10px"><div style="flex:1">'+f('numero','Número','123')+'</div><div style="flex:2">'+f('compl','Complemento','Apto, bloco (opcional)')+'</div></div>'+f('bairro','Bairro','Bairro')+'<div style="display:flex;gap:10px"><div style="flex:3">'+f('cidade','Cidade','Cidade')+'</div><div style="flex:1">'+f('uf','UF','SC','maxlength="2"')+'</div></div>'+f('ref','Ponto de referência','Opcional: portão azul, próximo à praça')+f('apelido','Nome do endereço','Casa, Trabalho (opcional)')+'<div class="ce" id="ct-erro"></div>'+(id!=='novo'?'<div style="margin-top:12px"><button class="lk" style="color:#f87171" onclick="ctEndDel(\''+esc(id)+'\')">Excluir este endereço</button></div>':'')+'</div><div class="rod"><button class="bt c" id="ct-bt" onclick="ctEndSalva()">Salvar endereço</button></div>',true);
+}
+
+function ctLocUsar(){
+  var b=$('ct-loc'), er=$('ct-erro'); if(!navigator.geolocation){ if(er) er.textContent='Seu aparelho não permite usar a localização.'; return; }
+  b.disabled=true; b.textContent='Buscando sua localização…'; if(er) er.textContent='';
+  function volta(m){ b.disabled=false; b.textContent='📍 Usar minha localização atual'; if(er&&m) er.textContent=m; }
+  navigator.geolocation.getCurrentPosition(function(pos){
+    fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&accept-language=pt-BR&lat='+pos.coords.latitude+'&lon='+pos.coords.longitude).then(function(r){ return r.json(); }).then(function(v){
+      var a=(v&&v.address)||{}; if(!a.road&&!a.suburb&&!a.city&&!a.town){ volta('Não consegui achar o endereço aqui. Digite o CEP.'); return; }
+      var uf=String(a['ISO3166-2-lvl4']||'').replace(/^BR-/,'').slice(0,2), set=function(k,val){ var x=$('ce-'+k); if(x&&val) x.value=val; };
+      set('rua',a.road||a.pedestrian||''); set('numero',a.house_number||''); set('bairro',a.suburb||a.neighbourhood||a.quarter||''); set('cidade',a.city||a.town||a.village||a.municipality||''); set('uf',uf);
+      var cp=$('ce-cep'); if(cp&&a.postcode){ cp.value=a.postcode; ctCep(cp); }
+      volta(''); b.textContent='✓ Localização preenchida. Confira e ajuste o número'; var n=$('ce-numero'); if(n&&!n.value) n.focus();
+    }).catch(function(){ volta('Não consegui buscar o endereço. Digite o CEP.'); });
+  },function(er2){ volta(er2&&er2.code===1?'Localização bloqueada. Libere nas permissões do navegador ou digite o CEP.':'Não consegui pegar sua localização. Digite o CEP.'); },{enableHighAccuracy:true,timeout:12000,maximumAge:60000});
 }
 function ctCep(i){
   var d=i.value.replace(/\D/g,'').slice(0,8); i.value=d.length>5?d.slice(0,5)+'-'+d.slice(5):d;
