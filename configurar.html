@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Giro OS — Configurar cardápio · GIRO-OS-CONFIG-02</title>
+<title>Giro OS — Configurar cardápio · GIRO-OS-CONFIG-03</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -161,14 +161,14 @@ body.lgon #wz{display:none}
       <div style="display:flex;gap:10px"><button class="btn pri wide" id="lgB" style="flex:1;width:auto" onclick="entrar()">Entrar</button></div>
       
       <p class="demo" id="lgM" style="color:#c0392b;font-weight:700;min-height:18px"></p>
-      <p class="bld">GIRO-OS-CONFIG-02</p>
+      <p class="bld">GIRO-OS-CONFIG-03</p>
     </div>
   </div>
 </div>
 
 <!-- ══════════ APP ══════════ -->
 <div id="wz">
-  <div class="wtop"><img id="wlogo" alt="" style="display:none"><b id="wemp">Seu restaurante</b><small>GIRO-OS-CONFIG-02</small></div>
+  <div class="wtop"><img id="wlogo" alt="" style="display:none"><b id="wemp">Seu restaurante</b><small>GIRO-OS-CONFIG-03</small></div>
   <div class="wbar"><i id="wbar"></i></div>
 
   <div class="wc" id="w0"><h2>Vamos montar seu cardápio</h2><p>Olá<span id="w0n"></span>! Tire foto do cardápio de papel e eu cadastro os produtos, as categorias e os preços para você. Leva poucos minutos.</p><p id="w0t" style="font-weight:700"></p><div class="er" id="w0e"></div>
@@ -347,6 +347,7 @@ function fotosAbre(auto){
   api('/painel/cardapio').then(function(d){
     if(d._h===401||d._h===403){ if(auto) passo(5); else mostraLogin('Entre de novo.'); return; }
     PR=(d.prods||[]); $('w6e').textContent=''; $('w6b').value=''; fotosPinta(); passo(PR.length?6:5);
+    PR.forEach(function(p){ if((p.sabores||[]).some(function(x){ return x.foto; })) api('/painel/cardapio-fotos?prod='+encodeURIComponent(p.id)).then(function(r){ var m=(r&&r.fotos)||{}; (p.sabores||[]).forEach(function(x){ if(m[x.id]) x._p=m[x.id]; }); fotosPinta(); }); });
   });
 }
 function fotosPinta(){
