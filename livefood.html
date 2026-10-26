@@ -807,7 +807,7 @@ function ctEntrega(){ if(CT.ctx==='conta') contaTela(); else if(CT.ctx==='mesa')
 function ctModo(m){ EN.modo=m; ctGrava(); ctEntrega(); }
 function ctSelEnd(id){ EN.end=id; ctGrava(); ctEntrega(); }
 function ctSegue(){
-  if(EN.modo==='entrega'&&!EN.end){ ctErro('Cadastre ou escolha um endereço de entrega.'); return; } ctGrava();
+  if(EN.modo==='entrega'&&!EN.end){ ckSemEnd(); return; } ctGrava();
   ckResumo();
 }
 function ctEndForm(id){
@@ -940,6 +940,11 @@ function ckResumo(){
   h+='<div class="rod"><button class="bt c" id="ct-bt" '+(!fq.ok?'disabled ':'')+'onclick="ckPaga()">'+(!fq.ok?'Fora da área de entrega':fechado&&!pg?'Agendar pedido':(CK.pg==='conta'?'Fazer pedido · '+brl(tot):CK.pg==='dinheiro'?'Finalizar pedido · '+brl(tot):CK.pg==='cartao'?'Pagar '+brl(tot)+' no cartão':'Pagar '+brl(tot)+' com Pix'))+'</button></div>';
   abreFolha(h,true);
   if(CK.anim){ CK.anim=0; var ei=$('ck-its'),sm=$('ck-sm'); if(ei) void ei.offsetHeight; requestAnimationFrame(function(){ if(ei){ ei.style.maxHeight='0px'; ei.style.opacity=0; } if(sm) sm.style.display='flex'; }); }
+}
+function ckSemEnd(){
+  ctErro('Cadastre ou escolha um endereço de entrega.'); toast('Falta o endereço de entrega. Toque em "Cadastrar endereço".');
+  var bs=document.querySelectorAll('#sheet button'), i, alvo=null; for(i=0;i<bs.length;i++){ if((bs[i].getAttribute('onclick')||'').indexOf("ctEndForm('novo')")>=0){ alvo=bs[i]; break; } }
+  if(alvo){ try{ alvo.scrollIntoView({block:'center',behavior:'smooth'}); }catch(e){} alvo.style.transition='transform .12s'; var n=0, t=setInterval(function(){ alvo.style.transform=(n%2?'translateX(6px)':'translateX(-6px)'); if(++n>5){ clearInterval(t); alvo.style.transform=''; } },90); }
 }
 function ckPaga(){
   var fechado=!estaAberto(), pg=fechado?progLer():null; if(fechado&&!pg){ abreAgenda(); return; }
