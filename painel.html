@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Giro OS — Painel do ponto · GIRO-OS-083</title>
+<title>Giro OS — Painel do ponto · GIRO-OS-084</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -1991,11 +1991,13 @@ function srvCarregar(){
     if(d.vazio){
       if(temLocal && LOCAL_CLI && !localMesmo){ srvLimparMemoria(); repintarTudo(); temLocal=false; }
       if(temLocal){
-        var n=PEDIDOS.length;
-        srvStatus('☁ aguardando envio',true);
-        srvBarra('Dados deste navegador ainda não estão no servidor','Encontrei '+n+' pedidos e '+MOTORISTAS.length+' motoristas guardados aqui. Envie para o servidor para eles ficarem disponíveis em qualquer lugar e não se perderem.',
-          [{t:'Enviar para o servidor',pri:1,js:'srvMigrar()'},{t:'Baixar backup',js:'baixarBackup()'}]);
-        return;
+        if(d.trial && !localMesmo){   /* conta de teste nova: não recebe os dados guardados de outra conta neste navegador */
+          srvStatus('☁ aguardando',true);
+          srvBarra('Este navegador tem dados de outra conta','Há '+PEDIDOS.length+' pedidos e '+MOTORISTAS.length+' motoristas guardados aqui que não são desta conta. Baixe o backup se quiser guardá-los e depois limpe para continuar.',
+            [{t:'Baixar backup',pri:1,js:'baixarBackup()'},{t:'Limpar e continuar',js:'srvLimparEsta()'}]);
+          return;
+        }
+        srvMigrarAuto(); return;   /* os dados deste navegador vão para o servidor sozinhos, sem perguntar */
       }
       SRV.pronto=true; srvStatus('☁ salvo'); return;
     }
@@ -2299,6 +2301,11 @@ setInterval(dedupeScan,30000); setTimeout(dedupeScan,7000);
 function pontoNomeCarregar(){ if(!REAL || !DD_TOKEN) return; fetch(DELTADIS_API+'/mesa/ponto',{cache:'no-store'}).then(function(r){ return r.json(); }).then(function(d){ if(d && d.ok && d.nome) PONTO_NOME=d.nome; }).catch(function(){}); }
 setTimeout(pontoNomeCarregar,3000); setInterval(pontoNomeCarregar,600000);
 
+function srvLimparEsta(){ srvBarraFechar(); srvLimparMemoria(); SRV.pronto=true; salvarLocal(); repintarTudo(); srvStatus('☁ salvo'); }
+function srvMigrarAuto(){
+  SRV.pronto=true; srvStatus('☁ enviando…');
+  srvEnviar(function(ok){ if(ok){ srvStatus('☁ salvo'); } else srvBarra('Não consegui enviar os dados para o servidor','Sem conexão ou erro no servidor. Tento de novo sozinho; você também pode tentar agora.',[{t:'Tentar de novo',pri:1,js:'srvBarraFechar();srvMigrarAuto()'},{t:'Baixar backup',js:'baixarBackup()'}]); });
+}
 function srvMigrar(){
   srvBarraFechar(); SRV.pronto=true; aviso('Enviando seus dados para o servidor...');
   srvEnviar(function(ok){ if(ok) aviso('Pronto! Seus dados agora estão guardados no servidor.'); else srvBarra('Não consegui enviar','Sem conexão ou erro no servidor. Tento de novo sozinho; você também pode tentar agora.',[{t:'Tentar de novo',pri:1,js:'srvBarraFechar();srvEnviar(function(o){aviso(o?\'Dados enviados!\':\'Ainda não consegui.\');})'},{t:'Baixar backup',js:'baixarBackup()'}]); });
