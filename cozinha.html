@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Giro OS — Cozinha · GIRO-OS-COZINHA-01</title>
+<style>
+:root{--bg:#0c0c0f;--card:#17171c;--line:#2a2a33;--txt:#f4f4f6;--mut:#9aa0ab;--novo:#ef4444;--prep:#f59e0b;--pron:#22c55e;--pri:#f97316}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+button{font:inherit;cursor:pointer;border:0;color:inherit}
+#top{display:flex;align-items:center;gap:12px;padding:10px 16px;background:#111116;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+#top h1{font-size:19px;font-weight:800;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#top h1 small{font-size:11px;color:var(--mut);font-weight:600;margin-left:8px}
+#top .ib{background:#22222a;border-radius:10px;padding:9px 13px;font-size:14px;font-weight:700}
+#top .ib.on{background:var(--pri);color:#000}
+#rel{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}
+#cols{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:14px;align-items:start}
+.col h2{font-size:15px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;padding:8px 12px;border-radius:10px;margin-bottom:10px;display:flex;justify-content:space-between;color:#000}
+.col.n h2{background:var(--novo);color:#fff}.col.p h2{background:var(--prep)}.col.r h2{background:var(--pron)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px;margin-bottom:12px}
+.card.novo{border-color:var(--novo);animation:pisca 1.6s ease-in-out infinite}
+@keyframes pisca{50%{box-shadow:0 0 0 3px #ef444455}}
+.hd{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.tag{font-size:13px;font-weight:800;border-radius:9px;padding:4px 10px;background:#2c2c36}
+.tag.mesa{background:#7c3aed;color:#fff}.tag.ent{background:#0ea5e9;color:#fff}.tag.ret{background:#14b8a6;color:#000}.tag.ag{background:#f59e0b;color:#000}
+.num{font-size:20px;font-weight:800}
+.tm{margin-left:auto;font-size:15px;font-weight:800;font-variant-numeric:tabular-nums}
+.tm.w{color:var(--prep)}.tm.d{color:var(--novo)}
+.nm{font-size:12.5px;color:var(--mut);margin-bottom:6px}
+.it{display:flex;gap:11px;padding:9px 0;border-top:1px solid var(--line)}
+.it:first-of-type{border-top:0}
+.ft{flex:none;width:76px;height:76px;border-radius:12px;background:#24242c center/cover no-repeat;display:flex;align-items:center;justify-content:center;font-size:30px}
+.ft.m{display:grid;grid-template-columns:1fr 1fr;gap:2px;background:none;padding:0}.ft.m i{background:#24242c center/cover no-repeat;border-radius:7px}
+.tx{flex:1;min-width:0}
+.tx b{font-size:19px;line-height:1.25;display:block}
+.tx b em{font-style:normal;color:var(--pri);margin-right:6px}
+.tx div{font-size:15px;color:#d7d9de;line-height:1.4;margin-top:2px}
+.tx .ad{color:#86efac;font-weight:700}
+.tx .ob{background:#fde047;color:#000;font-weight:800;border-radius:8px;padding:3px 8px;display:inline-block;margin-top:4px}
+.po{background:#fde047;color:#000;font-weight:800;border-radius:10px;padding:8px 10px;margin-top:8px;font-size:15px}
+.bt{width:100%;margin-top:10px;padding:15px;border-radius:13px;font-size:18px;font-weight:800;color:#000}
+.bt.n{background:var(--prep)}.bt.p{background:var(--pron)}.bt.r{background:#2c2c36;color:#fff;font-size:15px;padding:12px}
+.un{display:block;margin:8px auto 0;background:none;color:var(--mut);font-size:13px;text-decoration:underline}
+.vz{border:2px dashed var(--line);border-radius:14px;padding:22px;text-align:center;color:var(--mut);font-size:14.5px}
+#lg{position:fixed;inset:0;background:var(--bg);display:none;align-items:center;justify-content:center;padding:24px;z-index:20}
+#lg .bx{width:100%;max-width:360px;display:flex;flex-direction:column;gap:12px}
+#lg h2{font-size:24px}#lg p{color:var(--mut);font-size:14px}
+#lg input{padding:14px;border-radius:12px;border:1px solid var(--line);background:#1b1b22;color:var(--txt);font-size:17px}
+#lg button{padding:15px;border-radius:12px;background:var(--pri);color:#000;font-size:17px;font-weight:800}
+#lg .er{color:#f87171;font-size:14px;min-height:18px}
+#som{position:fixed;inset:0;background:#000c;display:none;align-items:center;justify-content:center;z-index:15}
+#som button{padding:22px 34px;border-radius:18px;background:var(--pri);color:#000;font-size:21px;font-weight:800}
+@media(max-width:900px){#cols{grid-template-columns:1fr}.col h2{position:sticky;top:58px;z-index:3}}
+</style>
+</head>
+<body>
+<div id="top"><h1 id="emp">Cozinha<small>GIRO-OS-COZINHA-01</small></h1><span id="rel"></span><button class="ib" id="bSom" onclick="somAlterna()">🔔 Som</button><button class="ib" onclick="telaCheia()">⛶</button><button class="ib" onclick="sair()">Sair</button></div>
+<div id="cols"><div class="col n"><h2><span>Novos</span><span id="cN">0</span></h2><div id="lN"></div></div><div class="col p"><h2><span>Em preparo</span><span id="cP">0</span></h2><div id="lP"></div></div><div class="col r"><h2><span>Prontos</span><span id="cR">0</span></h2><div id="lR"></div></div></div>
+<div id="lg"><div class="bx"><h2>Cozinha</h2><p>Entre com o e-mail e a senha do restaurante (ou de um usuário da cozinha).</p><input id="lgE" type="email" placeholder="E-mail" autocomplete="username"><input id="lgS" type="password" placeholder="Senha" autocomplete="current-password" onkeydown="if(event.key==='Enter')entrar()"><div class="er" id="lgM"></div><button id="lgB" onclick="entrar()">Entrar</button></div></div>
+<div id="som"><button onclick="somLiga()">🔔 Toque para ativar o som dos pedidos</button></div>
+<script>
+var API='https://giro-os-api.nucleofull.workers.dev', TK='', CLI='', OFF=0, PED=[], BUSY=0, VISTO={}, INIT=0, SOM=true, AC=null;
+try{ TK=localStorage.getItem('dd_jwt')||''; }catch(e){}
+function $(i){ return document.getElementById(i); }
+function esc(x){ return String(x==null?'':x).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function hdr(){ return {'Content-Type':'application/json','Authorization':'Bearer '+TK}; }
+function mostraLogin(m){ TK=''; try{ localStorage.removeItem('dd_jwt'); localStorage.removeItem('dd_user'); }catch(e){} $('lg').style.display='flex'; $('lgM').textContent=m||''; }
+function entrar(){
+  var e=$('lgE').value.trim(), s=$('lgS').value; if(!e||!s){ $('lgM').textContent='Digite o e-mail e a senha.'; return; }
+  var b=$('lgB'); b.disabled=true; b.textContent='Entrando…'; $('lgM').textContent='';
+  fetch(API+'/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:e,senha:s})}).then(function(r){ return r.json().catch(function(){ return {}; }); }).then(function(d){
+    b.disabled=false; b.textContent='Entrar';
+    if(!d||!d.ok){ $('lgM').textContent=(d&&d.mensagem)||'Não consegui entrar.'; return; }
+    if(d.usuario&&d.usuario.perfil==='master'){ $('lgM').textContent='Esse acesso é do administrador.'; return; }
+    TK=d.token; try{ localStorage.setItem('dd_jwt',d.token); localStorage.setItem('dd_user',JSON.stringify(d.usuario||null)); }catch(x){}
+    $('lg').style.display='none'; $('lgS').value=''; busca(); somPergunta();
+  }).catch(function(){ b.disabled=false; b.textContent='Entrar'; $('lgM').textContent='Sem conexão. Tente de novo.'; });
+}
+function sair(){ if(!confirm('Sair da cozinha?')) return; mostraLogin(''); PED=[]; pinta(); }
+function somPergunta(){ if(SOM&&!AC) $('som').style.display='flex'; }
+function somLiga(){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); bip(); }catch(e){} $('som').style.display='none'; }
+function somAlterna(){ SOM=!SOM; $('bSom').textContent=SOM?'🔔 Som':'🔕 Mudo'; $('bSom').classList.toggle('on',!SOM); if(SOM&&!AC) somLiga(); }
+function bip(){ if(!AC||!SOM) return; try{ var o=AC.createOscillator(), g=AC.createGain(); o.connect(g); g.connect(AC.destination); g.gain.value=.25; o.frequency.value=880; o.start(); setTimeout(function(){ o.frequency.value=1175; },180); setTimeout(function(){ o.frequency.value=880; },360); setTimeout(function(){ o.stop(); },560); }catch(e){} }
+function telaCheia(){ var d=document.documentElement; try{ if(document.fullscreenElement) document.exitFullscreen(); else (d.requestFullscreen||d.webkitRequestFullscreen).call(d); }catch(e){} }
+function minutos(p){ return Math.max(0,Math.floor((Date.now()+OFF-p.criado)/60000)); }
+function hhmm(ms){ var d=new Date(ms); return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); }
+function fotoHtml(f){ if(!f||!f.length) return '<div class="ft">🍽️</div>'; if(f.length===1) return '<div class="ft" style="background-image:url(\''+API+f[0]+'\')"></div>'; return '<div class="ft m">'+f.slice(0,2).map(function(u){ return '<i style="background-image:url(\''+API+u+'\')"></i>'; }).join('')+'</div>'; }
+function itemHtml(l){
+  var d=[]; if(l.tam) d.push('<div>Tamanho: <b style="display:inline;font-size:15px">'+esc(l.tam)+'</b></div>');
+  if(l.sab&&l.sab.length){ var n=l.sab.length; d.push('<div>'+l.sab.map(function(s){ return (n>1?'½ ':'')+esc(s); }).join(' + ').replace(/½/g,n===2?'½':n===3?'⅓':'¼')+'</div>'); }
+  if(l.borda) d.push('<div>Borda: <b style="display:inline;font-size:15px">'+esc(l.borda)+'</b></div>');
+  (l.adds||[]).forEach(function(a){ d.push('<div class="ad">+ '+esc(a)+'</div>'); });
+  if(l.obs) d.push('<div class="ob">Obs: '+esc(l.obs)+'</div>');
+  return '<div class="it">'+fotoHtml(l.fotos)+'<div class="tx"><b><em>'+(l.qty||1)+'×</em>'+esc(l.nome)+'</b>'+d.join('')+'</div></div>';
+}
+function cardHtml(p,col){
+  var m=minutos(p), cl=(col==='r')?'':(m>=25?'d':(m>=15?'w':'')), tag=p.modo==='mesa'?'<span class="tag mesa">MESA '+esc(p.mesa)+'</span>':(p.modo==='retirada'?'<span class="tag ret">RETIRADA</span>':'<span class="tag ent">ENTREGA</span>');
+  if(p.prog_dia) tag+='<span class="tag ag">AGENDADO '+esc(p.prog_hora||'')+'</span>';
+  var bt=col==='n'?'<button class="bt n" onclick="muda(\''+esc(p.id)+'\',\'preparo\')">▶ Iniciar preparo</button>':col==='p'?'<button class="bt p" onclick="muda(\''+esc(p.id)+'\',\'pronto\')">✔ Pronto</button><button class="un" onclick="muda(\''+esc(p.id)+'\',\'\')">voltar para Novos</button>':'<button class="bt r" onclick="muda(\''+esc(p.id)+'\',\'ok\')">Retirar da tela</button><button class="un" onclick="muda(\''+esc(p.id)+'\',\'preparo\')">voltar para Em preparo</button>';
+  return '<div class="card'+(col==='n'?' novo':'')+'"><div class="hd">'+tag+'<span class="num">#'+p.num+'</span><span class="tm '+cl+'">'+hhmm(p.criado)+' · '+m+' min</span></div>'+(p.modo!=='mesa'&&p.nome?'<div class="nm">'+esc(p.nome)+'</div>':'')+p.itens.map(itemHtml).join('')+(p.obs?'<div class="po">Obs do pedido: '+esc(p.obs)+'</div>':'')+bt+'</div>';
+}
+function pinta(){
+  var c={n:[],p:[],r:[]}; PED.forEach(function(p){ c[p.estado==='preparo'?'p':(p.estado==='pronto'?'r':'n')].push(p); });
+  ['n','p','r'].forEach(function(k){ var id=k.toUpperCase(); $('l'+id).innerHTML=c[k].length?c[k].map(function(p){ return cardHtml(p,k); }).join(''):'<div class="vz">'+(k==='n'?'Nenhum pedido novo':k==='p'?'Nada em preparo':'Nada pronto')+'</div>'; $('c'+id).textContent=c[k].length; });
+}
+function busca(){
+  if(!TK){ mostraLogin(''); return; } if(BUSY) return; BUSY=1;
+  fetch(API+'/painel/cozinha',{headers:hdr()}).then(function(r){ return r.json().catch(function(){ return {}; }).then(function(d){ d._h=r.status; return d; }); }).then(function(d){
+    BUSY=0;
+    if(d._h===401||d._h===403){ mostraLogin('Entre de novo.'); return; }
+    if(!d||!d.ok) return;
+    OFF=(d.agora||Date.now())-Date.now(); CLI=d.cli||CLI; if(d.empresa) $('emp').innerHTML=esc(d.empresa)+' · Cozinha<small>GIRO-OS-COZINHA-01</small>';
+    var novo=0; d.pedidos.forEach(function(p){ if(!VISTO[p.id]){ VISTO[p.id]=1; if(INIT&&p.estado==='') novo++; } });
+    PED=d.pedidos; INIT=1; pinta(); if(novo) bip();
+  }).catch(function(){ BUSY=0; });
+}
+function muda(id,estado){
+  PED.forEach(function(p){ if(p.id===id) p.estado=estado; }); if(estado==='ok') PED=PED.filter(function(p){ return p.id!==id; }); pinta();
+  fetch(API+'/painel/cozinha-fase',{method:'POST',headers:hdr(),body:JSON.stringify({id:id,estado:estado})}).then(function(r){ return r.json(); }).then(function(d){ if(!d||!d.ok) throw 0; busca(); }).catch(function(){ busca(); });
+}
+setInterval(function(){ var d=new Date(); $('rel').textContent=hhmm(d.getTime()); },15000); $('rel').textContent=hhmm(Date.now());
+setInterval(function(){ if(!document.hidden) busca(); },6000);
+setInterval(pinta,30000);
+try{ if(navigator.wakeLock) navigator.wakeLock.request('screen').catch(function(){}); document.addEventListener('visibilitychange',function(){ if(!document.hidden&&navigator.wakeLock) navigator.wakeLock.request('screen').catch(function(){}); }); }catch(e){}
+if(TK){ busca(); somPergunta(); } else mostraLogin('');
+</script>
+</body>
+</html>
