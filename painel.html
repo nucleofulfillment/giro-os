@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Giro OS — Painel do ponto · GIRO-OS-077</title>
+<title>Giro OS — Painel do ponto · GIRO-OS-079</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -663,7 +663,7 @@ a{color:inherit}
 
       <!-- PEDIDOS -->
       <section class="page" id="pg-pedidos">
-        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega e das mesas, por status · <span style="opacity:.6">GIRO-OS-077</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
+        <div class="pghd"><div><h1>Pedidos</h1><div class="sub">pedidos de entrega e das mesas, por status · <span style="opacity:.6">GIRO-OS-079</span></div></div><button class="btn pri" onclick="abrirNovoPedido()" style="padding:9px 16px">+ Novo pedido</button> <span class="vertodos" onclick="abrirUploadPlanilha()">+ Upload planilha</span> <span class="vertodos" onclick="sincronizarAnjunClique()">🔄 Sincronizar rastreio</span></div>
         <div id="pd-chip"></div>
         <div class="card">
           <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
@@ -782,7 +782,7 @@ a{color:inherit}
 
       <!-- CARDÁPIO (1A): produtos, categorias e adicionais do restaurante -->
       <section class="page" id="pg-cardapio">
-        <div class="pghd"><div><h1>Cardápio</h1><div class="sub">produtos do seu restaurante · <span style="opacity:.6">GIRO-OS-077</span></div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn sec" onclick="cdAbrirCats()">Categorias</button><button class="btn sec" onclick="cdLinkCardapio()">🔗 Link do cardápio</button><button class="btn sec" onclick="cdAparencia()">🎨 Aparência</button><button class="btn sec" onclick="cdHorario()">🕒 Horário</button><button class="btn sec" onclick="cdFrete()">🛵 Entrega</button><button class="btn sec" onclick="cdMesas()">🍽️ Mesas <span id="ms-bd" style="display:none;background:#ef4444;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px"></span></button><button class="btn sec" onclick="cdAbrirOfertas()">▶ Ofertas</button><button class="btn sec" onclick="cdAbrirImport()">Importar planilha</button><button class="btn pri" onclick="cdNovo()">+ Novo produto</button></div></div>
+        <div class="pghd"><div><h1>Cardápio</h1><div class="sub">produtos do seu restaurante · <span style="opacity:.6">GIRO-OS-079</span></div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn sec" onclick="cdAbrirCats()">Categorias</button><button class="btn sec" onclick="cdLinkCardapio()">🔗 Link do cardápio</button><button class="btn sec" onclick="cdEtiquetas()">Etiquetas</button><button class="btn sec" onclick="cdAparencia()">🎨 Aparência</button><button class="btn sec" onclick="cdHorario()">🕒 Horário</button><button class="btn sec" onclick="cdFrete()">🛵 Entrega</button><button class="btn sec" onclick="cdMesas()">🍽️ Mesas <span id="ms-bd" style="display:none;background:#ef4444;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px"></span></button><button class="btn sec" onclick="cdAbrirOfertas()">▶ Ofertas</button><button class="btn sec" onclick="cdAbrirImport()">Importar planilha</button><button class="btn pri" onclick="cdNovo()">+ Novo produto</button></div></div>
         <div class="card">
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px"><input class="inp" id="cd-busca" placeholder="Buscar produto" oninput="cdPintar()" style="flex:1;min-width:200px"><select class="inp" id="cd-fcat" onchange="cdPintar()" style="width:210px;max-width:100%"></select></div>
           <div id="cd-selbar" style="display:none;align-items:center;gap:10px;flex-wrap:wrap;background:var(--s2);border-radius:12px;padding:8px 12px;margin-bottom:10px;font-size:13px"><span id="cd-seltxt" style="font-weight:700"></span><button class="btn pri sm" onclick="cdExibirOferta()">▶ Exibir oferta</button><button class="btn sec sm" onclick="cdLimparSel()">Limpar</button></div>
@@ -4411,7 +4411,7 @@ function comandasSincronizar(){
   }).catch(function(){ CM_BUSY=false; });
 }
 setInterval(comandasSincronizar,10000); setTimeout(comandasSincronizar,4000);
-/* ══ (GIRO-OS-077) PEDIDOS DO CARDÁPIO DIGITAL: o cliente pagou o Pix no app e o pedido cai aqui em Pedidos ══ */
+/* ══ (GIRO-OS-079) PEDIDOS DO CARDÁPIO DIGITAL: o cliente pagou o Pix no app e o pedido cai aqui em Pedidos ══ */
 var FD_BUSY=false;
 function foodImportar(o,fim){
   var hoje=hojeISO();
@@ -4424,6 +4424,17 @@ function foodImportar(o,fim){
     var ped={cod:cod, tr:'gir', mt:null, cliente:o.nome||'', bairro:ret?'Retirada':(e.bairro||''), rua:ret?'':(e.rua||''), num:ret?'':(e.numero||''), comp:ret?'':(e.compl||''), bai:ret?'Retirada':(e.bairro||''), cid:ret?'':(e.cidade||''), endOrig:'', vl:(o.total==null?0:o.total), cep:ret?'':(e.cep||''), area:'', st:'coletado', t1:'', t2:'', tel:o.fone||'', canal:'Cardápio', vend:'', scan:cod, dia:hoje, hora:hora, obs:'em aberto', ent:'', fechId:null,
       tam:'', hp:ms, pg:(o.pagto==='dinheiro'?'dinheiro':'online'), pgp:(o.pagto==='dinheiro'?0:1), pgr:'', tx:(o.frete==null?null:o.frete), itens:(o.itens||'')+(o.desconto>0?' | Desconto do pedido programado: -R$ '+Number(o.desconto).toFixed(2).replace('.',','):''), atend:'',
       com:'', atn:'', tpe:ag?'Agendado':(ret?'Retirada':'Entrega'), prz:ag?(o.prog_hora||''):'', prt:ag?('agendado para '+pa[2]+'/'+pa[1]+' às '+o.prog_hora):'', ref:ret?'':(e.ref||''), tpg:null, apg:(o.pagto==='dinheiro'?(o.total||0):0), op:[(o.obs||''),(o.pagto==='dinheiro'?('Cobrar R$ '+Number(o.total||0).toFixed(2).replace('.',',')+' em dinheiro'+(o.troco>0?' · troco para R$ '+Number(o.troco).toFixed(2).replace('.',','):' · sem troco')):'')].filter(Boolean).join(' | '), cmid:'fd'+o.id, urg:ag?1:0};
+    if(o.modo==='mesa'){   /* (079) pedido de mesa pago: entra em Pedidos/Dashboard como ENTREGUE (não vai pra fila do motoboy) e lança a entrada no Fluxo de Caixa */
+      var mz=String((e&&e.mesa)||''), dz=new Date(), entz=ymdLocal(dz)+' '+hora;
+      ped.st='entregue'; ped.ent=entz; ped.cliente='Mesa '+mz; ped.bairro='Mesa '+mz; ped.bai=ped.bairro; ped.rua=''; ped.num=''; ped.comp=''; ped.cid=''; ped.cep=''; ped.ref='';
+      ped.tpe='Mesa'; ped.canal='Mesa'; ped.tx=null; ped.urg=0; ped.prz=''; ped.prt=''; ped.obs=''; ped.t1=hora+' — pago na mesa'; ped.pgp=1; ped.apg=0;
+      ped.pg=(o.pagto==='dinheiro'?'dinheiro':'online'); ped.pgr=({pix:'pix',dinheiro:'dinheiro',cartao:'cartao'})[o.pagto]||'pago'; ped.op=(o.obs||'');
+      if(!EXTRATO.some(function(x){ return x.fdid===o.id; })){
+        var mxz=0; EXTRATO.forEach(function(x){ if(Number(x.id)>mxz) mxz=Number(x.id); });
+        if(CATEGORIAS_FC.indexOf('Vendas')<0) CATEGORIAS_FC.push('Vendas');
+        EXTRATO.push({id:mxz+1, tp:'in', tt:'Mesa '+mz+' · pedido #'+(o.num||''), categoria:'Vendas', data:hoje, vl:(o.total==null?0:Number(o.total)), status:'recebido', fdid:o.id});
+      }
+    }
     PEDIDOS.push(ped); fim(true);
   }
   var tmo=setTimeout(function(){ if(!feito){ feito=true; criar(ult+1); } },4000);
@@ -4454,7 +4465,7 @@ setInterval(foodSincronizar,10000); setTimeout(foodSincronizar,5000);
 var FD_FASE={};
 function foodStatusPush(){
   if(!REAL||!DD_TOKEN||document.hidden) return;
-  var itens=[]; PEDIDOS.forEach(function(p){ if(!p.cmid||p.cmid.indexOf('fd')!==0) return; var id=p.cmid.slice(2), f=p.st==='entregue'?'entregue':(p.st==='em rota'?'rota':'preparo'); if(FD_FASE[id]!==f) itens.push({id:id,fase:f}); });
+  var itens=[]; PEDIDOS.forEach(function(p){ if(!p.cmid||p.cmid.indexOf('fd')!==0||p.tpe==='Mesa') return; var id=p.cmid.slice(2), f=p.st==='entregue'?'entregue':(p.st==='em rota'?'rota':'preparo'); if(FD_FASE[id]!==f) itens.push({id:id,fase:f}); });
   if(!itens.length) return;
   fetch(DELTADIS_API+'/painel/food-status',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+DD_TOKEN},body:JSON.stringify({itens:itens})}).then(function(r){ return r.json(); }).then(function(d){ if(d&&d.ok) itens.forEach(function(x){ FD_FASE[x.id]=x.fase; }); }).catch(function(){});
 }
@@ -5810,7 +5821,7 @@ function mpAplicarModo(){
   el('mp-diabar').style.display=(m==='vivo')?'contents':'none';
   el('mp-opbar').style.display=(m==='mapa')?'flex':'none'; el('mp-opmot').style.display='none'; el('mp-vivo').style.display=(m==='mapa')?'':'none';
   var rl=el('mp-ritmo'); if(rl&&rl.parentNode) rl.parentNode.style.display=(m==='vivo')?'':'none';
-  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-077';
+  el('mp-sub').textContent=((m==='vivo')?'entregas marcadas no app do motorista, ao vivo':'pedidos na fila: escolha e feche o grupo')+' · GIRO-OS-079';
   if(m!=='mapa'){ mpPkTodos(false); el('mp-sempos').style.display='none'; el('mp-sempos-btn').style.display='none'; }
   if(m==='vivo'){ MP_ENQ=true; mpBuscar(); } else mpOperador();
 }
@@ -7447,6 +7458,61 @@ function cdLinkCardapio(){
   el('sh-import').querySelector('h3').textContent='Link do cardápio'; abrir('sh-import');
 }
 function cdCopiaLink(){ var i=el('cd-link-in'); i.select(); try{ document.execCommand('copy'); aviso('Link copiado'); }catch(e){ aviso('Selecione e copie o link'); } }
+
+/* ── ETIQUETAS das mesas (078): gravar NFC (Android/Chrome) + QR code ── */
+var ET={n:0,ok:{},gravando:0};
+function etChave(){ return 'dd_etq_'+(CD.cli||''); }
+function etLer(){ try{ var v=JSON.parse(localStorage.getItem(etChave())||'null'); if(v){ ET.n=Number(v.n)||0; ET.ok=v.ok||{}; } }catch(e){} }
+function etGrava(){ try{ localStorage.setItem(etChave(),JSON.stringify({n:ET.n,ok:ET.ok})); }catch(e){} }
+function etUrl(m){ return cdLinkUrl()+'&mesa='+encodeURIComponent(m); }
+function cdEtiquetas(){
+  etLer(); var nfc=('NDEFReader' in window);
+  el('sh-import').querySelector('h3').textContent='Etiquetas das mesas';
+  var h='<p style="margin:0 0 10px;font-size:13px;line-height:1.55;color:var(--muted2)">Cada mesa tem um link próprio. Grave o link numa etiqueta NFC (o cliente encosta o celular na mesa) ou imprima o QR code.</p>';
+  h+=nfc?'<div style="font-size:12.5px;background:#ecfdf5;color:#166534;border-radius:10px;padding:9px 11px;margin-bottom:12px;font-weight:600">✓ Este celular grava etiquetas NFC.</div>':'<div style="font-size:12.5px;background:#fff7ed;color:#9a3412;border-radius:10px;padding:9px 11px;margin-bottom:12px;font-weight:600">Este aparelho não grava NFC. Para gravar, abra este painel no <b>Chrome de um Android</b>. Aqui você pode copiar o link e imprimir os QR codes.</div>';
+  h+='<div class="field"><label>Quantas mesas o restaurante tem?</label><div style="display:flex;gap:10px"><input class="inp" id="et-n" type="number" min="0" max="200" inputmode="numeric" value="'+(ET.n||'')+'" placeholder="Ex.: 12" style="flex:1"><button class="btn pri" onclick="etCria()">Criar</button></div></div>';
+  h+='<div id="et-msg" style="font-size:13px;font-weight:700;min-height:20px;margin:4px 0 8px"></div><div id="et-lista"></div>';
+  if(ET.n) h+='<button class="btn sec wide" style="margin-top:6px" onclick="etImprimir()">🖨 Imprimir todos os QR codes</button>';
+  el('cd-imp-corpo').innerHTML=h; abrir('sh-import'); etLista();
+}
+function etCria(){ var n=Math.floor(Number(el('et-n').value)||0); if(n<1||n>200){ etMsg('Digite um número de 1 a 200.',false); return; } ET.n=n; etGrava(); cdEtiquetas(); }
+function etMsg(t,ok){ var e=el('et-msg'); if(e){ e.textContent=t||''; e.style.color=ok===true?'#16a34a':(ok===false?'#dc2626':'var(--muted2)'); } }
+function etLista(){
+  var L=el('et-lista'); if(!L) return; var h='', i, nfc=('NDEFReader' in window);
+  for(i=1;i<=ET.n;i++){ var g=ET.ok[i];
+    h+='<div style="display:flex;align-items:center;gap:8px;border:1px solid var(--border2);border-radius:12px;padding:9px 11px;margin-bottom:8px"><b style="flex:1;font-size:14.5px">Mesa '+i+(g?' <span style="font-size:11.5px;color:#16a34a;font-weight:800">✓ gravada</span>':'')+'</b>'
+      +(nfc?'<button class="btn pri sm" onclick="etGravar('+i+')">Gravar</button>':'')+'<button class="btn sec sm" onclick="etCopia('+i+')">Copiar link</button></div>';
+  }
+  L.innerHTML=h;
+}
+function etCopia(m){ var t=document.createElement('input'); t.value=etUrl(m); document.body.appendChild(t); t.select(); try{ document.execCommand('copy'); etMsg('Link da mesa '+m+' copiado.',true); }catch(e){ etMsg(t.value,null); } t.remove(); }
+function etGravar(m){
+  if(ET.gravando) return; if(!('NDEFReader' in window)){ etMsg('Este aparelho não grava NFC.',false); return; }
+  ET.gravando=1; etMsg('Encoste a etiqueta da mesa '+m+' na parte de trás do celular…',null);
+  var rd=new NDEFReader();
+  rd.write({records:[{recordType:'url',data:etUrl(m)}]},{overwrite:true}).then(function(){
+    ET.gravando=0; ET.ok[m]=1; etGrava(); etMsg('✓ Mesa '+m+' gravada! Agora cole a etiqueta na mesa.',true); etLista();
+  }).catch(function(e){ ET.gravando=0; var n=e&&e.name; etMsg(n==='NotAllowedError'?'O celular não deixou usar o NFC. Ligue o NFC nas configurações e tente de novo.':(n==='NotSupportedError'?'Esta etiqueta não aceita gravação. Tente outra.':'Não consegui gravar. Encoste a etiqueta e tente de novo.'),false); });
+}
+function etImprimir(){
+  if(window.QRCode){ etPagina(); return; }
+  etMsg('Preparando os QR codes…',null);
+  var sc=document.createElement('script'); sc.src='https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+  sc.onload=function(){ etPagina(); }; sc.onerror=function(){ etMsg('Não consegui carregar o gerador de QR. Verifique a internet e tente de novo.',false); };
+  document.head.appendChild(sc);
+}
+function etPagina(){
+  var i, itens='', emp=esc((window.DD_USER&&(DD_USER.empresa||DD_USER.cliente))||'');
+  for(i=1;i<=ET.n;i++){
+    var box=document.createElement('div'); box.style.cssText='position:absolute;left:-9999px'; document.body.appendChild(box);
+    new QRCode(box,{text:etUrl(i),width:240,height:240,correctLevel:QRCode.CorrectLevel.M});
+    var cv=box.querySelector('canvas'), src=''; try{ src=cv.toDataURL('image/png'); }catch(e){} box.remove();
+    itens+='<div class="c"><div class="t">'+emp+'</div><img src="'+src+'"><div class="m">Mesa '+i+'</div><div class="s">Aponte a câmera ou encoste o celular</div></div>';
+  }
+  var w=window.open('','_blank'); if(!w){ etMsg('O navegador bloqueou a janela. Permita pop-ups e tente de novo.',false); return; }
+  w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>QR codes das mesas</title><style>body{font-family:Arial,sans-serif;margin:16px}.g{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.c{border:2px solid #222;border-radius:14px;padding:14px;text-align:center;page-break-inside:avoid}.c img{width:100%;max-width:200px}.t{font-weight:700;font-size:14px}.m{font-size:30px;font-weight:800;margin:4px 0}.s{font-size:12px;color:#555}@media print{body{margin:0}}</style></head><body><div class="g">'+itens+'</div><script>setTimeout(function(){window.print()},400)<\/script></body></html>');
+  w.document.close(); etMsg('',null);
+}
 /* ── ofertas com vídeo (1B) ── */
 function cdSelProd(id,on){ if(on) CD.sel[id]=1; else delete CD.sel[id]; cdBarraSel(); }
 function cdLimparSel(){ CD.sel={}; cdPintar(); }
