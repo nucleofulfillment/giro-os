@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Giro OS — Painel do ponto · GIRO-OS-081</title>
+<title>Giro OS — Painel do ponto · GIRO-OS-082</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -1490,13 +1490,14 @@ a{color:inherit}
     </div>
     <div id="pl2" style="display:none">
       <h2 style="margin:0 0 4px;font-size:22px;font-weight:800">Plano <span id="pl-nome"></span></h2>
-      <p style="margin:0 0 16px;font-size:13px;color:#9E9084">Deixe seus dados que a gente entra em contato para liberar o seu acesso.</p>
+      <p style="margin:0 0 16px;font-size:13px;color:#9E9084">Preencha os dados e crie sua senha. Em seguida você já monta o seu cardápio, tirando foto dele.</p>
       <div class="field"><label>Nome do restaurante</label><input class="inp" id="pl-emp" autocomplete="organization"></div>
       <div class="field"><label>Seu nome</label><input class="inp" id="pl-resp" autocomplete="name"></div>
       <div class="field"><label>WhatsApp (com DDD)</label><input class="inp" id="pl-fone" inputmode="tel" autocomplete="tel" placeholder="(47) 99999-9999"></div>
       <div class="field"><label>E-mail</label><input class="inp" id="pl-mail" type="email" autocomplete="email"></div>
+      <div class="field"><label>Crie uma senha (mín. 8 caracteres)</label><input class="inp" id="pl-sen" type="password" autocomplete="new-password"></div>
       <div id="pl-msg" style="color:#DC2626;font-weight:700;font-size:13.5px;min-height:18px;margin-bottom:8px"></div>
-      <button class="btn pri wide" id="pl-bt" type="button" onclick="plEnvia()">Enviar</button>
+      <button class="btn pri wide" id="pl-bt" type="button" onclick="plEnvia()">Criar conta e montar cardápio</button>
       <p style="text-align:center;margin:12px 0 0"><a href="#" onclick="plVolta();return false" style="font-size:13px;font-weight:700;color:#D96D28;text-decoration:none">← Voltar aos planos</a></p>
     </div>
     <div id="pl3" style="display:none;text-align:center;padding:10px 0">
@@ -7502,15 +7503,17 @@ function plVolta(){ ['pl1','pl2','pl3'].forEach(function(i,k){ document.getEleme
 function plEscolhe(n){ PL.plano=n; document.getElementById('pl-nome').textContent=n; document.getElementById('pl-msg').textContent=''; document.getElementById('pl1').style.display='none'; document.getElementById('pl2').style.display='block'; }
 function plEnvia(){
   var g=function(i){ return document.getElementById(i).value.trim(); }, m=document.getElementById('pl-msg'), b=document.getElementById('pl-bt');
-  var dados={empresa:g('pl-emp'),responsavel:g('pl-resp'),whats:g('pl-fone'),email:g('pl-mail'),plano:PL.plano};
+  var dados={empresa:g('pl-emp'),responsavel:g('pl-resp'),whats:g('pl-fone'),email:g('pl-mail'),plano:PL.plano,senha:document.getElementById('pl-sen').value};
   if(dados.empresa.length<2){ m.textContent='Informe o nome do restaurante.'; return; } if(dados.responsavel.length<2){ m.textContent='Informe o seu nome.'; return; }
   if(dados.whats.replace(/\D/g,'').length<10){ m.textContent='Informe o WhatsApp com DDD.'; return; } if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(dados.email)){ m.textContent='Confira o e-mail.'; return; }
+  if(dados.senha.length<8){ m.textContent='A senha precisa ter pelo menos 8 caracteres.'; return; }
   m.textContent=''; b.disabled=true; b.textContent='Enviando…';
   fetch(DELTADIS_API+'/assinar/interesse',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(dados)}).then(function(r){ return r.json().catch(function(){ return {}; }); }).then(function(d){
-    b.disabled=false; b.textContent='Enviar';
+    b.disabled=false; b.textContent='Criar conta e montar cardápio';
     if(!d||!d.ok){ m.textContent=(d&&d.mensagem)||'Não consegui enviar. Tente de novo.'; return; }
+    if(d.token){ try{ localStorage.setItem('dd_jwt',d.token); localStorage.setItem('dd_user',JSON.stringify(d.usuario||{})); }catch(e){} location.href='configurar.html'; return; }
     document.getElementById('pl2').style.display='none'; document.getElementById('pl3').style.display='block';
-  }).catch(function(){ b.disabled=false; b.textContent='Enviar'; m.textContent='Sem conexão. Tente de novo.'; });
+  }).catch(function(){ b.disabled=false; b.textContent='Criar conta e montar cardápio'; m.textContent='Sem conexão. Tente de novo.'; });
 }
 /* ── ETIQUETAS das mesas (078): gravar NFC (Android/Chrome) + QR code ── */
 var ET={n:0,ok:{},gravando:0};
