@@ -1299,6 +1299,7 @@ function abreMenu(){
 }
 function abreCat(id){
   var g=null; menuGrupos().forEach(function(x){ if(x.id===id) g=x; }); if(!g){ abreMenu(); return; }
+  if(g.ps.length===1&&(g.ps[0].sabores||[]).length){ abreSheet(g.ps[0].id); return; }   /* categoria com um produto só, que tem sabores (ex.: Pizzas > Pizza): abre direto os tamanhos e sabores */
   var h='<div class="wh"><button class="bk" onclick="abreMenu()">'+BKI+'</button><b>'+esc(g.nome)+'</b></div><div class="wb">';
   g.ps.forEach(function(p){ var pr=minPreco(p), ft=p.foto?'<div class="th" style="width:56px;height:56px;border-radius:10px;background:#2a2a30 center/cover url('+fotoUrl(p)+');flex:none"></div>':'<div style="width:56px;height:56px;border-radius:10px;background:#2a2a30;flex:none;display:flex;align-items:center;justify-content:center;">'+icone(tipoDesenho(p),28)+'</div>';
     h+='<div class="mp" onclick="abreSheet(\''+esc(p.id)+'\')">'+ft+'<div style="flex:1;min-width:0"><b style="font-size:14.5px">'+esc(p.nome)+'</b>'+promoTag(p)+'</div><span class="vl" style="color:var(--pri2);font-weight:800;font-size:13.5px;text-align:right">'+(pr.de?'a partir de ':'')+(pr.orig>pr.min?'<s class="de">'+brl(pr.orig)+'</s> ':'')+brl(pr.min)+'</span></div>'; });
