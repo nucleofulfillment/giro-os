@@ -930,8 +930,8 @@ function ckResumo(){
     h+='<button class="bt c" style="flex:none;width:100%;margin-top:12px;background:transparent;border:2px solid var(--pri);color:#fff" onclick="ctEndForm(\'novo\')">+ '+(ends.length?'Outro endereço':'Cadastrar endereço')+'</button>'; }
   if(fechado) h+=pg?'<div class="ad on" style="cursor:default"><div class="tx"><b>🕒 Pedido agendado</b><small>'+esc(progFmt(pg))+'</small></div><div class="ac"><button class="lk" onclick="abreAgenda()">Alterar</button></div></div>':'<div class="ad" style="cursor:default;border-color:#f87171"><div class="tx"><b>Estamos fechados agora</b><small>Agende o pedido para um horário em que estaremos abertos.</small></div></div>';
   if(MESA) CK.pg='conta';
-  if((CK.pg==='pix'||CK.pg==='cartao')&&!c.cpf) h+='<label class="cl">Seu CPF (necessário para gerar o Pix)</label><input class="cin" id="ck-cpf" type="tel" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" oninput="ckCpfFmt(this)">';
-  else if(CK.pg==='pix'||CK.pg==='cartao') h+='<div class="nt">CPF do pagamento: '+esc(c.cpf)+'</div>';
+  if((CK.pg==='cartao'||(CK.pg==='pix'&&CPFN))&&!c.cpf) h+='<label class="cl">Seu CPF (necessário para gerar o Pix)</label><input class="cin" id="ck-cpf" type="tel" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" oninput="ckCpfFmt(this)">';
+  else if((CK.pg==='pix'||CK.pg==='cartao')&&c.cpf) h+='<div class="nt">CPF do pagamento: '+esc(c.cpf)+'</div>';
   h+='<label class="cl">Observação do pedido (opcional)</label><textarea id="ck-obs" maxlength="300" placeholder="Ex.: tocar a campainha"></textarea>';
   if(MESA){} else h+='<label class="cl">Forma de pagamento</label><div class="ad'+(CK.pg==='pix'?' on':'')+'" onclick="ckPg(\'pix\')"><div class="rd"></div><div class="tx"><b>Pix</b><small>Aprovação na hora</small></div></div><div class="ad'+(CK.pg==='dinheiro'?' on':'')+'" onclick="ckPg(\'dinheiro\')"><div class="rd"></div><div class="tx"><b>Dinheiro</b><small>'+(EN.modo==='retirada'?'Pague na retirada':'Pague ao entregador')+'</small></div></div><div class="ad'+(CK.pg==='cartao'?' on':'')+'" onclick="ckPg(\'cartao\')"><div class="rd"></div><div class="tx"><b>Cartão de crédito</b><small>À vista · pague agora</small></div></div>';
   if(CK.pg==='cartao') h+=ckCartaoHtml(c);
@@ -941,6 +941,7 @@ function ckResumo(){
   abreFolha(h,true);
   if(CK.anim){ CK.anim=0; var ei=$('ck-its'),sm=$('ck-sm'); if(ei) void ei.offsetHeight; requestAnimationFrame(function(){ if(ei){ ei.style.maxHeight='0px'; ei.style.opacity=0; } if(sm) sm.style.display='flex'; }); }
 }
+var CPFN=0;   /* (060) vira 1 só se o Asaas do restaurante exigir CPF para o Pix */
 function ckSemEnd(){
   ctErro('Cadastre ou escolha um endereço de entrega.'); toast('Falta o endereço de entrega. Toque em "Cadastrar endereço".');
   var bs=document.querySelectorAll('#sheet button'), i, alvo=null; for(i=0;i<bs.length;i++){ if((bs[i].getAttribute('onclick')||'').indexOf("ctEndForm('novo')")>=0){ alvo=bs[i]; break; } }
@@ -971,6 +972,7 @@ function ckPaga(){
     cardB=null;
     if(r.ok){ CK.ped=r.pedido; if(din) ckOk(r.pedido); else if(CK.pg==='cartao'){ if(r.pedido.status==='pago') ckOk(r.pedido); else ckAguarda(r.pedido); } else ckPix(); }
     else if(r._http===401){ CT.tok=''; ctLogin(); }
+    else if(r.erro==='cpf_necessario'){ CPFN=1; ckResumo(); ctErro(r.mensagem||'Informe o seu CPF para gerar o Pix.'); }
     else { b.disabled=false; b.textContent=CK.pg==='conta'?'Fazer pedido':din?'Finalizar pedido':(CK.pg==='cartao'?'Pagar no cartão':'Pagar com Pix'); ctErro(r.mensagem||'Não consegui criar o pedido.'); }
   });
 }
@@ -1016,8 +1018,8 @@ function mesaContaMonta(){
   h+='<div class="ad'+(MC.forma==='pix'?' on':'')+'" onclick="mesaForma(\'pix\')"><div class="rd"></div><div class="tx"><b>Pix</b><small>Pague agora pelo celular</small></div></div>';
   h+='<div class="ad'+(MC.forma==='cartao'?' on':'')+'" onclick="mesaForma(\'cartao\')"><div class="rd"></div><div class="tx"><b>Cartão</b><small>Pague no caixa</small></div></div>';
   h+='<div class="ad'+(MC.forma==='dinheiro'?' on':'')+'" onclick="mesaForma(\'dinheiro\')"><div class="rd"></div><div class="tx"><b>Dinheiro</b><small>Pague no caixa</small></div></div>';
-  if(MC.forma==='pix'&&!c.cpf) h+='<label class="cl">Seu CPF (necessário para gerar o Pix)</label><input class="cin" id="mc-cpf" type="tel" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" oninput="ckCpfFmt(this)">';
-  else if(MC.forma==='pix') h+='<div class="nt">CPF do pagamento: '+esc(c.cpf)+'</div>';
+  if(MC.forma==='pix'&&CPFN&&!c.cpf) h+='<label class="cl">Seu CPF (necessário para gerar o Pix)</label><input class="cin" id="mc-cpf" type="tel" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" oninput="ckCpfFmt(this)">';
+  else if(MC.forma==='pix'&&c.cpf) h+='<div class="nt">CPF do pagamento: '+esc(c.cpf)+'</div>';
   h+='<div class="ce" id="ct-erro"></div></div><div class="rod"><button class="bt c" id="ct-bt" onclick="mesaConfirma()">'+(MC.forma==='pix'?'Pagar '+brl(d.total)+' com Pix':'Fechar conta · '+brl(d.total))+'</button></div>';
   abreFolha(h,true);
 }
@@ -1027,6 +1029,7 @@ function mesaConfirma(){
   ctApi('/food/pedidos-mesa-fechar',{mesa:MESA,forma:MC.forma,cpf:cpf||undefined}).then(function(r){
     if(r.ok){ if(r.conta.status==='aguardando_pagto') mesaPix(r.conta); else mesaCaixaMsg(r.conta); }
     else if(r._http===401){ CT.tok=''; ctLogin(); }
+    else if(r.erro==='cpf_necessario'){ CPFN=1; mesaContaMonta(); ctErro(r.mensagem||'Informe o seu CPF para gerar o Pix.'); }
     else { b.disabled=false; b.textContent=MC.forma==='pix'?'Pagar com Pix':'Fechar conta'; ctErro(r.mensagem||'Não consegui fechar a conta.'); }
   });
 }
