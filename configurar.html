@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Giro OS — Configurar cardápio · GIRO-OS-CONFIG-01</title>
+<title>Giro OS — Configurar cardápio · GIRO-OS-CONFIG-02</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -121,6 +121,7 @@ body.lgon #wz{display:none}
 .rc{border:1px solid var(--border2);border-radius:14px;margin-bottom:12px;overflow:hidden}
 .rc>.h{display:flex;align-items:center;gap:8px;background:var(--s3);padding:9px 12px}
 .rc>.h input{flex:1;min-width:0;border:0;background:none;font-weight:800;font-size:14.5px;color:var(--text);font-family:var(--fbody)}
+.fr{display:flex;align-items:center;gap:10px;padding:9px 12px;border-top:1px solid var(--border2)}.fr b{flex:1;font-size:14px;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis}.fr .ft{width:42px;height:42px;border-radius:9px;background:var(--s4) center/cover;flex:none;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted)}.fr .fb{border:1px solid var(--border2);background:var(--s3);border-radius:10px;padding:9px 12px;font-size:14px;font-weight:700;cursor:pointer;flex:none}.fr .ok2{color:#16A34A;font-weight:800;font-size:12px;flex:none}.fg{border:1px solid var(--border2);border-radius:14px;margin:10px 0;overflow:hidden}.fg .fr:first-child{border-top:0;background:var(--s3)}.fg .tg{padding:10px 12px;font-size:13.5px;font-weight:700;color:var(--muted);border-top:1px solid var(--border2);cursor:pointer}
 .ri{display:flex;align-items:flex-start;gap:9px;padding:10px 12px;border-top:1px solid var(--border2)}
 .ri.off{opacity:.45}
 .ri input[type=checkbox]{width:20px;height:20px;margin-top:3px;accent-color:#D96D28;flex:none}
@@ -160,14 +161,14 @@ body.lgon #wz{display:none}
       <div style="display:flex;gap:10px"><button class="btn pri wide" id="lgB" style="flex:1;width:auto" onclick="entrar()">Entrar</button></div>
       
       <p class="demo" id="lgM" style="color:#c0392b;font-weight:700;min-height:18px"></p>
-      <p class="bld">GIRO-OS-CONFIG-01</p>
+      <p class="bld">GIRO-OS-CONFIG-02</p>
     </div>
   </div>
 </div>
 
 <!-- ══════════ APP ══════════ -->
 <div id="wz">
-  <div class="wtop"><img id="wlogo" alt="" style="display:none"><b id="wemp">Seu restaurante</b><small>GIRO-OS-CONFIG-01</small></div>
+  <div class="wtop"><img id="wlogo" alt="" style="display:none"><b id="wemp">Seu restaurante</b><small>GIRO-OS-CONFIG-02</small></div>
   <div class="wbar"><i id="wbar"></i></div>
 
   <div class="wc" id="w0"><h2>Vamos montar seu cardápio</h2><p>Olá<span id="w0n"></span>! Tire foto do cardápio de papel e eu cadastro os produtos, as categorias e os preços para você. Leva poucos minutos.</p><p id="w0t" style="font-weight:700"></p><div class="er" id="w0e"></div>
@@ -187,9 +188,13 @@ body.lgon #wz{display:none}
 
   <div class="wc" id="w4" style="display:none;text-align:center"><div class="spin"></div><h2 id="w4m">Cadastrando…</h2><p>Não feche esta tela.</p><div class="er" id="w4e"></div><button class="wb p" id="w4b" style="display:none" onclick="revisao()">Voltar e tentar de novo</button></div>
 
+  <div class="wc" id="w6" style="display:none"><h2>Fotos dos pratos</h2><p>Se quiser, toque em 📷 no item para pôr a foto. É opcional: dá para fazer depois, no painel.</p>
+    <input class="inp" id="w6b" placeholder="Buscar item ou sabor…" oninput="fotosPinta()"><input type="file" id="w6f" accept="image/*" style="display:none" onchange="fotoEscolhida(this)">
+    <div id="w6l"></div><div class="er" id="w6e"></div><button class="wb p" onclick="passo(5)">Concluir</button></div>
+
   <div class="wc" id="w5" style="display:none;text-align:center"><div class="ok">✓</div><h2>Cardápio no ar!</h2><p id="w5n"></p><p>Este é o link do seu cardápio digital:</p>
     <div class="lk"><input class="inp" id="w5l" readonly onclick="this.select()"></div>
-    <button class="wb p" id="w5c" onclick="copia()">Copiar link</button><button class="wb s" onclick="abreCardapio()">Abrir o cardápio</button><button class="wb s" onclick="irPainel()">Ir para o painel</button><p style="margin-top:14px;font-size:12.5px">No painel você coloca as fotos dos pratos, o horário, a entrega e as mesas.</p></div>
+    <button class="wb p" id="w5c" onclick="copia()">Copiar link</button><button class="wb s" onclick="abreCardapio()">Abrir o cardápio</button><button class="wb s" onclick="fotosAbre()">Fotos dos pratos</button><button class="wb s" onclick="irPainel()">Ir para o painel</button><p style="margin-top:14px;font-size:12.5px">No painel você coloca as fotos dos pratos, o horário, a entrega e as mesas.</p></div>
 </div>
 <script>
 var API='https://giro-os-api.nucleofull.workers.dev', TK='', CLI='', EMP='', FOTOS=[], CATS=[], PASSO=0, BUSY=0;
@@ -228,8 +233,8 @@ function inicio(){
   });
 }
 function passo(n){
-  PASSO=n; ['w0','w1','w2','w3','w4','w5'].forEach(function(id,i){ $(id).style.display=(i===n)?'block':'none'; });
-  $('wbar').style.width=({0:'8%',1:'30%',2:'55%',3:'75%',4:'90%',5:'100%'})[n]; window.scrollTo(0,0);
+  PASSO=n; ['w0','w1','w2','w3','w4','w5','w6'].forEach(function(id,i){ $(id).style.display=(i===n)?'block':'none'; });
+  $('wbar').style.width=({0:'8%',1:'30%',2:'55%',3:'75%',4:'90%',5:'100%',6:'95%'})[n]; window.scrollTo(0,0);
 }
 /* ── fotos ── */
 function fotoNova(inp){
@@ -319,7 +324,65 @@ function cadastrar(){
       }).then(function(r){ if(!r||!r.ok) throw new Error((r&&r.mensagem)||'Não salvou.'); feitos++; um(i+1); })
       .catch(function(e){ BUSY=0; er.textContent='Parou no meio: '+e.message+' O que já foi cadastrado ficou salvo.'; $('w4b').style.display='block'; });
     })(0);
-    function fim(){ BUSY=0; $('w5n').textContent=feitos+' produto'+(feitos==1?'':'s')+' cadastrado'+(feitos==1?'':'s')+(falhas?(' ('+falhas+' já existia'+(falhas==1?'':'m')+')'):''); linkFinal(); api('/painel/onboarding',{feito:true}); passo(5); }
+    function fim(){ BUSY=0; $('w5n').textContent=feitos+' produto'+(feitos==1?'':'s')+' cadastrado'+(feitos==1?'':'s')+(falhas?(' ('+falhas+' já existia'+(falhas==1?'':'m')+')'):''); linkFinal(); api('/painel/onboarding',{feito:true}); fotosAbre(true); }
+  });
+}
+
+/* ── (CONFIG-02) fotos dos pratos: lista dos itens cadastrados, foto opcional em cada um ── */
+var PR=[], FT=null, Q={}, ABRE={};
+function reduz2(f,m,lim,cb){
+  var url=URL.createObjectURL(f), im=new Image();
+  im.onload=function(){
+    var w=im.naturalWidth, h=im.naturalHeight, out='';
+    for(var t=0;t<6&&!out;t++){
+      var k=Math.min(1,m/Math.max(w,h)), c=document.createElement('canvas'); c.width=Math.round(w*k); c.height=Math.round(h*k); c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+      var qs=[.8,.65,.5,.4]; for(var i=0;i<qs.length;i++){ var u=''; try{ u=c.toDataURL('image/jpeg',qs[i]); }catch(e){} if(u&&u.length<=lim){ out=u; break; } }
+      m=Math.round(m*.8);
+    }
+    URL.revokeObjectURL(url); cb(out);
+  };
+  im.onerror=function(){ URL.revokeObjectURL(url); cb(''); }; im.src=url;
+}
+function fotosAbre(auto){
+  api('/painel/cardapio').then(function(d){
+    if(d._h===401||d._h===403){ if(auto) passo(5); else mostraLogin('Entre de novo.'); return; }
+    PR=(d.prods||[]); $('w6e').textContent=''; $('w6b').value=''; fotosPinta(); passo(PR.length?6:5);
+  });
+}
+function fotosPinta(){
+  var q=($('w6b').value||'').toLowerCase().trim(), h='';
+  PR.forEach(function(p,pi){
+    var sab=p.sabores||[], achados=q?sab.map(function(s,si){ return String(s.nome).toLowerCase().indexOf(q)>=0?si:-1; }).filter(function(x){ return x>=0; }):[], nomeOk=!q||String(p.nome).toLowerCase().indexOf(q)>=0;
+    if(q&&!nomeOk&&!achados.length) return;
+    var aberto=ABRE[p.id]||(q&&achados.length), lista=q?achados:sab.map(function(s,si){ return si; });
+    h+='<div class="fg"><div class="fr"><span class="ft"'+(p.foto?' style="background-image:url(\''+p.foto+'\')"':'')+'>'+(p.foto?'':'🍽')+'</span><b>'+esc(p.nome)+'</b>'+(p.foto?'<span class="ok2">✓</span>':'')+'<button class="fb" onclick="fotoPick('+pi+',-1)">📷</button></div>';
+    if(sab.length){
+      var com=sab.filter(function(s){ return s.foto; }).length;
+      h+='<div class="tg" onclick="fotosAlterna('+pi+')">'+(aberto?'▾':'▸')+' Sabores ('+sab.length+') · '+com+' com foto</div>';
+      if(aberto) lista.forEach(function(si){ var s=sab[si]; h+='<div class="fr"><span class="ft"'+(s._p?' style="background-image:url(\''+s._p+'\')"':'')+'>'+(s.foto&&!s._p?'✓':(s._p?'':'🍕'))+'</span><b>'+esc(s.nome)+'</b>'+(s._busy?'<span class="ok2" style="color:var(--muted)">enviando…</span>':(s.foto?'<span class="ok2">✓</span>':''))+'<button class="fb" onclick="fotoPick('+pi+','+si+')">📷</button></div>'; });
+    }
+    h+='</div>';
+  });
+  $('w6l').innerHTML=h||'<p>Nenhum item encontrado.</p>';
+}
+function fotosAlterna(pi){ var id=PR[pi].id; ABRE[id]=!ABRE[id]; fotosPinta(); }
+function fotoPick(pi,si){ FT={pi:pi,si:si}; $('w6f').click(); }
+function fotoEscolhida(inp){
+  var f=inp.files&&inp.files[0]; inp.value=''; if(!f||!FT) return; var a=FT, p=PR[a.pi], er=$('w6e'); er.textContent='';
+  reduz2(f,a.si<0?900:420,a.si<0?400000:58000,function(u){
+    if(!u){ er.textContent='Não consegui usar essa foto. Tente outra.'; return; }
+    var s=a.si>=0?p.sabores[a.si]:null; if(s) s._busy=1; fotosPinta();
+    Q[p.id]=(Q[p.id]||Promise.resolve()).then(function(){
+      var it=JSON.parse(JSON.stringify(p,function(k,v){ return (k==='_p'||k==='_busy')?undefined:v; }));
+      (it.sabores||[]).forEach(function(x,i){ x.foto=(a.si===i)?u:(x.foto?'1':''); });
+      if(a.si<0) it.foto=u;
+      return api('/painel/cardapio-salvar',{tipo:'prod',item:it}).then(function(r){
+        if(s) delete s._busy;
+        if(!r.ok){ er.textContent=(r.mensagem||'Não salvou a foto.'); }
+        else if(s){ s.foto=1; s._p=u; } else p.foto=u;
+        fotosPinta();
+      });
+    });
   });
 }
 function base(){ var b=location.href.split('#')[0].split('?')[0]; return b.slice(0,b.lastIndexOf('/')+1); }
