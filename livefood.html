@@ -741,7 +741,7 @@ function abreSacola(){ navOn('sac'); CK.on=0; CK.open=0;
 }
 /* ── conta do cliente (5B): entra pelo WhatsApp com código, guarda nome e endereços ── */
 var CT={tok:'',conta:null,fone:'',conhecido:false,tmr:null,edit:null,ctx:'ck'}, EN={modo:'entrega',end:''};
-function ctk(){ return 'lf_conta_'+(D.cli||CLI); }
+function ctk(){ return (MESA?'lf_contamesa_':'lf_conta_')+(D.cli||CLI); }
 function ctLer(){ try{ var v=JSON.parse(localStorage.getItem(ctk())||'null'); if(v&&v.tok){ CT.tok=v.tok; CT.conta=v.conta||null; } }catch(e){} try{ var e=JSON.parse(localStorage.getItem('lf_entrega_'+(D.cli||CLI))||'null'); if(e&&e.modo) EN=e; }catch(x){} }
 function ctGrava(){ try{ localStorage.setItem(ctk(),JSON.stringify({tok:CT.tok,conta:CT.conta})); localStorage.setItem('lf_entrega_'+(D.cli||CLI),JSON.stringify(EN)); }catch(e){} }
 function ctSair(){ CT.tok=''; CT.conta=null; try{ localStorage.removeItem(ctk()); }catch(e){} ctLogin(); }
@@ -761,7 +761,18 @@ function sacContinuar(){
     if(d.ok){ CT.conta=d.conta; ctGrava(); CK.anim=1; CK.open=0; ctEntrega(); } else if(d._http===401){ CT.tok=''; CT.conta=null; ctLogin(); } else ctLogin();
   });
 }
+var MG={n:0};
+function mesaGuest(){
+  if(MG.n>=3){ MG.n=0; abreFolha(ctCab('Mesa','fechaSheet()')+'<div class="wb"><div class="nt" style="margin-top:14px">Não consegui abrir sua mesa. Chame o garçom.</div></div>',true); return; }
+  MG.n++; abreFolha(ctCab('Mesa','fechaSheet()')+'<div class="wb"><div class="nt" style="margin-top:14px">Abrindo sua mesa…</div></div>',true);
+  ctApi('/food/conta/mesa-entrar',{mesa:MESA}).then(function(d){
+    if(!d.ok){ MG.n=3; mesaGuest(); return; }
+    CT.tok=d.token; CT.conta=d.conta; ctGrava();
+    if(CT.ctx==='mesa') mesaContaTela(); else { CK.anim=1; CK.open=0; ctEntrega(); }
+  });
+}
 function ctLogin(){
+  if(MESA) return mesaGuest();
   abreFolha(ctCab('Entrar',(CT.ctx==='conta'||CT.ctx==='mesa')?'fechaSheet()':'abreSacola()')+'<div class="wb"><div class="nt" style="margin-top:12px;font-size:14px;color:#fff">Informe seu WhatsApp. Vamos enviar um código de 6 números para confirmar que é você.</div><label class="cl">Seu WhatsApp</label><input class="cin" id="ct-fone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(47) 99999-9999" maxlength="16" oninput="ctMask(this)"><div class="ce" id="ct-erro"></div></div><div class="rod"><button class="bt c" id="ct-bt" onclick="ctPedeCodigo()">Receber código</button></div>',true);
 }
 function ctPedeCodigo(){
@@ -905,7 +916,7 @@ function ckResumo(){
   h+='<div id="ck-its" style="overflow:hidden;transition:max-height .32s ease,opacity .25s ease;max-height:'+((CK.anim||CK.open)?'1400px':'0')+';opacity:'+((CK.anim||CK.open)?1:0)+'">'+sacLista();
   if(d.bri) h+='<div class="rsm"><div class="tx"><b>1× '+esc(d.bri)+'</b><small>Brinde do pedido programado</small></div><div class="vl" style="color:#4ade80">Grátis</div></div>';
   h+='</div><div class="rsm" id="ck-sm" style="align-items:center;'+(CK.anim?'display:none':'')+'"><div class="tx"><b>'+nIt+(nIt>1?' itens':' item')+'</b><small>Subtotal '+brl(sub)+'</small></div><button class="lk" id="ck-vi" onclick="ckItens()">'+(CK.open?'− esconder itens':'+ ver meus itens')+'</button></div>';
-  h+='<div style="margin:12px 0 0;font-size:15px">Olá, <b>'+esc(c.nome||'')+'</b>! <button class="lk" onclick="ctSair()">Não sou eu</button></div>';
+  if(!MESA) h+='<div style="margin:12px 0 0;font-size:15px">Olá, <b>'+esc(c.nome||'')+'</b>! <button class="lk" onclick="ctSair()">Não sou eu</button></div>';
   if(MESA) h+='<div class="ad on" style="cursor:default;margin-top:12px"><div class="tx"><b>🍽️ Mesa '+esc(MESA)+'</b><small>O pedido vai direto para a cozinha. Você paga no final, em Fechar conta.</small></div></div>'; else h+='<div class="seg"><button class="'+(EN.modo==='entrega'?'on':'')+'" onclick="ctModo(\'entrega\')">🛵 Entrega</button><button class="'+(EN.modo==='retirada'?'on':'')+'" onclick="ctModo(\'retirada\')">🏪 Retirada</button></div>';
   if(MESA){} else if(EN.modo==='retirada') h+='<div class="nt" style="font-size:14px;color:#fff;margin-top:12px">Você retira o pedido no balcão do restaurante. Avisamos pelo WhatsApp quando estiver pronto.</div>';
   else { ends.forEach(function(e){ h+='<div class="ad'+(e.id===EN.end?' on':'')+'" onclick="ctSelEnd(\''+esc(e.id)+'\')"><div class="rd"></div><div class="tx"><b>'+esc(e.apelido||'Endereço')+'</b><small>'+ctEndTxt(e)+'</small></div><div class="ac"><button class="lk" onclick="event.stopPropagation();ctEndForm(\''+esc(e.id)+'\')">Editar</button></div></div>'; });
