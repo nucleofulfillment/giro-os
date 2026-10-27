@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Giro OS — Cozinha · GIRO-OS-COZINHA-05</title>
+<title>Giro OS — Cozinha · GIRO-OS-COZINHA-07</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -105,6 +105,8 @@ body.lgon #top,body.lgon #cols{display:none}
 #top h1{font-size:19px;font-weight:800;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
 #top h1 small{font-size:10.5px;color:var(--muted);font-weight:600;margin-left:8px}
 #top .ib{background:var(--s3);border:1px solid var(--border2);border-radius:10px;padding:9px 13px;font-size:14px;font-weight:700;color:var(--text)}
+#top .seg{display:flex;gap:4px;margin-left:auto;margin-right:12px;background:var(--s3);border:1px solid var(--border2);border-radius:12px;padding:3px}#top .seg button{border:0;background:transparent;border-radius:9px;padding:8px 13px;font-size:14px;font-weight:800;color:var(--text)}#top .seg button.on{background:var(--grad);color:#fff}.bdg{display:inline-block;font-size:11px;font-weight:800;border-radius:8px;padding:1px 7px;margin-left:8px;vertical-align:middle;background:#E8F0FE;color:#1d4ed8}.bdg.k{background:#FFF4DB;color:#92580A}
+@media(max-width:700px){#top{flex-wrap:wrap;gap:8px}#top .seg{margin:0;order:5;width:100%}#top .seg button{flex:1}}
 #top .ib.on{background:var(--grad);color:#fff;border-color:transparent}
 #rel{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--texto2)}
 #cols{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding:16px;align-items:start}
@@ -129,8 +131,8 @@ body.lgon #top,body.lgon #cols{display:none}
 .tx b em{font-style:normal;color:var(--roxo);margin-right:6px}
 .tx div{font-size:14.5px;color:var(--muted2);line-height:1.4;margin-top:2px;font-weight:600}
 .tx .ad{color:var(--green);font-weight:700}
-.tx .ob{background:#FEF3C7;color:#6B4E00;font-weight:800;border-radius:8px;padding:3px 8px;display:inline-block;margin-top:4px}
-.po{background:#FEF3C7;color:#6B4E00;font-weight:800;border-radius:10px;padding:8px 10px;margin-top:8px;font-size:14.5px}
+.tx .ob{background:#DC2626;color:#fff;font-weight:800;border-radius:8px;padding:3px 8px;display:inline-block;margin-top:4px}
+.po{background:#DC2626;color:#fff;font-weight:800;border-radius:10px;padding:8px 10px;margin-top:8px;font-size:14.5px}
 .bt{width:100%;margin-top:10px;padding:15px;border-radius:12px;font-size:17px;font-weight:800;color:#fff;border:0;cursor:pointer}
 .bt.n{background:var(--grad)}.bt.p{background:var(--green)}.bt.r{background:var(--s3);color:var(--texto2);border:1px solid var(--border2);font-size:14.5px;padding:12px}
 .un{display:block;margin:8px auto 0;background:none;border:0;color:var(--muted);font-size:13px;text-decoration:underline;cursor:pointer}
@@ -165,17 +167,17 @@ body.lgon #top,body.lgon #cols{display:none}
       <div style="display:flex;gap:10px"><button class="btn pri wide" id="lgB" style="flex:1;width:auto" onclick="entrar()">Entrar</button></div>
       
       <p class="demo" id="lgM" style="color:#c0392b;font-weight:700;min-height:18px"></p>
-      <p class="bld">GIRO-OS-COZINHA-05</p>
+      <p class="bld">GIRO-OS-COZINHA-07</p>
     </div>
   </div>
 </div>
 
 <!-- ══════════ APP ══════════ -->
-<div id="top"><img class="lo" id="lo" alt="" style="display:none"><h1 id="emp">Cozinha<small>GIRO-OS-COZINHA-05</small></h1><span id="rel"></span><button class="ib" id="bSom" onclick="somAlterna()">🔔 Som</button><button class="ib" onclick="telaCheia()">⛶</button><button class="ib" onclick="sair()">Sair</button></div>
+<div id="top"><img class="lo" id="lo" alt="" style="display:none"><h1 id="emp">Cozinha<small>GIRO-OS-COZINHA-07</small></h1><span class="seg" id="seg"><button id="sCozinha" onclick="setEst('cozinha')">🍳 Cozinha</button><button id="sBar" onclick="setEst('bar')">🍺 Bar</button><button id="sTodos" onclick="setEst('todos')">Unificado</button></span><span id="rel"></span><button class="ib" id="bSom" onclick="somAlterna()">🔔 Som</button><button class="ib" onclick="telaCheia()">⛶</button><button class="ib" onclick="sair()">Sair</button></div>
 <div id="cols"><div class="col n"><h2><span>Novos</span><span id="cN">0</span></h2><div id="lN"></div></div><div class="col p"><h2><span>Em preparo</span><span id="cP">0</span></h2><div id="lP"></div></div><div class="col r"><h2><span>Prontos</span><span id="cR">0</span></h2><div id="lR"></div></div></div>
 <div id="som"><button onclick="somLiga()">🔔 Toque para ativar o som dos pedidos</button></div>
 <script>
-var PEND={}, API='https://giro-os-api.nucleofull.workers.dev', TK='', CLI='', OFF=0, PED=[], BUSY=0, VISTO={}, INIT=0, SOM=true, AC=null;
+var PEND={}, API='https://giro-os-api.nucleofull.workers.dev', TK='', CLI='', OFF=0, EST='todos', PED=[], BUSY=0, VISTO={}, INIT=0, SOM=true, AC=null;
 try{ TK=localStorage.getItem('dd_jwt')||''; }catch(e){}
 function $(i){ return document.getElementById(i); }
 function esc(x){ return String(x==null?'':x).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
@@ -214,13 +216,18 @@ function telaCheia(){ var d=document.documentElement; try{ if(document.fullscree
 function minutos(p){ return Math.max(0,Math.floor((Date.now()+OFF-p.criado)/60000)); }
 function hhmm(ms){ var d=new Date(ms); return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); }
 function fotoHtml(f){ if(!f||!f.length) return '<div class="ft">🍽️</div>'; if(f.length===1) return '<div class="ft" style="background-image:url(\''+API+f[0]+'\')"></div>'; return '<div class="ft m">'+f.slice(0,2).map(function(u){ return '<i style="background-image:url(\''+API+u+'\')"></i>'; }).join('')+'</div>'; }
+try{ var _e=localStorage.getItem('coz_est'); if(_e==='cozinha'||_e==='bar'||_e==='todos') EST=_e; }catch(e){}
+var NOMEST={cozinha:'Cozinha',bar:'Bar',todos:'Cozinha + Bar'};
+function setEst(e){ if(e===EST) return; EST=e; try{ localStorage.setItem('coz_est',e); }catch(x){} PED=[]; PEND={}; VISTO={}; INIT=0; marcaEst(); pinta(); BUSY=0; busca(); }
+function marcaEst(){ $('sCozinha').classList.toggle('on',EST==='cozinha'); $('sBar').classList.toggle('on',EST==='bar'); $('sTodos').classList.toggle('on',EST==='todos'); if(EMP) $('emp').innerHTML=esc(EMP)+' · '+NOMEST[EST]+'<small>GIRO-OS-COZINHA-07</small>'; try{ document.title='Giro OS — '+NOMEST[EST]+' · GIRO-OS-COZINHA-07'; }catch(e){} }
+var EMP='';
 function itemHtml(l){
   var d=[]; if(l.tam) d.push('<div>Tamanho: <b style="display:inline;font-size:15px">'+esc(l.tam)+'</b></div>');
   if(l.sab&&l.sab.length){ var n=l.sab.length; d.push('<div>'+l.sab.map(function(s){ return (n>1?'½ ':'')+esc(s); }).join(' + ').replace(/½/g,n===2?'½':n===3?'⅓':'¼')+'</div>'); }
   if(l.borda) d.push('<div>Borda: <b style="display:inline;font-size:15px">'+esc(l.borda)+'</b></div>');
   (l.adds||[]).forEach(function(a){ d.push('<div class="ad">+ '+esc(a)+'</div>'); });
   if(l.obs) d.push('<div class="ob">Obs: '+esc(l.obs)+'</div>');
-  return '<div class="it">'+fotoHtml(l.fotos)+'<div class="tx"><b><em>'+(l.qty||1)+'×</em>'+esc(l.nome)+'</b>'+d.join('')+'</div></div>';
+  return '<div class="it">'+fotoHtml(l.fotos)+'<div class="tx"><b><em>'+(l.qty||1)+'×</em>'+esc(l.nome)+(EST==='todos'?(l.dest==='bar'?'<span class="bdg">🍺 Bar</span>':'<span class="bdg k">🍳 Cozinha</span>'):'')+'</b>'+d.join('')+'</div></div>';
 }
 function cardHtml(p,col){
   var m=minutos(p), cl=(col==='r')?'':(m>=25?'d':(m>=15?'w':'')), tag=p.modo==='mesa'?'<span class="tag mesa">MESA '+esc(p.mesa)+'</span>':(p.modo==='retirada'?'<span class="tag ret">RETIRADA</span>':'<span class="tag ent">ENTREGA</span>');
@@ -234,11 +241,11 @@ function pinta(){
 }
 function busca(){
   if(!TK){ mostraLogin(''); return; } if(BUSY) return; BUSY=1;
-  fetch(API+'/painel/cozinha',{headers:hdr()}).then(function(r){ return r.json().catch(function(){ return {}; }).then(function(d){ d._h=r.status; return d; }); }).then(function(d){
-    BUSY=0;
+  var _est=EST; fetch(API+'/painel/cozinha?est='+_est,{headers:hdr()}).then(function(r){ return r.json().catch(function(){ return {}; }).then(function(d){ d._h=r.status; return d; }); }).then(function(d){
+    BUSY=0; if(_est!==EST) return;
     if(d._h===401||d._h===403){ mostraLogin('Entre de novo.'); return; }
     if(!d||!d.ok) return;
-    OFF=(d.agora||Date.now())-Date.now(); CLI=d.cli||CLI; if(d.empresa) $('emp').innerHTML=esc(d.empresa)+' · Cozinha<small>GIRO-OS-COZINHA-05</small>'; if(CLI&&!$('lo').getAttribute('src')){ $('lo').onerror=function(){ this.style.display='none'; }; $('lo').onload=function(){ this.style.display=''; }; $('lo').src=API+'/food/foto/'+encodeURIComponent(CLI)+'/_logo'; }
+    OFF=(d.agora||Date.now())-Date.now(); CLI=d.cli||CLI; if(d.empresa){ EMP=d.empresa; marcaEst(); } if(CLI&&!$('lo').getAttribute('src')){ $('lo').onerror=function(){ this.style.display='none'; }; $('lo').onload=function(){ this.style.display=''; }; $('lo').src=API+'/food/foto/'+encodeURIComponent(CLI)+'/_logo'; }
     var novo=0; d.pedidos.forEach(function(p){ if(!VISTO[p.id]){ VISTO[p.id]=1; if(INIT&&p.estado==='') novo++; } });
     var agr=Date.now(); d.pedidos.forEach(function(p){ var q=PEND[p.id]; if(q){ if(p.estado===q.e||agr-q.t>15000) delete PEND[p.id]; else p.estado=q.e; } });
     PED=d.pedidos.filter(function(p){ var q=PEND[p.id]; return !(q&&q.e==='ok'); }); INIT=1; pinta(); if(novo) bip();
@@ -247,11 +254,11 @@ function busca(){
 function muda(id,estado){
   PEND[id]={e:estado,t:Date.now()};
   PED.forEach(function(p){ if(p.id===id) p.estado=estado; }); if(estado==='ok') PED=PED.filter(function(p){ return p.id!==id; }); pinta();
-  fetch(API+'/painel/cozinha-fase',{method:'POST',headers:hdr(),body:JSON.stringify({id:id,estado:estado})}).then(function(r){ return r.json(); }).then(function(d){ if(!d||!d.ok) throw 0; PEND[id].t=Date.now(); setTimeout(function(){ BUSY=0; busca(); },300); }).catch(function(){ delete PEND[id]; BUSY=0; busca(); });
+  fetch(API+'/painel/cozinha-fase',{method:'POST',headers:hdr(),body:JSON.stringify({id:id,estado:estado,est:EST})}).then(function(r){ return r.json(); }).then(function(d){ if(!d||!d.ok) throw 0; PEND[id].t=Date.now(); setTimeout(function(){ BUSY=0; busca(); },300); }).catch(function(){ delete PEND[id]; BUSY=0; busca(); });
 }
 setInterval(function(){ var d=new Date(); $('rel').textContent=hhmm(d.getTime()); },15000); $('rel').textContent=hhmm(Date.now());
 setInterval(function(){ if(!document.hidden) busca(); },3000); document.addEventListener('visibilitychange',function(){ if(!document.hidden) busca(); }); window.addEventListener('focus',function(){ busca(); });
-setInterval(pinta,30000);
+setInterval(pinta,30000); marcaEst();
 try{ if(navigator.wakeLock) navigator.wakeLock.request('screen').catch(function(){}); document.addEventListener('visibilitychange',function(){ if(!document.hidden&&navigator.wakeLock) navigator.wakeLock.request('screen').catch(function(){}); }); }catch(e){}
 if(TK){ $('login').classList.remove('on'); document.body.classList.remove('lgon'); busca(); somPergunta(); } else mostraLogin('');
 </script>

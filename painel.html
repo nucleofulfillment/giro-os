@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Giro OS — Painel do ponto · GIRO-OS-088</title>
+<title>Giro OS — Painel do ponto · GIRO-OS-091</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -791,6 +791,14 @@ a{color:inherit}
         </div>
       </section>
 
+      <section class="page" id="pg-clientes">
+        <div class="pghd"><div><h1>Clientes</h1><div class="sub">cadastro de clientes do atendimento · <span id="cl-total">—</span></div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn sec" onclick="clImportarAbrir()">⬆ Importar planilha</button><button class="btn pri" onclick="clNovo()">+ Novo cliente</button></div></div>
+        <div class="card">
+          <div class="search" style="margin-bottom:14px;max-width:520px"><span>🔎</span><input id="cl-busca" placeholder="buscar por nome, telefone ou número" oninput="CL.max=200;clPintar()"></div>
+          <div id="cl-lista"></div>
+        </div>
+      </section>
+
       <!-- FINANCEIRO (GMV mora aqui) -->
       <section class="page" id="pg-financeiro">
         <div class="pghd"><div><h1>Financeiro</h1><div class="sub">movimento do ponto de distribuição</div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" style="background:#fff;border:1.5px solid var(--roxo);color:var(--roxo)" onclick="abrirCustos()">+ Custo Operacional</button></div></div>
@@ -1346,6 +1354,11 @@ a{color:inherit}
     <div id="cd-of-erro" style="color:var(--red);font-size:12.5px;margin-top:10px"></div>
   </div>
   <div style="flex-shrink:0;border-top:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--s1);border-radius:0 0 18px 18px"><button class="btn pri" id="cd-of-salvar" onclick="cdOfSalvar()">Salvar</button><button class="btn sec" onclick="cdAbrirOfertas()">Voltar à lista</button><button class="btn sec" id="cd-of-dup" onclick="cdOfDuplicarAberto()">Duplicar</button><button class="btn sec" id="cd-of-apagar" onclick="cdOfApagarAberto()" style="color:var(--red);margin-left:auto">Apagar</button></div>
+</div>
+
+<div class="sheet wide" id="sh-cli">
+  <div class="sh-hd"><h3>Cliente</h3><button onclick="fecharTudo()">✕</button></div>
+  <div class="sh-bd" id="cl-corpo"></div>
 </div>
 
 <div class="sheet wide" id="sh-import">
@@ -3352,6 +3365,7 @@ var NAV_DESKTOP=[
   {id:'mesa',       lb:'Mesa',       ic:'<rect x="3" y="4" width="18" height="16" rx="1.5"/><path d="M7 4V2M17 4V2M7 10H17M7 14H14"/>'},
   {id:'mapeamento', lb:'Mapeamento', ic:'<path d="M12 21s7-6.2 7-11.2A7 7 0 105 9.8C5 14.8 12 21 12 21z"/><circle cx="12" cy="9.8" r="2.6"/>'},
   {id:'cardapio',   lb:'Cardápio',   ic:'<path d="M6 3v8a2 2 0 002 2v8M10 3v8M8 3v8M16 21V3c-2 1-3 4-3 8h3"/>'},
+  {id:'clientes',   lb:'Clientes',   ic:'<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5M16 5.2a3.2 3.2 0 010 5.6M18 14.8c2 .6 3.5 2.4 3.5 5.2"/>'},
   {id:'motoristas', lb:'Motoristas', ic:'<rect x="1" y="7" width="15" height="10" rx="1.5"/><path d="M16 10h3l3 3v4h-6z"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="19" r="2"/>'},
   {id:'veiculos',   lb:'Veículos',   ic:'<path d="M5 17h14M5 17a2 2 0 110-4M19 17a2 2 0 100-4M3 13l2-6h14l2 6M7 10h10"/>'},
   {id:'mensagens',  lb:'Mensagens',  ic:'<path d="M21 11.5a8.4 8.4 0 01-8.9 8.4 8.6 8.6 0 01-3.7-.9L3 20l1.2-4.9a8.4 8.4 0 1116.8-3.6z"/>'},
@@ -3370,7 +3384,7 @@ var NAV_MOBILE=[
 var PAG='dashboard';
 function svgIco(d){return '<svg viewBox="0 0 24 24">'+d+'</svg>';}
 /* (66) ACESSOS por perfil: dono = tudo · gerente (Operacional) = tudo menos Financeiro e Configurações · mesa = só a Mesa */
-function acessoPaginas(){ var p=DD_USER&&DD_USER.perfil; if(p==='mesa') return ['mesa']; if(p==='gerente') return ['dashboard','pedidos','mesa','mapeamento','motoristas','veiculos','mensagens']; return null; }
+function acessoPaginas(){ var p=DD_USER&&DD_USER.perfil; if(p==='mesa') return ['mesa']; if(p==='gerente') return ['dashboard','pedidos','mesa','mapeamento','motoristas','veiculos','mensagens','clientes']; return null; }
 function pagOk(id){ var a=acessoPaginas(); return !a||a.indexOf(id)>=0; }
 function montarNav(){
   var h='',i;
@@ -3437,6 +3451,7 @@ function ir(p){
   for(i=0;i<bs.length;i++) bs[i].classList.toggle('on', bs[i].getAttribute('data-p')===p);
   if(p==='veiculos') veCarregar();
   if(p==='cardapio') cdCarregar();
+  if(p==='clientes') clCarregar();
   if(p==='mapeamento'&&VIVO_ON) setTimeout(function(){ vivoBuscar(); },800);
   if(p==='mensagens') msgAbrirTela(); else clearInterval(MSG.timer);
   if(p==='cte') cteAbrirTela();
@@ -4360,7 +4375,7 @@ function msPedidosHtml(busca){
     if(busca&&(('mesa '+x.mesa+' '+x.num+' '+x.itens).toLowerCase().indexOf(busca)<0)) return;
     var st=x.fase==='preparo'?['Em preparo','#f59e0b']:(x.fase==='rota'?['Pronto','#22c55e']:['Novo','#ef4444']), nx=x.fase===''?['preparo','Começar preparo']:(x.fase==='preparo'?['rota','Pronto']:['entregue','Servido ✔']);
     var rc=x.status==='pago'?(x.pagto==='pix'?'Pago no Pix':x.pagto==='dinheiro'?'Pago em dinheiro':x.pagto==='cartao'?'Pago no cartão':'Pago'):(x.status==='marcado'?'Pendurado':'Conta aberta');
-    h+='<tr><td><b>#'+x.num+'</b><br><span style="color:var(--muted);font-size:11.5px">'+esc(x.itens)+'</span>'+(x.atend?'<br><span style="font-size:11.5px;font-weight:700;color:var(--muted2)">Garçom: '+esc(x.atend)+(x.cli?' · Cliente: '+esc(x.cli)+' ('+esc(x.joia)+')':'')+'</span>':'')+(x.obs?'<br><span style="color:var(--amber);font-size:11px;font-weight:600">Obs: '+esc(x.obs)+'</span>':'')+'</td><td>Mesa '+esc(x.mesa)+'</td><td>LOCAL</td><td>'+msHora(x.criado)+'</td><td>—</td><td><span style="font-size:11.5px;font-weight:800;color:#fff;background:'+st[1]+';border-radius:10px;padding:2px 9px">'+st[0]+'</span></td><td>'+moeda(x.total)+'</td><td>'+rc+'</td><td style="white-space:nowrap"><button class="btn pri sm" type="button" onclick="msFase(\''+esc(x.id)+'\',\''+nx[0]+'\')">'+nx[1]+'</button></td></tr>'; });
+    h+='<tr style="cursor:pointer" onclick="msDetalhe(\''+esc(x.id)+'\')"><td><b>#'+x.num+'</b><br><span style="display:block;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:11.5px">'+esc(x.itens)+'</span>'+(x.atend?'<br><span style="font-size:11.5px;font-weight:700;color:var(--muted2)">Garçom: '+esc(x.atend)+(x.cli?' · Cliente: '+esc(x.cli)+' ('+esc(x.joia)+')':'')+'</span>':'')+(x.obs?'<br><span style="color:var(--amber);font-size:11px;font-weight:600">Obs: '+esc(x.obs)+'</span>':'')+'</td><td>Mesa '+esc(x.mesa)+'</td><td>LOCAL</td><td>'+msHora(x.criado)+'</td><td>—</td><td><span style="font-size:11.5px;font-weight:800;color:#fff;background:'+st[1]+';border-radius:10px;padding:2px 9px">'+st[0]+'</span></td><td>'+moeda(x.total)+'</td><td>'+rc+'</td><td style="white-space:nowrap"><button class="btn pri sm" type="button" onclick="event.stopPropagation();msFase(\''+esc(x.id)+'\',\''+nx[0]+'\')">'+nx[1]+'</button></td></tr>'; });
   return h||'<tr><td colspan="9"><div class="empty">Nenhum pedido de mesa em andamento</div></td></tr>';
 }
 /* as cores de tempo andam sozinhas: repinta a lista a cada minuto quando ela está aberta */
@@ -7420,6 +7435,110 @@ function msPintar(){
     h+='<div style="border:1px solid var(--border);border-radius:12px;padding:10px;margin-bottom:10px"><div style="display:flex;align-items:center;gap:8px"><b style="font-size:15px">Mesa '+esc(x.mesa)+'</b><span style="font-size:12px;color:var(--muted)">#'+x.num+' · '+msHora(x.criado)+'</span><span style="margin-left:auto;font-size:11.5px;font-weight:800;color:#fff;background:'+st[1]+';border-radius:10px;padding:2px 9px">'+st[0]+'</span></div><div style="font-size:13.5px;margin:6px 0;line-height:1.45">'+esc(x.itens)+'</div>'+(x.atend?'<div style="font-size:12px;font-weight:700;color:var(--muted2);margin-bottom:4px">Garçom: '+esc(x.atend)+(x.cli?' · Cliente: '+esc(x.cli)+' ('+esc(x.joia)+')':'')+'</div>':'')+(x.obs?'<div style="font-size:12.5px;color:#f59e0b;margin-bottom:6px">Obs: '+esc(x.obs)+'</div>':'')+'<div style="display:flex;align-items:center;gap:8px"><span style="font-size:12.5px;color:var(--muted);flex:1">'+pg+' · '+moeda(x.total)+'</span>'+bt+'</div></div>'; });
   el('cd-imp-corpo').innerHTML=h;
 }
+/* ── (090) menu CLIENTES: lista, busca, cadastro, ficha e importação por planilha ── */
+var CL={lista:[],max:200};
+function clApi(path,body){ var o=body?{method:'POST',headers:cdHdr(),body:JSON.stringify(body)}:{headers:cdHdr()}; return fetch(DELTADIS_API+path,o).then(function(r){ return r.json(); }); }
+function clFone(f){ f=String(f||'').replace(/\D/g,''); if(f.length>=12&&f.slice(0,2)==='55') f=f.slice(2); if(f.length===11) return '('+f.slice(0,2)+') '+f.slice(2,7)+'-'+f.slice(7); if(f.length===10) return '('+f.slice(0,2)+') '+f.slice(2,6)+'-'+f.slice(6); return f; }
+function clCarregar(){
+  el('cl-lista').innerHTML='<div style="padding:14px;color:var(--muted)">Carregando…</div>';
+  clApi('/painel/atend-socios').then(function(d){ if(!d||!d.ok) throw new Error((d&&d.mensagem)||'erro'); CL.lista=d.socios||[]; CL.max=200; clPintar(); })
+  .catch(function(e){ el('cl-lista').innerHTML='<div style="padding:14px;color:var(--red)">'+esc(e.message||'Não carregou')+'</div>'; });
+}
+function clPintar(){
+  var q=(el('cl-busca').value||'').toLowerCase().trim(), qd=q.replace(/\D/g,''), h='', n=0, tot=0;
+  CL.lista.forEach(function(s){
+    var ok=!q||String(s.nome||'').toLowerCase().indexOf(q)>=0||String(s.joia).toLowerCase().indexOf(q)>=0||(qd.length>=3&&String(s.fone||'').indexOf(qd)>=0);
+    if(!ok) return; tot++; if(n>=CL.max) return; n++;
+    var sit=s.bloqueado?'<span style="color:#fff;background:#ef4444;border-radius:10px;padding:2px 9px;font-size:11.5px;font-weight:800">Bloqueado</span>':(s.ativo===0?'<span style="color:var(--muted)">Inativo</span>':(s.devendo>0?'<b style="color:var(--red)">'+moeda(s.devendo)+'</b>':'<span style="color:#16a34a;font-weight:700">Em dia</span>'));
+    h+='<tr style="cursor:pointer" onclick="clAbrir(\''+esc(s.joia)+'\')"><td><b>'+esc(s.joia)+'</b></td><td>'+esc(s.nome)+'</td><td>'+esc(clFone(s.fone)||'—')+'</td><td>'+sit+'</td></tr>';
+  });
+  if(!h) h='<tr><td colspan="4"><div class="empty">'+(CL.lista.length?'Nenhum cliente encontrado':'Nenhum cliente cadastrado ainda')+'</div></td></tr>';
+  el('cl-lista').innerHTML='<div class="tb-wrap"><table class="tb"><thead><tr><th style="width:90px">Número</th><th>Nome</th><th>Celular</th><th>Situação</th></tr></thead><tbody>'+h+'</tbody></table></div>'+(tot>n?'<div style="text-align:center;margin-top:12px"><button class="btn sec" onclick="CL.max+=300;clPintar()">Mostrar mais ('+(tot-n)+' restantes)</button></div>':'');
+  el('cl-total').textContent=tot+(tot===1?' cliente':' clientes');
+}
+function clForm(s,novo){
+  return '<label style="font-size:12px;color:var(--muted)">Número do cliente</label><input class="inp" id="cl-j" inputmode="numeric" value="'+esc(s.joia||'')+'" '+(novo?'':'readonly style="opacity:.7"')+' style="margin-bottom:10px">'
+   +'<label style="font-size:12px;color:var(--muted)">Nome</label><input class="inp" id="cl-n" maxlength="80" value="'+esc(s.nome||'')+'" style="margin-bottom:10px">'
+   +'<label style="font-size:12px;color:var(--muted)">Celular (com DDD)</label><input class="inp" id="cl-f" inputmode="tel" value="'+esc(clFone(s.fone))+'" style="margin-bottom:10px">'
+   +'<label style="font-size:12px;color:var(--muted)">Observação</label><input class="inp" id="cl-o" maxlength="200" value="'+esc(s.obs||'')+'" style="margin-bottom:10px">'
+   +'<label style="display:flex;gap:8px;align-items:center;font-size:13.5px;margin:6px 0 12px"><input type="checkbox" id="cl-a" '+(s.ativo===0?'':'checked')+'> Cliente ativo</label>'
+   +'<div id="cl-erro" style="color:var(--red);font-size:12.5px;margin-bottom:6px"></div><button class="btn pri wide" onclick="clSalvar('+(novo?1:0)+')">'+(novo?'Cadastrar cliente':'Salvar alterações')+'</button>';
+}
+function clNovo(){ el('sh-cli').querySelector('h3').textContent='Novo cliente'; el('cl-corpo').innerHTML=clForm({},true); abrir('sh-cli'); }
+function clAbrir(j){
+  var s=CL.lista.filter(function(x){ return String(x.joia)===String(j); })[0]; if(!s) return;
+  el('sh-cli').querySelector('h3').textContent='Cliente '+s.joia+' · '+s.nome;
+  var st=s.bloqueado?'<div style="background:#fdecec;color:#b91c1c;border-radius:10px;padding:9px 12px;font-weight:700;margin-bottom:12px">⛔ Bloqueado por cobrança vencida · deve '+moeda(s.devendo)+'</div>':(s.devendo>0?'<div style="background:#fff4db;color:#92580a;border-radius:10px;padding:9px 12px;font-weight:700;margin-bottom:12px">Deve '+moeda(s.devendo)+'</div>':'');
+  el('cl-corpo').innerHTML=st+clForm(s,false)+'<div style="font-weight:800;margin:20px 0 8px">Pedidos do cliente</div><div id="cl-hist" style="color:var(--muted);font-size:13px">Carregando…</div>';
+  abrir('sh-cli');
+  clApi('/painel/atend-cliente?joia='+encodeURIComponent(j)).then(function(d){
+    var b=el('cl-hist'); if(!b) return; if(!d||!d.ok){ b.textContent=(d&&d.mensagem)||'Sem histórico.'; return; }
+    var ps=d.pedidos||[]; if(!ps.length){ b.textContent='Nenhum pedido ainda.'; return; }
+    var nm={aberto:['Em aberto','#f59e0b'],pendurado:['Pendurado','#8b5cf6'],cobranca:['Em cobrança','#ef4444'],pago:['Pago','#16a34a']};
+    b.innerHTML=ps.map(function(p){ var sit=nm[p.situacao]||['—','#999'], dt=new Date(p.criado);
+      var it=(p.l||[]).map(function(l){ return '<div>'+l.qty+'x '+esc(l.nome)+(l.tam?' ('+esc(l.tam)+')':'')+'</div>'; }).join('');
+      return '<div style="border:1px solid var(--border);border-radius:12px;padding:10px;margin-bottom:8px;color:var(--text,inherit)"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><b>#'+p.num+'</b><span style="font-size:12px;color:var(--muted)">'+dt.toLocaleDateString('pt-BR')+' '+msHora(p.criado)+(p.mesa?' · Mesa '+esc(p.mesa):'')+'</span><span style="font-size:11.5px;font-weight:800;color:#fff;background:'+sit[1]+';border-radius:10px;padding:2px 9px">'+sit[0]+'</span></div><div style="font-size:13px;margin:6px 0">'+it+'</div><div style="font-weight:800">'+moeda(p.total)+'</div></div>'; }).join('');
+  }).catch(function(){ var b=el('cl-hist'); if(b) b.textContent='Não consegui carregar o histórico.'; });
+}
+function clSalvar(novo){
+  var er=el('cl-erro'); er.textContent='';
+  var b={joia:el('cl-j').value.trim(),nome:el('cl-n').value.trim(),fone:el('cl-f').value,obs:el('cl-o').value.trim(),ativo:el('cl-a').checked?1:0};
+  if(novo&&CL.lista.some(function(x){ return String(x.joia)===String(b.joia); })){ er.textContent='Já existe um cliente com esse número.'; return; }
+  clApi('/painel/atend-socio-salvar',b).then(function(d){ if(!d||!d.ok) throw new Error((d&&d.mensagem)||'Não salvou'); fecharTudo(); aviso(novo?'Cliente cadastrado':'Cliente atualizado'); clCarregar(); })
+  .catch(function(e){ er.textContent=e.message||'Não salvou'; });
+}
+/* importação em massa */
+function clImportarAbrir(){
+  el('sh-cli').querySelector('h3').textContent='Importar clientes por planilha';
+  el('cl-corpo').innerHTML='<div style="font-size:13.5px;line-height:1.5;margin-bottom:12px">Use a planilha modelo (colunas <b>Número</b>, <b>Nome</b>, <b>Celular</b>, <b>Observação</b>). Cliente com número que já existe é <b>atualizado</b>; os novos são criados.</div>'
+   +'<button class="btn sec wide" onclick="clModelo()" style="margin-bottom:12px">⬇ Baixar planilha modelo</button>'
+   +'<input class="inp" type="file" id="cl-arq" accept=".xlsx,.xls,.csv" onchange="clLerPlanilha(this)"><div id="cl-imp-res" style="margin-top:12px"></div>';
+  abrir('sh-cli');
+}
+function clModelo(){
+  if(typeof XLSX==='undefined'){ aviso('O gerador de Excel não carregou. Recarregue a página.'); return; }
+  var ws=XLSX.utils.aoa_to_sheet([['Número','Nome','Celular','Observação'],['1001','Maria da Silva','(47) 99999-0000','Exemplo — apague esta linha'],['1002','João Souza','','']]); ws['!cols']=[{wch:12},{wch:32},{wch:20},{wch:30}];
+  var wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Clientes'); XLSX.writeFile(wb,'modelo-clientes.xlsx');
+}
+function clNorm(t){ return String(t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,''); }
+var CL_IMP=[];
+function clLerPlanilha(inp){
+  var f=inp.files&&inp.files[0]; if(!f) return; var res=el('cl-imp-res'); res.innerHTML='<div style="color:var(--muted)">Lendo a planilha…</div>';
+  var rd=new FileReader();
+  rd.onload=function(ev){
+    var wb; try{ wb=XLSX.read(ev.target.result,{type:'array'}); }catch(err){ res.innerHTML='<div style="color:var(--red)">Não consegui abrir esse arquivo. Use o modelo (.xlsx).</div>'; return; }
+    var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:false,defval:''}), hd=(rows[0]||[]).map(clNorm), ix={j:-1,n:-1,f:-1,o:-1};
+    hd.forEach(function(h,i){ if(ix.j<0&&/^(numero|num|joia|codigo|cod|cliente|nmero)$/.test(h)) ix.j=i; else if(ix.n<0&&/^(nome|nomedocliente|razaosocial)$/.test(h)) ix.n=i; else if(ix.f<0&&/^(celular|telefone|fone|whatsapp|tel|cel)$/.test(h)) ix.f=i; else if(ix.o<0&&/^(observacao|obs|observacoes|observao)$/.test(h)) ix.o=i; });
+    if(ix.j<0||ix.n<0){ res.innerHTML='<div style="color:var(--red)">Não achei as colunas <b>Número</b> e <b>Nome</b> na primeira linha. Use a planilha modelo.</div>'; return; }
+    CL_IMP=[]; for(var i=1;i<rows.length;i++){ var r=rows[i]; if(!r||!String(r[ix.j]||'').trim()&&!String(r[ix.n]||'').trim()) continue; CL_IMP.push({joia:String(r[ix.j]||'').trim(),nome:String(r[ix.n]||'').trim(),fone:ix.f>=0?String(r[ix.f]||''):'',obs:ix.o>=0?String(r[ix.o]||''):''}); }
+    if(!CL_IMP.length){ res.innerHTML='<div style="color:var(--red)">A planilha não tem nenhum cliente.</div>'; return; }
+    res.innerHTML='<div style="margin-bottom:10px"><b>'+CL_IMP.length+'</b> cliente'+(CL_IMP.length>1?'s':'')+' encontrado'+(CL_IMP.length>1?'s':'')+'. Exemplo: '+esc(CL_IMP[0].joia)+' · '+esc(CL_IMP[0].nome)+'</div><button class="btn pri wide" id="cl-imp-go" onclick="clImportar()">Importar '+CL_IMP.length+' cliente'+(CL_IMP.length>1?'s':'')+'</button>';
+  };
+  rd.readAsArrayBuffer(f);
+}
+function clImportar(){
+  var bt=el('cl-imp-go'); bt.disabled=true; bt.textContent='Importando…'; var res=el('cl-imp-res'), novos=0, atu=0, errs=[], te=0, pos=0, lote=1000;
+  function prox(){
+    if(pos>=CL_IMP.length){ var h='<div style="background:#e8f7ee;color:#14753A;border-radius:10px;padding:10px 12px;font-weight:700;margin-bottom:10px">✔ '+novos+' novo'+(novos===1?'':'s')+' · '+atu+' atualizado'+(atu===1?'':'s')+'</div>';
+      if(te) h+='<div style="color:var(--red);font-size:13px"><b>'+te+' linha'+(te>1?'s':'')+' não entrou'+(te>1?'ram':'')+':</b><br>'+errs.map(function(e){ return 'Linha '+(e.linha+1)+': '+esc(e.motivo); }).join('<br>')+(te>errs.length?'<br>…':'')+'</div>';
+      res.innerHTML=h; clCarregar(); return; }
+    var fatia=CL_IMP.slice(pos,pos+lote), base=pos; pos+=lote;
+    clApi('/painel/atend-socios-importar',{linhas:fatia}).then(function(d){ if(!d||!d.ok) throw new Error((d&&d.mensagem)||'Não importou');
+      novos+=d.novos; atu+=d.atualizados; te+=d.total_erros||0; (d.erros||[]).forEach(function(e){ errs.push({linha:e.linha+base,motivo:e.motivo}); }); prox(); })
+    .catch(function(e){ res.innerHTML='<div style="color:var(--red)">'+esc(e.message||'Não importou')+'</div>'; });
+  }
+  prox();
+}
+function msDetalhe(id){
+  var x=((typeof MS!=='undefined'&&MS.ped)||[]).filter(function(o){ return o.id===id; })[0]; if(!x) return;
+  var rc=x.status==='pago'?(x.pagto==='pix'?'Pago no Pix':x.pagto==='dinheiro'?'Pago em dinheiro':x.pagto==='cartao'?'Pago no cartão':'Pago'):(x.status==='marcado'?'Pendurado':'Conta aberta');
+  var fs=x.fase==='preparo'?'Em preparo':(x.fase==='rota'?'Pronto':'Novo');
+  var li=String(x.itens||'').split('; ').map(function(t){ return '<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:14px;line-height:1.4">'+esc(t)+'</div>'; }).join('');
+  var h='<div style="font-size:20px;font-weight:800">Pedido #'+x.num+'</div><div style="color:var(--muted);font-size:13px;margin:2px 0 10px">Mesa '+esc(x.mesa)+' · '+msHora(x.criado)+' · '+fs+'</div>'+li
+   +(x.obs?'<div style="margin-top:10px;color:var(--amber);font-weight:700;font-size:13px">Obs: '+esc(x.obs)+'</div>':'')
+   +'<div style="margin-top:12px;font-size:13px;line-height:1.7"><b>Total:</b> '+moeda(x.total)+'<br><b>Situação:</b> '+rc+(x.atend?'<br><b>Garçom:</b> '+esc(x.atend):'')+(x.cli?'<br><b>Cliente:</b> '+esc(x.cli)+' ('+esc(x.joia)+')':'')+'</div>';
+  el('cd-imp-corpo').innerHTML=h; el('sh-import').querySelector('h3').textContent='Detalhes do pedido'; abrir('sh-import');
+}
 function msFase(id,fase){ fetch(DELTADIS_API+'/painel/food-mesa-fase',{method:'POST',headers:cdHdr(),body:JSON.stringify({id:id,fase:fase})}).then(function(r){return r.json();}).then(function(d){ if(!d||!d.ok) throw new Error((d&&d.mensagem)||'erro'); msPoll(); }).catch(function(e){ aviso(e.message||'Não salvou'); }); }
 function msFechaMesa(m){ if(!confirm('Confirmar que a mesa '+m+' pagou e fechar a conta?')) return; MS.con=MS.con.filter(function(k){ return k.mesa!==m; }); msPintar(); msBadge(); fetch(DELTADIS_API+'/painel/food-mesa-fechar',{method:'POST',headers:cdHdr(),body:JSON.stringify({mesa:m})}).then(function(r){return r.json();}).then(function(d){ if(!d||!d.ok) throw new Error((d&&d.mensagem)||'erro'); aviso('Mesa '+m+' fechada'); msPoll(); }).catch(function(e){ aviso(e.message||'Não salvou'); msPoll(); }); }
 function msChamadoOk(id){ MS.cha=MS.cha.filter(function(c){ return c.id!==id; }); msPintar(); msBadge(); fetch(DELTADIS_API+'/painel/food-chamado-ok',{method:'POST',headers:cdHdr(),body:JSON.stringify({id:id})}).catch(function(){}); }
@@ -7863,7 +7982,7 @@ function cdPintarCats(){
   for(i=0;i<CD.cats.length;i++){
     var c=CD.cats[i], n=0, j; for(j=0;j<CD.prods.length;j++) if(CD.prods[j].cat===c.id) n++;
     h+='<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--border)"><div onclick="cdCatFotoEsc(\''+c.id+'\')" title="Foto da categoria" style="width:46px;height:46px;border-radius:10px;flex:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;background:var(--border) center/cover'+(c.foto?' url('+c.foto+')':'')+'">'+(c.foto?'':'📷')+'</div><div style="flex:1;font-weight:700;font-size:13.5px">'+esc(c.nome)+' <span style="font-weight:500;color:var(--muted);font-size:12px">· '+n+' produto'+(n===1?'':'s')+'</span></div>'
-      +'<button class="btn sec sm" onclick="cdRenCat(\''+c.id+'\')">Renomear</button><button class="btn sec sm" onclick="cdDelCat(\''+c.id+'\')" style="color:var(--red)">Apagar</button></div>';
+      +'<select class="inp" onchange="cdCatDest(\''+c.id+'\',this.value)" title="Para onde vai o pedido desta categoria" style="width:auto;padding:6px 8px;font-size:12.5px"><option value="cozinha"'+(c.dest==='bar'?'':' selected')+'>🍳 Cozinha</option><option value="bar"'+(c.dest==='bar'?' selected':'')+'>🍺 Bar</option></select><button class="btn sec sm" onclick="cdRenCat(\''+c.id+'\')">Renomear</button><button class="btn sec sm" onclick="cdDelCat(\''+c.id+'\')" style="color:var(--red)">Apagar</button></div>';
   }
   el('cd-cats-lista').innerHTML=h||'<div style="color:var(--muted);font-size:13px">Nenhuma categoria ainda.</div>';
 }
@@ -7877,7 +7996,7 @@ function cdCatFoto(inp){
       cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);
       var q=0.8, out=cv.toDataURL('image/jpeg',q); while(out.length>300000&&q>0.35){ q-=0.1; out=cv.toDataURL('image/jpeg',q); }
       el('cd-cats-erro').textContent='Salvando foto...';
-      cdSalvarApi('cat',{id:c.id,ordem:c.ordem,nome:c.nome,foto:out}).then(cdRecarregarCats).then(function(){ el('cd-cats-erro').textContent=''; }).catch(function(e){ el('cd-cats-erro').textContent='Não salvou: '+e.message; });
+      cdSalvarApi('cat',{id:c.id,ordem:c.ordem,nome:c.nome,foto:out,dest:c.dest||'cozinha'}).then(cdRecarregarCats).then(function(){ el('cd-cats-erro').textContent=''; }).catch(function(e){ el('cd-cats-erro').textContent='Não salvou: '+e.message; });
     }; im.onerror=function(){ el('cd-cats-erro').textContent='Não consegui ler essa imagem.'; }; im.src=rd.result; };
   rd.readAsDataURL(f); inp.value='';
 }
@@ -7886,10 +8005,14 @@ function cdAddCat(){
   var nm=el('cd-cat-nova').value.trim(); if(!nm) return;
   cdSalvarApi('cat',{nome:nm}).then(function(){ el('cd-cat-nova').value=''; return cdRecarregarCats(); }).catch(function(e){ el('cd-cats-erro').textContent='Não salvou: '+e.message; });
 }
+function cdCatDest(id,v){
+  var i, c=null; for(i=0;i<CD.cats.length;i++) if(CD.cats[i].id===id) c=CD.cats[i]; if(!c) return;
+  cdSalvarApi('cat',{id:c.id,ordem:c.ordem,nome:c.nome,foto:c.foto||'',dest:v}).then(cdRecarregarCats).catch(function(e){ el('cd-cats-erro').textContent='Não salvou: '+e.message; cdPintarCats(); });
+}
 function cdRenCat(id){
   var i, c=null; for(i=0;i<CD.cats.length;i++) if(CD.cats[i].id===id) c=CD.cats[i];
   if(!c) return; var nm=window.prompt('Novo nome da categoria:',c.nome); if(!nm||!nm.trim()) return;
-  cdSalvarApi('cat',{id:c.id,ordem:c.ordem,nome:nm.trim(),foto:c.foto||''}).then(cdRecarregarCats).catch(function(e){ el('cd-cats-erro').textContent='Não salvou: '+e.message; });
+  cdSalvarApi('cat',{id:c.id,ordem:c.ordem,nome:nm.trim(),foto:c.foto||'',dest:c.dest||'cozinha'}).then(cdRecarregarCats).catch(function(e){ el('cd-cats-erro').textContent='Não salvou: '+e.message; });
 }
 function cdDelCat(id){
   var i, c=null, n=0; for(i=0;i<CD.cats.length;i++) if(CD.cats[i].id===id) c=CD.cats[i];
