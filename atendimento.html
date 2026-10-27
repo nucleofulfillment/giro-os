@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
 <meta name="theme-color" content="#F97316">
-<title>Atendimento · GIRO-OS-ATEND-16</title>
+<title>Atendimento · GIRO-OS-ATEND-17</title>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#FBF7F5;--s1:#fff;--s3:#FBF3EE;--s4:#F5E8E0;--b2:#F2DED2;--tx:#29231E;--mu:#9E9084;--mu2:#6C6055;--pri:#D96D28;--grad:linear-gradient(120deg,#F97316,#FDB022);--ok:#16A34A;--er:#DC2626;--am:#B45309;--f:'Manrope',-apple-system,sans-serif}
@@ -244,6 +244,7 @@ function aba(a){
 }
 /* ── comanda atual ── */
 (function(){ ['iMesa','iJoia'].forEach(function(id){ var e=document.getElementById(id); if(!e) return; e.addEventListener('focus',function(){ document.body.classList.add('kb'); }); e.addEventListener('blur',function(){ setTimeout(function(){ var a=document.activeElement; if(!a||(a.id!=='iMesa'&&a.id!=='iJoia')) document.body.classList.remove('kb'); },200); }); }); })();
+function plab(p){ return p.sub?p.num+'-'+p.sub:String(p.num); }
 function modo(m){ COM.modo=m; $('sgM').classList.toggle('on',m==='mesa'); $('sgB').classList.toggle('on',m==='balcao'); $('lbMesa').textContent=m==='mesa'?'Número da mesa':'Número da comanda do balcão (opcional)'; }
 var SUGS=[], _dj=0, CLIS=null;
 function digJoia(){
@@ -421,7 +422,7 @@ function tiraItem(k){ CART.splice(k,1); if(!CART.length){ fecha(); cartBar(); } 
 function enviaPedido(){
   var b=$('pBt'); b.disabled=true; b.textContent='Enviando…'; $('pErr').textContent='';
   api('/painel/atend-pedido',{mesa:COM.mesa,joia:COM.joia,obs:($('pObs')||{value:''}).value,liberar:COM.liberar,itens:CART.map(function(i){ return {p:i.p,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs,qty:i.qty}; })}).then(function(r){
-    if(r.ok){ var ped={num:r.num,mesa:COM.mesa,joia:COM.joia,nome:COM.nome,atend:D.usuario,criado:Date.now(),obs:($('pObs')||{value:''}).value,modo:COM.modo,l:CART.map(function(i){ return {nome:i.nome,qty:i.qty,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs}; })}; CART=[]; fecha(); cartBar(); toast('Pedido #'+r.num+' enviado para a cozinha'); zeraComanda(); if(impOn()) imprime(ped); return; }
+    if(r.ok){ var ped={num:r.num,sub:r.sub||0,mesa:COM.mesa,joia:COM.joia,nome:COM.nome,atend:D.usuario,criado:Date.now(),obs:($('pObs')||{value:''}).value,modo:COM.modo,l:CART.map(function(i){ return {nome:i.nome,qty:i.qty,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs}; })}; CART=[]; fecha(); cartBar(); toast('Pedido #'+plab(r)+' enviado para a cozinha'); zeraComanda(); if(impOn()) imprime(ped); return; }
     if(r._h===401){ mostraLogin('Entre de novo.'); return; }
     b.disabled=false; b.textContent='Enviar para a cozinha'; $('pErr').innerHTML=esc(r.mensagem||'Não consegui enviar.')+(r.erro==='bloqueado'&&r.pode_liberar?'<br><button class="bt mini r" style="margin-top:8px" onclick="COM.liberar=true;enviaPedido()">Liberar mesmo assim</button>':'');
   });
@@ -434,7 +435,7 @@ function carregaCom(){
     COMS=d.comandas||[]; var h='';
     COMS.forEach(function(c,i){
       var t=(c.mesa?'Mesa '+esc(c.mesa):'')+(c.joia?(c.mesa?' · ':'')+pill(c.joia):'');
-      h+='<div class="cm" id="cm'+i+'"><div class="h"><div><b>'+t+'</b><div style="font-size:12.5px;color:var(--mu2)">'+esc(c.nome||'')+'</div></div><span class="v">'+brl(c.total)+'</span></div><div class="pd">'+c.pedidos.map(function(p,k){ return '<div class="pr"><div class="ph"><span><b>#'+p.num+'</b> · '+new Date(p.criado).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+(p.atend?' · '+esc(p.atend):'')+'</span><button onclick="reimp('+i+','+k+')" title="Imprimir">🖨</button></div>'+String(p.itens||'').split('; ').map(function(t){ return '<div class="pi">'+esc(t)+'</div>'; }).join('')+'</div>'; }).join('')+'</div>'
+      h+='<div class="cm" id="cm'+i+'"><div class="h"><div><b>'+t+'</b><div style="font-size:12.5px;color:var(--mu2)">'+esc(c.nome||'')+'</div></div><span class="v">'+brl(c.total)+'</span></div>'+(c.pedidos.length&&c.pedidos[0].sub?'<div style="font-size:12px;font-weight:800;color:var(--mu2);margin-top:6px">PEDIDO #'+c.pedidos[0].num+'</div>':'')+'<div class="pd">'+c.pedidos.map(function(p,k){ return '<div class="pr"><div class="ph"><span><b>#'+plab(p)+'</b> · '+new Date(p.criado).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+(p.atend?' · '+esc(p.atend):'')+'</span><button onclick="reimp('+i+','+k+')" title="Imprimir">🖨</button></div>'+String(p.itens||'').split('; ').map(function(t){ return '<div class="pi">'+esc(t)+'</div>'; }).join('')+'</div>'; }).join('')+'</div>'
         +'<div class="ac"><button class="bt s" onclick="ativaComanda(COMS['+i+'])">+ Pedido</button><button class="bt g" onclick="fechaForm('+i+')">Fechar conta</button></div></div>';
     });
     $('lCom').innerHTML=h||'<p style="color:var(--mu2)">Nenhuma comanda aberta agora.</p>'; achaPed();
@@ -443,7 +444,7 @@ function carregaCom(){
 function achaPed(){
   var q=($('bPed').value||'').toLowerCase().trim(), num=/^\d+$/.test(q);
   COMS.forEach(function(c,i){ var e=$('cm'+i); if(!e) return;
-    var ok=!q||String(c.joia).indexOf(q)===0&&num||(c.nome||'').toLowerCase().indexOf(q)>=0||(num&&String(c.mesa)===q)||(num&&c.pedidos.some(function(p){ return String(p.num)===q; }));
+    var ok=!q||String(c.joia).indexOf(q)===0&&num||(c.nome||'').toLowerCase().indexOf(q)>=0||(num&&String(c.mesa)===q)||(c.pedidos.some(function(p){ return plab(p)===q||String(p.num)===q; }));
     e.style.display=ok?'':'none'; });
 }
 function fechaForm(i){
@@ -516,7 +517,7 @@ function clienteDet(joia,fresh){
     d.pedidos.forEach(function(p){
       var dd=dtBR(p.criado); if(dd!==dia){ dia=dd; h+='<div class="dia">'+esc(dd)+'</div>'; }
       var st={aberto:['y','Em aberto'],pendurado:['o','Pendurado'],cobranca:['r','Cobrança em aberto'],pago:['g','Pago'+(p.forma&&p.forma!=='conta'?' · '+p.forma:'')+(p.pago_em?' · '+new Date(p.pago_em).toLocaleDateString('pt-BR'):'')]}[p.situacao]||['a',p.situacao];
-      h+='<div class="cm"><div class="h"><div><b>#'+p.num+'</b> · '+hrBR(p.criado)+(p.mesa?' · Mesa '+esc(p.mesa):'')+' <span class="tag '+st[0]+'">'+esc(st[1])+'</span></div><span class="v">'+brl(p.total)+'</span></div>'
+      h+='<div class="cm"><div class="h"><div><b>#'+plab(p)+'</b> · '+hrBR(p.criado)+(p.mesa?' · Mesa '+esc(p.mesa):'')+' <span class="tag '+st[0]+'">'+esc(st[1])+'</span></div><span class="v">'+brl(p.total)+'</span></div>'
         +'<div class="ln">'+p.l.map(function(l){ return '<b>'+l.qty+'x '+esc(l.nome)+'</b>'+(linhaTxt(l)?' — '+esc(linhaTxt(l)):''); }).join('<br>')+(p.obs?'<br>Obs: '+esc(p.obs):'')+'</div>'
         +(p.atend?'<div class="ln">Atendente: '+esc(p.atend)+'</div>':'')+'</div>';
     });
@@ -534,13 +535,13 @@ function code128Svg(txt){
 }
 function impOn(){ try{ return localStorage.getItem('at_imp')!=='0'; }catch(e){ return true; } }
 function impSet(v){ try{ localStorage.setItem('at_imp',v?'1':'0'); }catch(e){} }
-function reimp(i,k){ var c=COMS[i], p=c.pedidos[k]; imprime({num:p.num,mesa:p.mesa||c.mesa,joia:c.joia,nome:c.nome,atend:p.atend,criado:p.criado,obs:p.obs,l:p.l||[],reimp:1}); }
+function reimp(i,k){ var c=COMS[i], p=c.pedidos[k]; imprime({num:p.num,sub:p.sub||0,mesa:p.mesa||c.mesa,joia:c.joia,nome:c.nome,atend:p.atend,criado:p.criado,obs:p.obs,l:p.l||[],reimp:1}); }
 function imprime(p){
   var eh=esc, it='';
   (p.l||[]).forEach(function(l){ var n=(l.sab||[]).length, sub=[]; if(l.tam) sub.push(eh(l.tam)); (l.sab||[]).forEach(function(x){ sub.push((n>1?'1/'+n+' ':'')+eh(x)); }); if(l.borda) sub.push('Borda: '+eh(l.borda)); (l.adds||[]).forEach(function(a){ sub.push('+ '+eh(a)); });
     it+='<div class="it"><div class="q">'+l.qty+'x</div><div class="d"><b>'+eh(l.nome)+'</b>'+sub.map(function(x){ return '<div>'+x+'</div>'; }).join('')+(l.obs?'<div class="ob">! '+eh(l.obs)+'</div>':'')+'</div></div>'; });
   var local=p.mesa?((p.modo==='balcao'?'BALCÃO ':'MESA ')+eh(p.mesa)):(p.modo==='balcao'?'BALCÃO':'CLIENTE '+eh(p.joia));
-  var html='<!doctype html><html><head><meta charset="utf-8"><title>Pedido '+p.num+'</title><style>@page{size:80mm auto;margin:3mm}*{box-sizing:border-box}body{margin:0;width:74mm;font-family:Arial,Helvetica,sans-serif;color:#000}'
+  var html='<!doctype html><html><head><meta charset="utf-8"><title>Pedido '+plab(p)+'</title><style>@page{size:80mm auto;margin:3mm}*{box-sizing:border-box}body{margin:0;width:74mm;font-family:Arial,Helvetica,sans-serif;color:#000}'
    +'.c{text-align:center}.emp{font-size:17px;font-weight:900;letter-spacing:.5px}.sub{font-size:12px;letter-spacing:3px;font-weight:700;margin-top:2px}.sp{border-top:2px dashed #000;margin:7px 0}'
    +'.mesa{background:#000;color:#fff;text-align:center;font-size:34px;font-weight:900;padding:6px 4px;border-radius:6px;letter-spacing:1px;-webkit-print-color-adjust:exact;print-color-adjust:exact}.row{display:flex;justify-content:space-between;font-size:12.5px;margin:3px 0}'
    +'.cli{font-size:16px;font-weight:900;margin-top:6px}.jo{display:inline-block;border:2px solid #000;border-radius:5px;padding:0 6px;font-weight:900;margin-left:4px}'
@@ -548,10 +549,10 @@ function imprime(p){
    +'.po{font-size:13px;font-weight:700;border:2px solid #000;border-radius:5px;padding:4px 6px;margin-top:4px}.bc{text-align:center;margin-top:8px}.bc svg{max-width:100%;height:46px}.num{font-size:15px;font-weight:900;letter-spacing:2px;text-align:center}</style></head><body>'
    +'<div class="c emp">'+eh(D.empresa||'')+'</div><div class="c sub">'+(p.reimp?'COZINHA · 2ª VIA':'COZINHA')+'</div><div class="sp"></div>'
    +'<div class="mesa"'+(p.mesa?'':' style="font-size:20px"')+'>'+local+'</div>'
-   +'<div class="row"><span><b>Pedido #'+p.num+'</b></span><span>'+new Date(p.criado).toLocaleDateString('pt-BR')+' '+hrBR(p.criado)+'</span></div>'
+   +'<div class="row"><span><b>Pedido #'+plab(p)+'</b></span><span>'+new Date(p.criado).toLocaleDateString('pt-BR')+' '+hrBR(p.criado)+'</span></div>'
    +(p.nome&&p.joia?'<div class="cli">'+eh(p.nome)+'<span class="jo">'+eh(p.joia)+'</span></div>':'')
    +(p.atend?'<div class="row"><span>Atendente: '+eh(p.atend)+'</span></div>':'')+'<div class="sp"></div>'+it
-   +(p.obs?'<div class="po">OBS: '+eh(p.obs)+'</div>':'')+'<div class="sp"></div><div class="bc">'+code128Svg(String(p.num))+'</div><div class="num">'+p.num+'</div></body></html>';
+   +(p.obs?'<div class="po">OBS: '+eh(p.obs)+'</div>':'')+'<div class="sp"></div><div class="bc">'+code128Svg(plab(p))+'</div><div class="num">'+plab(p)+'</div></body></html>';
   var f=document.createElement('iframe'); f.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0'; document.body.appendChild(f);
   var d=f.contentWindow.document; d.open(); d.write(html); d.close();
   setTimeout(function(){ try{ f.contentWindow.focus(); f.contentWindow.print(); }catch(e){ toast('Não consegui abrir a impressão.'); } setTimeout(function(){ try{ f.remove(); }catch(e){} },60000); },350);

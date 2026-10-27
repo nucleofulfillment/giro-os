@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Giro OS — Painel do ponto · GIRO-OS-092</title>
+<title>Giro OS — Painel do ponto · GIRO-OS-093</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -7477,7 +7477,7 @@ function clAbrir(j){
     var nm={aberto:['Em aberto','#f59e0b'],pendurado:['Pendurado','#8b5cf6'],cobranca:['Em cobrança','#ef4444'],pago:['Pago','#16a34a']};
     b.innerHTML=ps.map(function(p){ var sit=nm[p.situacao]||['—','#999'], dt=new Date(p.criado);
       var it=(p.l||[]).map(function(l){ return '<div>'+l.qty+'x '+esc(l.nome)+(l.tam?' ('+esc(l.tam)+')':'')+'</div>'; }).join('');
-      return '<div style="border:1px solid var(--border);border-radius:12px;padding:10px;margin-bottom:8px;color:var(--text,inherit)"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><b>#'+p.num+'</b><span style="font-size:12px;color:var(--muted)">'+dt.toLocaleDateString('pt-BR')+' '+msHora(p.criado)+(p.mesa?' · Mesa '+esc(p.mesa):'')+'</span><span style="font-size:11.5px;font-weight:800;color:#fff;background:'+sit[1]+';border-radius:10px;padding:2px 9px">'+sit[0]+'</span></div><div style="font-size:13px;margin:6px 0">'+it+'</div><div style="font-weight:800">'+moeda(p.total)+'</div></div>'; }).join('');
+      return '<div style="border:1px solid var(--border);border-radius:12px;padding:10px;margin-bottom:8px;color:var(--text,inherit)"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><b>#'+p.num+(p.sub?'-'+p.sub:'')+'</b><span style="font-size:12px;color:var(--muted)">'+dt.toLocaleDateString('pt-BR')+' '+msHora(p.criado)+(p.mesa?' · Mesa '+esc(p.mesa):'')+'</span><span style="font-size:11.5px;font-weight:800;color:#fff;background:'+sit[1]+';border-radius:10px;padding:2px 9px">'+sit[0]+'</span></div><div style="font-size:13px;margin:6px 0">'+it+'</div><div style="font-weight:800">'+moeda(p.total)+'</div></div>'; }).join('');
   }).catch(function(){ var b=el('cl-hist'); if(b) b.textContent='Não consegui carregar o histórico.'; });
 }
 function clSalvar(novo){
@@ -7533,7 +7533,8 @@ function msDetalhe(id){
   var x=((typeof MS!=='undefined'&&MS.ped)||[]).filter(function(o){ return o.id===id; })[0]; if(!x) return;
   var rc=x.status==='pago'?(x.pagto==='pix'?'Pago no Pix':x.pagto==='dinheiro'?'Pago em dinheiro':x.pagto==='cartao'?'Pago no cartão':'Pago'):(x.status==='marcado'?'Pendurado':'Conta aberta');
   var fs=x.fase==='preparo'?'Em preparo':(x.fase==='rota'?'Pronto':'Novo');
-  var li=String(x.itens||'').split('; ').map(function(t){ return '<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:14px;line-height:1.4">'+esc(t)+'</div>'; }).join('');
+  var linha=function(t){ return '<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:14px;line-height:1.4">'+esc(t)+'</div>'; };
+  var li=(x.subs&&x.subs.length)?x.subs.map(function(sb,i){ return '<div style="margin-top:10px;font-size:12.5px;font-weight:800;color:var(--muted)">'+x.num+'-'+(sb.sub||i+1)+' · '+msHora(sb.criado)+(sb.atend?' · '+esc(sb.atend):'')+'</div>'+String(sb.itens||'').split('; ').map(linha).join('')+(sb.obs?'<div style="color:var(--amber);font-weight:700;font-size:12.5px">Obs: '+esc(sb.obs)+'</div>':''); }).join(''):String(x.itens||'').split('; ').map(linha).join('');
   var h='<div style="font-size:20px;font-weight:800">Pedido #'+x.num+'</div><div style="color:var(--muted);font-size:13px;margin:2px 0 10px">Mesa '+esc(x.mesa)+' · '+msHora(x.criado)+' · '+fs+'</div>'+li
    +(x.obs?'<div style="margin-top:10px;color:var(--amber);font-weight:700;font-size:13px">Obs: '+esc(x.obs)+'</div>':'')
    +'<div style="margin-top:12px;font-size:13px;line-height:1.7"><b>Total:</b> '+moeda(x.total)+'<br><b>Situação:</b> '+rc+(x.atend?'<br><b>Garçom:</b> '+esc(x.atend):'')+(x.cli?'<br><b>Cliente:</b> '+esc(x.cli)+' ('+esc(x.joia)+')':'')+'</div>';

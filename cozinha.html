@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Giro OS — Cozinha · GIRO-OS-COZINHA-08</title>
+<title>Giro OS — Cozinha · GIRO-OS-COZINHA-09</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -168,13 +168,13 @@ body.lgon #top,body.lgon #cols{display:none}
       <div style="display:flex;gap:10px"><button class="btn pri wide" id="lgB" style="flex:1;width:auto" onclick="entrar()">Entrar</button></div>
       
       <p class="demo" id="lgM" style="color:#c0392b;font-weight:700;min-height:18px"></p>
-      <p class="bld">GIRO-OS-COZINHA-08</p>
+      <p class="bld">GIRO-OS-COZINHA-09</p>
     </div>
   </div>
 </div>
 
 <!-- ══════════ APP ══════════ -->
-<div id="top"><img class="lo" id="lo" alt="" style="display:none"><h1 id="emp">Cozinha<small>GIRO-OS-COZINHA-08</small></h1><span class="seg" id="seg"><button id="sCozinha" onclick="setEst('cozinha')">🍳 Cozinha</button><button id="sBar" onclick="setEst('bar')">🍺 Bar</button><button id="sTodos" onclick="setEst('todos')">Unificado</button></span><span id="rel"></span><button class="ib" id="bSom" onclick="somAlterna()">🔔 Som</button><button class="ib" onclick="telaCheia()">⛶</button><button class="ib" onclick="sair()">Sair</button></div>
+<div id="top"><img class="lo" id="lo" alt="" style="display:none"><h1 id="emp">Cozinha<small>GIRO-OS-COZINHA-09</small></h1><span class="seg" id="seg"><button id="sCozinha" onclick="setEst('cozinha')">🍳 Cozinha</button><button id="sBar" onclick="setEst('bar')">🍺 Bar</button><button id="sTodos" onclick="setEst('todos')">Unificado</button></span><span id="rel"></span><button class="ib" id="bSom" onclick="somAlterna()">🔔 Som</button><button class="ib" onclick="telaCheia()">⛶</button><button class="ib" onclick="sair()">Sair</button></div>
 <div id="cols"><div class="col n"><h2><span>Novos</span><span id="cN">0</span></h2><div id="lN"></div></div><div class="col p"><h2><span>Em preparo</span><span id="cP">0</span></h2><div id="lP"></div></div><div class="col r"><h2><span>Prontos</span><span id="cR">0</span></h2><div id="lR"></div></div></div>
 <div id="som"><button onclick="somLiga()">🔔 Toque para ativar o som dos pedidos</button></div>
 <script>
@@ -220,7 +220,7 @@ function fotoHtml(f){ if(!f||!f.length) return '<div class="ft">🍽️</div>'; 
 try{ var _e=localStorage.getItem('coz_est'); if(_e==='cozinha'||_e==='bar'||_e==='todos') EST=_e; }catch(e){}
 var NOMEST={cozinha:'Cozinha',bar:'Bar',todos:'Cozinha + Bar'};
 function setEst(e){ if(e===EST) return; EST=e; try{ localStorage.setItem('coz_est',e); }catch(x){} PED=[]; PEND={}; VISTO={}; INIT=0; marcaEst(); pinta(); BUSY=0; busca(); }
-function marcaEst(){ $('sCozinha').classList.toggle('on',EST==='cozinha'); $('sBar').classList.toggle('on',EST==='bar'); $('sTodos').classList.toggle('on',EST==='todos'); if(EMP) $('emp').innerHTML=esc(EMP)+' · '+NOMEST[EST]+'<small>GIRO-OS-COZINHA-08</small>'; try{ document.title='Giro OS — '+NOMEST[EST]+' · GIRO-OS-COZINHA-08'; }catch(e){} }
+function marcaEst(){ $('sCozinha').classList.toggle('on',EST==='cozinha'); $('sBar').classList.toggle('on',EST==='bar'); $('sTodos').classList.toggle('on',EST==='todos'); if(EMP) $('emp').innerHTML=esc(EMP)+' · '+NOMEST[EST]+'<small>GIRO-OS-COZINHA-09</small>'; try{ document.title='Giro OS — '+NOMEST[EST]+' · GIRO-OS-COZINHA-09'; }catch(e){} }
 var EMP='';
 function itemHtml(l){
   var d=[]; if(l.tam) d.push('<div>Tamanho: <b style="display:inline;font-size:15px">'+esc(l.tam)+'</b></div>');
@@ -234,7 +234,7 @@ function cardHtml(p,col){
   var m=minutos(p), cl=(col==='r')?'':(m>=25?'d':(m>=15?'w':'')), tag=p.modo==='mesa'?'<span class="tag mesa">MESA '+esc(p.mesa)+'</span>':(p.modo==='retirada'?'<span class="tag ret">RETIRADA</span>':'<span class="tag ent">ENTREGA</span>');
   if(p.prog_dia) tag+='<span class="tag ag">AGENDADO '+esc(p.prog_hora||'')+'</span>';
   var bt=col==='n'?'<button class="bt n" onclick="muda(\''+esc(p.id)+'\',\'preparo\')">▶ Iniciar preparo</button>':col==='p'?'<button class="bt p" onclick="muda(\''+esc(p.id)+'\',\'pronto\')">✔ Pronto</button><button class="un" onclick="muda(\''+esc(p.id)+'\',\'\')">voltar para Novos</button>':'<button class="bt r" onclick="muda(\''+esc(p.id)+'\',\'ok\')">Retirar da tela</button><button class="un" onclick="muda(\''+esc(p.id)+'\',\'preparo\')">voltar para Em preparo</button>';
-  return '<div class="card'+(col==='n'?' novo':'')+'"><div class="hd">'+tag+'<span class="num">#'+p.num+'</span><span class="tm '+cl+'">'+hhmm(p.criado)+' · '+m+' min</span></div>'+(p.modo!=='mesa'&&p.nome?'<div class="nm">'+esc(p.nome)+'</div>':'')+p.itens.map(itemHtml).join('')+(p.obs?'<div class="po">Obs do pedido: '+esc(p.obs)+'</div>':'')+bt+'</div>';
+  return '<div class="card'+(col==='n'?' novo':'')+'"><div class="hd">'+tag+'<span class="num">#'+p.num+(p.sub?'-'+p.sub:'')+'</span><span class="tm '+cl+'">'+hhmm(p.criado)+' · '+m+' min</span></div>'+(p.modo!=='mesa'&&p.nome?'<div class="nm">'+esc(p.nome)+'</div>':'')+p.itens.map(itemHtml).join('')+(p.obs?'<div class="po">Obs do pedido: '+esc(p.obs)+'</div>':'')+bt+'</div>';
 }
 function pinta(){
   var c={n:[],p:[],r:[]}; PED.forEach(function(p){ c[p.estado==='preparo'?'p':(p.estado==='pronto'?'r':'n')].push(p); });
