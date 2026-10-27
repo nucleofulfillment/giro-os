@@ -442,7 +442,6 @@ function artItens(){
   var n=W.sab.length; W.sab.forEach(function(id){ var s=sabPorId(id); if(s) l.push({e:emojiSab(s),n:(n>1?'1/'+n+' ':'')+s.nome,k:'s'+id}); });
   if(W.borda!=null){ var bn=bordas()[W.borda].nome; l.push({e:/doce|chocolate/i.test(bn)?'🍫':'🧀',n:bn,k:'b'+W.borda}); }
   W.add.forEach(function(j){ var a=outros()[j]; if(a) l.push({e:emojiItem(a.nome),n:a.nome,k:'a'+j}); });
-  SAC.forEach(function(i,j){ if((i.tipo==='bebida')||(!i.tipo&&i.kind==='item'&&/refri|coca|guaran|fanta|sprite|suco|cerveja|chopp|bebida|[áa]gua|lata|energ|pepsi/i.test(i.nome))) l.push({e:emojiItem(i.nome),n:(i.qty>1?i.qty+'× ':'')+i.nome,k:'c'+j+i.qty}); });
   return l;
 }
 function artLista(){
@@ -1266,6 +1265,9 @@ function menuGrupos(){
 }
 function estaAberto(){
   if(MESA) return true;
+  return noHorario();
+}
+function noHorario(){
   var h=D&&D.cfg&&D.cfg.horarios; if(!h||h.length!==7) return true;
   var n=new Date(Date.now()-3*3600000), d=n.getUTCDay(), m=n.getUTCHours()*60+n.getUTCMinutes();
   function mm(s){ var a=String(s||'').split(':'); return (+a[0])*60+(+a[1]||0); }
@@ -1338,7 +1340,7 @@ function pintaAgenda(){
   var np=document.querySelector('.pgd'); if(np){ np.style.scrollBehavior='auto'; np.scrollLeft=sx; var on=np.querySelector('.pgc.on'); if(on){ var l0=on.offsetLeft-np.offsetLeft, r0=l0+on.offsetWidth; if(l0<np.scrollLeft+8||r0>np.scrollLeft+np.clientWidth-30){ np.style.scrollBehavior='smooth'; np.scrollLeft=Math.max(0,l0-np.clientWidth/2+on.offsetWidth/2); } } setTimeout(function(){ np.style.scrollBehavior=''; },400); }
 }
 function progSim(){ if(!PGD||!PGD.hora) return; try{ localStorage.setItem('lf_prog_'+(D.cli||CLI),JSON.stringify({dia:PGD.dia,hora:PGD.hora})); }catch(e){} toast('Pedido agendado para '+progFmt(PGD)); fechaSheet(); setTimeout(abreMenu,350); }
-function pintaStatus(){ var e=$('stt'); if(!e) return; var a=estaAberto(); e.textContent=a?'ABERTO':'FECHADO'; e.className=a?'ab':'fc'; }
+function pintaStatus(){ var e=$('stt'); if(!e) return; var a=noHorario(); e.textContent=a?'ABERTO':'FECHADO'; e.className=a?'ab':'fc'; }
 setInterval(function(){ try{ pintaStatus(); }catch(e){} },60000);
 function promoTag(p){ var d=p.promo; if(!d||!(d.valor>0)) return ''; return '<div><span class="tg">'+(d.tipo==='pct'?String(d.valor).replace('.',',')+'% OFF':'− '+brl(d.valor))+'</span></div>'; }
 function menuMin(ps){ var m=0; ps.forEach(function(p){ var v=minPreco(p).min; if(v>0&&(!m||v<m)) m=v; }); return m; }
@@ -1355,7 +1357,7 @@ function menuFotoUrl(g){
 }
 function abreMenu(){
   var gs=menuGrupos(), rows=Math.max(1,Math.ceil(gs.length/4));
-  var h='<div class="wh"><button class="bk" onclick="fechaSheet()">'+BKI+'</button><b>Cardápio</b><small style="margin-left:auto;font-size:10px;color:var(--mut)">LIVEFOOD-04</small></div><div class="wb mfull"><div class="mgrid" style="grid-template-rows:repeat('+rows+',minmax(0,1fr))">';
+  var h='<div class="wh"><button class="bk" onclick="fechaSheet()">'+BKI+'</button><b>Cardápio</b><small style="margin-left:auto;font-size:10px;color:var(--mut)">LIVEFOOD-05</small></div><div class="wb mfull"><div class="mgrid" style="grid-template-rows:repeat('+rows+',minmax(0,1fr))">';
   gs.forEach(function(g){ var u=menuFotoUrl(g), promo=g.ps.some(function(p){return p.promo&&p.promo.valor>0;});
     h+='<div class="cc" onclick="abreCat(\''+esc(g.id)+'\')" '+(u?'style="background-image:url('+u+')"':'')+'>'+(u?'':'<span class="mic">'+icone(tipoDesenho(g.ps[0]),34)+'</span>')+(promo?'<span class="mpr">Promo</span>':'')+'<b>'+esc(g.nome)+'</b></div>'; });
   h+='</div></div>'; abreFolha(h,true,'fx');
