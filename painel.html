@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Giro OS — Painel do ponto · GIRO-OS-104</title>
+<title>Giro OS — Painel do ponto · GIRO-OS-106</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -7126,6 +7126,7 @@ function cdPintar(){
   var q=(el('cd-busca').value||'').toLowerCase().trim(), cat=fc.value, out='', n=0, comOf={};
   CD.ofs.forEach(function(o){ if(o.ativo!==false) (o.produtos||[]).forEach(function(id){ comOf[id]=1; }); });
   cdBarraSel();
+  CD.prods.sort(function(a,b){ return String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR',{sensitivity:'base',numeric:true}); });
   for(i=0;i<CD.prods.length;i++){
     var p=CD.prods[i];
     if(q&&(p.nome||'').toLowerCase().indexOf(q)<0) continue;
@@ -7954,7 +7955,7 @@ function cdCol(r,nomes){ var i; for(i=0;i<nomes.length;i++){ var v=r[nomes[i]]; 
 /* ── fotos em lote: cada arquivo (nome do produto.png) vai pro produto de mesmo nome ── */
 function cdFotosLote(){
   CD.fl=null; el('sh-import').querySelector('h3').textContent='Fotos em lote';
-  el('cd-imp-corpo').innerHTML='<p style="margin:0 0 12px;font-size:13px;line-height:1.55;color:var(--muted2)">Escolha várias fotos de uma vez. O sistema liga cada foto ao produto que tem o <b>mesmo nome do arquivo</b> (ex.: <b>Pastel de Carne.png</b> vai pro produto "Pastel de Carne"; acento e maiúscula não importam). Antes de gravar você confere o resumo. A foto antiga do produto é trocada.</p>'
+  el('cd-imp-corpo').innerHTML='<p style="margin:0 0 12px;font-size:13px;line-height:1.55;color:var(--muted2)">Escolha várias fotos de uma vez. O sistema liga cada foto ao produto de <b>nome igual ou parecido</b> (ex.: <b>Pastel de Carne.png</b> vai pro "Pastel de Carne"; <b>Coca Cola Lata 350ml.png</b> vai pro "Refri Coca Cola Lata 350ml"). Acento e maiúscula não importam. Antes de gravar você confere o resumo. A foto antiga do produto é trocada.</p>'
     +'<div style="margin-bottom:12px"><button class="btn pri" type="button" onclick="el(\'cd-fl-file\').click()">Escolher fotos</button></div>'
     +'<input type="file" id="cd-fl-file" accept="image/*" multiple style="display:none" onchange="cdFlLer(this)"><div id="cd-fl-res"></div>';
   abrir('sh-import');
@@ -7970,17 +7971,32 @@ function cdFlRedim(f){
     rd.onerror=function(){ no(new Error('não li o arquivo')); }; rd.readAsDataURL(f);
   });
 }
+function cdFlTok(t){ return cdNorm(t).replace(/(\d)\s+(ml|kg|g|l)\b/g,'$1$2').split(' ').filter(Boolean); }
 function cdFlLer(inp){
   var fs=[].slice.call(inp.files||[]); inp.value=''; if(!fs.length) return;
-  var res=el('cd-fl-res'), mp={}, i; CD.prods.forEach(function(p){ mp[cdNorm(p.nome)]=p; });
-  var ok=[], sem=[];
-  fs.forEach(function(f){ var p=mp[cdNorm(f.name.replace(/\.[^.]+$/,''))]; if(p) ok.push({f:f,p:p}); else sem.push(f.name); });
+  var res=el('cd-fl-res'), mp={}, usado={}, ok=[], resto=[], sem=[];
+  CD.prods.forEach(function(p){ mp[cdNorm(p.nome)]=p; });
+  /* 1) nome igual (sem acento/maiúscula) */
+  fs.forEach(function(f){ var p=mp[cdNorm(f.name.replace(/\.[^.]+$/,''))]; if(p&&!usado[p.id]){ usado[p.id]=1; ok.push({f:f,p:p}); } else resto.push(f); });
+  /* 2) nome parecido: todas as palavras de um estão no outro (ex.: "Coca Cola Lata 350ml" ↔ "Refri Coca Cola Lata 350ml"); vence o que tem menos palavras sobrando; empate = não chuta */
+  resto.forEach(function(f){
+    var ft=cdFlTok(f.name.replace(/\.[^.]+$/,'')), melhor=null, emp=false;
+    CD.prods.forEach(function(p){
+      if(usado[p.id]) return; var pt=cdFlTok(p.nome);
+      var fNoP=ft.every(function(w){ return pt.indexOf(w)>=0; }), pNoF=pt.every(function(w){ return ft.indexOf(w)>=0; });
+      if(!fNoP&&!pNoF) return;
+      var extra=Math.abs(pt.length-ft.length);
+      if(!melhor||extra<melhor.extra){ melhor={p:p,extra:extra}; emp=false; } else if(extra===melhor.extra) emp=true;
+    });
+    if(melhor&&!emp){ usado[melhor.p.id]=1; ok.push({f:f,p:melhor.p,aprox:1}); } else sem.push(f.name+(emp?' (mais de um produto parecido)':''));
+  });
   CD.fl=ok;
-  var h='<div style="font-weight:800;margin:6px 0">'+ok.length+' foto'+(ok.length==1?'':'s')+' com produto</div>';
-  if(ok.length) h+='<div style="max-height:220px;overflow:auto;font-size:12.5px;border:1px solid var(--border);border-radius:10px;padding:6px 10px;margin-bottom:8px">'+ok.map(function(o){ return '<div style="padding:2px 0">'+esc(o.f.name)+' → <b>'+esc(o.p.nome)+'</b>'+(o.p.foto?' <span style="color:var(--muted)">(troca a foto atual)</span>':'')+'</div>'; }).join('')+'</div>';
-  if(sem.length) h+='<div style="font-size:12.5px;color:var(--red);margin:6px 0"><b>'+sem.length+' sem produto de mesmo nome (ignoradas):</b><br>'+sem.map(esc).join('<br>')+'</div>';
+  var nA=ok.filter(function(o){ return o.aprox; }).length;
+  var h='<div style="font-weight:800;margin:6px 0">'+ok.length+' foto'+(ok.length==1?'':'s')+' com produto'+(nA?' <span style="font-weight:600;color:var(--muted)">('+nA+' pelo nome parecido, marcadas com ≈)</span>':'')+'</div>';
+  if(ok.length) h+='<div style="max-height:240px;overflow:auto;font-size:12.5px;border:1px solid var(--border);border-radius:10px;padding:6px 10px;margin-bottom:8px">'+ok.map(function(o){ return '<div style="padding:2px 0">'+(o.aprox?'≈ ':'')+esc(o.f.name)+' → <b>'+esc(o.p.nome)+'</b>'+(o.p.foto?' <span style="color:var(--muted)">(troca a foto atual)</span>':'')+'</div>'; }).join('')+'</div>';
+  if(sem.length) h+='<div style="font-size:12.5px;color:var(--red);margin:6px 0"><b>'+sem.length+' sem produto parecido (ignoradas):</b><br>'+sem.map(esc).join('<br>')+'</div>';
   if(ok.length) h+='<div id="cd-fl-erro" style="color:var(--red);font-size:12.5px;margin:6px 0"></div><button class="btn pri wide" id="cd-fl-go" onclick="cdFlSubir()">Subir '+ok.length+' foto'+(ok.length==1?'':'s')+'</button>';
-  else h+='<div style="font-size:12.5px;color:var(--muted2)">Nenhuma foto bateu com um produto. Confira se os produtos já foram importados e se o nome do arquivo é igual ao do produto.</div>';
+  else h+='<div style="font-size:12.5px;color:var(--muted2)">Nenhuma foto bateu com um produto. Confira se os produtos já foram importados.</div>';
   res.innerHTML=h;
 }
 function cdFlSubir(){

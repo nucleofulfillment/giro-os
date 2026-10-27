@@ -406,7 +406,9 @@ function sacQtd(){ var n=0; SAC.forEach(function(i){ n+=i.qty; }); return n; }
 function sacMarca(){ var n=sacQtd(), b=$('nSac'); b.textContent=n; b.style.display=n?'flex':'none'; }
 function toast(t){ var e=$('toast'); e.textContent=t; e.style.display='block'; clearTimeout(toast._t); toast._t=setTimeout(function(){ e.style.display='none'; },2200); }
 function abreFolha(h,wz,full){ var s=$('sheet'); var pl=$('wzp'); if(pl) pl.style.display='none'; s.className=(wz?'wz ':'')+(full===true?'fz ':'')+(full==='fx'?'fx ':'')+(s.classList.contains('on')?'on':''); s.innerHTML=h; $('ovl').style.display='block'; requestAnimationFrame(function(){ s.classList.add('on'); }); }
-function fechaSheet(){ CK.on=0; CK.open=0; $('sheet').classList.remove('on'); $('ovl').style.display='none'; navOn('inicio'); wizPill(); }
+var LF_VOLTA='';
+function voltaOrig(){ if(LF_VOLTA==='menu') abreMenu(); else if(LF_VOLTA) abreCat(LF_VOLTA); else fechaSheet(); }
+function fechaSheet(){ LF_VOLTA=''; CK.on=0; CK.open=0; $('sheet').classList.remove('on'); $('ovl').style.display='none'; navOn('inicio'); wizPill(); }
 
 /* ── passo a passo do produto (estilo iFood) ── */
 var W=null;
@@ -671,7 +673,7 @@ function wPinta(novo){
   h+='<div class="art'+(k==='fim'?' big':'')+(p.vid&&!(p.sabores||[]).length?' hv':'')+'">'+(p.vid&&!(p.sabores||[]).length?'<video class="pv" src="'+API+'/food/video/'+encodeURIComponent(D.cli||CLI)+'/'+encodeURIComponent(p.vid)+'" autoplay muted loop playsinline preload="auto"></video>':'')+'<div class="al">'+artLista()+'</div><div class="sv">'+(p.vid&&!(p.sabores||[]).length?'':artSvg())+'</div>'+(p.desc?'<button class="infb" onclick="var q=document.getElementById(\'infp\');q.style.display=q.style.display===\'block\'?\'none\':\'block\'">+</button><div class="infp" id="infp" onclick="this.style.display=\'none\'">'+esc(p.desc)+'</div>':'')+'</div>';
   h+='<div class="wb'+(k==='fim'?' fm':'')+'" id="wb">';
   h+=wCorpo(k);
-  h+='</div><div id="wtl"></div><div class="rod"><button class="vlt" type="button" onclick="'+(W.passo?'wVolta()':'fechaSheet()')+'">‹ Voltar</button><div class="qt"><button onclick="wQtd(-1)">−</button><span id="wq">'+W.qty+'</span><button onclick="wQtd(1)">+</button></div><button class="bt'+(last?'':' c')+'" id="wbt" onclick="wAvanca()"></button></div>';
+  h+='</div><div id="wtl"></div><div class="rod"><button class="vlt" type="button" onclick="'+(W.passo?'wVolta()':'voltaOrig()')+'">‹ Voltar</button><div class="qt"><button onclick="wQtd(-1)">−</button><span id="wq">'+W.qty+'</span><button onclick="wQtd(1)">+</button></div><button class="bt'+(last?'':' c')+'" id="wbt" onclick="wAvanca()"></button></div>';
   abreFolha(h,true,true); W.prev=W.prevNx; W.prevL=W.nxL; wTl(); if(k==='sab'||(k==='opc'&&(p.sabores||[]).length)) wLista(); wRod();
 }
 function wResumo(){
@@ -1161,7 +1163,7 @@ function abreBusca(){
   buscaLista(); setTimeout(function(){ var e=$('bq'); if(e) e.focus(); },350);
 }
 function buscaLista(){
-  var q=(($('bq')||{}).value||'').trim().toLowerCase(), h='', ps=Object.keys(D.produtos).map(function(k){ return D.produtos[k]; });
+  var q=(($('bq')||{}).value||'').trim().toLowerCase(), h='', ps=Object.keys(D.produtos).map(function(k){ return D.produtos[k]; }).sort(function(a,b){ return String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR',{sensitivity:'base',numeric:true}); });
   if(q) ps=ps.filter(function(p){ return (p.nome+' '+(p.desc||'')+' '+(p.sabores||[]).map(function(s){return s.nome;}).join(' ')).toLowerCase().indexOf(q)>=0; });
   ps.slice(0,40).forEach(function(p){ var pr=minPreco(p), ft=p.foto?'<div style="width:56px;height:56px;border-radius:10px;background:#2a2a30 center/cover url('+fotoUrl(p)+');flex:none"></div>':'<div style="width:56px;height:56px;border-radius:10px;background:#ffffff0f;display:flex;align-items:center;justify-content:center;flex:none">'+icone(tipoDesenho(p),26)+'</div>';
     h+='<div class="mp" onclick="abreSheet(\''+esc(p.id)+'\')">'+ft+'<div style="flex:1;min-width:0"><b style="font-size:14.5px">'+esc(p.nome)+'</b>'+promoTag(p)+'</div><span class="vl" style="color:var(--pri2);font-weight:800;font-size:13.5px;text-align:right">'+(pr.min>0?(pr.de?'a partir de ':'')+(pr.orig>pr.min?'<s class="de">'+brl(pr.orig)+'</s> ':'')+brl(pr.min):'')+'</span></div>'; });
@@ -1261,6 +1263,7 @@ var BKI='<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#ff
 function menuGrupos(){
   var cats={}, g=[]; (D.cats||[]).forEach(function(c){ cats[c.id]={id:c.id,nome:c.nome,foto:c.foto,v:c.v,ps:[]}; g.push(cats[c.id]); });
   var sem={id:'_',nome:g.length?'Outros':'Produtos',ps:[]}; Object.keys(D.produtos).forEach(function(id){ var p=D.produtos[id]; if(p.cat&&cats[p.cat]) cats[p.cat].ps.push(p); else sem.ps.push(p); });
+  g.forEach(function(x){ x.ps.sort(function(a,b){ return String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR',{sensitivity:'base',numeric:true}); }); }); sem.ps.sort(function(a,b){ return String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR',{sensitivity:'base',numeric:true}); });
   g.push(sem); return g.filter(function(x){ return x.ps.length; });
 }
 function estaAberto(){
@@ -1356,15 +1359,17 @@ function menuFotoUrl(g){
   return u;
 }
 function abreMenu(){
+  LF_VOLTA='';
   var gs=menuGrupos(), rows=Math.max(1,Math.ceil(gs.length/4));
-  var h='<div class="wh"><button class="bk" onclick="fechaSheet()">'+BKI+'</button><b>Cardápio</b><small style="margin-left:auto;font-size:10px;color:var(--mut)">LIVEFOOD-11</small></div><div class="wb mfull"><div class="mgrid">';
+  var h='<div class="wh"><button class="bk" onclick="fechaSheet()">'+BKI+'</button><b>Cardápio</b><small style="margin-left:auto;font-size:10px;color:var(--mut)">LIVEFOOD-13</small></div><div class="wb mfull"><div class="mgrid">';
   gs.forEach(function(g){ var u=menuFotoUrl(g), promo=g.ps.some(function(p){return p.promo&&p.promo.valor>0;});
     h+='<div class="cc" onclick="abreCat(\''+esc(g.id)+'\')" '+(u?'style="background-image:url('+u+')"':'')+'>'+(u?'':'<span class="mic">'+icone(tipoDesenho(g.ps[0]),34)+'</span>')+(promo?'<span class="mpr">Promo</span>':'')+'<b>'+esc(g.nome)+'</b></div>'; });
   h+='</div></div>'; abreFolha(h,true,'fx');
 }
 function abreCat(id){
   var g=null; menuGrupos().forEach(function(x){ if(x.id===id) g=x; }); if(!g){ abreMenu(); return; }
-  if(g.ps.length===1&&(g.ps[0].sabores||[]).length){ abreSheet(g.ps[0].id); return; }   /* categoria com um produto só, que tem sabores (ex.: Pizzas > Pizza): abre direto os tamanhos e sabores */
+  if(g.ps.length===1&&(g.ps[0].sabores||[]).length){ LF_VOLTA='menu'; abreSheet(g.ps[0].id); return; }   /* categoria com um produto só, que tem sabores (ex.: Pizzas > Pizza): abre direto os tamanhos e sabores */
+  LF_VOLTA=id;
   var h='<div class="wh"><button class="bk" onclick="abreMenu()">'+BKI+'</button><b>'+esc(g.nome)+'</b></div><div class="wb">';
   g.ps.forEach(function(p){ var pr=minPreco(p), ft=p.foto?'<div class="th" style="width:56px;height:56px;border-radius:10px;background:#2a2a30 center/cover url('+fotoUrl(p)+');flex:none"></div>':'<div style="width:56px;height:56px;border-radius:10px;background:#2a2a30;flex:none;display:flex;align-items:center;justify-content:center;">'+icone(tipoDesenho(p),28)+'</div>';
     h+='<div class="mp" onclick="abreSheet(\''+esc(p.id)+'\')">'+ft+'<div style="flex:1;min-width:0"><b style="font-size:14.5px">'+esc(p.nome)+'</b>'+promoTag(p)+'</div><span class="vl" style="color:var(--pri2);font-weight:800;font-size:13.5px;text-align:right">'+(pr.de?'a partir de ':'')+(pr.orig>pr.min?'<s class="de">'+brl(pr.orig)+'</s> ':'')+brl(pr.min)+'</span></div>'; });
