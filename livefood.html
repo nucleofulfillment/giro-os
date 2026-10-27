@@ -8,7 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="LiveFood">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Cardápio · LiveFood</title>
-<!-- LIVEFOOD-20 --><meta name="versao" content="LIVEFOOD-20">
+<!-- LIVEFOOD-21 --><meta name="versao" content="LIVEFOOD-21">
 <style>
 :root{--bg:#0b0b0d;--tx:#fff;--mut:rgba(255,255,255,.68);--pri:#f97316;--pri2:#f97316;--glass:rgba(18,18,22,.62);--line:rgba(255,255,255,.16)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -124,7 +124,8 @@ html.claro #sheet .art img,html.claro #sheet .art video,html.claro #sheet .art s
 #msp .bt{width:100%;max-width:340px;flex:none}
 #msp .bt.g{background:transparent;border:2px solid var(--pri);color:#fff}
 #mside{display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);z-index:9;flex-direction:column;gap:12px}
-#mside button{width:54px;padding:8px 0 6px;border-radius:15px;border:1px solid var(--line);background:var(--glass);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#fff;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:9.5px;font-weight:800;letter-spacing:.3px;cursor:pointer}
+#mside button.sh{font-size:8.5px;letter-spacing:0;white-space:nowrap}
+#mside button{width:76px;padding:8px 0 6px;border-radius:15px;border:1px solid var(--line);background:var(--glass);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#fff;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:9.5px;font-weight:800;letter-spacing:.3px;cursor:pointer}
 #wzp{display:none;position:fixed;left:12px;right:12px;bottom:calc(72px + env(safe-area-inset-bottom));margin:0 auto;max-width:496px;z-index:26;background:#16161af2;border:1.5px solid var(--pri);border-radius:16px;align-items:center;box-shadow:0 8px 24px #0009;overflow:hidden}
 #wzp .go{flex:1;background:none;border:0;color:#fff;text-align:left;padding:11px 14px;cursor:pointer;min-width:0}#wzp .go b{display:block;font-size:14px;color:var(--pri)}#wzp .go small{display:block;font-size:12.5px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #wzp .x{flex:none;background:none;border:0;border-left:1px solid var(--line);color:var(--mut);width:46px;align-self:stretch;font-size:16px;cursor:pointer}
@@ -208,6 +209,10 @@ html.claro #wzp{filter:invert(1) hue-rotate(180deg)}
 .art .orb{animation:spin 30s linear infinite;transform-origin:180px 150px}@keyframes spin{to{transform:rotate(360deg)}}
 .art .pz{animation:pz 2.6s ease-in-out infinite}@keyframes pz{50%{opacity:.55}}
 .art .tw{animation:tw 2.4s ease-in-out infinite}@keyframes tw{50%{opacity:.1}}
+#toast.tp{top:calc(16px + env(safe-area-inset-top));bottom:auto!important;z-index:60;box-shadow:0 8px 24px #0007}
+.voa{position:fixed;z-index:70;width:72px;height:72px;margin:-36px 0 0 -36px;border-radius:50%;background:#2a2a30 center/cover;border:2px solid #fff;box-shadow:0 6px 18px #0008;pointer-events:none;transition:transform .75s cubic-bezier(.5,-.1,.7,1),opacity .75s ease-in;opacity:1}
+@keyframes bump{0%{transform:scale(1)}40%{transform:scale(1.35)}100%{transform:scale(1)}}
+.bump{animation:bump .45s ease}
 #toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#fff;color:#000;font-weight:700;font-size:13px;padding:10px 16px;border-radius:99px;z-index:40;display:none;max-width:90%}
 .mc{margin:16px 0 4px;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--mut)}
 .wz .wtl2{display:flex;padding:8px 16px 4px;background:#16161a;border-top:1px solid var(--line)}
@@ -275,7 +280,7 @@ html.claro #wzp{filter:invert(1) hue-rotate(180deg)}
   <div id="cards"></div>
   <button id="somc" onclick="alternaSom()"></button>
   <button id="mnb" onclick="abreMenu()"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M8.5 10h7M8.5 14h7M8.5 18h4"/></svg><span>CARDÁPIO</span></button>
-  <div id="mside"><button type="button" onclick="garcomChama()"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18h16M5 18a7 7 0 0 1 14 0M12 8V6M10 6h4"/></svg>GARÇOM</button><button type="button" onclick="mesaFechar()"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2Z"/><path d="M9 8h6M9 12h6"/></svg>CONTA</button><button type="button" id="bShare" onclick="compartilhaLink()"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M8 7l4-4 4 4"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>ENVIAR</button></div>
+  <div id="mside"><button type="button" class="sh" id="bShare" onclick="compartilhaLink()"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="19" r="2.6"/><path d="M8.3 10.7l7.4-4.3M8.3 13.3l7.4 4.3"/></svg>COMPARTILHAR</button><button type="button" onclick="garcomChama()"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18h16M5 18a7 7 0 0 1 14 0M12 8V6M10 6h4"/></svg>GARÇOM</button><button type="button" onclick="mesaFechar()"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2Z"/><path d="M9 8h6M9 12h6"/></svg>CONTA</button></div>
   <div id="vazio"><h2 id="vzT">Cardápio em breve</h2><p id="vzP">Ainda não há ofertas no ar. Volte daqui a pouco.</p><button id="vzB" type="button" onclick="abreMenu()" style="display:none;pointer-events:auto;margin-top:12px;border:0;border-radius:12px;padding:13px 22px;font-size:15px;font-weight:800;color:#fff;background:var(--pri,#f97316);cursor:pointer">Ver cardápio</button></div>
 </div>
 <nav id="nav"><button id="nv-inicio" onclick="navIr('inicio')"><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1Z"/></svg><span>Início</span></button><button id="nv-busca" onclick="navIr('busca')"><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><span>Busca</span></button><button id="nv-pedidos" onclick="navIr('pedidos')"><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg><span>Pedidos</span></button><button id="nv-sac" onclick="navIr('sac')"><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l-1 12H6Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><span>Sacola</span><i class="bg" id="nSac"></i></button><button id="nv-conta" onclick="navIr('conta')"><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg><span>Conta</span></button></nav>
@@ -407,7 +412,7 @@ function sacLer(){ try{ SAC=JSON.parse(localStorage.getItem(lsk())||'[]')||[]; }
 function sacGrava(){ try{ localStorage.setItem(lsk(),JSON.stringify(SAC)); }catch(e){} sacMarca(); }
 function sacQtd(){ var n=0; SAC.forEach(function(i){ n+=i.qty; }); return n; }
 function sacMarca(){ var n=sacQtd(), b=$('nSac'); b.textContent=n; b.style.display=n?'flex':'none'; }
-function toast(t){ var e=$('toast'); e.textContent=t; e.style.display='block'; clearTimeout(toast._t); toast._t=setTimeout(function(){ e.style.display='none'; },2200); }
+function toast(t,topo){ var e=$('toast'); e.className=topo?'tp':''; e.textContent=t; e.style.display='block'; clearTimeout(toast._t); toast._t=setTimeout(function(){ e.style.display='none'; },2200); }
 function abreFolha(h,wz,full){ var s=$('sheet'); var pl=$('wzp'); if(pl) pl.style.display='none'; s.className=(wz?'wz ':'')+(full===true?'fz ':'')+(full==='fx'?'fx ':'')+(s.classList.contains('on')?'on':''); s.innerHTML=h; $('ovl').style.display='block'; requestAnimationFrame(function(){ s.classList.add('on'); }); }
 var LF_VOLTA='';
 function voltaOrig(){ if(LF_VOLTA==='menu') abreMenu(); else if(LF_VOLTA) abreCat(LF_VOLTA); else fechaSheet(); }
@@ -766,7 +771,16 @@ function wAdd2(){
   var ex=SAC.filter(function(x){return x.k===it.k;})[0]; if(ex) ex.qty=Math.min(50,ex.qty+it.qty); else SAC.push(it);
   sacGrava(); sacPos();
 }
-function sacPos(){ abreSacola(); toast('Adicionado à sacola'); }
+function voaSacola(foto){
+  try{
+    var al=$('nv-sac'); if(!al) return; var r=al.getBoundingClientRect(), x1=r.left+r.width/2, y1=r.top+r.height/2, x0=innerWidth/2, y0=innerHeight*.38;
+    var d=document.createElement('div'); d.className='voa'; if(foto) d.style.backgroundImage='url("'+foto+'")'; else { d.style.background='var(--pri,#f97316)'; d.style.display='flex'; d.style.alignItems='center'; d.style.justifyContent='center'; d.style.fontSize='30px'; d.textContent='🍽'; }
+    d.style.left=x0+'px'; d.style.top=y0+'px'; document.body.appendChild(d);
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){ d.style.transform='translate('+(x1-x0)+'px,'+(y1-y0)+'px) scale(.28)'; d.style.opacity='.35'; }); });
+    setTimeout(function(){ if(d.parentNode) d.parentNode.removeChild(d); var b=$('nSac')||al; b.classList.remove('bump'); void b.offsetWidth; b.classList.add('bump'); },780);
+  }catch(e){}
+}
+function sacPos(){ var f=''; try{ f=(W&&W.p&&W.p.foto)?fotoUrl(W.p):''; }catch(e){} abreSacola(); toast('Adicionado à sacola',true); voaSacola(f); }
 function sacEdit(j){
   var it=SAC[j]; if(!it) return; var p=D.produtos[it.p]; if(!p){ toast('Este produto não está mais disponível'); return; }
   W={p:p,tam:null,sab:[],borda:null,add:[],qty:it.qty,obs:it.obs||'',passo:0,q:'',edK:j};
@@ -924,7 +938,7 @@ function ctCartaoDel(id){ ctApi('/food/conta/cartao-del',{id:id}).then(function(
 /* ── (modo mesa) cliente sentado: link ?mesa=N (etiqueta NFC/QR da mesa) ── */
 var GAR={ult:0};
 function mesaInit(force){
-  if(!MESA){ var s0=$('mside'); if(s0){ s0.style.display='flex'; s0.children[0].style.display='none'; s0.children[1].style.display='none'; } return; }
+  if(!MESA){ var s0=$('mside'); if(s0){ s0.style.display='flex'; s0.children[1].style.display='none'; s0.children[2].style.display='none'; } return; }
   if(geoCfg()) geoPega(function(ok){ var cf=geoCfg(); if(!ok){ toast('Ative a localização para fazer pedidos pela mesa'); return; } if(geoDist(GEO.lat,GEO.lng,cf.lat,cf.lng)-Math.min(GEO.acc,100)>cf.raio) toast('Você está longe do restaurante: dá para ver o cardápio, mas não para pedir'); });
   var sd=$('mside'); if(sd) sd.style.display='flex'; var nc=$('nv-conta'); if(nc) nc.style.display='none';
   var k='lf_splash_'+(D.cli||CLI)+'_'+MESA, vis=false; try{ vis=!!sessionStorage.getItem(k); }catch(e){}
