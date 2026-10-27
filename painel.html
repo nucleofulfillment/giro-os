@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Giro OS — Painel do ponto · GIRO-OS-093</title>
+<title>Giro OS — Painel do ponto · GIRO-OS-094</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -799,6 +799,14 @@ a{color:inherit}
         </div>
       </section>
 
+      <section class="page" id="pg-mesas">
+        <div class="pghd"><div><h1>Mesas</h1><div class="sub">mesas do salão e etiquetas NFC · <span id="mz-total">—</span></div></div><button class="btn pri" onclick="mzNova()">+ Nova mesa</button></div>
+        <div class="card">
+          <div class="search" style="margin-bottom:14px;max-width:360px"><span>🔎</span><input id="mz-busca" placeholder="buscar mesa" oninput="mzPintar()"></div>
+          <div id="mz-lista"></div>
+        </div>
+      </section>
+
       <!-- FINANCEIRO (GMV mora aqui) -->
       <section class="page" id="pg-financeiro">
         <div class="pghd"><div><h1>Financeiro</h1><div class="sub">movimento do ponto de distribuição</div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" style="background:#fff;border:1.5px solid var(--roxo);color:var(--roxo)" onclick="abrirCustos()">+ Custo Operacional</button></div></div>
@@ -1354,6 +1362,16 @@ a{color:inherit}
     <div id="cd-of-erro" style="color:var(--red);font-size:12.5px;margin-top:10px"></div>
   </div>
   <div style="flex-shrink:0;border-top:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--s1);border-radius:0 0 18px 18px"><button class="btn pri" id="cd-of-salvar" onclick="cdOfSalvar()">Salvar</button><button class="btn sec" onclick="cdAbrirOfertas()">Voltar à lista</button><button class="btn sec" id="cd-of-dup" onclick="cdOfDuplicarAberto()">Duplicar</button><button class="btn sec" id="cd-of-apagar" onclick="cdOfApagarAberto()" style="color:var(--red);margin-left:auto">Apagar</button></div>
+</div>
+
+<div class="sheet" id="sh-mesa">
+  <div class="sh-hd"><h3>Nova mesa</h3><button onclick="fecharTudo()">✕</button></div>
+  <div class="sh-bd">
+    <div style="font-size:13.5px;line-height:1.5;margin-bottom:12px">Para criar várias de uma vez, preencha <b>De</b> e <b>Até</b> (ex.: 1 até 20). Para uma só, preencha apenas o <b>De</b> (aceita letras, ex.: VIP1).</div>
+    <label style="font-size:12px;color:var(--muted)">De</label><input class="inp" id="mz-de" maxlength="8" style="margin-bottom:10px">
+    <label style="font-size:12px;color:var(--muted)">Até (opcional)</label><input class="inp" id="mz-ate" inputmode="numeric" maxlength="8" style="margin-bottom:10px">
+    <div id="mz-erro" style="color:var(--red);font-size:12.5px;margin-bottom:6px"></div><button class="btn pri wide" onclick="mzSalvar()">Criar</button>
+  </div>
 </div>
 
 <div class="sheet wide" id="sh-cli">
@@ -3365,6 +3383,7 @@ var NAV_DESKTOP=[
   {id:'mesa',       lb:'Mesa',       ic:'<rect x="3" y="4" width="18" height="16" rx="1.5"/><path d="M7 4V2M17 4V2M7 10H17M7 14H14"/>'},
   {id:'mapeamento', lb:'Mapeamento', ic:'<path d="M12 21s7-6.2 7-11.2A7 7 0 105 9.8C5 14.8 12 21 12 21z"/><circle cx="12" cy="9.8" r="2.6"/>'},
   {id:'cardapio',   lb:'Cardápio',   ic:'<path d="M6 3v8a2 2 0 002 2v8M10 3v8M8 3v8M16 21V3c-2 1-3 4-3 8h3"/>'},
+  {id:'mesas',      lb:'Mesas',      ic:'<circle cx="6" cy="6" r="2.3"/><circle cx="12" cy="6" r="2.3"/><circle cx="18" cy="6" r="2.3"/><circle cx="6" cy="12" r="2.3"/><circle cx="12" cy="12" r="2.3"/><circle cx="18" cy="12" r="2.3"/><circle cx="6" cy="18" r="2.3"/><circle cx="12" cy="18" r="2.3"/><circle cx="18" cy="18" r="2.3"/>'},
   {id:'clientes',   lb:'Clientes',   ic:'<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5M16 5.2a3.2 3.2 0 010 5.6M18 14.8c2 .6 3.5 2.4 3.5 5.2"/>'},
   {id:'motoristas', lb:'Motoristas', ic:'<rect x="1" y="7" width="15" height="10" rx="1.5"/><path d="M16 10h3l3 3v4h-6z"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="19" r="2"/>'},
   {id:'veiculos',   lb:'Veículos',   ic:'<path d="M5 17h14M5 17a2 2 0 110-4M19 17a2 2 0 100-4M3 13l2-6h14l2 6M7 10h10"/>'},
@@ -3384,7 +3403,7 @@ var NAV_MOBILE=[
 var PAG='dashboard';
 function svgIco(d){return '<svg viewBox="0 0 24 24">'+d+'</svg>';}
 /* (66) ACESSOS por perfil: dono = tudo · gerente (Operacional) = tudo menos Financeiro e Configurações · mesa = só a Mesa */
-function acessoPaginas(){ var p=DD_USER&&DD_USER.perfil; if(p==='mesa') return ['mesa']; if(p==='gerente') return ['dashboard','pedidos','mesa','mapeamento','motoristas','veiculos','mensagens','clientes']; return null; }
+function acessoPaginas(){ var p=DD_USER&&DD_USER.perfil; if(p==='mesa') return ['mesa']; if(p==='gerente') return ['dashboard','pedidos','mesa','mapeamento','motoristas','veiculos','mensagens','clientes','mesas']; return null; }
 function pagOk(id){ var a=acessoPaginas(); return !a||a.indexOf(id)>=0; }
 function montarNav(){
   var h='',i;
@@ -3452,6 +3471,7 @@ function ir(p){
   if(p==='veiculos') veCarregar();
   if(p==='cardapio') cdCarregar();
   if(p==='clientes') clCarregar();
+  if(p==='mesas') mzCarregar();
   if(p==='mapeamento'&&VIVO_ON) setTimeout(function(){ vivoBuscar(); },800);
   if(p==='mensagens') msgAbrirTela(); else clearInterval(MSG.timer);
   if(p==='cte') cteAbrirTela();
@@ -7528,6 +7548,37 @@ function clImportar(){
     .catch(function(e){ res.innerHTML='<div style="color:var(--red)">'+esc(e.message||'Não importou')+'</div>'; });
   }
   prox();
+}
+/* ── (094) menu MESAS: cadastro das mesas e etiqueta NFC ── */
+var MZ={lista:[]};
+function mzApi(path,body){ var o=body?{method:'POST',headers:cdHdr(),body:JSON.stringify(body)}:{headers:cdHdr()}; return fetch(DELTADIS_API+path,o).then(function(r){ return r.json(); }); }
+function mzCarregar(){
+  el('mz-lista').innerHTML='<div style="padding:14px;color:var(--muted)">Carregando…</div>';
+  mzApi('/painel/atend-mesas').then(function(d){ if(!d||!d.ok) throw new Error((d&&d.mensagem)||'erro'); MZ.lista=d.mesas||[]; mzPintar(); })
+  .catch(function(e){ el('mz-lista').innerHTML='<div style="padding:14px;color:var(--red)">'+esc(e.message||'Não carregou')+'</div>'; });
+}
+function mzLink(n){ return location.origin+location.pathname.replace(/[^\/]*$/,'')+'atendimento.html?mesa='+encodeURIComponent(n); }
+function mzPintar(){
+  var q=(el('mz-busca').value||'').toLowerCase().trim(), h='', n=0;
+  MZ.lista.forEach(function(m){ if(q&&String(m.num).toLowerCase().indexOf(q)<0) return; n++;
+    h+='<div style="border:1px solid var(--border);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px"><div style="display:flex;align-items:center;gap:10px"><div style="width:46px;height:46px;border-radius:50%;background:'+(m.oc?'#16a34a':'var(--pri,#E07B39)')+';color:#fff;font-weight:800;font-size:17px;display:flex;align-items:center;justify-content:center;flex:none">'+esc(m.num)+'</div><div style="min-width:0"><b>Mesa '+esc(m.num)+'</b><div style="font-size:12px;color:var(--muted)">'+(m.oc?'<span style="color:#16a34a;font-weight:700">Comanda aberta</span>':'Livre')+'</div></div></div>'
+     +'<div style="font-size:12px;color:var(--muted)">'+(m.nfc?'🏷️ Etiqueta gravada em '+new Date(m.nfc).toLocaleDateString('pt-BR'):'Sem etiqueta NFC')+'</div>'
+     +'<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn sec sm" onclick="mzNfc(\''+esc(m.num)+'\')">Gravar NFC</button><button class="btn sec sm" onclick="mzCopia(\''+esc(m.num)+'\')">Copiar link</button><button class="btn sec sm" style="color:var(--red)" onclick="mzApaga(\''+esc(m.num)+'\')">Apagar</button></div></div>'; });
+  el('mz-total').textContent=MZ.lista.length+(MZ.lista.length===1?' mesa cadastrada':' mesas cadastradas');
+  el('mz-lista').innerHTML=n?'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px">'+h+'</div>':'<div class="empty">'+(MZ.lista.length?'Nenhuma mesa encontrada':'Nenhuma mesa cadastrada ainda. Enquanto não houver mesas cadastradas, o atendimento aceita qualquer número.')+'</div>';
+}
+function mzNova(){ el('mz-de').value=''; el('mz-ate').value=''; el('mz-erro').textContent=''; abrir('sh-mesa'); }
+function mzSalvar(){
+  var er=el('mz-erro'); er.textContent=''; var de=el('mz-de').value.trim(), ate=el('mz-ate').value.trim(); if(!de){ er.textContent='Informe o número da mesa.'; return; }
+  mzApi('/painel/atend-mesas-salvar',{de:de,ate:ate}).then(function(d){ if(!d||!d.ok) throw new Error((d&&d.mensagem)||'Não salvou'); fecharTudo(); aviso(d.novas+' mesa'+(d.novas===1?'':'s')+' criada'+(d.novas===1?'':'s')); mzCarregar(); })
+  .catch(function(e){ er.textContent=e.message||'Não salvou'; });
+}
+function mzApaga(n){ if(!confirm('Apagar a mesa '+n+'? Comandas já abertas nela não são apagadas.')) return; mzApi('/painel/atend-mesas-apagar',{num:n}).then(function(){ mzCarregar(); }).catch(function(){ aviso('Não apagou'); }); }
+function mzCopia(n){ var u=mzLink(n); try{ navigator.clipboard.writeText(u).then(function(){ aviso('Link copiado'); },function(){ window.prompt('Copie o link:',u); }); }catch(e){ window.prompt('Copie o link:',u); } }
+function mzNfc(n){
+  if(!('NDEFReader' in window)){ aviso('Gravar NFC só funciona no Chrome do celular Android. Use "Copiar link" e grave com outro app.'); return; }
+  aviso('Encoste a etiqueta no celular…');
+  var rd=new NDEFReader(); rd.write({records:[{recordType:'url',data:mzLink(n)}]}).then(function(){ aviso('Etiqueta da mesa '+n+' gravada ✔'); mzApi('/painel/atend-mesas-nfc',{num:n}).then(mzCarregar); }).catch(function(e){ aviso('Não gravou: '+((e&&e.message)||'tente de novo')); });
 }
 function msDetalhe(id){
   var x=((typeof MS!=='undefined'&&MS.ped)||[]).filter(function(o){ return o.id===id; })[0]; if(!x) return;

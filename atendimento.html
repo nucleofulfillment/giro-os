@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
 <meta name="theme-color" content="#F97316">
-<title>Atendimento · GIRO-OS-ATEND-17</title>
+<title>Atendimento · GIRO-OS-ATEND-19</title>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#FBF7F5;--s1:#fff;--s3:#FBF3EE;--s4:#F5E8E0;--b2:#F2DED2;--tx:#29231E;--mu:#9E9084;--mu2:#6C6055;--pri:#D96D28;--grad:linear-gradient(120deg,#F97316,#FDB022);--ok:#16A34A;--er:#DC2626;--am:#B45309;--f:'Manrope',-apple-system,sans-serif}
@@ -27,7 +27,7 @@ label.l{display:block;font-size:12.5px;font-weight:700;color:var(--mu2);margin:1
 /* topo */
 #top{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid var(--b2);padding:10px 14px;display:flex;align-items:center;gap:10px}
 #top b{font-size:16px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#top small{color:var(--mu);font-weight:700;font-size:11px}
+#top small{color:var(--tx,#2b211b);font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #top button{border:1px solid var(--b2);background:var(--s3);border-radius:10px;padding:8px 11px;font-weight:700;font-size:13px}
 #chip{margin:12px 14px 0;background:#fff;border:1.5px solid var(--b2);border-radius:14px;padding:10px 13px;display:flex;align-items:center;gap:10px}
 #chip .t{flex:1;min-width:0}#chip b{font-size:15px}#chip small{display:block;color:var(--mu2);font-size:12.5px}
@@ -60,6 +60,8 @@ h2{margin:6px 0 10px;font-size:19px;font-weight:800}
 .opt .d{width:22px;height:22px;border-radius:50%;border:2px solid #CFC4BB;flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px}
 .opt.sq .d{border-radius:7px}.opt.on .d{background:var(--pri);border-color:var(--pri)}
 .opt .n{flex:1;min-width:0}.opt .n b{font-size:15px;display:block}.opt .n small{color:var(--mu);font-size:12px}.opt .p{font-weight:800;color:var(--pri);font-size:13.5px}
+.mrow{display:flex;gap:10px;align-items:stretch}.mrow .inp{flex:1;min-width:0}.mpick{flex:none;width:62px;border-radius:14px;border:2px solid var(--b2);background:#fff;display:flex;align-items:center;justify-content:center;color:var(--pri)}.mpick svg{width:28px;height:28px;stroke:currentColor;fill:none;stroke-width:1.8}
+.mz{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;padding:6px 0 4px}.mb{aspect-ratio:1;border-radius:50%;border:0;background:var(--pri);color:#fff;font-weight:800;font-size:17px;padding:0}.mb.oc{background:#16A34A}.mlg{display:flex;gap:16px;font-size:12.5px;color:var(--mu2);margin:4px 0 8px}.mlg i{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:5px;vertical-align:-1px}
 .sec.lock{opacity:.4}#sec-fim.lock{opacity:.4;pointer-events:none}
 .tl{display:flex;padding:2px 0 10px}.tl .st{flex:1;text-align:center;font-size:11px;font-weight:700;color:var(--mu2);cursor:pointer;position:relative}
 .tl .st:not(:last-child)::after{content:'';position:absolute;top:14px;left:calc(50% + 18px);width:calc(100% - 36px);height:2px;background:#E5DCD4}
@@ -148,7 +150,7 @@ label.l.big{font-size:14px;margin-top:16px}
 </div>
 
 <div id="app" class="hide">
-  <div id="top"><div style="flex:1;min-width:0"><b id="emp">Atendimento</b><small id="usu"></small></div><button onclick="sair()">Sair</button></div>
+  <div id="top"><div style="flex:1;min-width:0;display:flex;align-items:center;gap:12px"><b id="emp" style="flex:none">Atendimento</b><small id="usu"></small></div><button onclick="sair()">Sair</button></div>
   <div id="chip" class="hide"><div class="t"><b id="chipT"></b><small id="chipS"></small></div><button onclick="trocaComanda()">Trocar</button></div>
 
   <!-- PEDIDO -->
@@ -158,8 +160,8 @@ label.l.big{font-size:14px;margin-top:16px}
       <div class="card">
         <div class="idL"><button id="sgM" class="sw on" onclick="modo('mesa')"><svg viewBox="0 0 24 24"><path d="M3 9h18M5 9l1 10M19 9l-1 10M12 9v10M7 5h10l1 4H6z"/></svg>Mesa</button>
         <button id="sgB" class="sw" onclick="modo('balcao')"><svg viewBox="0 0 24 24"><path d="M4 17h16M6 17a6 6 0 0112 0M12 7V5M10 5h4M3 20h18"/></svg>Balcão</button></div>
-        <div class="idR"><label class="l big" id="lbMesa">Número da mesa</label><input class="inp big" id="iMesa" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="off">
-        <label class="l big">Cliente</label><input class="inp big" id="iJoia" inputmode="numeric" pattern="[0-9]*" maxlength="12" autocomplete="off" placeholder="Digite o número do cliente" oninput="digJoia()">
+        <div class="idR"><label class="l big" id="lbMesa">Número da mesa</label><div class="mrow"><input class="inp big" id="iMesa" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="off" oninput="linkMesa()" onfocus="carregaAbertas()"><button type="button" class="mpick hide" id="bMapa" onclick="abreMapa()" title="Escolher no mapa de mesas"><svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.4"/><circle cx="12" cy="6" r="2.4"/><circle cx="18" cy="6" r="2.4"/><circle cx="6" cy="12" r="2.4"/><circle cx="12" cy="12" r="2.4"/><circle cx="18" cy="12" r="2.4"/><circle cx="6" cy="18" r="2.4"/><circle cx="12" cy="18" r="2.4"/><circle cx="18" cy="18" r="2.4"/></svg></button></div>
+        <label class="l big">Cliente</label><input class="inp big" id="iJoia" inputmode="numeric" pattern="[0-9]*" maxlength="12" autocomplete="off" placeholder="Digite o número do cliente" oninput="digJoia()" onfocus="carregaAbertas()">
         <div id="sugs"></div>
         <div id="joiaInfo"></div>
         <div class="er" id="idErr"></div>
@@ -227,12 +229,13 @@ function inicio(){
   if(!TK){ mostraLogin(''); return; }
   api('/painel/atend-dados').then(function(d){
     if(d._h===401||d._h===403){ mostraLogin('Entre de novo.'); return; }
-    if(!d.ok){ mostraLogin(d.mensagem||'Não consegui abrir agora.'); return; }
+    if(!d.ok){ mostraLogin(d.mensagem||'Não consegui abrir agora.'); return; } carregaAbertas();
     D=d; CLI=d.cli; GEST=!!d.gestor; CLIS=(d.clientes&&d.clientes.length<5000)?d.clientes:null; tema(d.cor);
     $('login').classList.add('hide'); $('app').classList.remove('hide');
-    $('emp').innerHTML=(d.logo?'<img src="'+API+'/food/foto/'+encodeURIComponent(d.cli)+'/_logo" alt="" style="height:24px;border-radius:5px;vertical-align:middle;margin-right:8px">':'')+esc(d.empresa||'Atendimento'); $('usu').textContent=d.usuario||'';
+    $('emp').innerHTML=d.logo?'<img src="'+API+'/food/foto/'+encodeURIComponent(d.cli)+'/_logo" alt="'+esc(d.empresa||'')+'" style="height:30px;border-radius:6px;vertical-align:middle">':esc(d.empresa||'Atendimento'); $('usu').textContent=d.usuario||'';
     [].forEach.call(document.querySelectorAll('.gest'),function(b){ b.classList.toggle('hide',!GEST); });
-    aba('ped'); pintaCats();
+    aba('ped'); pintaCats(); mostraMapaBtn();
+    try{ var qm=new URLSearchParams(location.search).get('mesa'); if(qm&&!COM.mesa&&!$('iMesa').value){ modo('mesa'); $('iMesa').value=String(qm).replace(/[^A-Za-z0-9]/g,'').slice(0,8).toUpperCase(); } }catch(e){}
   });
 }
 /* ── abas ── */
@@ -244,15 +247,48 @@ function aba(a){
 }
 /* ── comanda atual ── */
 (function(){ ['iMesa','iJoia'].forEach(function(id){ var e=document.getElementById(id); if(!e) return; e.addEventListener('focus',function(){ document.body.classList.add('kb'); }); e.addEventListener('blur',function(){ setTimeout(function(){ var a=document.activeElement; if(!a||(a.id!=='iMesa'&&a.id!=='iJoia')) document.body.classList.remove('kb'); },200); }); }); })();
+function mostraMapaBtn(){ var b=$('bMapa'); if(b) b.classList.toggle('hide',!(D&&D.mesas&&D.mesas.length&&COM.modo!=='balcao')); }
+function abreMapa(){
+  folha('Escolha a mesa','<div style="padding:20px;color:var(--mu2)">Carregando…</div>','');
+  api('/painel/atend-mesas').then(function(d){
+    if(!d.ok){ folha('Escolha a mesa','<p class="er">'+esc(d.mensagem||'Não consegui abrir o mapa.')+'</p>',''); return; }
+    var h='<div class="mlg"><span><i style="background:var(--pri)"></i>Livre</span><span><i style="background:#16A34A"></i>Comanda aberta</span></div><div class="mz">'+d.mesas.map(function(m){ return '<button class="mb'+(m.oc?' oc':'')+'" onclick="pegaMesa(\''+esc(m.num)+'\')">'+esc(m.num)+'</button>'; }).join('')+'</div>';
+    folha('Escolha a mesa',h,'');
+  });
+}
+function pegaMesa(n){ $('iMesa').value=n; fecha(); $('idErr').textContent=''; linkMesa(); }
+/* vínculo mesa <-> cliente: só vale enquanto a comanda está aberta (fechou a conta, some) */
+var OPENL=[], _ab=0, AUTOJ='', AUTOM='';
+function carregaAbertas(){
+  var t=Date.now(); if(t-_ab<4000) return Promise.resolve(); _ab=t;
+  return api('/painel/atend-comandas').then(function(d){ if(d&&d.ok) OPENL=(d.comandas||[]).filter(function(c){ return c.mesa&&c.joia; }); }).catch(function(){});
+}
+function abertaMesa(m){ for(var i=0;i<OPENL.length;i++) if(String(OPENL[i].mesa).toUpperCase()===m) return OPENL[i]; return null; }
+function abertaJoia(j){ for(var i=0;i<OPENL.length;i++) if(String(OPENL[i].joia)===String(j)) return OPENL[i]; return null; }
+function linkMesa(){
+  var m=$('iMesa').value.trim().toUpperCase().replace(/[^A-Z0-9]/g,''), j=$('iJoia');
+  if(AUTOJ&&j.value===AUTOJ&&(!m||!abertaMesa(m)||String(abertaMesa(m).joia)!==AUTOJ)){ j.value=''; AUTOJ=''; COM.nome=''; $('joiaInfo').innerHTML=''; $('sugs').innerHTML=''; }
+  if(COM.modo==='balcao'||!m) return;
+  var c=abertaMesa(m); if(!c||j.value.trim()) return;
+  j.value=c.joia; AUTOJ=String(c.joia); $('sugs').innerHTML=''; $('idErr').textContent='';
+  buscaJoia().then(function(s){ if(s&&!s.bloqueado) $('joiaInfo').insertAdjacentHTML('beforeend','<div class="aviso am">Mesa '+esc(m)+' já tem comanda aberta deste cliente.</div>'); });
+}
+function linkJoia(j){
+  var m=$('iMesa'), cur=m.value.trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
+  if(AUTOM&&m.value===AUTOM&&(!j||!abertaJoia(j)||String(abertaJoia(j).mesa).toUpperCase()!==AUTOM)){ m.value=''; AUTOM=''; }
+  if(!j) return; var c=abertaJoia(j); if(!c||cur) return;
+  if(COM.modo==='balcao') modo('mesa');
+  m.value=c.mesa; AUTOM=String(c.mesa).toUpperCase(); $('idErr').textContent='';
+}
 function plab(p){ return p.sub?p.num+'-'+p.sub:String(p.num); }
-function modo(m){ COM.modo=m; $('sgM').classList.toggle('on',m==='mesa'); $('sgB').classList.toggle('on',m==='balcao'); $('lbMesa').textContent=m==='mesa'?'Número da mesa':'Número da comanda do balcão (opcional)'; }
+function modo(m){ COM.modo=m; mostraMapaBtn(); $('sgM').classList.toggle('on',m==='mesa'); $('sgB').classList.toggle('on',m==='balcao'); $('lbMesa').textContent=m==='mesa'?'Número da mesa':'Número da comanda do balcão (opcional)'; }
 var SUGS=[], _dj=0, CLIS=null;
 function digJoia(){
-  clearTimeout(_dj); COM.nome=''; COM.bloq=false; COM.liberar=false; $('joiaInfo').innerHTML=''; var q=$('iJoia').value.trim(); if(!q){ $('sugs').innerHTML=''; return; }
+  clearTimeout(_dj); COM.nome=''; COM.bloq=false; COM.liberar=false; $('joiaInfo').innerHTML=''; var q=$('iJoia').value.trim(); if(!q){ $('sugs').innerHTML=''; AUTOJ=''; linkJoia(''); return; }
   if(CLIS){ var ql=q.toLowerCase(), num=/^\d+$/.test(q), r=[]; for(var i=0;i<CLIS.length&&r.length<8;i++){ var c=CLIS[i]; if(num?String(c[0])===q:c[1].toLowerCase().indexOf(ql)>=0) r.push({joia:c[0],nome:c[1]}); } return mostraSugs(r,true); }
   _dj=setTimeout(function(){ api('/painel/atend-clientes?q='+encodeURIComponent(q)).then(function(d){ if($('iJoia').value.trim()!==q) return; mostraSugs((d.clientes||[]).filter(function(c){ return String(c.joia)===q; }),false); }); },120);
 }
-function mostraSugs(l,ok){ SUGS=l; var h=''; l.forEach(function(c,i){ h+='<button class="sug" onclick="pickCli('+i+')">'+pill(c.joia)+'<b>'+esc(c.nome)+'</b>'+(c.bloqueado?'<span class="tag r">BLOQUEADO</span>':'')+'</button>'; }); $('sugs').innerHTML=h||(ok?'<div class="aviso er">Nenhum cliente encontrado.</div>':''); }
+function mostraSugs(l,ok){ SUGS=l; linkJoia(l.length===1?String(l[0].joia):''); var h=''; l.forEach(function(c,i){ h+='<button class="sug" onclick="pickCli('+i+')">'+pill(c.joia)+'<b>'+esc(c.nome)+'</b>'+(c.bloqueado?'<span class="tag r">BLOQUEADO</span>':'')+'</button>'; }); $('sugs').innerHTML=h||(ok?'<div class="aviso er">Nenhum cliente encontrado.</div>':''); }
 function pickCli(i){ var c=SUGS[i]; if(!c) return; $('iJoia').value=c.joia; if(COM.modo!=='balcao'&&!$('iMesa').value.trim()){ abreComanda(); return; } $('sugs').innerHTML=''; abreComanda(); }
 function buscaJoia(){
   var j=$('iJoia').value.replace(/\W/g,''); var box=$('joiaInfo'); COM.nome=''; COM.dev=0; COM.bloq=false; COM.liberar=false;
@@ -270,6 +306,7 @@ function liberaBloq(){ COM.liberar=true; $('joiaInfo').innerHTML='<div class="av
 function abreComanda(){
   var mesa=$('iMesa').value.trim().toUpperCase().replace(/[^A-Z0-9]/g,''), joia=$('iJoia').value.replace(/\W/g,''), er=$('idErr'); er.textContent='';
   if(COM.modo!=='balcao'&&!mesa){ er.textContent='⚠️ Você não preencheu o número da mesa.'; try{ $('iMesa').focus(); }catch(e){} return; }
+  if(COM.modo!=='balcao'&&mesa&&D.mesas&&D.mesas.length&&D.mesas.indexOf(mesa)<0){ er.textContent='⚠️ A mesa '+mesa+' não está cadastrada. Escolha no mapa de mesas.'; return; }
   if(!mesa&&!joia){ er.textContent='Informe a mesa ou a joia do cliente.'; return; }
   buscaJoia().then(function(s){
     if(joia&&!s){ er.textContent='Confira a joia: não encontrei esse cliente.'; return; }
@@ -282,7 +319,7 @@ function mostraComanda(){
   $('chipT').innerHTML=t.join(' · '); $('chipS').textContent=COM.nome||'Comanda aberta'; $('chip').classList.remove('hide');
 }
 function trocaComanda(){ if(CART.length&&!confirm('Há itens no pedido que ainda não foram enviados. Trocar de comanda mesmo assim?')) return; zeraComanda(); }
-function zeraComanda(){ COM={mesa:'',joia:'',nome:'',modo:COM.modo,dev:0,bloq:false,liberar:false}; CART=[]; $('chip').classList.add('hide'); $('iMesa').value=''; $('iJoia').value=''; $('joiaInfo').innerHTML=''; $('sugs').innerHTML=''; $('idErr').textContent=''; limpaBusca(); ['p-cats','p-prods'].forEach(function(i){ $(i).classList.add('hide'); }); $('p-ident').classList.remove('hide'); cartBar(); window.scrollTo(0,0); }
+function zeraComanda(){ _ab=0; AUTOJ=''; AUTOM=''; carregaAbertas(); COM={mesa:'',joia:'',nome:'',modo:COM.modo,dev:0,bloq:false,liberar:false}; CART=[]; $('chip').classList.add('hide'); $('iMesa').value=''; $('iJoia').value=''; $('joiaInfo').innerHTML=''; $('sugs').innerHTML=''; $('idErr').textContent=''; limpaBusca(); ['p-cats','p-prods'].forEach(function(i){ $(i).classList.add('hide'); }); $('p-ident').classList.remove('hide'); cartBar(); window.scrollTo(0,0); }
 function ativaComanda(c){ COM={mesa:c.mesa||'',joia:c.joia||'',nome:c.nome||'',modo:c.joia&&!c.mesa?'balcao':'mesa',dev:0,bloq:false,liberar:false}; CART=[]; mostraComanda(); $('p-ident').classList.add('hide'); aba('ped'); verCats(); }
 /* ── cardápio: categorias em cards ── */
 function fotoProd(p){ return p.foto?API+'/food/foto/'+encodeURIComponent(CLI)+'/'+encodeURIComponent(p.id):''; }
@@ -421,7 +458,7 @@ function abreCarrinho(){
 function tiraItem(k){ CART.splice(k,1); if(!CART.length){ fecha(); cartBar(); } else { abreCarrinho(); cartBar(); } }
 function enviaPedido(){
   var b=$('pBt'); b.disabled=true; b.textContent='Enviando…'; $('pErr').textContent='';
-  api('/painel/atend-pedido',{mesa:COM.mesa,joia:COM.joia,obs:($('pObs')||{value:''}).value,liberar:COM.liberar,itens:CART.map(function(i){ return {p:i.p,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs,qty:i.qty}; })}).then(function(r){
+  api('/painel/atend-pedido',{modo:COM.modo,mesa:COM.mesa,joia:COM.joia,obs:($('pObs')||{value:''}).value,liberar:COM.liberar,itens:CART.map(function(i){ return {p:i.p,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs,qty:i.qty}; })}).then(function(r){
     if(r.ok){ var ped={num:r.num,sub:r.sub||0,mesa:COM.mesa,joia:COM.joia,nome:COM.nome,atend:D.usuario,criado:Date.now(),obs:($('pObs')||{value:''}).value,modo:COM.modo,l:CART.map(function(i){ return {nome:i.nome,qty:i.qty,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs}; })}; CART=[]; fecha(); cartBar(); toast('Pedido #'+plab(r)+' enviado para a cozinha'); zeraComanda(); if(impOn()) imprime(ped); return; }
     if(r._h===401){ mostraLogin('Entre de novo.'); return; }
     b.disabled=false; b.textContent='Enviar para a cozinha'; $('pErr').innerHTML=esc(r.mensagem||'Não consegui enviar.')+(r.erro==='bloqueado'&&r.pode_liberar?'<br><button class="bt mini r" style="margin-top:8px" onclick="COM.liberar=true;enviaPedido()">Liberar mesmo assim</button>':'');
@@ -432,7 +469,7 @@ var COMS=[];
 function carregaCom(){
   api('/painel/atend-comandas').then(function(d){
     if(d._h===401){ mostraLogin('Entre de novo.'); return; } if(!d.ok){ $('lCom').innerHTML='<p>'+esc(d.mensagem||'Erro')+'</p>'; return; }
-    COMS=d.comandas||[]; var h='';
+    COMS=d.comandas||[]; OPENL=COMS.filter(function(c){ return c.mesa&&c.joia; }); var h='';
     COMS.forEach(function(c,i){
       var t=(c.mesa?'Mesa '+esc(c.mesa):'')+(c.joia?(c.mesa?' · ':'')+pill(c.joia):'');
       h+='<div class="cm" id="cm'+i+'"><div class="h"><div><b>'+t+'</b><div style="font-size:12.5px;color:var(--mu2)">'+esc(c.nome||'')+'</div></div><span class="v">'+brl(c.total)+'</span></div>'+(c.pedidos.length&&c.pedidos[0].sub?'<div style="font-size:12px;font-weight:800;color:var(--mu2);margin-top:6px">PEDIDO #'+c.pedidos[0].num+'</div>':'')+'<div class="pd">'+c.pedidos.map(function(p,k){ return '<div class="pr"><div class="ph"><span><b>#'+plab(p)+'</b> · '+new Date(p.criado).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+(p.atend?' · '+esc(p.atend):'')+'</span><button onclick="reimp('+i+','+k+')" title="Imprimir">🖨</button></div>'+String(p.itens||'').split('; ').map(function(t){ return '<div class="pi">'+esc(t)+'</div>'; }).join('')+'</div>'; }).join('')+'</div>'
@@ -456,7 +493,7 @@ function fechaForm(i){
 function fechaFazer(i,forma){
   var c=COMS[i]; $('fcErr').textContent='';
   api('/painel/atend-fechar',{mesa:c.mesa,joia:c.joia,forma:forma}).then(function(r){
-    if(r.ok){ fecha(); toast(forma==='marcar'?'Marcado na conta de '+(c.nome||'cliente')+' · '+brl(r.total):'Conta fechada · '+brl(r.total)); carregaCom(); return; }
+    if(r.ok){ _ab=0; fecha(); toast(forma==='marcar'?'Marcado na conta de '+(c.nome||'cliente')+' · '+brl(r.total):'Conta fechada · '+brl(r.total)); carregaCom(); return; }
     if(r._h===401){ mostraLogin('Entre de novo.'); return; } $('fcErr').textContent=r.mensagem||'Não consegui fechar.';
   });
 }
