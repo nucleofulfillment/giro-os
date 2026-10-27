@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Giro OS — Painel do ponto · GIRO-OS-086</title>
+<title>Giro OS — Painel do ponto · GIRO-OS-088</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -844,6 +844,7 @@ a{color:inherit}
           <div class="cfgcard" style="cursor:pointer" onclick="abrirAreas()"><div class="ic">🗺️</div><h4>Áreas de entrega (regiões)</h4><p>Valor pago ao motorista por região (nome) ou por faixa de CEP. As regiões da planilha aparecem sozinhas.</p><span class="badge b-in">configurar</span></div>
           <div class="cfgcard"><div class="ic">💬</div><h4>WhatsApp</h4><p>Módulo opcional de conversa automática com motoristas e destinatários.</p><div style="display:flex;align-items:center;gap:10px"><label class="wa-sw" title="Ligar ou desligar o WhatsApp desta empresa"><input type="checkbox" id="wa-chk" onchange="waAlternar(this.checked)" disabled><span class="wa-bl"></span></label><span class="badge b-wt" id="wa-badge">carregando…</span></div></div>
           <div class="cfgcard" style="cursor:pointer" onclick="cdPagamento()"><div class="ic">💳</div><h4>Configurar checkout</h4><p>Conecte a conta Asaas do restaurante para receber pedidos do cardápio digital por Pix e cartão. Cole a chave de API e teste a conexão.</p><span class="badge b-in">configurar</span></div>
+          <div class="cfgcard" style="cursor:pointer" onclick="cdCfgClientes()"><div class="ic">👥</div><h4>Configurações clientes</h4><p>Regras do atendimento por garçom/balcão: bloqueio de cliente inadimplente, fechamento automático da conta pendurada e mensagem da cobrança.</p><span class="badge b-in">configurar</span></div>
         </div>
       </section>
 
@@ -1016,7 +1017,7 @@ a{color:inherit}
     <p style="margin:0 0 10px;font-size:12.5px;color:var(--muted)">Quem você cadastra aqui entra no painel com o próprio e-mail e senha. Os motoristas continuam na aba Motoristas.</p>
     <div id="us-lista" style="margin-bottom:14px"><div style="color:var(--muted);font-size:13px">Carregando...</div></div>
     <div id="us-tit" style="font-weight:800;font-size:12px;letter-spacing:.5px;color:var(--muted);margin-bottom:6px">NOVO USUÁRIO</div>
-    <div class="field"><label>Acesso</label><select class="inp" id="us-perfil"><option value="gerente">Operacional — todo o painel, menos Financeiro e Configurações</option><option value="mesa">Mesa — só a Mesa</option></select></div>
+    <div class="field"><label>Acesso</label><select class="inp" id="us-perfil"><option value="gerente">Operacional — todo o painel, menos Financeiro e Configurações</option><option value="mesa">Mesa — só a Mesa</option><option value="garcom">Garçom — só o Atendimento (pedidos e conta)</option></select></div>
     <div class="field"><label>Nome</label><input class="inp" id="us-nome" autocomplete="off"></div>
     <div class="field"><label>E-mail</label><input class="inp" id="us-email" type="email" autocomplete="off"></div>
     <div class="field"><label>Celular com DDD (opcional)</label><input class="inp" id="us-fone" inputmode="tel" autocomplete="off" placeholder="(47) 99999-9999"></div>
@@ -3495,6 +3496,7 @@ function entrarCodigo(){
       b.disabled=false;
       if(!d||!d.ok){ m.textContent=(d&&d.mensagem)||'Código inválido. Tente de novo.'; return; }
       if(d.usuario.perfil==='master'){ m.textContent='Este acesso é do administrador. Use a página admin.'; return; }
+      if(d.usuario.perfil==='garcom'){ ddGuardar(d.token,d.usuario); location.href='atendimento.html'; return; }
       LG.modo='senha'; LG.etapa=1; lgPintar(); ddGuardar(d.token,d.usuario); el('lg-senha').value=''; abrirApp();
     }).catch(function(){ b.disabled=false; m.textContent='Sem conexão com o servidor. Tente de novo.'; });
 }
@@ -3510,6 +3512,7 @@ function entrar(){
       b.disabled=false; b.textContent='Entrar';
       if(!d||!d.ok){ m.textContent=(d&&d.mensagem)||'Não foi possível entrar. Tente de novo.'; return; }
       if(d.usuario.perfil==='master'){ m.textContent='Este acesso é do administrador. Use a página admin.'; return; }
+      if(d.usuario.perfil==='garcom'){ ddGuardar(d.token,d.usuario); location.href='atendimento.html'; return; }
       ddGuardar(d.token,d.usuario); el('lg-senha').value=''; abrirApp();
     }).catch(function(){ b.disabled=false; b.textContent='Entrar'; m.textContent='Sem conexão com o servidor. Tente de novo.'; });
 }
@@ -3621,7 +3624,7 @@ var US={lista:[],edit:''};
 function usuModoNovo(){ US.edit=''; ['us-nome','us-email','us-fone','us-senha'].forEach(function(i){ el(i).value=''; }); el('us-perfil').value='gerente'; el('us-msg').textContent=''; el('us-tit').textContent='NOVO USUÁRIO'; el('us-senha-lb').textContent='Senha (mínimo 8 caracteres)'; el('us-btn').textContent='Cadastrar usuário'; el('us-cancel').style.display='none'; }
 function usuEditar(id){
   var u=null, i; for(i=0;i<US.lista.length;i++) if(US.lista[i].id===id) u=US.lista[i]; if(!u) return;
-  US.edit=id; el('us-perfil').value=(u.perfil==='mesa'?'mesa':'gerente'); el('us-nome').value=u.nome||''; el('us-email').value=u.email||''; el('us-fone').value=u.telefone||''; el('us-senha').value=''; el('us-msg').textContent='';
+  US.edit=id; el('us-perfil').value=(u.perfil==='mesa'||u.perfil==='garcom'?u.perfil:'gerente'); el('us-nome').value=u.nome||''; el('us-email').value=u.email||''; el('us-fone').value=u.telefone||''; el('us-senha').value=''; el('us-msg').textContent='';
   el('us-tit').textContent='EDITAR USUÁRIO'; el('us-senha-lb').textContent='Nova senha (deixe em branco para manter a atual)'; el('us-btn').textContent='Salvar alterações'; el('us-cancel').style.display='';
   try{ el('us-tit').scrollIntoView({behavior:'smooth',block:'start'}); }catch(e){}
 }
@@ -3637,7 +3640,7 @@ function usuCarregar(){
     var l=(d.usuarios||[]).filter(function(u){ return u.perfil!=='motorista'; }), h='', i, u; US.lista=l;
     for(i=0;i<l.length;i++){ u=l[i]; var dono=u.perfil==='dono';
       h+='<div style="border:1px solid var(--border2);border-radius:12px;padding:10px 12px;margin-bottom:8px;background:var(--s2)">'+
-        '<div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><b>'+esc(u.nome)+'</b><span style="font-size:11.5px;font-weight:700;color:'+(u.ativo?'#2e7d32':'#c0392b')+'">'+(dono?'Dono':(u.perfil==='mesa'?'Mesa':'Operacional'))+(u.ativo?'':' · inativo')+'</span></div>'+
+        '<div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><b>'+esc(u.nome)+'</b><span style="font-size:11.5px;font-weight:700;color:'+(u.ativo?'#2e7d32':'#c0392b')+'">'+(dono?'Dono':(u.perfil==='mesa'?'Mesa':(u.perfil==='garcom'?'Garçom':'Operacional')))+(u.ativo?'':' · inativo')+'</span></div>'+
         '<div style="font-size:12.5px;color:var(--muted);margin:2px 0 6px;word-break:break-all">'+esc(u.email)+'</div>'+
         (dono?'':'<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sec" data-id="'+esc(u.id)+'" onclick="usuEditar(this.getAttribute(\'data-id\'))">Editar</button><button class="btn sec" data-id="'+esc(u.id)+'" onclick="usuNovaSenha(this.getAttribute(\'data-id\'))">Nova senha</button><button class="btn sec" data-id="'+esc(u.id)+'" data-at="'+(u.ativo?0:1)+'" onclick="usuAtivo(this.getAttribute(\'data-id\'),this.getAttribute(\'data-at\'))">'+(u.ativo?'Desativar':'Ativar')+'</button></div>')+'</div>'; }
     box.innerHTML=h||'<div style="color:var(--muted);font-size:13px">Nenhum usuário.</div>';
@@ -3706,6 +3709,7 @@ function sair(){
 function retomarSessao(){
   if(!DD_TOKEN){ ddMostrarLogin(); return; }
   fetch(DELTADIS_API+'/auth/me').then(function(r){return r.json().catch(function(){return null;});}).then(function(d){
+    if(d&&d.ok&&d.usuario&&d.usuario.perfil==='garcom'){ location.href='atendimento.html'; return; }
     if(d&&d.ok&&d.usuario&&(d.usuario.perfil==='dono'||d.usuario.perfil==='gerente')){ DD_USER=d.usuario; try{localStorage.setItem('dd_user',JSON.stringify(d.usuario));}catch(e){} abrirApp(); }
     ddMostrarLogin();
   }).catch(function(){ ddMostrarLogin(); });
@@ -4356,7 +4360,7 @@ function msPedidosHtml(busca){
     if(busca&&(('mesa '+x.mesa+' '+x.num+' '+x.itens).toLowerCase().indexOf(busca)<0)) return;
     var st=x.fase==='preparo'?['Em preparo','#f59e0b']:(x.fase==='rota'?['Pronto','#22c55e']:['Novo','#ef4444']), nx=x.fase===''?['preparo','Começar preparo']:(x.fase==='preparo'?['rota','Pronto']:['entregue','Servido ✔']);
     var rc=x.status==='pago'?(x.pagto==='pix'?'Pago no Pix':x.pagto==='dinheiro'?'Pago em dinheiro':x.pagto==='cartao'?'Pago no cartão':'Pago'):(x.status==='marcado'?'Pendurado':'Conta aberta');
-    h+='<tr><td><b>#'+x.num+'</b><br><span style="color:var(--muted);font-size:11.5px">'+esc(x.itens)+'</span>'+(x.obs?'<br><span style="color:var(--amber);font-size:11px;font-weight:600">Obs: '+esc(x.obs)+'</span>':'')+'</td><td>Mesa '+esc(x.mesa)+'</td><td>LOCAL</td><td>'+msHora(x.criado)+'</td><td>—</td><td><span style="font-size:11.5px;font-weight:800;color:#fff;background:'+st[1]+';border-radius:10px;padding:2px 9px">'+st[0]+'</span></td><td>'+moeda(x.total)+'</td><td>'+rc+'</td><td style="white-space:nowrap"><button class="btn pri sm" type="button" onclick="msFase(\''+esc(x.id)+'\',\''+nx[0]+'\')">'+nx[1]+'</button></td></tr>'; });
+    h+='<tr><td><b>#'+x.num+'</b><br><span style="color:var(--muted);font-size:11.5px">'+esc(x.itens)+'</span>'+(x.atend?'<br><span style="font-size:11.5px;font-weight:700;color:var(--muted2)">Garçom: '+esc(x.atend)+(x.cli?' · Cliente: '+esc(x.cli)+' ('+esc(x.joia)+')':'')+'</span>':'')+(x.obs?'<br><span style="color:var(--amber);font-size:11px;font-weight:600">Obs: '+esc(x.obs)+'</span>':'')+'</td><td>Mesa '+esc(x.mesa)+'</td><td>LOCAL</td><td>'+msHora(x.criado)+'</td><td>—</td><td><span style="font-size:11.5px;font-weight:800;color:#fff;background:'+st[1]+';border-radius:10px;padding:2px 9px">'+st[0]+'</span></td><td>'+moeda(x.total)+'</td><td>'+rc+'</td><td style="white-space:nowrap"><button class="btn pri sm" type="button" onclick="msFase(\''+esc(x.id)+'\',\''+nx[0]+'\')">'+nx[1]+'</button></td></tr>'; });
   return h||'<tr><td colspan="9"><div class="empty">Nenhum pedido de mesa em andamento</div></td></tr>';
 }
 /* as cores de tempo andam sozinhas: repinta a lista a cada minuto quando ela está aberta */
@@ -7413,7 +7417,7 @@ function msPintar(){
   MS.ped.forEach(function(x){
     var st=x.fase==='preparo'?['Em preparo','#f59e0b']:(x.fase==='rota'?['Pronto','#22c55e']:['Novo','#ef4444']), pg=x.status==='pago'?(x.pagto==='pix'?'Pago no Pix':x.pagto==='dinheiro'?'Pago em dinheiro':x.pagto==='cartao'?'Pago no cartão':'Pago'):(x.status==='marcado'?'Pendurado (conta do cliente)':x.pagto==='conta'?'Na conta da mesa':x.pagto==='caixa'?'Pagar no caixa (cartão ou dinheiro)':'Pago no Pix');
     var bt=x.fase===''?'<button class="btn pri sm" type="button" onclick="msFase(\''+esc(x.id)+'\',\'preparo\')">Começar preparo</button>':(x.fase==='preparo'?'<button class="btn pri sm" type="button" onclick="msFase(\''+esc(x.id)+'\',\'rota\')">Pronto</button>':'<button class="btn pri sm" type="button" onclick="msFase(\''+esc(x.id)+'\',\'entregue\')">Servido ✔</button>');
-    h+='<div style="border:1px solid var(--border);border-radius:12px;padding:10px;margin-bottom:10px"><div style="display:flex;align-items:center;gap:8px"><b style="font-size:15px">Mesa '+esc(x.mesa)+'</b><span style="font-size:12px;color:var(--muted)">#'+x.num+' · '+msHora(x.criado)+'</span><span style="margin-left:auto;font-size:11.5px;font-weight:800;color:#fff;background:'+st[1]+';border-radius:10px;padding:2px 9px">'+st[0]+'</span></div><div style="font-size:13.5px;margin:6px 0;line-height:1.45">'+esc(x.itens)+'</div>'+(x.obs?'<div style="font-size:12.5px;color:#f59e0b;margin-bottom:6px">Obs: '+esc(x.obs)+'</div>':'')+'<div style="display:flex;align-items:center;gap:8px"><span style="font-size:12.5px;color:var(--muted);flex:1">'+pg+' · '+moeda(x.total)+'</span>'+bt+'</div></div>'; });
+    h+='<div style="border:1px solid var(--border);border-radius:12px;padding:10px;margin-bottom:10px"><div style="display:flex;align-items:center;gap:8px"><b style="font-size:15px">Mesa '+esc(x.mesa)+'</b><span style="font-size:12px;color:var(--muted)">#'+x.num+' · '+msHora(x.criado)+'</span><span style="margin-left:auto;font-size:11.5px;font-weight:800;color:#fff;background:'+st[1]+';border-radius:10px;padding:2px 9px">'+st[0]+'</span></div><div style="font-size:13.5px;margin:6px 0;line-height:1.45">'+esc(x.itens)+'</div>'+(x.atend?'<div style="font-size:12px;font-weight:700;color:var(--muted2);margin-bottom:4px">Garçom: '+esc(x.atend)+(x.cli?' · Cliente: '+esc(x.cli)+' ('+esc(x.joia)+')':'')+'</div>':'')+(x.obs?'<div style="font-size:12.5px;color:#f59e0b;margin-bottom:6px">Obs: '+esc(x.obs)+'</div>':'')+'<div style="display:flex;align-items:center;gap:8px"><span style="font-size:12.5px;color:var(--muted);flex:1">'+pg+' · '+moeda(x.total)+'</span>'+bt+'</div></div>'; });
   el('cd-imp-corpo').innerHTML=h;
 }
 function msFase(id,fase){ fetch(DELTADIS_API+'/painel/food-mesa-fase',{method:'POST',headers:cdHdr(),body:JSON.stringify({id:id,fase:fase})}).then(function(r){return r.json();}).then(function(d){ if(!d||!d.ok) throw new Error((d&&d.mensagem)||'erro'); msPoll(); }).catch(function(e){ aviso(e.message||'Não salvou'); }); }
@@ -7459,6 +7463,28 @@ function cdFrSalvar(){
   fetch(DELTADIS_API+'/painel/cardapio-config',{method:'POST',headers:cdHdr(),body:JSON.stringify(body)}).then(function(r){return r.json();}).then(function(d){
     if(!d||!d.ok) throw new Error((d&&d.mensagem)||'não salvou'); aviso(CDFR.regras.length?'Entrega salva':'Entrega grátis para todos'); fecharTudo();
   }).catch(function(e){ aviso(e.message||'Não salvou'); });
+}
+/* ── configurações de clientes do atendimento (bloqueio, fechamento, mensagem) ── */
+function cdCfgClientes(){
+  el('cd-imp-corpo').innerHTML='<div style="font-size:13px;color:var(--muted)">Carregando…</div>';
+  el('sh-import').querySelector('h3').textContent='Configurações clientes'; abrir('sh-import');
+  fetch(DELTADIS_API+'/painel/atend-cfg',{headers:cdHdr()}).then(function(r){return r.json();}).then(function(d){
+    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'erro'); var c=d.cfg||{};
+    el('cd-imp-corpo').innerHTML='<div style="font-size:13px;color:var(--muted2);line-height:1.5;margin-bottom:12px">Valem para os clientes cadastrados no <b>Atendimento</b> (garçom/balcão) que penduram a conta com <b>Marcar</b>.</div>'
+      +'<label style="font-size:12px;font-weight:700;color:var(--muted2)">Bloquear cliente com cobrança vencida há mais de (dias)</label>'
+      +'<input class="inp" id="cc-bloq" inputmode="numeric" pattern="[0-9]*" placeholder="0 = não bloquear" value="'+(c.bloq_dias||'')+'" style="margin:6px 0 14px">'
+      +'<label style="display:flex;gap:8px;align-items:center;font-size:13.5px;font-weight:700;margin-bottom:6px"><input type="checkbox" id="cc-auto" '+(c.fecha_auto?'checked':'')+' style="width:18px;height:18px"> Fechar a conta e gerar a cobrança automaticamente</label>'
+      +'<label style="font-size:12px;font-weight:700;color:var(--muted2)">Nos dias do mês (separe por vírgula)</label>'
+      +'<input class="inp" id="cc-dias" inputmode="numeric" placeholder="Ex.: 10, 20, 30" value="'+esc((c.fecha_dias||[]).join(', '))+'" style="margin:6px 0 14px">'
+      +'<label style="font-size:12px;font-weight:700;color:var(--muted2)">Mensagem da cobrança (use {nome}, {valor}, {empresa}, {joia})</label>'
+      +'<textarea class="inp" id="cc-msg" rows="4" placeholder="Olá, {nome}! Segue o fechamento da sua conta em {empresa}: R$ {valor}." style="margin:6px 0 10px">'+esc(c.msg||'')+'</textarea>'
+      +'<div id="cc-m" style="font-size:12.5px;min-height:18px;margin-bottom:8px"></div><button class="btn pri" type="button" onclick="cdCfgClientesSalvar()">Salvar</button>';
+  }).catch(function(e){ el('cd-imp-corpo').innerHTML='<div style="color:#f87171;font-size:13px">'+esc(e.message||'Não consegui abrir.')+'</div>'; });
+}
+function cdCfgClientesSalvar(){
+  fetch(DELTADIS_API+'/painel/atend-cfg',{method:'POST',headers:cdHdr(),body:JSON.stringify({bloq_dias:el('cc-bloq').value,fecha_auto:el('cc-auto').checked,fecha_dias:el('cc-dias').value,msg:el('cc-msg').value})}).then(function(r){return r.json();}).then(function(d){
+    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'não salvou'); aviso('Configurações salvas'); fecharTudo();
+  }).catch(function(e){ var m=el('cc-m'); if(m){ m.style.color='#f87171'; m.textContent=e.message||'Não salvou'; } });
 }
 /* ── pagamento: conta Asaas do restaurante (065) ── */
 function cdPagamento(){

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#F97316">
-<title>Atendimento · GIRO-OS-ATEND-04</title>
+<title>Atendimento · GIRO-OS-ATEND-06</title>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#FBF7F5;--s1:#fff;--s3:#FBF3EE;--s4:#F5E8E0;--b2:#F2DED2;--tx:#29231E;--mu:#9E9084;--mu2:#6C6055;--pri:#D96D28;--grad:linear-gradient(120deg,#F97316,#FDB022);--ok:#16A34A;--er:#DC2626;--am:#B45309;--f:'Manrope',-apple-system,sans-serif}
@@ -79,6 +79,14 @@ h2{margin:6px 0 10px;font-size:19px;font-weight:800}
 .dia{font-size:12px;font-weight:800;letter-spacing:.6px;color:var(--mu2);text-transform:uppercase;margin:16px 0 6px}
 .tag.o{background:#FFE8D1;color:#B4540A}.tag.y{background:#FFF4DB;color:#92580A}
 .ln{font-size:13px;color:var(--mu2);line-height:1.5;margin-top:4px}.ln b{color:var(--tx)}
+.sw{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;padding:20px;border-radius:16px;border:2px solid var(--b2);background:#fff;font-weight:800;font-size:18px;color:var(--mu2);margin-bottom:10px;cursor:pointer}
+.sw.on{border-color:var(--pri);color:var(--pri);background:#FFF4EA}
+.sw svg{width:28px;height:28px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.inp.big{padding:18px 16px;font-size:20px;border-radius:14px}.bt.big{padding:20px;font-size:18px;border-radius:16px}
+label.l.big{font-size:14px;margin-top:16px}
+.sug{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:16px;border-radius:14px;border:1.5px solid var(--b2);background:#fff;margin-top:8px;font-size:18px;cursor:pointer}
+.sug b{flex:1}.sug .pill{font-size:16px}
+#p-ident .card{max-width:560px;margin-left:auto;margin-right:auto}
 @media(min-width:900px){
  .main{max-width:1400px;margin:0 auto;padding:16px 24px}
  #chip{margin:14px auto 0;max-width:1352px}
@@ -116,14 +124,14 @@ h2{margin:6px 0 10px;font-size:19px;font-weight:800}
     <div id="p-ident">
       <h2>Nova comanda</h2>
       <div class="card">
-        <div class="seg"><button id="sgM" class="on" onclick="modo('mesa')">🍽 Mesa</button><button id="sgB" onclick="modo('balcao')">🛎 Balcão</button></div>
-        <div class="row2">
-          <div><label class="l" id="lbMesa">Número da mesa</label><input class="inp" id="iMesa" inputmode="text" maxlength="8" autocomplete="off"></div>
-          <div><label class="l">Joia (cliente)</label><input class="inp" id="iJoia" inputmode="numeric" maxlength="12" autocomplete="off" onchange="buscaJoia()" onblur="buscaJoia()"></div>
-        </div>
+        <button id="sgM" class="sw on" onclick="modo('mesa')"><svg viewBox="0 0 24 24"><path d="M3 9h18M5 9l1 10M19 9l-1 10M12 9v10M7 5h10l1 4H6z"/></svg>Mesa</button>
+        <button id="sgB" class="sw" onclick="modo('balcao')"><svg viewBox="0 0 24 24"><path d="M4 17h16M6 17a6 6 0 0112 0M12 7V5M10 5h4M3 20h18"/></svg>Balcão</button>
+        <label class="l big" id="lbMesa">Número da mesa</label><input class="inp big" id="iMesa" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="off">
+        <label class="l big">Cliente</label><input class="inp big" id="iJoia" inputmode="numeric" pattern="[0-9]*" maxlength="12" autocomplete="off" placeholder="Digite o número do cliente" oninput="digJoia()">
+        <div id="sugs"></div>
         <div id="joiaInfo"></div>
         <div class="er" id="idErr"></div>
-        <button class="bt" onclick="abreComanda()">Continuar para o cardápio</button>
+        <button class="bt big" onclick="abreComanda()">Continuar para o cardápio</button>
       </div>
     </div>
 
@@ -134,26 +142,13 @@ h2{margin:6px 0 10px;font-size:19px;font-weight:800}
   <!-- COMANDAS -->
   <div id="v-com" class="main hide"><h2>Comandas abertas</h2><input class="inp" id="bPed" placeholder="Bipar ou digitar o nº do pedido…" inputmode="numeric" oninput="achaPed()" autocomplete="off" style="margin-bottom:12px"><div id="lCom"></div></div>
 
-  <!-- SÓCIOS -->
+  <!-- CLIENTES -->
   <div id="v-soc" class="main hide">
     <h2>Clientes</h2>
-    <input class="inp" id="bSoc" placeholder="Buscar por nome ou joia…" oninput="pintaSocios()">
+    <div id="recTot"></div>
+    <input class="inp" id="bSoc" placeholder="🔎 Buscar por nome ou número…" oninput="pintaSocios()" autocomplete="off">
     <button class="bt" onclick="socioForm(null)">+ Cadastrar cliente</button>
     <div id="lSoc" style="margin-top:12px"></div>
-  </div>
-
-  <!-- A RECEBER -->
-  <div id="v-rec" class="main hide">
-    <h2>A receber (conta marcada)</h2>
-    <div id="lRec"></div>
-    <h2 style="margin-top:20px">Regras</h2>
-    <div class="card">
-      <label class="l">Bloquear cliente com cobrança vencida há mais de (dias)</label><input class="inp" id="cBloq" inputmode="numeric" placeholder="0 = não bloquear">
-      <label class="l" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="cAuto" style="width:20px;height:20px"> Fechar e cobrar automático nos dias:</label>
-      <input class="inp" id="cDias" placeholder="Ex.: 10, 20, 30">
-      <label class="l">Mensagem da cobrança (use {nome}, {valor}, {empresa}, {joia})</label><textarea class="inp" id="cMsg" rows="3" placeholder="Olá, {nome}! Segue o fechamento da sua conta em {empresa}: R$ {valor}."></textarea>
-      <button class="bt" onclick="salvaCfg()">Salvar regras</button>
-    </div>
   </div>
 
   <div id="cartbar" class="hide"><button onclick="abreCarrinho()"><span id="cbN">0 itens</span><span id="cbV"></span></button></div>
@@ -161,7 +156,6 @@ h2{margin:6px 0 10px;font-size:19px;font-weight:800}
     <button id="n-ped" class="on" onclick="aba('ped')"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Pedido</button>
     <button id="n-com" onclick="aba('com')"><svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 3h6v3H9zM9 11h6M9 15h6"/></svg>Comandas</button>
     <button id="n-soc" class="gest hide" onclick="aba('soc')"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 5.2a3.2 3.2 0 010 5.6M18 14.5c1.8.8 3 2.6 3 5.5"/></svg>Clientes</button>
-    <button id="n-rec" class="gest hide" onclick="aba('rec')"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10h18M16 15h2"/></svg>A receber</button>
   </div>
 </div>
 
@@ -211,14 +205,19 @@ function inicio(){
 }
 /* ── abas ── */
 function aba(a){
-  ABA=a; ['ped','com','soc','rec'].forEach(function(k){ $('v-'+k).classList.toggle('hide',k!==a); $('n-'+k).classList.toggle('on',k===a); });
+  ABA=a; ['ped','com','soc'].forEach(function(k){ $('v-'+k).classList.toggle('hide',k!==a); $('n-'+k).classList.toggle('on',k===a); });
   clearInterval(POLL); POLL=null; window.scrollTo(0,0); cartBar();
   if(a==='com'){ carregaCom(); POLL=setInterval(carregaCom,15000); }
   if(a==='soc') carregaSocios();
-  if(a==='rec') carregaRec();
 }
 /* ── comanda atual ── */
-function modo(m){ COM.modo=m; $('sgM').classList.toggle('on',m==='mesa'); $('sgB').classList.toggle('on',m==='balcao'); $('lbMesa').textContent=m==='mesa'?'Número da mesa':'Comanda do balcão (opcional com joia)'; $('iMesa').placeholder=m==='balcao'?'Ex.: B1':''; }
+function modo(m){ COM.modo=m; $('sgM').classList.toggle('on',m==='mesa'); $('sgB').classList.toggle('on',m==='balcao'); $('lbMesa').textContent=m==='mesa'?'Número da mesa':'Número da comanda do balcão (opcional)'; }
+var SUGS=[], _dj=0;
+function digJoia(){
+  clearTimeout(_dj); COM.nome=''; COM.bloq=false; COM.liberar=false; $('joiaInfo').innerHTML=''; var q=$('iJoia').value.trim(); if(!q){ $('sugs').innerHTML=''; return; }
+  _dj=setTimeout(function(){ api('/painel/atend-clientes?q='+encodeURIComponent(q)).then(function(d){ if($('iJoia').value.trim()!==q) return; SUGS=d.clientes||[]; var h=''; SUGS.forEach(function(c,i){ h+='<button class="sug" onclick="pickCli('+i+')">'+pill(c.joia)+'<b>'+esc(c.nome)+'</b>'+(c.bloqueado?'<span class="tag r">BLOQUEADO</span>':'')+'</button>'; }); $('sugs').innerHTML=h||(d.ok?'<div class="aviso er">Nenhum cliente encontrado.</div>':''); }); },220);
+}
+function pickCli(i){ var c=SUGS[i]; if(!c) return; $('iJoia').value=c.joia; $('sugs').innerHTML=''; abreComanda(); }
 function buscaJoia(){
   var j=$('iJoia').value.replace(/\W/g,''); var box=$('joiaInfo'); COM.nome=''; COM.dev=0; COM.bloq=false; COM.liberar=false;
   if(!j){ box.innerHTML=''; return Promise.resolve(null); }
@@ -238,7 +237,7 @@ function abreComanda(){
   buscaJoia().then(function(s){
     if(joia&&!s){ er.textContent='Confira a joia: não encontrei esse cliente.'; return; }
     if(joia&&COM.bloq&&!COM.liberar){ er.textContent='Cliente bloqueado. Só o gestor libera.'; return; }
-    COM.mesa=mesa; COM.joia=joia; CART=[]; mostraComanda(); verCats();
+    $('sugs').innerHTML=''; COM.mesa=mesa; COM.joia=joia; CART=[]; mostraComanda(); verCats();
   });
 }
 function mostraComanda(){
@@ -246,7 +245,7 @@ function mostraComanda(){
   $('chipT').innerHTML=t.join(' · '); $('chipS').textContent=COM.nome||'Comanda aberta'; $('chip').classList.remove('hide');
 }
 function trocaComanda(){ if(CART.length&&!confirm('Há itens no pedido que ainda não foram enviados. Trocar de comanda mesmo assim?')) return; zeraComanda(); }
-function zeraComanda(){ COM={mesa:'',joia:'',nome:'',modo:COM.modo,dev:0,bloq:false,liberar:false}; CART=[]; $('chip').classList.add('hide'); $('iMesa').value=''; $('iJoia').value=''; $('joiaInfo').innerHTML=''; $('idErr').textContent=''; limpaBusca(); ['p-cats','p-prods'].forEach(function(i){ $(i).classList.add('hide'); }); $('p-ident').classList.remove('hide'); cartBar(); window.scrollTo(0,0); }
+function zeraComanda(){ COM={mesa:'',joia:'',nome:'',modo:COM.modo,dev:0,bloq:false,liberar:false}; CART=[]; $('chip').classList.add('hide'); $('iMesa').value=''; $('iJoia').value=''; $('joiaInfo').innerHTML=''; $('sugs').innerHTML=''; $('idErr').textContent=''; limpaBusca(); ['p-cats','p-prods'].forEach(function(i){ $(i).classList.add('hide'); }); $('p-ident').classList.remove('hide'); cartBar(); window.scrollTo(0,0); }
 function ativaComanda(c){ COM={mesa:c.mesa||'',joia:c.joia||'',nome:c.nome||'',modo:c.joia&&!c.mesa?'balcao':'mesa',dev:0,bloq:false,liberar:false}; CART=[]; mostraComanda(); $('p-ident').classList.add('hide'); aba('ped'); verCats(); }
 /* ── cardápio: categorias em cards ── */
 function fotoProd(p){ return p.foto?API+'/food/foto/'+encodeURIComponent(CLI)+'/'+encodeURIComponent(p.id):''; }
@@ -369,7 +368,7 @@ function carregaCom(){
     COMS=d.comandas||[]; var h='';
     COMS.forEach(function(c,i){
       var t=(c.mesa?'Mesa '+esc(c.mesa):'')+(c.joia?(c.mesa?' · ':'')+pill(c.joia):'');
-      h+='<div class="cm" id="cm'+i+'"><div class="h"><div><b>'+t+'</b><div style="font-size:12.5px;color:var(--mu2)">'+esc(c.nome||'')+'</div></div><span class="v">'+brl(c.total)+'</span></div><div class="pd">'+c.pedidos.map(function(p,k){ return '<b>#'+p.num+'</b> · '+new Date(p.criado).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+' · '+esc(p.itens)+' <button onclick="reimp('+i+','+k+')" title="Imprimir" style="border:0;background:var(--s3);border-radius:8px;padding:3px 8px">🖨</button>'; }).join('<br>')+'</div>'
+      h+='<div class="cm" id="cm'+i+'"><div class="h"><div><b>'+t+'</b><div style="font-size:12.5px;color:var(--mu2)">'+esc(c.nome||'')+'</div></div><span class="v">'+brl(c.total)+'</span></div><div class="pd">'+c.pedidos.map(function(p,k){ return '<b>#'+p.num+'</b> · '+new Date(p.criado).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+(p.atend?' · '+esc(p.atend):'')+' · '+esc(p.itens)+' <button onclick="reimp('+i+','+k+')" title="Imprimir" style="border:0;background:var(--s3);border-radius:8px;padding:3px 8px">🖨</button>'; }).join('<br>')+'</div>'
         +'<div class="ac"><button class="bt s" onclick="ativaComanda(COMS['+i+'])">+ Pedido</button><button class="bt g" onclick="fechaForm('+i+')">Fechar conta</button></div></div>';
     });
     $('lCom').innerHTML=h||'<p style="color:var(--mu2)">Nenhuma comanda aberta agora.</p>';
@@ -393,12 +392,22 @@ function fechaFazer(i,forma){
   });
 }
 /* ── clientes (gestor) ── */
-function carregaSocios(){ api('/painel/atend-socios').then(function(d){ if(!d.ok){ $('lSoc').innerHTML='<p>'+esc(d.mensagem||'Erro')+'</p>'; return; } SOCIOS=d.socios||[]; pintaSocios(); }); }
+function carregaSocios(){
+  Promise.all([api('/painel/atend-socios'),api('/painel/atend-receber')]).then(function(r){
+    var d=r[0], rc=r[1]; if(!d.ok){ $('lSoc').innerHTML='<p>'+esc(d.mensagem||'Erro')+'</p>'; return; }
+    SOCIOS=d.socios||[]; REC=rc.ok?rc:{marcados:[],cobrancas:[]};
+    var tot=0, nm=0; REC.marcados.forEach(function(m){ tot+=m.total; nm++; }); var ab=0; REC.cobrancas.forEach(function(c){ if(c.status!=='pago') ab+=c.total; });
+    $('recTot').innerHTML='<div class="card" style="margin-bottom:12px"><div class="row2" style="gap:8px"><div><small style="color:var(--mu2)">Pendurado (sem cobrança)</small><br><b style="font-size:19px;color:#B4540A">'+brl(tot)+'</b></div><div><small style="color:var(--mu2)">Cobranças em aberto</small><br><b style="font-size:19px;color:var(--er)">'+brl(ab)+'</b></div></div>'+(nm?'<button class="bt s" style="margin-top:12px" onclick="geraCob(\'\')">Gerar cobrança de todos · '+brl(tot)+'</button>':'')+'</div>';
+    pintaSocios();
+  });
+}
 function pintaSocios(){
   var q=($('bSoc').value||'').toLowerCase().trim(), h='';
-  SOCIOS.forEach(function(s,i){ if(q&&(s.nome.toLowerCase().indexOf(q)<0&&String(s.joia).indexOf(q)<0)) return;
-    h+='<div class="cm" onclick="clienteDet(\''+esc(s.joia)+'\')"><div class="h"><div><b>'+esc(s.nome)+'</b> '+(s.ativo?pill(s.joia):'<span class="tag a">inativo</span>')+''+(s.bloqueado?'<span class="tag r">BLOQUEADO</span>':'')+'<div style="font-size:12.5px;color:var(--mu2)">'+esc(s.fone||'sem celular')+'</div></div>'+(s.devendo>0?'<span class="v" style="color:var(--er)">'+brl(s.devendo)+'</span>':'')+'</div></div>'; });
-  $('lSoc').innerHTML=h||'<p style="color:var(--mu2)">Nenhum cliente cadastrado.</p>';
+  var lista=SOCIOS.slice().sort(function(a,b){ return (b.devendo>0)-(a.devendo>0)||b.devendo-a.devendo; });
+  lista.forEach(function(s){ if(q&&(s.nome.toLowerCase().indexOf(q)<0&&String(s.joia).indexOf(q)<0)) return;
+    var pend=0, cob=0; if(REC){ REC.marcados.forEach(function(m){ if(String(m.joia)===String(s.joia)) pend+=m.total; }); REC.cobrancas.forEach(function(c){ if(String(c.joia)===String(s.joia)&&c.status!=='pago') cob+=c.total; }); }
+    h+='<div class="cm" style="cursor:pointer" onclick="clienteDet(\''+esc(s.joia)+'\')"><div class="h"><div><b>'+esc(s.nome)+'</b> '+(s.ativo?pill(s.joia):'<span class="tag a">inativo</span>')+(s.bloqueado?'<span class="tag r">BLOQUEADO</span>':'')+'<div style="font-size:12.5px;color:var(--mu2)">'+esc(s.fone||'sem celular')+(pend>0?' · pendurado '+brl(pend):'')+(cob>0?' · cobrança '+brl(cob):'')+'</div></div>'+(s.devendo>0?'<span class="v" style="color:var(--er)">'+brl(s.devendo)+'</span>':'<span style="color:var(--ok);font-weight:800;font-size:13px">em dia</span>')+'</div></div>'; });
+  $('lSoc').innerHTML=h||'<p style="color:var(--mu2)">Nenhum cliente encontrado.</p>';
 }
 function editaCli(j){ var k=-1; SOCIOS.forEach(function(s,n){ if(String(s.joia)===String(j)) k=n; }); socioForm(k<0?null:k); }
 function socioForm(i){
@@ -419,14 +428,19 @@ function hrBR(t){ return new Date(t).toLocaleTimeString('pt-BR',{hour:'2-digit',
 function linhaTxt(l){ var d=[], n=(l.sab||[]).length; if(l.tam) d.push(l.tam); (l.sab||[]).forEach(function(x){ d.push((n>1?'1/'+n+' ':'')+x); }); if(l.borda) d.push('Borda: '+l.borda); (l.adds||[]).forEach(function(a){ d.push('+ '+a); }); if(l.obs) d.push('Obs: '+l.obs); return d.join(' · '); }
 function clienteDet(joia){
   folha('Conta do cliente','<p style="color:var(--mu2)">Carregando…</p>','');
-  api('/painel/atend-cliente?joia='+encodeURIComponent(joia)).then(function(d){
+  Promise.all([api('/painel/atend-cliente?joia='+encodeURIComponent(joia)),api('/painel/atend-receber')]).then(function(r){
+    var d=r[0]; if(r[1].ok) REC=r[1];
     if(!d.ok){ $('shB').innerHTML='<p>'+esc(d.mensagem||'Erro')+'</p>'; return; }
     var c=d.cliente, ab=0, pd=0, cb=0, pg=0;
     d.pedidos.forEach(function(p){ if(p.situacao==='pago') pg+=p.total; else if(p.situacao==='aberto') ab+=p.total; else if(p.situacao==='pendurado') pd+=p.total; else cb+=p.total; });
     var h='<div style="margin:4px 0 8px"><b style="font-size:18px">'+esc(c.nome)+'</b> '+pill(c.joia)+(c.bloqueado?' <span class="tag r">BLOQUEADO · '+c.dias_atraso+' dias</span>':'')+'<div style="font-size:13px;color:var(--mu2)">'+esc(c.fone||'sem celular')+'</div></div>'
      +'<div class="row2" style="gap:8px;margin-bottom:6px"><div class="cm" style="margin:0"><small>Pendurado</small><br><b style="color:#B4540A">'+brl(pd)+'</b></div><div class="cm" style="margin:0"><small>Cobrança aberta</small><br><b style="color:var(--er)">'+brl(cb)+'</b></div><div class="cm" style="margin:0"><small>Pago</small><br><b style="color:var(--ok)">'+brl(pg)+'</b></div></div>'
-     +(ab>0?'<div class="aviso am">Comanda em aberto agora: '+brl(ab)+'</div>':'')
-     +'<button class="bt s" style="margin:8px 0 0" onclick="editaCli(\''+esc(c.joia)+'\')">Editar cadastro</button>';
+     +(ab>0?'<div class="aviso am">Comanda em aberto agora: '+brl(ab)+'</div>':'');
+    var jm=REC.marcados.filter(function(m){ return String(m.joia)===String(c.joia); })[0];
+    if(jm) h+='<button class="bt" style="margin:10px 0 0" onclick="geraCob(\''+esc(c.joia)+'\')">Gerar cobrança · '+brl(jm.total)+'</button>';
+    var cbs=REC.cobrancas.filter(function(x){ return String(x.joia)===String(c.joia); });
+    if(cbs.length){ h+='<div class="dia">Cobranças</div>'; cbs.forEach(function(x){ var pago=x.status==='pago'; h+='<div class="cm"><div class="h"><div><b>'+brl(x.total)+'</b> <span class="tag '+(pago?'g':'r')+'">'+(pago?'paga':'em aberto')+'</span><div style="font-size:12.5px;color:var(--mu2)">'+x.n+' pedido'+(x.n>1?'s':'')+' · gerada em '+new Date(x.criado).toLocaleDateString('pt-BR')+(x.enviado&&!pago?' · cobrança enviada':'')+'</div></div></div>'+(pago?'':'<div class="ac"><button class="bt s" onclick="enviaCob(\''+esc(x.id)+'\')">📲 WhatsApp</button><button class="bt g" onclick="pagoForm(\''+esc(x.id)+'\')">Recebi</button></div>')+'</div>'; }); }
+    h+='<button class="bt s" style="margin:10px 0 0" onclick="editaCli(\''+esc(c.joia)+'\')">Editar cadastro</button>';
     var dia='';
     d.pedidos.forEach(function(p){
       var dd=dtBR(p.criado); if(dd!==dia){ dia=dd; h+='<div class="dia">'+esc(dd)+'</div>'; }
@@ -436,7 +450,7 @@ function clienteDet(joia){
         +(p.atend?'<div class="ln">Atendente: '+esc(p.atend)+'</div>':'')+'</div>';
     });
     if(!d.pedidos.length) h+='<p style="color:var(--mu2)">Ainda não consumiu nada.</p>';
-    $('shB').innerHTML=h;
+    $('shT').textContent='Conta do cliente'; $('shB').innerHTML=h;
   });
 }
 /* ── impressão do pedido (cupom 80mm) com código de barras do nº do pedido ── */
@@ -471,33 +485,18 @@ function imprime(p){
   var d=f.contentWindow.document; d.open(); d.write(html); d.close();
   setTimeout(function(){ try{ f.contentWindow.focus(); f.contentWindow.print(); }catch(e){ toast('Não consegui abrir a impressão.'); } setTimeout(function(){ try{ f.remove(); }catch(e){} },60000); },350);
 }
-/* ── a receber (gestor) ── */
-
-function carregaRec(){
-  api('/painel/atend-receber').then(function(d){
-    if(!d.ok){ $('lRec').innerHTML='<p>'+esc(d.mensagem||'Erro')+'</p>'; return; } REC=d; var h='', tot=0;
-    h+='<div class="sec">Marcado, ainda sem cobrança</div>';
-    d.marcados.forEach(function(m,i){ tot+=m.total; h+='<div class="cm"><div class="h"><div><b>'+esc(m.nome||'Cliente')+'</b> '+pill(m.joia)+'<div style="font-size:12.5px;color:var(--mu2)">'+m.n+' pedido'+(m.n>1?'s':'')+'</div></div><span class="v">'+brl(m.total)+'</span></div><div class="ac"><button class="bt s" onclick="clienteDet(\''+esc(m.joia)+'\')">Detalhes</button><button class="bt s" onclick="geraCob(\''+esc(m.joia)+'\')">Gerar cobrança</button></div></div>'; });
-    if(!d.marcados.length) h+='<p style="color:var(--mu2)">Nada marcado no momento.</p>'; else h+='<button class="bt" onclick="geraCob(\'\')">Fechar todos agora · '+brl(tot)+'</button>';
-    h+='<div class="sec" style="margin-top:18px">Cobranças</div>';
-    d.cobrancas.forEach(function(c,i){ var pago=c.status==='pago'; h+='<div class="cm"><div class="h"><div><b>'+esc(c.nome||'Cliente')+'</b> '+pill(c.joia)+'<span class="tag '+(pago?'g':'r')+'">'+(pago?'pago':'em aberto')+'</span><div style="font-size:12.5px;color:var(--mu2)">'+c.n+' pedido'+(c.n>1?'s':'')+' · '+new Date(c.criado).toLocaleDateString('pt-BR')+(c.enviado&&!pago?' · cobrança enviada':'')+'</div></div><span class="v">'+brl(c.total)+'</span></div>'
-      +'<div class="ac"><button class="bt s" onclick="clienteDet(\''+esc(c.joia)+'\')">Detalhes</button>'+(pago?'':'<button class="bt s" onclick="enviaCob('+i+')">📲 WhatsApp</button><button class="bt g" onclick="pagoForm('+i+')">Recebi</button>')+'</div></div>'; });
-    if(!d.cobrancas.length) h+='<p style="color:var(--mu2)">Nenhuma cobrança ainda.</p>';
-    $('lRec').innerHTML=h;
-  });
-  api('/painel/atend-cfg').then(function(d){ if(!d.ok) return; var c=d.cfg; $('cBloq').value=c.bloq_dias||''; $('cAuto').checked=!!c.fecha_auto; $('cDias').value=(c.fecha_dias||[]).join(', '); $('cMsg').value=c.msg||''; });
+/* ── cobranças (dentro de Clientes) ── */
+function geraCob(joia){ api('/painel/atend-fechamento',{joia:joia}).then(function(r){ if(r.ok){ toast(r.criadas+' cobrança'+(r.criadas==1?'':'s')+' gerada'+(r.criadas==1?'':'s')); carregaSocios(); if(joia) clienteDet(joia); else fecha(); } else toast(r.mensagem||'Erro'); }); }
+function cobPorId(id){ return (REC.cobrancas||[]).filter(function(x){ return x.id===id; })[0]; }
+function enviaCob(id){
+  var c=cobPorId(id); if(!c) return; if(!c.fone){ toast('Esse cliente não tem celular cadastrado.'); return; }
+  window.open('https://wa.me/'+c.fone+'?text='+encodeURIComponent(c.msg),'_blank'); api('/painel/atend-fech-enviado',{id:c.id}).then(function(){ carregaSocios(); clienteDet(c.joia); });
 }
-function geraCob(joia){ api('/painel/atend-fechamento',{joia:joia}).then(function(r){ if(r.ok){ toast(r.criadas+' cobrança'+(r.criadas==1?'':'s')+' gerada'+(r.criadas==1?'':'s')); carregaRec(); } else toast(r.mensagem||'Erro'); }); }
-function enviaCob(i){
-  var c=REC.cobrancas[i]; if(!c.fone){ toast('Esse cliente não tem celular cadastrado.'); return; }
-  window.open('https://wa.me/'+c.fone+'?text='+encodeURIComponent(c.msg),'_blank'); api('/painel/atend-fech-enviado',{id:c.id}).then(function(){ carregaRec(); });
+function pagoForm(id){
+  var c=cobPorId(id); if(!c) return; var h='<div style="font-size:15px;margin:6px 0 10px"><b>'+esc(c.nome)+'</b><br><span style="font-size:22px;font-weight:800;color:var(--pri)">'+brl(c.total)+'</span></div><div class="sec">Como recebeu?</div>';
+  [['pix','Pix'],['cartao','Cartão'],['dinheiro','Dinheiro']].forEach(function(f){ h+='<div class="opt" onclick="pagoOk(\''+esc(id)+'\',\''+f[0]+'\')"><span class="n"><b>'+f[1]+'</b></span></div>'; }); folha('Marcar como pago',h,'');
 }
-function pagoForm(i){
-  var c=REC.cobrancas[i], h='<div style="font-size:15px;margin:6px 0 10px"><b>'+esc(c.nome)+'</b><br><span style="font-size:22px;font-weight:800;color:var(--pri)">'+brl(c.total)+'</span></div><div class="sec">Como recebeu?</div>';
-  [['pix','Pix'],['cartao','Cartão'],['dinheiro','Dinheiro']].forEach(function(f){ h+='<div class="opt" onclick="pagoOk('+i+',\''+f[0]+'\')"><span class="n"><b>'+f[1]+'</b></span></div>'; }); folha('Marcar como pago',h,'');
-}
-function pagoOk(i,f){ api('/painel/atend-fech-pago',{id:REC.cobrancas[i].id,forma:f}).then(function(r){ if(r.ok){ fecha(); toast('Recebimento registrado'); carregaRec(); } else toast(r.mensagem||'Erro'); }); }
-function salvaCfg(){ api('/painel/atend-cfg',{bloq_dias:$('cBloq').value,fecha_auto:$('cAuto').checked,fecha_dias:$('cDias').value,msg:$('cMsg').value}).then(function(r){ toast(r.ok?'Regras salvas':(r.mensagem||'Não salvou')); }); }
+function pagoOk(id,f){ var c=cobPorId(id); api('/painel/atend-fech-pago',{id:id,forma:f}).then(function(r){ if(r.ok){ toast('Recebimento registrado'); carregaSocios(); clienteDet(c.joia); } else toast(r.mensagem||'Erro'); }); }
 modo('mesa');
 if(TK) inicio(); else mostraLogin('');
 </script>
