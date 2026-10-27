@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>LiveFood — Painel · GIRO-OS-120</title>
+<title>LiveFood — Painel · GIRO-OS-122</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -7732,7 +7732,7 @@ function cdCfgClientesSalvar(){
   }).catch(function(e){ var m=el('cc-m'); if(m){ m.style.color='#f87171'; m.textContent=e.message||'Não salvou'; } });
 }
 /* ── (120) SALÃO: desenhar a planta do restaurante (mesas, balcão, cozinha, banheiros, entrada, saída) ── */
-var SL={L:[],sel:0,drag:null,uid:1};
+var SL={L:[],sel:0,drag:null,uid:1,v3:false,ang:35};
 var SL_T={mesa:{nome:'Mesa'},balcao:{nome:'Balcão de saída',w:110,h:30,label:'BALCÃO'},cozinha:{nome:'Cozinha e bar',w:96,h:230,label:'COZINHA'},banheiro:{nome:'Banheiro',w:52,h:40,label:'WC'},entrada:{nome:'Entrada',w:84,h:16,label:'ENTRADA'},saida:{nome:'Saída',w:84,h:16,label:'SAÍDA'}};
 function slModelo(){
   var L=[],id=1; function add(t,x,y,n,label,w,h){ var d=SL_T[t]; L.push({id:id++,t:t,x:x,y:y,n:n||0,label:label||'',w:w||d.w||44,h:h||d.h||44}); }
@@ -7744,7 +7744,7 @@ function slModelo(){
 function slPeca(id){ return SL.L.filter(function(p){return p.id===id;})[0]; }
 function slFormas(p){
   var h='';
-  if(p.t==='mesa'){ h+='<circle cx="'+p.x+'" cy="'+p.y+'" r="22" fill="#F5E8E0" stroke="#E3C9B8" stroke-width="2"/><text x="'+p.x+'" y="'+(p.y+6)+'" text-anchor="middle" font-size="16" font-weight="800" fill="#29231E">'+p.n+'</text>'; }
+  if(p.t==='mesa'){ var dm=p.w||44, fz=Math.max(11,Math.min(30,Math.round(dm*0.36))); h+='<circle cx="'+p.x+'" cy="'+p.y+'" r="'+(dm/2)+'" fill="#F5E8E0" stroke="#E3C9B8" stroke-width="2"/><text x="'+p.x+'" y="'+(p.y+fz*0.37)+'" text-anchor="middle" font-size="'+fz+'" font-weight="800" fill="#29231E">'+p.n+'</text>'; }
   else if(p.t==='entrada'||p.t==='saida'){ h+='<rect x="'+(p.x-p.w/2)+'" y="'+(p.y-p.h/2)+'" width="'+p.w+'" height="'+p.h+'" rx="4" fill="'+(p.t==='entrada'?'#16A34A':'#DC2626')+'" opacity=".9"/><text '+(p.h>p.w?'transform="rotate(-90 '+p.x+' '+p.y+')" ':'')+'x="'+p.x+'" y="'+(p.y+4)+'" text-anchor="middle" font-size="10" font-weight="800" fill="#fff">'+esc(p.label||SL_T[p.t].label)+'</text>'; }
   else {
     var forte=p.t==='balcao', lab=esc(p.label||SL_T[p.t].label);
@@ -7760,38 +7760,138 @@ function slPlanta(){
   for(gy=25;gy<360;gy+=25) s+='<line x1="4" y1="'+gy+'" x2="596" y2="'+gy+'" stroke="#F2DED2" stroke-width=".6"/>';
   SL.L.forEach(function(p){
     s+='<g data-id="'+p.id+'" style="cursor:grab">'+slFormas(p);
-    if(SL.sel===p.id){ var r=p.t==='mesa'?{x:p.x-27,y:p.y-27,w:54,h:54}:{x:p.x-p.w/2-4,y:p.y-p.h/2-4,w:p.w+8,h:p.h+8}; s+='<rect x="'+r.x+'" y="'+r.y+'" width="'+r.w+'" height="'+r.h+'" rx="8" fill="none" stroke="#FF5A00" stroke-width="2.5" stroke-dasharray="5 4"/>'; }
+    if(SL.sel===p.id){ var pw=p.w||44, ph=p.t==='mesa'?pw:p.h, r={x:p.x-pw/2-4,y:p.y-ph/2-4,w:pw+8,h:ph+8}; s+='<rect x="'+r.x+'" y="'+r.y+'" width="'+r.w+'" height="'+r.h+'" rx="8" fill="none" stroke="#FF5A00" stroke-width="2.5" stroke-dasharray="5 4" style="pointer-events:none"/><rect data-h="1" x="'+(p.x+pw/2-8)+'" y="'+(p.y+ph/2-8)+'" width="18" height="18" rx="4" fill="#FF5A00" stroke="#fff" stroke-width="2.5" style="cursor:nwse-resize"/>'; }
     s+='</g>';
   });
   return s;
 }
 function slAbrir(){
-  SL.sel=0; el('cd-imp-corpo').innerHTML='<div style="font-size:13px;color:var(--muted)">Carregando…</div>';
-  el('sh-import').querySelector('h3').textContent='Salão'; abrir('sh-import');
+  SL.sel=0; SL.sujo=false;
+  var t=el('sl-tela');
+  if(!t){ t=document.createElement('div'); t.id='sl-tela'; t.style.cssText='position:fixed;inset:0;z-index:300;background:var(--bg);display:flex;flex-direction:column'; document.body.appendChild(t); }
+  t.style.display='flex'; document.body.style.overflow='hidden';
+  t.innerHTML='<div style="padding:24px;font-size:13px;color:var(--muted)">Carregando…</div>';
   fetch(DELTADIS_API+'/painel/salao',{headers:cdHdr()}).then(function(r){return r.json();}).then(function(d){
     if(!d||!d.ok) throw new Error((d&&d.mensagem)||'erro');
     SL.L=d.pecas||[]; SL.uid=1; SL.L.forEach(function(p){ if(p.id>=SL.uid) SL.uid=p.id+1; }); slMonta();
-  }).catch(function(e){ el('cd-imp-corpo').innerHTML='<div style="color:#f87171;font-size:13px">'+esc(e.message||'Não consegui abrir.')+'</div>'; });
+  }).catch(function(e){ t.innerHTML='<div style="padding:24px;font-size:13px"><button class="btn sec" type="button" onclick="slFecha()">← Voltar ao painel</button><div style="color:#f87171;margin-top:14px">'+esc(e.message||'Não consegui abrir.')+'</div></div>'; });
 }
+function slFecha(){
+  if(SL.sujo&&!window.confirm('Você mexeu no salão e não salvou. Sair mesmo assim?')) return;
+  try{ if(document.fullscreenElement) document.exitFullscreen(); }catch(e){}
+  var t=el('sl-tela'); if(t){ t.style.display='none'; t.innerHTML=''; } document.body.style.overflow=''; SL.sujo=false;
+}
+function slTelaCheia(){
+  var t=el('sl-tela'); try{ if(document.fullscreenElement) document.exitFullscreen(); else if(t.requestFullscreen) t.requestFullscreen(); }catch(e){}
+}
+document.addEventListener('fullscreenchange',function(){ var b=el('sl-bfull'); if(b) b.textContent=document.fullscreenElement?'Sair da tela cheia':'Tela cheia'; });
 function slMonta(){
-  el('cd-imp-corpo').innerHTML='<div style="font-size:13px;color:var(--muted2);line-height:1.5;margin-bottom:10px">Monte o mapa do seu salão: toque numa peça para colocar e <b>arraste</b> até o lugar certo. O garçom vai ver este mapa no celular, com o balcão na base. Escala: 25 pontos = 1 metro.</div>'
-    +'<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">'+['mesa','balcao','cozinha','banheiro','entrada','saida'].map(function(t){ return '<button class="btn sec" type="button" style="padding:7px 11px;font-size:12.5px" onclick="slAdd(\''+t+'\')">+ '+SL_T[t].nome+'</button>'; }).join('')+'</div>'
-    +'<svg id="sl-svg" viewBox="0 0 600 360" style="width:100%;height:auto;display:block;border-radius:12px;background:#FDF9F7;border:1px solid var(--border2);touch-action:none" role="img" aria-label="Planta do salão"></svg>'
-    +'<div id="sl-prop" style="margin-top:10px;min-height:44px"></div>'
-    +'<div id="sl-m" style="font-size:12.5px;min-height:18px;margin:8px 0"></div>'
-    +'<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn pri" type="button" onclick="slSalvar()">Salvar salão</button><button class="btn sec" type="button" onclick="slExemplo()">Usar modelo de exemplo</button></div>';
+  var bs='padding:8px 12px;font-size:13px', cheia=!!(document.documentElement.requestFullscreen);
+  el('sl-tela').innerHTML='<div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--s1);border-bottom:1px solid var(--border);flex-wrap:wrap">'
+    +'<button class="btn sec" type="button" style="'+bs+'" onclick="slFecha()">← Voltar ao painel</button>'
+    +'<b style="font-size:16px;margin-left:4px">Salão</b><span style="flex:1"></span>'
+    +'<button class="btn sec" id="sl-b3" type="button" style="'+bs+'" onclick="slVista()">Ver em 3D</button>'
+    +(cheia?'<button class="btn sec" id="sl-bfull" type="button" style="'+bs+'" onclick="slTelaCheia()">Tela cheia</button>':'')
+    +'<button class="btn pri" type="button" style="'+bs+'" onclick="slSalvar()">Salvar salão</button></div>'
+    +'<div style="flex:1;min-height:0;display:flex;flex-direction:column;gap:10px;padding:12px 14px">'
+    +'<div style="font-size:12.5px;color:var(--muted2);line-height:1.45">Toque numa peça para colocar e <b>arraste</b> até o lugar certo. Para <b>aumentar ou diminuir</b>, arraste o quadradinho laranja do canto. Para <b>mudar o nome</b>, toque duas vezes no texto. O garçom vai ver este mapa no celular, com o balcão na base. Escala: 25 pontos = 1 metro.</div>'
+    +'<div id="sl-tools" style="display:flex;flex-wrap:wrap;gap:6px">'+['mesa','balcao','cozinha','banheiro','entrada','saida'].map(function(t){ return '<button class="btn sec" type="button" style="padding:7px 11px;font-size:12.5px" onclick="slAdd(\''+t+'\')">+ '+SL_T[t].nome+'</button>'; }).join('')+'<button class="btn sec" type="button" style="padding:7px 11px;font-size:12.5px;margin-left:auto" onclick="slExemplo()">Usar modelo de exemplo</button></div>'
+    +'<div id="sl-bar3" style="display:none;gap:6px;align-items:center;flex-wrap:wrap"><button class="btn sec" type="button" style="padding:7px 11px;font-size:12.5px" onclick="slGira3(-45)">↺ Girar</button><button class="btn sec" type="button" style="padding:7px 11px;font-size:12.5px" onclick="slGira3(45)">Girar ↻</button><span style="font-size:12.5px;color:var(--muted2)">Visão 3D só para olhar. Arraste a imagem para girar. Para editar, volte ao 2D.</span></div>'
+    +'<div style="flex:1;min-height:0"><svg id="sl-svg" viewBox="0 0 600 360" style="width:100%;height:100%;display:block;border-radius:12px;background:#FDF9F7;border:1px solid var(--border2);touch-action:none" role="img" aria-label="Planta do salão"></svg><svg id="sl-svg3" viewBox="0 0 900 520" style="width:100%;height:100%;display:none;border-radius:12px;background:#FBF3EE;border:1px solid var(--border2);touch-action:none;cursor:grab" role="img" aria-label="Salão em 3D"></svg></div>'
+    +'<div id="sl-prop" style="min-height:44px"></div><div id="sl-m" style="font-size:12.5px;min-height:18px"></div></div>';
   var s=el('sl-svg');
   s.addEventListener('pointerdown',function(e){
-    var g=e.target.closest('g[data-id]'); if(!g){ SL.sel=0; slDesenha(); return; }
-    var id=+g.getAttribute('data-id'), p=slPeca(id), q=slPt(e); SL.sel=id; SL.drag={id:id,dx:q.x-p.x,dy:q.y-p.y}; s.setPointerCapture(e.pointerId); slDesenha(true);
+    var g=e.target.closest('g[data-id]'); if(!g){ SL.sel=0; SL.ult=0; slDesenha(); return; }
+    var id=+g.getAttribute('data-id'), p=slPeca(id), q=slPt(e);
+    if(e.target.getAttribute&&e.target.getAttribute('data-h')){ SL.drag={id:id,mode:'size'}; s.setPointerCapture(e.pointerId); return; }
+    var agora=Date.now(), dbl=(SL.ult===id&&agora-SL.ultT<380);
+    SL.ult=id; SL.ultT=agora; SL.sel=id;
+    if(dbl){ SL.drag=null; SL.abrirEd=true; slDesenha(); return; }
+    SL.drag={id:id,mode:'move',dx:q.x-p.x,dy:q.y-p.y}; s.setPointerCapture(e.pointerId); slDesenha(true);
   });
   s.addEventListener('pointermove',function(e){
-    if(!SL.drag) return; var p=slPeca(SL.drag.id), q=slPt(e);
-    p.x=Math.max(10,Math.min(590,Math.round((q.x-SL.drag.dx)/5)*5)); p.y=Math.max(10,Math.min(350,Math.round((q.y-SL.drag.dy)/5)*5)); s.innerHTML=slPlanta();
+    if(!SL.drag) return; var p=slPeca(SL.drag.id), q=slPt(e); SL.sujo=true;
+    if(SL.drag.mode==='size'){
+      var dx=Math.abs(q.x-p.x), dy=Math.abs(q.y-p.y);
+      if(p.t==='mesa'){ p.w=p.h=Math.max(30,Math.min(90,Math.round(2*Math.max(dx,dy)/5)*5)); }
+      else { p.w=Math.max(10,Math.min(300,Math.round(2*dx/5)*5)); p.h=Math.max(10,Math.min(300,Math.round(2*dy/5)*5)); }
+    } else { p.x=Math.max(10,Math.min(590,Math.round((q.x-SL.drag.dx)/5)*5)); p.y=Math.max(10,Math.min(350,Math.round((q.y-SL.drag.dy)/5)*5)); SL.ult=0; }
+    s.innerHTML=slPlanta();
   });
-  s.addEventListener('pointerup',function(){ SL.drag=null; }); s.addEventListener('pointercancel',function(){ SL.drag=null; });
+  s.addEventListener('pointerup',function(){ SL.drag=null; if(SL.abrirEd){ SL.abrirEd=false; setTimeout(slEditaTexto,70); } }); s.addEventListener('pointercancel',function(){ SL.drag=null; });
+  var s3=el('sl-svg3'), r3x=null;
+  s3.addEventListener('pointerdown',function(e){ r3x={x:e.clientX,a:SL.ang}; s3.setPointerCapture(e.pointerId); });
+  s3.addEventListener('pointermove',function(e){ if(!r3x) return; SL.ang=((r3x.a+(e.clientX-r3x.x)*0.5)%360+360)%360; slDesenha3(); });
+  s3.addEventListener('pointerup',function(){ r3x=null; }); s3.addEventListener('pointercancel',function(){ r3x=null; });
+  SL.v3=false; slDesenha();
+}
+function slEditaTexto(){
+  var p=slPeca(SL.sel); if(!p) return; var old=el('sl-ed'); if(old) old.remove();
+  var s=el('sl-svg'), m=s.getScreenCTM(), cx=p.x*m.a+m.e, cy=p.y*m.d+m.f, mesa=p.t==='mesa';
+  var inp=document.createElement('input'); inp.id='sl-ed'; inp.className='inp'; inp.type=mesa?'number':'text'; inp.maxLength=14;
+  inp.value=mesa?p.n:(p.label||SL_T[p.t].label); inp.setAttribute('aria-label',mesa?'Número da mesa':'Nome na planta');
+  inp.style.cssText='position:fixed;z-index:400;width:'+(mesa?84:150)+'px;left:'+Math.round(cx-(mesa?42:75))+'px;top:'+Math.round(cy-20)+'px;text-align:center;font-weight:800;box-shadow:0 6px 20px rgba(0,0,0,.25);border-color:#FF5A00';
+  el('sl-tela').appendChild(inp); inp.focus(); inp.select();
+  var feito=false;
+  function fim(ok){ if(feito) return; feito=true; if(ok){ if(mesa){ var v=parseInt(inp.value,10); if(v>0&&v<1000){ p.n=v; SL.sujo=true; } } else { p.label=inp.value.replace(/[<>"]/g,'').slice(0,14); SL.sujo=true; } } inp.remove(); slDesenha(); }
+  inp.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); fim(true); } else if(e.key==='Escape'){ fim(false); } });
+  inp.addEventListener('blur',function(){ fim(true); });
+}
+function slTam(f){
+  var p=slPeca(SL.sel); if(!p) return; SL.sujo=true;
+  if(p.t==='mesa'){ p.w=p.h=Math.max(30,Math.min(90,Math.round(p.w*(f>0?1.15:0.87)/5)*5)); }
+  else { p.w=Math.max(10,Math.min(300,Math.round(p.w*(f>0?1.15:0.87)/5)*5)); p.h=Math.max(10,Math.min(300,Math.round(p.h*(f>0?1.15:0.87)/5)*5)); }
   slDesenha();
 }
+/* visão 3D (isométrica, girável): só olhar, a edição é no 2D */
+function slRender3D(L,ang){
+  var S=0.95,K=0.55,C=0.82,cx=450,cy=290,th=ang*Math.PI/180,co=Math.cos(th),si=Math.sin(th);
+  function P(x,y,z){ var dx=x-300,dy=y-180,xr=dx*co-dy*si,yr=dx*si+dy*co; return {x:cx+xr*S,y:cy+yr*S*K-z*S*C,d:yr}; }
+  function f1(n){ return Math.round(n*10)/10; }
+  function poly(pts,fill,op){ return '<polygon points="'+pts.map(function(q){return f1(q.x)+','+f1(q.y);}).join(' ')+'" fill="'+fill+'" stroke="rgba(41,35,30,.28)" stroke-width="1" stroke-linejoin="round"'+(op?' opacity="'+op+'"':'')+'/>'; }
+  var objs=[], labs=[];
+  function box(x0,y0,x1,y1,hz,cTop,cA,cB){
+    var c=[[x0,y0],[x1,y0],[x1,y1],[x0,y1]], b=c.map(function(q){return P(q[0],q[1],0);}), t=c.map(function(q){return P(q[0],q[1],hz);}), fc=[], i, j, o='';
+    for(i=0;i<4;i++){ j=(i+1)%4; fc.push({d:(b[i].d+b[j].d)/2,pts:[b[i],b[j],t[j],t[i]],c:(i%2?cB:cA)}); }
+    fc.sort(function(a,b2){return a.d-b2.d;}); fc.forEach(function(f){ o+=poly(f.pts,f.c); }); o+=poly(t,cTop);
+    return {d:P((x0+x1)/2,(y0+y1)/2,0).d,svg:o};
+  }
+  function cyl(x,y,r,hz,cTop,cSide){
+    var b=P(x,y,0), t=P(x,y,hz), rx=r*S, ry=r*S*K;
+    return {d:b.d,svg:'<path d="M'+f1(t.x-rx)+' '+f1(t.y)+' L'+f1(b.x-rx)+' '+f1(b.y)+' A'+f1(rx)+' '+f1(ry)+' 0 0 0 '+f1(b.x+rx)+' '+f1(b.y)+' L'+f1(t.x+rx)+' '+f1(t.y)+' Z" fill="'+cSide+'" stroke="rgba(41,35,30,.28)" stroke-width="1"/><ellipse cx="'+f1(t.x)+'" cy="'+f1(t.y)+'" rx="'+f1(rx)+'" ry="'+f1(ry)+'" fill="'+cTop+'" stroke="rgba(41,35,30,.28)" stroke-width="1"/>'};
+  }
+  var o='', cor=[[0,0],[600,0],[600,360],[0,360]], fl=cor.map(function(q){return P(q[0],q[1],0);}), g, k;
+  o+=poly(fl,'#FDF9F7');
+  for(g=50;g<600;g+=50){ var a1=P(g,0,0),a2=P(g,360,0); o+='<line x1="'+f1(a1.x)+'" y1="'+f1(a1.y)+'" x2="'+f1(a2.x)+'" y2="'+f1(a2.y)+'" stroke="#F2DED2" stroke-width=".8"/>'; }
+  for(g=50;g<360;g+=50){ var b1=P(0,g,0),b2=P(600,g,0); o+='<line x1="'+f1(b1.x)+'" y1="'+f1(b1.y)+'" x2="'+f1(b2.x)+'" y2="'+f1(b2.y)+'" stroke="#F2DED2" stroke-width=".8"/>'; }
+  var walls=[], wf='';
+  for(k=0;k<4;k++){ var q1=cor[k],q2=cor[(k+1)%4], w0=P(q1[0],q1[1],0), w1=P(q2[0],q2[1],0), w2=P(q2[0],q2[1],24), w3=P(q1[0],q1[1],24); walls.push({d:(w0.d+w1.d)/2,pts:[w0,w1,w2,w3]}); }
+  walls.forEach(function(w){ if(w.d<0) o+=poly(w.pts,'#EADFD5'); });
+  L.forEach(function(p){
+    var w=p.w||44, h=p.h||44, x0=p.x-w/2, x1=p.x+w/2, y0=p.y-h/2, y1=p.y+h/2, lab=p.label||(SL_T[p.t]&&SL_T[p.t].label)||'', top;
+    if(p.t==='mesa'){
+      var r=w/2, an, ci;
+      for(ci=0;ci<4;ci++){ an=(45+90*ci)*Math.PI/180; objs.push(cyl(p.x+Math.cos(an)*(r+9),p.y+Math.sin(an)*(r+9),6,13,'#C79A78','#A67B5B')); }
+      objs.push(cyl(p.x,p.y,r,26,'#F5E8E0','#D9BFAE')); top=P(p.x,p.y,26); labs.push({x:top.x,y:top.y+Math.max(4,Math.round(w*0.12)),t:String(p.n),f:Math.max(11,Math.min(24,Math.round(w*0.34)))});
+    } else if(p.t==='balcao'){ objs.push(box(x0,y0,x1,y1,36,'#FFFFFF','#CFC4B9','#B9ADA1')); top=P(p.x,p.y,36); labs.push({x:top.x,y:top.y+4,t:lab,f:11}); }
+    else if(p.t==='cozinha'){ objs.push(box(x0,y0,x1,y1,70,'#E6DED5','#C9BEB2','#B3A89C')); top=P(p.x,p.y,70); labs.push({x:top.x,y:top.y+4,t:lab,f:12}); }
+    else if(p.t==='banheiro'){ objs.push(box(x0,y0,x1,y1,48,'#EFE7E0','#D2C8BD','#BDB2A7')); top=P(p.x,p.y,48); labs.push({x:top.x,y:top.y+4,t:lab,f:11}); }
+    else { var ent=p.t==='entrada'; objs.push(box(x0,y0,x1,y1,4,ent?'#2FB45E':'#E03B3B',ent?'#1F8A45':'#B52C2C',ent?'#1F8A45':'#B52C2C')); top=P(p.x,p.y,4); labs.push({x:top.x,y:top.y+(h>w?14:12),t:lab,f:10}); }
+  });
+  objs.sort(function(a,b){return a.d-b.d;}); objs.forEach(function(ob){ o+=ob.svg; });
+  walls.forEach(function(w){ if(w.d>=0) o+=poly(w.pts,'#EADFD5',0.3); });
+  labs.forEach(function(l){ o+='<text x="'+f1(l.x)+'" y="'+f1(l.y)+'" text-anchor="middle" font-size="'+l.f+'" font-weight="800" fill="#29231E" style="paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round">'+esc(l.t)+'</text>'; });
+  return o;
+}
+function slDesenha3(){ el('sl-svg3').innerHTML=slRender3D(SL.L,SL.ang); }
+function slVista(){
+  SL.v3=!SL.v3; SL.sel=0; var o=el('sl-ed'); if(o) o.remove();
+  el('sl-svg').style.display=SL.v3?'none':'block'; el('sl-svg3').style.display=SL.v3?'block':'none';
+  el('sl-tools').style.display=SL.v3?'none':'flex'; el('sl-prop').style.display=SL.v3?'none':'block'; el('sl-bar3').style.display=SL.v3?'flex':'none';
+  el('sl-b3').textContent=SL.v3?'Voltar ao 2D (editar)':'Ver em 3D';
+  if(SL.v3) slDesenha3(); else slDesenha();
+}
+function slGira3(d){ SL.ang=((SL.ang+d)%360+360)%360; slDesenha3(); }
 function slPt(e){ var s=el('sl-svg'), m=s.getScreenCTM().inverse(), q=s.createSVGPoint(); q.x=e.clientX; q.y=e.clientY; return q.matrixTransform(m); }
 function slDesenha(manterProp){
   el('sl-svg').innerHTML=slPlanta();
@@ -7801,19 +7901,19 @@ function slDesenha(manterProp){
   var h='<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b style="font-size:13px">'+SL_T[p.t].nome+'</b>';
   if(p.t==='mesa') h+='<input class="inp" id="sl-n" type="number" min="1" max="999" value="'+p.n+'" style="width:110px" oninput="slEdita()" aria-label="Número da mesa">';
   else h+='<input class="inp" id="sl-l" type="text" maxlength="14" value="'+esc(p.label||SL_T[p.t].label)+'" style="width:170px" oninput="slEdita()" aria-label="Nome na planta">';
-  h+=(p.t==='mesa'?'':'<button class="btn sec" type="button" style="padding:7px 11px;font-size:12.5px" onclick="slGira()">Girar</button>')+'<button class="btn sec" type="button" style="padding:7px 11px;font-size:12.5px" onclick="slRemove()">Remover</button></div>';
+  h+='<button class="btn sec" type="button" style="padding:7px 11px;font-size:12.5px" onclick="slTam(-1)">− Menor</button><button class="btn sec" type="button" style="padding:7px 11px;font-size:12.5px" onclick="slTam(1)">+ Maior</button>'+(p.t==='mesa'?'':'<button class="btn sec" type="button" style="padding:7px 11px;font-size:12.5px" onclick="slGira()">Girar</button>')+'<button class="btn sec" type="button" style="padding:7px 11px;font-size:12.5px" onclick="slRemove()">Remover</button></div>';
   pr.innerHTML=h;
 }
-function slEdita(){ var p=slPeca(SL.sel); if(!p) return; if(p.t==='mesa'){ var v=parseInt(el('sl-n').value,10); if(v>0) p.n=v; } else p.label=el('sl-l').value; el('sl-svg').innerHTML=slPlanta(); }
-function slGira(){ var p=slPeca(SL.sel); if(!p) return; var t=p.w; p.w=p.h; p.h=t; slDesenha(); }
-function slRemove(){ SL.L=SL.L.filter(function(p){return p.id!==SL.sel;}); SL.sel=0; slDesenha(); }
+function slEdita(){ var p=slPeca(SL.sel); if(!p) return; SL.sujo=true; if(p.t==='mesa'){ var v=parseInt(el('sl-n').value,10); if(v>0) p.n=v; } else p.label=el('sl-l').value; el('sl-svg').innerHTML=slPlanta(); }
+function slGira(){ var p=slPeca(SL.sel); if(!p) return; SL.sujo=true; var t=p.w; p.w=p.h; p.h=t; slDesenha(); }
+function slRemove(){ SL.sujo=true; SL.L=SL.L.filter(function(p){return p.id!==SL.sel;}); SL.sel=0; slDesenha(); }
 function slAdd(t){
   var m=el('sl-m'); m.textContent='';
   if(t==='balcao'&&SL.L.some(function(p){return p.t==='balcao';})){ m.style.color='#B08A00'; m.textContent='Já existe um balcão: arraste o que está no mapa.'; return; }
   var n=0; if(t==='mesa'){ var us={}; SL.L.forEach(function(p){ if(p.t==='mesa') us[p.n]=1; }); n=1; while(us[n]) n++; }
-  var d=SL_T[t], p={id:SL.uid++,t:t,x:300,y:180,n:n,label:t==='banheiro'?'WC':'',w:d.w||44,h:d.h||44}; SL.L.push(p); SL.sel=p.id; slDesenha();
+  var d=SL_T[t], p={id:SL.uid++,t:t,x:300,y:180,n:n,label:t==='banheiro'?'WC':'',w:d.w||44,h:d.h||44}; SL.L.push(p); SL.sel=p.id; SL.sujo=true; slDesenha();
 }
-function slExemplo(){ if(SL.L.length&&!window.confirm('Isso troca o desenho atual pelo modelo de exemplo. Continuar?')) return; SL.L=slModelo(); SL.uid=SL.L.length+1; SL.sel=0; slDesenha(); }
+function slExemplo(){ if(SL.L.length&&!window.confirm('Isso troca o desenho atual pelo modelo de exemplo. Continuar?')) return; SL.L=slModelo(); SL.uid=SL.L.length+1; SL.sel=0; SL.sujo=true; slDesenha(); }
 function slSalvar(){
   var m=el('sl-m'), us={}, dup=0; SL.L.forEach(function(p){ if(p.t==='mesa'){ if(us[p.n]) dup=p.n; us[p.n]=1; } });
   m.style.color='#DC2626';
@@ -7821,7 +7921,7 @@ function slSalvar(){
   m.style.color='var(--muted)'; m.textContent='Salvando…';
   fetch(DELTADIS_API+'/painel/salao',{method:'POST',headers:cdHdr(),body:JSON.stringify({pecas:SL.L})}).then(function(r){return r.json();}).then(function(d){
     if(!d||!d.ok) throw new Error((d&&d.mensagem)||'não salvou');
-    SL.L=d.pecas||[]; SL.sel=0; slDesenha(); var nm=SL.L.filter(function(p){return p.t==='mesa';}).length, sb=SL.L.some(function(p){return p.t==='balcao';});
+    SL.L=d.pecas||[]; SL.sel=0; SL.sujo=false; slDesenha(); var nm=SL.L.filter(function(p){return p.t==='mesa';}).length, sb=SL.L.some(function(p){return p.t==='balcao';});
     m.style.color='#16A34A'; m.textContent='Salão salvo ✓ ('+nm+(nm===1?' mesa':' mesas')+')'+(sb?'':' · falta colocar o balcão de saída'); aviso('Salão salvo');
   }).catch(function(e){ m.style.color='#DC2626'; m.textContent=e.message||'Não salvou'; });
 }
