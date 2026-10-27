@@ -2,9 +2,9 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
 <meta name="theme-color" content="#F97316">
-<title>Atendimento · GIRO-OS-ATEND-14</title>
+<title>Atendimento · GIRO-OS-ATEND-16</title>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#FBF7F5;--s1:#fff;--s3:#FBF3EE;--s4:#F5E8E0;--b2:#F2DED2;--tx:#29231E;--mu:#9E9084;--mu2:#6C6055;--pri:#D96D28;--grad:linear-gradient(120deg,#F97316,#FDB022);--ok:#16A34A;--er:#DC2626;--am:#B45309;--f:'Manrope',-apple-system,sans-serif}
@@ -60,6 +60,12 @@ h2{margin:6px 0 10px;font-size:19px;font-weight:800}
 .opt .d{width:22px;height:22px;border-radius:50%;border:2px solid #CFC4BB;flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px}
 .opt.sq .d{border-radius:7px}.opt.on .d{background:var(--pri);border-color:var(--pri)}
 .opt .n{flex:1;min-width:0}.opt .n b{font-size:15px;display:block}.opt .n small{color:var(--mu);font-size:12px}.opt .p{font-weight:800;color:var(--pri);font-size:13.5px}
+.sec.lock{opacity:.4}#sec-fim.lock{opacity:.4;pointer-events:none}
+.tl{display:flex;padding:2px 0 10px}.tl .st{flex:1;text-align:center;font-size:11px;font-weight:700;color:var(--mu2);cursor:pointer;position:relative}
+.tl .st:not(:last-child)::after{content:'';position:absolute;top:14px;left:calc(50% + 18px);width:calc(100% - 36px);height:2px;background:#E5DCD4}
+.tl .st .c{width:28px;height:28px;border-radius:50%;margin:0 auto 3px;border:2px solid #CFC4BB;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:var(--mu2);background:#fff;position:relative;z-index:1}
+.tl .st.done .c{background:var(--pri);border-color:var(--pri);color:#fff}.tl .st.cur .c,.tl .st.num .c{border-color:var(--pri);color:var(--pri)}.tl .st.num .c{background:#FFF1E6}.tl .st.lk{opacity:.4}
+#tlPop{background:#fff;border:1px solid var(--b2);border-radius:14px;box-shadow:0 4px 14px rgba(0,0,0,.12);padding:8px 12px;margin-bottom:8px;max-height:30vh;overflow:auto}#tlPop .pp{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--s4);font-size:14px}#tlPop .pp button{border:0;background:var(--s3);border-radius:50%;width:26px;height:26px}
 .sec{font-size:12px;font-weight:800;letter-spacing:.8px;color:var(--mu2);margin:14px 0 2px;text-transform:uppercase;display:flex;justify-content:space-between}
 .qt{display:flex;align-items:center;gap:14px;justify-content:center;margin:12px 0 4px}.qt button{width:42px;height:42px;border-radius:50%;border:1.5px solid var(--b2);background:#fff;font-size:22px;font-weight:800}.qt b{font-size:20px;min-width:26px;text-align:center}
 /* barra de baixo */
@@ -96,8 +102,12 @@ label.l.big{font-size:14px;margin-top:16px}
  #p-ident .inp.big{padding:13px 14px;font-size:19px}
  #p-ident label.l.big{margin-top:10px}
  #p-ident #sugs{min-height:58px}
- #p-ident .bt.big{position:fixed;left:14px;right:14px;bottom:calc(72px + env(safe-area-inset-bottom));z-index:25;padding:16px;margin:0;box-shadow:0 4px 14px rgba(0,0,0,.18)}
- #p-ident .card{padding-bottom:70px}
+ #p-ident .bt.big{position:fixed;left:14px;right:14px;width:auto;box-sizing:border-box;bottom:calc(72px + env(safe-area-inset-bottom));z-index:25;padding:16px;margin:0;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+ body:has(#v-ped:not(.hide) #p-ident:not(.hide)){overflow:hidden;height:100dvh;padding-bottom:0}
+ body.kb:has(#v-ped:not(.hide) #p-ident:not(.hide)) #nav,body.kb #p-ident .sw,body.kb #p-ident h2{display:none}
+ body.kb #p-ident .bt.big{bottom:10px}
+ body.kb #v-ped{padding-top:4px}
+ #p-ident .card{padding-bottom:14px}
 }
 @media(min-width:900px){
  #p-ident .card{max-width:1100px;display:grid;grid-template-columns:1fr 1.15fr;gap:32px;padding:26px}
@@ -233,6 +243,7 @@ function aba(a){
   if(a==='soc') carregaSocios();
 }
 /* ── comanda atual ── */
+(function(){ ['iMesa','iJoia'].forEach(function(id){ var e=document.getElementById(id); if(!e) return; e.addEventListener('focus',function(){ document.body.classList.add('kb'); }); e.addEventListener('blur',function(){ setTimeout(function(){ var a=document.activeElement; if(!a||(a.id!=='iMesa'&&a.id!=='iJoia')) document.body.classList.remove('kb'); },200); }); }); })();
 function modo(m){ COM.modo=m; $('sgM').classList.toggle('on',m==='mesa'); $('sgB').classList.toggle('on',m==='balcao'); $('lbMesa').textContent=m==='mesa'?'Número da mesa':'Número da comanda do balcão (opcional)'; }
 var SUGS=[], _dj=0, CLIS=null;
 function digJoia(){
@@ -310,7 +321,7 @@ var IT=null;
 function promoAtiva(p){ var d=p.desconto; if(!d||!(d.valor>0)) return null; var n=new Date(Date.now()-3*3600000).toISOString().slice(0,16); if(d.de&&n<d.de) return null; if(d.ate&&n>d.ate) return null; return d; }
 function itemSheet(id){
   var p=(D.prods||[]).filter(function(x){ return x.id===id; })[0]; if(!p) return;
-  IT={p:p,tam:(p.tamanhos&&p.tamanhos.length===1)?p.tamanhos[0].nome:'',sab:[],borda:'',adds:{},obs:'',qty:1,busca:''}; itemPinta();
+  IT={p:p,tam:(p.tamanhos&&p.tamanhos.length===1)?p.tamanhos[0].nome:'',sab:[],borda:'',adds:{},obs:'',qty:1,busca:'',borOk:0,opcOk:0,sabAck:0,pop:0}; itemPinta();
 }
 function tamAtual(){ var t=null; (IT.p.tamanhos||[]).forEach(function(x){ if(x.nome===IT.tam) t=x; }); return t; }
 function itemPreco(){
@@ -321,25 +332,54 @@ function itemPreco(){
   v+=ex; (p.adicionais||[]).forEach(function(a){ if(/borda/i.test(a.nome)){ if(IT.borda===a.nome) v+=a.preco; } else if(IT.adds[a.nome]) v+=a.preco; });
   return Math.round(v*100)/100;
 }
+function itemBordas(){ return (IT.p.adicionais||[]).filter(function(a){ return /borda/i.test(a.nome); }); }
+function itemOutros(){ return (IT.p.adicionais||[]).filter(function(a){ return !/borda/i.test(a.nome); }); }
+function itemMax(){ var t=tamAtual(); return t?t.max:1; }
+function stepsIt(){ var p=IT.p, r=[]; if((p.tamanhos||[]).length) r.push('tam'); if((p.sabores||[]).length) r.push('sab'); if(itemBordas().length) r.push('bor'); if(itemOutros().length) r.push('opc'); return r; }
+function reqTam(){ return !(IT.p.tamanhos||[]).length||!!IT.tam; }
+function reqSab(){ return !(IT.p.sabores||[]).length||(IT.sab.length>0&&(IT.sab.length>=itemMax()||!!IT.sabAck)); }
+function liberado(k){ if(k==='tam') return true; if(k==='sab') return reqTam(); return reqTam()&&reqSab(); }
+function feito(k){ return k==='tam'?!!IT.tam:k==='sab'?reqSab():k==='bor'?!!IT.borOk:!!IT.opcOk; }
+function proxSec(k){ var o=stepsIt(), i=o.indexOf(k); return (i>=0&&o[i+1])?o[i+1]:'fim'; }
+function goSec(k){ var e=$('sec-'+k), b=$('shB'); if(!e||!b) return; b.scrollTo({top:b.scrollTop+e.getBoundingClientRect().top-b.getBoundingClientRect().top-6,behavior:'smooth'}); }
+function secHd(k,titulo,dir){ var lk=!liberado(k); return '<div class="sec'+(lk?' lock':'')+'" id="sec-'+k+'"'+(lk?' onclick="toast(\''+(k==='sab'?'Escolha o tamanho primeiro.':'Termine as etapas de cima primeiro.')+'\')"':'')+'><span>'+titulo+'</span><span>'+(dir||'')+'</span></div>'; }
 function itemPinta(){
-  var p=IT.p, h='', t=tamAtual(), max=t?t.max:1, bordas=(p.adicionais||[]).filter(function(a){ return /borda/i.test(a.nome); }), outros=(p.adicionais||[]).filter(function(a){ return !/borda/i.test(a.nome); });
+  var p=IT.p, h='', t=tamAtual(), max=t?t.max:1, bordas=itemBordas(), outros=itemOutros();
   if(p.desc) h+='<p style="color:var(--mu2);font-size:13.5px;margin:6px 0">'+esc(p.desc)+'</p>';
-  if((p.tamanhos||[]).length){ h+='<div class="sec">Tamanho</div>'; p.tamanhos.forEach(function(x,i){ h+='<div class="opt'+(IT.tam===x.nome?' on':'')+'" onclick="setTam('+i+')"><span class="d">'+(IT.tam===x.nome?'✓':'')+'</span><span class="n"><b>'+esc(x.nome)+'</b><small>até '+x.max+' sabor'+(x.max>1?'es':'')+'</small></span><span class="p">'+brl(x.preco)+'</span></div>'; }); }
+  if((p.tamanhos||[]).length){ h+=secHd('tam','Tamanho',''); p.tamanhos.forEach(function(x,i){ h+='<div class="opt'+(IT.tam===x.nome?' on':'')+'" onclick="setTam('+i+')"><span class="d">'+(IT.tam===x.nome?'✓':'')+'</span><span class="n"><b>'+esc(x.nome)+'</b><small>até '+x.max+' sabor'+(x.max>1?'es':'')+'</small></span><span class="p">'+brl(x.preco)+'</span></div>'; }); }
   if((p.sabores||[]).length){
-    h+='<div class="sec"><span>Sabores</span><span>'+IT.sab.length+' / '+(t?max:1)+'</span></div>';
-    h+='<input class="inp" placeholder="Buscar sabor…" value="'+esc(IT.busca)+'" oninput="IT.busca=this.value;pintaSab()" style="margin:6px 0"><div id="lSab"></div>';
+    h+=secHd('sab','Sabores',liberado('sab')?IT.sab.length+' / '+(t?max:1):'');
+    if(liberado('sab')){
+      h+='<input class="inp" placeholder="Buscar sabor…" value="'+esc(IT.busca)+'" oninput="IT.busca=this.value;pintaSab()" style="margin:6px 0"><div id="lSab"></div>';
+      if(IT.sab.length>0&&IT.sab.length<max&&!IT.sabAck) h+='<button class="bt s" style="margin:10px 0 0" onclick="sabContinua()">Continuar com '+IT.sab.length+' sabor'+(IT.sab.length>1?'es':'')+'</button>';
+    }
   }
-  if(bordas.length){ h+='<div class="sec">Borda</div><div class="opt'+(IT.borda===''?' on':'')+'" onclick="setBorda(\'\')"><span class="d">'+(IT.borda===''?'✓':'')+'</span><span class="n"><b>Sem borda recheada</b></span></div>'; bordas.forEach(function(a,i){ h+='<div class="opt'+(IT.borda===a.nome?' on':'')+'" onclick="setBorda('+i+',1)"><span class="d">'+(IT.borda===a.nome?'✓':'')+'</span><span class="n"><b>'+esc(a.nome)+'</b></span><span class="p">+ '+brl(a.preco)+'</span></div>'; }); }
-  if(outros.length){ h+='<div class="sec">Adicionais</div>'; outros.forEach(function(a,i){ var on=IT.adds[a.nome]; h+='<div class="opt sq'+(on?' on':'')+'" onclick="setAdd('+i+')"><span class="d">'+(on?'✓':'')+'</span><span class="n"><b>'+esc(a.nome)+'</b></span><span class="p">+ '+brl(a.preco)+'</span></div>'; }); }
-  h+='<label class="l">Observação</label><input class="inp" value="'+esc(IT.obs)+'" maxlength="200" placeholder="Ex.: sem cebola" oninput="IT.obs=this.value">';
-  h+='<div class="qt"><button onclick="setQtd(-1)">−</button><b id="qtv">'+IT.qty+'</b><button onclick="setQtd(1)">+</button></div><div class="er" id="itErr"></div>';
-  folha(p.nome,h,'<button class="bt" style="margin:0" onclick="itemAdd()">Adicionar · <span id="itPr"></span></button>'); if((p.sabores||[]).length) pintaSab(); itemTot();
+  if(bordas.length){ h+=secHd('bor','Borda',''); if(liberado('bor')){ h+='<div class="opt'+(IT.borOk&&IT.borda===''?' on':'')+'" onclick="setBorda(\'\')"><span class="d">'+(IT.borOk&&IT.borda===''?'✓':'')+'</span><span class="n"><b>Sem borda recheada</b></span></div>'; bordas.forEach(function(a,i){ h+='<div class="opt'+(IT.borda===a.nome?' on':'')+'" onclick="setBorda('+i+',1)"><span class="d">'+(IT.borda===a.nome?'✓':'')+'</span><span class="n"><b>'+esc(a.nome)+'</b></span><span class="p">+ '+brl(a.preco)+'</span></div>'; }); } }
+  if(outros.length){ h+=secHd('opc','Adicionais',''); if(liberado('opc')){ outros.forEach(function(a,i){ var on=IT.adds[a.nome]; h+='<div class="opt sq'+(on?' on':'')+'" onclick="setAdd('+i+')"><span class="d">'+(on?'✓':'')+'</span><span class="n"><b>'+esc(a.nome)+'</b></span><span class="p">+ '+brl(a.preco)+'</span></div>'; }); } }
+  h+='<div id="sec-fim"'+(liberado('fim')?'':' class="lock"')+'><label class="l">Observação</label><input class="inp" value="'+esc(IT.obs)+'" maxlength="200" placeholder="Ex.: sem cebola" oninput="IT.obs=this.value">';
+  h+='<div class="qt"><button onclick="setQtd(-1)">−</button><b id="qtv">'+IT.qty+'</b><button onclick="setQtd(1)">+</button></div></div><div class="er" id="itErr"></div>';
+  var rod='', ss=stepsIt(), nm={tam:'Tamanho',sab:'Sabores',bor:'Borda',opc:'Adicionais'};
+  if(ss.length>1||(ss.length===1&&ss[0]==='sab')){
+    var cur=''; ss.forEach(function(k){ if(!cur&&liberado(k)&&!feito(k)&&(k==='tam'||k==='sab')) cur=k; });
+    rod+='<div class="tl">'+ss.map(function(k,i){ var lk=!liberado(k), dn=feito(k), n=(k==='sab'?IT.sab.length:0), c=(k==='sab'&&n>0)?String(n):(dn?'✓':String(i+1));
+      return '<div class="st'+(dn?' done':'')+(lk?' lk':'')+(cur===k?' cur':'')+(k==='sab'&&n>0&&!dn?' num':'')+'" onclick="tlClick(\''+k+'\')"><div class="c">'+c+'</div>'+nm[k]+'</div>'; }).join('')+'</div>';
+    if(IT.pop&&IT.sab.length) rod='<div id="tlPop"><b style="font-size:12px;color:var(--mu2)">SABORES ESCOLHIDOS</b>'+IT.sab.map(function(x,i){ return '<div class="pp"><span>'+(IT.sab.length>1?(i+1)+'. ':'')+esc(x)+'</span><button onclick="sabTira('+i+')" title="Tirar">✕</button></div>'; }).join('')+'</div>'+rod;
+  }
+  rod+='<button class="bt" style="margin:0" onclick="itemAdd()">Adicionar · <span id="itPr"></span></button>';
+  folha(p.nome,h,rod); if((p.sabores||[]).length&&liberado('sab')) pintaSab(); itemTot();
 }
+function tlClick(k){
+  if(!liberado(k)){ toast(k==='sab'?'Escolha o tamanho primeiro.':'Termine as etapas anteriores primeiro.'); return; }
+  if(k==='sab'&&IT.sab.length>0){ IT.pop=!IT.pop; keep(); if(!IT.pop) goSec('sab'); return; }
+  IT.pop=0; keep(k);
+}
+function sabTira(i){ IT.sab.splice(i,1); if(!IT.sab.length){ IT.pop=0; IT.sabAck=0; } keep(); }
+function sabContinua(){ IT.sabAck=1; keep(proxSec('sab')); }
 function itemTot(){ var e=$('itPr'); if(e) e.textContent=brl(itemPreco()*IT.qty); }
-function setTam(i){ IT.tam=IT.p.tamanhos[i].nome; var t=tamAtual(); if(t&&IT.sab.length>t.max) IT.sab=IT.sab.slice(0,t.max); keep(); }
-function keep(){ var b=$('shB'), st=b.scrollTop; itemPinta(); $('shB').scrollTop=st; }
-function setBorda(i,real){ var bs=(IT.p.adicionais||[]).filter(function(a){ return /borda/i.test(a.nome); }); IT.borda=real?bs[i].nome:''; keep(); }
-function setAdd(i){ var os=(IT.p.adicionais||[]).filter(function(a){ return !/borda/i.test(a.nome); }); var n=os[i].nome; if(IT.adds[n]) delete IT.adds[n]; else IT.adds[n]=1; keep(); }
+function setTam(i){ IT.tam=IT.p.tamanhos[i].nome; var t=tamAtual(); if(t&&IT.sab.length>t.max) IT.sab=IT.sab.slice(0,t.max); IT.pop=0; keep(reqSab()?null:(stepsIt().indexOf('sab')>=0?'sab':proxSec('tam'))); }
+function keep(go){ var b=$('shB'), st=b.scrollTop; itemPinta(); $('shB').scrollTop=st; if(go) setTimeout(function(){ goSec(go); },40); }
+function setBorda(i,real){ var bs=itemBordas(); IT.borda=real?bs[i].nome:''; IT.borOk=1; keep(proxSec('bor')); }
+function setAdd(i){ var os=itemOutros(); var n=os[i].nome; if(IT.adds[n]) delete IT.adds[n]; else IT.adds[n]=1; IT.opcOk=Object.keys(IT.adds).length?1:0; keep(); }
 function setQtd(d){ IT.qty=Math.max(1,Math.min(50,IT.qty+d)); $('qtv').textContent=IT.qty; itemTot(); }
 function pintaSab(){
   var q=(IT.busca||'').toLowerCase().trim(), t=tamAtual(), max=t?t.max:1, last='', h='';
@@ -352,14 +392,15 @@ function pintaSab(){
 }
 function setSab(i){
   var s=IT.p.sabores[i], t=tamAtual(), max=t?t.max:1, k=IT.sab.indexOf(s.nome);
-  if((IT.p.tamanhos||[]).length&&!t){ $('itErr').textContent='Escolha o tamanho primeiro.'; return; }
-  if(k>=0) IT.sab.splice(k,1); else { if(IT.sab.length>=max){ if(max===1) IT.sab=[s.nome]; else { $('itErr').textContent='Esse tamanho aceita até '+max+' sabores.'; return; } } else IT.sab.push(s.nome); }
-  $('itErr').textContent=''; var st=$('shB').scrollTop; itemPinta(); $('shB').scrollTop=st;
+  if((IT.p.tamanhos||[]).length&&!t){ toast('Escolha o tamanho primeiro.'); return; }
+  if(k>=0){ IT.sab.splice(k,1); if(!IT.sab.length){ IT.sabAck=0; IT.pop=0; } }
+  else { if(IT.sab.length>=max){ if(max===1) IT.sab=[s.nome]; else { toast('Esse tamanho aceita até '+max+' sabores.'); return; } } else IT.sab.push(s.nome); }
+  var cheio=IT.sab.length>=max&&k<0; keep(cheio?proxSec('sab'):null);
 }
 function itemAdd(){
   var p=IT.p, er=$('itErr'); er.textContent='';
-  if((p.tamanhos||[]).length&&!IT.tam){ er.textContent='Escolha o tamanho.'; return; }
-  if((p.sabores||[]).length&&!IT.sab.length){ er.textContent='Escolha pelo menos um sabor.'; return; }
+  if((p.tamanhos||[]).length&&!IT.tam){ er.textContent='Escolha o tamanho.'; goSec('tam'); return; }
+  if((p.sabores||[]).length&&!IT.sab.length){ er.textContent='Escolha pelo menos um sabor.'; goSec('sab'); return; }
   CART.push({p:p.id,nome:p.nome,tam:IT.tam,sab:IT.sab.slice(),borda:IT.borda,adds:Object.keys(IT.adds),obs:IT.obs.trim(),qty:IT.qty,unit:itemPreco()});
   fecha(); toast('Adicionado ao pedido'); limpaBusca(); verCats();
 }
