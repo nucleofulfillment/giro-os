@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#F97316">
-<title>Atendimento · GIRO-OS-ATEND-06</title>
+<title>Atendimento · GIRO-OS-ATEND-09</title>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#FBF7F5;--s1:#fff;--s3:#FBF3EE;--s4:#F5E8E0;--b2:#F2DED2;--tx:#29231E;--mu:#9E9084;--mu2:#6C6055;--pri:#D96D28;--grad:linear-gradient(120deg,#F97316,#FDB022);--ok:#16A34A;--er:#DC2626;--am:#B45309;--f:'Manrope',-apple-system,sans-serif}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--tx);font-family:var(--f);-webkit-font-smoothing:antialiased}
 button,input,select,textarea{font-family:var(--f);font-size:16px}
-body{padding-bottom:calc(74px + env(safe-area-inset-bottom))}
+body{padding-bottom:calc(150px + env(safe-area-inset-bottom))}
 .hide{display:none!important}
 /* login */
 #login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:var(--grad)}
@@ -75,7 +75,7 @@ h2{margin:6px 0 10px;font-size:19px;font-weight:800}
 .cm .ac{display:flex;gap:8px;margin-top:10px}.cm .ac .bt{margin:0;padding:11px;font-size:14px}
 .tag{display:inline-block;font-size:11px;font-weight:800;border-radius:8px;padding:2px 7px;margin-left:6px}.tag.r{background:#FDECEC;color:#B91C1C}.tag.a{background:#FFF4DB;color:#92580A}.tag.g{background:#E8F7EE;color:#14753A}
 .pill{display:inline-block;background:#16A34A;color:#fff;border-radius:8px;padding:2px 10px;font-weight:800;font-size:.92em;line-height:1.35;vertical-align:middle}
-#bProd{margin-bottom:12px}#lBusca{max-width:820px}
+#bProd{margin-bottom:12px}
 .dia{font-size:12px;font-weight:800;letter-spacing:.6px;color:var(--mu2);text-transform:uppercase;margin:16px 0 6px}
 .tag.o{background:#FFE8D1;color:#B4540A}.tag.y{background:#FFF4DB;color:#92580A}
 .ln{font-size:13px;color:var(--mu2);line-height:1.5;margin-top:4px}.ln b{color:var(--tx)}
@@ -140,7 +140,7 @@ label.l.big{font-size:14px;margin-top:16px}
   </div>
 
   <!-- COMANDAS -->
-  <div id="v-com" class="main hide"><h2>Comandas abertas</h2><input class="inp" id="bPed" placeholder="Bipar ou digitar o nº do pedido…" inputmode="numeric" oninput="achaPed()" autocomplete="off" style="margin-bottom:12px"><div id="lCom"></div></div>
+  <div id="v-com" class="main hide"><h2>Comandas abertas</h2><input class="inp" id="bPed" placeholder="🔎 Buscar por nome ou número do cliente…" oninput="achaPed()" autocomplete="off" style="margin-bottom:12px"><div id="lCom"></div></div>
 
   <!-- CLIENTES -->
   <div id="v-soc" class="main hide">
@@ -196,7 +196,7 @@ function inicio(){
   api('/painel/atend-dados').then(function(d){
     if(d._h===401||d._h===403){ mostraLogin('Entre de novo.'); return; }
     if(!d.ok){ mostraLogin(d.mensagem||'Não consegui abrir agora.'); return; }
-    D=d; CLI=d.cli; GEST=!!d.gestor; tema(d.cor);
+    D=d; CLI=d.cli; GEST=!!d.gestor; CLIS=(d.clientes&&d.clientes.length<5000)?d.clientes:null; tema(d.cor);
     $('login').classList.add('hide'); $('app').classList.remove('hide');
     $('emp').innerHTML=(d.logo?'<img src="'+API+'/food/foto/'+encodeURIComponent(d.cli)+'/_logo" alt="" style="height:24px;border-radius:5px;vertical-align:middle;margin-right:8px">':'')+esc(d.empresa||'Atendimento'); $('usu').textContent=d.usuario||'';
     [].forEach.call(document.querySelectorAll('.gest'),function(b){ b.classList.toggle('hide',!GEST); });
@@ -212,11 +212,13 @@ function aba(a){
 }
 /* ── comanda atual ── */
 function modo(m){ COM.modo=m; $('sgM').classList.toggle('on',m==='mesa'); $('sgB').classList.toggle('on',m==='balcao'); $('lbMesa').textContent=m==='mesa'?'Número da mesa':'Número da comanda do balcão (opcional)'; }
-var SUGS=[], _dj=0;
+var SUGS=[], _dj=0, CLIS=null;
 function digJoia(){
   clearTimeout(_dj); COM.nome=''; COM.bloq=false; COM.liberar=false; $('joiaInfo').innerHTML=''; var q=$('iJoia').value.trim(); if(!q){ $('sugs').innerHTML=''; return; }
-  _dj=setTimeout(function(){ api('/painel/atend-clientes?q='+encodeURIComponent(q)).then(function(d){ if($('iJoia').value.trim()!==q) return; SUGS=d.clientes||[]; var h=''; SUGS.forEach(function(c,i){ h+='<button class="sug" onclick="pickCli('+i+')">'+pill(c.joia)+'<b>'+esc(c.nome)+'</b>'+(c.bloqueado?'<span class="tag r">BLOQUEADO</span>':'')+'</button>'; }); $('sugs').innerHTML=h||(d.ok?'<div class="aviso er">Nenhum cliente encontrado.</div>':''); }); },220);
+  if(CLIS){ var ql=q.toLowerCase(), num=/^\d+$/.test(q), r=[]; for(var i=0;i<CLIS.length&&r.length<8;i++){ var c=CLIS[i]; if(num?String(c[0]).indexOf(q)===0:c[1].toLowerCase().indexOf(ql)>=0) r.push({joia:c[0],nome:c[1]}); } return mostraSugs(r,true); }
+  _dj=setTimeout(function(){ api('/painel/atend-clientes?q='+encodeURIComponent(q)).then(function(d){ if($('iJoia').value.trim()!==q) return; mostraSugs(d.clientes||[],d.ok); }); },120);
 }
+function mostraSugs(l,ok){ SUGS=l; var h=''; l.forEach(function(c,i){ h+='<button class="sug" onclick="pickCli('+i+')">'+pill(c.joia)+'<b>'+esc(c.nome)+'</b>'+(c.bloqueado?'<span class="tag r">BLOQUEADO</span>':'')+'</button>'; }); $('sugs').innerHTML=h||(ok?'<div class="aviso er">Nenhum cliente encontrado.</div>':''); }
 function pickCli(i){ var c=SUGS[i]; if(!c) return; $('iJoia').value=c.joia; $('sugs').innerHTML=''; abreComanda(); }
 function buscaJoia(){
   var j=$('iJoia').value.replace(/\W/g,''); var box=$('joiaInfo'); COM.nome=''; COM.dev=0; COM.bloq=false; COM.liberar=false;
@@ -371,12 +373,14 @@ function carregaCom(){
       h+='<div class="cm" id="cm'+i+'"><div class="h"><div><b>'+t+'</b><div style="font-size:12.5px;color:var(--mu2)">'+esc(c.nome||'')+'</div></div><span class="v">'+brl(c.total)+'</span></div><div class="pd">'+c.pedidos.map(function(p,k){ return '<b>#'+p.num+'</b> · '+new Date(p.criado).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+(p.atend?' · '+esc(p.atend):'')+' · '+esc(p.itens)+' <button onclick="reimp('+i+','+k+')" title="Imprimir" style="border:0;background:var(--s3);border-radius:8px;padding:3px 8px">🖨</button>'; }).join('<br>')+'</div>'
         +'<div class="ac"><button class="bt s" onclick="ativaComanda(COMS['+i+'])">+ Pedido</button><button class="bt g" onclick="fechaForm('+i+')">Fechar conta</button></div></div>';
     });
-    $('lCom').innerHTML=h||'<p style="color:var(--mu2)">Nenhuma comanda aberta agora.</p>';
+    $('lCom').innerHTML=h||'<p style="color:var(--mu2)">Nenhuma comanda aberta agora.</p>'; achaPed();
   });
 }
 function achaPed(){
-  var q=$('bPed').value.replace(/\D/g,''), ach=-1; COMS.forEach(function(c,i){ var e=$('cm'+i); if(!e) return; var tem=q&&c.pedidos.some(function(p){ return String(p.num)===q; }); e.style.outline=tem?'3px solid #16A34A':''; if(tem) ach=i; });
-  if(ach>=0){ var e2=$('cm'+ach); if(e2&&e2.scrollIntoView) e2.scrollIntoView({block:'center',behavior:'smooth'}); }
+  var q=($('bPed').value||'').toLowerCase().trim(), num=/^\d+$/.test(q);
+  COMS.forEach(function(c,i){ var e=$('cm'+i); if(!e) return;
+    var ok=!q||String(c.joia).indexOf(q)===0&&num||(c.nome||'').toLowerCase().indexOf(q)>=0||(num&&String(c.mesa)===q)||(num&&c.pedidos.some(function(p){ return String(p.num)===q; }));
+    e.style.display=ok?'':'none'; });
 }
 function fechaForm(i){
   var c=COMS[i], h='<div style="font-size:15px;margin:6px 0 10px"><b>'+(c.mesa?'Mesa '+esc(c.mesa):'')+(c.joia?' '+pill(c.joia):'')+'</b> · '+esc(c.nome||'')+'<br><span style="font-size:22px;font-weight:800;color:var(--pri)">'+brl(c.total)+'</span></div><div class="sec">Forma de pagamento</div>';
@@ -419,17 +423,20 @@ function socioForm(i){
    +'<label class="l" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="sA" '+(s.ativo?'checked':'')+' style="width:20px;height:20px"> Cliente ativo</label><div class="er" id="sErr"></div>';
   folha(i==null?'Novo cliente':'Editar cliente',h,'<button class="bt" style="margin:0" onclick="salvaSocio()">Salvar</button>');
 }
+function cliCache(j,n,at){ if(!CLIS||!j) return; var k=-1; CLIS.forEach(function(c,i){ if(String(c[0])===String(j)) k=i; }); if(!at){ if(k>=0) CLIS.splice(k,1); return; } if(k>=0) CLIS[k][1]=n; else { CLIS.push([j,n]); CLIS.sort(function(a,b){ return (parseInt(a[0],10)||0)-(parseInt(b[0],10)||0); }); } }
 function salvaSocio(){
-  api('/painel/atend-socio-salvar',{joia:$('sJ').value,nome:$('sN').value,fone:$('sF').value,obs:$('sO').value,ativo:$('sA').checked?1:0}).then(function(r){ if(r.ok){ fecha(); toast('Cliente salvo'); carregaSocios(); } else $('sErr').textContent=r.mensagem||'Não salvou.'; });
+  api('/painel/atend-socio-salvar',{joia:$('sJ').value,nome:$('sN').value,fone:$('sF').value,obs:$('sO').value,ativo:$('sA').checked?1:0}).then(function(r){ if(r.ok){ fecha(); toast('Cliente salvo'); cliCache($('sJ').value.replace(/\W/g,''),$('sN').value.trim(),$('sA').checked); carregaSocios(); } else $('sErr').textContent=r.mensagem||'Não salvou.'; });
 }
 /* ── detalhe do cliente: todas as comandas, dia, hora, itens e situação ── */
 function dtBR(t){ return new Date(t).toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'}); }
 function hrBR(t){ return new Date(t).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); }
 function linhaTxt(l){ var d=[], n=(l.sab||[]).length; if(l.tam) d.push(l.tam); (l.sab||[]).forEach(function(x){ d.push((n>1?'1/'+n+' ':'')+x); }); if(l.borda) d.push('Borda: '+l.borda); (l.adds||[]).forEach(function(a){ d.push('+ '+a); }); if(l.obs) d.push('Obs: '+l.obs); return d.join(' · '); }
-function clienteDet(joia){
-  folha('Conta do cliente','<p style="color:var(--mu2)">Carregando…</p>','');
-  Promise.all([api('/painel/atend-cliente?joia='+encodeURIComponent(joia)),api('/painel/atend-receber')]).then(function(r){
-    var d=r[0]; if(r[1].ok) REC=r[1];
+function clienteDet(joia,fresh){
+  var s0=SOCIOS.filter(function(x){ return String(x.joia)===String(joia); })[0];
+  folha('Conta do cliente',s0?'<div style="margin:4px 0 8px"><b style="font-size:18px">'+esc(s0.nome)+'</b> '+pill(s0.joia)+'<div style="font-size:13px;color:var(--mu2)">'+esc(s0.fone||'sem celular')+'</div></div><p style="color:var(--mu2)">Carregando o histórico…</p>':'<p style="color:var(--mu2)">Carregando…</p>','');
+  var ps=[api('/painel/atend-cliente?joia='+encodeURIComponent(joia))]; if(fresh||!REC) ps.push(api('/painel/atend-receber'));
+  Promise.all(ps).then(function(r){
+    var d=r[0]; if(r[1]&&r[1].ok) REC=r[1]; if(!REC) REC={marcados:[],cobrancas:[]};
     if(!d.ok){ $('shB').innerHTML='<p>'+esc(d.mensagem||'Erro')+'</p>'; return; }
     var c=d.cliente, ab=0, pd=0, cb=0, pg=0;
     d.pedidos.forEach(function(p){ if(p.situacao==='pago') pg+=p.total; else if(p.situacao==='aberto') ab+=p.total; else if(p.situacao==='pendurado') pd+=p.total; else cb+=p.total; });
@@ -486,17 +493,17 @@ function imprime(p){
   setTimeout(function(){ try{ f.contentWindow.focus(); f.contentWindow.print(); }catch(e){ toast('Não consegui abrir a impressão.'); } setTimeout(function(){ try{ f.remove(); }catch(e){} },60000); },350);
 }
 /* ── cobranças (dentro de Clientes) ── */
-function geraCob(joia){ api('/painel/atend-fechamento',{joia:joia}).then(function(r){ if(r.ok){ toast(r.criadas+' cobrança'+(r.criadas==1?'':'s')+' gerada'+(r.criadas==1?'':'s')); carregaSocios(); if(joia) clienteDet(joia); else fecha(); } else toast(r.mensagem||'Erro'); }); }
+function geraCob(joia){ api('/painel/atend-fechamento',{joia:joia}).then(function(r){ if(r.ok){ toast(r.criadas+' cobrança'+(r.criadas==1?'':'s')+' gerada'+(r.criadas==1?'':'s')); carregaSocios(); if(joia) clienteDet(joia,true); else fecha(); } else toast(r.mensagem||'Erro'); }); }
 function cobPorId(id){ return (REC.cobrancas||[]).filter(function(x){ return x.id===id; })[0]; }
 function enviaCob(id){
   var c=cobPorId(id); if(!c) return; if(!c.fone){ toast('Esse cliente não tem celular cadastrado.'); return; }
-  window.open('https://wa.me/'+c.fone+'?text='+encodeURIComponent(c.msg),'_blank'); api('/painel/atend-fech-enviado',{id:c.id}).then(function(){ carregaSocios(); clienteDet(c.joia); });
+  window.open('https://wa.me/'+c.fone+'?text='+encodeURIComponent(c.msg),'_blank'); api('/painel/atend-fech-enviado',{id:c.id}).then(function(){ carregaSocios(); clienteDet(c.joia,true); });
 }
 function pagoForm(id){
   var c=cobPorId(id); if(!c) return; var h='<div style="font-size:15px;margin:6px 0 10px"><b>'+esc(c.nome)+'</b><br><span style="font-size:22px;font-weight:800;color:var(--pri)">'+brl(c.total)+'</span></div><div class="sec">Como recebeu?</div>';
   [['pix','Pix'],['cartao','Cartão'],['dinheiro','Dinheiro']].forEach(function(f){ h+='<div class="opt" onclick="pagoOk(\''+esc(id)+'\',\''+f[0]+'\')"><span class="n"><b>'+f[1]+'</b></span></div>'; }); folha('Marcar como pago',h,'');
 }
-function pagoOk(id,f){ var c=cobPorId(id); api('/painel/atend-fech-pago',{id:id,forma:f}).then(function(r){ if(r.ok){ toast('Recebimento registrado'); carregaSocios(); clienteDet(c.joia); } else toast(r.mensagem||'Erro'); }); }
+function pagoOk(id,f){ var c=cobPorId(id); api('/painel/atend-fech-pago',{id:id,forma:f}).then(function(r){ if(r.ok){ toast('Recebimento registrado'); carregaSocios(); clienteDet(c.joia,true); } else toast(r.mensagem||'Erro'); }); }
 modo('mesa');
 if(TK) inicio(); else mostraLogin('');
 </script>
