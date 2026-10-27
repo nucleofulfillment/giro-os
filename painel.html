@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Giro OS — Painel do ponto · GIRO-OS-107</title>
+<title>Giro OS — Painel do ponto · GIRO-OS-109</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -135,7 +135,10 @@ a{color:inherit}
 .side button .ic svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2}
 .side button:hover{background:var(--s2)}
 .side button.on{background:linear-gradient(120deg,rgba(237,128,58,.12),rgba(236,165,72,.12));color:var(--roxo-esc);font-weight:700}
-.side button,.side button.on,.tabbar button.on{color:#7A1414}   /* (GIRO-OS-007) só o menu em bordô Trilhos; resto do sistema em preto */
+.side button,.side button.on,.tabbar button.on{color:#111}
+.side{display:flex;flex-direction:column}
+.side-logo{margin-top:auto;padding:22px 12px 6px;text-align:center}
+.side-logo img{width:150px;max-width:100%;opacity:.95}   /* (GIRO-OS-007) só o menu em bordô Trilhos; resto do sistema em preto */
 .main{flex:1;min-width:0;padding:22px 26px 60px}
 .page{display:none}
 .page.on{display:block}
@@ -592,7 +595,7 @@ a{color:inherit}
       <div class="chk"><div class="ck">✓</div><span>Status de cada pacote, do ponto até a entrega</span></div>
       <div class="chk"><div class="ck">✓</div><span>Financeiro e repasse aos motoristas com um clique</span></div>
     </div>
-    <div class="lg-foot">DELTADIS · Núcleo Fulfillment</div>
+    <div class="lg-foot" style="opacity:1"><img src="livefood-logo-branca.png" alt="LiveFood" style="height:44px"></div>
   </div>
   <div class="lg-wrap">
     <div class="lg-form">
@@ -784,7 +787,7 @@ a{color:inherit}
 
       <!-- CARDÁPIO (1A): produtos, categorias e adicionais do restaurante -->
       <section class="page" id="pg-cardapio">
-        <div class="pghd"><div><h1>Cardápio</h1><div class="sub">produtos do seu restaurante · <span style="opacity:.6">GIRO-OS-081</span></div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn sec" onclick="cdAbrirCats()">Categorias</button><button class="btn sec" onclick="cdLinkCardapio()">🔗 Link do cardápio</button><button class="btn sec" onclick="cdEtiquetas()">Etiquetas</button><button class="btn sec" onclick="window.open('configurar.html','_blank')">📷 Cardápio por foto</button><button class="btn sec" onclick="cdAparencia()">🎨 Marca e cores</button><button class="btn sec" onclick="cdHorario()">🕒 Horário</button><button class="btn sec" onclick="cdFrete()">🛵 Entrega</button><button class="btn sec" onclick="cdGeo()">📍 Localização</button><button class="btn sec" onclick="cdMesas()">🍽️ Mesas <span id="ms-bd" style="display:none;background:#ef4444;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px"></span></button><button class="btn sec" onclick="window.open('atendimento.html','_blank')">🧾 Atendimento (garçom/balcão)</button><button class="btn sec" onclick="cdAbrirOfertas()">▶ Ofertas</button><button class="btn sec" onclick="cdAbrirImport()">Importar planilha</button><button class="btn sec" onclick="cdFotosLote()">📷 Fotos em lote</button><button class="btn pri" onclick="cdNovo()">+ Novo produto</button></div></div>
+        <div class="pghd"><div><h1>Cardápio</h1><div class="sub">produtos do seu restaurante · <span style="opacity:.6">GIRO-OS-081</span></div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn sec" onclick="cdAbrirCats()">Categorias</button><button class="btn sec" onclick="cdLinkCardapio()">🔗 Link do cardápio</button><button class="btn sec" onclick="cdEtiquetas()">Etiquetas</button><button class="btn sec" onclick="window.open('configurar.html','_blank')">📷 Cardápio por foto</button><button class="btn sec" onclick="cdAparencia()">🎨 Marca e cores</button><button class="btn sec" onclick="cdHorario()">🕒 Horário</button><button class="btn sec" onclick="cdFrete()">🛵 Entrega</button><button class="btn sec" onclick="cdGeo()">📍 Mesa</button><button class="btn sec" onclick="cdMesas()">🍽️ Mesas <span id="ms-bd" style="display:none;background:#ef4444;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px"></span></button><button class="btn sec" onclick="window.open('atendimento.html','_blank')">🧾 Atendimento (garçom/balcão)</button><button class="btn sec" onclick="cdAbrirOfertas()">▶ Ofertas</button><button class="btn sec" onclick="cdAbrirImport()">Importar planilha</button><button class="btn sec" onclick="cdFotosLote()">📷 Fotos em lote</button><button class="btn pri" onclick="cdNovo()">+ Novo produto</button></div></div>
         <div class="card">
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px"><input class="inp" id="cd-busca" placeholder="Buscar produto" oninput="cdPintar()" style="flex:1;min-width:200px"><select class="inp" id="cd-fcat" onchange="cdPintar()" style="width:210px;max-width:100%"></select></div>
           <div id="cd-selbar" style="display:none;align-items:center;gap:10px;flex-wrap:wrap;background:var(--s2);border-radius:12px;padding:8px 12px;margin-bottom:10px;font-size:13px"><span id="cd-seltxt" style="font-weight:700"></span><button class="btn pri sm" onclick="cdExibirOferta()">▶ Exibir oferta</button><button class="btn sec sm" onclick="cdLimparSel()">Limpar</button></div>
@@ -3412,7 +3415,7 @@ function montarNav(){
   var h='',i;
   for(i=0;i<NAV_DESKTOP.length;i++){var n=NAV_DESKTOP[i]; if(!pagOk(n.id)) continue;
     h+='<button class="'+(n.id===PAG?'on':'')+'" data-p="'+n.id+'" onclick="ir(\''+n.id+'\')"><span class="ic">'+svgIco(n.ic)+'</span><span>'+n.lb+'</span></button>';}
-  el('side').innerHTML=h;
+  el('side').innerHTML=h+'<div class="side-logo"><img src="livefood-logo.png" alt="LiveFood"></div>';
   var tb='';
   for(i=0;i<NAV_MOBILE.length;i++){var m=NAV_MOBILE[i]; if(!pagOk(m.id)) continue;
     tb+='<button class="'+(m.id===PAG?'on':'')+'" data-p="'+m.id+'" onclick="ir(\''+m.id+'\')">'+svgIco(m.ic)+'<span>'+m.lb+'</span></button>';}
@@ -7633,18 +7636,18 @@ function cdFrete(){
   }).catch(function(e){ el('cd-imp-corpo').innerHTML='<div style="color:#f87171;font-size:13px">'+esc(e.message||'Não consegui abrir.')+'</div>'; });
 }
 
-var CDGEO={lat:'',lng:'',raio:'300'};
+var CDGEO={lat:'',lng:'',raio:'300',login:0};
 function cdGeo(){
   el('cd-imp-corpo').innerHTML='<div style="font-size:13px;color:var(--muted)">Carregando…</div>';
-  el('sh-import').querySelector('h3').textContent='Localização do restaurante'; abrir('sh-import');
+  el('sh-import').querySelector('h3').textContent='Mesa: localização e cadastro'; abrir('sh-import');
   fetch(DELTADIS_API+'/painel/cardapio-config',{headers:cdHdr()}).then(function(r){return r.json();}).then(function(d){
     if(!d||!d.ok) throw new Error((d&&d.mensagem)||'erro');
-    CDGEO=d.geo?{lat:String(d.geo.lat),lng:String(d.geo.lng),raio:String(d.geo.raio)}:{lat:'',lng:'',raio:'300'};
+    CDGEO=d.geo?{lat:String(d.geo.lat),lng:String(d.geo.lng),raio:String(d.geo.raio),login:d.loginMesa?1:0}:{lat:'',lng:'',raio:'300',login:d.loginMesa?1:0};
     cdGeoPintar();
   }).catch(function(e){ el('cd-imp-corpo').innerHTML='<div style="color:#f87171;font-size:13px">'+esc(e.message||'Não consegui abrir.')+'</div>'; });
 }
 function cdGeoPintar(){
-  el('cd-imp-corpo').innerHTML='<div style="font-size:13px;color:var(--muted2);line-height:1.5;margin-bottom:12px">Quem pede pela <b>mesa</b> (QR Code) só consegue enviar o pedido estando perto do restaurante. O cardápio continua aberto para todos. Fique <b>dentro do restaurante</b> e toque em "Usar minha localização agora".</div>'
+  el('cd-imp-corpo').innerHTML='<label style="display:flex;gap:10px;align-items:flex-start;border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:14px;cursor:pointer"><input type="checkbox" '+(CDGEO.login?'checked ':'')+'onchange="CDGEO.login=this.checked?1:0" style="margin-top:3px"><span style="font-size:13.5px;line-height:1.45"><b>Cadastro com código do WhatsApp na mesa</b><br><span style="color:var(--muted2)">O cliente que escaneia a mesa informa o telefone e confirma com um código recebido no WhatsApp. O sistema o reconhece nas próximas vezes.</span></span></label><div style="font-size:13px;color:var(--muted2);line-height:1.5;margin-bottom:12px">Quem pede pela <b>mesa</b> (QR Code) só consegue enviar o pedido estando perto do restaurante. O cardápio continua aberto para todos. Fique <b>dentro do restaurante</b> e toque em "Usar minha localização agora".</div>'
     +'<button class="btn sec wide" type="button" onclick="cdGeoAqui()">📍 Usar minha localização agora</button>'
     +'<div style="display:flex;gap:8px;margin-top:10px"><input class="inp" style="flex:1" inputmode="decimal" placeholder="Latitude" value="'+esc(CDGEO.lat)+'" oninput="CDGEO.lat=this.value"><input class="inp" style="flex:1" inputmode="decimal" placeholder="Longitude" value="'+esc(CDGEO.lng)+'" oninput="CDGEO.lng=this.value"></div>'
     +'<label style="display:block;margin:12px 0 4px;font-size:13px;font-weight:700">Raio permitido (metros)</label><input class="inp" style="width:120px" inputmode="numeric" value="'+esc(CDGEO.raio)+'" oninput="CDGEO.raio=this.value.replace(/\\D/g,\'\')">'
@@ -7658,8 +7661,8 @@ function cdGeoAqui(){
 }
 function cdGeoSalvar(){
   var la=parseFloat(String(CDGEO.lat).replace(',','.')), ln=parseFloat(String(CDGEO.lng).replace(',','.')), body;
-  if(String(CDGEO.lat).trim()===''&&String(CDGEO.lng).trim()==='') body={geo:null};
-  else { if(!isFinite(la)||!isFinite(ln)){ aviso('Latitude/longitude inválidas'); return; } body={geo:{lat:la,lng:ln,raio:parseInt(CDGEO.raio,10)||300}}; }
+  if(String(CDGEO.lat).trim()===''&&String(CDGEO.lng).trim()==='') body={geo:null,loginMesa:CDGEO.login?1:0};
+  else { if(!isFinite(la)||!isFinite(ln)){ aviso('Latitude/longitude inválidas'); return; } body={geo:{lat:la,lng:ln,raio:parseInt(CDGEO.raio,10)||300},loginMesa:CDGEO.login?1:0}; }
   fetch(DELTADIS_API+'/painel/cardapio-config',{method:'POST',headers:cdHdr(),body:JSON.stringify(body)}).then(function(r){return r.json();}).then(function(d){
     if(!d||!d.ok) throw new Error((d&&d.mensagem)||'não salvou'); aviso(body.geo?'Localização salva':'Limite de localização removido'); fecharTudo();
   }).catch(function(e){ aviso(e.message||'Não salvou'); });

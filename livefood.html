@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
 <meta name="theme-color" content="#0b0b0d">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="LiveFood">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Cardápio · LiveFood</title>
-<!-- LIVEFOOD-16 --><meta name="versao" content="LIVEFOOD-16">
+<!-- LIVEFOOD-19 --><meta name="versao" content="LIVEFOOD-19">
 <style>
 :root{--bg:#0b0b0d;--tx:#fff;--mut:rgba(255,255,255,.68);--pri:#f97316;--pri2:#f97316;--glass:rgba(18,18,22,.62);--line:rgba(255,255,255,.16)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -300,9 +300,11 @@ function minPreco0(p){ var t=(p.tamanhos||[]).map(function(x){return x.preco;}).
 /* ── instalar como app (manifest feito na hora, com o nome do restaurante) ── */
 function manifesto(){
   try{
-    var svg="data:image/svg+xml;utf8,"+encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='110' fill='#f97316'/><text x='256' y='330' font-size='260' text-anchor='middle'>🍕</text></svg>");
-    var m={name:D.empresa||'Cardápio',short_name:(D.empresa||'Cardápio').slice(0,12),start_url:location.href,display:'standalone',display_override:['fullscreen','standalone'],orientation:'portrait',background_color:'#0b0b0d',theme_color:'#0b0b0d',icons:[{src:svg,sizes:'any',type:'image/svg+xml',purpose:'any'}]};
+    var base=location.origin+location.pathname.replace(/[^\/]*$/,''), ini=location.origin+location.pathname+(CLI?'?c='+encodeURIComponent(CLI):'');
+    var m={name:'LiveFood',short_name:'LiveFood',description:'Cardápio e pedidos',id:ini,start_url:ini,scope:base,display:'standalone',orientation:'portrait',background_color:'#0b0705',theme_color:'#0b0705',icons:[{src:base+'livefood-icon-192.png',sizes:'192x192',type:'image/png',purpose:'any'},{src:base+'livefood-icon-512.png',sizes:'512x512',type:'image/png',purpose:'any'},{src:base+'livefood-icon-maskable-512.png',sizes:'512x512',type:'image/png',purpose:'maskable'}]};
     var l=document.createElement('link'); l.rel='manifest'; l.href=URL.createObjectURL(new Blob([JSON.stringify(m)],{type:'application/manifest+json'})); document.head.appendChild(l);
+    var a=document.createElement('link'); a.rel='apple-touch-icon'; a.href=base+'livefood-icon-180.png'; document.head.appendChild(a);
+    if('serviceWorker' in navigator) navigator.serviceWorker.register(base+'livefood-sw.js').catch(function(){});
   }catch(e){}
 }
 
@@ -800,7 +802,8 @@ function abreSacola(){ navOn('sac'); CK.on=0; CK.open=0;
 /* ── conta do cliente (5B): entra pelo WhatsApp com código, guarda nome e endereços ── */
 var CT={tok:'',conta:null,fone:'',conhecido:false,tmr:null,edit:null,ctx:'ck'}, EN={modo:'entrega',end:''};
 function ctk(){ return (MESA?'lf_contamesa_':'lf_conta_')+(D.cli||CLI); }
-function ctLer(){ try{ var v=JSON.parse(localStorage.getItem(ctk())||'null'); if(v&&v.tok){ CT.tok=v.tok; CT.conta=v.conta||null; } }catch(e){} try{ var e=JSON.parse(localStorage.getItem('lf_entrega_'+(D.cli||CLI))||'null'); if(e&&e.modo) EN=e; }catch(x){} }
+function LOGM(){ return !!(MESA&&D&&D.cfg&&D.cfg.loginMesa); }
+function ctLer(){ try{ var v=JSON.parse(localStorage.getItem(ctk())||'null'); if(v&&v.tok&&!(LOGM()&&v.conta&&/^mesa/i.test(String(v.conta.fone||'')))){ CT.tok=v.tok; CT.conta=v.conta||null; } }catch(e){} try{ var e=JSON.parse(localStorage.getItem('lf_entrega_'+(D.cli||CLI))||'null'); if(e&&e.modo) EN=e; }catch(x){} }
 function ctGrava(){ try{ localStorage.setItem(ctk(),JSON.stringify({tok:CT.tok,conta:CT.conta})); localStorage.setItem('lf_entrega_'+(D.cli||CLI),JSON.stringify(EN)); }catch(e){} }
 function ctSair(){ CT.tok=''; CT.conta=null; try{ localStorage.removeItem(ctk()); }catch(e){} ctLogin(); }
 function ctApi(rota,corpo,get){
@@ -830,8 +833,8 @@ function mesaGuest(){
   });
 }
 function ctLogin(){
-  if(MESA) return mesaGuest();
-  abreFolha(ctCab('Entrar',(CT.ctx==='conta'||CT.ctx==='mesa')?'fechaSheet()':'abreSacola()')+'<div class="wb"><div class="nt" style="margin-top:12px;font-size:14px;color:#fff">Informe seu WhatsApp. Vamos enviar um código de 6 números para confirmar que é você.</div><label class="cl">Seu WhatsApp</label><input class="cin" id="ct-fone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(47) 99999-9999" maxlength="16" oninput="ctMask(this)"><div class="ce" id="ct-erro"></div></div><div class="rod"><button class="bt c" id="ct-bt" onclick="ctPedeCodigo()">Receber código</button></div>',true);
+  if(MESA&&!LOGM()) return mesaGuest();
+  abreFolha(ctCab('Entrar',(CT.ctx==='conta'||CT.ctx==='mesa'||CT.ctx==='ini')?'fechaSheet()':'abreSacola()')+'<div class="wb"><div class="nt" style="margin-top:12px;font-size:14px;color:#fff">Informe seu WhatsApp. Vamos enviar um código de 6 números para confirmar que é você.</div><label class="cl">Seu WhatsApp</label><input class="cin" id="ct-fone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(47) 99999-9999" maxlength="16" oninput="ctMask(this)"><div class="ce" id="ct-erro"></div></div><div class="rod"><button class="bt c" id="ct-bt" onclick="ctPedeCodigo()">Receber código</button></div>',true);
 }
 function ctPedeCodigo(){
   var d=($('ct-fone')||{value:CT.fone}).value.replace(/\D/g,''); if(d.length<10||d.length>11){ ctErro('Confira o número: DDD + número.'); return; }
@@ -854,7 +857,7 @@ function ctEntrar(){
 }
 function ctEndTxt(e){ return esc(e.rua)+', '+esc(e.numero)+(e.compl?' · '+esc(e.compl):'')+'<br>'+esc(e.bairro)+' · '+esc(e.cidade)+(e.uf?'/'+esc(e.uf):''); }
 function ckKeep(){ var v={}; ['ck-cpf','ck-obs','ck-tr','ck-cn','ck-cnome','ck-cval','ck-ccv','ck-cmail','ck-ccep','ck-cnum'].forEach(function(i){ var e=$(i); if(e) v[i]=e.value; }); ckResumo(); Object.keys(v).forEach(function(i){ var e=$(i); if(e) e.value=v[i]; }); }
-function ctEntrega(){ if(CT.ctx==='conta') contaTela(); else if(CT.ctx==='mesa') mesaContaTela(); else ckKeep(); }
+function ctEntrega(){ if(CT.ctx==='ini'){ fechaSheet(); mesaSplashFecha(); } else if(CT.ctx==='conta') contaTela(); else if(CT.ctx==='mesa') mesaContaTela(); else ckKeep(); }
 function ctModo(m){ EN.modo=m; ctGrava(); ctEntrega(); }
 function ctSelEnd(id){ EN.end=id; ctGrava(); ctEntrega(); }
 function ctSegue(){
@@ -927,9 +930,10 @@ function mesaInit(force){
   var k='lf_splash_'+(D.cli||CLI)+'_'+MESA, vis=false; try{ vis=!!sessionStorage.getItem(k); }catch(e){}
   if(vis&&force!==true) return;
   var lg=(D.cfg&&D.cfg.logo)?'<img class="lg2" alt="" src="'+API+'/food/foto/'+encodeURIComponent(D.cli||CLI)+'/_logo?v='+(D.cfg.v||0)+'">':'<div style="font-size:22px;font-weight:800">'+esc(D.empresa||'')+'</div>';
-  $('msp').innerHTML=lg+'<div class="mn">Mesa '+esc(MESA)+'</div><h1>Bem-vindo(a)!</h1><p>Veja o cardápio, faça o pedido pelo celular e levamos até a sua mesa. Você paga só no final.</p><button class="bt c" onclick="mesaSplashFecha()">Ver o cardápio</button><button class="bt c g" onclick="garcomChama()">🛎 Chamar o garçom</button><button class="bt c g" onclick="mesaSplashFecha();mesaFechar()">🧾 Fechar conta</button>';
+  $('msp').innerHTML=lg+'<div class="mn">Mesa '+esc(MESA)+'</div><h1>Bem-vindo(a)!</h1><p>Veja o cardápio, faça o pedido pelo celular e levamos até a sua mesa. Você paga só no final.</p><button class="bt c" onclick="mesaVer()">Ver o cardápio</button><button class="bt c g" onclick="garcomChama()">🛎 Chamar o garçom</button><button class="bt c g" onclick="mesaSplashFecha();mesaFechar()">🧾 Fechar conta</button><img src="livefood-logo.png" alt="LiveFood" style="height:34px;align-self:center;margin-top:26px;opacity:.95">';
   $('msp').style.display='flex';
 }
+function mesaVer(){ if(!LOGM()){ mesaSplashFecha(); return; } CT.ctx='ini'; ctLer(); if(CT.tok){ mesaSplashFecha(); return; } ctLogin(); }
 function mesaSplashFecha(){ $('msp').style.display='none'; try{ sessionStorage.setItem('lf_splash_'+(D.cli||CLI)+'_'+MESA,'1'); }catch(e){} }
 function garcomChama(){
   if(!MESA) return; if(Date.now()-GAR.ult<30000){ toast('O garçom já foi avisado. Já vamos até você!'); return; }
@@ -1062,12 +1066,15 @@ function mesaContaTela(sem){
     mesaContaMonta();
   });
 }
+function mesaRachaTxt(n,t){ n=parseInt(n,10)||0; if(n<2) return '<span style="opacity:.7;font-size:13px">Digite quantas pessoas vão dividir e mostramos o valor de cada uma.</span>'; var v=Math.ceil(t*100/n)/100; return 'Cada pessoa paga <b style="font-size:18px">'+brl(v)+'</b>'+((Math.round(v*n*100)!==Math.round(t*100))?'<div style="font-size:12px;opacity:.7;margin-top:2px">Valor arredondado para cima (centavos).</div>':''); }
+function mesaRacha(e){ e.value=e.value.replace(/\D/g,'').slice(0,2); MC.pes=e.value; var r=$('mc-rach'); if(r) r.innerHTML=mesaRachaTxt(MC.pes,(MC.d&&MC.d.total)||0); }
 function mesaContaMonta(){
   var d=MC.d||{pedidos:[],total:0}, c=CT.conta||{}, h=ctCab('Fechar conta','fechaSheet()')+'<div class="wb">';
   if(!d.pedidos.length){ abreFolha(h+'<div class="nt" style="margin-top:14px;font-size:14.5px;color:#fff">Sua mesa não tem pedidos em aberto no momento.</div></div><div class="rod"><button class="bt c" onclick="fechaSheet();mesaInit(true)">Voltar ao início</button></div>',true); return; }
   h+='<div style="margin:14px 0 2px;font-size:15px"><b>🍽️ Mesa '+esc(MESA)+'</b></div>';
   d.pedidos.forEach(function(x){ h+='<div class="rsm"><div class="tx"><b>Pedido #'+x.num+'</b><small>'+esc(x.itens)+'</small></div><div class="vl">'+brl(x.total)+'</div></div>'; });
   h+='<div class="tt" style="padding:12px 0 0;font-size:17px"><span>Total da mesa</span><span>'+brl(d.total)+'</span></div>';
+  h+='<div style="border:1px solid var(--line);border-radius:14px;padding:12px;margin-top:14px"><b style="font-size:14px">👥 Dividir a conta</b><div style="display:flex;align-items:center;gap:10px;margin-top:8px"><input class="cin" id="mc-pes" type="tel" inputmode="numeric" maxlength="2" placeholder="Quantas pessoas?" value="'+(MC.pes||'')+'" oninput="mesaRacha(this)" style="flex:1;margin:0"></div><div id="mc-rach" style="margin-top:8px;font-size:15px">'+mesaRachaTxt(MC.pes,d.total)+'</div></div>';
   h+='<label class="cl">Como você quer pagar?</label>';
   h+='<div class="ad'+(MC.forma==='pix'?' on':'')+'" onclick="mesaForma(\'pix\')"><div class="rd"></div><div class="tx"><b>Pix</b><small>Pague agora pelo celular</small></div></div>';
   h+='<div class="ad'+(MC.forma==='cartao'?' on':'')+'" onclick="mesaForma(\'cartao\')"><div class="rd"></div><div class="tx"><b>Cartão</b><small>Pague no caixa</small></div></div>';
