@@ -1,4 +1,4 @@
-/* GIRO OS — MARCA DO RESTAURANTE (marca.js · MARCA-04)
+/* GIRO OS — MARCA DO RESTAURANTE (marca.js · MARCA-06)
    Uma logo + uma cor por restaurante, valendo pra todas as telas.
    Como a tela descobre o restaurante:
      1) pelo link:  ...html?c=cinquenta  (o aparelho guarda e nas próximas vezes já sabe)
@@ -10,7 +10,7 @@
 (function(){
   var BASE=((document.currentScript&&document.currentScript.src)||'').replace(/[^\/]*$/,'');
   var API='https://giro-os-api.nucleofull.workers.dev', KC='giro_marca_cli', KM='giro_marca_dados_';
-  var M={cli:'',d:null,lum:{},exp:false};
+  var M={cli:'',d:null,lum:{},exp:false,logado:false};
   function ls(k,v){ try{ if(v===undefined) return localStorage.getItem(k)||''; if(v===null) localStorage.removeItem(k); else localStorage.setItem(k,v); }catch(e){ return ''; } return ''; }
   function limpa(c){ return String(c||'').replace(/[^A-Za-z0-9_-]/g,'').slice(0,40); }
 
@@ -71,11 +71,11 @@
   /* telas de login: sem identificador do restaurante no link, aparece a marca LiveFood */
   function liveLogos(){
     var im=document.querySelectorAll('[data-marca-login]'),k,pw=document.querySelectorAll('[data-marca-powered]');
-    for(k=0;k<im.length;k++){ im[k].setAttribute('src',BASE+'livefood-logo.png'); im[k].setAttribute('alt','LiveFood'); im[k].style.filter=''; im[k].style.height='46px'; im[k].style.display=''; var pc=im[k].closest?im[k].closest('.gos-card'):null; if(pc) pc.style.display=''; }
+    for(k=0;k<im.length;k++){ var sc=im[k].hasAttribute('data-marca-sobre'); im[k].setAttribute('src',BASE+(sc?'livefood-logo-branca.png':'livefood-logo.png')); im[k].setAttribute('alt','LiveFood'); im[k].style.filter=''; im[k].style.height=sc?'62px':'46px'; im[k].style.display=''; var pc=im[k].closest?im[k].closest('.gos-card'):null; if(!sc&&!pc){ im[k].style.display='block'; im[k].style.margin='0 auto 12px'; } if(pc){ pc.style.display=''; if(sc){ pc.style.background='transparent'; pc.style.boxShadow='none'; pc.style.padding='0'; } } }
     for(k=0;k<pw.length;k++) pw[k].style.display='none';
   }
   function aplica(d){
-    if(!d||!d.ok) return; M.d=d; aplicaCor(d.cor); aplicaLogos(d);
+    if(!d||!d.ok) return; M.d=d; if(M.exp||M.logado) aplicaCor(d.cor); aplicaLogos(d);
     try{ document.documentElement.setAttribute('data-marca',d.cli||''); }catch(e){}
   }
 
@@ -86,7 +86,7 @@
       if(!d||!d.ok){ return; } M.cli=d.cli||M.cli; ls(KC,M.cli); ls(KM+M.cli,JSON.stringify(d)); aplica(d);
     }).catch(function(){});
   }
-  function set(cli){ cli=limpa(cli); if(!cli||cli===M.cli) return; M.cli=cli; ls(KC,cli); carrega(); }
+  function set(cli){ cli=limpa(cli); M.logado=true; if(!cli) return; if(cli===M.cli){ if(M.d) aplica(M.d); return; } M.cli=cli; ls(KC,cli); carrega(); }
   /* restaurante ainda desconhecido (primeiro acesso sem ?c=): login neutro, nunca a logo de outro restaurante */
   function neutro(){
     var cards=document.querySelectorAll('.gos-card'),k;
