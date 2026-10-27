@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>LiveFood — Painel · GIRO-OS-118</title>
+<title>LiveFood — Painel · GIRO-OS-119</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -295,6 +295,9 @@ a{color:inherit}
 .dd-panel{position:absolute;top:calc(100% + 6px);left:0;z-index:40;background:var(--s1);border:1px solid var(--border2);border-radius:12px;box-shadow:0 8px 24px rgba(69,59,51,.16);padding:6px;min-width:220px;max-height:280px;overflow:auto}
 .dd-panel label{display:flex;gap:8px;align-items:center;padding:7px 8px;font-size:13px;cursor:pointer;border-radius:8px}
 .dd-panel label:hover{background:var(--s2)}
+.tb-ms th:nth-child(5),.tb-ms td:nth-child(5){display:none}
+.tb-ms td{white-space:nowrap}
+.ms-cut{display:block;max-width:210px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tb-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -2px}
 .tb{width:100%;min-width:600px;border-collapse:collapse}
 .tb th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);font-weight:700;padding:9px 10px;border-bottom:1px solid var(--border);white-space:nowrap}
@@ -3890,6 +3893,14 @@ function agregadoDash(){
     if(p.st==='em rota') agg.emrota++; else if(p.st==='entregue') agg.entregue++; else if(p.st==='devolvido') agg.devolvido++; else if(p.st==='extraviado') agg.extraviado++; else if(ehTentativa(p.st)) agg.tentativas++; else agg.coletado++; }
   return agg;
 }
+function dashMesaKpis(){
+  try{
+    if(typeof MS==='undefined'||!MS.init||!(MS.ped.length||MS.con.length)) return '';
+    var n0=0,n1=0,n2=0,tot=0; MS.ped.forEach(function(x){ if(x.fase==='preparo') n1++; else if(x.fase==='rota') n2++; else n0++; }); MS.con.forEach(function(k){ tot+=Number(k.total)||0; });
+    function c(lb,cl,v,dl){ return '<div class="kpi" style="cursor:pointer" onclick="dashParaPedidos(\'mesas\')"><div class="lb '+cl+'">'+lb+'</div><div class="vl">'+v+'</div><div class="dl">'+dl+'</div></div>'; }
+    return c('Mesa · Novos','cr',n0,'aguardando a cozinha')+c('Mesa · Em preparo','',n1,'sendo preparados agora')+c('Mesa · Prontos','cg',n2,'prontos para servir')+c('Mesas abertas','cb',MS.con.length,'conta em aberto: '+moeda(tot));
+  }catch(e){ return ''; }
+}
 function pintarDashboard(){
   var i, AG=agregadoDash(), tf=DASH_TR?transp(DASH_TR):null;
   el('db-filtro').innerHTML=tf?('<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:13px"><span class="badge b-wt" style="font-size:12px">Filtrando: '+esc(tf.n)+'</span><span class="vertodos" onclick="limparFiltroDash()">✕ limpar filtro</span></div>'):'';
@@ -3898,7 +3909,7 @@ function pintarDashboard(){
     '<div class="kpi" style="cursor:pointer" onclick="dashParaPedidos(\'coletado\')"><div class="lb">Base</div><div class="vl">'+AG.coletado+'</div><div class="dl">na base, aguardando saída</div></div>'+
     '<div class="kpi" style="cursor:pointer" onclick="dashParaPedidos(\'em rota\')"><div class="lb cb">Em rota</div><div class="vl vb">'+AG.emrota+'</div><div class="dl">com motoristas agora</div></div>'+
     '<div class="kpi" style="cursor:pointer" onclick="dashParaPedidos(\'entregue\')"><div class="lb cg">Entregue</div><div class="vl vg">'+AG.entregue+'</div><div class="dl">concluídos no período</div></div>'+
-    '<div class="kpi" style="cursor:pointer" onclick="dashParaPedidos(\'acao\')"><div class="lb cr">Precisa de ação</div><div class="vl vr">'+(AG.tentativas+AG.devolvido+AG.extraviado)+'</div><div class="dl">tentativas, devolução ou extravio</div></div>';
+    '<div class="kpi" style="cursor:pointer" onclick="dashParaPedidos(\'acao\')"><div class="lb cr">Precisa de ação</div><div class="vl vr">'+(AG.tentativas+AG.devolvido+AG.extraviado)+'</div><div class="dl">tentativas, devolução ou extravio</div></div>'+dashMesaKpis();
 
   var probs=[]; for(i=0;i<PEDIDOS.length;i++) if((!DASH_TR||PEDIDOS[i].tr===DASH_TR) && dashDentro(PEDIDOS[i]) && (ehTentativa(PEDIDOS[i].st)||PEDIDOS[i].st==='devolvido'||PEDIDOS[i].st==='extraviado')) probs.push(PEDIDOS[i]);
   el('pdv-n').textContent=probs.length;
@@ -4389,6 +4400,7 @@ function pintarPedidos(){
   if(n>LIM) h+='<tr><td colspan="9"><div class="empty">Mostrando os primeiros '+LIM+' de '+n+' pedidos — use a busca ou os filtros para ver os outros</div></td></tr>';
   if(!h) h='<tr><td colspan="9"><div class="empty">Nenhum pedido encontrado'+(tf?' para esta transportadora':'')+'</div></td></tr>';
   if(FILTRO_PD==='mesas') h=msPedidosHtml(busca);
+  try{ el('pd-corpo').parentNode.classList.toggle('tb-ms',FILTRO_PD==='mesas'); }catch(e){}
   el('pd-corpo').innerHTML=h;
 }
 /* (077) pedidos das MESAS aparecem em Pedidos, no filtro MESAS (lista própria; não mistura com a fila do motoboy) */
@@ -4400,7 +4412,7 @@ function msPedidosHtml(busca){
     if(busca&&(('mesa '+x.mesa+' '+x.num+' '+x.itens).toLowerCase().indexOf(busca)<0)) return;
     var st=x.fase==='preparo'?['Em preparo','#f59e0b']:(x.fase==='rota'?['Pronto','#22c55e']:['Novo','#ef4444']), nx=x.fase===''?['preparo','Começar preparo']:(x.fase==='preparo'?['rota','Pronto']:['entregue','Servido ✔']);
     var rc=x.status==='pago'?(x.pagto==='pix'?'Pago no Pix':x.pagto==='dinheiro'?'Pago em dinheiro':x.pagto==='cartao'?'Pago no cartão':'Pago'):(x.status==='marcado'?'Pendurado':'Conta aberta');
-    h+='<tr style="cursor:pointer" onclick="msDetalhe(\''+esc(x.id)+'\')"><td><b>#'+x.num+'</b><br><span style="display:block;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:11.5px">'+esc(x.itens)+'</span>'+(x.atend?'<br><span style="font-size:11.5px;font-weight:700;color:var(--muted2)">Garçom: '+esc(x.atend)+(x.cli?' · Cliente: '+esc(x.cli)+' ('+esc(x.joia)+')':'')+'</span>':'')+(x.obs?'<br><span style="color:var(--amber);font-size:11px;font-weight:600">Obs: '+esc(x.obs)+'</span>':'')+'</td><td>Mesa '+esc(x.mesa)+'</td><td>LOCAL</td><td>'+msHora(x.criado)+'</td><td>—</td><td><span style="font-size:11.5px;font-weight:800;color:#fff;background:'+st[1]+';border-radius:10px;padding:2px 9px">'+st[0]+'</span></td><td>'+moeda(x.total)+'</td><td>'+rc+'</td><td style="white-space:nowrap"><button class="btn pri sm" type="button" onclick="event.stopPropagation();msFase(\''+esc(x.id)+'\',\''+nx[0]+'\')">'+nx[1]+'</button></td></tr>'; });
+    h+='<tr style="cursor:pointer" onclick="msDetalhe(\''+esc(x.id)+'\')"><td><b>#'+x.num+'</b><span class="ms-cut" title="'+esc(x.itens)+'" style="color:var(--muted);font-size:11.5px">'+esc(x.itens)+'</span>'+(x.atend?'<span class="ms-cut" style="font-size:11.5px;font-weight:700;color:var(--muted2)">Garçom: '+esc(x.atend)+(x.cli?' · Cliente: '+esc(x.cli)+' ('+esc(x.joia)+')':'')+'</span>':'')+(x.obs?'<span class="ms-cut" title="'+esc(x.obs)+'" style="color:var(--amber);font-size:11px;font-weight:600">Obs: '+esc(x.obs)+'</span>':'')+'</td><td>Mesa '+esc(x.mesa)+'</td><td>LOCAL</td><td>'+msHora(x.criado)+'</td><td>—</td><td><span style="font-size:11.5px;font-weight:800;color:#fff;background:'+st[1]+';border-radius:10px;padding:2px 9px">'+st[0]+'</span></td><td>'+moeda(x.total)+'</td><td>'+rc+'</td><td style="white-space:nowrap"><button class="btn pri sm" type="button" onclick="event.stopPropagation();msFase(\''+esc(x.id)+'\',\''+nx[0]+'\')">'+nx[1]+'</button></td></tr>'; });
   return h||'<tr><td colspan="9"><div class="empty">Nenhum pedido de mesa em andamento</div></td></tr>';
 }
 /* as cores de tempo andam sozinhas: repinta a lista a cada minuto quando ela está aberta */
@@ -7447,7 +7459,7 @@ function msPoll(){
     MS.ped=d.pedidos||[]; MS.cha=d.chamados||[]; MS.con=d.contas||[]; MS.init=1;
     if(av.length){ aviso(av.join(' · ')); msBeep(); }
     msBadge(); if(MS.aberto) msPintar();
-    var sg=JSON.stringify([MS.ped.map(function(x){ return x.id+x.fase+x.status; }),MS.con]); if(sg!==MS.sig){ MS.sig=sg; try{ if(typeof PAG!=='undefined'&&PAG==='pedidos') pintarPedidos(); }catch(e){} }
+    var sg=JSON.stringify([MS.ped.map(function(x){ return x.id+x.fase+x.status; }),MS.con]); if(sg!==MS.sig){ MS.sig=sg; try{ if(typeof PAG!=='undefined'&&PAG==='pedidos') pintarPedidos(); if(typeof PAG!=='undefined'&&PAG==='dashboard') pintarDashboard(); }catch(e){} }
   }).catch(function(){ MS.busy=0; });
 }
 setInterval(msPoll,8000); setTimeout(msPoll,6000);
