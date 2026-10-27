@@ -1,4 +1,4 @@
-/* GIRO OS — MARCA DO RESTAURANTE (marca.js · MARCA-08)
+/* GIRO OS — MARCA DO RESTAURANTE (marca.js · MARCA-09)
    Uma logo + uma cor por restaurante, valendo pra todas as telas.
    Como a tela descobre o restaurante:
      1) pelo link:  ...html?c=cinquenta  (o aparelho guarda e nas próximas vezes já sabe)
@@ -45,6 +45,7 @@
     im.onerror=function(){ M.lum[url]=-1; cb(-1); };
     im.src=url;
   }
+  function cardBranco(c){ c.style.background='#fff'; c.style.boxShadow='0 6px 18px rgba(31,35,41,.16)'; c.style.padding='9px 16px'; }
   function aplicaLogos(d){
     var imgs=document.querySelectorAll('[data-marca-logo]'), k;
     for(k=0;k<imgs.length;k++) (function(el){
@@ -57,7 +58,7 @@
           var f='';
           if(l>=0){ if(fundo==='claro'&&l>0.72) f='brightness(0)'; else if(fundo==='escuro'&&l<0.22) f='brightness(0) invert(1)'; }
           el.style.filter=f; el.style.display=''; if(el.getAttribute('src')!==u) el.setAttribute('src',u);
-          if(pai) pai.style.display='';
+          if(pai){ pai.style.display=''; if(el.hasAttribute('data-marca-sobre')) cardBranco(pai); }
         });
       } else {
         /* restaurante conhecido, mas ainda sem logo: some a logo velha e mostra o nome */
@@ -67,7 +68,7 @@
     var pw=document.querySelectorAll('[data-marca-powered]'); for(k=0;k<pw.length;k++) pw[k].style.display=(M.exp&&d.logo)?'':'none';
     var nm=document.querySelectorAll('[data-marca-nome]'); for(k=0;k<nm.length;k++){ nm[k].textContent=d.nome||''; if(!d.logo&&d.nome) nm[k].style.display=''; }
     /* sem logo, o cartão branco do login vira o nome do restaurante */
-    if(!d.logo&&d.nome&&M.exp){ var cards=document.querySelectorAll('.gos-card'); for(k=0;k<cards.length;k++){ if(!cards[k].querySelector('.marca-txt')){ var sp=document.createElement('b'); sp.className='marca-txt'; sp.style.cssText='font-size:22px;font-weight:800;color:#29231E;padding:4px 2px'; sp.textContent=d.nome; cards[k].appendChild(sp); } } }
+    if(!d.logo&&d.nome&&M.exp){ var cards=document.querySelectorAll('.gos-card'); for(k=0;k<cards.length;k++){ if(!cards[k].querySelector('.marca-txt')){ cardBranco(cards[k]); var sp=document.createElement('b'); sp.className='marca-txt'; sp.style.cssText='font-size:22px;font-weight:800;color:#29231E;padding:4px 2px'; sp.textContent=d.nome; cards[k].appendChild(sp); } } }
   }
   /* telas de login: sem identificador do restaurante no link, aparece a marca LiveFood */
   function liveLogos(){
@@ -91,7 +92,7 @@
   /* restaurante ainda desconhecido (primeiro acesso sem ?c=): login neutro, nunca a logo de outro restaurante */
   function neutro(){
     var cards=document.querySelectorAll('.gos-card'),k;
-    for(k=0;k<cards.length;k++){ if(!cards[k].querySelector('.marca-txt')){ var sp=document.createElement('b'); sp.className='marca-txt'; sp.style.cssText='font-size:22px;font-weight:800;color:#29231E;padding:4px 2px'; sp.textContent='Giro OS'; cards[k].appendChild(sp); } }
+    for(k=0;k<cards.length;k++){ if(!cards[k].querySelector('.marca-txt')){ cardBranco(cards[k]); var sp=document.createElement('b'); sp.className='marca-txt'; sp.style.cssText='font-size:22px;font-weight:800;color:#29231E;padding:4px 2px'; sp.textContent='Giro OS'; cards[k].appendChild(sp); } }
   }
   function init(){
     var q=new URLSearchParams(location.search), c=limpa(q.get('c')||q.get('cli')||q.get('loja')||'');
