@@ -8,7 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="LiveFood">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Cardápio · LiveFood</title>
-<!-- LIVEFOOD-19 --><meta name="versao" content="LIVEFOOD-19">
+<!-- LIVEFOOD-20 --><meta name="versao" content="LIVEFOOD-20">
 <style>
 :root{--bg:#0b0b0d;--tx:#fff;--mut:rgba(255,255,255,.68);--pri:#f97316;--pri2:#f97316;--glass:rgba(18,18,22,.62);--line:rgba(255,255,255,.16)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -309,7 +309,7 @@ function manifesto(){
 }
 
 function carregar(primeira){
-  if(!CLI){ vazio('Link incompleto','Falta o código do restaurante no endereço (?c=...).'); return Promise.resolve(); }
+  if(!CLI){ vazio('Bem-vindo ao LiveFood','Escaneie o QR Code da sua mesa ou abra o link do restaurante para ver o cardápio.'); try{ var vz=$('vazio'); if(vz&&!$('vz-lg')){ var g=document.createElement('img'); g.id='vz-lg'; g.src='livefood-logo.png'; g.alt='LiveFood'; g.style.cssText='height:46px;margin-bottom:18px'; vz.insertBefore(g,vz.firstChild); } }catch(e){} return Promise.resolve(); }
   return fetch(API+'/food/cardapio/'+encodeURIComponent(CLI)).then(function(r){return r.json();}).then(function(d){
     if(!d||!d.ok){ if(primeira) vazio('Cardápio não encontrado',(d&&d.mensagem)||'Confira o link.'); return; }
     if(primeira){ D=d; sacLer(); aplicaTema(); navOn('inicio'); temaAplica(); wizPill(); mesaInit(); document.title=(d.empresa||'Cardápio'); $('emp').innerHTML=((d.cfg&&d.cfg.logo)?'<img class="lg" src="'+API+'/food/foto/'+encodeURIComponent(d.cli||CLI)+'/_logo?v='+(d.cfg.v||0)+'" alt="'+esc(d.empresa)+'" onerror="this.outerHTML=\''+esc(d.empresa).replace(/'/g,'')+'\'">':esc(d.empresa))+'<small id="stt"></small>'; pintaStatus(); try{ if(!estaAberto()&&!sessionStorage.getItem('lf_fcm_'+(d.cli||CLI))){ sessionStorage.setItem('lf_fcm_'+(d.cli||CLI),'1'); setTimeout(abreFechado,600); } }catch(e){} manifesto(); iniciar(); }
