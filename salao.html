@@ -1,3 +1,7 @@
+<!doctype html>
+<html lang="pt-BR">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Teste de Salão</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito:wght@500;600;700;800&display=swap">
@@ -132,6 +136,27 @@ input,select{border:1px solid var(--line);background:var(--card);color:var(--ink
 .rota{stroke:var(--acc);stroke-width:3.5;fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:9 8;animation:flui 1s linear infinite}
 @keyframes flui{to{stroke-dashoffset:-34}}
 @media (prefers-reduced-motion:reduce){.rota,.anel{animation:none}}
+.ctrl{display:contents}
+.ctrlTop{display:none}
+.gbar{display:flex;align-items:center;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:8px}
+.gbar .gtabs{margin:0}
+#bCtrl,#bSair{display:none}
+body.full{padding:0}
+body.full .wrap{max-width:none;gap:0}
+body.full header{display:none}
+body.full .tst{display:block}
+body.full .ctrl{display:none}
+body.full .ctrl.open{display:flex;flex-direction:column;gap:12px;position:fixed;inset:0;overflow:auto;background:var(--bg);z-index:50;padding:max(12px,env(safe-area-inset-top)) 12px 24px}
+body.full .ctrl.open .ctrlTop{display:flex;justify-content:space-between;align-items:center;gap:8px}
+body.full .phonecol{position:fixed;inset:0;z-index:10;background:var(--bg);display:flex;flex-direction:column;padding:max(8px,env(safe-area-inset-top)) 6px 0}
+body.full .gbar{flex:none;flex-wrap:nowrap;overflow-x:auto;margin-bottom:6px;justify-content:flex-start}
+body.full #bCtrl,body.full #bSair{display:inline-flex;align-items:center}
+body.full #bFull{display:none}
+body.full .gbar .gtabs{flex-wrap:nowrap;flex:none}
+body.full .gbar button{flex:none;white-space:nowrap}
+body.full .gt{padding:5px 9px;min-height:34px}
+body.full .celular{flex:1;min-height:0;background:none;border:0;padding:0;border-radius:0}
+body.full .tela{height:100%;border-radius:0;background:none;padding:0 0 max(8px,env(safe-area-inset-bottom))}
 </style>
 
 <div class="wrap">
@@ -164,6 +189,7 @@ input,select{border:1px solid var(--line);background:var(--card);color:var(--ink
 
   <section id="t2" hidden>
     <div class="tst">
+      <div class="ctrl" id="ctrl"><div class="ctrlTop"><button class="sm" id="bEd" type="button">Editar salão</button><button class="sm pri" id="bFecha" type="button">Voltar ao mapa</button></div>
       <div class="pan">
         <h2>Novo pedido <small>garçom ou cliente</small></h2>
         <label class="hint" for="selMesa" style="display:block;margin-bottom:4px">Mesa</label>
@@ -186,8 +212,8 @@ input,select{border:1px solid var(--line);background:var(--card);color:var(--ink
         <p class="hint">Pedido pronto vai para o garçom livre mais antigo da fila. Quem está em rota não recebe pedido novo.</p>
         <div id="fila"></div>
       </div>
-      <div>
-        <div class="gtabs" id="gtabs"></div>
+      </div>
+      <div class="phonecol"><div class="gbar"><div class="gtabs" id="gtabs"></div><button class="sm" id="bCtrl" type="button">Pedidos</button><button class="sm" id="bFull" type="button">Tela cheia</button><button class="sm" id="bSair" type="button">Sair</button></div>
         <div class="celular"><div class="tela" id="app" aria-live="polite"></div></div>
       </div>
     </div>
@@ -457,7 +483,15 @@ input,select{border:1px solid var(--line);background:var(--card);color:var(--ink
   $('bTodos').onclick=function(){ P.filter(function(p){return p.st==='novo'||p.st==='preparo';}).map(function(p){return p.id;}).forEach(pronto); };
   $('bReset').onclick=function(){ P=[]; C=[]; seq=1; cseq=1; carr=[]; novosG(); gv=1; drawCarr(); drawT(); };
 
-  function aba(n){ $('t1').hidden=n!==1; $('t2').hidden=n!==2; $('tab1').setAttribute('aria-selected',n===1); $('tab2').setAttribute('aria-selected',n===2); if(n===1) drawEd(); else{ menuUI(); drawT(); } }
+  var fullPref=null;
+  function modoFull(){ var on=fullPref===null?window.innerWidth<=700:fullPref; document.body.classList.toggle('full',on&&!$('t2').hidden); }
+  $('bFull').onclick=function(){ fullPref=true; modoFull(); };
+  $('bSair').onclick=function(){ fullPref=false; $('ctrl').classList.remove('open'); modoFull(); };
+  $('bCtrl').onclick=function(){ $('ctrl').classList.add('open'); };
+  $('bFecha').onclick=function(){ $('ctrl').classList.remove('open'); };
+  $('bEd').onclick=function(){ $('ctrl').classList.remove('open'); aba(1); };
+  window.addEventListener('resize',modoFull);
+  function aba(n){ $('t1').hidden=n!==1; $('t2').hidden=n!==2; $('tab1').setAttribute('aria-selected',n===1); $('tab2').setAttribute('aria-selected',n===2); modoFull(); if(n===1) drawEd(); else{ menuUI(); drawT(); } }
   $('tab1').onclick=function(){ aba(1); }; $('tab2').onclick=function(){ aba(2); };
   paleta(); drawEd();
 })();
