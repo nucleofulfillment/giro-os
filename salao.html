@@ -53,8 +53,13 @@ input,select{border:1px solid var(--line);background:var(--card);color:var(--ink
 .canvas svg{width:100%;height:auto;display:block;border-radius:12px;background:var(--chao);border:1px solid var(--line);touch-action:none}
 .salvo{font-size:12px;font-weight:800;color:var(--ok)}
 /* teste */
-.tst{display:grid;grid-template-columns:minmax(250px,300px) minmax(250px,320px) minmax(290px,340px);gap:14px;align-items:start;justify-content:center}
-@media (max-width:1020px){.tst{grid-template-columns:1fr 1fr}}
+.colx{display:flex;flex-direction:column;gap:14px}
+.foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:9px}
+.foto b{z-index:1}
+.ft .dt{font-size:11.5px;color:var(--mut);font-weight:700;line-height:1.25}
+span.gt{border:1px solid var(--line);border-radius:12px;font-weight:800}
+.tst{display:grid;grid-template-columns:minmax(250px,320px) minmax(290px,340px);gap:14px;align-items:start;justify-content:center}
+@media (max-width:1020px){.tst{grid-template-columns:minmax(250px,320px) minmax(290px,340px)}}
 @media (max-width:660px){.tst{grid-template-columns:1fr}}
 .menu{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
 .menu button{min-height:34px;padding:5px 9px;font-size:13px}
@@ -163,8 +168,8 @@ body.full .tela{height:100%;border-radius:0;background:none;padding:0 0 max(8px,
 <div class="wrap">
   <header>
     <div>
-      <h1>Salão do garçom <small style="font:700 12px var(--f-body);color:var(--mut)">SALAO-04</small></h1>
-      <p>Mapa real do seu restaurante, desenhado em Painel &gt; Configurações &gt; Salão. Os pedidos abaixo ainda são de teste.</p>
+      <h1>Salão do garçom <small style="font:700 12px var(--f-body);color:var(--mut)">SALAO-05</small></h1>
+      <p>Mapa real do seu restaurante, desenhado em Painel &gt; Configurações &gt; Salão. Os pedidos prontos da cozinha chegam aqui sozinhos.</p>
     </div>
     <a class="btn-l" href="painel.html">Editar o salão no painel</a>
   </header>
@@ -172,30 +177,20 @@ body.full .tela{height:100%;border-radius:0;background:none;padding:0 0 max(8px,
   <section id="t2">
     <div class="tst">
       <div class="ctrl" id="ctrl"><div class="ctrlTop"><button class="sm" id="bEd" type="button">Editar salão (painel)</button><button class="sm pri" id="bFecha" type="button">Voltar ao mapa</button></div>
+      <div class="colx">
       <div class="pan">
-        <h2>Novo pedido <small>garçom ou cliente</small></h2>
-        <label class="hint" for="selMesa" style="display:block;margin-bottom:4px">Mesa</label>
-        <select id="selMesa"></select>
-        <div class="menu" id="menu"></div>
-        <div class="carrinho" id="carr"></div>
-        <input id="obs" type="text" maxlength="60" placeholder="Observação do pedido (ex.: sem coentro)">
-        <div class="row" style="margin-top:8px"><button class="pri" id="bEnv" type="button">Enviar à cozinha</button><button id="bRnd" type="button">Pedido aleatório</button></div>
-        <div class="row" style="margin-top:8px"><button id="bCham" type="button">Chamar garçom (mesa acima)</button></div>
-        <div class="row" style="margin-top:8px"><button class="sm" id="bEx3" type="button">Exemplo: 3 pedidos</button><button class="sm" id="bReset" type="button">Limpar tudo</button></div>
-      </div>
-      <div class="pan">
-        <h2>Cozinha <small id="cozInfo"></small></h2>
-        <div class="row" style="margin-bottom:8px"><button class="sm" id="bTodos" type="button">Marcar todos como prontos</button></div>
-        <div id="coz"></div>
-        <h2 style="margin-top:6px">Balcão de saída <small>vagas numeradas</small></h2>
-        <p class="hint">A cozinha coloca o prato na vaga que o sistema indicar. Basta um adesivo numerado no balcão, sem papel impresso.</p>
-        <div class="balcao" id="balc"></div>
-        <h2 style="margin-top:14px">Fila de garçons <small>como a dos motoboys</small></h2>
+        <h2>Fila de garçons <small>como a dos motoboys</small></h2>
         <p class="hint">Pedido pronto vai para o garçom livre mais antigo da fila. Quem está em rota não recebe pedido novo.</p>
         <div id="fila"></div>
       </div>
+      <div class="pan">
+        <h2>Balcão de saída <small>vagas numeradas</small></h2>
+        <p class="hint">A cozinha coloca o prato na vaga que o sistema indicar. Basta um adesivo numerado no balcão, sem papel impresso.</p>
+        <div class="balcao" id="balc"></div>
       </div>
-      <div class="phonecol"><div class="gbar"><div class="gtabs" id="gtabs"></div><button class="sm" id="bCtrl" type="button">Pedidos</button><button class="sm" id="bFull" type="button">Tela cheia</button><button class="sm" id="bSair" type="button">Sair</button></div>
+      </div>
+      </div>
+      <div class="phonecol"><div class="gbar"><div class="gtabs" id="gtabs"></div><button class="sm" id="bCtrl" type="button">Fila e balcão</button><button class="sm" id="bFull" type="button">Tela cheia</button><button class="sm" id="bSair" type="button">Sair</button></div>
         <div class="celular"><div class="tela" id="app" aria-live="polite"></div></div>
       </div>
     </div>
@@ -204,15 +199,11 @@ body.full .tela{height:100%;border-radius:0;background:none;padding:0 0 max(8px,
 
 <script>
 (function(){
-  var KEY='lf_salao_teste_v2', PXM=25, FATOR=1.3;
+  var PXM=25, FATOR=1.3;
   var TIPOS={
     mesa:{nome:'Mesa'}, balcao:{nome:'Balcão de saída',w:110,h:30,label:'BALCÃO'}, cozinha:{nome:'Cozinha e bar',w:96,h:230,label:'COZINHA'},
     banheiro:{nome:'Banheiro',w:52,h:40,label:'WC'}, entrada:{nome:'Entrada',w:84,h:16,label:'ENTRADA'}, saida:{nome:'Saída',w:84,h:16,label:'SAÍDA'}
   };
-  var MENU=[
-    {nome:'Filé Mignon 500g',foto:'🥩',tipo:'Prato quente'},{nome:'Picanha na Chapa',foto:'🥩',tipo:'Prato quente'},{nome:'Moqueca de Peixe',foto:'🍲',tipo:'Prato quente'},{nome:'Risoto de Cogumelos',foto:'🍚',tipo:'Prato quente'},
-    {nome:'Salada de Folhas',foto:'🥗',tipo:'Salada'},{nome:'Batata Rústica',foto:'🍟',tipo:'Porção'},{nome:'Cerveja Heineken 600ml',foto:'🍺',tipo:'Bebida'},{nome:'Suco de Laranja',foto:'🧃',tipo:'Bebida'},{nome:'Pudim de Leite',foto:'🍮',tipo:'Sobremesa'}
-  ];
   var CORES=['#e03131','#1971c2','#2f9e44','#e67700','#7048e8','#0c8599','#d6336c','#495057'];
   var NV=8;
   function $(id){return document.getElementById(id);}
@@ -269,160 +260,125 @@ body.full .tela{height:100%;border-radius:0;background:none;padding:0 0 max(8px,
     return s;
   }
 
-  /* ---------- pedidos, garçons e fila ---------- */
-  var P=[], C=[], seq=1, cseq=1, carr=[], tick=0, gv=1, G=[];
-  function novosG(){ G=[{id:1,nome:'Ana'},{id:2,nome:'Bia'},{id:3,nome:'Caio'}].map(function(g){ g.fase='livre'; g.livre=++tick; g.pos=null; g.sheet=0; g.av=''; return g; }); }
-  novosG();
-  function gar(id){ return G.filter(function(g){return g.id===id;})[0]; }
-  function novoItem(nome,q,obs){ var m=MENU.filter(function(x){return x.nome===nome;})[0]||{tipo:'Prato',foto:'🍽️'}; return {q:q||1,nome:nome,tipo:m.tipo,foto:m.foto,obs:obs||''}; }
-  function criaPedido(mesaN,itens){ P.push({id:seq++,mesa:mesaN,itens:itens,st:'novo',vaga:0,pego:false,t:0,g:0}); drawT(); }
-  function criaChamado(mesaN){ if(!mesaN||C.some(function(c){return c.mesa===mesaN&&!c.feito;})) return; C.push({id:cseq++,mesa:mesaN,g:0,feito:false,t:++tick}); dispatch(); drawT(); }
-  function iniciar(id){ P.forEach(function(p){ if(p.id===id) p.st='preparo'; }); drawT(); }
-  function vagaLivre(){ var us={}; P.forEach(function(p){ if(p.st==='pronto'&&!p.pego) us[p.vaga]=1; }); for(var i=1;i<=NV;i++) if(!us[i]) return i; return 0; }
-  function pronto(id){ P.forEach(function(p){ if(p.id===id&&p.st!=='pronto'&&p.st!=='entregue'){ p.st='pronto'; p.vaga=vagaLivre(); p.t=++tick; } }); dispatch(); drawT(); }
-  function avisa(g,t){ g.av=t; setTimeout(function(){ if(g.av===t){ g.av=''; drawApp(); } },4500); }
-  function naoPegos(g){ return P.filter(function(p){return p.g===g.id&&p.st==='pronto'&&!p.pego;}); }
-  function pegos(g){ return P.filter(function(p){return p.g===g.id&&p.st==='pronto'&&p.pego;}); }
-  function carga(g){ return P.filter(function(p){return p.g===g.id&&p.st==='pronto';}).length; }
-  function livres(){ return G.filter(function(g){return g.fase==='livre';}).sort(function(a,b){return a.livre-b.livre;}); }
-  /* regra da fila: pedido novo vai para o garçom livre mais antigo; quem está em rota não recebe */
-  function dispatch(){
-    var fila=[];
-    P.forEach(function(p){ if(p.st==='pronto'&&!p.g&&!p.pego) fila.push({k:'p',o:p,t:p.t}); });
-    C.forEach(function(c){ if(!c.g&&!c.feito) fila.push({k:'c',o:c,t:c.t}); });
-    fila.sort(function(a,b){return a.t-b.t;});
-    fila.forEach(function(f){
-      var g=livres()[0];
-      if(f.k==='p'){
-        if(!g) g=G.filter(function(x){return x.fase==='balcao';}).sort(function(a,b){return carga(a)-carga(b);})[0];
-        if(!g) return;
-        f.o.g=g.id; if(g.fase==='livre'){ g.fase='balcao'; g.pos=null; }
-        avisa(g,'Pedido #'+f.o.id+' pronto · Mesa '+f.o.mesa+'. Vá ao balcão.');
-      } else {
-        if(!g) return; f.o.g=g.id; g.fase='rota'; avisa(g,'Mesa '+f.o.mesa+' chamou o garçom.');
-      }
+  /* ---------- estado real vindo do Worker (fila de garçons, pedidos prontos, chamados) ---------- */
+  var ST=null, ME={fase:'livre',pos:0,nome:'',fila:0}, sheet='', visto=null, avisoTxt='', avisoT=0, erroNet=false, busy=false;
+  function token(){ var t=''; try{ t=localStorage.getItem('dd_jwt')||''; }catch(e){} return t; }
+  function chama(path,metodo,corpo){
+    return fetch(API+path,{method:metodo||'GET',headers:{'Authorization':'Bearer '+token(),'Content-Type':'application/json'},body:corpo?JSON.stringify(corpo):undefined}).then(function(r){
+      if(r.status===401) throw new Error('login'); return r.json();
     });
   }
-  function grupos(g){
+  function naoPegos(){ return ST?ST.pedidos.filter(function(p){return !p.pego;}):[]; }
+  function pegos(){ return ST?ST.pedidos.filter(function(p){return p.pego;}):[]; }
+  function grupos(){
     var m={},o=[];
     function pega(n){ if(!m[n]){ m[n]={mesa:n,itens:[],ped:[],cham:null}; o.push(m[n]); } return m[n]; }
-    pegos(g).forEach(function(p){ var s=pega(p.mesa); s.ped.push(p); s.itens=s.itens.concat(p.itens); });
-    C.forEach(function(c){ if(c.g===g.id&&!c.feito) pega(c.mesa).cham=c; });
+    pegos().forEach(function(p){ var s=pega(p.mesa); s.ped.push(p); s.itens=s.itens.concat(p.itens); });
+    if(ST) ST.chamados.forEach(function(c){ pega(c.mesa).cham=c; });
     return o;
   }
   function nn(gs,ini){ var rest=gs.slice(),cur=ini,out=[],tot=0; while(rest.length){ var bi=0,bd=1e9; rest.forEach(function(s,i){ var m=mesaPorN(s.mesa); if(!m) return; var d=dist(cur,m); if(d<bd){bd=d;bi=i;} }); var s=rest.splice(bi,1)[0], m=mesaPorN(s.mesa); s.d=m?bd:0; tot+=s.d; if(m) cur=m; out.push(s); } return {rota:out,total:tot}; }
   /* a linha sempre parte da última entrega; do balcão só na saída inicial */
-  function paradas(g){ var bal=balcao(), ini=(g.fase==='rota'&&g.pos&&mesaPorN(g.pos))||bal, r=nn(grupos(g),ini); r.ini=ini; return r; }
-  function pegar(g,id){ P.forEach(function(p){ if(p.id===id&&p.g===g.id&&p.st==='pronto') p.pego=true; }); g.pos=null; g.sheet=0; drawT(); }
-  function livraSe(g){ if(!paradas(g).rota.length){ g.fase='livre'; g.livre=++tick; } }
-  function sair(g){ P.forEach(function(p){ if(p.g===g.id&&p.st==='pronto'&&!p.pego) p.g=0; }); g.fase='rota'; g.sheet=0; livraSe(g); dispatch(); drawT(); }
-  function conclui(g,n){ P.forEach(function(p){ if(p.g===g.id&&p.mesa===n&&p.st==='pronto'&&p.pego) p.st='entregue'; }); C.forEach(function(c){ if(c.g===g.id&&c.mesa===n) c.feito=true; }); g.pos=n; livraSe(g); dispatch(); drawT(); }
+  function paradas(){ var bal=balcao(), ini=(ME.fase==='rota'&&ME.pos&&mesaPorN(ME.pos))||bal, r=nn(grupos(),ini); r.ini=ini; return r; }
 
-  function menuUI(){
-    var ms=mesas(); $('selMesa').innerHTML=ms.length?ms.map(function(m){return '<option value="'+m.n+'">Mesa '+m.n+' · '+zona(m)+'</option>';}).join(''):'<option value="">Cadastre mesas no passo 1</option>';
-    $('menu').innerHTML=MENU.map(function(m,i){ return '<button type="button" data-m="'+i+'">+ '+esc(m.nome)+'</button>'; }).join('');
-    drawCarr();
+  function atualiza(d){
+    ST=d; ME=d.eu; erroNet=false;
+    var ids={}; d.pedidos.forEach(function(p){ if(!p.pego) ids['p'+p.id]=1; }); d.chamados.forEach(function(c){ ids['c'+c.id]=1; });
+    if(visto){ var novo=null; Object.keys(ids).forEach(function(k){ if(!visto[k]) novo=k; });
+      if(novo){ var p0=novo.charAt(0)==='p'?d.pedidos.filter(function(p){return 'p'+p.id===novo;})[0]:null, c0=novo.charAt(0)==='c'?d.chamados.filter(function(c){return 'c'+c.id===novo;})[0]:null;
+        avisoTxt=p0?('Pedido pronto · Mesa '+p0.mesa+'. Vá ao balcão.'):('Mesa '+(c0?c0.mesa:'')+' chamou o garçom.');
+        clearTimeout(avisoT); avisoT=setTimeout(function(){ avisoTxt=''; drawApp(); },5000); try{ if(navigator.vibrate) navigator.vibrate([200,100,200]); }catch(e){} } }
+    visto=ids;
+    if(sheet&&!naoPegos().some(function(p){return p.id===sheet;})) sheet='';
+    drawT();
   }
-  function drawCarr(){
-    $('carr').innerHTML=carr.length?carr.map(function(c,i){ return '<div class="itc"><span>'+c.q+'x '+esc(c.nome)+'</span><button class="sm" type="button" data-cm="'+i+'">-</button><button class="sm" type="button" data-cp="'+i+'">+</button></div>'; }).join(''):'<div class="vazio">Toque nos itens acima para montar o pedido.</div>';
-  }
-  function drawCoz(){
-    var nv=P.filter(function(p){return p.st==='novo';}), pr=P.filter(function(p){return p.st==='preparo';});
-    function card(p){ var lis=p.itens.map(function(i){ return '<li>'+i.q+'x '+esc(i.nome)+(i.obs?'<em>'+esc(i.obs)+'</em>':'')+'</li>'; }).join(''); var bt=p.st==='novo'?'<button class="sm" type="button" data-ini="'+p.id+'">Iniciar preparo</button>':'<button class="sm pri" type="button" data-pro="'+p.id+'">Pedido pronto</button>'; return '<div class="ped'+(p.st==='preparo'?' prep':'')+'"><div class="top">#'+p.id+' · Mesa '+p.mesa+'</div><ul>'+lis+'</ul>'+bt+'</div>'; }
-    $('coz').innerHTML='<div class="col"><b>Novos</b>'+(nv.map(card).join('')||'<div class="vazio">Nenhum pedido novo.</div>')+'</div><div class="col"><b>Em preparo</b>'+(pr.map(card).join('')||'<div class="vazio">Nada em preparo.</div>')+'</div>';
-    $('cozInfo').textContent=(nv.length+pr.length)+' em andamento';
-    var oc={}; P.forEach(function(p){ if(p.st==='pronto'&&!p.pego&&p.vaga) oc[p.vaga]=p; });
-    var h=''; for(var i=1;i<=NV;i++){ var o=oc[i]; h+='<div class="vaga'+(o?' on':'')+'"'+(o?' style="background:'+CORES[i-1]+';border-color:'+CORES[i-1]+'"':'')+'><b>'+i+'</b>'+(o?'Mesa '+o.mesa:'livre')+'</div>'; }
-    $('balc').innerHTML=h;
-  }
-  function drawFila(){
-    var lv=livres(), h='';
-    lv.forEach(function(g,i){ h+='<div class="gl"><b>'+(i+1)+'º</b><span class="gn">'+g.nome+'</span><span class="st f-livre">livre na fila</span></div>'; });
-    G.filter(function(g){return g.fase!=='livre';}).forEach(function(g){
-      var t; if(g.fase==='balcao') t='no balcão · '+naoPegos(g).length+' esperando, '+pegos(g).length+' na bandeja'; else { var n=paradas(g).rota.length; t='em rota · '+n+(n===1?' parada':' paradas'); }
-      h+='<div class="gl"><b>·</b><span class="gn">'+g.nome+'</span><span class="st f-'+g.fase+'">'+t+'</span></div>';
+  function poll(){
+    if(!PL.ok||busy||document.hidden) return;
+    chama('/painel/salao-estado').then(function(d){ if(!d||!d.ok) throw new Error('erro'); atualiza(d); }).catch(function(e){
+      if(e.message==='login'){ PL={ok:false,msg:'Sua sessão expirou. Entre de novo no painel.'}; } else erroNet=true; drawT();
     });
-    var pe=P.filter(function(p){return p.st==='pronto'&&!p.g&&!p.pego;}).length, pc=C.filter(function(c){return !c.g&&!c.feito;}).length;
-    if(pe||pc) h+='<div class="banner">Esperando um garçom ficar livre: '+pe+(pe===1?' pedido':' pedidos')+', '+pc+(pc===1?' chamado':' chamados')+'.</div>';
-    $('fila').innerHTML=h;
+  }
+  function acao(corpo){
+    if(busy) return; busy=true;
+    chama('/painel/salao-acao','POST',corpo).then(function(d){ busy=false; if(!d||!d.ok) throw new Error((d&&d.mensagem)||'erro'); poll(); }).catch(function(e){ busy=false; avisoTxt=e.message==='login'?'Sessão expirada. Entre de novo no painel.':(e.message||'Não consegui. Tente de novo.'); clearTimeout(avisoT); avisoT=setTimeout(function(){ avisoTxt=''; drawApp(); },4000); drawApp(); });
   }
 
   /* ---------- celular do garçom: mapa na vertical, balcão na base ---------- */
   function vm(p){ return {x:p.y,y:600-p.x}; }
   function LV(){ return L.map(function(p){ var q={},k; for(k in p) q[k]=p[k]; q.x=p.y; q.y=600-p.x; if(p.t!=='mesa'){ q.w=p.h; q.h=p.w; } return q; }); }
-  function mapaV(g){
-    var bal=balcao(), b=vm(bal), pr=paradas(g), ip=vm(pr.ini), idx={}, tipo={}, ex='';
+  function mapaV(){
+    var bal=balcao(), b=vm(bal), pr=paradas(), ip=vm(pr.ini), idx={}, tipo={}, ex='';
     var pts=pr.rota.map(function(s){ var m=mesaPorN(s.mesa); return m?vm(m):null; }).filter(Boolean);
     pr.rota.forEach(function(s,i){ idx[s.mesa]=i+1; tipo[s.mesa]=s.ped.length?'ent':'cham'; });
-    var foco=(g.fase==='rota'&&pr.rota.length)?pr.rota[0].mesa:0;
+    var foco=(ME.fase==='rota'&&pr.rota.length)?pr.rota[0].mesa:0;
     pr.rota.forEach(function(s,i){ var m=mesaPorN(s.mesa); if(!m) return; var q=vm(m), c=tipo[s.mesa]==='cham'?'#1971c2':'var(--acc)'; ex+='<circle cx="'+(q.x+20)+'" cy="'+(q.y-20)+'" r="11" fill="var(--card)" stroke="'+c+'" stroke-width="2"/><text x="'+(q.x+20)+'" y="'+(q.y-16)+'" text-anchor="middle" font-size="12" font-weight="800" fill="'+c+'">'+(i+1)+'</text>'; });
-    var un=naoPegos(g);
-    un.forEach(function(p,i){ var row=Math.floor(i/5), nr=Math.min(5,un.length-row*5), x=b.x+((i%5)-(nr-1)/2)*40, y=b.y+(row?34:0), cor=p.vaga?CORES[p.vaga-1]:'#495057';
-      ex+='<g data-bub="'+p.id+'" style="cursor:pointer"><circle class="anel" cx="'+x+'" cy="'+y+'" r="16" fill="none" stroke="'+cor+'" stroke-width="3"/><circle cx="'+x+'" cy="'+y+'" r="16" fill="'+cor+'" stroke="#fff" stroke-width="3"/><text x="'+x+'" y="'+(y+5)+'" text-anchor="middle" font-size="13" font-weight="800" fill="#fff" style="pointer-events:none">#'+p.id+'</text></g>'; });
-    var gm=g.pos&&g.fase==='rota'?mesaPorN(g.pos):null, vx, vy;
+    var un=naoPegos();
+    un.forEach(function(p,i){ var row=Math.floor(i/5), nr=Math.min(5,un.length-row*5), x=b.x+((i%5)-(nr-1)/2)*40, y=b.y+(row?34:0), cor=p.vaga?CORES[(p.vaga-1)%8]:'#495057';
+      ex+='<g data-bub="'+esc(p.id)+'" style="cursor:pointer"><circle class="anel" cx="'+x+'" cy="'+y+'" r="16" fill="none" stroke="'+cor+'" stroke-width="3"/><circle cx="'+x+'" cy="'+y+'" r="16" fill="'+cor+'" stroke="#fff" stroke-width="3"/><text x="'+x+'" y="'+(y+5)+'" text-anchor="middle" font-size="13" font-weight="800" fill="#fff" style="pointer-events:none">#'+esc(p.num)+'</text></g>'; });
+    var gm=ME.pos&&ME.fase==='rota'?mesaPorN(ME.pos):null, vx, vy;
     if(gm){ var q2=vm(gm); vx=q2.x-20; vy=q2.y+20; } else { vx=b.x+128; vy=b.y; }
     ex+='<circle cx="'+vx+'" cy="'+vy+'" r="8" fill="var(--ok)" stroke="var(--card)" stroke-width="2.5"/><text x="'+vx+'" y="'+(vy-13)+'" text-anchor="middle" font-size="10" font-weight="800" fill="var(--ok)">você</text>';
     var svg=planta({list:LV(),vert:true,rota:pts,ini:ip,extra:ex,mesaCtx:function(p){ if(!idx[p.n]) return null; var f=foco===p.n, c=tipo[p.n]==='cham'?'#1971c2':'var(--acc)'; return {cor:f?c:'var(--card)',borda:c,ink:f?'#fff':c}; }});
     return '<div class="mapa"><svg viewBox="0 0 360 600" role="img" aria-label="Mapa do salão com o balcão na base">'+svg+'</svg></div>';
   }
-  function chipVaga(v){ return '<span class="chipv" style="background:'+(v?CORES[v-1]:'#495057')+'"><small>VAGA</small>'+(v||'?')+'</span>'; }
-  function fotos(itens,mini){ return '<div class="fotos'+(mini?' mini':'')+'">'+itens.map(function(it){ return '<div class="ft"><div class="foto">'+it.foto+'<b>'+it.q+'x</b></div><div class="nm">'+esc(it.nome)+'</div>'+(it.obs?'<i>'+esc(it.obs)+'</i>':'')+'</div>'; }).join('')+'</div>'; }
-  function rotulo(g){ if(g.fase==='livre') return 'Livre · '+(livres().indexOf(g)+1)+'º da fila'; return g.fase==='balcao'?'No balcão':'Em rota'; }
-  function painelV(g){
-    var un=naoPegos(g), pr=paradas(g), pg=pegos(g), h='<div class="painel">';
-    var sh=g.sheet&&un.filter(function(p){return p.id===g.sheet;})[0];
+  function chipVaga(v){ return '<span class="chipv" style="background:'+(v?CORES[(v-1)%8]:'#495057')+'"><small>VAGA</small>'+(v||'?')+'</span>'; }
+  function fotos(itens,mini){ return '<div class="fotos'+(mini?' mini':'')+'">'+itens.map(function(it){ return '<div class="ft"><div class="foto">🍽️'+(it.foto?'<img src="'+esc(it.foto)+'" alt="" loading="lazy" onerror="this.remove()">':'')+'<b>'+it.q+'x</b></div><div class="nm">'+esc(it.nome)+'</div>'+(it.det?'<span class="dt">'+esc(it.det)+'</span>':'')+(it.obs?'<i>'+esc(it.obs)+'</i>':'')+'</div>'; }).join('')+'</div>'; }
+  function rotulo(){ if(ME.fase==='livre') return 'Livre · '+(ME.fila||1)+'º da fila'; return ME.fase==='balcao'?'No balcão':'Em rota'; }
+  function painelV(){
+    var un=naoPegos(), pr=paradas(), pg=pegos(), h='<div class="painel">';
+    var sh=sheet&&un.filter(function(p){return p.id===sheet;})[0];
     if(sh){
-      h+='<div class="card agora"><div class="h">'+chipVaga(sh.vaga)+'<span class="mesaN">#'+sh.id+'</span><span class="zona">vai para a <b>Mesa '+sh.mesa+'</b></span></div>'+fotos(sh.itens)+'<p class="hint" style="margin:0">Confira as fotos e as quantidades no balcão.</p><button class="pri" type="button" data-peg="'+sh.id+'">Peguei</button><button class="sm" type="button" data-fechar="1">Voltar ao mapa</button></div>';
-    } else if(g.fase==='rota'&&pr.rota.length){
+      h+='<div class="card agora"><div class="h">'+chipVaga(sh.vaga)+'<span class="mesaN">#'+esc(sh.num)+'</span><span class="zona">vai para a <b>Mesa '+sh.mesa+'</b></span></div>'+fotos(sh.itens)+(sh.obs?'<div class="banner" style="color:var(--bad)">'+esc(sh.obs)+'</div>':'')+'<p class="hint" style="margin:0">Confira as fotos e as quantidades no balcão.</p><button class="pri" type="button" data-peg="'+esc(sh.id)+'">Peguei</button><button class="sm" type="button" data-fechar="1">Voltar ao mapa</button></div>';
+    } else if(ME.fase==='rota'&&pr.rota.length){
       var s=pr.rota[0], m=mesaPorN(s.mesa), rest=pr.rota.slice(1).map(function(x){return 'Mesa '+x.mesa;}).join(' · ');
-      h+='<div class="card agora"><div class="h"><span class="tag">AGORA</span><span class="mesaN">Mesa '+s.mesa+'</span><span class="zona">'+(m?zona(m):'')+' · '+Math.round(s.d)+' m</span></div>';
+      h+='<div class="card agora"><div class="h"><span class="tag">AGORA</span><span class="mesaN">Mesa '+s.mesa+'</span><span class="zona">'+(m?zona(m)+' · '+Math.round(s.d)+' m':'fora do mapa')+'</span></div>';
       if(s.cham) h+='<span class="tag" style="background:#1971c2;align-self:flex-start">O CLIENTE CHAMOU O GARÇOM</span>';
       if(s.itens.length) h+=fotos(s.itens,true);
       h+='<button class="pri" type="button" data-ent="'+s.mesa+'">'+(s.ped.length?'Entreguei na Mesa '+s.mesa:'Atendi a Mesa '+s.mesa)+'</button></div>';
       if(rest) h+='<div class="resumo">Depois: '+esc(rest)+'</div>';
-    } else if(g.fase==='balcao'){
+    } else if(ME.fase==='balcao'){
       h+='<div class="passo">No balcão: '+un.length+(un.length===1?' pedido':' pedidos')+'</div><p class="hint" style="margin:0">Toque na bolinha numerada do mapa, confira as fotos e toque em Peguei.</p>';
-      if(un.length) h+='<div class="lnks">'+un.map(function(p){ return '<button class="sm" type="button" data-bub="'+p.id+'">#'+p.id+' · Mesa '+p.mesa+' · vaga '+p.vaga+'</button>'; }).join('')+'</div>';
-      if(pg.length) h+='<div class="resumo">Na bandeja: '+pg.map(function(p){return '#'+p.id+' (Mesa '+p.mesa+')';}).join(', ')+'</div>';
+      if(un.length) h+='<div class="lnks">'+un.map(function(p){ return '<button class="sm" type="button" data-bub="'+esc(p.id)+'">#'+esc(p.num)+' · Mesa '+p.mesa+' · vaga '+p.vaga+'</button>'; }).join('')+'</div>';
+      if(pg.length) h+='<div class="resumo">Na bandeja: '+pg.map(function(p){return '#'+esc(p.num)+' (Mesa '+p.mesa+')';}).join(', ')+'</div>';
       h+='<button class="pri" type="button" data-sair="1"'+(pg.length?'':' disabled')+'>'+(!pg.length?'Pegue ao menos um pedido':(un.length?'Sair e deixar '+un.length+' no balcão':'Sair para entregar'))+'</button>';
-    } else h+='<div class="zero">Você está livre ('+(livres().indexOf(g)+1)+'º da fila).<br>Quando a cozinha liberar um pedido para você, ele aparece como bolinha no balcão.</div>';
+    } else h+='<div class="zero">Você está livre ('+(ME.fila||1)+'º da fila).<br>Quando um pedido ficar pronto, ele aparece como bolinha no balcão.</div>';
     return h+'</div>';
   }
   function drawApp(){
-    var g=gar(gv), bal=balcao();
+    var bal=balcao();
     if(!PL.ok){ $('gtabs').innerHTML=''; $('app').innerHTML='<div class="zero">'+esc(PL.msg)+'<br><br><a class="btn-l" href="painel.html">Abrir o painel</a></div>'; return; }
-    $('gtabs').innerHTML=G.map(function(x){ var nu=naoPegos(x).length; return '<button type="button" class="gt'+(x.id===gv?' on':'')+'" data-gv="'+x.id+'"><span class="dot f-'+x.fase+'"></span>'+x.nome+(nu?'<em>'+nu+'</em>':'')+'</button>'; }).join('');
-    var h='<div class="barra"><b>Garçom · '+g.nome+'</b><span class="st f-'+g.fase+'">'+esc(rotulo(g))+'</span></div>';
-    if(g.av) h+='<div class="aviso">'+esc(g.av)+'</div>';
+    if(!ST){ $('gtabs').innerHTML=''; $('app').innerHTML='<div class="zero">Conectando…</div>'; return; }
+    $('gtabs').innerHTML='<span class="gt on"><span class="dot f-'+ME.fase+'"></span>'+esc(ME.nome||'Garçom')+'</span>';
+    var h='<div class="barra"><b>Garçom · '+esc(ME.nome||'')+'</b><span class="st f-'+ME.fase+'">'+esc(rotulo())+'</span></div>';
+    if(erroNet) h+='<div class="banner">Sem conexão. Tentando de novo…</div>';
+    if(avisoTxt) h+='<div class="aviso">'+esc(avisoTxt)+'</div>';
     if(!bal){ $('app').innerHTML=h+'<div class="zero">Falta o balcão de saída na planta.<br>Desenhe o balcão em Painel &gt; Configurações &gt; Salão.</div>'; return; }
-    $('app').innerHTML=h+mapaV(g)+painelV(g);
+    $('app').innerHTML=h+mapaV()+painelV();
   }
-  function drawT(){ drawCoz(); drawFila(); drawApp(); }
+  function drawLado(){
+    if(!ST){ $('fila').innerHTML='<div class="vazio">Conectando…</div>'; $('balc').innerHTML=''; return; }
+    var h=''; ST.garcons.forEach(function(g){
+      var t=g.fase==='livre'?'livre na fila':(g.fase==='balcao'?'no balcão · '+g.n+(g.n===1?' pedido':' pedidos'):'em rota · '+g.n+(g.n===1?' parada':' paradas'));
+      h+='<div class="gl"><b>'+(g.fila?g.fila+'º':'·')+'</b><span class="gn">'+esc(g.nome)+'</span><span class="st f-'+g.fase+'">'+t+'</span></div>'; });
+    var pe=ST.espera.pedidos, pc=ST.espera.chamados;
+    if(pe||pc) h+='<div class="banner">Esperando um garçom ficar livre: '+pe+(pe===1?' pedido':' pedidos')+', '+pc+(pc===1?' chamado':' chamados')+'.</div>';
+    $('fila').innerHTML=h||'<div class="vazio">Nenhum garçom conectado.</div>';
+    var oc={}; ST.balcao.forEach(function(b){ oc[b.vaga]=b; });
+    var hb=''; for(var i=1;i<=NV;i++){ var o=oc[i]; hb+='<div class="vaga'+(o?' on':'')+'"'+(o?' style="background:'+CORES[i-1]+';border-color:'+CORES[i-1]+'"':'')+'><b>'+i+'</b>'+(o?'Mesa '+o.mesa:'livre')+'</div>'; }
+    $('balc').innerHTML=hb;
+  }
+  function drawT(){ drawLado(); drawApp(); }
 
   document.addEventListener('click',function(e){
-    var t=e.target.closest('[data-bub]'); if(!t) return; var g=gar(gv); g.sheet=+t.getAttribute('data-bub'); drawApp();
+    var t=e.target.closest('[data-bub]'); if(!t) return; sheet=t.getAttribute('data-bub'); drawApp();
   });
   document.addEventListener('click',function(e){
     var b=e.target.closest('button'); if(!b) return; var d=b.dataset;
-    if(d.m!==undefined){ var m=MENU[+d.m], f=carr.filter(function(c){return c.nome===m.nome;})[0]; if(f) f.q++; else carr.push({q:1,nome:m.nome}); drawCarr(); }
-    else if(d.cp!==undefined){ carr[+d.cp].q++; drawCarr(); }
-    else if(d.cm!==undefined){ var c=carr[+d.cm]; c.q--; if(c.q<1) carr.splice(+d.cm,1); drawCarr(); }
-    else if(d.ini) iniciar(+d.ini);
-    else if(d.pro) pronto(+d.pro);
-    else if(d.gv){ gv=+d.gv; drawApp(); }
-    else if(d.peg) pegar(gar(gv),+d.peg);
-    else if(d.fechar){ gar(gv).sheet=0; drawApp(); }
-    else if(d.sair) sair(gar(gv));
-    else if(d.ent) conclui(gar(gv),+d.ent);
+    if(d.peg){ sheet=''; acao({acao:'pegar',id:d.peg}); }
+    else if(d.fechar){ sheet=''; drawApp(); }
+    else if(d.sair) acao({acao:'sair'});
+    else if(d.ent) acao({acao:'entregar',mesa:d.ent});
   });
-  $('bEnv').onclick=function(){ var mn=parseInt($('selMesa').value,10); if(!mn||!carr.length){ $('carr').insertAdjacentHTML('beforeend','<div class="vazio" style="color:var(--bad)">Escolha a mesa e ao menos um item.</div>'); return; } var ob=$('obs').value.trim(); criaPedido(mn,carr.map(function(c,i){ return novoItem(c.nome,c.q,i===0?ob:''); })); carr=[]; $('obs').value=''; drawCarr(); };
-  $('bCham').onclick=function(){ criaChamado(parseInt($('selMesa').value,10)); };
-  function rndMesa(){ var ms=mesas(); return ms.length?ms[Math.floor(Math.random()*ms.length)].n:0; }
-  function rndItens(){ var k=1+Math.floor(Math.random()*3), o=[]; for(var i=0;i<k;i++){ var m=MENU[Math.floor(Math.random()*MENU.length)]; o.push(novoItem(m.nome,1+Math.floor(Math.random()*2),Math.random()<.25?'sem cebola':'')); } return o; }
-  $('bRnd').onclick=function(){ var m=rndMesa(); if(m) criaPedido(m,rndItens()); };
-  $('bEx3').onclick=function(){ var ms=mesas(); if(ms.length<3) return; [0,Math.floor(ms.length/2),ms.length-1].forEach(function(i){ criaPedido(ms[i].n,rndItens()); }); };
-  $('bTodos').onclick=function(){ P.filter(function(p){return p.st==='novo'||p.st==='preparo';}).map(function(p){return p.id;}).forEach(pronto); };
-  $('bReset').onclick=function(){ P=[]; C=[]; seq=1; cseq=1; carr=[]; novosG(); gv=1; drawCarr(); drawT(); };
 
   var fullPref=null;
   function modoFull(){ var on=fullPref===null?window.innerWidth<=700:fullPref; document.body.classList.toggle('full',on); }
@@ -432,6 +388,7 @@ body.full .tela{height:100%;border-radius:0;background:none;padding:0 0 max(8px,
   $('bFecha').onclick=function(){ $('ctrl').classList.remove('open'); };
   $('bEd').onclick=function(){ location.href='painel.html'; };
   window.addEventListener('resize',modoFull);
-  carregaPlanta().then(function(){ menuUI(); drawT(); modoFull(); });
+  document.addEventListener('visibilitychange',function(){ if(!document.hidden) poll(); });
+  carregaPlanta().then(function(){ modoFull(); drawT(); poll(); setInterval(poll,3000); });
 })();
 </script>
