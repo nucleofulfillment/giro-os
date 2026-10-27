@@ -1,4 +1,4 @@
-/* GIRO OS — MARCA DO RESTAURANTE (marca.js · MARCA-06)
+/* GIRO OS — MARCA DO RESTAURANTE (marca.js · MARCA-07)
    Uma logo + uma cor por restaurante, valendo pra todas as telas.
    Como a tela descobre o restaurante:
      1) pelo link:  ...html?c=cinquenta  (o aparelho guarda e nas próximas vezes já sabe)
@@ -22,8 +22,8 @@
     if(!/^#[0-9a-fA-F]{6}$/.test(c||'')) return;
     var b=rgb(c), claro=hex(mistura(b,[255,255,255],.28)), escuro=hex(mistura(b,[0,0,0],.38)), medio=hex(mistura(b,[0,0,0],.10)), s=document.documentElement.style;
     s.setProperty('--pri',medio); s.setProperty('--roxo',medio); s.setProperty('--rosa',claro); s.setProperty('--roxo-esc',escuro);
-    s.setProperty('--grad','linear-gradient(120deg,'+c+','+claro+')');
-    s.setProperty('--grad-arte','linear-gradient(115deg,'+escuro+' 0%,'+c+' 50%,'+claro+' 100%)');
+    s.setProperty('--grad',c);
+    s.setProperty('--grad-arte',c);
     var mt=document.querySelector('meta[name="theme-color"]'); if(mt) mt.setAttribute('content',c);
   }
 
