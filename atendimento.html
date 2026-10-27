@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
 <meta name="theme-color" content="#F97316">
-<title>Atendimento · GIRO-OS-ATEND-36</title>
+<title>Atendimento · GIRO-OS-ATEND-37</title>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#FBF7F5;--s1:#fff;--s3:#FBF3EE;--s4:#F5E8E0;--b2:#F2DED2;--tx:#29231E;--mu:#9E9084;--mu2:#6C6055;--pri:#D96D28;--grad:#FF5A00;--ok:#16A34A;--er:#DC2626;--am:#B45309;--f:'Manrope',-apple-system,sans-serif}
@@ -226,7 +226,7 @@ label.l.big{font-size:14px;margin-top:16px}
 </div>
 
 <div id="app" class="hide">
-  <div id="top"><div style="flex:1;min-width:0;display:flex;align-items:center;gap:12px"><b id="emp" style="flex:none">Atendimento</b><small id="usu"></small></div><button id="mpTopBtn" type="button" onclick="mpAbre()">🗺️ Atender via mapa</button><span style="font-size:10px;color:#9a8f86;font-weight:700;margin-right:8px;white-space:nowrap">ATEND-36</span><button onclick="sair()">Sair</button></div>
+  <div id="top"><div style="flex:1;min-width:0;display:flex;align-items:center;gap:12px"><b id="emp" style="flex:none">Atendimento</b><small id="usu"></small></div><button id="mpTopBtn" type="button" onclick="mpAbre()">🗺️ Atender via mapa</button><span style="font-size:10px;color:#9a8f86;font-weight:700;margin-right:8px;white-space:nowrap">ATEND-37</span><button onclick="sair()">Sair</button></div>
   <div id="chip" class="hide"><div class="t"><b id="chipT"></b><small id="chipS"></small></div><button onclick="trocaComanda()">Trocar</button></div>
 
   <!-- PEDIDO -->
@@ -553,7 +553,7 @@ function tiraItem(k){ CART.splice(k,1); if(!CART.length){ fecha(); cartBar(); } 
 function enviaPedido(){
   var b=$('pBt'); b.disabled=true; b.textContent='Enviando…'; $('pErr').textContent='';
   api('/painel/atend-pedido',{modo:COM.modo,mesa:COM.mesa,joia:COM.joia,obs:($('pObs')||{value:''}).value,liberar:COM.liberar,itens:CART.map(function(i){ return {p:i.p,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs,qty:i.qty}; })}).then(function(r){
-    if(r.ok){ var ped={num:r.num,sub:r.sub||0,mesa:COM.mesa,joia:COM.joia,nome:COM.nome,atend:D.usuario,criado:Date.now(),obs:($('pObs')||{value:''}).value,modo:COM.modo,l:CART.map(function(i){ return {p:i.p,nome:i.nome,qty:i.qty,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs}; })}; CART=[]; fecha(); cartBar(); toast('Pedido #'+plab(r)+' enviado para a cozinha'); zeraComanda(); if(impOn()) imprime(ped); return; }
+    if(r.ok){ var ped={num:r.num,sub:r.sub||0,mesa:COM.mesa,joia:COM.joia,nome:COM.nome,atend:D.usuario,criado:Date.now(),obs:($('pObs')||{value:''}).value,modo:COM.modo,l:CART.map(function(i){ return {p:i.p,nome:i.nome,qty:i.qty,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs}; })}; CART=[]; fecha(); cartBar(); toast('Pedido #'+plab(r)+' enviado para a cozinha'); zeraComanda(); if(impOn()) imprimeAuto(ped); return; }
     if(r._h===401){ mostraLogin('Entre de novo.'); return; }
     b.disabled=false; b.textContent='Enviar para a cozinha'; $('pErr').innerHTML=esc(r.mensagem||'Não consegui enviar.')+(r.erro==='bloqueado'&&r.pode_liberar?'<br><button class="bt mini r" style="margin-top:8px" onclick="COM.liberar=true;enviaPedido()">Liberar mesmo assim</button>':'');
   });
@@ -666,13 +666,21 @@ function code128Svg(txt){
 }
 function impOn(){ try{ return localStorage.getItem('at_imp')!=='0'; }catch(e){ return true; } }
 function impSet(v){ try{ localStorage.setItem('at_imp',v?'1':'0'); }catch(e){} }
-function reimp(i,k){ var c=COMS[i], p=c.pedidos[k]; imprime({num:p.num,sub:p.sub||0,mesa:p.mesa||c.mesa,joia:c.joia,nome:c.nome,atend:p.atend,criado:p.criado,obs:p.obs,l:p.l||[],reimp:1}); }
+function reimp(i,k){ var c=COMS[i], p=c.pedidos[k]; imprimeAuto({num:p.num,sub:p.sub||0,mesa:p.mesa||c.mesa,joia:c.joia,nome:c.nome,atend:p.atend,criado:p.criado,obs:p.obs,l:p.l||[],reimp:1}); }
 var CSS_SLIP='.c{text-align:center}.emp{font-size:17px;font-weight:900;letter-spacing:.5px}.sub{font-size:12px;letter-spacing:3px;font-weight:700;margin-top:2px}.sp{border-top:2px dashed #000;margin:7px 0}.mesa{background:#000;color:#fff;text-align:center;font-size:34px;font-weight:900;padding:6px 4px;border-radius:6px;letter-spacing:1px;-webkit-print-color-adjust:exact;print-color-adjust:exact}.row{display:flex;justify-content:space-between;font-size:12.5px;margin:3px 0}.cli{font-size:16px;font-weight:900;margin-top:6px}.jo{display:inline-block;border:2px solid #000;border-radius:5px;padding:0 6px;font-weight:900;margin-left:4px}.it{display:flex;gap:8px;margin:7px 0;font-size:14px}.q{font-weight:900;font-size:17px;min-width:30px}.d b{font-size:15px;text-transform:uppercase}.d div{font-size:13px;margin-top:1px}.d .ob{font-weight:900;border:1.5px solid #000;border-radius:4px;padding:1px 4px;margin-top:3px}.po{font-size:13px;font-weight:700;border:2px solid #000;border-radius:5px;padding:4px 6px;margin-top:4px}.bc{text-align:center;margin-top:8px}.bc svg{max-width:100%;height:46px}.num{font-size:15px;font-weight:900;letter-spacing:2px;text-align:center}';
 function destLinha(l){ var pp=null,i; for(i=0;i<(D.prods||[]).length;i++){ if((l.p&&D.prods[i].id===l.p)||(!l.p&&D.prods[i].nome===l.nome)){ pp=D.prods[i]; break; } } var c=null; if(pp&&pp.cat){ for(i=0;i<(D.cats||[]).length;i++) if(D.cats[i].id===pp.cat) c=D.cats[i]; } return (c&&c.dest==='bar')?'bar':'cozinha'; }
-function imprime(p){
+function filaSetor(p){
   var g={cozinha:[],bar:[]}; (p.l||[]).forEach(function(l){ g[destLinha(l)].push(l); });
   var fila=[]; ['cozinha','bar'].forEach(function(s){ if(g[s].length) fila.push([s,g[s]]); }); if(!fila.length) fila.push(['cozinha',p.l||[]]);
-  imprimeFila(p,fila);
+  return fila;
+}
+function imprime(p){ imprimeFila(p,filaSetor(p)); }
+/* (ATEND-37) impressão automática: manda para a fila do Worker (o programa do restaurante imprime em cada impressora); se o programa não está ligado, imprime pelo navegador como antes */
+function imprimeAuto(p){
+  var fila=filaSetor(p);
+  api('/painel/atend-imprimir',{lab:plab(p),mesa:p.mesa,modo:p.modo,joia:p.joia,nome:p.nome,atend:p.atend,criado:p.criado,obs:p.obs,reimp:p.reimp?1:0,empresa:D.empresa||'',fila:fila.map(function(x){ return {setor:x[0],l:x[1]}; })}).then(function(r){
+    if(!(r&&r.ok&&r.agente)) imprimeFila(p,fila);
+  });
 }
 function imprimeFila(p,fila){
   var pags=[];
