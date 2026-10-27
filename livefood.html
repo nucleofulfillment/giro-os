@@ -208,13 +208,22 @@ html.claro #wzp{filter:invert(1) hue-rotate(180deg)}
 .art .tw{animation:tw 2.4s ease-in-out infinite}@keyframes tw{50%{opacity:.1}}
 #toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#fff;color:#000;font-weight:700;font-size:13px;padding:10px 16px;border-radius:99px;z-index:40;display:none;max-width:90%}
 .mc{margin:16px 0 4px;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--mut)}
+.wz .wtl2{display:flex;padding:8px 16px 4px;background:#16161a;border-top:1px solid var(--line)}
+.wz .wtl2 .wst{flex:1;text-align:center;font-size:11px;font-weight:700;color:var(--mut);cursor:pointer;position:relative}
+.wz .wtl2 .wst:not(:last-child)::after{content:'';position:absolute;top:14px;left:calc(50% + 18px);width:calc(100% - 36px);height:2px;background:#ffffff26}
+.wz .wtl2 .wst .wc{width:28px;height:28px;border-radius:50%;margin:0 auto 3px;border:2px solid #ffffff55;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:var(--mut);background:#16161a;position:relative;z-index:1}
+.wz .wtl2 .wst.done .wc{background:var(--pri);border-color:var(--pri);color:#fff}.wz .wtl2 .wst.cur .wc,.wz .wtl2 .wst.num .wc{border-color:var(--pri);color:var(--pri)}.wz .wtl2 .wst.lk{opacity:.4}
+#tlPop{background:#1e1e24;border:1px solid var(--line);border-radius:14px;margin:0 16px 6px;padding:8px 12px;max-height:30vh;overflow:auto}
+#tlPop b{font-size:11px;color:var(--mut);letter-spacing:.5px}#tlPop .pp{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-top:1px solid var(--line);font-size:14px}
+#tlPop .pp button{border:0;background:#ffffff14;color:#fff;border-radius:8px;width:28px;height:28px;font-weight:800}
+.lkd{opacity:.45}.wz .cont{width:100%;margin:10px 0 0;padding:12px;border-radius:12px;border:1.5px solid var(--pri);background:transparent;color:var(--pri);font-weight:800;font-size:14px}
 .wz .wb.mfull{overflow:hidden;display:flex;flex-direction:column;padding:12px}
 .mgrid{flex:1;min-height:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
-.mc{position:relative;cursor:pointer;min-width:0;min-height:0;border-radius:14px;overflow:hidden;background:#2a2a30 center/cover no-repeat}
-.mc .mic{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
-.mc::after{content:"";position:absolute;left:0;right:0;bottom:0;height:55%;background:linear-gradient(transparent,#000c);pointer-events:none}
-.mc .mpr{position:absolute;top:6px;left:6px;z-index:2;background:var(--pri);color:#fff;font-size:9.5px;font-weight:800;padding:2px 6px;border-radius:999px}
-.mc b{position:absolute;left:8px;right:8px;bottom:7px;z-index:2;color:#fff;text-transform:none;letter-spacing:0;font-size:12.5px;line-height:1.15;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-shadow:0 1px 3px #000a}
+.cc{position:relative;cursor:pointer;min-width:0;min-height:0;border-radius:14px;overflow:hidden;background:#2a2a30 center/cover no-repeat}
+.cc .mic{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.cc::after{content:"";position:absolute;left:0;right:0;bottom:0;height:55%;background:linear-gradient(transparent,#000c);pointer-events:none}
+.cc .mpr{position:absolute;top:6px;left:6px;z-index:2;background:var(--pri);color:#fff;font-size:9.5px;font-weight:800;padding:2px 6px;border-radius:999px}
+.cc b{position:absolute;left:8px;right:8px;bottom:7px;z-index:2;color:#fff;text-transform:none;letter-spacing:0;font-size:12.5px;line-height:1.15;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-shadow:0 1px 3px #000a}
 .mp{display:flex;gap:12px;align-items:center;padding:12px 0;border-top:1px solid var(--line);cursor:pointer}
 
 #sheet .fh{height:220px;background:#222 center/cover no-repeat;border-radius:24px 24px 0 0;position:relative}
@@ -607,9 +616,10 @@ function wPassos(){
 }
 function abreSheet(id){
   var p=D.produtos[id]; if(!p) return;
-  W={p:p,tam:null,sab:[],borda:null,add:[],qty:1,obs:'',passo:0,q:''};
+  W={p:p,tam:null,sab:[],borda:null,add:[],qty:1,obs:'',passo:0,q:'',sabAck:0,borOk:0,addOk:0,pop:0};
   if((p.tamanhos||[]).length===1) W.tam=p.tamanhos[0].id;
   var dr=wizLer(); if(dr&&dr.p===id){ W.tam=dr.tam!=null?dr.tam:W.tam; W.sab=(dr.sab||[]).filter(function(s){ return (p.sabores||[]).some(function(x){return x.id===s;}); }); W.borda=dr.borda; W.add=(dr.add||[]).filter(function(j){ return outros()[j]; }); W.qty=dr.qty||1; W.obs=dr.obs||''; if(W.borda!=null&&!bordas()[W.borda]) W.borda=null; if(W.tam&&!(p.tamanhos||[]).some(function(x){return x.id===W.tam;})) W.tam=((p.tamanhos||[]).length===1?p.tamanhos[0].id:null); toast('Continuando de onde você parou'); }
+  W.sabAck=W.sab.length?1:0; W.borOk=W.borda!=null?1:0; W.addOk=W.add.length?1:0;
   W.passos=wPassos(); wPinta(true);
 }
 /* ── rascunho da montagem: volta de onde parou ── */
@@ -626,28 +636,35 @@ function wTitulo(k){ return {tam:'Escolha o tamanho',sab:'Escolha os sabores',bo
 function wPode(k){ if(k==='opc'){ var q=W.p; if((q.tamanhos||[]).length&&!W.tam) return false; if((q.sabores||[]).length&&W.sab.length<1) return false; return true; } if(k==='tam') return !!W.tam; if(k==='sab') return W.sab.length>=1; return true; }
 function wCorpo(k){
   var p=W.p, h='';
-  if(k==='tam'||(k==='opc'&&(p.tamanhos||[]).length)){ if(h&&k==='opc') h+='<div style="height:18px"></div>';
+  if(k==='tam'||(k==='opc'&&(p.tamanhos||[]).length)){ if(h&&k==='opc') h+='<div style="height:18px"></div>'; h+='<div id="sec-tam">';
     h+='<div class="gt"><div><h4>Tamanho</h4><small>Escolha 1 opção</small></div><span class="tg ob">OBRIGATÓRIO</span></div>';
     p.tamanhos.forEach(function(t){ h+='<div class="op rd'+(W.tam===t.id?' on':'')+'" onclick="wTamSel(\''+esc(t.id)+'\')"><div class="nm2">'+esc(t.nome)+((t.med||t.max>1)?'<small>'+(t.med?esc(t.med):'')+(t.med&&t.max>1?' · ':'')+(t.max>1?'até '+t.max+' sabores':'')+'</small>':'')+'</div><span class="vl">'+precoHtml(p,t.preco)+'</span><span class="ck">'+(W.tam===t.id?'✓':'')+'</span></div>'; });
-  }
+  h+='</div>'; }
   if(k==='sab'||(k==='opc'&&(p.sabores||[]).length)){ if(h&&k==='opc') h+='<div style="height:18px"></div>';
-    var mx=wMax();
+    var mx=wMax(), lib=k!=='opc'||wLib('sab'); h+='<div id="sec-sab"'+(lib?'':' class="lkd" onclick="toast(\'Escolha o tamanho primeiro.\')"')+'>';
     h+='<div class="gt"><div><h4>Sabores</h4><small>Escolha de 1 até '+mx+(mx>1?' · dividimos a pizza igualmente':'')+'</small></div><span class="tg ob" id="sbc">'+W.sab.length+' / '+mx+'</span></div>';
-    h+='<input class="busca" id="sbq" placeholder="Buscar sabor…" value="'+esc(W.q)+'" oninput="W.q=this.value;wLista()"><div id="sbl"></div>';
+    if(lib){ h+='<input class="busca" id="sbq" placeholder="Buscar sabor…" value="'+esc(W.q)+'" oninput="W.q=this.value;wLista()"><div id="sbl"></div>';
+      if(k==='opc'&&W.sab.length>0&&W.sab.length<mx&&!W.sabAck) h+='<button class="cont" onclick="wSabContinua()">Continuar com '+W.sab.length+' sabor'+(W.sab.length>1?'es':'')+'</button>'; }
+    h+='</div>';
   }
   if(k==='borda'||(k==='opc'&&bordas().length)){ if(h&&k==='opc') h+='<div style="height:18px"></div>';
+    var libB=k!=='opc'||wLib('bor'); h+='<div id="sec-bor"'+(libB?'':' class="lkd" onclick="toast(\'Termine as etapas de cima primeiro.\')"')+'>';
     h+='<div class="gt"><div><h4>Borda</h4><small>Escolha 1 opção</small></div><span class="tg">OPCIONAL</span></div>';
-    h+='<div class="op rd'+(W.borda==null?' on':'')+'" onclick="wBorda(null)"><div class="nm2">Sem borda recheada</div><span class="ck">'+(W.borda==null?'✓':'')+'</span></div>';
-    bordas().forEach(function(a,j){ h+='<div class="op rd'+(W.borda===j?' on':'')+'" onclick="wBorda('+j+')"><div class="nm2">'+esc(a.nome)+'</div><span class="vl">+ '+brl(a.preco)+'</span><span class="ck">'+(W.borda===j?'✓':'')+'</span></div>'; });
+    if(libB){ var sb0=(k!=='opc'||W.borOk)&&W.borda==null;
+    h+='<div class="op rd'+(sb0?' on':'')+'" onclick="wBorda(null)"><div class="nm2">Sem borda recheada</div><span class="ck">'+(sb0?'✓':'')+'</span></div>';
+    bordas().forEach(function(a,j){ h+='<div class="op rd'+(W.borda===j?' on':'')+'" onclick="wBorda('+j+')"><div class="nm2">'+esc(a.nome)+'</div><span class="vl">+ '+brl(a.preco)+'</span><span class="ck">'+(W.borda===j?'✓':'')+'</span></div>'; }); }
+    h+='</div>';
   }
   if(k==='add'||(k==='opc'&&outros().length)){ if(h&&k==='opc') h+='<div style="height:18px"></div>';
+    var libA=k!=='opc'||wLib('add'); h+='<div id="sec-add"'+(libA?'':' class="lkd" onclick="toast(\'Termine as etapas de cima primeiro.\')"')+'>';
     h+='<div class="gt"><div><h4>Adicionais</h4><small>Escolha quantos quiser</small></div><span class="tg">OPCIONAL</span></div>';
-    outros().forEach(function(a,j){ var on=W.add.indexOf(j)>=0; h+='<div class="op cb'+(on?' on':'')+'" onclick="wAdd('+j+')"><div class="nm2">'+esc(a.nome)+'</div><span class="vl">+ '+brl(a.preco)+'</span><span class="ck">'+(on?'✓':'')+'</span></div>'; });
+    if(libA) outros().forEach(function(a,j){ var on=W.add.indexOf(j)>=0; h+='<div class="op cb'+(on?' on':'')+'" onclick="wAdd('+j+')"><div class="nm2">'+esc(a.nome)+'</div><span class="vl">+ '+brl(a.preco)+'</span><span class="ck">'+(on?'✓':'')+'</span></div>'; });
+    h+='</div>';
   }
   if(k==='fim') h+=wResumo();
   return h;
 }
-function wRef(){ var wb=$('wb'); if(!wb){ wPinta(); return; } var k=W.passos[W.passo], st=wb.scrollTop; wb.innerHTML=wCorpo(k); wb.scrollTop=st; if((W.p.sabores||[]).length&&$('sbl')) wLista(); artAtual(); wRod(); }
+function wRef(){ var wb=$('wb'); if(!wb){ wPinta(); return; } var k=W.passos[W.passo], st=wb.scrollTop; wb.innerHTML=wCorpo(k); wb.scrollTop=st; if((W.p.sabores||[]).length&&$('sbl')) wLista(); artAtual(); wRod(); wTl(); }
 function wPinta(novo){
   var p=W.p, k=W.passos[W.passo], last=W.passo===W.passos.length-1, h='', i;
   h+='<div class="wh"><button class="bk" onclick="'+(W.passo?'wVolta()':'fechaSheet()')+'">'+(W.passo?'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 5l-7 7 7 7"/></svg>':'<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg>')+'</button><b>'+esc(p.nome)+'</b><span class="hp" id="artPr"></span></div>';
@@ -655,8 +672,8 @@ function wPinta(novo){
   h+='<div class="art'+(k==='fim'?' big':'')+(p.vid&&!(p.sabores||[]).length?' hv':'')+'">'+(p.vid&&!(p.sabores||[]).length?'<video class="pv" src="'+API+'/food/video/'+encodeURIComponent(D.cli||CLI)+'/'+encodeURIComponent(p.vid)+'" autoplay muted loop playsinline preload="auto"></video>':'')+'<div class="al">'+artLista()+'</div><div class="sv">'+(p.vid&&!(p.sabores||[]).length?'':artSvg())+'</div>'+(p.desc?'<button class="infb" onclick="var q=document.getElementById(\'infp\');q.style.display=q.style.display===\'block\'?\'none\':\'block\'">+</button><div class="infp" id="infp" onclick="this.style.display=\'none\'">'+esc(p.desc)+'</div>':'')+'</div>';
   h+='<div class="wb'+(k==='fim'?' fm':'')+'" id="wb">';
   h+=wCorpo(k);
-  h+='</div><div class="rod"><button class="vlt" type="button" onclick="'+(W.passo?'wVolta()':'fechaSheet()')+'">‹ Voltar</button><div class="qt"><button onclick="wQtd(-1)">−</button><span id="wq">'+W.qty+'</span><button onclick="wQtd(1)">+</button></div><button class="bt'+(last?'':' c')+'" id="wbt" onclick="wAvanca()"></button></div>';
-  abreFolha(h,true,true); W.prev=W.prevNx; W.prevL=W.nxL; if(k==='sab'||(k==='opc'&&(p.sabores||[]).length)) wLista(); wRod();
+  h+='</div><div id="wtl"></div><div class="rod"><button class="vlt" type="button" onclick="'+(W.passo?'wVolta()':'fechaSheet()')+'">‹ Voltar</button><div class="qt"><button onclick="wQtd(-1)">−</button><span id="wq">'+W.qty+'</span><button onclick="wQtd(1)">+</button></div><button class="bt'+(last?'':' c')+'" id="wbt" onclick="wAvanca()"></button></div>';
+  abreFolha(h,true,true); W.prev=W.prevNx; W.prevL=W.nxL; wTl(); if(k==='sab'||(k==='opc'&&(p.sabores||[]).length)) wLista(); wRod();
 }
 function wResumo(){
   var r='<textarea placeholder="Alguma observação? Ex.: sem cebola" oninput="W.obs=this.value">'+esc(W.obs)+'</textarea>';
@@ -668,9 +685,33 @@ function wRod(){
   b.disabled=!wPode(k); $('wq').textContent=W.qty; artPreco(); wizSalva();
   b.innerHTML=last?'<span>'+(W.edK!=null?'Salvar alterações':'Adicionar')+'</span><span>'+brl(wUnit()*W.qty)+'</span>':'<span>Avançar</span>';
 }
-function wTamSel(id){ W.tam=id; var mx=wMax(); if(W.sab.length>mx) W.sab=W.sab.slice(0,mx); wRef(); }
-function wBorda(j){ W.borda=j; wRef(); }
-function wAdd(j){ var i=W.add.indexOf(j); if(i>=0) W.add.splice(i,1); else W.add.push(j); wRef(); }
+function wSecs(){ var p=W.p,r=[]; if((p.tamanhos||[]).length) r.push('tam'); if((p.sabores||[]).length) r.push('sab'); if(bordas().length) r.push('bor'); if(outros().length) r.push('add'); return r; }
+function wReqTam(){ return !(W.p.tamanhos||[]).length||!!W.tam; }
+function wReqSab(){ return !(W.p.sabores||[]).length||(W.sab.length>0&&(W.sab.length>=wMax()||!!W.sabAck)); }
+function wLib(k){ if(k==='tam') return true; if(k==='sab') return wReqTam(); return wReqTam()&&wReqSab(); }
+function wFeito(k){ return k==='tam'?!!W.tam:k==='sab'?wReqSab():k==='bor'?!!W.borOk:!!W.addOk; }
+function wProx(k){ var o=wSecs(), i=o.indexOf(k); return (i>=0&&o[i+1])?o[i+1]:null; }
+function wGo(k){ var e=$('sec-'+k), b=$('wb'); if(!e||!b) return; b.scrollTo({top:b.scrollTop+e.getBoundingClientRect().top-b.getBoundingClientRect().top-6,behavior:'smooth'}); }
+function wKeep(go){ wRef(); if(go) setTimeout(function(){ wGo(go); },40); }
+function wTl(){
+  var e=$('wtl'); if(!e) return; var ss=wSecs(), k0=W.passos[W.passo];
+  if(k0!=='opc'||!(ss.length>1||(ss.length===1&&ss[0]==='sab'))){ e.innerHTML=''; return; }
+  var nm={tam:'Tamanho',sab:'Sabores',bor:'Borda',add:'Adicionais'}, cur=''; ss.forEach(function(k){ if(!cur&&wLib(k)&&!wFeito(k)&&(k==='tam'||k==='sab')) cur=k; });
+  var h=''; if(W.pop&&W.sab.length) h+='<div id="tlPop"><b>SABORES ESCOLHIDOS</b>'+W.sab.map(function(id,i){ var s=sabPorId(id); return '<div class="pp"><span>'+(W.sab.length>1?(i+1)+'. ':'')+esc(s?s.nome:'')+'</span><button onclick="wSabTira('+i+')" title="Tirar">✕</button></div>'; }).join('')+'</div>';
+  h+='<div class="wtl2">'+ss.map(function(k,i){ var lk=!wLib(k), dn=wFeito(k), n=(k==='sab'?W.sab.length:0), c=(k==='sab'&&n>0)?String(n):(dn?'✓':String(i+1));
+    return '<div class="wst'+(dn?' done':'')+(lk?' lk':'')+(cur===k?' cur':'')+(k==='sab'&&n>0&&!dn?' num':'')+'" onclick="wTlClick(\''+k+'\')"><div class="wc">'+c+'</div>'+nm[k]+'</div>'; }).join('')+'</div>';
+  e.innerHTML=h;
+}
+function wTlClick(k){
+  if(!wLib(k)){ toast(k==='sab'?'Escolha o tamanho primeiro.':'Termine as etapas anteriores primeiro.'); return; }
+  if(k==='sab'&&W.sab.length>0){ W.pop=!W.pop; wTl(); if(!W.pop) wGo('sab'); return; }
+  W.pop=0; wTl(); wGo(k);
+}
+function wSabTira(i){ W.sab.splice(i,1); if(!W.sab.length){ W.pop=0; W.sabAck=0; } wRef(); }
+function wSabContinua(){ W.sabAck=1; wKeep(wProx('sab')); }
+function wTamSel(id){ W.tam=id; var mx=wMax(); if(W.sab.length>mx) W.sab=W.sab.slice(0,mx); W.pop=0; wKeep(wReqSab()?null:(wSecs().indexOf('sab')>=0?'sab':wProx('tam'))); }
+function wBorda(j){ W.borda=j; W.borOk=1; wKeep(wProx('bor')); }
+function wAdd(j){ var i=W.add.indexOf(j); if(i>=0) W.add.splice(i,1); else W.add.push(j); W.addOk=W.add.length?1:0; wRef(); }
 function wQtd(d){ W.qty=Math.max(1,Math.min(50,W.qty+d)); wRod(); }
 function wVolta(){ W.passo=Math.max(0,W.passo-1); wPinta(); }
 function wAvanca(){ var k=W.passos[W.passo]; if(!wPode(k)) return; if(W.passo<W.passos.length-1){ W.passo++; wPinta(); } else if(k==='fim'){ wAdd2(); wizLimpa(); } else wObsAbre(); }
@@ -682,13 +723,14 @@ function wObsFecha(){ var m=$('obsm'); m.style.display='none'; m.style.height=''
 function wObsOk(){ W.obs=$('obs-tx').value.trim().slice(0,200); wObsFecha(); wAdd2(); wizLimpa(); }
 function wSab(id){
   var i=W.sab.indexOf(id), mx=wMax();
-  if(i>=0) W.sab.splice(i,1);
+  if(i>=0){ W.sab.splice(i,1); if(!W.sab.length){ W.sabAck=0; W.pop=0; } }
   else if(mx===1) W.sab=[id];
   else if(W.sab.length>=mx){ toast('Máximo de '+mx+' sabores neste tamanho'); return; }
   else W.sab.push(id);
-  wLista(); $('sbc').textContent=W.sab.length+' / '+mx; artAtual(); wRod();
+  var cheio=i<0&&W.sab.length>=mx; wKeep(cheio?wProx('sab'):null);
 }
 function wLista(){
+  if(!$('sbl')) return;
   var q=W.q.toLowerCase().trim(), mx=wMax(), grupos={}, ordemG=[], h='';
   (W.p.sabores||[]).forEach(function(s){ if(q&&(s.nome+' '+s.desc).toLowerCase().indexOf(q)<0) return; var g=s.grupo||'Sabores'; if(!grupos[g]){ grupos[g]=[]; ordemG.push(g); } grupos[g].push(s); });
   ordemG.forEach(function(g){
@@ -728,7 +770,7 @@ function sacEdit(j){
   it.sab.forEach(function(n){ var s=(p.sabores||[]).filter(function(x){return x.nome===n;})[0]; if(s) W.sab.push(s.id); });
   var bi=bordas().map(function(a){return a.nome;}).indexOf(it.borda); W.borda=(it.borda&&bi>=0)?bi:null;
   var os=outros().map(function(a){return a.nome;}); it.adds.forEach(function(n){ var k=os.indexOf(n); if(k>=0) W.add.push(k); });
-  W.passos=wPassos(); W.passo=W.passos.length-1; wPinta(true);
+  W.sabAck=1; W.borOk=1; W.addOk=1; W.passos=wPassos(); W.passo=W.passos.length-1; wPinta(true);
 }
 
 /* ── sacola ── */
@@ -1313,9 +1355,9 @@ function menuFotoUrl(g){
 }
 function abreMenu(){
   var gs=menuGrupos(), rows=Math.max(1,Math.ceil(gs.length/4));
-  var h='<div class="wh"><button class="bk" onclick="fechaSheet()">'+BKI+'</button><b>Cardápio</b><small style="margin-left:auto;font-size:10px;color:var(--mut)">LIVEFOOD-03</small></div><div class="wb mfull"><div class="mgrid" style="grid-template-rows:repeat('+rows+',minmax(0,1fr))">';
+  var h='<div class="wh"><button class="bk" onclick="fechaSheet()">'+BKI+'</button><b>Cardápio</b><small style="margin-left:auto;font-size:10px;color:var(--mut)">LIVEFOOD-04</small></div><div class="wb mfull"><div class="mgrid" style="grid-template-rows:repeat('+rows+',minmax(0,1fr))">';
   gs.forEach(function(g){ var u=menuFotoUrl(g), promo=g.ps.some(function(p){return p.promo&&p.promo.valor>0;});
-    h+='<div class="mc" onclick="abreCat(\''+esc(g.id)+'\')" '+(u?'style="background-image:url('+u+')"':'')+'>'+(u?'':'<span class="mic">'+icone(tipoDesenho(g.ps[0]),34)+'</span>')+(promo?'<span class="mpr">Promo</span>':'')+'<b>'+esc(g.nome)+'</b></div>'; });
+    h+='<div class="cc" onclick="abreCat(\''+esc(g.id)+'\')" '+(u?'style="background-image:url('+u+')"':'')+'>'+(u?'':'<span class="mic">'+icone(tipoDesenho(g.ps[0]),34)+'</span>')+(promo?'<span class="mpr">Promo</span>':'')+'<b>'+esc(g.nome)+'</b></div>'; });
   h+='</div></div>'; abreFolha(h,true,'fx');
 }
 function abreCat(id){
