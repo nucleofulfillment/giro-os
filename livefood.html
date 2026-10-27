@@ -218,7 +218,7 @@ html.claro #wzp{filter:invert(1) hue-rotate(180deg)}
 #tlPop .pp button{border:0;background:#ffffff14;color:#fff;border-radius:8px;width:28px;height:28px;font-weight:800}
 .lkd{opacity:.45}.wz .cont{width:100%;margin:10px 0 0;padding:12px;border-radius:12px;border:1.5px solid var(--pri);background:transparent;color:var(--pri);font-weight:800;font-size:14px}
 .wz .wb.mfull{overflow:auto;padding:12px}
-.mgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.mgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .cc{position:relative;cursor:pointer;min-width:0;aspect-ratio:1/1;border-radius:14px;overflow:hidden;background:#2a2a30 center/cover no-repeat}
 .cc .mic{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
 .cc::after{content:"";position:absolute;left:0;right:0;bottom:0;height:55%;background:linear-gradient(transparent,#000c);pointer-events:none}
@@ -695,13 +695,14 @@ function wTl(){
   var e=$('wtl'); if(!e) return; var ss=wSecs(), k0=W.passos[W.passo];
   if(k0!=='opc'||!(ss.length>1||(ss.length===1&&ss[0]==='sab'))){ e.innerHTML=''; return; }
   var nm={tam:'Tamanho',sab:'Sabores',bor:'Borda',add:'Adicionais'}, cur=''; ss.forEach(function(k){ if(!cur&&wLib(k)&&!wFeito(k)&&(k==='tam'||k==='sab')) cur=k; });
-  var h=''; if(false) h+='<div id="tlPop"><b>SABORES ESCOLHIDOS</b>'+W.sab.map(function(id,i){ var s=sabPorId(id); return '<div class="pp"><span>'+(W.sab.length>1?(i+1)+'. ':'')+esc(s?s.nome:'')+'</span><button onclick="wSabTira('+i+')" title="Tirar">✕</button></div>'; }).join('')+'</div>';
+  var h=''; if(W.pop&&W.sab.length) h+='<div id="tlPop"><b>SABORES ESCOLHIDOS</b>'+W.sab.map(function(id,i){ var s=sabPorId(id); return '<div class="pp"><span>'+(W.sab.length>1?(i+1)+'. ':'')+esc(s?s.nome:'')+'</span><button onclick="wSabTira('+i+')" title="Tirar">✕</button></div>'; }).join('')+'</div>';
   h+='<div class="wtl2">'+ss.map(function(k,i){ var lk=!wLib(k), dn=wFeito(k), n=(k==='sab'?W.sab.length:0), c=dn?'✓':String(i+1);
-    return '<div class="wst'+(dn?' done':'')+(lk?' lk':'')+(cur===k?' cur':'')+'" onclick="wTlClick(\''+k+'\')"><div class="wc">'+c+'</div>'+nm[k]+'</div>'; }).join('')+'</div>';
+    return '<div class="wst'+(dn?' done':'')+(lk?' lk':'')+(cur===k?' cur':'')+'" onclick="wTlClick(\''+k+'\')"><div class="wc">'+c+'</div>'+nm[k]+(k==='sab'&&n?' ('+n+(wMax()>1?'/'+wMax():'')+')':'')+'</div>'; }).join('')+'</div>';
   e.innerHTML=h;
 }
 function wTlClick(k){
   if(!wLib(k)){ toast(k==='sab'?'Escolha o tamanho primeiro.':'Termine as etapas anteriores primeiro.'); return; }
+    if(k==='sab'&&W.sab.length){ W.pop=W.pop?0:1; wTl(); if(!W.pop) wGo(k); return; }
     W.pop=0; wTl(); wGo(k);
 }
 function wSabTira(i){ W.sab.splice(i,1); if(!W.sab.length){ W.pop=0; W.sabAck=0; } wRef(); }
@@ -1355,7 +1356,7 @@ function menuFotoUrl(g){
 }
 function abreMenu(){
   var gs=menuGrupos(), rows=Math.max(1,Math.ceil(gs.length/4));
-  var h='<div class="wh"><button class="bk" onclick="fechaSheet()">'+BKI+'</button><b>Cardápio</b><small style="margin-left:auto;font-size:10px;color:var(--mut)">LIVEFOOD-09</small></div><div class="wb mfull"><div class="mgrid">';
+  var h='<div class="wh"><button class="bk" onclick="fechaSheet()">'+BKI+'</button><b>Cardápio</b><small style="margin-left:auto;font-size:10px;color:var(--mut)">LIVEFOOD-10</small></div><div class="wb mfull"><div class="mgrid">';
   gs.forEach(function(g){ var u=menuFotoUrl(g), promo=g.ps.some(function(p){return p.promo&&p.promo.valor>0;});
     h+='<div class="cc" onclick="abreCat(\''+esc(g.id)+'\')" '+(u?'style="background-image:url('+u+')"':'')+'>'+(u?'':'<span class="mic">'+icone(tipoDesenho(g.ps[0]),34)+'</span>')+(promo?'<span class="mpr">Promo</span>':'')+'<b>'+esc(g.nome)+'</b></div>'; });
   h+='</div></div>'; abreFolha(h,true,'fx');
