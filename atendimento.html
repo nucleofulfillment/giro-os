@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
 <meta name="theme-color" content="#F97316">
-<title>Atendimento · GIRO-OS-ATEND-23</title>
+<title>Atendimento · GIRO-OS-ATEND-25</title>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#FBF7F5;--s1:#fff;--s3:#FBF3EE;--s4:#F5E8E0;--b2:#F2DED2;--tx:#29231E;--mu:#9E9084;--mu2:#6C6055;--pri:#D96D28;--grad:linear-gradient(120deg,#F97316,#FDB022);--ok:#16A34A;--er:#DC2626;--am:#B45309;--f:'Manrope',-apple-system,sans-serif}
@@ -139,7 +139,7 @@ label.l.big{font-size:14px;margin-top:16px}
 @media(min-width:600px) and (max-width:899px){.grid{grid-template-columns:repeat(4,1fr)}}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(130px + env(safe-area-inset-bottom));background:#29231E;color:#fff;border-radius:12px;padding:11px 16px;font-weight:700;font-size:14px;z-index:60;display:none;max-width:90%;text-align:center}
 </style>
-<script src="marca.js?v=2"></script>
+<script src="marca.js?v=3"></script>
 </head>
 <body>
 
@@ -155,7 +155,7 @@ label.l.big{font-size:14px;margin-top:16px}
 </div>
 
 <div id="app" class="hide">
-  <div id="top"><div style="flex:1;min-width:0;display:flex;align-items:center;gap:12px"><b id="emp" style="flex:none">Atendimento</b><small id="usu"></small></div><span style="font-size:10px;color:#9a8f86;font-weight:700;margin-right:8px;white-space:nowrap">ATEND-23</span><button onclick="sair()">Sair</button></div>
+  <div id="top"><div style="flex:1;min-width:0;display:flex;align-items:center;gap:12px"><b id="emp" style="flex:none">Atendimento</b><small id="usu"></small></div><span style="font-size:10px;color:#9a8f86;font-weight:700;margin-right:8px;white-space:nowrap">ATEND-25</span><button onclick="sair()">Sair</button></div>
   <div id="chip" class="hide"><div class="t"><b id="chipT"></b><small id="chipS"></small></div><button onclick="trocaComanda()">Trocar</button></div>
 
   <!-- PEDIDO -->
@@ -235,9 +235,9 @@ function inicio(){
   api('/painel/atend-dados').then(function(d){
     if(d._h===401||d._h===403){ mostraLogin('Entre de novo.'); return; }
     if(!d.ok){ mostraLogin(d.mensagem||'Não consegui abrir agora.'); return; } carregaAbertas();
-    D=d; CLI=d.cli; try{ window.GiroMarca&&GiroMarca.set(CLI); }catch(e){} GEST=!!d.gestor; CLIS=(d.clientes&&d.clientes.length<5000)?d.clientes:null; tema(d.cor);
+    D=d; try{ (D.prods||[]).sort(function(a,b){ return String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR',{sensitivity:'base',numeric:true}); }); }catch(e){} CLI=d.cli; try{ window.GiroMarca&&GiroMarca.set(CLI); }catch(e){} GEST=!!d.gestor; CLIS=(d.clientes&&d.clientes.length<5000)?d.clientes:null; tema(d.cor);
     $('login').classList.add('hide'); $('app').classList.remove('hide');
-    $('emp').innerHTML=d.logo?'<img src="'+API+'/food/foto/'+encodeURIComponent(d.cli)+'/_logo" alt="'+esc(d.empresa||'')+'" style="height:30px;border-radius:6px;vertical-align:middle">':esc(d.empresa||'Atendimento'); $('usu').textContent=d.usuario||'';
+    $('emp').innerHTML=d.logo?'<img src="'+API+'/food/foto/'+encodeURIComponent(d.cli)+'/_logo" alt="'+esc(d.empresa||'')+'" style="height:30px;border-radius:6px;vertical-align:middle">':esc(d.empresa||'Atendimento'); $('usu').textContent=d.usuario||''; try{ var li=$('emp').querySelector('img'); if(li&&window.GiroMarca&&GiroMarca.ajusta) GiroMarca.ajusta(li,'claro'); }catch(e){}
     [].forEach.call(document.querySelectorAll('.gest'),function(b){ b.classList.toggle('hide',!GEST); });
     aba('ped'); pintaCats(); mostraMapaBtn();
     try{ var qm=new URLSearchParams(location.search).get('mesa'); if(qm&&!COM.mesa&&!$('iMesa').value){ modo('mesa'); $('iMesa').value=String(qm).replace(/[^A-Za-z0-9]/g,'').slice(0,8).toUpperCase(); } }catch(e){}
@@ -330,7 +330,7 @@ function ativaComanda(c){ COM={mesa:c.mesa||'',joia:c.joia||'',nome:c.nome||'',m
 function fotoProd(p){ return p.foto?API+'/food/foto/'+encodeURIComponent(CLI)+'/'+encodeURIComponent(p.id):''; }
 function grupos(){
   var g=[], mp={}; (D.cats||[]).forEach(function(c){ mp[c.id]={id:c.id,nome:c.nome,foto:c.foto,ps:[]}; g.push(mp[c.id]); });
-  var sem={id:'_',nome:g.length?'Outros':'Produtos',ps:[]}; (D.prods||[]).forEach(function(p){ if(p.cat&&mp[p.cat]) mp[p.cat].ps.push(p); else sem.ps.push(p); }); g.push(sem);
+  var sem={id:'_',nome:g.length?'Outros':'Produtos',ps:[]}; (D.prods||[]).forEach(function(p){ if(p.cat&&mp[p.cat]) mp[p.cat].ps.push(p); else sem.ps.push(p); }); g.forEach(function(x){ x.ps.sort(function(a,b){ return String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR',{sensitivity:'base',numeric:true}); }); }); sem.ps.sort(function(a,b){ return String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR',{sensitivity:'base',numeric:true}); }); g.push(sem);
   return g.filter(function(x){ return x.ps.length; });
 }
 function pintaCats(){

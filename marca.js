@@ -1,4 +1,4 @@
-/* GIRO OS — MARCA DO RESTAURANTE (marca.js · MARCA-02)
+/* GIRO OS — MARCA DO RESTAURANTE (marca.js · MARCA-03)
    Uma logo + uma cor por restaurante, valendo pra todas as telas.
    Como a tela descobre o restaurante:
      1) pelo link:  ...html?c=cinquenta  (o aparelho guarda e nas próximas vezes já sabe)
@@ -89,7 +89,12 @@
     var q=new URLSearchParams(location.search), c=limpa(q.get('c')||q.get('cli')||q.get('loja')||'');
     M.cli=c||limpa(ls(KC)); if(!M.cli) neutro(); carrega();
   }
-  window.GiroMarca={init:init,set:set,refresh:function(){ if(M.cli){ ls(KM+M.cli,null); carrega(); } },dados:function(){ return M.d; },cli:function(){ return M.cli; },
+  /* logo montada pela própria tela (ex.: barra de cima): escurece se for clara em fundo claro, clareia se for escura em fundo escuro */
+  function ajusta(el,fundo){
+    if(!el||!el.getAttribute) return; var u=el.getAttribute('src')||''; if(!u) return;
+    luminancia(u,function(l){ var f=''; if(l>=0){ if(fundo==='claro'&&l>0.72) f='brightness(0)'; else if(fundo==='escuro'&&l<0.22) f='brightness(0) invert(1)'; } el.style.filter=f; });
+  }
+  window.GiroMarca={ajusta:ajusta,init:init,set:set,refresh:function(){ if(M.cli){ ls(KM+M.cli,null); carrega(); } },dados:function(){ return M.d; },cli:function(){ return M.cli; },
     /* aceita o objeto do usuário logado (várias telas guardam o restaurante com nomes diferentes) */
     deUsuario:function(u){ if(u) set(u.cliente_id||u.cli||u.cliente||''); }};
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
