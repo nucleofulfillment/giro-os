@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
 <meta name="theme-color" content="#F97316">
-<title>Atendimento · GIRO-OS-ATEND-31</title>
+<title>Atendimento · GIRO-OS-ATEND-32</title>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#FBF7F5;--s1:#fff;--s3:#FBF3EE;--s4:#F5E8E0;--b2:#F2DED2;--tx:#29231E;--mu:#9E9084;--mu2:#6C6055;--pri:#D96D28;--grad:#FF5A00;--ok:#16A34A;--er:#DC2626;--am:#B45309;--f:'Manrope',-apple-system,sans-serif}
@@ -150,6 +150,13 @@ label.l.big{font-size:14px;margin-top:16px}
 #mp .tela{height:100%;border-radius:0;background:none;padding:0 0 max(8px,env(safe-area-inset-bottom));overflow:hidden;display:flex;flex-direction:column;gap:8px}
 #mp .tela>*{flex:none}#mp .tela>.mapa{flex:1;min-height:0}
 #mp .btn-l{display:inline-block;text-decoration:none}
+#mp .mpBk{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:62}
+#mp .mpSh{position:fixed;left:0;right:0;bottom:0;z-index:63;max-height:88%;max-width:560px;margin:0 auto;background:var(--card);border-radius:22px 22px 0 0;display:flex;flex-direction:column;box-shadow:0 -8px 30px rgba(0,0,0,.25)}
+#mp .mpSh .cor{overflow:auto;padding:16px;display:flex;flex-direction:column;gap:12px;min-height:0}
+#mp .mpSh .pe{padding:12px 16px max(14px,env(safe-area-inset-bottom));border-top:1px solid var(--line)}
+#mp .mpSh .pe .pri{width:100%;min-height:58px;font-size:18px}
+#mp .mpSh .foto{height:120px}
+#mp .mpSh .h{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 #mpCtrl{position:fixed;inset:0;z-index:61;background:var(--bg);overflow:auto;display:none;flex-direction:column;gap:12px;padding:max(12px,env(safe-area-inset-top)) 12px 24px}
 #mpCtrl.open{display:flex}
 #mpCtrl .ctrlTop{display:flex;justify-content:space-between;align-items:center;gap:8px;max-width:560px;width:100%;margin:0 auto}
@@ -213,7 +220,7 @@ label.l.big{font-size:14px;margin-top:16px}
 </div>
 
 <div id="app" class="hide">
-  <div id="top"><div style="flex:1;min-width:0;display:flex;align-items:center;gap:12px"><b id="emp" style="flex:none">Atendimento</b><small id="usu"></small></div><button id="mpTopBtn" type="button" onclick="mpAbre()">🗺️ Atender via mapa</button><span style="font-size:10px;color:#9a8f86;font-weight:700;margin-right:8px;white-space:nowrap">ATEND-31</span><button onclick="sair()">Sair</button></div>
+  <div id="top"><div style="flex:1;min-width:0;display:flex;align-items:center;gap:12px"><b id="emp" style="flex:none">Atendimento</b><small id="usu"></small></div><button id="mpTopBtn" type="button" onclick="mpAbre()">🗺️ Atender via mapa</button><span style="font-size:10px;color:#9a8f86;font-weight:700;margin-right:8px;white-space:nowrap">ATEND-32</span><button onclick="sair()">Sair</button></div>
   <div id="chip" class="hide"><div class="t"><b id="chipT"></b><small id="chipS"></small></div><button onclick="trocaComanda()">Trocar</button></div>
 
   <!-- PEDIDO -->
@@ -753,7 +760,7 @@ if(TK) inicio(); else mostraLogin('');
   }
 
   /* ---------- estado real vindo do Worker (fila de garçons, pedidos prontos, chamados) ---------- */
-  var ATIVO=false, ABERTO=false, iniciou=false, ST=null, ME={fase:'livre',pos:0,nome:'',fila:0}, sheet='', visto=null, avisoTxt='', avisoT=0, erroNet=false, busy=false;
+  var lista=false, ATIVO=false, ABERTO=false, iniciou=false, ST=null, ME={fase:'livre',pos:0,nome:'',fila:0}, sheet='', visto=null, avisoTxt='', avisoT=0, erroNet=false, busy=false;
   function token(){ var t=''; try{ t=localStorage.getItem('dd_jwt')||''; }catch(e){} return t; }
   function chama(path,metodo,corpo){
     return fetch(API+path,{method:metodo||'GET',headers:{'Authorization':'Bearer '+token(),'Content-Type':'application/json'},body:corpo?JSON.stringify(corpo):undefined}).then(function(r){
@@ -782,6 +789,7 @@ if(TK) inicio(); else mostraLogin('');
         clearTimeout(avisoT); avisoT=setTimeout(function(){ avisoTxt=''; drawApp(); },5000); if(!ABERTO){ try{ toast(avisoTxt); }catch(e){} } try{ if(navigator.vibrate) navigator.vibrate([200,100,200]); }catch(e){} } }
     visto=ids;
     if(sheet&&!naoPegos().some(function(p){return p.id===sheet;})) sheet='';
+    if(lista&&!naoPegos().length) lista=false;
     drawT();
   }
   function poll(){
@@ -818,10 +826,7 @@ if(TK) inicio(); else mostraLogin('');
   function rotulo(){ if(ME.fase==='livre') return 'Livre · '+(ME.fila||1)+'º da fila'; return ME.fase==='balcao'?'No balcão':'Em rota'; }
   function painelV(){
     var un=naoPegos(), pr=paradas(), pg=pegos(), h='<div class="painel">';
-    var sh=sheet&&un.filter(function(p){return p.id===sheet;})[0];
-    if(sh){
-      h+='<div class="card agora"><div class="h">'+chipVaga(sh.vaga)+'<span class="mesaN">#'+esc(sh.num)+'</span><span class="zona">vai para a <b>Mesa '+sh.mesa+'</b></span></div>'+fotos(sh.itens)+(sh.obs?'<div class="banner" style="color:var(--bad)">'+esc(sh.obs)+'</div>':'')+'<p class="hint" style="margin:0">Confira as fotos e as quantidades no balcão.</p><button class="pri" type="button" data-peg="'+esc(sh.id)+'">Peguei</button><button class="sm" type="button" data-fechar="1">Voltar ao mapa</button></div>';
-    } else if(ME.fase==='rota'&&pr.rota.length){
+    if(false){    } else if(ME.fase==='rota'&&pr.rota.length){
       var s=pr.rota[0], m=mesaPorN(s.mesa), rest=pr.rota.slice(1).map(function(x){return 'Mesa '+x.mesa;}).join(' · ');
       h+='<div class="card agora"><div class="h"><span class="tag">AGORA</span><span class="mesaN">Mesa '+s.mesa+'</span><span class="zona">'+(m?zona(m)+' · '+Math.round(s.d)+' m':'fora do mapa')+'</span></div>';
       if(s.cham) h+='<span class="tag" style="background:#1971c2;align-self:flex-start">O CLIENTE CHAMOU O GARÇOM</span>';
@@ -835,7 +840,14 @@ if(TK) inicio(); else mostraLogin('');
       if(pg.length) h+='<div class="resumo">Na bandeja: '+pg.map(function(p){return '#'+esc(p.num)+' (Mesa '+p.mesa+')';}).join(', ')+'</div>';
       h+='<button class="pri" type="button" data-sair="1"'+(pg.length?'':' disabled')+'>'+(!pg.length?'Pegue ao menos um pedido':(un.length?'Sair e deixar '+un.length+' no balcão':'Sair para entregar'))+'</button>';
     } else h+='<div class="zero">Você está livre ('+(ME.fila||1)+'º da fila).<br>Quando um pedido ficar pronto, ele aparece como bolinha no balcão. Toque nela para pegar.</div>';
-    return h+'</div>';
+    if(un.length) h+='<button class="pri" type="button" data-lista="1">Pedidos prontos no balcão ('+un.length+')</button>';
+    return h+'</div>'+sheetsV();
+  }
+  function sheetsV(){
+    var un=naoPegos(), sh=sheet&&un.filter(function(p){return p.id===sheet;})[0], h='';
+    if(sh) h+='<div class="mpBk" data-fechar="1"></div><div class="mpSh"><div class="cor"><div class="h">'+chipVaga(sh.vaga)+'<span class="mesaN">#'+esc(sh.num)+'</span><span class="zona">vai para a <b>Mesa '+sh.mesa+'</b></span><button class="sm" type="button" data-fechar="1" style="margin-left:auto">Fechar</button></div>'+fotos(sh.itens)+(sh.obs?'<div class="banner" style="color:var(--bad)">'+esc(sh.obs)+'</div>':'')+'</div><div class="pe"><button class="pri" type="button" data-peg="'+esc(sh.id)+'">Peguei · ir para a Mesa '+sh.mesa+'</button></div></div>';
+    else if(lista) h+='<div class="mpBk" data-fechar="1"></div><div class="mpSh"><div class="cor"><div class="h"><span class="mesaN" style="font-size:20px">Pedidos prontos</span><button class="sm" type="button" data-fechar="1" style="margin-left:auto">Fechar</button></div>'+(un.length?un.map(function(p){ var r=p.itens.slice(0,3).map(function(i){return i.q+'x '+esc(i.nome);}).join(', ')+(p.itens.length>3?'…':''); return '<button type="button" data-bub="'+esc(p.id)+'" style="display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;width:100%"><span class="h" style="gap:8px">'+chipVaga(p.vaga)+'<b style="font-size:18px">Mesa '+p.mesa+'</b><span class="zona">#'+esc(p.num)+'</span></span><span style="font-size:13px;font-weight:700;color:var(--mut)">'+r+'</span></button>'; }).join(''):'<div class="zero">Nenhum pedido pronto agora.</div>')+'</div></div>';
+    return h;
   }
   function drawApp(){
     var bal=balcao();
@@ -864,12 +876,13 @@ if(TK) inicio(); else mostraLogin('');
   function drawT(){ drawLado(); drawApp(); badge(); }
 
   document.addEventListener('click',function(e){
-    var t=e.target.closest('[data-bub]'); if(!t) return; sheet=t.getAttribute('data-bub'); drawApp();
+    var t=e.target.closest('[data-bub]'); if(!t) return; sheet=t.getAttribute('data-bub'); lista=false; drawApp();
   });
   document.addEventListener('click',function(e){
     var b=e.target.closest('button'); if(!b) return; var d=b.dataset;
-    if(d.peg){ sheet=''; acao({acao:'pegar',id:d.peg}); }
-    else if(d.fechar){ sheet=''; drawApp(); }
+    if(d.peg){ sheet=''; lista=false; acao({acao:'pegar',id:d.peg}); }
+    else if(d.fechar){ sheet=''; lista=false; drawApp(); }
+    else if(d.lista){ lista=true; drawApp(); }
     else if(d.sair) acao({acao:'sair'});
     else if(d.ent) acao({acao:'entregar',mesa:d.ent});
   });
