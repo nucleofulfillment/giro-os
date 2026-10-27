@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>LiveFood — Painel · GIRO-OS-117</title>
+<title>LiveFood — Painel · GIRO-OS-118</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -8171,7 +8171,7 @@ function cdCatFoto(inp){
       cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);
       var q=0.8, out=cv.toDataURL('image/jpeg',q); while(out.length>300000&&q>0.35){ q-=0.1; out=cv.toDataURL('image/jpeg',q); }
       el('cd-cats-erro').textContent='Salvando foto...';
-      cdSalvarApi('cat',{id:c.id,ordem:c.ordem,nome:c.nome,foto:out,dest:cdDestDe(c)}).then(cdRecarregarCats).then(function(){ el('cd-cats-erro').textContent=''; }).catch(function(e){ el('cd-cats-erro').textContent='Não salvou: '+e.message; });
+      cdSalvarApi('cat',{id:c.id,ordem:c.ordem,nome:c.nome,foto:out,dest:cdDestDe(c),man:c.man?1:0}).then(cdRecarregarCats).then(function(){ el('cd-cats-erro').textContent=''; }).catch(function(e){ el('cd-cats-erro').textContent='Não salvou: '+e.message; });
     }; im.onerror=function(){ el('cd-cats-erro').textContent='Não consegui ler essa imagem.'; }; im.src=rd.result; };
   rd.readAsDataURL(f); inp.value='';
 }
@@ -8180,15 +8180,15 @@ function cdAddCat(){
   var nm=el('cd-cat-nova').value.trim(); if(!nm) return;
   cdSalvarApi('cat',{nome:nm}).then(function(){ el('cd-cat-nova').value=''; return cdRecarregarCats(); }).catch(function(e){ el('cd-cats-erro').textContent='Não salvou: '+e.message; });
 }
-function cdDestDe(c){ if(c.dest==='bar'||c.dest==='cozinha') return c.dest; return /bebida|drink|chopp|chope|cerveja|suco|refri|vinho|caipir|coquetel|destilad|dose|água|agua|energ|bar\b/i.test(c.nome||'')?'bar':'cozinha'; }
+function cdDestDe(c){ if(c.dest==='bar') return 'bar'; if(c.man&&c.dest==='cozinha') return 'cozinha'; return /bebida|drink|chopp|chope|cerveja|suco|refri|vinho|caipir|coquetel|destilad|dose|água|agua|energ|bar\b/i.test(c.nome||'')?'bar':'cozinha'; }
 function cdCatDest(id,v){
   var i, c=null; for(i=0;i<CD.cats.length;i++) if(CD.cats[i].id===id) c=CD.cats[i]; if(!c) return;
-  cdSalvarApi('cat',{id:c.id,ordem:c.ordem,nome:c.nome,foto:c.foto||'',dest:v}).then(cdRecarregarCats).catch(function(e){ el('cd-cats-erro').textContent='Não salvou: '+e.message; cdPintarCats(); });
+  cdSalvarApi('cat',{id:c.id,ordem:c.ordem,nome:c.nome,foto:c.foto||'',dest:v,man:1}).then(cdRecarregarCats).catch(function(e){ el('cd-cats-erro').textContent='Não salvou: '+e.message; cdPintarCats(); });
 }
 function cdRenCat(id){
   var i, c=null; for(i=0;i<CD.cats.length;i++) if(CD.cats[i].id===id) c=CD.cats[i];
   if(!c) return; var nm=window.prompt('Novo nome da categoria:',c.nome); if(!nm||!nm.trim()) return;
-  cdSalvarApi('cat',{id:c.id,ordem:c.ordem,nome:nm.trim(),foto:c.foto||'',dest:cdDestDe(c)}).then(cdRecarregarCats).catch(function(e){ el('cd-cats-erro').textContent='Não salvou: '+e.message; });
+  cdSalvarApi('cat',{id:c.id,ordem:c.ordem,nome:nm.trim(),foto:c.foto||'',dest:cdDestDe(c),man:c.man?1:0}).then(cdRecarregarCats).catch(function(e){ el('cd-cats-erro').textContent='Não salvou: '+e.message; });
 }
 function cdDelCat(id){
   var i, c=null, n=0; for(i=0;i<CD.cats.length;i++) if(CD.cats[i].id===id) c=CD.cats[i];
