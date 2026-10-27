@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Giro OS — Painel do ponto · GIRO-OS-099</title>
+<title>Giro OS — Painel do ponto · GIRO-OS-101</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -6081,16 +6081,23 @@ function saidasSincronizar(){
   SD_LEU=true;
   fetch(DELTADIS_API+'/painel/saidas').then(function(r){ return r.json(); }).then(function(d){
     SD_LEU=false; if(!d||!d.ok||!d.saidas) return;
-    var mud=0, agora=new Date(), forma={dinheiro:'dinheiro',pix:'pix',cartao:'cartao',pago:'online'};
+    var mud=0, agora=new Date(), forma={dinheiro:'dinheiro',pix:'pix',cartao:'cartao',pago:'online'}, feito={}, ap=saidasAplic(), apNovo={};
+    /* (v97) o mesmo pedido pode estar em 2 saídas (saiu, voltou e saiu de novo): vale só a mais nova (a lista vem da mais nova pra mais velha).
+       E cada situação que o motoboy marcou é aplicada uma vez só: se o painel mudou o pedido depois, não briga de novo a cada 12s. */
     d.saidas.forEach(function(sd){ (sd.paradas||[]).forEach(function(pa){
+      if(feito[pa.cod]) return; feito[pa.cod]=1;
       var p=mpAcharPed(pa.cod); if(!p||p.tr!=='gir') return;
+      var ch=sd.id+'|'+pa.cod, vl=pa.st+'|'+(pa.quando||''); apNovo[ch]=vl; if(ap[ch]===vl) return;
       if(pa.st==='entregue' && p.st==='em rota'){ var dt=new Date(pa.quando||Date.now()); p.st='entregue'; p.ent=ymdLocal(dt)+' '+('0'+dt.getHours()).slice(-2)+':'+('0'+dt.getMinutes()).slice(-2); p.pgr=forma[pa.pgr]||pa.pgr; p.pgp=1; mud++; }
       else if(pa.st==='ausente' && p.st==='em rota'){ p.st='devolvido'; mud++; }
       else if(pa.st==='pendente' && (p.st==='entregue'||p.st==='devolvido') && sd.status==='ativa'){ p.st='em rota'; p.ent=''; p.pgr=''; mud++; }
     }); });
     if(mud){ try{ recalcularReal(); }catch(e){} salvarLocal(); repintarTudo(); if(PAG==='mapeamento') mpOperador(); aviso(mud+' atualização(ões) do motoboy'); }
+    saidasAplicSalvar(apNovo);
   }).catch(function(){ SD_LEU=false; });
 }
+function saidasAplic(){ try{ return JSON.parse(localStorage.getItem('giro_saidas_aplic')||'{}')||{}; }catch(e){ return {}; } }
+function saidasAplicSalvar(o){ try{ localStorage.setItem('giro_saidas_aplic',JSON.stringify(o)); }catch(e){} }
 setInterval(saidasSincronizar,12000);
 function mpDesfazerGrupo(id){ mpGrCarregar(); MP_GR=MP_GR.filter(function(g){ return String(g.id)!==String(id); }); mpGrSalvar(); mpOperador(); if(MP_MODO==='mapa') mpPkEstiloTodos(); }
 /* barra do modo mapa */
@@ -7419,13 +7426,17 @@ function cdHrSalvar(){
 }
 /* ── MESAS (075): chamados de garçom + pedidos feitos na mesa ── */
 var MS={ped:[],cha:[],con:[],vistoP:{},vistoC:{},vistoK:{},aberto:0,busy:0,init:0};
+try{ MS.vistoC=JSON.parse(localStorage.getItem('giro_ms_vistoC')||'{}')||{}; }catch(e){}
 function msBeep(){ try{ var a=new (window.AudioContext||window.webkitAudioContext)(), o=a.createOscillator(), g=a.createGain(); o.connect(g); g.connect(a.destination); o.frequency.value=880; g.gain.value=.15; o.start(); setTimeout(function(){ o.frequency.value=1175; },170); setTimeout(function(){ o.stop(); a.close(); },400); }catch(e){} }
 function msBadge(){ var n=MS.cha.length+MS.con.filter(function(x){ return x.pedir; }).length+MS.ped.filter(function(x){ return !x.fase; }).length, b=el('ms-bd'); if(!b) return; b.style.display=n?'inline-block':'none'; b.textContent=n; }
 function msPoll(){
   if(!REAL||!DD_TOKEN||document.hidden||MS.busy) return; MS.busy=1;
   fetch(DELTADIS_API+'/painel/food-mesa',{headers:cdHdr()}).then(function(r){return r.json();}).then(function(d){
-    MS.busy=0; if(!d||!d.ok) return; var av=[];
-    (d.chamados||[]).forEach(function(c){ if(!MS.vistoC[c.id]){ MS.vistoC[c.id]=1; av.push('🛎 Mesa '+c.mesa+' chamando o garçom'); } });
+    MS.busy=0; if(!d||!d.ok) return; var av=[], ag=d.agora||Date.now(), vc={};
+    /* (v97) chamado já avisado fica guardado no aparelho: recarregar o painel não repete o aviso. Chamado antigo (mais de 30 min) que o painel
+       encontra ao abrir só aparece no contador do botão 🍽️ Mesas (Cardápio), sem aviso de novo. */
+    (d.chamados||[]).forEach(function(c){ vc[c.id]=1; if(!MS.vistoC[c.id]){ MS.vistoC[c.id]=1; if(MS.init || ag-(Number(c.criado)||0) < 1800000) av.push('🛎 Mesa '+c.mesa+' chamando o garçom'); } });
+    MS.vistoC=vc; try{ localStorage.setItem('giro_ms_vistoC',JSON.stringify(vc)); }catch(e){}
     (d.pedidos||[]).forEach(function(x){ if(!MS.vistoP[x.id]){ MS.vistoP[x.id]=1; if(MS.init) av.push('🍽️ Mesa '+x.mesa+': novo pedido #'+x.num); } });
     (d.contas||[]).forEach(function(k){ if(k.pedir&&!MS.vistoK[k.mesa+k.pedir+k.total]){ MS.vistoK[k.mesa+k.pedir+k.total]=1; if(MS.init) av.push('🧾 Mesa '+k.mesa+' quer fechar a conta ('+(k.pedir==='dinheiro'?'dinheiro':'cartão')+')'); } });
     MS.ped=d.pedidos||[]; MS.cha=d.chamados||[]; MS.con=d.contas||[]; MS.init=1;
@@ -7554,11 +7565,14 @@ function clImportar(){
 var MZ={lista:[]};
 function mzApi(path,body){ var o=body?{method:'POST',headers:cdHdr(),body:JSON.stringify(body)}:{headers:cdHdr()}; return fetch(DELTADIS_API+path,o).then(function(r){ return r.json(); }); }
 function mzCarregar(){
+  mzCliBusca();
   el('mz-lista').innerHTML='<div style="padding:14px;color:var(--muted)">Carregando…</div>';
   mzApi('/painel/atend-mesas').then(function(d){ if(!d||!d.ok) throw new Error((d&&d.mensagem)||'erro'); MZ.lista=d.mesas||[]; mzPintar(); })
   .catch(function(e){ el('mz-lista').innerHTML='<div style="padding:14px;color:var(--red)">'+esc(e.message||'Não carregou')+'</div>'; });
 }
-function mzLink(n){ return location.origin+location.pathname.replace(/[^\/]*$/,'')+'atendimento.html?mesa='+encodeURIComponent(n); }
+function mzLink(n){ return location.origin+location.pathname.replace(/[^\/]*$/,'')+'livefood.html?c='+encodeURIComponent(CD.cli||'')+'&mesa='+encodeURIComponent(n); }
+function mzCliOk(){ if(CD.cli) return true; aviso('Ainda carregando o código do restaurante. Tente de novo em 2 segundos.'); mzCliBusca(); return false; }
+function mzCliBusca(){ if(CD.cli) return; fetch(DELTADIS_API+'/painel/cardapio',{headers:cdHdr()}).then(function(r){ return r.json(); }).then(function(x){ if(x&&x.ok&&x.cli) CD.cli=x.cli; }).catch(function(){}); }
 function mzPintar(){
   var q=(el('mz-busca').value||'').toLowerCase().trim(), h='', n=0;
   MZ.lista.sort(function(a,b){ var x=String(a.num), y=String(b.num), nx=/^\d+$/.test(x), ny=/^\d+$/.test(y); if(nx&&ny) return parseInt(x,10)-parseInt(y,10); if(nx!==ny) return nx?-1:1; return x<y?-1:x>y?1:0; });
@@ -7583,8 +7597,9 @@ function mzSalvar(){
   salva(de).catch(function(e){ er.textContent=e.message||'Não salvou'; });
 }
 function mzApaga(n){ if(!confirm('Apagar a mesa '+n+'? Comandas já abertas nela não são apagadas.')) return; mzApi('/painel/atend-mesas-apagar',{num:n}).then(function(){ mzCarregar(); }).catch(function(){ aviso('Não apagou'); }); }
-function mzCopia(n){ var u=mzLink(n); try{ navigator.clipboard.writeText(u).then(function(){ aviso('Link copiado'); },function(){ window.prompt('Copie o link:',u); }); }catch(e){ window.prompt('Copie o link:',u); } }
+function mzCopia(n){ if(!mzCliOk()) return; var u=mzLink(n); try{ navigator.clipboard.writeText(u).then(function(){ aviso('Link copiado'); },function(){ window.prompt('Copie o link:',u); }); }catch(e){ window.prompt('Copie o link:',u); } }
 function mzNfc(n){
+  if(!mzCliOk()) return;
   if(!('NDEFReader' in window)){ aviso('Gravar NFC só funciona no Chrome do celular Android. Use "Copiar link" e grave com outro app.'); return; }
   aviso('Encoste a etiqueta no celular…');
   var rd=new NDEFReader(); rd.write({records:[{recordType:'url',data:mzLink(n)}]}).then(function(){ aviso('Etiqueta da mesa '+n+' gravada ✔'); mzApi('/painel/atend-mesas-nfc',{num:n}).then(mzCarregar); }).catch(function(e){ aviso('Não gravou: '+((e&&e.message)||'tente de novo')); });
