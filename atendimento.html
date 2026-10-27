@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
 <meta name="theme-color" content="#F97316">
-<title>Atendimento · GIRO-OS-ATEND-20</title>
+<title>Atendimento · GIRO-OS-ATEND-22</title>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#FBF7F5;--s1:#fff;--s3:#FBF3EE;--s4:#F5E8E0;--b2:#F2DED2;--tx:#29231E;--mu:#9E9084;--mu2:#6C6055;--pri:#D96D28;--grad:linear-gradient(120deg,#F97316,#FDB022);--ok:#16A34A;--er:#DC2626;--am:#B45309;--f:'Manrope',-apple-system,sans-serif}
@@ -106,6 +106,7 @@ label.l.big{font-size:14px;margin-top:16px}
  #p-ident .inp.big{padding:13px 14px;font-size:19px}
  #p-ident label.l.big{margin-top:10px}
  #p-ident #sugs{min-height:58px}
+ #p-ident:has(#sugs .sug) .bt.big{display:none}
  #p-ident .bt.big{position:fixed;left:14px;right:14px;width:auto;box-sizing:border-box;bottom:calc(72px + env(safe-area-inset-bottom));z-index:25;padding:16px;margin:0;box-shadow:0 4px 14px rgba(0,0,0,.18)}
  body:has(#v-ped:not(.hide) #p-ident:not(.hide)){overflow:hidden;height:100dvh;padding-bottom:0}
  body.kb:has(#v-ped:not(.hide) #p-ident:not(.hide)) #nav,body.kb #p-ident .sw,body.kb #p-ident h2{display:none}
@@ -152,7 +153,7 @@ label.l.big{font-size:14px;margin-top:16px}
 </div>
 
 <div id="app" class="hide">
-  <div id="top"><div style="flex:1;min-width:0;display:flex;align-items:center;gap:12px"><b id="emp" style="flex:none">Atendimento</b><small id="usu"></small></div><span style="font-size:10px;color:#9a8f86;font-weight:700;margin-right:8px;white-space:nowrap">ATEND-20</span><button onclick="sair()">Sair</button></div>
+  <div id="top"><div style="flex:1;min-width:0;display:flex;align-items:center;gap:12px"><b id="emp" style="flex:none">Atendimento</b><small id="usu"></small></div><span style="font-size:10px;color:#9a8f86;font-weight:700;margin-right:8px;white-space:nowrap">ATEND-22</span><button onclick="sair()">Sair</button></div>
   <div id="chip" class="hide"><div class="t"><b id="chipT"></b><small id="chipS"></small></div><button onclick="trocaComanda()">Trocar</button></div>
 
   <!-- PEDIDO -->
@@ -163,7 +164,7 @@ label.l.big{font-size:14px;margin-top:16px}
         <div class="idL"><button id="sgM" class="sw on" onclick="modo('mesa')"><svg viewBox="0 0 24 24"><path d="M3 9h18M5 9l1 10M19 9l-1 10M12 9v10M7 5h10l1 4H6z"/></svg>Mesa</button>
         <button id="sgB" class="sw" onclick="modo('balcao')"><svg viewBox="0 0 24 24"><path d="M4 17h16M6 17a6 6 0 0112 0M12 7V5M10 5h4M3 20h18"/></svg>Balcão</button></div>
         <div class="idR"><label class="l big" id="lbMesa">Número da mesa</label><div class="mrow"><input class="inp big" id="iMesa" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="off" oninput="linkMesa()" onfocus="carregaAbertas()"><button type="button" class="mpick hide" id="bMapa" onclick="abreMapa()" title="Escolher no mapa de mesas"><svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.4"/><circle cx="12" cy="6" r="2.4"/><circle cx="18" cy="6" r="2.4"/><circle cx="6" cy="12" r="2.4"/><circle cx="12" cy="12" r="2.4"/><circle cx="18" cy="12" r="2.4"/><circle cx="6" cy="18" r="2.4"/><circle cx="12" cy="18" r="2.4"/><circle cx="18" cy="18" r="2.4"/></svg></button></div>
-        <label class="l big">Cliente</label><input class="inp big" id="iJoia" inputmode="numeric" pattern="[0-9]*" maxlength="12" autocomplete="off" placeholder="Digite o número do cliente" oninput="digJoia()" onfocus="carregaAbertas()">
+        <label class="l big">Cliente</label><input class="inp big" id="iJoia" inputmode="numeric" pattern="[0-9]*" maxlength="12" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" onkeydown="if(event.key==='Enter'){ event.preventDefault(); if(SUGS&&SUGS.length===1) pickCli(0); else abreComanda(); }" placeholder="Digite o número do cliente" oninput="digJoia()" onfocus="carregaAbertas()">
         <div id="sugs"></div>
         <div id="joiaInfo"></div>
         <div class="er" id="idErr"></div>
@@ -379,7 +380,7 @@ var IT=null;
 function promoAtiva(p){ var d=p.desconto; if(!d||!(d.valor>0)) return null; var n=new Date(Date.now()-3*3600000).toISOString().slice(0,16); if(d.de&&n<d.de) return null; if(d.ate&&n>d.ate) return null; return d; }
 function itemSheet(id){
   var p=(D.prods||[]).filter(function(x){ return x.id===id; })[0]; if(!p) return;
-  IT={p:p,tam:(p.tamanhos&&p.tamanhos.length===1)?p.tamanhos[0].nome:'',sab:[],borda:'',adds:{},obs:'',qty:1,busca:'',borOk:0,opcOk:0,sabAck:0,pop:0}; itemPinta(); if(!stepsIt().length) foco('#itAddBtn');
+  IT={p:p,tam:(p.tamanhos&&p.tamanhos.length===1)?p.tamanhos[0].nome:'',sab:[],borda:'',adds:{},obs:'',qty:1,busca:'',borOk:1,opcOk:0,sabAck:0,pop:0}; itemPinta(); if(!stepsIt().length) foco('#itAddBtn');
 }
 function tamAtual(){ var t=null; (IT.p.tamanhos||[]).forEach(function(x){ if(x.nome===IT.tam) t=x; }); return t; }
 function itemPreco(){
@@ -468,9 +469,9 @@ function cartBar(){
   var on=CART.length&&ABA==='ped'&&COM.mesa+COM.joia!==''; $('cartbar').classList.toggle('hide',!on);
   if(on){ var n=0; CART.forEach(function(i){ n+=i.qty; }); $('cbN').textContent='Ver pedido · '+n+' ite'+(n==1?'m':'ns'); $('cbV').textContent=brl(cartTot()); }
 }
-function descItem(i){ var d=[]; if(i.tam) d.push(i.tam); var n=i.sab.length; i.sab.forEach(function(s){ d.push((n>1?'1/'+n+' ':'')+s); }); if(i.borda) d.push('Borda: '+i.borda); i.adds.forEach(function(a){ d.push('+ '+a); }); if(i.obs) d.push('Obs: '+i.obs); return d.join(' · '); }
+function descItem(i,br){ var d=[]; if(i.tam) d.push(i.tam); var n=i.sab.length; i.sab.forEach(function(s){ d.push((n>1?'1/'+n+' ':'')+s); }); if(i.borda) d.push('Borda: '+i.borda); i.adds.forEach(function(a){ d.push('+ '+a); }); if(i.obs) d.push('Obs: '+i.obs); return br?d.map(esc).join('<br>'):d.join(' · '); }
 function abreCarrinho(){
-  var h=''; CART.forEach(function(i,k){ h+='<div class="opt"><span class="n"><b>'+i.qty+'x '+esc(i.nome)+'</b><small>'+esc(descItem(i))+'</small></span><span class="p">'+brl(i.unit*i.qty)+'</span><button onclick="tiraItem('+k+')" style="border:0;background:var(--s3);border-radius:8px;width:32px;height:32px;font-weight:800">×</button></div>'; });
+  var h=''; CART.forEach(function(i,k){ h+='<div class="opt"><span class="n"><b>'+i.qty+'x '+esc(i.nome)+'</b><small>'+descItem(i,1)+'</small></span><span class="p">'+brl(i.unit*i.qty)+'</span><button onclick="tiraItem('+k+')" style="border:0;background:var(--s3);border-radius:8px;width:32px;height:32px;font-weight:800">×</button></div>'; });
   h+='<label class="l">Observação do pedido (cozinha)</label><input class="inp" id="pObs" maxlength="300"><div class="er" id="pErr"></div>';
   h+='<label class="l" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="pImp" '+(impOn()?'checked':'')+' onchange="impSet(this.checked)" style="width:20px;height:20px"> Imprimir o pedido ao enviar</label>';
   folha('Pedido · '+[(COM.mesa?(COM.modo==='balcao'?'Balcão ':'Mesa ')+COM.mesa:''),COM.joia].filter(Boolean).join(' · '),h,'<button class="bt" id="pBt" style="margin:0" onclick="enviaPedido()">Enviar para a cozinha · '+brl(cartTot())+'</button>'); foco('#pBt');
