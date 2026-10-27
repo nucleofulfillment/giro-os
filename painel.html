@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Giro OS — Painel do ponto · GIRO-OS-103</title>
+<title>Giro OS — Painel do ponto · GIRO-OS-104</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -784,7 +784,7 @@ a{color:inherit}
 
       <!-- CARDÁPIO (1A): produtos, categorias e adicionais do restaurante -->
       <section class="page" id="pg-cardapio">
-        <div class="pghd"><div><h1>Cardápio</h1><div class="sub">produtos do seu restaurante · <span style="opacity:.6">GIRO-OS-081</span></div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn sec" onclick="cdAbrirCats()">Categorias</button><button class="btn sec" onclick="cdLinkCardapio()">🔗 Link do cardápio</button><button class="btn sec" onclick="cdEtiquetas()">Etiquetas</button><button class="btn sec" onclick="window.open('configurar.html','_blank')">📷 Cardápio por foto</button><button class="btn sec" onclick="cdAparencia()">🎨 Marca e cores</button><button class="btn sec" onclick="cdHorario()">🕒 Horário</button><button class="btn sec" onclick="cdFrete()">🛵 Entrega</button><button class="btn sec" onclick="cdMesas()">🍽️ Mesas <span id="ms-bd" style="display:none;background:#ef4444;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px"></span></button><button class="btn sec" onclick="window.open('atendimento.html','_blank')">🧾 Atendimento (garçom/balcão)</button><button class="btn sec" onclick="cdAbrirOfertas()">▶ Ofertas</button><button class="btn sec" onclick="cdAbrirImport()">Importar planilha</button><button class="btn pri" onclick="cdNovo()">+ Novo produto</button></div></div>
+        <div class="pghd"><div><h1>Cardápio</h1><div class="sub">produtos do seu restaurante · <span style="opacity:.6">GIRO-OS-081</span></div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn sec" onclick="cdAbrirCats()">Categorias</button><button class="btn sec" onclick="cdLinkCardapio()">🔗 Link do cardápio</button><button class="btn sec" onclick="cdEtiquetas()">Etiquetas</button><button class="btn sec" onclick="window.open('configurar.html','_blank')">📷 Cardápio por foto</button><button class="btn sec" onclick="cdAparencia()">🎨 Marca e cores</button><button class="btn sec" onclick="cdHorario()">🕒 Horário</button><button class="btn sec" onclick="cdFrete()">🛵 Entrega</button><button class="btn sec" onclick="cdMesas()">🍽️ Mesas <span id="ms-bd" style="display:none;background:#ef4444;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px"></span></button><button class="btn sec" onclick="window.open('atendimento.html','_blank')">🧾 Atendimento (garçom/balcão)</button><button class="btn sec" onclick="cdAbrirOfertas()">▶ Ofertas</button><button class="btn sec" onclick="cdAbrirImport()">Importar planilha</button><button class="btn sec" onclick="cdFotosLote()">📷 Fotos em lote</button><button class="btn pri" onclick="cdNovo()">+ Novo produto</button></div></div>
         <div class="card">
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px"><input class="inp" id="cd-busca" placeholder="Buscar produto" oninput="cdPintar()" style="flex:1;min-width:200px"><select class="inp" id="cd-fcat" onchange="cdPintar()" style="width:210px;max-width:100%"></select></div>
           <div id="cd-selbar" style="display:none;align-items:center;gap:10px;flex-wrap:wrap;background:var(--s2);border-radius:12px;padding:8px 12px;margin-bottom:10px;font-size:13px"><span id="cd-seltxt" style="font-weight:700"></span><button class="btn pri sm" onclick="cdExibirOferta()">▶ Exibir oferta</button><button class="btn sec sm" onclick="cdLimparSel()">Limpar</button></div>
@@ -7951,6 +7951,53 @@ function cdAbaLinhas(wb,nomes){
   return [];
 }
 function cdCol(r,nomes){ var i; for(i=0;i<nomes.length;i++){ var v=r[nomes[i]]; if(v!==undefined&&String(v).trim()!=='') return v; } return ''; }
+/* ── fotos em lote: cada arquivo (nome do produto.png) vai pro produto de mesmo nome ── */
+function cdFotosLote(){
+  CD.fl=null; el('sh-import').querySelector('h3').textContent='Fotos em lote';
+  el('cd-imp-corpo').innerHTML='<p style="margin:0 0 12px;font-size:13px;line-height:1.55;color:var(--muted2)">Escolha várias fotos de uma vez. O sistema liga cada foto ao produto que tem o <b>mesmo nome do arquivo</b> (ex.: <b>Pastel de Carne.png</b> vai pro produto "Pastel de Carne"; acento e maiúscula não importam). Antes de gravar você confere o resumo. A foto antiga do produto é trocada.</p>'
+    +'<div style="margin-bottom:12px"><button class="btn pri" type="button" onclick="el(\'cd-fl-file\').click()">Escolher fotos</button></div>'
+    +'<input type="file" id="cd-fl-file" accept="image/*" multiple style="display:none" onchange="cdFlLer(this)"><div id="cd-fl-res"></div>';
+  abrir('sh-import');
+}
+function cdFlRedim(f){
+  return new Promise(function(ok,no){
+    var rd=new FileReader();
+    rd.onload=function(){ var im=new Image(); im.onload=function(){
+      var m=700,w=im.width,h=im.height,k=Math.min(1,m/Math.max(w,h)),cv=document.createElement('canvas'); cv.width=Math.round(w*k); cv.height=Math.round(h*k);
+      cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);
+      var q=0.8,out=cv.toDataURL('image/jpeg',q); while(out.length>420000&&q>0.35){ q-=0.1; out=cv.toDataURL('image/jpeg',q); }
+      ok(out); }; im.onerror=function(){ no(new Error('imagem inválida')); }; im.src=rd.result; };
+    rd.onerror=function(){ no(new Error('não li o arquivo')); }; rd.readAsDataURL(f);
+  });
+}
+function cdFlLer(inp){
+  var fs=[].slice.call(inp.files||[]); inp.value=''; if(!fs.length) return;
+  var res=el('cd-fl-res'), mp={}, i; CD.prods.forEach(function(p){ mp[cdNorm(p.nome)]=p; });
+  var ok=[], sem=[];
+  fs.forEach(function(f){ var p=mp[cdNorm(f.name.replace(/\.[^.]+$/,''))]; if(p) ok.push({f:f,p:p}); else sem.push(f.name); });
+  CD.fl=ok;
+  var h='<div style="font-weight:800;margin:6px 0">'+ok.length+' foto'+(ok.length==1?'':'s')+' com produto</div>';
+  if(ok.length) h+='<div style="max-height:220px;overflow:auto;font-size:12.5px;border:1px solid var(--border);border-radius:10px;padding:6px 10px;margin-bottom:8px">'+ok.map(function(o){ return '<div style="padding:2px 0">'+esc(o.f.name)+' → <b>'+esc(o.p.nome)+'</b>'+(o.p.foto?' <span style="color:var(--muted)">(troca a foto atual)</span>':'')+'</div>'; }).join('')+'</div>';
+  if(sem.length) h+='<div style="font-size:12.5px;color:var(--red);margin:6px 0"><b>'+sem.length+' sem produto de mesmo nome (ignoradas):</b><br>'+sem.map(esc).join('<br>')+'</div>';
+  if(ok.length) h+='<div id="cd-fl-erro" style="color:var(--red);font-size:12.5px;margin:6px 0"></div><button class="btn pri wide" id="cd-fl-go" onclick="cdFlSubir()">Subir '+ok.length+' foto'+(ok.length==1?'':'s')+'</button>';
+  else h+='<div style="font-size:12.5px;color:var(--muted2)">Nenhuma foto bateu com um produto. Confira se os produtos já foram importados e se o nome do arquivo é igual ao do produto.</div>';
+  res.innerHTML=h;
+}
+function cdFlSubir(){
+  var lista=CD.fl; if(!lista||!lista.length) return; var b=el('cd-fl-go'), er=el('cd-fl-erro'), feitos=0, falhas=[]; b.disabled=true; er.textContent='';
+  function um(i){
+    if(i>=lista.length) return Promise.resolve();
+    var o=lista[i]; b.textContent='Subindo '+(i+1)+' de '+lista.length+'…';
+    return cdFlRedim(o.f).then(function(du){
+      var c=JSON.parse(JSON.stringify(o.p)); c.foto=du; return cdSalvarApi('prod',c).then(function(){ feitos++; });
+    }).catch(function(e){ falhas.push(o.p.nome+' ('+e.message+')'); }).then(function(){ return um(i+1); });
+  }
+  um(0).then(function(){
+    cdCarregar();
+    if(falhas.length){ b.disabled=false; b.textContent='Tentar de novo'; er.innerHTML='Subiram '+feitos+'. Não subiram: '+falhas.map(esc).join('; ')+'. Escolha só essas fotos e tente de novo.'; }
+    else { fecharTudo(); aviso(feitos+' foto'+(feitos==1?'':'s')+' no cardápio'); }
+  });
+}
 function cdAbrirImport(){
   CD.imp=null; el('sh-import').querySelector('h3').textContent='Importar cardápio por planilha';
   el('cd-imp-corpo').innerHTML='<p style="margin:0 0 12px;font-size:13px;line-height:1.55;color:var(--muted2)">Envie a planilha do cardápio e o sistema cria todos os produtos, tamanhos, sabores e adicionais de uma vez. Antes de gravar, você confere um resumo. Se já existir um produto com o mesmo nome, ele é <b>atualizado</b> (as fotos dos sabores com o mesmo nome continuam).</p>'
