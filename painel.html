@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>LiveFood — Painel · GIRO-OS-119</title>
+<title>LiveFood — Painel · GIRO-OS-120</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -868,6 +868,7 @@ a{color:inherit}
           <div class="cfgcard" style="cursor:pointer" onclick="cdAparencia()"><div class="ic">🎨</div><h4>Marca e cores</h4><p>Cadastre a logo e escolha a cor do restaurante. Vale para todo o sistema: login, painel, atendimento, cozinha e cardápio.</p></div>
           <div class="cfgcard" style="cursor:pointer" onclick="cdPagamento()"><div class="ic">💳</div><h4>Configurar checkout</h4><p>Conecte a conta Asaas do restaurante para receber pedidos do cardápio digital por Pix e cartão. Cole a chave de API e teste a conexão.</p><span class="badge b-in">configurar</span></div>
           <div class="cfgcard" style="cursor:pointer" onclick="cdCfgClientes()"><div class="ic">👥</div><h4>Configurações clientes</h4><p>Regras do atendimento por garçom/balcão: bloqueio de cliente inadimplente, fechamento automático da conta pendurada e mensagem da cobrança.</p><span class="badge b-in">configurar</span></div>
+          <div class="cfgcard" style="cursor:pointer" onclick="slAbrir()"><div class="ic">🪑</div><h4>Salão</h4><p>Desenhe o mapa do seu salão: mesas, balcão de saída, cozinha, banheiros, entrada e saída. O garçom usa esse mapa no celular para entregar os pedidos e atender os chamados.</p><span class="badge b-in">desenhar</span></div>
         </div>
       </section>
 
@@ -7729,6 +7730,100 @@ function cdCfgClientesSalvar(){
   fetch(DELTADIS_API+'/painel/atend-cfg',{method:'POST',headers:cdHdr(),body:JSON.stringify({bloq_dias:el('cc-bloq').value,fecha_auto:el('cc-auto').checked,fecha_dias:el('cc-dias').value,msg:el('cc-msg').value})}).then(function(r){return r.json();}).then(function(d){
     if(!d||!d.ok) throw new Error((d&&d.mensagem)||'não salvou'); aviso('Configurações salvas'); fecharTudo();
   }).catch(function(e){ var m=el('cc-m'); if(m){ m.style.color='#f87171'; m.textContent=e.message||'Não salvou'; } });
+}
+/* ── (120) SALÃO: desenhar a planta do restaurante (mesas, balcão, cozinha, banheiros, entrada, saída) ── */
+var SL={L:[],sel:0,drag:null,uid:1};
+var SL_T={mesa:{nome:'Mesa'},balcao:{nome:'Balcão de saída',w:110,h:30,label:'BALCÃO'},cozinha:{nome:'Cozinha e bar',w:96,h:230,label:'COZINHA'},banheiro:{nome:'Banheiro',w:52,h:40,label:'WC'},entrada:{nome:'Entrada',w:84,h:16,label:'ENTRADA'},saida:{nome:'Saída',w:84,h:16,label:'SAÍDA'}};
+function slModelo(){
+  var L=[],id=1; function add(t,x,y,n,label,w,h){ var d=SL_T[t]; L.push({id:id++,t:t,x:x,y:y,n:n||0,label:label||'',w:w||d.w||44,h:h||d.h||44}); }
+  add('cozinha',57,150,0,'',96,230); add('balcao',150,185,0,'',30,110);
+  [[215,55],[315,55],[415,55],[215,150],[315,150],[415,150],[215,245],[315,245],[415,245],[535,70],[535,160],[535,250]].forEach(function(p,i){ add('mesa',p[0],p[1],i+1); });
+  add('banheiro',300,335,0,'WC M'); add('banheiro',365,335,0,'WC F'); add('entrada',110,345,0,'ENTRADA'); add('saida',520,345,0,'SAÍDA');
+  return L;
+}
+function slPeca(id){ return SL.L.filter(function(p){return p.id===id;})[0]; }
+function slFormas(p){
+  var h='';
+  if(p.t==='mesa'){ h+='<circle cx="'+p.x+'" cy="'+p.y+'" r="22" fill="#F5E8E0" stroke="#E3C9B8" stroke-width="2"/><text x="'+p.x+'" y="'+(p.y+6)+'" text-anchor="middle" font-size="16" font-weight="800" fill="#29231E">'+p.n+'</text>'; }
+  else if(p.t==='entrada'||p.t==='saida'){ h+='<rect x="'+(p.x-p.w/2)+'" y="'+(p.y-p.h/2)+'" width="'+p.w+'" height="'+p.h+'" rx="4" fill="'+(p.t==='entrada'?'#16A34A':'#DC2626')+'" opacity=".9"/><text '+(p.h>p.w?'transform="rotate(-90 '+p.x+' '+p.y+')" ':'')+'x="'+p.x+'" y="'+(p.y+4)+'" text-anchor="middle" font-size="10" font-weight="800" fill="#fff">'+esc(p.label||SL_T[p.t].label)+'</text>'; }
+  else {
+    var forte=p.t==='balcao', lab=esc(p.label||SL_T[p.t].label);
+    h+='<rect x="'+(p.x-p.w/2)+'" y="'+(p.y-p.h/2)+'" width="'+p.w+'" height="'+p.h+'" rx="8" fill="'+(forte?'#fff':'#EFE7E0')+'" stroke="'+(forte?'#29231E':'#D9CFC6')+'" stroke-width="'+(forte?2:1.5)+'"/>';
+    if(forte&&p.h>p.w*1.3) h+='<text x="'+p.x+'" y="'+(p.y+p.h/2+14)+'" text-anchor="middle" font-size="11" font-weight="800" fill="#29231E">'+lab+'</text>';
+    else h+='<text x="'+p.x+'" y="'+(p.y+4)+'" text-anchor="middle" font-size="11" font-weight="800" fill="'+(forte?'#29231E':'#6C6055')+'">'+lab+'</text>';
+  }
+  return h;
+}
+function slPlanta(){
+  var s='<rect x="2" y="2" width="596" height="356" rx="10" fill="none" stroke="#D9CFC6" stroke-width="3"/>', gx, gy;
+  for(gx=25;gx<600;gx+=25) s+='<line x1="'+gx+'" y1="4" x2="'+gx+'" y2="356" stroke="#F2DED2" stroke-width=".6"/>';
+  for(gy=25;gy<360;gy+=25) s+='<line x1="4" y1="'+gy+'" x2="596" y2="'+gy+'" stroke="#F2DED2" stroke-width=".6"/>';
+  SL.L.forEach(function(p){
+    s+='<g data-id="'+p.id+'" style="cursor:grab">'+slFormas(p);
+    if(SL.sel===p.id){ var r=p.t==='mesa'?{x:p.x-27,y:p.y-27,w:54,h:54}:{x:p.x-p.w/2-4,y:p.y-p.h/2-4,w:p.w+8,h:p.h+8}; s+='<rect x="'+r.x+'" y="'+r.y+'" width="'+r.w+'" height="'+r.h+'" rx="8" fill="none" stroke="#FF5A00" stroke-width="2.5" stroke-dasharray="5 4"/>'; }
+    s+='</g>';
+  });
+  return s;
+}
+function slAbrir(){
+  SL.sel=0; el('cd-imp-corpo').innerHTML='<div style="font-size:13px;color:var(--muted)">Carregando…</div>';
+  el('sh-import').querySelector('h3').textContent='Salão'; abrir('sh-import');
+  fetch(DELTADIS_API+'/painel/salao',{headers:cdHdr()}).then(function(r){return r.json();}).then(function(d){
+    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'erro');
+    SL.L=d.pecas||[]; SL.uid=1; SL.L.forEach(function(p){ if(p.id>=SL.uid) SL.uid=p.id+1; }); slMonta();
+  }).catch(function(e){ el('cd-imp-corpo').innerHTML='<div style="color:#f87171;font-size:13px">'+esc(e.message||'Não consegui abrir.')+'</div>'; });
+}
+function slMonta(){
+  el('cd-imp-corpo').innerHTML='<div style="font-size:13px;color:var(--muted2);line-height:1.5;margin-bottom:10px">Monte o mapa do seu salão: toque numa peça para colocar e <b>arraste</b> até o lugar certo. O garçom vai ver este mapa no celular, com o balcão na base. Escala: 25 pontos = 1 metro.</div>'
+    +'<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">'+['mesa','balcao','cozinha','banheiro','entrada','saida'].map(function(t){ return '<button class="btn sec" type="button" style="padding:7px 11px;font-size:12.5px" onclick="slAdd(\''+t+'\')">+ '+SL_T[t].nome+'</button>'; }).join('')+'</div>'
+    +'<svg id="sl-svg" viewBox="0 0 600 360" style="width:100%;height:auto;display:block;border-radius:12px;background:#FDF9F7;border:1px solid var(--border2);touch-action:none" role="img" aria-label="Planta do salão"></svg>'
+    +'<div id="sl-prop" style="margin-top:10px;min-height:44px"></div>'
+    +'<div id="sl-m" style="font-size:12.5px;min-height:18px;margin:8px 0"></div>'
+    +'<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn pri" type="button" onclick="slSalvar()">Salvar salão</button><button class="btn sec" type="button" onclick="slExemplo()">Usar modelo de exemplo</button></div>';
+  var s=el('sl-svg');
+  s.addEventListener('pointerdown',function(e){
+    var g=e.target.closest('g[data-id]'); if(!g){ SL.sel=0; slDesenha(); return; }
+    var id=+g.getAttribute('data-id'), p=slPeca(id), q=slPt(e); SL.sel=id; SL.drag={id:id,dx:q.x-p.x,dy:q.y-p.y}; s.setPointerCapture(e.pointerId); slDesenha(true);
+  });
+  s.addEventListener('pointermove',function(e){
+    if(!SL.drag) return; var p=slPeca(SL.drag.id), q=slPt(e);
+    p.x=Math.max(10,Math.min(590,Math.round((q.x-SL.drag.dx)/5)*5)); p.y=Math.max(10,Math.min(350,Math.round((q.y-SL.drag.dy)/5)*5)); s.innerHTML=slPlanta();
+  });
+  s.addEventListener('pointerup',function(){ SL.drag=null; }); s.addEventListener('pointercancel',function(){ SL.drag=null; });
+  slDesenha();
+}
+function slPt(e){ var s=el('sl-svg'), m=s.getScreenCTM().inverse(), q=s.createSVGPoint(); q.x=e.clientX; q.y=e.clientY; return q.matrixTransform(m); }
+function slDesenha(manterProp){
+  el('sl-svg').innerHTML=slPlanta();
+  var pr=el('sl-prop'), p=SL.sel&&slPeca(SL.sel);
+  if(!p){ pr.innerHTML='<div style="font-size:12.5px;color:var(--muted)">Toque numa peça do mapa para mudar o nome ou o número, girar ou remover.</div>'; return; }
+  if(manterProp&&el('sl-n')) return;
+  var h='<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b style="font-size:13px">'+SL_T[p.t].nome+'</b>';
+  if(p.t==='mesa') h+='<input class="inp" id="sl-n" type="number" min="1" max="999" value="'+p.n+'" style="width:110px" oninput="slEdita()" aria-label="Número da mesa">';
+  else h+='<input class="inp" id="sl-l" type="text" maxlength="14" value="'+esc(p.label||SL_T[p.t].label)+'" style="width:170px" oninput="slEdita()" aria-label="Nome na planta">';
+  h+=(p.t==='mesa'?'':'<button class="btn sec" type="button" style="padding:7px 11px;font-size:12.5px" onclick="slGira()">Girar</button>')+'<button class="btn sec" type="button" style="padding:7px 11px;font-size:12.5px" onclick="slRemove()">Remover</button></div>';
+  pr.innerHTML=h;
+}
+function slEdita(){ var p=slPeca(SL.sel); if(!p) return; if(p.t==='mesa'){ var v=parseInt(el('sl-n').value,10); if(v>0) p.n=v; } else p.label=el('sl-l').value; el('sl-svg').innerHTML=slPlanta(); }
+function slGira(){ var p=slPeca(SL.sel); if(!p) return; var t=p.w; p.w=p.h; p.h=t; slDesenha(); }
+function slRemove(){ SL.L=SL.L.filter(function(p){return p.id!==SL.sel;}); SL.sel=0; slDesenha(); }
+function slAdd(t){
+  var m=el('sl-m'); m.textContent='';
+  if(t==='balcao'&&SL.L.some(function(p){return p.t==='balcao';})){ m.style.color='#B08A00'; m.textContent='Já existe um balcão: arraste o que está no mapa.'; return; }
+  var n=0; if(t==='mesa'){ var us={}; SL.L.forEach(function(p){ if(p.t==='mesa') us[p.n]=1; }); n=1; while(us[n]) n++; }
+  var d=SL_T[t], p={id:SL.uid++,t:t,x:300,y:180,n:n,label:t==='banheiro'?'WC':'',w:d.w||44,h:d.h||44}; SL.L.push(p); SL.sel=p.id; slDesenha();
+}
+function slExemplo(){ if(SL.L.length&&!window.confirm('Isso troca o desenho atual pelo modelo de exemplo. Continuar?')) return; SL.L=slModelo(); SL.uid=SL.L.length+1; SL.sel=0; slDesenha(); }
+function slSalvar(){
+  var m=el('sl-m'), us={}, dup=0; SL.L.forEach(function(p){ if(p.t==='mesa'){ if(us[p.n]) dup=p.n; us[p.n]=1; } });
+  m.style.color='#DC2626';
+  if(dup){ m.textContent='Duas mesas com o número '+dup+'. Troque o número de uma delas.'; return; }
+  m.style.color='var(--muted)'; m.textContent='Salvando…';
+  fetch(DELTADIS_API+'/painel/salao',{method:'POST',headers:cdHdr(),body:JSON.stringify({pecas:SL.L})}).then(function(r){return r.json();}).then(function(d){
+    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'não salvou');
+    SL.L=d.pecas||[]; SL.sel=0; slDesenha(); var nm=SL.L.filter(function(p){return p.t==='mesa';}).length, sb=SL.L.some(function(p){return p.t==='balcao';});
+    m.style.color='#16A34A'; m.textContent='Salão salvo ✓ ('+nm+(nm===1?' mesa':' mesas')+')'+(sb?'':' · falta colocar o balcão de saída'); aviso('Salão salvo');
+  }).catch(function(e){ m.style.color='#DC2626'; m.textContent=e.message||'Não salvou'; });
 }
 /* ── pagamento: conta Asaas do restaurante (065) ── */
 function cdPagamento(){
