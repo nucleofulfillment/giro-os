@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Giro OS — Painel do ponto · GIRO-OS-085</title>
+<title>Giro OS — Painel do ponto · GIRO-OS-086</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -4355,7 +4355,7 @@ function msPedidosHtml(busca){
   ped.forEach(function(x){
     if(busca&&(('mesa '+x.mesa+' '+x.num+' '+x.itens).toLowerCase().indexOf(busca)<0)) return;
     var st=x.fase==='preparo'?['Em preparo','#f59e0b']:(x.fase==='rota'?['Pronto','#22c55e']:['Novo','#ef4444']), nx=x.fase===''?['preparo','Começar preparo']:(x.fase==='preparo'?['rota','Pronto']:['entregue','Servido ✔']);
-    var rc=x.status==='pago'?(x.pagto==='pix'?'Pago no Pix':x.pagto==='dinheiro'?'Pago em dinheiro':x.pagto==='cartao'?'Pago no cartão':'Pago'):'Conta aberta';
+    var rc=x.status==='pago'?(x.pagto==='pix'?'Pago no Pix':x.pagto==='dinheiro'?'Pago em dinheiro':x.pagto==='cartao'?'Pago no cartão':'Pago'):(x.status==='marcado'?'Pendurado':'Conta aberta');
     h+='<tr><td><b>#'+x.num+'</b><br><span style="color:var(--muted);font-size:11.5px">'+esc(x.itens)+'</span>'+(x.obs?'<br><span style="color:var(--amber);font-size:11px;font-weight:600">Obs: '+esc(x.obs)+'</span>':'')+'</td><td>Mesa '+esc(x.mesa)+'</td><td>LOCAL</td><td>'+msHora(x.criado)+'</td><td>—</td><td><span style="font-size:11.5px;font-weight:800;color:#fff;background:'+st[1]+';border-radius:10px;padding:2px 9px">'+st[0]+'</span></td><td>'+moeda(x.total)+'</td><td>'+rc+'</td><td style="white-space:nowrap"><button class="btn pri sm" type="button" onclick="msFase(\''+esc(x.id)+'\',\''+nx[0]+'\')">'+nx[1]+'</button></td></tr>'; });
   return h||'<tr><td colspan="9"><div class="empty">Nenhum pedido de mesa em andamento</div></td></tr>';
 }
@@ -7411,7 +7411,7 @@ function msPintar(){
   h+='<div style="font-weight:800;font-size:13.5px;margin:12px 0 6px">🍽️ Pedidos das mesas</div>';
   if(!MS.ped.length) h+='<div style="border:1px dashed var(--border);border-radius:12px;padding:14px;font-size:13px;color:var(--muted)">Nenhum pedido de mesa em andamento.</div>';
   MS.ped.forEach(function(x){
-    var st=x.fase==='preparo'?['Em preparo','#f59e0b']:(x.fase==='rota'?['Pronto','#22c55e']:['Novo','#ef4444']), pg=x.status==='pago'?(x.pagto==='pix'?'Pago no Pix':x.pagto==='dinheiro'?'Pago em dinheiro':x.pagto==='cartao'?'Pago no cartão':'Pago'):(x.pagto==='conta'?'Na conta da mesa':x.pagto==='caixa'?'Pagar no caixa (cartão ou dinheiro)':'Pago no Pix');
+    var st=x.fase==='preparo'?['Em preparo','#f59e0b']:(x.fase==='rota'?['Pronto','#22c55e']:['Novo','#ef4444']), pg=x.status==='pago'?(x.pagto==='pix'?'Pago no Pix':x.pagto==='dinheiro'?'Pago em dinheiro':x.pagto==='cartao'?'Pago no cartão':'Pago'):(x.status==='marcado'?'Pendurado (conta do cliente)':x.pagto==='conta'?'Na conta da mesa':x.pagto==='caixa'?'Pagar no caixa (cartão ou dinheiro)':'Pago no Pix');
     var bt=x.fase===''?'<button class="btn pri sm" type="button" onclick="msFase(\''+esc(x.id)+'\',\'preparo\')">Começar preparo</button>':(x.fase==='preparo'?'<button class="btn pri sm" type="button" onclick="msFase(\''+esc(x.id)+'\',\'rota\')">Pronto</button>':'<button class="btn pri sm" type="button" onclick="msFase(\''+esc(x.id)+'\',\'entregue\')">Servido ✔</button>');
     h+='<div style="border:1px solid var(--border);border-radius:12px;padding:10px;margin-bottom:10px"><div style="display:flex;align-items:center;gap:8px"><b style="font-size:15px">Mesa '+esc(x.mesa)+'</b><span style="font-size:12px;color:var(--muted)">#'+x.num+' · '+msHora(x.criado)+'</span><span style="margin-left:auto;font-size:11.5px;font-weight:800;color:#fff;background:'+st[1]+';border-radius:10px;padding:2px 9px">'+st[0]+'</span></div><div style="font-size:13.5px;margin:6px 0;line-height:1.45">'+esc(x.itens)+'</div>'+(x.obs?'<div style="font-size:12.5px;color:#f59e0b;margin-bottom:6px">Obs: '+esc(x.obs)+'</div>':'')+'<div style="display:flex;align-items:center;gap:8px"><span style="font-size:12.5px;color:var(--muted);flex:1">'+pg+' · '+moeda(x.total)+'</span>'+bt+'</div></div>'; });
   el('cd-imp-corpo').innerHTML=h;
