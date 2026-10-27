@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
 <meta name="theme-color" content="#F97316">
-<title>Atendimento · GIRO-OS-ATEND-19</title>
+<title>Atendimento · GIRO-OS-ATEND-20</title>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#FBF7F5;--s1:#fff;--s3:#FBF3EE;--s4:#F5E8E0;--b2:#F2DED2;--tx:#29231E;--mu:#9E9084;--mu2:#6C6055;--pri:#D96D28;--grad:linear-gradient(120deg,#F97316,#FDB022);--ok:#16A34A;--er:#DC2626;--am:#B45309;--f:'Manrope',-apple-system,sans-serif}
@@ -45,6 +45,8 @@ h2{margin:6px 0 10px;font-size:19px;font-weight:800}
 .cat::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 35%,rgba(0,0,0,.72))}
 .cat span{position:relative;z-index:1;color:#fff;font-weight:800;font-size:16px;padding:12px;line-height:1.15;text-shadow:0 1px 6px rgba(0,0,0,.5)}
 .cat.sf{background:var(--grad)}
+.prod.sel{outline:3px solid var(--tema,#D96D28);outline-offset:-1px}
+.bt:focus-visible,#cartbar button:focus-visible{outline:3px solid #29231E;outline-offset:3px}
 .prod{display:flex;align-items:center;gap:12px;padding:10px;border-radius:14px;background:#fff;border:1px solid var(--b2);margin-bottom:8px;width:100%;text-align:left;cursor:pointer}
 .prod .im{width:54px;height:54px;border-radius:11px;background:var(--s4) center/cover;flex:none}
 .prod b{display:block;font-size:15px}.prod small{color:var(--mu2);font-size:12.5px}.prod .v{margin-left:auto;font-weight:800;color:var(--pri);font-size:14px;text-align:right;flex:none}
@@ -150,7 +152,7 @@ label.l.big{font-size:14px;margin-top:16px}
 </div>
 
 <div id="app" class="hide">
-  <div id="top"><div style="flex:1;min-width:0;display:flex;align-items:center;gap:12px"><b id="emp" style="flex:none">Atendimento</b><small id="usu"></small></div><span style="font-size:10px;color:#9a8f86;font-weight:700;margin-right:8px;white-space:nowrap">ATEND-19</span><button onclick="sair()">Sair</button></div>
+  <div id="top"><div style="flex:1;min-width:0;display:flex;align-items:center;gap:12px"><b id="emp" style="flex:none">Atendimento</b><small id="usu"></small></div><span style="font-size:10px;color:#9a8f86;font-weight:700;margin-right:8px;white-space:nowrap">ATEND-20</span><button onclick="sair()">Sair</button></div>
   <div id="chip" class="hide"><div class="t"><b id="chipT"></b><small id="chipS"></small></div><button onclick="trocaComanda()">Trocar</button></div>
 
   <!-- PEDIDO -->
@@ -169,7 +171,7 @@ label.l.big{font-size:14px;margin-top:16px}
       </div>
     </div>
 
-    <div id="p-cats" class="hide"><input class="inp" id="bProd" placeholder="🔎 Buscar produto pelo nome…" oninput="buscaProd()" autocomplete="off"><div id="lBusca" class="hide"></div><div id="cwrap"><h2>Categorias</h2><div class="grid" id="gCats"></div></div></div>
+    <div id="p-cats" class="hide"><input class="inp" id="bProd" placeholder="🔎 Buscar produto pelo nome…" oninput="buscaProd()" onkeydown="bKey(event)" autocomplete="off"><div id="lBusca" class="hide"></div><div id="cwrap"><h2>Categorias</h2><div class="grid" id="gCats"></div></div></div>
     <div id="p-prods" class="hide"><button class="voltar" onclick="verCats()">‹ Categorias</button><h2 id="tCat"></h2><div id="lProds"></div></div>
   </div>
 
@@ -311,7 +313,7 @@ function abreComanda(){
   buscaJoia().then(function(s){
     if(joia&&!s){ er.textContent='Confira a joia: não encontrei esse cliente.'; return; }
     if(joia&&COM.bloq&&!COM.liberar){ er.textContent='Cliente bloqueado. Só o gestor libera.'; return; }
-    $('sugs').innerHTML=''; COM.mesa=mesa; COM.joia=joia; CART=[]; mostraComanda(); verCats();
+    $('sugs').innerHTML=''; COM.mesa=mesa; COM.joia=joia; CART=[]; mostraComanda(); verCats(); foco('#bProd');
   });
 }
 function mostraComanda(){
@@ -319,7 +321,7 @@ function mostraComanda(){
   $('chipT').innerHTML=t.join(' · '); $('chipS').textContent=COM.nome||'Comanda aberta'; $('chip').classList.remove('hide');
 }
 function trocaComanda(){ if(CART.length&&!confirm('Há itens no pedido que ainda não foram enviados. Trocar de comanda mesmo assim?')) return; zeraComanda(); }
-function zeraComanda(){ _ab=0; AUTOJ=''; AUTOM=''; carregaAbertas(); COM={mesa:'',joia:'',nome:'',modo:COM.modo,dev:0,bloq:false,liberar:false}; CART=[]; $('chip').classList.add('hide'); $('iMesa').value=''; $('iJoia').value=''; $('joiaInfo').innerHTML=''; $('sugs').innerHTML=''; $('idErr').textContent=''; limpaBusca(); ['p-cats','p-prods'].forEach(function(i){ $(i).classList.add('hide'); }); $('p-ident').classList.remove('hide'); cartBar(); window.scrollTo(0,0); }
+function zeraComanda(){ _ab=0; AUTOJ=''; AUTOM=''; carregaAbertas(); COM={mesa:'',joia:'',nome:'',modo:COM.modo,dev:0,bloq:false,liberar:false}; CART=[]; $('chip').classList.add('hide'); $('iMesa').value=''; $('iJoia').value=''; $('joiaInfo').innerHTML=''; $('sugs').innerHTML=''; $('idErr').textContent=''; limpaBusca(); ['p-cats','p-prods'].forEach(function(i){ $(i).classList.add('hide'); }); $('p-ident').classList.remove('hide'); cartBar(); window.scrollTo(0,0); foco('#iMesa'); }
 function ativaComanda(c){ COM={mesa:c.mesa||'',joia:c.joia||'',nome:c.nome||'',modo:c.joia&&!c.mesa?'balcao':'mesa',dev:0,bloq:false,liberar:false}; CART=[]; mostraComanda(); $('p-ident').classList.add('hide'); aba('ped'); verCats(); }
 /* ── cardápio: categorias em cards ── */
 function fotoProd(p){ return p.foto?API+'/food/foto/'+encodeURIComponent(CLI)+'/'+encodeURIComponent(p.id):''; }
@@ -335,12 +337,30 @@ function pintaCats(){
   });
   $('gCats').innerHTML=h||'<p>Nenhum produto cadastrado.</p>';
 }
+/* ── teclado (computador): Enter encadeia busca → item → Adicionar → Ver pedido → Enviar ── */
+var DESK=false; try{ DESK=matchMedia('(hover:hover) and (pointer:fine)').matches; }catch(e){}
+var BSEL=0;
+function foco(sel){ if(!DESK) return; setTimeout(function(){ var e=document.querySelector(sel); if(e&&!e.closest('.hide')){ try{ e.focus(); }catch(x){} } },60); }
+function marcaSel(){ if(!DESK) return; var l=document.querySelectorAll('#lBusca .prod'); if(BSEL>=l.length) BSEL=l.length-1; if(BSEL<0) BSEL=0; for(var i=0;i<l.length;i++) l[i].classList.toggle('sel',i===BSEL); if(l[BSEL]&&l[BSEL].scrollIntoView) l[BSEL].scrollIntoView({block:'nearest'}); }
+function bKey(ev){
+  var l=document.querySelectorAll('#lBusca .prod');
+  if(ev.key==='Enter'){ if(l.length){ ev.preventDefault(); (l[BSEL]||l[0]).click(); } }
+  else if(ev.key==='ArrowDown'){ ev.preventDefault(); BSEL++; marcaSel(); }
+  else if(ev.key==='ArrowUp'){ ev.preventDefault(); BSEL--; marcaSel(); }
+}
+document.addEventListener('keydown',function(ev){
+  if(ev.key==='Escape'&&$('sh').style.display==='flex'){ fecha(); return; }
+  if(!DESK||ev.ctrlKey||ev.metaKey||ev.altKey||ev.key.length!==1) return;
+  var tg=ev.target&&ev.target.tagName; if(tg==='INPUT'||tg==='TEXTAREA'||tg==='SELECT') return;
+  if($('sh').style.display==='flex'||$('p-cats').classList.contains('hide')) return;
+  $('bProd').focus();
+});
 function limpaBusca(){ $('bProd').value=''; buscaProd(); }
 function buscaProd(){
   var q=$('bProd').value.toLowerCase().trim(), box=$('lBusca');
   if(!q){ box.classList.add('hide'); $('cwrap').classList.remove('hide'); return; }
   var h=''; (D.prods||[]).forEach(function(p){ if(p.nome.toLowerCase().indexOf(q)<0) return; var m=menorPreco(p), u=fotoProd(p); h+='<button class="prod" onclick="itemSheet(\''+esc(p.id)+'\')"><span class="im" '+(u?'style="background-image:url(\''+u+'\')"':'')+'></span><span><b>'+esc(p.nome)+'</b><small>'+esc((p.desc||'').slice(0,60))+'</small></span><span class="v">'+(m.de?'a partir de<br>':'')+brl(m.v)+'</span></button>'; });
-  box.innerHTML=h||'<p style="color:var(--mu2)">Nenhum produto com esse nome.</p>'; box.classList.remove('hide'); $('cwrap').classList.add('hide');
+  box.innerHTML=h||'<p style="color:var(--mu2)">Nenhum produto com esse nome.</p>'; box.classList.remove('hide'); $('cwrap').classList.add('hide'); BSEL=0; marcaSel();
 }
 function verCats(){ $('p-ident').classList.add('hide'); $('p-prods').classList.add('hide'); $('p-cats').classList.remove('hide'); cartBar(); window.scrollTo(0,0); }
 function menorPreco(p){ var t=(p.tamanhos||[]).map(function(x){ return x.preco; }).filter(function(x){ return x>0; }); return t.length?{v:Math.min.apply(null,t),de:t.length>1}:{v:p.preco||0,de:false}; }
@@ -359,7 +379,7 @@ var IT=null;
 function promoAtiva(p){ var d=p.desconto; if(!d||!(d.valor>0)) return null; var n=new Date(Date.now()-3*3600000).toISOString().slice(0,16); if(d.de&&n<d.de) return null; if(d.ate&&n>d.ate) return null; return d; }
 function itemSheet(id){
   var p=(D.prods||[]).filter(function(x){ return x.id===id; })[0]; if(!p) return;
-  IT={p:p,tam:(p.tamanhos&&p.tamanhos.length===1)?p.tamanhos[0].nome:'',sab:[],borda:'',adds:{},obs:'',qty:1,busca:'',borOk:0,opcOk:0,sabAck:0,pop:0}; itemPinta();
+  IT={p:p,tam:(p.tamanhos&&p.tamanhos.length===1)?p.tamanhos[0].nome:'',sab:[],borda:'',adds:{},obs:'',qty:1,busca:'',borOk:0,opcOk:0,sabAck:0,pop:0}; itemPinta(); if(!stepsIt().length) foco('#itAddBtn');
 }
 function tamAtual(){ var t=null; (IT.p.tamanhos||[]).forEach(function(x){ if(x.nome===IT.tam) t=x; }); return t; }
 function itemPreco(){
@@ -403,7 +423,7 @@ function itemPinta(){
       return '<div class="st'+(dn?' done':'')+(lk?' lk':'')+(cur===k?' cur':'')+(k==='sab'&&n>0&&!dn?' num':'')+'" onclick="tlClick(\''+k+'\')"><div class="c">'+c+'</div>'+nm[k]+'</div>'; }).join('')+'</div>';
     if(IT.pop&&IT.sab.length) rod='<div id="tlPop"><b style="font-size:12px;color:var(--mu2)">SABORES ESCOLHIDOS</b>'+IT.sab.map(function(x,i){ return '<div class="pp"><span>'+(IT.sab.length>1?(i+1)+'. ':'')+esc(x)+'</span><button onclick="sabTira('+i+')" title="Tirar">✕</button></div>'; }).join('')+'</div>'+rod;
   }
-  rod+='<button class="bt" style="margin:0" onclick="itemAdd()">Adicionar · <span id="itPr"></span></button>';
+  rod+='<button class="bt" id="itAddBtn" style="margin:0" onclick="itemAdd()">Adicionar · <span id="itPr"></span></button>';
   folha(p.nome,h,rod); if((p.sabores||[]).length&&liberado('sab')) pintaSab(); itemTot();
 }
 function tlClick(k){
@@ -440,7 +460,7 @@ function itemAdd(){
   if((p.tamanhos||[]).length&&!IT.tam){ er.textContent='Escolha o tamanho.'; goSec('tam'); return; }
   if((p.sabores||[]).length&&!IT.sab.length){ er.textContent='Escolha pelo menos um sabor.'; goSec('sab'); return; }
   CART.push({p:p.id,nome:p.nome,tam:IT.tam,sab:IT.sab.slice(),borda:IT.borda,adds:Object.keys(IT.adds),obs:IT.obs.trim(),qty:IT.qty,unit:itemPreco()});
-  fecha(); toast('Adicionado ao pedido'); limpaBusca(); verCats();
+  fecha(); toast('Adicionado ao pedido'); limpaBusca(); verCats(); foco('#cartbar button');
 }
 /* ── pedido (carrinho) ── */
 function cartTot(){ var t=0; CART.forEach(function(i){ t+=i.unit*i.qty; }); return Math.round(t*100)/100; }
@@ -453,7 +473,7 @@ function abreCarrinho(){
   var h=''; CART.forEach(function(i,k){ h+='<div class="opt"><span class="n"><b>'+i.qty+'x '+esc(i.nome)+'</b><small>'+esc(descItem(i))+'</small></span><span class="p">'+brl(i.unit*i.qty)+'</span><button onclick="tiraItem('+k+')" style="border:0;background:var(--s3);border-radius:8px;width:32px;height:32px;font-weight:800">×</button></div>'; });
   h+='<label class="l">Observação do pedido (cozinha)</label><input class="inp" id="pObs" maxlength="300"><div class="er" id="pErr"></div>';
   h+='<label class="l" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="pImp" '+(impOn()?'checked':'')+' onchange="impSet(this.checked)" style="width:20px;height:20px"> Imprimir o pedido ao enviar</label>';
-  folha('Pedido · '+[(COM.mesa?(COM.modo==='balcao'?'Balcão ':'Mesa ')+COM.mesa:''),COM.joia].filter(Boolean).join(' · '),h,'<button class="bt" id="pBt" style="margin:0" onclick="enviaPedido()">Enviar para a cozinha · '+brl(cartTot())+'</button>');
+  folha('Pedido · '+[(COM.mesa?(COM.modo==='balcao'?'Balcão ':'Mesa ')+COM.mesa:''),COM.joia].filter(Boolean).join(' · '),h,'<button class="bt" id="pBt" style="margin:0" onclick="enviaPedido()">Enviar para a cozinha · '+brl(cartTot())+'</button>'); foco('#pBt');
 }
 function tiraItem(k){ CART.splice(k,1); if(!CART.length){ fecha(); cartBar(); } else { abreCarrinho(); cartBar(); } }
 function enviaPedido(){
