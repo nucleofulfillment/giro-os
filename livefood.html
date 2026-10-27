@@ -269,7 +269,7 @@ html.claro #wzp{filter:invert(1) hue-rotate(180deg)}
   <video class="vd" id="v0" muted playsinline preload="auto"></video>
   <video class="vd" id="v1" muted playsinline preload="auto"></video>
   <div id="omask"></div><div class="shade-t"></div><div class="shade-b"></div>
-  <div id="top"><div id="segs"></div><div id="bar"><div id="emp"></div><button class="rb" id="bGar" style="display:none" title="Chamar garçom" onclick="garcomChama()">🛎</button><button class="rb" id="bTema" title="Tema claro/escuro" onclick="alternaTema()"></button><button class="rb" id="bMenu" style="display:none" title="Cardápio" onclick="abreMenu()"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M8.5 10h7M8.5 14h7M8.5 18h4"/></svg></button></div></div>
+  <div id="top"><div id="segs"></div><div id="bar"><div id="emp"></div><button class="rb" id="bGar" style="display:none" title="Chamar garçom" onclick="garcomChama()">🛎</button><div style="position:relative;flex:none"><button class="rb" id="bTema" title="Tema claro/escuro" onclick="alternaTema()"></button><button class="rb" id="bShare" title="Compartilhar cardápio" onclick="compartilhaLink()" style="position:absolute;left:0;top:48px"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M8 7l4-4 4 4"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg></button></div><button class="rb" id="bMenu" style="display:none" title="Cardápio" onclick="abreMenu()"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M8.5 10h7M8.5 14h7M8.5 18h4"/></svg></button></div></div>
   <div id="ovbox"></div><div id="oft"></div>
   <div id="cards"></div>
   <button id="somc" onclick="alternaSom()"></button>
@@ -1236,6 +1236,13 @@ var PEDS=[];
 })();
 
 /* ── tema claro / escuro ── */
+function compartilhaLink(){
+  var u=location.origin+location.pathname+(CLI?'?c='+encodeURIComponent(CLI):''), t=(D&&D.empresa)||document.title||'Cardápio';
+  if(navigator.share){ navigator.share({title:t,text:'Veja o cardápio de '+t,url:u}).catch(function(){}); return; }
+  function ok(){ toast('Link copiado'); }
+  try{ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(u).then(ok,function(){ prompt('Copie o link:',u); }); return; } }catch(e){}
+  try{ var ta=document.createElement('textarea'); ta.value=u; ta.style.cssText='position:fixed;opacity:0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); ok(); }catch(e){ prompt('Copie o link:',u); }
+}
 function temaLer(){ try{ return localStorage.getItem('lf_tema')==='claro'?'claro':'escuro'; }catch(e){ return 'escuro'; } }
 function setTema(m){ try{ localStorage.setItem('lf_tema',m); }catch(e){} temaAplica(); }
 function alternaTema(){ setTema(temaLer()==='claro'?'escuro':'claro'); }
@@ -1361,7 +1368,7 @@ function menuFotoUrl(g){
 function abreMenu(){
   LF_VOLTA='';
   var gs=menuGrupos(), rows=Math.max(1,Math.ceil(gs.length/4));
-  var h='<div class="wh"><button class="bk" onclick="fechaSheet()">'+BKI+'</button><b>Cardápio</b><small style="margin-left:auto;font-size:10px;color:var(--mut)">LIVEFOOD-13</small></div><div class="wb mfull"><div class="mgrid">';
+  var h='<div class="wh"><button class="bk" onclick="fechaSheet()">'+BKI+'</button><b>Cardápio</b><small style="margin-left:auto;font-size:10px;color:var(--mut)">LIVEFOOD-14</small></div><div class="wb mfull"><div class="mgrid">';
   gs.forEach(function(g){ var u=menuFotoUrl(g), promo=g.ps.some(function(p){return p.promo&&p.promo.valor>0;});
     h+='<div class="cc" onclick="abreCat(\''+esc(g.id)+'\')" '+(u?'style="background-image:url('+u+')"':'')+'>'+(u?'':'<span class="mic">'+icone(tipoDesenho(g.ps[0]),34)+'</span>')+(promo?'<span class="mpr">Promo</span>':'')+'<b>'+esc(g.nome)+'</b></div>'; });
   h+='</div></div>'; abreFolha(h,true,'fx');
