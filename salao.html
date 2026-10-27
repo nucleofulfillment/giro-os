@@ -35,6 +35,7 @@ button.sm{min-height:36px;padding:6px 10px;font-size:13px}
 button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
 button:disabled{opacity:.5;cursor:default}
 input,select{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:8px 10px;min-height:40px;width:100%}
+.btn-l{font-weight:800;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:9px 13px;text-decoration:none;font-size:14px}
 .tabs{display:flex;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px}
 .tabs button{border:0;background:none;min-height:38px}
 .tabs button[aria-selected="true"]{background:var(--acc);color:#fff}
@@ -162,34 +163,15 @@ body.full .tela{height:100%;border-radius:0;background:none;padding:0 0 max(8px,
 <div class="wrap">
   <header>
     <div>
-      <h1>Teste de salão e entrega</h1>
-      <p>Monte a planta e faça pedidos de teste: cozinha, fila de garçons e o celular do garçom, com o mapa na vertical e o balcão na base.</p>
+      <h1>Salão do garçom <small style="font:700 12px var(--f-body);color:var(--mut)">SALAO-04</small></h1>
+      <p>Mapa real do seu restaurante, desenhado em Painel &gt; Configurações &gt; Salão. Os pedidos abaixo ainda são de teste.</p>
     </div>
-    <div class="tabs" role="tablist">
-      <button role="tab" id="tab1" aria-selected="true" type="button">1. Montar salão</button>
-      <button role="tab" id="tab2" aria-selected="false" type="button">2. Testar pedidos</button>
-    </div>
+    <a class="btn-l" href="painel.html">Editar o salão no painel</a>
   </header>
 
-  <section id="t1">
-    <div class="ed">
-      <div class="pan">
-        <h2>Peças</h2>
-        <p class="hint">Toque numa peça para colocar no salão e arraste para o lugar certo.</p>
-        <div class="paleta" id="paleta"></div>
-        <div class="prop" id="prop"><p class="hint" style="margin:0">Toque numa peça do mapa para editar o nome, girar ou remover.</p></div>
-        <div class="row" style="margin-top:12px"><button class="sm" id="bEx" type="button">Voltar ao exemplo</button><span class="salvo" id="salvo"></span></div>
-      </div>
-      <div class="pan canvas">
-        <h2>Planta do salão <small>escala: 25 pontos = 1 metro</small></h2>
-        <svg id="svg" viewBox="0 0 600 360" role="img" aria-label="Planta do salão para editar"></svg>
-      </div>
-    </div>
-  </section>
-
-  <section id="t2" hidden>
+  <section id="t2">
     <div class="tst">
-      <div class="ctrl" id="ctrl"><div class="ctrlTop"><button class="sm" id="bEd" type="button">Editar salão</button><button class="sm pri" id="bFecha" type="button">Voltar ao mapa</button></div>
+      <div class="ctrl" id="ctrl"><div class="ctrlTop"><button class="sm" id="bEd" type="button">Editar salão (painel)</button><button class="sm pri" id="bFecha" type="button">Voltar ao mapa</button></div>
       <div class="pan">
         <h2>Novo pedido <small>garçom ou cliente</small></h2>
         <label class="hint" for="selMesa" style="display:block;margin-bottom:4px">Mesa</label>
@@ -237,20 +219,15 @@ body.full .tela{height:100%;border-radius:0;background:none;padding:0 0 max(8px,
   function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 
   /* ---------- planta ---------- */
-  var uid=1;
-  function exemplo(){
-    var L=[], id=1;
-    function add(t,x,y,n,label,w,h){ var d=TIPOS[t]; L.push({id:id++,t:t,x:x,y:y,n:n||0,label:label||'',w:w||d.w||44,h:h||d.h||44}); }
-    add('cozinha',57,150,0,'',96,230); add('balcao',150,185,0,'',30,110);
-    [[215,55],[315,55],[415,55],[215,150],[315,150],[415,150],[215,245],[315,245],[415,245],[535,70],[535,160],[535,250]].forEach(function(p,i){ add('mesa',p[0],p[1],i+1); });
-    add('banheiro',300,335,0,'WC M'); add('banheiro',365,335,0,'WC F'); add('entrada',110,345,0,'ENTRADA'); add('saida',520,345,0,'SAÍDA');
-    uid=id; return L;
+  var L=[], sel=null, PL={ok:false,msg:'Carregando o salão…'}, API='https://giro-os-api.nucleofull.workers.dev';
+  function carregaPlanta(){
+    var tk=''; try{ tk=localStorage.getItem('dd_jwt')||''; }catch(e){}
+    if(!tk){ PL={ok:false,msg:'Entre no painel para abrir o salão do seu restaurante.'}; return Promise.resolve(); }
+    return fetch(API+'/painel/salao',{headers:{'Authorization':'Bearer '+tk}}).then(function(r){ if(r.status===401) throw new Error('login'); return r.json(); }).then(function(d){
+      if(!d||!d.ok) throw new Error('erro'); L=d.pecas||[];
+      PL=L.some(function(p){return p.t==='mesa';})?{ok:true}:{ok:false,msg:'O salão ainda não foi desenhado. Desenhe em Painel > Configurações > Salão.'};
+    }).catch(function(e){ PL={ok:false,msg:e.message==='login'?'Sua sessão expirou. Entre de novo no painel.':'Não consegui carregar o salão. Tente de novo.'}; });
   }
-  var L=null;
-  try{ var s=localStorage.getItem(KEY); if(s){ L=JSON.parse(s); L.forEach(function(p){ if(p.id>=uid) uid=p.id+1; }); } }catch(e){}
-  if(!L||!L.length) L=exemplo();
-  var sel=null, salvoT=0;
-  function salva(){ try{ localStorage.setItem(KEY,JSON.stringify(L)); $('salvo').textContent='Salvo neste navegador'; clearTimeout(salvoT); salvoT=setTimeout(function(){ $('salvo').textContent=''; },1800); }catch(e){ $('salvo').textContent='Não foi possível salvar aqui'; } }
   function peca(id){ return L.filter(function(p){return p.id===id;})[0]; }
   function mesas(){ return L.filter(function(p){return p.t==='mesa';}).sort(function(a,b){return a.n-b.n;}); }
   function mesaPorN(n){ return mesas().filter(function(m){return m.n===n;})[0]; }
@@ -262,7 +239,7 @@ body.full .tela{height:100%;border-radius:0;background:none;padding:0 0 max(8px,
     ctx=ctx||{}; var fill='var(--peca)', st='var(--mesa-line)', tx='var(--mut)', h='';
     if(p.t==='mesa'){
       var cor=ctx.cor||'var(--mesa)', ln=ctx.borda||'var(--mesa-line)', ink=ctx.ink||'var(--ink)';
-      h+='<circle cx="'+p.x+'" cy="'+p.y+'" r="22" fill="'+cor+'" stroke="'+ln+'" stroke-width="2"/><text x="'+p.x+'" y="'+(p.y+6)+'" text-anchor="middle" font-size="16" font-weight="800" fill="'+ink+'">'+p.n+'</text>';
+      var dm=p.w||44, fz=Math.max(11,Math.min(26,Math.round(dm*0.36))); h+='<circle cx="'+p.x+'" cy="'+p.y+'" r="'+(dm/2)+'" fill="'+cor+'" stroke="'+ln+'" stroke-width="2"/><text x="'+p.x+'" y="'+(p.y+fz*0.37)+'" text-anchor="middle" font-size="'+fz+'" font-weight="800" fill="'+ink+'">'+p.n+'</text>';
     } else if(p.t==='entrada'||p.t==='saida'){
       var c=p.t==='entrada'?'var(--ok)':'var(--bad)';
       h+='<rect x="'+(p.x-p.w/2)+'" y="'+(p.y-p.h/2)+'" width="'+p.w+'" height="'+p.h+'" rx="4" fill="'+c+'" opacity=".9"/><text '+(p.h>p.w?'transform="rotate(-90 '+p.x+' '+p.y+')" ':'')+'x="'+p.x+'" y="'+(p.y+4)+'" text-anchor="middle" font-size="10" font-weight="800" fill="#fff">'+esc(p.label||TIPOS[p.t].label)+'</text>';
@@ -291,43 +268,6 @@ body.full .tela{height:100%;border-radius:0;background:none;padding:0 0 max(8px,
     if(opts.extra) s+=opts.extra;
     return s;
   }
-
-  /* ---------- editor ---------- */
-  function drawEd(){
-    $('svg').innerHTML=planta({edit:true});
-    var pr=$('prop'), p=sel&&peca(sel);
-    if(!p){ pr.innerHTML='<p class="hint" style="margin:0">Toque numa peça do mapa para editar o nome, girar ou remover.</p>'; return; }
-    var h='<b>'+TIPOS[p.t].nome+'</b>';
-    if(p.t==='mesa') h+='<label for="pN">Número da mesa</label><input id="pN" type="number" min="1" max="999" value="'+p.n+'">';
-    else h+='<label for="pL">Nome na planta</label><input id="pL" type="text" maxlength="14" value="'+esc(p.label||TIPOS[p.t].label)+'">';
-    h+='<div class="row">'+(p.t==='mesa'?'':'<button class="sm" id="pG" type="button">Girar</button>')+'<button class="sm" id="pR" type="button">Remover</button></div>';
-    pr.innerHTML=h;
-    if($('pN')) $('pN').oninput=function(){ var v=parseInt(this.value,10); if(v>0){ p.n=v; salva(); $('svg').innerHTML=planta({edit:true}); } };
-    if($('pL')) $('pL').oninput=function(){ p.label=this.value; salva(); $('svg').innerHTML=planta({edit:true}); };
-    if($('pG')) $('pG').onclick=function(){ var t=p.w; p.w=p.h; p.h=t; salva(); drawEd(); };
-    $('pR').onclick=function(){ L=L.filter(function(x){return x.id!==p.id;}); sel=null; salva(); drawEd(); };
-  }
-  function paleta(){
-    $('paleta').innerHTML=['mesa','balcao','cozinha','banheiro','entrada','saida'].map(function(t){ return '<button type="button" data-add="'+t+'">+ '+TIPOS[t].nome+'</button>'; }).join('');
-  }
-  document.addEventListener('click',function(e){
-    var b=e.target.closest('[data-add]'); if(!b) return; var t=b.dataset.add, d=TIPOS[t];
-    if(t==='balcao'&&balcao()){ $('salvo').textContent='Já existe um balcão: arraste o que está no mapa.'; return; }
-    var n=0; if(t==='mesa'){ var us={}; mesas().forEach(function(m){us[m.n]=1;}); n=1; while(us[n]) n++; }
-    var p={id:uid++,t:t,x:300,y:180,n:n,label:t==='banheiro'?'WC':'',w:d.w||44,h:d.h||44}; L.push(p); sel=p.id; salva(); drawEd();
-  });
-  var drag=null;
-  function pt(e){ var s=$('svg'), m=s.getScreenCTM().inverse(), q=s.createSVGPoint(); q.x=e.clientX; q.y=e.clientY; return q.matrixTransform(m); }
-  $('svg').addEventListener('pointerdown',function(e){
-    var g=e.target.closest('g[data-id]'); if(!g){ sel=null; drawEd(); return; }
-    var id=+g.dataset.id, p=peca(id), q=pt(e); sel=id; drag={id:id,dx:q.x-p.x,dy:q.y-p.y,mov:false}; $('svg').setPointerCapture(e.pointerId); drawEd();
-  });
-  $('svg').addEventListener('pointermove',function(e){
-    if(!drag) return; var p=peca(drag.id), q=pt(e); p.x=Math.max(10,Math.min(590,Math.round((q.x-drag.dx)/5)*5)); p.y=Math.max(10,Math.min(350,Math.round((q.y-drag.dy)/5)*5)); drag.mov=true; $('svg').innerHTML=planta({edit:true});
-  });
-  function fimDrag(){ if(drag&&drag.mov) salva(); drag=null; }
-  $('svg').addEventListener('pointerup',fimDrag); $('svg').addEventListener('pointercancel',fimDrag);
-  $('bEx').onclick=function(){ L=exemplo(); sel=null; salva(); drawEd(); };
 
   /* ---------- pedidos, garçons e fila ---------- */
   var P=[], C=[], seq=1, cseq=1, carr=[], tick=0, gv=1, G=[];
@@ -450,10 +390,11 @@ body.full .tela{height:100%;border-radius:0;background:none;padding:0 0 max(8px,
   }
   function drawApp(){
     var g=gar(gv), bal=balcao();
+    if(!PL.ok){ $('gtabs').innerHTML=''; $('app').innerHTML='<div class="zero">'+esc(PL.msg)+'<br><br><a class="btn-l" href="painel.html">Abrir o painel</a></div>'; return; }
     $('gtabs').innerHTML=G.map(function(x){ var nu=naoPegos(x).length; return '<button type="button" class="gt'+(x.id===gv?' on':'')+'" data-gv="'+x.id+'"><span class="dot f-'+x.fase+'"></span>'+x.nome+(nu?'<em>'+nu+'</em>':'')+'</button>'; }).join('');
     var h='<div class="barra"><b>Garçom · '+g.nome+'</b><span class="st f-'+g.fase+'">'+esc(rotulo(g))+'</span></div>';
     if(g.av) h+='<div class="aviso">'+esc(g.av)+'</div>';
-    if(!bal){ $('app').innerHTML=h+'<div class="zero">Falta o balcão de saída na planta.<br>Volte ao passo 1 e coloque o balcão.</div>'; return; }
+    if(!bal){ $('app').innerHTML=h+'<div class="zero">Falta o balcão de saída na planta.<br>Desenhe o balcão em Painel &gt; Configurações &gt; Salão.</div>'; return; }
     $('app').innerHTML=h+mapaV(g)+painelV(g);
   }
   function drawT(){ drawCoz(); drawFila(); drawApp(); }
@@ -484,15 +425,13 @@ body.full .tela{height:100%;border-radius:0;background:none;padding:0 0 max(8px,
   $('bReset').onclick=function(){ P=[]; C=[]; seq=1; cseq=1; carr=[]; novosG(); gv=1; drawCarr(); drawT(); };
 
   var fullPref=null;
-  function modoFull(){ var on=fullPref===null?window.innerWidth<=700:fullPref; document.body.classList.toggle('full',on&&!$('t2').hidden); }
+  function modoFull(){ var on=fullPref===null?window.innerWidth<=700:fullPref; document.body.classList.toggle('full',on); }
   $('bFull').onclick=function(){ fullPref=true; modoFull(); };
   $('bSair').onclick=function(){ fullPref=false; $('ctrl').classList.remove('open'); modoFull(); };
   $('bCtrl').onclick=function(){ $('ctrl').classList.add('open'); };
   $('bFecha').onclick=function(){ $('ctrl').classList.remove('open'); };
-  $('bEd').onclick=function(){ $('ctrl').classList.remove('open'); aba(1); };
+  $('bEd').onclick=function(){ location.href='painel.html'; };
   window.addEventListener('resize',modoFull);
-  function aba(n){ $('t1').hidden=n!==1; $('t2').hidden=n!==2; $('tab1').setAttribute('aria-selected',n===1); $('tab2').setAttribute('aria-selected',n===2); modoFull(); if(n===1) drawEd(); else{ menuUI(); drawT(); } }
-  $('tab1').onclick=function(){ aba(1); }; $('tab2').onclick=function(){ aba(2); };
-  paleta(); drawEd();
+  carregaPlanta().then(function(){ menuUI(); drawT(); modoFull(); });
 })();
 </script>
