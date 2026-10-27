@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
 <meta name="theme-color" content="#F97316">
-<title>Atendimento · GIRO-OS-ATEND-30</title>
+<title>Atendimento · GIRO-OS-ATEND-31</title>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#FBF7F5;--s1:#fff;--s3:#FBF3EE;--s4:#F5E8E0;--b2:#F2DED2;--tx:#29231E;--mu:#9E9084;--mu2:#6C6055;--pri:#D96D28;--grad:#FF5A00;--ok:#16A34A;--er:#DC2626;--am:#B45309;--f:'Manrope',-apple-system,sans-serif}
@@ -207,13 +207,13 @@ label.l.big{font-size:14px;margin-top:16px}
 </div></div>
 <div id="mpCtrl"><div class="ctrlTop"><a class="sm btn-l" id="mpEd" href="painel.html" style="display:none">Editar salão (painel)</a><button class="sm pri" id="mpFecha" type="button">Voltar ao mapa</button></div>
   <div class="colx">
-    <div class="pan"><h2>Fila de garçons <small>como a dos motoboys</small></h2><p class="hint">Pedido pronto vai para o garçom livre mais antigo da fila. Quem está em rota não recebe pedido novo.</p><div id="mpFila"></div></div>
+    <div class="pan"><h2>Fila de garçons <small>como a dos motoboys</small></h2><p class="hint">Pedido pronto espera no balcão e qualquer garçom pega (toca na bolinha). Chamado de mesa vai para o garçom livre mais antigo da fila.</p><div id="mpFila"></div></div>
     <div class="pan"><h2>Balcão de saída <small>vagas numeradas</small></h2><p class="hint">A cozinha coloca o prato na vaga indicada. Basta um adesivo numerado no balcão, sem papel impresso.</p><div class="balcao" id="mpBalc"></div></div>
   </div>
 </div>
 
 <div id="app" class="hide">
-  <div id="top"><div style="flex:1;min-width:0;display:flex;align-items:center;gap:12px"><b id="emp" style="flex:none">Atendimento</b><small id="usu"></small></div><button id="mpTopBtn" type="button" onclick="mpAbre()">🗺️ Atender via mapa</button><span style="font-size:10px;color:#9a8f86;font-weight:700;margin-right:8px;white-space:nowrap">ATEND-30</span><button onclick="sair()">Sair</button></div>
+  <div id="top"><div style="flex:1;min-width:0;display:flex;align-items:center;gap:12px"><b id="emp" style="flex:none">Atendimento</b><small id="usu"></small></div><button id="mpTopBtn" type="button" onclick="mpAbre()">🗺️ Atender via mapa</button><span style="font-size:10px;color:#9a8f86;font-weight:700;margin-right:8px;white-space:nowrap">ATEND-31</span><button onclick="sair()">Sair</button></div>
   <div id="chip" class="hide"><div class="t"><b id="chipT"></b><small id="chipS"></small></div><button onclick="trocaComanda()">Trocar</button></div>
 
   <!-- PEDIDO -->
@@ -760,8 +760,8 @@ if(TK) inicio(); else mostraLogin('');
       if(r.status===401) throw new Error('login'); return r.json();
     });
   }
-  function naoPegos(){ return ST?ST.pedidos.filter(function(p){return !p.pego;}):[]; }
-  function pegos(){ return ST?ST.pedidos.filter(function(p){return p.pego;}):[]; }
+  function naoPegos(){ return ST?(ST.fila||[]):[]; }
+  function pegos(){ return ST?ST.pedidos:[]; }
   function grupos(){
     var m={},o=[];
     function pega(n){ if(!m[n]){ m[n]={mesa:n,itens:[],ped:[],cham:null}; o.push(m[n]); } return m[n]; }
@@ -828,12 +828,13 @@ if(TK) inicio(); else mostraLogin('');
       if(s.itens.length) h+=fotos(s.itens,true);
       h+='<button class="pri" type="button" data-ent="'+s.mesa+'">'+(s.ped.length?'Entreguei na Mesa '+s.mesa:'Atendi a Mesa '+s.mesa)+'</button></div>';
       if(rest) h+='<div class="resumo">Depois: '+esc(rest)+'</div>';
+      if(un.length) h+='<div class="resumo" style="background:var(--warn-soft);border-color:var(--warn)">'+un.length+(un.length===1?' pedido pronto esperando':' pedidos prontos esperando')+' no balcão. Toque na bolinha para pegar.</div>';
     } else if(ME.fase==='balcao'){
       h+='<div class="passo">No balcão: '+un.length+(un.length===1?' pedido':' pedidos')+'</div><p class="hint" style="margin:0">Toque na bolinha numerada do mapa, confira as fotos e toque em Peguei.</p>';
       if(un.length) h+='<div class="lnks">'+un.map(function(p){ return '<button class="sm" type="button" data-bub="'+esc(p.id)+'">#'+esc(p.num)+' · Mesa '+p.mesa+' · vaga '+p.vaga+'</button>'; }).join('')+'</div>';
       if(pg.length) h+='<div class="resumo">Na bandeja: '+pg.map(function(p){return '#'+esc(p.num)+' (Mesa '+p.mesa+')';}).join(', ')+'</div>';
       h+='<button class="pri" type="button" data-sair="1"'+(pg.length?'':' disabled')+'>'+(!pg.length?'Pegue ao menos um pedido':(un.length?'Sair e deixar '+un.length+' no balcão':'Sair para entregar'))+'</button>';
-    } else h+='<div class="zero">Você está livre ('+(ME.fila||1)+'º da fila).<br>Quando um pedido ficar pronto, ele aparece como bolinha no balcão.</div>';
+    } else h+='<div class="zero">Você está livre ('+(ME.fila||1)+'º da fila).<br>Quando um pedido ficar pronto, ele aparece como bolinha no balcão. Toque nela para pegar.</div>';
     return h+'</div>';
   }
   function drawApp(){
