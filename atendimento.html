@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
 <meta name="theme-color" content="#F97316">
-<title>Atendimento · GIRO-OS-ATEND-32</title>
+<title>Atendimento · GIRO-OS-ATEND-34</title>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#FBF7F5;--s1:#fff;--s3:#FBF3EE;--s4:#F5E8E0;--b2:#F2DED2;--tx:#29231E;--mu:#9E9084;--mu2:#6C6055;--pri:#D96D28;--grad:#FF5A00;--ok:#16A34A;--er:#DC2626;--am:#B45309;--f:'Manrope',-apple-system,sans-serif}
@@ -157,6 +157,12 @@ label.l.big{font-size:14px;margin-top:16px}
 #mp .mpSh .pe .pri{width:100%;min-height:58px;font-size:18px}
 #mp .mpSh .foto{height:120px}
 #mp .mpSh .h{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#mp{height:100%;height:100dvh}
+#mp .in .celular{flex:1 1 0;min-height:0;display:flex;flex-direction:column}
+#mp .in .tela{flex:1 1 0;min-height:0;height:auto;overflow:hidden}
+#mp .in .tela>.mapa{flex:1 1 0;min-height:150px}
+#mp .in .tela>.painel{flex:0 0 auto;max-height:46%;max-height:46dvh;overflow:auto}
+#mp .in .mapa svg{height:100%}
 #mpCtrl{position:fixed;inset:0;z-index:61;background:var(--bg);overflow:auto;display:none;flex-direction:column;gap:12px;padding:max(12px,env(safe-area-inset-top)) 12px 24px}
 #mpCtrl.open{display:flex}
 #mpCtrl .ctrlTop{display:flex;justify-content:space-between;align-items:center;gap:8px;max-width:560px;width:100%;margin:0 auto}
@@ -220,7 +226,7 @@ label.l.big{font-size:14px;margin-top:16px}
 </div>
 
 <div id="app" class="hide">
-  <div id="top"><div style="flex:1;min-width:0;display:flex;align-items:center;gap:12px"><b id="emp" style="flex:none">Atendimento</b><small id="usu"></small></div><button id="mpTopBtn" type="button" onclick="mpAbre()">🗺️ Atender via mapa</button><span style="font-size:10px;color:#9a8f86;font-weight:700;margin-right:8px;white-space:nowrap">ATEND-32</span><button onclick="sair()">Sair</button></div>
+  <div id="top"><div style="flex:1;min-width:0;display:flex;align-items:center;gap:12px"><b id="emp" style="flex:none">Atendimento</b><small id="usu"></small></div><button id="mpTopBtn" type="button" onclick="mpAbre()">🗺️ Atender via mapa</button><span style="font-size:10px;color:#9a8f86;font-weight:700;margin-right:8px;white-space:nowrap">ATEND-34</span><button onclick="sair()">Sair</button></div>
   <div id="chip" class="hide"><div class="t"><b id="chipT"></b><small id="chipS"></small></div><button onclick="trocaComanda()">Trocar</button></div>
 
   <!-- PEDIDO -->
@@ -528,7 +534,7 @@ function itemAdd(){
   if((p.tamanhos||[]).length&&!IT.tam){ er.textContent='Escolha o tamanho.'; goSec('tam'); return; }
   if((p.sabores||[]).length&&!IT.sab.length){ er.textContent='Escolha pelo menos um sabor.'; goSec('sab'); return; }
   CART.push({p:p.id,nome:p.nome,tam:IT.tam,sab:IT.sab.slice(),borda:IT.borda,adds:Object.keys(IT.adds),obs:IT.obs.trim(),qty:IT.qty,unit:itemPreco()});
-  fecha(); toast('Adicionado ao pedido'); limpaBusca(); verCats(); foco('#cartbar button');
+  fecha(); toast('Adicionado ao pedido'); limpaBusca(); verCats(); foco('#bProd');
 }
 /* ── pedido (carrinho) ── */
 function cartTot(){ var t=0; CART.forEach(function(i){ t+=i.unit*i.qty; }); return Math.round(t*100)/100; }
@@ -600,7 +606,7 @@ function pintaSocios(){
   var lista=SOCIOS.slice().sort(function(a,b){ return (b.devendo>0)-(a.devendo>0)||b.devendo-a.devendo; });
   lista.forEach(function(s){ if(q&&(s.nome.toLowerCase().indexOf(q)<0&&String(s.joia).indexOf(q)<0)) return;
     var pend=0, cob=0; if(REC){ REC.marcados.forEach(function(m){ if(String(m.joia)===String(s.joia)) pend+=m.total; }); REC.cobrancas.forEach(function(c){ if(String(c.joia)===String(s.joia)&&c.status!=='pago') cob+=c.total; }); }
-    h+='<div class="cm" style="cursor:pointer" onclick="clienteDet(\''+esc(s.joia)+'\')"><div class="h"><div style="min-width:0"><div class="cn">'+(s.ativo?pill(s.joia):'<span class="tag a" style="margin-left:0">inativo</span>')+(s.bloqueado?'<span class="tag r">BLOQUEADO</span>':'')+'</div><b style="display:block;word-break:break-word;margin-top:3px">'+esc(s.nome)+'</b><div style="font-size:12.5px;color:var(--mu2)">'+esc(s.fone||'sem celular')+(pend>0?' · pendurado '+brl(pend):'')+(cob>0?' · cobrança '+brl(cob):'')+'</div></div>'+(s.devendo>0?'<span class="v" style="color:var(--er)">'+brl(s.devendo)+'</span>':'<span style="color:var(--ok);font-weight:800;font-size:13px">em dia</span>')+'</div></div>'; });
+    h+='<div class="cm" style="cursor:pointer" onclick="clienteDet(\''+esc(s.joia)+'\')"><div class="h"><div style="min-width:0"><div class="cn">'+(s.ativo?pill(s.joia):'<span class="tag a" style="margin-left:0">inativo</span>')+(s.bloqueado?'<span class="tag r">BLOQUEADO</span>':'')+'</div><b style="display:block;word-break:break-word;margin-top:3px">'+esc(s.nome)+'</b><div style="font-size:12.5px;color:var(--mu2)">'+esc(s.fone||'sem celular')+(pend>0?' · pendurado '+brl(pend):'')+(cob>0?' · cobrança '+brl(cob):'')+'</div></div>'+(s.devendo>0?'<span class="v" style="color:var(--er)">'+brl(s.devendo)+'</span>':'')+'</div></div>'; });
   $('lSoc').innerHTML=h||'<p style="color:var(--mu2)">Nenhum cliente encontrado.</p>';
 }
 function editaCli(j){ var k=-1; SOCIOS.forEach(function(s,n){ if(String(s.joia)===String(j)) k=n; }); socioForm(k<0?null:k); }
@@ -829,7 +835,7 @@ if(TK) inicio(); else mostraLogin('');
     if(false){    } else if(ME.fase==='rota'&&pr.rota.length){
       var s=pr.rota[0], m=mesaPorN(s.mesa), rest=pr.rota.slice(1).map(function(x){return 'Mesa '+x.mesa;}).join(' · ');
       h+='<div class="card agora"><div class="h"><span class="tag">AGORA</span><span class="mesaN">Mesa '+s.mesa+'</span><span class="zona">'+(m?zona(m)+' · '+Math.round(s.d)+' m':'fora do mapa')+'</span></div>';
-      if(s.cham) h+='<span class="tag" style="background:#1971c2;align-self:flex-start">O CLIENTE CHAMOU O GARÇOM</span>';
+      if(s.cham) h+='<span class="tag" style="background:#1971c2;align-self:flex-start">O CLIENTE CHAMOU O GARÇOM · vá até a mesa</span>';
       if(s.itens.length) h+=fotos(s.itens,true);
       h+='<button class="pri" type="button" data-ent="'+s.mesa+'">'+(s.ped.length?'Entreguei na Mesa '+s.mesa:'Atendi a Mesa '+s.mesa)+'</button></div>';
       if(rest) h+='<div class="resumo">Depois: '+esc(rest)+'</div>';
