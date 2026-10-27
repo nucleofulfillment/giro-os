@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Giro OS — Painel do ponto · GIRO-OS-098</title>
+<title>Giro OS — Painel do ponto · GIRO-OS-099</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -7561,20 +7561,26 @@ function mzCarregar(){
 function mzLink(n){ return location.origin+location.pathname.replace(/[^\/]*$/,'')+'atendimento.html?mesa='+encodeURIComponent(n); }
 function mzPintar(){
   var q=(el('mz-busca').value||'').toLowerCase().trim(), h='', n=0;
+  MZ.lista.sort(function(a,b){ var x=String(a.num), y=String(b.num), nx=/^\d+$/.test(x), ny=/^\d+$/.test(y); if(nx&&ny) return parseInt(x,10)-parseInt(y,10); if(nx!==ny) return nx?-1:1; return x<y?-1:x>y?1:0; });
   MZ.lista.forEach(function(m){ if(q&&String(m.num).toLowerCase().indexOf(q)<0) return; n++;
     h+='<div style="border:1px solid var(--border);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px"><div style="display:flex;align-items:center;gap:10px"><div style="width:46px;height:46px;border-radius:50%;background:'+(m.oc?'#16a34a':'var(--pri,#E07B39)')+';color:#fff;font-weight:800;font-size:17px;display:flex;align-items:center;justify-content:center;flex:none">'+esc(m.num)+'</div><div style="min-width:0"><b>Mesa '+esc(m.num)+'</b><div style="font-size:12px;color:var(--muted)">'+(m.oc?'<span style="color:#16a34a;font-weight:700">Comanda aberta</span>':'Livre')+'</div></div></div>'
      +'<div style="font-size:12px;color:var(--muted)">'+(m.lug?'👥 '+m.lug+(m.lug===1?' lugar':' lugares'):'👥 lugares não informados')+' · '+(m.nfc?'🏷️ NFC gravada em '+new Date(m.nfc).toLocaleDateString('pt-BR'):'sem etiqueta NFC')+'</div>'
-     +'<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn sec sm"'+(m.lug>0?' style="background:#16a34a;border-color:#16a34a;color:#fff"':'')+' onclick="mzEdita(\''+esc(m.num)+'\')">Lugares</button><button class="btn sec sm" onclick="mzNfc(\''+esc(m.num)+'\')">Gravar NFC</button><button class="btn sec sm" onclick="mzCopia(\''+esc(m.num)+'\')">Copiar link</button><button class="btn sec sm" style="color:var(--red)" onclick="mzApaga(\''+esc(m.num)+'\')">Apagar</button></div></div>'; });
+     +'<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn sec sm"'+(m.lug>0?' style="background:#16a34a;border-color:#16a34a;color:#fff"':'')+' onclick="mzEdita(\''+esc(m.num)+'\',\'lug\')">Lugares</button><button class="btn sec sm" onclick="mzEdita(\''+esc(m.num)+'\',\'ed\')">Editar</button><button class="btn sec sm" onclick="mzNfc(\''+esc(m.num)+'\')">Gravar NFC</button><button class="btn sec sm" onclick="mzCopia(\''+esc(m.num)+'\')">Copiar link</button><button class="btn sec sm" style="color:var(--red)" onclick="mzApaga(\''+esc(m.num)+'\')">Apagar</button></div></div>'; });
   el('mz-total').textContent=MZ.lista.length+(MZ.lista.length===1?' mesa cadastrada':' mesas cadastradas');
   el('mz-lista').innerHTML=n?'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px">'+h+'</div>':'<div class="empty">'+(MZ.lista.length?'Nenhuma mesa encontrada':'Nenhuma mesa cadastrada ainda. Enquanto não houver mesas cadastradas, o atendimento aceita qualquer número.')+'</div>';
 }
-function mzTela(novo){ el('mz-tit').textContent=novo?'Nova mesa':'Lugares da mesa'; el('mz-bt').textContent=novo?'Criar':'Salvar'; el('mz-ateW').style.display=novo?'':'none'; el('mz-ajuda').style.display=novo?'':'none'; el('mz-lugW').style.display=''; el('mz-deL').textContent=novo?'De':'Mesa'; el('mz-de').readOnly=false; }
-function mzNova(){ mzTela(true); el('mz-de').value=''; el('mz-ate').value=''; el('mz-lug').value=''; el('mz-erro').textContent=''; abrir('sh-mesa'); }
-function mzEdita(n){ var m=MZ.lista.filter(function(x){ return String(x.num)===String(n); })[0]||{}; mzTela(false); el('mz-de').value=n; el('mz-ate').value=''; el('mz-lug').value=m.lug||''; el('mz-erro').textContent=''; abrir('sh-mesa'); }
+function mzTela(modo){ var novo=modo==='novo', lug=modo==='lug'; el('mz-tit').textContent=novo?'Nova mesa':lug?'Lugares da mesa':'Editar mesa'; el('mz-bt').textContent=novo?'Criar':'Salvar'; el('mz-ateW').style.display=novo?'':'none'; el('mz-ajuda').style.display=novo?'':'none'; el('mz-lugW').style.display=''; el('mz-deL').textContent=novo?'De':'Número da mesa'; el('mz-de').style.display=lug?'none':''; el('mz-deL').style.display=lug?'none':''; el('mz-de').readOnly=false; MZ.modo=modo; }
+function mzNova(){ mzTela('novo'); el('mz-de').value=''; el('mz-ate').value=''; el('mz-lug').value=''; el('mz-erro').textContent=''; abrir('sh-mesa'); }
+function mzEdita(n,modo){ var m=MZ.lista.filter(function(x){ return String(x.num)===String(n); })[0]||{}; mzTela(modo||'ed'); MZ.orig=String(n); MZ.nfcEra=!!m.nfc; if(modo==='lug') el('mz-tit').textContent='Lugares da mesa '+n; el('mz-de').value=n; el('mz-ate').value=''; el('mz-lug').value=m.lug||''; el('mz-erro').textContent=''; abrir('sh-mesa'); }
 function mzSalvar(){
-  var er=el('mz-erro'); er.textContent=''; var de=el('mz-de').value.trim(), ate=el('mz-ate').value.trim(); if(!de){ er.textContent='Informe o número da mesa.'; return; }
-  mzApi('/painel/atend-mesas-salvar',{de:de,ate:ate,lugares:el('mz-lug').value.trim()}).then(function(d){ if(!d||!d.ok) throw new Error((d&&d.mensagem)||'Não salvou'); if(el('mz-lug').value.trim()&&!d.v) throw new Error('O Worker ainda é uma versão antiga e não guarda os lugares. Suba o Worker 075.'); fecharTudo(); aviso(d.novas?d.novas+' mesa'+(d.novas===1?'':'s')+' criada'+(d.novas===1?'':'s'):'Lugares salvos'); mzCarregar(); })
-  .catch(function(e){ er.textContent=e.message||'Não salvou'; });
+  var er=el('mz-erro'); er.textContent=''; var de=el('mz-de').value.trim(), ate=el('mz-ate').value.trim(), lug=el('mz-lug').value.trim(), modo=MZ.modo||'novo'; if(!de){ er.textContent='Informe o número da mesa.'; return; }
+  var fim=function(d,msg){ fecharTudo(); aviso(msg); mzCarregar(); };
+  var salva=function(num,msg){ if(!lug&&modo!=='novo'){ fim(null,msg||'Mesa atualizada'); return Promise.resolve(); } return mzApi('/painel/atend-mesas-salvar',{de:num,ate:modo==='novo'?ate:'',lugares:lug}).then(function(d){ if(!d||!d.ok) throw new Error((d&&d.mensagem)||'Não salvou'); if(lug&&!d.v) throw new Error('O Worker ainda é uma versão antiga e não guarda os lugares. Suba o Worker 076.'); fim(d,modo==='novo'?(d.novas+' mesa'+(d.novas===1?'':'s')+' criada'+(d.novas===1?'':'s')):(msg||'Salvo')); }); };
+  if(modo!=='novo'&&String(MZ.orig)!==de){
+    mzApi('/painel/atend-mesas-renomear',{de:MZ.orig,para:de}).then(function(d){ if(!d||!d.ok||!d.v) throw new Error((d&&d.mensagem)||'Não consegui trocar o número. Suba o Worker 076.'); return salva(de,'Mesa '+MZ.orig+' agora é a mesa '+de+(MZ.nfcEra?'. Regrave a etiqueta NFC.':'')); }).catch(function(e){ er.textContent=e.message||'Não salvou'; });
+    return;
+  }
+  salva(de).catch(function(e){ er.textContent=e.message||'Não salvou'; });
 }
 function mzApaga(n){ if(!confirm('Apagar a mesa '+n+'? Comandas já abertas nela não são apagadas.')) return; mzApi('/painel/atend-mesas-apagar',{num:n}).then(function(){ mzCarregar(); }).catch(function(){ aviso('Não apagou'); }); }
 function mzCopia(n){ var u=mzLink(n); try{ navigator.clipboard.writeText(u).then(function(){ aviso('Link copiado'); },function(){ window.prompt('Copie o link:',u); }); }catch(e){ window.prompt('Copie o link:',u); } }
