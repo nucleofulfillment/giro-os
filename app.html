@@ -543,6 +543,11 @@ html.apk div[style*="position:fixed"][style*="left:0"][style*="bottom:0"]{bottom
 .ge-pgs{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .ge-pgs button{border:1.5px solid var(--border2);background:var(--s1);border-radius:14px;padding:16px 8px;font-weight:800;font-size:15px;cursor:pointer;color:var(--text)}
 .ge-pgs button:active{background:var(--s3)}
+/* (017) forma de pagamento combinada em destaque */
+.ge-pgs.um{grid-template-columns:1fr}
+.ge-pgs button.ge-pri{background:#1C1C1E;color:#fff;border-color:#1C1C1E;padding:18px 8px;font-size:16px}
+.ge-cmb{display:flex;justify-content:space-between;align-items:center;background:#FFF4E5;border:1.5px solid #FFD8A8;border-radius:14px;padding:12px 14px;margin:0 0 12px;font-size:16px}
+.ge-cmb b{font-weight:800;color:#1C1C1E}.ge-cmb span{font-weight:800;color:#9A5B00}
 .ge-vazio{text-align:center;color:var(--muted2);padding:40px 10px}
 .conteudo:has(.ge-rt){padding-bottom:0;overflow:hidden;display:flex;flex-direction:column}
 .conteudo:has(.ge-rt) #pg-entregas.on{display:flex;flex-direction:column;flex:1;min-height:0}
@@ -1495,7 +1500,7 @@ function geMapaDesenhar(ajustar){
     e=document.createElement('div'); e.className='rm-pin '+(p.st==='entregue'?'st-entregue':'st-ausente'); e.textContent=p.st==='entregue'?'✓':'!';
     GE.marc.push(new maplibregl.Marker({element:e}).setLngLat([p.lng,p.lat]).addTo(m)); b.extend([p.lng,p.lat]); });
   if(base){ e=document.createElement('div'); e.className='rm-pin base'; e.textContent='Eu'; e.style.width='auto'; e.style.padding='0 6px'; GE.marc.push(new maplibregl.Marker({element:e}).setLngLat([base.lng,base.lat]).addTo(m)); }
-  var lk=key+'|'+(base?base.lat.toFixed(3)+','+base.lng.toFixed(3):'-'), real=(GE.linha&&GE.linha.key===lk)?GE.linha.l:null;
+  var lk=key+'|'+(base?base.lat.toFixed(3)+','+base.lng.toFixed(3):'-'), real=(GE.linha&&(GE.linha.key===lk||GE.linha.key===lk+'|reta'))?GE.linha.l:null;   /* (017) reta provisória: mostra e não pede de novo até vencer (1 min) */
   var geo={type:'Feature',geometry:{type:'LineString',coordinates:real||reta}};
   if(m.getSource('ge-rota')) m.getSource('ge-rota').setData(geo); else { m.addSource('ge-rota',{type:'geojson',data:geo}); m.addLayer({id:'ge-rota-l',type:'line',source:'ge-rota',paint:{'line-color':'#D96D28','line-width':4,'line-opacity':.85}}); }
   if(ajustar||GE.fitKey!==key){ GE.fitKey=key; if(!b.isEmpty()) m.fitBounds(b,{padding:44,maxZoom:15,duration:0}); }
@@ -1510,15 +1515,22 @@ function geMapaDesenhar(ajustar){
     }
   }
 }
+/* (017) caminho pelas RUAS: tenta dois serviços de rota (com tempo limite); se os dois falharem, mostra a reta só por enquanto e tenta de novo em 1 minuto */
+var GE_OSRM=['https://router.project-osrm.org/route/v1/driving/','https://routing.openstreetmap.de/routed-car/route/v1/driving/'];
 function geOsrm(base,pts,lk,reta,mm){
-  var P=(base?[base]:[]).concat(pts), fim=function(l,km,min){ GE.lbusy=false; GE.linha={key:lk,l:l,km:km,min:min}; if(PAG==='entregas'&&GE.vista==='mapa'&&!document.querySelector('.ge-bg')) gePintar(); };
+  var P=(base?[base]:[]).concat(pts), fim=function(l,km,min,provisoria){ GE.lbusy=false; GE.linha={key:provisoria?(lk+'|reta'):lk,l:l,km:km,min:min}; if(provisoria) setTimeout(function(){ if(GE.linha&&GE.linha.key===lk+'|reta'){ GE.linha=null; if(PAG==='entregas'&&GE.vista==='mapa') geMapaDesenhar(false); } },60000); if(PAG==='entregas'&&GE.vista==='mapa'&&!document.querySelector('.ge-bg')) gePintar(); };
   if(P.length<2){ fim(reta,0,0); return; }
-  var u='https://router.project-osrm.org/route/v1/driving/'+P.map(function(x){ return x.lng.toFixed(6)+','+x.lat.toFixed(6); }).join(';')+'?overview=full&geometries=geojson';
-  fetch(u).then(function(r){ return r.json(); }).then(function(j){
-    var r0=j&&j.routes&&j.routes[0];
-    if(r0&&r0.geometry&&r0.geometry.coordinates&&r0.geometry.coordinates.length>1) fim(r0.geometry.coordinates,Math.round(r0.distance/100)/10,Math.round(r0.duration/60+pts.length*2));
-    else fim(reta,mm?Math.round(mm.idaKm*10)/10:0,mm?Math.round(mm.idaMin):0);
-  }).catch(function(){ fim(reta,mm?Math.round(mm.idaKm*10)/10:0,mm?Math.round(mm.idaMin):0); });
+  var coords=P.map(function(x){ return x.lng.toFixed(6)+','+x.lat.toFixed(6); }).join(';');
+  function tenta(i){
+    if(i>=GE_OSRM.length){ fim(reta,mm?Math.round(mm.idaKm*10)/10:0,mm?Math.round(mm.idaMin):0,true); return; }
+    var ctl=null, tmo=null; try{ ctl=new AbortController(); tmo=setTimeout(function(){ ctl.abort(); },9000); }catch(e){}
+    fetch(GE_OSRM[i]+coords+'?overview=full&geometries=geojson',ctl?{signal:ctl.signal}:{}).then(function(r){ return r.json(); }).then(function(j){
+      if(tmo) clearTimeout(tmo); var r0=j&&j.code==='Ok'&&j.routes&&j.routes[0];
+      if(r0&&r0.geometry&&r0.geometry.coordinates&&r0.geometry.coordinates.length>1) fim(r0.geometry.coordinates,Math.round(r0.distance/100)/10,Math.round(r0.duration/60+pts.length*2));
+      else tenta(i+1);
+    }).catch(function(){ if(tmo) clearTimeout(tmo); tenta(i+1); });
+  }
+  tenta(0);
 }
 function geHomeHtml(){
   var f=GE.fila, n=gePend(GE.saida), box='border:1px solid rgba(255,255,255,.7);border-radius:16px;padding:22px 12px';
@@ -1559,13 +1571,29 @@ function geParadaDe(cod){ var r=null; (GE.saida?GE.saida.paradas:[]).forEach(fun
 function geEntregar(cod){
   var p=geParadaDe(cod); if(!p) return; var pago=(p.pgp||p.pg==='online'), c=esc(cod);
   if(pago){ geMarcar(cod,'entregue','pago'); return; }   /* pedido que já subiu pago: entrega direta, sem perguntar */
-  var h='<div class="ge-bg" id="ge-sh"><div class="ge-sheet"><h3>Entregar #'+esc(p.num)+'</h3><p>Como o cliente pagou? ('+moeda(p.vl)+')</p>'+
-    '<div class="ge-pgs"><button onclick="geConfirma(\''+c+'\',\'dinheiro\')">Dinheiro</button><button onclick="geConfirma(\''+c+'\',\'pix\')">Pix</button><button onclick="geConfirma(\''+c+'\',\'cartao_deb\')">Cartão débito</button><button onclick="geConfirma(\''+c+'\',\'cartao_cred\')">Cartão crédito</button></div>'+
-    '<button class="ge-gh" style="width:100%;text-align:center;margin-top:10px" onclick="geFecharSh()">Cancelar</button></div></div>';
+  /* (017) a forma COMBINADA no pedido vem em destaque; trocar fica escondido e pede confirmação (evita erro no caixa) */
+  var cmb=p.pg==='dinheiro'?'dinheiro':(p.pg==='pix'?'pix':(/^cartao/.test(String(p.pg||''))?'cartao':''));
+  var NOMEPG={dinheiro:'💵 Dinheiro',pix:'⚡ Pix',cartao_deb:'💳 Cartão débito',cartao_cred:'💳 Cartão crédito'};
+  var bt=function(pg,cls){ return '<button class="'+(cls||'')+'" onclick="geConfirma(\''+c+'\',\''+pg+'\',\''+cmb+'\')">'+(cls==='ge-pri'?'Confirmar · ':'')+NOMEPG[pg]+'</button>'; };
+  var h='<div class="ge-bg" id="ge-sh"><div class="ge-sheet"><h3>Entregar #'+esc(p.num)+'</h3>';
+  if(cmb){
+    var princ=cmb==='cartao'?['cartao_deb','cartao_cred']:[cmb], outras=['dinheiro','pix','cartao_deb','cartao_cred'].filter(function(x){ return princ.indexOf(x)<0; });
+    h+='<p>Forma combinada com o cliente:</p><div class="ge-cmb"><b>'+(cmb==='dinheiro'?'💵 Dinheiro':cmb==='pix'?'⚡ Pix':'💳 Cartão')+'</b><span>'+moeda(p.vl)+'</span></div>'+
+      '<div class="ge-pgs'+(princ.length===1?' um':'')+'">'+princ.map(function(x){ return bt(x,'ge-pri'); }).join('')+'</div>'+
+      '<button class="ge-gh" id="ge-troca-bt" style="width:100%;text-align:center;margin-top:12px" onclick="el(\'ge-troca\').style.display=\'grid\';this.style.display=\'none\'">O cliente quer pagar de outro jeito?</button>'+
+      '<div class="ge-pgs" id="ge-troca" style="display:none;margin-top:10px">'+outras.map(function(x){ return bt(x); }).join('')+'</div>';
+  } else {
+    h+='<p>Como o cliente pagou? ('+moeda(p.vl)+')</p><div class="ge-pgs">'+['dinheiro','pix','cartao_deb','cartao_cred'].map(function(x){ return bt(x); }).join('')+'</div>';
+  }
+  h+='<button class="ge-gh" style="width:100%;text-align:center;margin-top:10px" onclick="geFecharSh()">Cancelar</button></div></div>';
   document.body.insertAdjacentHTML('beforeend',h);
 }
 function geFecharSh(){ var b=el('ge-sh'); if(b) b.remove(); }
-function geConfirma(cod,pg){ geFecharSh(); geMarcar(cod,'entregue',pg); }
+function geConfirma(cod,pg,cmb){
+  var mesma=!cmb||(cmb==='cartao'?/^cartao/.test(pg):pg===cmb);
+  if(!mesma){ var NM={dinheiro:'Dinheiro',pix:'Pix',cartao:'Cartão',cartao_deb:'Cartão débito',cartao_cred:'Cartão crédito'}; if(!confirm('A forma combinada era '+NM[cmb]+'.\nConfirmar a troca para '+NM[pg]+'?')) return; }
+  geFecharSh(); geMarcar(cod,'entregue',pg);
+}
 function geAusente(cod){ var p=geParadaDe(cod); if(confirm('Devolver o pedido'+(p?' #'+p.num:'')+'? Ele volta para o restaurante.')) geMarcar(cod,'ausente'); }
 function geMarcar(cod,acao,pg){
   if(GE.envio) return; GE.envio=true;

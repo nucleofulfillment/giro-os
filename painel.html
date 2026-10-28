@@ -3240,7 +3240,7 @@ function msgLerJson(r){ return r.json().catch(function(){ return {ok:false}; });
 function msgIniciarBadge(){
   if(MSG.badge) return;
   msgBuscarConv();
-  MSG.badge=setInterval(msgBuscarConv,30000);
+  MSG.badge=setInterval(function(){ if(PAG!=='mensagens'&&!document.hidden) msgBuscarConv(); },8000);   /* (101) fora da tela Mensagens: confere a cada 8s (aviso de atendente e contador) */
 }
 /* (094) a aba Clientes mostra as conversas dos pedidos pelo WhatsApp (o Live atende; a equipe pode assumir) */
 MSG.aba='mot'; MSG.cli=[]; MSG.cliOn=false;
@@ -3253,8 +3253,11 @@ function msgBuscarConv(){
     var antes=MSG.cliOn; MSG.cli=(d.conversas||[]).map(function(c){ c.tem_fone=1; c.cliente=1; return c; }); MSG.cliOn=!!(d.ativo||MSG.cli.length);
     if(MSG.cliOn&&!antes&&!MSG.mt) MSG.aba='cli';
     /* (101) cliente pediu atendente (o Live passou a conversa para a equipe): aviso com som e atalho para a conversa */
-    MSG.hum=MSG.hum||{}; var novosH=[];
-    MSG.cli.forEach(function(c){ if(c.humano){ if(MSG.humIni&&!MSG.hum[c.mt]) novosH.push(c); MSG.hum[c.mt]=1; } else delete MSG.hum[c.mt]; });
+    MSG.hum=MSG.hum||{}; MSG.ultIn=MSG.ultIn||{}; var novosH=[], novaMsgEq=false;
+    MSG.cli.forEach(function(c){ if(c.humano){ if(MSG.humIni&&!MSG.hum[c.mt]) novosH.push(c); MSG.hum[c.mt]=1; } else delete MSG.hum[c.mt];
+      /* conversa com a equipe: cliente mandou mensagem nova → som (a equipe é quem responde) */
+      var u=c.ultima; if(u&&u.dir==='in'){ if(c.humano&&MSG.humIni&&MSG.ultIn[c.mt]&&u.t>MSG.ultIn[c.mt]) novaMsgEq=true; MSG.ultIn[c.mt]=u.t; } });
+    if(novaMsgEq&&!novosH.length){ try{ msBeep(); }catch(e){} }
     MSG.humIni=true;
     if(novosH.length){ try{ msBeep(); }catch(e){} novosH.forEach(function(c){ aviso('🙋 '+esc(c.n)+' pediu atendimento no WhatsApp · <a href="#" onclick="ir(\'mensagens\');MSG.aba=\'cli\';msgAbrirTela();setTimeout(function(){ msgAbrir(\''+esc(c.mt)+'\'); },400);return false" style="color:#fff;font-weight:800;text-decoration:underline">abrir conversa</a>'); }); var tE=el('toast'); if(tE){ tE.style.pointerEvents='auto'; clearTimeout(window._tt); window._tt=setTimeout(function(){ tE.classList.remove('on'); tE.style.pointerEvents=''; },12000); } }
   }).catch(function(){});
@@ -3295,7 +3298,7 @@ function msgPintarBadge(){
 function msgAbrirTela(){
   msgBuscarConv();
   clearInterval(MSG.timer);
-  MSG.timer=setInterval(function(){ if(PAG!=='mensagens'){ clearInterval(MSG.timer); return; } msgBuscarConv(); if(MSG.mt) msgCarregar(true); },8000);
+  MSG.timer=setInterval(function(){ if(PAG!=='mensagens'){ clearInterval(MSG.timer); return; } if(document.hidden) return; msgBuscarConv(); if(MSG.mt) msgCarregar(true); },3000);   /* (101) na tela Mensagens: a cada 3s, quase instantâneo */
 }
 function msgPreview(c){
   var u=c.ultima; if(!u) return c.tem_fone?'Sem mensagens ainda':'sem telefone cadastrado';
