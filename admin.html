@@ -921,6 +921,8 @@ function abrirWhatsPedidos(){
    '<label>Loja que atende por esse número</label><select id="wp-cli"><option value="">— escolha —</option></select>'+
    '<label>Números liberados no teste (com DDD, um por linha)</label><textarea id="wp-teste" rows="3" placeholder="47 99999-0000" style="width:100%;font:inherit;padding:10px;border-radius:10px;border:1px solid #ddd"></textarea>'+
    '<label style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="wp-todos" style="width:auto"> Liberar para todos os clientes (sair do teste)</label>'+
+   '<label>WhatsApp da equipe para atendimento humano (opcional)</label><input id="wp-equipe" inputmode="tel" placeholder="47 99999-0000">'+
+   '<p class="sub" style="margin-top:4px">Se preencher, quando o cliente pedir para falar com uma pessoa o Live manda um botão que abre conversa nesse número. Se deixar vazio, a conversa passa para a equipe no Painel (menu Mensagens), com aviso.</p>'+
    '<p class="sub" style="margin-top:8px">No teste, só os números da lista falam com o Live. Os demais (motoristas e outros) continuam no fluxo de hoje.</p>'+
    '<div style="margin-top:14px;border-top:1px solid #eee;padding-top:12px"><div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:14px">Diagnóstico</b><span class="lk" style="cursor:pointer;font-size:13px;font-weight:700;color:var(--roxo,#FF5A00)" onclick="whatsDiag()">↻ atualizar</span></div><div id="wp-diag" class="sub" style="margin-top:6px;max-height:220px;overflow:auto;font-size:12.5px;line-height:1.5">Carregando…</div></div>'+
    '<div class="erro" id="wp-erro"></div><div class="acoes"><button class="btn" onclick="fechar()">Cancelar</button><button class="btn pri" id="wp-btn" onclick="salvarWhatsPedidos()">Salvar</button></div>');
@@ -968,14 +970,14 @@ function whatsPreencher(d){
     if(!d.ia) av.push('⚠️ Falta a chave da IA (LIVE_ANTHROPIC_API_KEY) no Worker.');
     el('wp-estado').textContent=av.length?av.join(' '):(c.on?(c.todos?'✅ Ligado para todos os clientes.':'✅ Ligado em teste.'):'Desligado.');
     el('wp-cli').innerHTML='<option value="">— escolha —</option>'+(d.lojas||[]).map(function(l){return '<option value="'+esc(l.id)+'">'+esc(l.nome||l.id)+'</option>';}).join('');
-    el('wp-cli').value=c.cli||''; el('wp-on').checked=!!c.on; el('wp-todos').checked=!!c.todos; el('wp-teste').value=(c.teste||[]).join('\n');
+    el('wp-cli').value=c.cli||''; el('wp-on').checked=!!c.on; el('wp-todos').checked=!!c.todos; el('wp-teste').value=(c.teste||[]).join('\n'); el('wp-equipe').value=c.equipe||'';
   }
 }
 function salvarWhatsPedidos(){
   var todos=el('wp-todos').checked;
   if(todos&&el('wp-on').checked&&!confirm('Liberar para TODOS? Qualquer pessoa que chamar nesse WhatsApp vai falar com o Live (os motoristas cadastrados continuam no atendimento deles).'))return;
   el('wp-btn').disabled=true;el('wp-erro').textContent='';
-  chamar('POST','/admin/whats-pedidos',{on:el('wp-on').checked,cli:el('wp-cli').value,teste:el('wp-teste').value,todos:todos}).then(function(d){
+  chamar('POST','/admin/whats-pedidos',{on:el('wp-on').checked,cli:el('wp-cli').value,teste:el('wp-teste').value,todos:todos,equipe:el('wp-equipe').value}).then(function(d){
     el('wp-btn').disabled=false;
     if(!d.ok){el('wp-erro').textContent=d.mensagem||'Erro.';return;}
     fechar();toast(d.config.on?'Pedidos pelo WhatsApp ligado!':'Pedidos pelo WhatsApp desligado.');

@@ -3252,6 +3252,11 @@ function msgBuscarConv(){
     if(!d||!d.ok) return;
     var antes=MSG.cliOn; MSG.cli=(d.conversas||[]).map(function(c){ c.tem_fone=1; c.cliente=1; return c; }); MSG.cliOn=!!(d.ativo||MSG.cli.length);
     if(MSG.cliOn&&!antes&&!MSG.mt) MSG.aba='cli';
+    /* (101) cliente pediu atendente (o Live passou a conversa para a equipe): aviso com som e atalho para a conversa */
+    MSG.hum=MSG.hum||{}; var novosH=[];
+    MSG.cli.forEach(function(c){ if(c.humano){ if(MSG.humIni&&!MSG.hum[c.mt]) novosH.push(c); MSG.hum[c.mt]=1; } else delete MSG.hum[c.mt]; });
+    MSG.humIni=true;
+    if(novosH.length){ try{ msBeep(); }catch(e){} novosH.forEach(function(c){ aviso('🙋 '+esc(c.n)+' pediu atendimento no WhatsApp · <a href="#" onclick="ir(\'mensagens\');MSG.aba=\'cli\';msgAbrirTela();setTimeout(function(){ msgAbrir(\''+esc(c.mt)+'\'); },400);return false" style="color:#fff;font-weight:800;text-decoration:underline">abrir conversa</a>'); }); var tE=el('toast'); if(tE){ tE.style.pointerEvents='auto'; clearTimeout(window._tt); window._tt=setTimeout(function(){ tE.classList.remove('on'); tE.style.pointerEvents=''; },12000); } }
   }).catch(function(){});
   return Promise.all([p1,p2]).then(function(){ msgPintarBadge(); msgPintarAbas(); if(PAG==='mensagens'){ msgPintarLista(); if(MSG.mt) msgPintarLive(); } });
 }
