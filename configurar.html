@@ -212,7 +212,7 @@ body.lgon #wz{display:none}
     <button class="wb p" id="w5c" onclick="copia()">Copiar link</button><button class="wb s" onclick="abreCardapio()">Abrir o cardápio</button><button class="wb s" onclick="fotosAbre()">Fotos dos pratos</button><button class="wb s" onclick="mesasAbre()">🏷️ Mesas e etiquetas NFC</button><button class="wb s" onclick="irPainel()">Ir para o painel</button><button class="wb l" onclick="voltaIni()">‹ Início do cardápio</button><p style="margin-top:14px;font-size:12.5px">No painel você coloca as fotos dos pratos, o horário, a entrega e as mesas.</p></div>
 </div>
 <script>
-var PROD=0, API='https://giro-os-api.nucleofull.workers.dev', TK='', CLI='', EMP='', FOTOS=[], CATS=[], PASSO=0, BUSY=0;
+var PROD=0, API='https://giro-os-api.nucleofull.workers.dev', TK='', CLI='', SLUG='', EMP='', FOTOS=[], CATS=[], PASSO=0, BUSY=0;
 try{ TK=localStorage.getItem('dd_jwt')||''; }catch(e){}
 function $(i){ return document.getElementById(i); }
 function esc(x){ return String(x==null?'':x).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
@@ -240,6 +240,7 @@ function inicio(){
     if(d._h===401||d._h===403){ mostraLogin('Entre de novo.'); return; }
     if(!d.ok){ $('login').classList.remove('on'); document.body.classList.remove('lgon'); passo(0); $('w0e').textContent=d.mensagem||'Não consegui abrir agora.'; return; }
     CLI=d.cli||''; EMP=d.empresa||''; try{ window.GiroMarca&&GiroMarca.set(CLI); }catch(e){}
+    api('/painel/cardapio').then(function(x){ if(x&&x.slug){ SLUG=x.slug; if($('w5l')&&$('w5l').value) linkFinal(); } });
     $('login').classList.remove('on'); document.body.classList.remove('lgon');
     $('wemp').textContent=EMP||'Seu restaurante'; $('w0n').textContent=EMP?(' '+EMP):'';
     if(CLI){ var lo=$('wlogo'); lo.onerror=function(){ this.style.display='none'; }; lo.onload=function(){ this.style.display=''; try{ if(window.GiroMarca&&GiroMarca.ajusta) GiroMarca.ajusta(this,'claro'); }catch(e){} }; lo.src=API+'/food/foto/'+encodeURIComponent(CLI)+'/_logo'; }
@@ -273,7 +274,8 @@ function mesasCria(){
   if(!de){ $('w8e').textContent='Informe o número da mesa.'; return; }
   api('/painel/atend-mesas-salvar',{de:de,ate:ate,lugares:lug}).then(function(d){ if(!d.ok){ $('w8e').textContent=d.mensagem||'Não consegui criar.'; return; } mesasCarrega(); });
 }
-function mesaLink(n){ return base()+'livefood.html?c='+encodeURIComponent(CLI)+'&mesa='+encodeURIComponent(n); }
+/* (092) endereço curto livefood.tec.br/<loja>/mesa/7 quando o servidor já informou o slug */
+function mesaLink(n){ return SLUG?base()+encodeURIComponent(SLUG)+'/mesa/'+encodeURIComponent(n):base()+'livefood.html?c='+encodeURIComponent(CLI)+'&mesa='+encodeURIComponent(n); }
 function mesaGrava(n){
   var st=$('w8st'); $('w8e').textContent='';
   if(!('NDEFReader' in window)){ $('w8e').textContent='Gravar etiqueta só funciona no Chrome do celular Android, com o NFC ligado.'; return; }
@@ -456,7 +458,7 @@ function fotoEscolhida(inp){
   });
 }
 function base(){ var b=location.href.split('#')[0].split('?')[0]; return b.slice(0,b.lastIndexOf('/')+1); }
-function linkFinal(){ $('w5l').value=base()+'livefood.html?c='+encodeURIComponent(CLI); }
+function linkFinal(){ $('w5l').value=SLUG?base()+encodeURIComponent(SLUG):base()+'livefood.html?c='+encodeURIComponent(CLI); }
 function copia(){ var i=$('w5l'); i.select(); try{ document.execCommand('copy'); $('w5c').textContent='Link copiado ✓'; }catch(e){} }
 function abreCardapio(){ window.open($('w5l').value,'_blank'); }
 function irPainel(){ location.href=base()+'painel.html'; }

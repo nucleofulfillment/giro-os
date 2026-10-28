@@ -296,7 +296,9 @@ html.claro #wzp{filter:invert(1) hue-rotate(180deg)}
 
 <script>
 var API='https://giro-os-api.nucleofull.workers.dev';
-var Q=new URLSearchParams(location.search), CLI=(Q.get('c')||Q.get('loja')||'').replace(/[^A-Za-z0-9_-]/g,''), MESA=(Q.get('mesa')||'').replace(/\D/g,'').slice(0,3);
+/* (092) a loja vem do link: livefood.tec.br/<loja>/mesa/7 (LF_ROTA, montado pelo 404.html) ou o formato antigo livefood.html?c=<código>&mesa=7 */
+var Q=new URLSearchParams(location.search), ROTA=window.LF_ROTA||{}, CLI=(ROTA.c||Q.get('c')||Q.get('loja')||'').replace(/[^A-Za-z0-9_-]/g,''), MESA=(ROTA.mesa||Q.get('mesa')||'').replace(/\D/g,'').slice(0,3);
+function lfLink(mesa){ var s=(D&&D.slug)||CLI; return location.origin+'/'+encodeURIComponent(s)+(mesa?'/mesa/'+mesa:''); }
 var SAC=[], LT=0, D={ofertas:[],produtos:{},empresa:''}, ordem=[], idx=-1, cur=0, vs=[document.getElementById('v0'),document.getElementById('v1')], somOn=false, tick=null, novoD=null;
 function $(i){return document.getElementById(i);}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
@@ -309,7 +311,7 @@ function minPreco0(p){ var t=(p.tamanhos||[]).map(function(x){return x.preco;}).
 /* ── instalar como app (manifest feito na hora, com o nome do restaurante) ── */
 function manifesto(){
   try{
-    var base=location.origin+location.pathname.replace(/[^\/]*$/,''), ini=location.origin+location.pathname+(CLI?'?c='+encodeURIComponent(CLI):'');
+    var base=document.baseURI.replace(/[?#].*$/,'').replace(/[^\/]*$/,''), ini=CLI?lfLink(''):location.origin+location.pathname;
     var m={name:'LiveFood',short_name:'LiveFood',description:'Cardápio e pedidos',id:ini,start_url:ini,scope:base,display:'standalone',orientation:'portrait',background_color:'#0b0705',theme_color:'#0b0705',icons:[{src:base+'livefood-icon-192.png',sizes:'192x192',type:'image/png',purpose:'any'},{src:base+'livefood-icon-512.png',sizes:'512x512',type:'image/png',purpose:'any'},{src:base+'livefood-icon-maskable-512.png',sizes:'512x512',type:'image/png',purpose:'maskable'}]};
     var l=document.createElement('link'); l.rel='manifest'; l.href=URL.createObjectURL(new Blob([JSON.stringify(m)],{type:'application/manifest+json'})); document.head.appendChild(l);
     var a=document.createElement('link'); a.rel='apple-touch-icon'; a.href=base+'livefood-icon-180.png'; document.head.appendChild(a);
@@ -321,7 +323,7 @@ function carregar(primeira){
   if(!CLI){ vazio('Bem-vindo ao LiveFood','Escaneie o QR Code da sua mesa ou abra o link do restaurante para ver o cardápio.'); try{ var vz=$('vazio'); if(vz&&!$('vz-lg')){ var g=document.createElement('img'); g.id='vz-lg'; g.src='livefood-logo.png'; g.alt='LiveFood'; g.style.cssText='height:46px;margin-bottom:18px'; vz.insertBefore(g,vz.firstChild); } }catch(e){} return Promise.resolve(); }
   return fetch(API+'/food/cardapio/'+encodeURIComponent(CLI)).then(function(r){return r.json();}).then(function(d){
     if(!d||!d.ok){ if(primeira) vazio('Cardápio não encontrado',(d&&d.mensagem)||'Confira o link.'); return; }
-    if(primeira){ D=d; sacLer(); aplicaTema(); navOn('inicio'); temaAplica(); wizPill(); mesaInit(); document.title=(d.empresa||'Cardápio'); $('emp').innerHTML=((d.cfg&&d.cfg.logo)?'<img class="lg" src="'+API+'/food/foto/'+encodeURIComponent(d.cli||CLI)+'/_logo?v='+(d.cfg.v||0)+'" alt="'+esc(d.empresa)+'" onerror="this.outerHTML=\''+esc(d.empresa).replace(/'/g,'')+'\'">':esc(d.empresa))+'<small id="stt"></small>'; pintaStatus(); try{ if(!estaAberto()&&!sessionStorage.getItem('lf_fcm_'+(d.cli||CLI))){ sessionStorage.setItem('lf_fcm_'+(d.cli||CLI),'1'); setTimeout(abreFechado,600); } }catch(e){} manifesto(); iniciar(); }
+    if(primeira){ D=d; CLI=d.cli||CLI; sacLer(); aplicaTema(); navOn('inicio'); temaAplica(); wizPill(); mesaInit(); document.title=(d.empresa||'Cardápio'); $('emp').innerHTML=((d.cfg&&d.cfg.logo)?'<img class="lg" src="'+API+'/food/foto/'+encodeURIComponent(d.cli||CLI)+'/_logo?v='+(d.cfg.v||0)+'" alt="'+esc(d.empresa)+'" onerror="this.outerHTML=\''+esc(d.empresa).replace(/'/g,'')+'\'">':esc(d.empresa))+'<small id="stt"></small>'; pintaStatus(); try{ if(!estaAberto()&&!sessionStorage.getItem('lf_fcm_'+(d.cli||CLI))){ sessionStorage.setItem('lf_fcm_'+(d.cli||CLI),'1'); setTimeout(abreFechado,600); } }catch(e){} manifesto(); iniciar(); }
     else novoD=d;
   }).catch(function(){ if(primeira) vazio('Sem conexão','Não consegui abrir o cardápio. Tente de novo.'); });
 }
@@ -1285,7 +1287,7 @@ function geoGate(cb){
   });
 }
 function compartilhaLink(){
-  var u=location.origin+location.pathname+(CLI?'?c='+encodeURIComponent(CLI):'')+(CLI&&MESA?'&mesa='+MESA:(MESA?'?mesa='+MESA:'')), t=(D&&D.empresa)||document.title||'Cardápio';
+  var u=CLI?lfLink(MESA):location.origin+location.pathname, t=(D&&D.empresa)||document.title||'Cardápio';
   if(navigator.share){ navigator.share({title:t,text:'Veja o cardápio de '+t,url:u}).catch(function(){}); return; }
   function ok(){ toast('Link copiado'); }
   try{ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(u).then(ok,function(){ prompt('Copie o link:',u); }); return; } }catch(e){}

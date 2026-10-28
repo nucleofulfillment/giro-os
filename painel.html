@@ -7123,7 +7123,7 @@ function cdCarregar(){
   var l=el('cd-lista'); if(l&&!CD.carregou) l.innerHTML='<div style="padding:24px;text-align:center;color:var(--muted)">Carregando…</div>';
   fetch(DELTADIS_API+'/painel/cardapio',{headers:cdHdr()}).then(function(r){ return r.json(); }).then(function(d){
     if(!d||!d.ok) throw new Error((d&&d.mensagem)||'não deu');
-    CD.cats=d.cats||[]; CD.prods=d.prods||[]; CD.ofs=d.ofertas||[]; CD.cli=d.cli||CD.cli; CD.carregou=true; cdPintar();
+    CD.cats=d.cats||[]; CD.prods=d.prods||[]; CD.ofs=d.ofertas||[]; CD.cli=d.cli||CD.cli; CD.slug=d.slug||CD.slug; CD.carregou=true; cdPintar();
   }).catch(function(e){ if(l) l.innerHTML='<div style="padding:24px;text-align:center;color:var(--red)">Não consegui abrir o cardápio: '+esc(e.message)+'</div>'; });
 }
 function cdNomeCat(id){ var i; for(i=0;i<CD.cats.length;i++) if(CD.cats[i].id===id) return CD.cats[i].nome; return ''; }
@@ -7591,9 +7591,9 @@ function mzCarregar(){
   mzApi('/painel/atend-mesas').then(function(d){ if(!d||!d.ok) throw new Error((d&&d.mensagem)||'erro'); MZ.lista=d.mesas||[]; mzPintar(); })
   .catch(function(e){ el('mz-lista').innerHTML='<div style="padding:14px;color:var(--red)">'+esc(e.message||'Não carregou')+'</div>'; });
 }
-function mzLink(n){ return location.origin+location.pathname.replace(/[^\/]*$/,'')+'livefood.html?c='+encodeURIComponent(CD.cli||'')+'&mesa='+encodeURIComponent(n); }
+function mzLink(n){ return etUrl(n); }
 function mzCliOk(){ if(CD.cli) return true; aviso('Ainda carregando o código do restaurante. Tente de novo em 2 segundos.'); mzCliBusca(); return false; }
-function mzCliBusca(){ if(CD.cli) return; fetch(DELTADIS_API+'/painel/cardapio',{headers:cdHdr()}).then(function(r){ return r.json(); }).then(function(x){ if(x&&x.ok&&x.cli) CD.cli=x.cli; }).catch(function(){}); }
+function mzCliBusca(){ if(CD.cli) return; fetch(DELTADIS_API+'/painel/cardapio',{headers:cdHdr()}).then(function(r){ return r.json(); }).then(function(x){ if(x&&x.ok&&x.cli){ CD.cli=x.cli; CD.slug=x.slug||CD.slug; } }).catch(function(){}); }
 function mzPintar(){
   var q=(el('mz-busca').value||'').toLowerCase().trim(), h='', n=0;
   MZ.lista.sort(function(a,b){ var x=String(a.num), y=String(b.num), nx=/^\d+$/.test(x), ny=/^\d+$/.test(y); if(nx&&ny) return parseInt(x,10)-parseInt(y,10); if(nx!==ny) return nx?-1:1; return x<y?-1:x>y?1:0; });
@@ -8000,7 +8000,8 @@ function cdPgtSalvar(){ var c=el('cd-pgt-chave').value.trim(); if(!c){ cdPgtMsg(
 function cdPgtTestar(){ cdPgtChama({testar:true},function(d){ cdPgtMsg('Conexão ok! Saldo na conta: R$ '+Number(d.saldo||0).toFixed(2).replace('.',','),true); }); }
 function cdPgtRemover(){ if(!window.confirm('Remover a conta Asaas deste restaurante? Os pedidos pelo app deixam de aceitar pagamento online.')) return; cdPgtChama({remover:true},function(){ cdPgPintar({configurado:false,ambiente:'producao'}); aviso('Conta removida'); }); }
 /* ── link público do cardápio do cliente ── */
-function cdLinkUrl(){ var b=location.href.split('#')[0].split('?')[0]; b=b.slice(0,b.lastIndexOf('/')+1); return b+'livefood.html?c='+encodeURIComponent(CD.cli||''); }
+/* (092) endereço curto: livefood.tec.br/<loja> e /<loja>/mesa/7 (o slug vem do servidor); sem slug, o formato antigo */
+function cdLinkUrl(){ var b=location.href.split('#')[0].split('?')[0]; b=b.slice(0,b.lastIndexOf('/')+1); return CD.slug?b+encodeURIComponent(CD.slug):b+'livefood.html?c='+encodeURIComponent(CD.cli||''); }
 function cdLinkCardapio(){
   var u=cdLinkUrl(), ok=CD.ofs.filter(function(o){ return o.ativo!==false&&o.vid; }).length;
   el('cd-imp-corpo').innerHTML='<p style="margin:0 0 10px;font-size:13px;line-height:1.55;color:var(--muted2)">Este é o link que o seu cliente abre (e pode instalar no celular). Cada restaurante tem o seu.</p>'
@@ -8037,7 +8038,7 @@ var ET={n:0,ok:{},gravando:0};
 function etChave(){ return 'dd_etq_'+(CD.cli||''); }
 function etLer(){ try{ var v=JSON.parse(localStorage.getItem(etChave())||'null'); if(v){ ET.n=Number(v.n)||0; ET.ok=v.ok||{}; } }catch(e){} }
 function etGrava(){ try{ localStorage.setItem(etChave(),JSON.stringify({n:ET.n,ok:ET.ok})); }catch(e){} }
-function etUrl(m){ return cdLinkUrl()+'&mesa='+encodeURIComponent(m); }
+function etUrl(m){ return CD.slug?cdLinkUrl()+'/mesa/'+encodeURIComponent(m):cdLinkUrl()+'&mesa='+encodeURIComponent(m); }
 function cdEtiquetas(){
   etLer(); var nfc=('NDEFReader' in window);
   el('sh-import').querySelector('h3').textContent='Etiquetas das mesas';
@@ -8137,7 +8138,7 @@ function cdPintarOfertas(){
   CD.destaque=null;
 }
 function cdOfSalvarApi(o){ return cdSalvarApi('oferta',o); }
-function cdOfRecarregar(){ return fetch(DELTADIS_API+'/painel/cardapio',{headers:cdHdr()}).then(function(r){ return r.json(); }).then(function(x){ if(x&&x.ok){ CD.cats=x.cats||[]; CD.prods=x.prods||[]; CD.ofs=x.ofertas||[]; CD.cli=x.cli||CD.cli; } cdPintar(); }); }
+function cdOfRecarregar(){ return fetch(DELTADIS_API+'/painel/cardapio',{headers:cdHdr()}).then(function(r){ return r.json(); }).then(function(x){ if(x&&x.ok){ CD.cats=x.cats||[]; CD.prods=x.prods||[]; CD.ofs=x.ofertas||[]; CD.cli=x.cli||CD.cli; CD.slug=x.slug||CD.slug; } cdPintar(); }); }
 function cdOfMover(id,d){
   var l=cdOfSorted(), i=l.findIndex(function(o){ return o.id===id; }), j=i+d; if(i<0||j<0||j>=l.length) return;
   var a=l[i], b=l[j], t=a.ordem; a.ordem=b.ordem; b.ordem=t;
