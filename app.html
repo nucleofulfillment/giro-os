@@ -7,7 +7,7 @@
 <link rel="apple-touch-icon" href="/site/img/icone-180.png">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <script>/* (208) APK: sem "viewport-fit=cover" o Android empurra o app para dentro das barras dele (cima e botões de baixo) em todas as telas */try{ if(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform()){ var mv=document.querySelector('meta[name=viewport]'); mv.setAttribute('content',mv.getAttribute('content').replace(/,\s*viewport-fit=cover/,'')); } }catch(e){}</script>
-<title>LiveFood — App do Motorista · GIRO-OS-016</title>
+<title>LiveFood — App do Motorista · GIRO-OS-017</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://giro-os-api.nucleofull.workers.dev" crossorigin>
@@ -592,6 +592,70 @@ html:has(.ge-rt) #topo{display:none!important}
 .topo-av,.av-grande{background:#111}
 #splash .sp-pts i{background:#FF5A00!important}
 </style>
+<style>
+/* ══ (GIRO-OS-017) LOGIN NO VISUAL DO HUB: fundo laranja com pontinhos, logo branca, o Live de capacete pilotando no mapa e o card branco ══ */
+#login{background:linear-gradient(150deg,#FF5A00 0%,#FF6A10 55%,#FF8A33 100%);padding:max(18px,var(--sat,0px)) 18px max(22px,var(--sab,0px));overflow-y:auto;align-items:flex-start}
+#login::before{content:'';position:fixed;inset:0;background-image:radial-gradient(rgba(255,255,255,.18) 1px,transparent 1.5px);background-size:22px 22px;-webkit-mask-image:radial-gradient(70% 60% at 50% 30%,#000,transparent);mask-image:radial-gradient(70% 60% at 50% 30%,#000,transparent);pointer-events:none}
+.lgx{position:relative;width:100%;max-width:420px;margin:0 auto;display:grid;gap:16px;grid-template-areas:"top" "cena" "card"}
+.lgx-top{grid-area:top;display:flex;align-items:center;justify-content:space-between}
+.lgx-top img{height:30px;width:auto;display:block}
+.lgx-tag{font-size:11.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#fff;background:rgba(0,0,0,.16);padding:6px 12px;border-radius:99px}
+#login .lg-card{grid-area:card;max-width:none;border:0;border-radius:24px;padding:24px 22px 18px;box-shadow:0 24px 50px -24px rgba(80,20,0,.7);text-align:left}
+#login .lg-logo,#login .lg-tag{display:none}
+#login .lg-card h2{font-size:24px;letter-spacing:-.02em;margin:0 0 4px;color:#1C1C1E}
+#login .lg-card p.sub{font-size:13.5px;font-weight:600;color:#5E5E66;margin:0 0 16px}
+#login .field label{display:block;font-size:13px;font-weight:800;color:#5E5E66;margin:0 0 6px}
+#login .inp{width:100%;font-size:16px;font-weight:600;color:#1C1C1E;padding:13px 14px;border:1.5px solid #E2E2E6;border-radius:14px;background:#F7F7F8;box-shadow:none;outline:none;transition:border-color .2s,background .2s}
+#login .inp:focus{border-color:#1C1C1E;background:#fff}
+#login #lg-btn{border-radius:14px;padding:15px;font-size:16px;font-weight:800;margin-top:8px}
+#login #lg-prim-link{color:#FF5A00!important}
+#login .lgx-mini{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:6px;padding-top:12px;border-top:1px solid #EEEEF1}
+#login .lgx-mini .demo{margin:0;opacity:.6;font-size:10.5px}
+#login .lgx-mini button{background:none;border:0;padding:4px 0;font:inherit;font-size:12px;font-weight:800;color:#5E5E66;cursor:pointer}
+/* cena: mapa em perspectiva passando, o Live de capacete na moto */
+.lgx-cena{grid-area:cena;position:relative;height:262px;border-radius:26px;overflow:hidden;background:linear-gradient(#FFE9D8,#FFF6EE 50%);box-shadow:0 24px 50px -26px rgba(80,20,0,.75),inset 0 0 0 1px rgba(255,255,255,.5);isolation:isolate}
+.lgx-chao{position:absolute;left:-60%;width:220%;bottom:0;height:600%;transform:perspective(420px) rotateX(64deg);transform-origin:50% 100%;background-repeat:repeat-y;background-size:100% auto}
+.lgx-ceu{position:absolute;inset:0 0 auto;height:42%;background:linear-gradient(#FFE6D2 45%,rgba(255,240,228,0));z-index:1}
+.lgx-sky{position:absolute;left:0;right:0;top:14%;height:30px;z-index:1;opacity:.5}
+.lgx-rider{position:absolute;left:50%;bottom:58px;width:160px;margin-left:-80px;height:220px;z-index:3;transform:scale(.74);transform-origin:50% 100%}
+.lgx-rider-in{position:absolute;inset:0;animation:lgxInc 4.2s ease-in-out infinite;transform-origin:50% 100%}
+.lgx-rider-bob{position:absolute;inset:0;animation:lgxTrep .26s ease-in-out infinite alternate}
+.lgx-parado .lgx-rider-bob{animation:none}.lgx-parado .lgx-rider-in{animation-play-state:paused}
+@keyframes lgxInc{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+@keyframes lgxTrep{from{transform:translateY(0)}to{transform:translateY(-2px)}}
+.lgx-bau{position:absolute;top:34px;left:50%;width:150px;height:76px;margin-left:-75px;border-radius:12px;background:linear-gradient(#2A2A2E,#141416);box-shadow:inset 0 -6px 0 rgba(0,0,0,.3)}
+.lgx-bau::after{content:'';position:absolute;left:0;right:0;top:30px;height:9px;background:#FF5A00}
+.lgx-cab{position:absolute;top:0;left:50%;width:120px;margin-left:-60px}
+.lgx-cab .lv-antena{display:none}
+.lgx-capacete{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.lgx-moto{position:absolute;left:50%;top:100px;width:160px;margin-left:-80px;overflow:visible}
+.lgx-sombra{position:absolute;left:50%;bottom:4px;width:70px;height:12px;margin-left:-35px;border-radius:50%;background:rgba(0,0,0,.25);filter:blur(3px)}
+.lgx-farol{position:absolute;left:50%;top:126px;width:150px;height:110px;margin-left:-75px;background:radial-gradient(ellipse 50% 60% at 50% 30%,rgba(255,244,214,.75),rgba(255,244,214,0));mix-blend-mode:screen;pointer-events:none}
+.lgx-vento i{position:absolute;top:60px;width:2px;height:24px;border-radius:2px;background:rgba(255,255,255,.95);opacity:0;animation:lgxVento 1.1s linear infinite}
+.lgx-vento i:nth-child(1){left:-8px;--vx:-14px}.lgx-vento i:nth-child(2){left:-22px;top:110px;animation-delay:.35s;--vx:-18px}
+.lgx-vento i:nth-child(3){right:-8px;animation-delay:.55s;--vx:16px}.lgx-vento i:nth-child(4){right:-22px;top:110px;animation-delay:.85s;--vx:16px}
+@keyframes lgxVento{0%{opacity:0;transform:translate(0,0)}25%{opacity:.9}100%{opacity:0;transform:translate(var(--vx),70px)}}
+.lgx-parado .lgx-vento i{animation:none;opacity:0}
+.lgx-chip{position:absolute;left:12px;right:12px;bottom:10px;z-index:5;display:flex;align-items:center;gap:10px;background:#fff;border-radius:16px;padding:9px 12px;box-shadow:0 10px 22px -12px rgba(0,0,0,.45);color:#1C1C1E}
+.lgx-chip div{flex:1;min-width:0}
+.lgx-chip small{display:block;font-size:10.5px;font-weight:800;color:#8A8A92;text-transform:uppercase;letter-spacing:.06em}
+.lgx-chip strong{display:block;font-size:13.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lgx-chip .lgx-bar{height:5px;border-radius:99px;background:#F1F1F3;margin-top:5px;overflow:hidden}.lgx-chip .lgx-bar i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#FF7A1A,#FF5A00)}
+.lgx-chip b{flex:none;font-size:12px;font-weight:800;color:#15803D;background:#EAF7EE;padding:4px 9px;border-radius:99px;display:flex;align-items:center;gap:5px}
+.lgx-chip b::before{content:'';width:6px;height:6px;border-radius:50%;background:#16A34A}
+.lgx-ok{position:absolute;left:50%;top:16px;z-index:6;background:#16A34A;color:#fff;font-size:14px;font-weight:800;padding:8px 15px;border-radius:99px;white-space:nowrap;box-shadow:0 12px 24px -10px rgba(21,128,61,.7);transform:translateX(-50%) scale(.4);opacity:0;transition:transform .35s cubic-bezier(.34,1.56,.64,1),opacity .2s}
+.lgx-ok.on{opacity:1;transform:translateX(-50%) scale(1)}
+html.dd-digitando .lgx-cena{display:none}   /* teclado aberto: some a cena e sobra espaço pros campos */
+@media (prefers-reduced-motion:reduce){.lgx-rider-in,.lgx-rider-bob,.lgx-vento i{animation:none}}
+@media (min-width:900px){
+  #login{align-items:center}
+  .lgx{max-width:880px;grid-template-columns:400px 1fr;grid-template-areas:"top top" "card cena";column-gap:56px;align-items:center}
+  .lgx-cena{height:min(520px,calc(100vh - 150px))}
+  .lgx-rider{transform:none;bottom:96px}
+  .lgx-chao{transform:perspective(700px) rotateX(60deg)}
+  .lgx-sky{top:20%}
+}
+</style>
 <style>html.dd-ret #login{visibility:hidden}</style><script>try{if(localStorage.getItem('dd_m_jwt'))document.documentElement.classList.add('dd-ret');}catch(e){}</script>
 </head>
 <body>
@@ -619,21 +683,49 @@ html:has(.ge-rt) #topo{display:none!important}
 
 <!-- ══════════ LOGIN ══════════ -->
 <div id="login">
+ <div class="lgx">
+  <div class="lgx-top"><img src="livefood-logo-branca.png" alt="LiveFood"><span class="lgx-tag">Entregador</span></div>
+  <div class="lgx-cena" id="lgx-cena" aria-hidden="true">
+    <div class="lgx-chao" id="lgx-chao"></div>
+    <svg class="lgx-sky" viewBox="0 0 248 34" preserveAspectRatio="none"><path d="M0 34V20h14v-8h12v12h10V6h16v28h8V16h12v-6h10v24h12V12h18v22h8V18h14V4h12v30h10V14h16v20h12V22h14v12z" fill="#F2C9A8"/></svg>
+    <div class="lgx-ceu"></div>
+    <div class="lgx-rider" id="lgx-rider"><div class="lgx-rider-in"><div class="lgx-rider-bob">
+      <div class="lgx-bau"></div>
+      <div class="lgx-cab" id="lgx-live"></div>
+      <svg class="lgx-moto" viewBox="0 0 160 110">
+        <defs><linearGradient id="lgxMt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF8A33"/><stop offset="1" stop-color="#E64800"/></linearGradient></defs>
+        <path d="M30 24L19 6M130 24l11-18" stroke="#2B2B2E" stroke-width="3" stroke-linecap="round"/>
+        <ellipse cx="17" cy="5" rx="9" ry="5" fill="#1C1C1E"/><ellipse cx="143" cy="5" rx="9" ry="5" fill="#1C1C1E"/>
+        <path d="M8 28Q80 14 152 28" stroke="#2B2B2E" stroke-width="7" fill="none" stroke-linecap="round"/>
+        <rect x="2" y="23" width="16" height="9" rx="4.5" fill="#111"/><rect x="142" y="23" width="16" height="9" rx="4.5" fill="#111"/>
+        <path d="M50 22h60l-9 56q-21 9-42 0z" fill="url(#lgxMt)"/>
+        <path d="M56 26h22l-4 46q-8 2-12-1z" fill="#fff" opacity=".18"/>
+        <circle cx="80" cy="42" r="12" fill="#FFF6DA" stroke="#fff" stroke-width="3"/><circle cx="80" cy="42" r="5" fill="#fff"/>
+        <path d="M62 80q18-9 36 0l-3 10q-15-6-30 0z" fill="#C93F00"/>
+        <ellipse cx="80" cy="96" rx="11" ry="14" fill="#1C1C1E"/><rect x="77" y="86" width="6" height="3" rx="1.5" fill="#444"/>
+      </svg>
+      <div class="lgx-farol"></div>
+      <div class="lgx-vento"><i></i><i></i><i></i><i></i></div>
+      <div class="lgx-sombra"></div>
+    </div></div></div>
+    <div class="lgx-ok" id="lgx-ok">✓ Entregue!</div>
+    <div class="lgx-chip"><div><small id="lgx-lb">A caminho</small><strong id="lgx-end">Rua das Flores, 120</strong><div class="lgx-bar"><i id="lgx-bar"></i></div></div><b>Online</b></div>
+  </div>
   <div class="lg-card">
     <div class="lg-logo">
       <img class="lf-logo" src="livefood-logo.png" alt="LiveFood">
     </div>
     <div class="lg-tag">App do Motorista</div>
-    <h2>Entrar</h2>
-    <p class="sub">Use o telefone cadastrado no ponto de distribuição.</p>
+    <h2>Bora rodar?</h2>
+    <p class="sub">Entre com o telefone cadastrado e o seu PIN.</p>
     <div class="field"><label>Telefone</label><input class="inp" id="lg-tel" type="tel" inputmode="tel" autocomplete="username" placeholder="(47) 9 0000-0000"></div>
     <p class="demo" id="lg-msg" style="color:#c0392b;font-weight:700;min-height:18px"></p>
     <div class="field"><label>PIN (4 a 6 números)</label><input class="inp" type="password" inputmode="numeric" autocomplete="current-password" id="lg-senha" placeholder="••••"></div>
     <button class="btn pri wide" id="lg-btn" onclick="entrar()">Entrar</button>
     <button class="btn wide" id="lg-prim-link" style="margin-top:10px;background:transparent;border:0;color:var(--roxo);font-weight:800;box-shadow:none" onclick="primeiroAbrir()">Primeiro acesso / esqueci o PIN</button>
-    <p class="demo" style="opacity:.55;font-size:10.5px">LiveFood · App do Motorista · GIRO-OS-016</p>
-    <button class="btn sec wide" style="margin-top:10px" onclick="alternarTelaCheia()">⛶ Ver em tela cheia</button>
+    <div class="lgx-mini"><p class="demo">LiveFood · GIRO-OS-017</p><button type="button" onclick="alternarTelaCheia()">⛶ Tela cheia</button></div>
   </div>
+ </div>
 </div>
 <div id="lg-modal" style="display:none;position:fixed;left:0;top:0;right:0;bottom:0;z-index:300;background:rgba(29,24,21,.6);align-items:center;justify-content:center;padding:16px" onclick="if(event.target===this)primeiroFechar()">
   <div style="background:#fff;border-radius:18px;padding:20px;width:100%;max-width:380px;box-shadow:0 12px 40px rgba(0,0,0,.35)">
@@ -5095,6 +5187,58 @@ document.addEventListener('DOMContentLoaded',function(){
   var lt=el('lg-tel'); if(lt) lt.addEventListener('keydown',function(ev){ if(ev.key==='Enter') el('lg-senha').focus(); });
   retomarSessao();
 });
+</script>
+<script>
+/* (017) cena do login: mapa em perspectiva passando e o Live de capacete pilotando; a barra enche, ele para, "Entregue!" e segue.
+   Só anima enquanto a tela de login está à mostra (não gasta bateria com o app aberto). */
+(function(){
+  'use strict';
+  function $(i){ return document.getElementById(i); }
+  var chao=$('lgx-chao'), cab=$('lgx-live'), rider=$('lgx-rider'), lg=$('login'); if(!chao||!cab||!lg) return;
+  var tile="<svg xmlns='http://www.w3.org/2000/svg' width='600' height='300'><rect width='600' height='300' fill='#EEF0EA'/>"
+    +"<rect x='96' y='12' width='60' height='46' rx='6' fill='#DFE2DC'/><rect x='166' y='12' width='76' height='46' rx='6' fill='#E5E2DA'/><rect x='96' y='68' width='146' height='52' rx='6' fill='#E2E5DF'/>"
+    +"<rect x='358' y='12' width='84' height='108' rx='6' fill='#DFE2DC'/><rect x='452' y='12' width='50' height='50' rx='6' fill='#E5E2DA'/><rect x='452' y='72' width='50' height='48' rx='6' fill='#E2E5DF'/>"
+    +"<rect x='96' y='184' width='146' height='100' rx='12' fill='#CDEBCF'/><circle cx='130' cy='214' r='13' fill='#A9DBAD'/><circle cx='176' cy='246' r='16' fill='#A9DBAD'/><circle cx='214' cy='206' r='11' fill='#A9DBAD'/>"
+    +"<rect x='358' y='184' width='60' height='100' rx='6' fill='#E5E2DA'/><rect x='428' y='184' width='74' height='46' rx='6' fill='#DFE2DC'/><rect x='428' y='240' width='74' height='44' rx='6' fill='#E2E5DF'/>"
+    +"<rect y='138' width='600' height='34' fill='#fff'/><rect x='54' width='26' height='300' fill='#fff'/><rect x='520' width='26' height='300' fill='#fff'/>"
+    +"<rect x='258' width='84' height='300' fill='#FFE1C9'/><rect x='258' y='138' width='84' height='34' fill='#FFD7B8'/>"
+    +"<rect x='290' width='20' height='300' fill='#FF5A00' opacity='.22'/><rect x='295' width='10' height='300' fill='#FF5A00'/>"
+    +"<circle cx='246' cy='40' r='9' fill='#9ED3A3'/><circle cx='246' cy='110' r='9' fill='#9ED3A3'/><circle cx='246' cy='210' r='9' fill='#9ED3A3'/><circle cx='246' cy='270' r='9' fill='#9ED3A3'/>"
+    +"<circle cx='354' cy='40' r='9' fill='#9ED3A3'/><circle cx='354' cy='110' r='9' fill='#9ED3A3'/><circle cx='354' cy='210' r='9' fill='#9ED3A3'/><circle cx='354' cy='270' r='9' fill='#9ED3A3'/></svg>";
+  chao.style.backgroundImage='url("data:image/svg+xml,'+encodeURIComponent(tile)+'")';
+  var live=null;
+  try{ if(window.LiveMascote){ live=LiveMascote.criar(cab,{sombra:false,flutuar:false,rotulo:'Live de capacete na moto'});
+    cab.querySelector('.live-corpo').insertAdjacentHTML('beforeend','<svg class="lgx-capacete" viewBox="-110 -130 220 230" aria-hidden="true"><defs><linearGradient id="lgxCp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3C3C42"/><stop offset="1" stop-color="#141416"/></linearGradient></defs>'
+      +'<path d="M-100,-46 L-100,26" stroke="#141416" stroke-width="7" stroke-linecap="round"/><path d="M100,-46 L100,26" stroke="#141416" stroke-width="7" stroke-linecap="round"/>'
+      +'<path d="M-106,-52 C-108,-106 -62,-128 0,-128 C62,-128 108,-106 106,-52 Z" fill="url(#lgxCp)"/>'
+      +'<path d="M-12,-127.6 L12,-127.6 L15,-54 L-15,-54 Z" fill="#FF5A00"/>'
+      +'<path d="M-84,-60 Q0,-86 84,-60 L80,-52 Q0,-76 -80,-52 Z" fill="#FF8A33" opacity=".9"/>'
+      +'<ellipse cx="-52" cy="-102" rx="30" ry="8" fill="#fff" opacity=".22" transform="rotate(-20 -52 -102)"/>'
+      +'<rect x="-110" y="-60" width="220" height="15" rx="7.5" fill="#0E0E10"/><rect x="-104" y="-58" width="208" height="4" rx="2" fill="#fff" opacity=".14"/></svg>');
+    live.expressao('feliz'); } }catch(e){ live=null; }
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches){ $('lgx-bar').style.width='60%'; return; }
+  var ENDS=['Rua das Flores, 120','Av. Paulista, 900','Rua Augusta, 45','Praça da Liberdade, 12'];
+  var DUR=6.5, k=0, prog=0, v=0, alvo=1, pos=0, ant=0, parado=false, prox=2.5;
+  function visivel(){ return lg.style.display!=='none' && !document.hidden && lg.offsetParent!==null && $('lgx-cena').offsetHeight>0; }
+  function chegou(){
+    parado=true; alvo=0; rider.classList.add('lgx-parado'); $('lgx-lb').textContent='Chegou';
+    if(live){ live.olhar(0,0); live.gesto('boas_vindas'); }
+    setTimeout(function(){ $('lgx-ok').classList.add('on'); },250);
+    setTimeout(function(){ $('lgx-ok').classList.remove('on'); if(live) live.gesto('piscadinha'); },1900);
+    setTimeout(function(){ k++; prog=0; parado=false; alvo=1; rider.classList.remove('lgx-parado'); $('lgx-lb').textContent='A caminho'; $('lgx-end').textContent=ENDS[k%ENDS.length]; if(live) live.expressao('feliz'); },2600);
+  }
+  function quadro(t){
+    if(!visivel()){ ant=0; setTimeout(function(){ requestAnimationFrame(quadro); },600); return; }
+    var dt=ant?Math.min(.05,(t-ant)/1000):0; ant=t;
+    v+=(alvo-v)*Math.min(1,dt*(alvo?2.2:5)); pos+=v*150*dt; chao.style.backgroundPositionY=(-pos)+'px';
+    if(!parado){
+      prog=Math.min(1,prog+dt/DUR); $('lgx-bar').style.width=(prog*100)+'%'; if(prog>=1) chegou();
+      prox-=dt; if(prox<=0&&live){ prox=LiveMascote.sorteio(2.2,4); var r=Math.random(); if(r<.4){ live.olhar(LiveMascote.sorteio(-.8,.8),LiveMascote.sorteio(-.2,.3)); setTimeout(function(){ if(!parado) live.olhar(0,0); },900); } else if(r<.7) live.piscar(); else live.expressao(Math.random()<.5?'animado':'feliz'); }
+    }
+    requestAnimationFrame(quadro);
+  }
+  requestAnimationFrame(quadro);
+})();
 </script>
 <script>
 /* (127) BOTÃO VOLTAR DO NAVEGADOR: não deixa o motorista sair do app (ia parar no /painel). Cada "voltar" é desfeito e ele continua na tela em que está (login, se não entrou). */
