@@ -7644,24 +7644,77 @@ function mzQr(n){
     var u=mzLink(n), qr=mzQrData(u);
     el('sh-import').querySelector('h3').textContent='QR code da mesa '+n;
     el('cd-imp-corpo').innerHTML='<div style="text-align:center"><img src="'+qr+'" alt="QR code da mesa '+esc(n)+'" style="width:240px;max-width:100%;border:1px solid var(--border);border-radius:14px;padding:10px;background:#fff"><div style="font-size:22px;font-weight:800;margin-top:8px">Mesa '+esc(n)+'</div><div style="font-size:13px;color:var(--muted);margin:4px 0 14px;word-break:break-all">'+esc(u)+'</div>'
-      +'<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn pri" id="mzq-baixar">⬇ Baixar imagem</button><button class="btn sec" id="mzq-imp">🖨 Imprimir</button><button class="btn sec" onclick="mzCopia(\''+esc(n)+'\')">Copiar link</button></div></div>';
+      +'<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn pri" id="mzq-comp">📤 Compartilhar</button><button class="btn sec" id="mzq-baixar">⬇ Baixar imagem</button><button class="btn sec" id="mzq-imp">🖨 Imprimir</button><button class="btn sec" onclick="mzCopia(\''+esc(n)+'\')">Copiar link</button></div></div>';
     abrir('sh-import');
-    el('mzq-baixar').onclick=function(){ mzCartao(n,u,qr,function(png){ var a=document.createElement('a'); a.href=png; a.download='qrcode-mesa-'+n+'.png'; document.body.appendChild(a); a.click(); a.remove(); }); };
-    el('mzq-imp').onclick=function(){ mzImprimir([{n:n,u:u,qr:qr}]); };
+    var png=''; mzCartao(n,u,qr,function(p){ png=p; });
+    el('mzq-baixar').onclick=function(){ mzCartao(n,u,qr,function(p){ var a=document.createElement('a'); a.href=p; a.download='qrcode-mesa-'+n+'.png'; document.body.appendChild(a); a.click(); a.remove(); }); };
+    el('mzq-imp').onclick=function(){ mzImprimirA4([{n:n,u:u,qr:qr}],{cm:8,nome:true,corte:true}); };
+    el('mzq-comp').onclick=function(){ mzCompartilhar(n,u,png); };
   }); });
 }
-function mzImprimir(L,w){
-  var emp=esc(mzEmp()), itens=L.map(function(x){ return '<div class="c"><div class="t">'+emp+'</div><img src="'+x.qr+'"><div class="m">Mesa '+esc(x.n)+'</div><div class="s">Aponte a câmera do celular para pedir</div><div class="u">'+esc(x.u.replace(/^https?:\/\//,''))+'</div></div>'; }).join('');
+/* compartilhar o cartão da mesa: no celular manda a imagem (WhatsApp, e-mail…); sem suporte, compartilha/copia o link */
+function mzCompartilhar(n,u,png){
+  var tx='QR code da Mesa '+n+(mzEmp()?' · '+mzEmp():'');
+  try{
+    if(png&&navigator.canShare){
+      var b=atob(png.split(',')[1]), a=new Uint8Array(b.length); for(var i=0;i<b.length;i++) a[i]=b.charCodeAt(i);
+      var f=new File([a],'qrcode-mesa-'+n+'.png',{type:'image/png'});
+      if(navigator.canShare({files:[f]})){ navigator.share({files:[f],title:tx,text:tx+'\n'+u}).catch(function(){}); return; }
+    }
+    if(navigator.share){ navigator.share({title:tx,text:tx,url:u}).catch(function(){}); return; }
+  }catch(e){}
+  mzCopia(n);
+}
+/* folha A4 montada: cartões quadrados do tamanho escolhido (cm), quantos couberem por página, com linha de corte */
+var MZA4={cm:5,nome:true,corte:true};
+function mzA4Calc(cm){ var s=cm*10, gap=0, uw=200, uh=287, col=Math.max(1,Math.floor((uw+gap)/(s+gap))), lin=Math.max(1,Math.floor((uh+gap)/(s+gap))); return {s:s,gap:gap,col:col,lin:lin,pag:col*lin}; }
+function mzImprimirA4(L,op,w){
+  op=op||MZA4; var k=mzA4Calc(op.cm), s=k.s, emp=esc(mzEmp()), pags='', i;
+  var fM=s*0.13, fN=s*0.055, fA=s*0.045, qr=s*(op.nome?0.66:0.72);
+  for(i=0;i<L.length;i+=k.pag){
+    pags+='<div class="pg">'+L.slice(i,i+k.pag).map(function(x){ return '<div class="c">'+(op.nome&&emp?'<div class="t">'+emp+'</div>':'')+'<img src="'+x.qr+'"><div class="m">Mesa '+esc(x.n)+'</div>'+(s>=45?'<div class="s">Aponte a câmera do celular</div>':'')+'</div>'; }).join('')+'</div>';
+  }
   w=w||window.open('','_blank'); if(!w){ aviso('O navegador bloqueou a janela. Permita pop-ups e tente de novo.'); return; }
-  w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>QR codes das mesas</title><style>body{font-family:Arial,sans-serif;margin:16px}.g{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.c{border:2px solid #222;border-radius:14px;padding:14px;text-align:center;page-break-inside:avoid}.c img{width:100%;max-width:200px}.t{font-weight:700;font-size:14px}.m{font-size:30px;font-weight:800;margin:4px 0}.s{font-size:12px;color:#555}.u{font-size:11px;color:#FF5A00;font-weight:700;margin-top:4px;word-break:break-all}@media print{body{margin:0}}</style></head><body><div class="g">'+itens+'</div><script>setTimeout(function(){window.print()},400)<\/script></body></html>');
+  w.document.open();
+  w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>QR codes das mesas</title><style>'
+    +'@page{size:A4;margin:5mm}*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;color:#111}'
+    +'.pg{width:200mm;display:grid;grid-template-columns:repeat('+k.col+','+s+'mm);grid-auto-rows:'+s+'mm;gap:'+k.gap+'mm;align-content:start;page-break-after:always;break-after:page}.pg:last-child{page-break-after:auto;break-after:auto}'
+    +'.c{width:'+s+'mm;height:'+s+'mm;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;overflow:hidden;'+(op.corte?'outline:0.2mm dashed #999;outline-offset:-0.1mm;':'')+'padding:'+(s*0.04)+'mm}'
+    +'.c img{width:'+qr+'mm;height:'+qr+'mm;image-rendering:pixelated}.t{font-weight:700;font-size:'+fN+'mm;line-height:1.1;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.m{font-weight:800;font-size:'+fM+'mm;line-height:1.05}.s{font-size:'+fA+'mm;color:#555}'
+    +'@media screen{body{background:#eee;padding:10px}.pg{background:#fff;padding:5mm;width:210mm;min-height:297mm;margin:0 auto 10px;box-shadow:0 2px 10px rgba(0,0,0,.15)}}'
+    +'</style></head><body>'+pags+'<script>setTimeout(function(){window.print()},500)<\/script></body></html>');
   w.document.close();
 }
 function mzQrTodos(){
   if(!MZ.lista.length){ aviso('Cadastre as mesas primeiro.'); return; }
   if(!mzCliOk()) return;
-  var w=window.open('','_blank'); if(!w){ aviso('O navegador bloqueou a janela. Permita pop-ups e tente de novo.'); return; }
-  w.document.write('<p style="font-family:Arial;padding:20px">Gerando os QR codes…</p>');
-  mzSlug(function(){ mzQrLib(function(){ w.document.open(); mzImprimir(MZ.lista.map(function(m){ var u=mzLink(m.num); return {n:m.num,u:u,qr:mzQrData(u)}; }),w); }); });
+  mzSlug(function(){}); mzQrLib(function(){});
+  el('sh-import').querySelector('h3').textContent='Imprimir QR codes das mesas';
+  el('cd-imp-corpo').innerHTML='<p style="margin:0 0 12px;font-size:13px;color:var(--muted2);line-height:1.5">Monta as folhas A4 com o QR de todas as <b>'+MZ.lista.length+' mesas</b>, já no tamanho escolhido. Na janela de impressão, dá para imprimir ou <b>Salvar como PDF</b>.</p>'
+    +'<div class="field"><label>Tamanho de cada QR (quadrado, em cm)</label><div style="display:flex;gap:6px;flex-wrap:wrap" id="mza4-tams">'+[3,4,5,6,8,10].map(function(t){ return '<button type="button" class="btn sec sm" data-cm="'+t+'">'+t+' × '+t+'</button>'; }).join('')+'</div>'
+    +'<div style="display:flex;align-items:center;gap:8px;margin-top:8px"><span style="font-size:13px">Outro:</span><input class="inp" id="mza4-cm" type="number" min="2.5" max="19" step="0.5" style="width:90px"><span style="font-size:13px">cm</span></div></div>'
+    +'<label style="display:flex;align-items:center;gap:8px;font-size:14px;margin:10px 0 4px"><input type="checkbox" id="mza4-nome" style="width:auto"> Mostrar o nome do restaurante</label>'
+    +'<label style="display:flex;align-items:center;gap:8px;font-size:14px;margin:4px 0 10px"><input type="checkbox" id="mza4-corte" style="width:auto"> Linha pontilhada para recortar</label>'
+    +'<div id="mza4-info" style="padding:10px 12px;border-radius:10px;background:var(--bg2,#FBF3EE);font-size:13.5px;font-weight:700;margin-bottom:12px"></div>'
+    +'<button class="btn pri wide" id="mza4-bt">🖨 Gerar e imprimir</button>';
+  abrir('sh-import');
+  el('mza4-nome').checked=MZA4.nome; el('mza4-corte').checked=MZA4.corte; el('mza4-cm').value=MZA4.cm;
+  function pinta(){
+    var cm=parseFloat(String(el('mza4-cm').value).replace(',','.'));
+    if(!(cm>=2.5&&cm<=19)){ el('mza4-info').textContent='Escolha um tamanho entre 2,5 e 19 cm.'; el('mza4-bt').disabled=true; return; }
+    MZA4.cm=cm; MZA4.nome=el('mza4-nome').checked; MZA4.corte=el('mza4-corte').checked; el('mza4-bt').disabled=false;
+    var k=mzA4Calc(cm), pg=Math.ceil(MZ.lista.length/k.pag);
+    [].forEach.call(el('mza4-tams').children,function(b){ b.classList.toggle('pri',parseFloat(b.getAttribute('data-cm'))===cm); b.classList.toggle('sec',parseFloat(b.getAttribute('data-cm'))!==cm); });
+    el('mza4-info').textContent=String(cm).replace('.',',')+' × '+String(cm).replace('.',',')+' cm → '+k.col+' por linha · '+k.pag+' por folha A4 · '+pg+(pg===1?' folha':' folhas')+' para '+MZ.lista.length+' mesas';
+  }
+  [].forEach.call(el('mza4-tams').children,function(b){ b.onclick=function(){ el('mza4-cm').value=b.getAttribute('data-cm'); pinta(); }; });
+  el('mza4-cm').oninput=pinta; el('mza4-nome').onchange=pinta; el('mza4-corte').onchange=pinta;
+  el('mza4-bt').onclick=function(){
+    var w=window.open('','_blank'); if(!w){ aviso('O navegador bloqueou a janela. Permita pop-ups e tente de novo.'); return; }
+    w.document.write('<p style="font-family:Arial;padding:20px">Montando as folhas…</p>');
+    mzSlug(function(){ mzQrLib(function(){ mzImprimirA4(MZ.lista.map(function(m){ var u=mzLink(m.num); return {n:m.num,u:u,qr:mzQrData(u)}; }),MZA4,w); }); });
+  };
+  pinta();
 }
 function mzCopia(n){ if(!mzCliOk()) return; var u=mzLink(n); try{ navigator.clipboard.writeText(u).then(function(){ aviso('Link copiado'); },function(){ window.prompt('Copie o link:',u); }); }catch(e){ window.prompt('Copie o link:',u); } }
 function mzNfc(n){
