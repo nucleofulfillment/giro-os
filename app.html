@@ -752,6 +752,15 @@ html.dd-digitando .lgx-cena{display:none}   /* teclado aberto: some a cena e sob
     <button class="btn sec wide" style="margin-top:8px" onclick="primeiroFechar()">Já tenho PIN — quero entrar</button>
   </div>
 </div>
+<div id="lj-modal" style="display:none;position:fixed;left:0;top:0;right:0;bottom:0;z-index:310;background:rgba(29,24,21,.6);align-items:center;justify-content:center;padding:16px" onclick="if(event.target===this)lojasFechar()">
+  <div style="background:#fff;border-radius:22px;padding:22px 20px;width:100%;max-width:380px;box-shadow:0 12px 40px rgba(0,0,0,.35)">
+    <div style="font-weight:800;color:#1C1C1E;font-size:19px;margin-bottom:6px">🛵 Entrar em qual loja?</div>
+    <p class="sub" id="lj-msg" style="margin:0 0 14px;color:#5E5E66"></p>
+    <div id="lj-lista"></div>
+    <button class="btn wide" style="margin-top:6px;background:transparent;border:0;box-shadow:none;color:#5E5E66" onclick="lojasFechar()">Cancelar</button>
+  </div>
+</div>
+<style>.lj-op{display:flex;align-items:center;justify-content:space-between;width:100%;margin:0 0 10px;padding:15px 16px;border:1.5px solid #E2E2E6;border-radius:14px;background:#F7F7F8;font:inherit;font-size:16px;font-weight:800;color:#1C1C1E;cursor:pointer;text-align:left}.lj-op:active{transform:scale(.98)}.lj-op i{font-style:normal;width:32px;height:32px;border-radius:10px;background:#FF5A00;color:#fff;display:flex;align-items:center;justify-content:center}</style>
 <div id="pin-modal" style="display:none;position:fixed;left:0;top:0;right:0;bottom:0;z-index:9500;background:rgba(29,24,21,.7);align-items:center;justify-content:center;padding:16px">
   <div style="background:#fff;border-radius:18px;padding:20px;width:100%;max-width:380px;box-shadow:0 12px 40px rgba(0,0,0,.35)">
     <div style="font-weight:800;color:var(--roxo);font-size:18px;margin-bottom:6px">🔐 Crie o seu PIN</div>
@@ -1572,21 +1581,32 @@ function entrar(){
       .then(function(d){
         b.disabled=false; b.textContent='Entrar';
         if(d&&d.ok){ try{ localStorage.removeItem('dd_cod_pend'); }catch(e){} ddGuardarM(d.token,d.usuario); el('lg-senha').value=''; abrirApp(); try{ pinNovoAbrir(pin); }catch(eP){} }
+        else if(d&&d.erro==='escolher_loja'&&d.lojas&&d.lojas.length){ try{ localStorage.removeItem('dd_cod_pend'); }catch(e){} lojasAbrir(d.lojas,d.mensagem); }   /* (017) PIN criado e vale nas lojas dele: escolhe em qual entrar */
         else entrarNormal();
       }).catch(function(){ b.disabled=false; b.textContent='Entrar'; entrarNormal(); });
     return;
   }
   entrarNormal();
 }
-function entrarNormal(){
+/* (017) entregador de mais de uma loja (mesmo telefone e PIN): escolhe em qual entrar */
+function lojasAbrir(lojas,msg){
+  el('lj-msg').textContent=msg||'Você entrega para mais de uma loja. Escolha em qual quer entrar.';
+  el('lj-lista').innerHTML=(lojas||[]).map(function(l){ return '<button class="lj-op" onclick="lojasEscolher(\''+String(l.id).replace(/[^A-Za-z0-9_-]/g,'')+'\')"><span>'+String(l.nome||l.id).replace(/[&<>"]/g,'')+'</span><i>→</i></button>'; }).join('');
+  el('lj-modal').style.display='flex';
+}
+function lojasFechar(){ el('lj-modal').style.display='none'; }
+function lojasEscolher(id){ lojasFechar(); entrarNormal(id); }
+function entrarNormal(cliente){
   var tel=el('lg-tel').value.trim(), pin=el('lg-senha').value.trim(), m=el('lg-msg'), b=el('lg-btn');
   m.style.color='#c0392b'; m.textContent='';
   if(!tel||!pin){ m.textContent='Digite o telefone e o PIN.'; return; }
   b.disabled=true; b.textContent='Entrando...';
-  fetch(RP_API+'/auth/login-motorista',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({telefone:tel,pin:pin})})
+  var corpo={telefone:tel,pin:pin}; if(typeof cliente==='string'&&cliente) corpo.cliente=cliente;
+  fetch(RP_API+'/auth/login-motorista',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(corpo)})
     .then(function(r){return r.json().catch(function(){return {ok:false};});})
     .then(function(d){
       b.disabled=false; b.textContent='Entrar';
+      if(d&&d.erro==='escolher_loja'&&d.lojas&&d.lojas.length){ lojasAbrir(d.lojas,d.mensagem); return; }
       if(!d||!d.ok){ m.textContent=(d&&d.mensagem)||'Não foi possível entrar. Tente de novo.'; return; }
       ddGuardarM(d.token,d.usuario); el('lg-senha').value=''; abrirApp();
     }).catch(function(){ b.disabled=false; b.textContent='Entrar'; m.textContent='Sem conexão com o servidor. Tente de novo.'; });
