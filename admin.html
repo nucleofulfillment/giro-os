@@ -603,7 +603,7 @@ function desenharClientes(){
   var L=CLIENTES.filter(function(c){return !q||String(c.nome||'').toLowerCase().indexOf(q)>=0||String(c.id||'').toLowerCase().indexOf(q)>=0;});
   if(!L.length){el('lista-clientes').innerHTML='<div class="vazio">'+(CLIENTES.length?'Nenhum cliente encontrado.':'Nenhum cliente ainda.')+'</div>';return;}
   el('lista-clientes').innerHTML=L.map(function(c){
-    return '<div class="cli"><div class="av">'+esc((c.nome||'?').charAt(0).toUpperCase())+'</div><div style="min-width:160px"><div class="nome">'+esc(c.nome)+'</div><div class="id">'+esc(c.id)+' · <span class="tag '+(c.ativo?'on':'off')+'">'+(c.ativo?'Ativo':'Desativado')+'</span></div></div>'+
+    return '<div class="cli"><div class="av">'+esc((c.nome||'?').charAt(0).toUpperCase())+'</div><div style="min-width:160px"><div class="nome">'+esc(c.nome)+'</div><div class="id">'+esc(c.id)+' · <span class="tag '+(c.ativo?'on':'off')+'">'+(c.ativo?'Ativo':'Desativado')+'</span>'+(c.piloto?' · <span class="tag">cliente-base</span>':'')+'</div>'+(c.slug?'<div class="id"><a href="https://livefood.tec.br/'+encodeURIComponent(c.slug)+'" target="_blank" rel="noopener" style="color:inherit">livefood.tec.br/'+esc(c.slug)+'</a></div>':'')+'</div>'+
       '<div class="dados"><div><b>'+(c.motoristas_ativos||0)+'</b>motoristas</div><div><b>'+(c.equipe||0)+'</b>equipe painel</div><div><b>'+reais(c.mensalidade_centavos)+'</b>mensalidade</div><div><b>'+reais(c.taxa_app_centavos)+'</b>por motorista</div><div><b>dia '+(c.dia_venc||10)+'</b>vencimento</div></div>'+
       '<button class="btn pri peq" onclick="abrirCliente(\''+esc(c.id)+'\')">Abrir</button></div>';
   }).join('');
@@ -666,6 +666,7 @@ function abrirCliente(id){
   var c=CLIENTES.filter(function(x){return x.id===id;})[0]; if(!c) return;
   abrirModal('<h3>'+esc(c.nome)+'</h3><p class="sub">'+esc(c.id)+'</p>'+
   '<label>Nome da empresa</label><input id="ec-nome" value="'+esc(c.nome)+'">'+
+  '<label>Endereço do cardápio</label><div style="display:flex;align-items:center;gap:6px"><span class="sub" style="margin:0;white-space:nowrap">livefood.tec.br/</span><input id="ec-slug" value="'+esc(c.slug||'')+'" placeholder="nome-da-loja" autocapitalize="off" spellcheck="false"></div><p class="sub" style="margin:4px 0 0">Só letras, números e hífen. Cuidado: se mudar, as etiquetas e QR codes já impressos com o endereço antigo param de abrir.</p>'+
   '<label>Plano</label><select id="ec-plano" onchange="planoDoCliente()"><option value="">Sem plano (valores manuais)</option>'+(PLANOS||[]).map(function(p){return '<option value="'+esc(p.id)+'"'+(c.plano_id===p.id?' selected':'')+'>'+esc(p.nome)+'</option>';}).join('')+'</select><p class="sub" id="ec-plano-info" style="margin:4px 0 0"></p>'+
   '<div class="linha2"><div><label>Mensalidade (R$)</label><input id="ec-men" inputmode="decimal" value="'+esc(deCentavos(c.mensalidade_centavos))+'"></div><div><label>Taxa por motorista (R$)</label><input id="ec-taxa" inputmode="decimal" value="'+esc(deCentavos(c.taxa_app_centavos))+'"></div></div>'+
   '<div class="linha2"><div><label>Dia do vencimento (1 a 31)</label><input id="ec-dia" inputmode="numeric" maxlength="2" value="'+esc(c.dia_venc||10)+'"></div><div></div></div>'+
@@ -674,6 +675,7 @@ function abrirCliente(id){
   '<div style="margin-top:20px"><b>Cobrança no fluxo</b></div><p class="sub" style="margin:2px 0 8px">A mensalidade e a taxa entram sozinhas no fluxo. Se você excluiu uma por engano, lance de novo aqui.</p><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input type="month" id="ec-mes" style="width:auto" value="'+hojeIso().slice(0,7)+'"><button class="btn peq" onclick="relancarCobranca(\''+esc(c.id)+'\')">Lançar no fluxo</button></div>'+
   '<div style="margin-top:20px"><b>Acesso do dono ao painel</b></div><div id="ec-dono"><div class="vazio">Carregando...</div></div>'+
   '<p class="sub" style="margin-top:6px">Os motoristas e os acessos do app são cadastrados pelo próprio cliente, dentro do painel dele.</p>'+
+  (c.piloto?'<p class="sub" style="margin-top:18px">Este é o <b>cliente-base</b> do sistema: ele não pode ser excluído.</p>':'<div style="margin-top:22px;padding-top:14px;border-top:1px solid #f1d5d0"><b style="color:#DC2626">Excluir loja</b><p class="sub" style="margin:2px 0 8px">Apaga a loja e tudo dela de vez: acessos, cardápio, pedidos, mesas e clientes. Não dá para desfazer.</p><button class="btn peq perigo" onclick="excluirCliente(\''+esc(c.id)+'\')">Excluir esta loja</button></div>')+
   '<div class="acoes"><button class="btn" onclick="fechar()">Fechar</button></div>');
   carregarDono(c.id);planoDoCliente();
 }
@@ -685,10 +687,28 @@ function planoDoCliente(){
   inf.textContent='Vale o plano: fixo '+reais(p.fixo_centavos)+' + '+reaisPac(p.pacote_centavos)+' por pacote'+(p.franquia?(p.variavel_total?'':' acima de '+p.franquia+' pacotes'):'')+(p.variavel_total?' desde o 1º pacote':'')+'. A mensalidade manual é ignorada.';
 }
 function salvarCliente(id){
-  chamar('PATCH','/admin/clientes/'+encodeURIComponent(id),{plano_id:el('ec-plano').value,nome:el('ec-nome').value.trim(),mensalidade_centavos:paraCentavos(el('ec-men').value),taxa_app_centavos:paraCentavos(el('ec-taxa').value),dia_venc:parseInt(el('ec-dia').value,10)||10}).then(function(d){
+  chamar('PATCH','/admin/clientes/'+encodeURIComponent(id),{plano_id:el('ec-plano').value,slug:el('ec-slug').value.trim(),nome:el('ec-nome').value.trim(),mensalidade_centavos:paraCentavos(el('ec-men').value),taxa_app_centavos:paraCentavos(el('ec-taxa').value),dia_venc:parseInt(el('ec-dia').value,10)||10}).then(function(d){
     if(!d.ok){el('ec-erro').textContent=d.mensagem||d.erro||'Erro ao salvar.';return;}
     toast('Dados salvos.');recarregarMantendo(id);
   }).catch(function(){});
+}
+/* (093) excluir loja de vez: confirma digitando o nome */
+function excluirCliente(id){
+  var c=CLIENTES.filter(function(x){return x.id===id;})[0]; if(!c) return;
+  abrirModal('<h3 style="color:#DC2626">Excluir '+esc(c.nome)+'?</h3><p class="sub">Isso apaga a loja <b>'+esc(c.nome)+'</b> ('+esc(c.id)+') e tudo dela: acessos ao painel e ao app, cardápio, pedidos, mesas, clientes e configurações. <b>Não dá para desfazer.</b></p>'+
+  '<label>Para confirmar, digite o nome da loja: <b>'+esc(c.nome)+'</b></label><input id="ex-nome" autocomplete="off">'+
+  '<div class="erro" id="ex-erro"></div><div class="acoes"><button class="btn" onclick="abrirCliente(\''+esc(c.id)+'\')">Cancelar</button><button class="btn perigo" id="ex-btn" onclick="confirmarExclusao(\''+esc(c.id)+'\')">Excluir para sempre</button></div>');
+  setTimeout(function(){var i=el('ex-nome');if(i)i.focus();},50);
+}
+function confirmarExclusao(id){
+  var c=CLIENTES.filter(function(x){return x.id===id;})[0]; if(!c) return;
+  var dig=el('ex-nome').value.trim();
+  if(dig.toLowerCase()!==String(c.nome||'').trim().toLowerCase()){el('ex-erro').textContent='O nome não confere. Digite exatamente: '+c.nome;return;}
+  el('ex-btn').disabled=true;el('ex-btn').textContent='Excluindo...';el('ex-erro').textContent='';
+  chamar('POST','/admin/clientes/'+encodeURIComponent(id)+'/excluir',{confirmar:dig}).then(function(d){
+    if(!d.ok){el('ex-btn').disabled=false;el('ex-btn').textContent='Excluir para sempre';el('ex-erro').textContent=d.mensagem||d.erro||'Não consegui excluir.';return;}
+    fechar();toast(c.nome+' excluída.');recarregarLista();
+  }).catch(function(){el('ex-btn').disabled=false;el('ex-btn').textContent='Excluir para sempre';el('ex-erro').textContent='Falha na conexão. Tente de novo.';});
 }
 function alternarCliente(id,ativo){
   if(!ativo&&!confirm('Desativar este cliente? Todos os acessos dele (painel e app) deixam de funcionar na hora.')) return;
