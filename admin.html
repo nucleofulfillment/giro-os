@@ -934,8 +934,31 @@ function whatsDiag(preencher){
     var u=d.ultima_recebida, h='<div>Servidor: <b>'+esc(d.versao||'versão antiga (cole o Worker novo)')+'</b></div>';
     h+='<div>Última mensagem que chegou no WhatsApp (qualquer pessoa): '+(u?('<b>'+esc(u.quando)+'</b> de '+esc(u.fone)):'<b>nenhuma</b>')+'</div>';
     h+=(d.log&&d.log.length)?('<ul style="margin:6px 0 0;padding-left:18px">'+d.log.map(function(x){ return '<li>'+esc(x)+'</li>'; }).join('')+'</ul>'):'<div style="margin-top:4px">Nenhum acontecimento registrado ainda. Mande uma mensagem e clique em atualizar.</div>';
+    if(!u) h+='<div style="margin-top:8px;padding:10px;border-radius:10px;background:#FFF4E5;color:#7A4A00">Nenhuma mensagem de WhatsApp chegou a este sistema. Provavelmente a Meta está mandando as mensagens desse número para outro endereço.<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn peq" onclick="whatsMetaInfo()">Ver para onde a Meta manda</button><button class="btn pri peq" onclick="whatsMetaApontar()">Mandar para este sistema</button></div><div id="wp-meta" style="margin-top:8px;white-space:pre-wrap;word-break:break-all"></div></div>';
+    else h+='<div style="margin-top:6px"><span class="lk" style="cursor:pointer;font-weight:700;color:#FF5A00" onclick="whatsMetaInfo()">Ver configuração do número na Meta</span><div id="wp-meta" style="margin-top:6px;white-space:pre-wrap;word-break:break-all"></div></div>';
     if(el('wp-diag')) el('wp-diag').innerHTML=h;
   }).catch(function(){});
+}
+/* (095) para onde a Meta entrega as mensagens do número (webhook) e botão para apontar para este sistema */
+function whatsMetaInfo(){
+  var o=el('wp-meta'); if(o) o.textContent='Consultando a Meta…';
+  chamar('GET','/diag/whats-info').then(function(d){
+    var r=d.resultado||{}, w=r.webhook_configuration||{};
+    if(!d.ok){ o.textContent='A Meta respondeu com erro: '+((r.error&&r.error.message)||d.erro||('HTTP '+d.http)); return; }
+    var dest=w.phone_number||w.whatsapp_business_account||w.application||'';
+    o.innerHTML='Número: <b>'+esc(r.display_phone_number||'?')+'</b> ('+esc(r.verified_name||'')+')<br>Situação: '+esc(r.status||r.code_verification_status||'?')+'<br>Mensagens vão para: <b>'+esc(dest||'(nenhum endereço configurado)')+'</b>'+
+      (String(dest).indexOf('giro-os-api')>=0?'<br>✅ Já aponta para este sistema.':'<br>⚠️ Não aponta para este sistema (giro-os-api).');
+  }).catch(function(){ if(o) o.textContent='Não consegui consultar agora.'; });
+}
+function whatsMetaApontar(){
+  if(!confirm('Mandar as mensagens desse número de WhatsApp para este sistema (LiveFood)?\n\nAtenção: se outro sistema (por exemplo, um painel antigo da DeltaDis) recebe as mensagens desse número hoje, ele deixa de receber.'))return;
+  var o=el('wp-meta'); if(o) o.textContent='Pedindo para a Meta…';
+  chamar('GET','/diag/whats-webhook').then(function(d){
+    var r=d.resultado||{};
+    if(d.erro==='sem_WHATS_VERIFY'){ o.textContent='Falta o segredo WHATS_VERIFY no Worker (Cloudflare → Settings → Variables). Crie com qualquer senha e tente de novo.'; return; }
+    if(!d.ok){ o.textContent='A Meta recusou: '+((r.error&&(r.error.error_user_msg||r.error.message))||d.erro||('HTTP '+d.http)); return; }
+    o.textContent='✅ Pronto! A Meta vai mandar as mensagens para este sistema. Mande um "oi" do seu celular e clique em atualizar.';
+  }).catch(function(){ if(o) o.textContent='Não consegui falar com a Meta agora.'; });
 }
 function whatsPreencher(d){
   {
