@@ -7668,22 +7668,33 @@ function mzCompartilhar(n,u,png){
 /* folha A4 montada: cartões quadrados do tamanho escolhido (cm), quantos couberem por página, com linha de corte */
 var MZA4={cm:5,nome:true,corte:true};
 function mzA4Calc(cm){ var s=cm*10, gap=0, uw=200, uh=287, col=Math.max(1,Math.floor((uw+gap)/(s+gap))), lin=Math.max(1,Math.floor((uh+gap)/(s+gap))); return {s:s,gap:gap,col:col,lin:lin,pag:col*lin}; }
-function mzImprimirA4(L,op,w){
+function mzImprimirA4(L,op){
   op=op||MZA4; var k=mzA4Calc(op.cm), s=k.s, emp=esc(mzEmp()), pags='', i;
   var fM=s*0.13, fN=s*0.055, fA=s*0.045, qr=s*(op.nome?0.66:0.72);
   for(i=0;i<L.length;i+=k.pag){
     pags+='<div class="pg">'+L.slice(i,i+k.pag).map(function(x){ return '<div class="c">'+(op.nome&&emp?'<div class="t">'+emp+'</div>':'')+'<img src="'+x.qr+'"><div class="m">Mesa '+esc(x.n)+'</div>'+(s>=45?'<div class="s">Aponte a câmera do celular</div>':'')+'</div>'; }).join('')+'</div>';
   }
-  w=w||window.open('','_blank'); if(!w){ aviso('O navegador bloqueou a janela. Permita pop-ups e tente de novo.'); return; }
-  w.document.open();
-  w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>QR codes das mesas</title><style>'
+  mzPrevia('<!doctype html><html><head><meta charset="utf-8"><title>QR codes das mesas</title><style>'
     +'@page{size:A4;margin:5mm}*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;color:#111}'
     +'.pg{width:200mm;display:grid;grid-template-columns:repeat('+k.col+','+s+'mm);grid-auto-rows:'+s+'mm;gap:'+k.gap+'mm;align-content:start;page-break-after:always;break-after:page}.pg:last-child{page-break-after:auto;break-after:auto}'
     +'.c{width:'+s+'mm;height:'+s+'mm;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;overflow:hidden;'+(op.corte?'outline:0.2mm dashed #999;outline-offset:-0.1mm;':'')+'padding:'+(s*0.04)+'mm}'
     +'.c img{width:'+qr+'mm;height:'+qr+'mm;image-rendering:pixelated}.t{font-weight:700;font-size:'+fN+'mm;line-height:1.1;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.m{font-weight:800;font-size:'+fM+'mm;line-height:1.05}.s{font-size:'+fA+'mm;color:#555}'
-    +'@media screen{body{background:#eee;padding:10px}.pg{background:#fff;padding:5mm;width:210mm;min-height:297mm;margin:0 auto 10px;box-shadow:0 2px 10px rgba(0,0,0,.15)}}'
-    +'</style></head><body>'+pags+'<script>setTimeout(function(){window.print()},500)<\/script></body></html>');
-  w.document.close();
+    +'@media screen{body{background:#e9e6e3;padding:14px}.pg{background:#fff;padding:5mm;width:210mm;min-height:297mm;margin:0 auto 14px;box-shadow:0 2px 12px rgba(0,0,0,.18)}}'
+    +'</style></head><body>'+pags+'</body></html>', Math.ceil(L.length/k.pag));
+}
+/* prévia da impressão dentro do próprio painel (sem abrir outra aba, que trava o painel no Chrome): só imprime quando a pessoa clica */
+function mzPrevia(html,folhas){
+  var v=el('mz-prev'); if(v) v.remove();
+  v=document.createElement('div'); v.id='mz-prev';
+  v.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(20,16,14,.72);display:flex;flex-direction:column';
+  v.innerHTML='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.2)"><b style="flex:1;min-width:160px">Prévia da impressão'+(folhas?' · '+folhas+(folhas===1?' folha A4':' folhas A4'):'')+'</b>'
+    +'<span style="font-size:12.5px;color:#6C6055">Na impressora, use escala 100% (tamanho real).</span>'
+    +'<button class="btn pri" id="mz-prev-imp">🖨 Imprimir / Salvar PDF</button><button class="btn sec" id="mz-prev-fechar">Fechar</button></div>'
+    +'<iframe id="mz-prev-fr" title="Prévia da impressão" style="flex:1;border:0;width:100%;background:#e9e6e3"></iframe>';
+  document.body.appendChild(v);
+  var fr=el('mz-prev-fr'); fr.srcdoc=html;
+  el('mz-prev-fechar').onclick=function(){ v.remove(); };
+  el('mz-prev-imp').onclick=function(){ try{ fr.contentWindow.focus(); fr.contentWindow.print(); }catch(e){ aviso('Não consegui abrir a impressão.'); } };
 }
 function mzQrTodos(){
   if(!MZ.lista.length){ aviso('Cadastre as mesas primeiro.'); return; }
@@ -7710,9 +7721,11 @@ function mzQrTodos(){
   [].forEach.call(el('mza4-tams').children,function(b){ b.onclick=function(){ el('mza4-cm').value=b.getAttribute('data-cm'); pinta(); }; });
   el('mza4-cm').oninput=pinta; el('mza4-nome').onchange=pinta; el('mza4-corte').onchange=pinta;
   el('mza4-bt').onclick=function(){
-    var w=window.open('','_blank'); if(!w){ aviso('O navegador bloqueou a janela. Permita pop-ups e tente de novo.'); return; }
-    w.document.write('<p style="font-family:Arial;padding:20px">Montando as folhas…</p>');
-    mzSlug(function(){ mzQrLib(function(){ mzImprimirA4(MZ.lista.map(function(m){ var u=mzLink(m.num); return {n:m.num,u:u,qr:mzQrData(u)}; }),MZA4,w); }); });
+    var bt=el('mza4-bt'); bt.disabled=true; bt.textContent='Montando as folhas…';
+    mzSlug(function(){ mzQrLib(function(){ setTimeout(function(){
+      mzImprimirA4(MZ.lista.map(function(m){ var u=mzLink(m.num); return {n:m.num,u:u,qr:mzQrData(u)}; }),MZA4);
+      bt.disabled=false; bt.textContent='🖨 Gerar e imprimir'; fecharTudo();
+    },30); }); });
   };
   pinta();
 }
@@ -8181,9 +8194,8 @@ function etPagina(){
     var cv=box.querySelector('canvas'), src=''; try{ src=cv.toDataURL('image/png'); }catch(e){} box.remove();
     itens+='<div class="c"><div class="t">'+emp+'</div><img src="'+src+'"><div class="m">Mesa '+i+'</div><div class="s">Aponte a câmera ou encoste o celular</div></div>';
   }
-  var w=window.open('','_blank'); if(!w){ etMsg('O navegador bloqueou a janela. Permita pop-ups e tente de novo.',false); return; }
-  w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>QR codes das mesas</title><style>body{font-family:Arial,sans-serif;margin:16px}.g{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.c{border:2px solid #222;border-radius:14px;padding:14px;text-align:center;page-break-inside:avoid}.c img{width:100%;max-width:200px}.t{font-weight:700;font-size:14px}.m{font-size:30px;font-weight:800;margin:4px 0}.s{font-size:12px;color:#555}@media print{body{margin:0}}</style></head><body><div class="g">'+itens+'</div><script>setTimeout(function(){window.print()},400)<\/script></body></html>');
-  w.document.close(); etMsg('',null);
+  fecharTudo(); etMsg('',null);
+  mzPrevia('<!doctype html><html><head><meta charset="utf-8"><title>QR codes das mesas</title><style>body{font-family:Arial,sans-serif;margin:16px;background:#fff}.g{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.c{border:2px solid #222;border-radius:14px;padding:14px;text-align:center;page-break-inside:avoid}.c img{width:100%;max-width:200px}.t{font-weight:700;font-size:14px}.m{font-size:30px;font-weight:800;margin:4px 0}.s{font-size:12px;color:#555}@media print{body{margin:0}}</style></head><body><div class="g">'+itens+'</div></body></html>');
 }
 /* ── ofertas com vídeo (1B) ── */
 function cdSelProd(id,on){ if(on) CD.sel[id]=1; else delete CD.sel[id]; cdBarraSel(); }
