@@ -394,19 +394,28 @@ a{color:inherit}
 .mp-pkl{display:none;position:absolute;left:15px;top:35px;height:2px;margin-top:-1px;background:rgba(41,35,30,.65);transform-origin:0 50%;pointer-events:none;border-radius:2px}
 .mp-pkdot{display:none;position:absolute;left:11px;top:31px;width:8px;height:8px;border-radius:50%;background:#29231E;border:1.5px solid #fff;pointer-events:none}
 .mp-pkw.esp .mp-pkl,.mp-pkw.esp .mp-pkdot{display:block}
-/* (094) visual LiveFood dos alfinetes: gota com brilho na cor do tempo, "cai" quando o pedido chega e pulsa quando atrasa */
-.mp-pk{background:radial-gradient(circle at 32% 28%,rgba(255,255,255,.55),rgba(255,255,255,0) 52%),var(--pc,#9CA3AF);border:3px solid #fff;box-shadow:0 6px 14px -4px rgba(41,35,30,.55),0 0 0 1px rgba(41,35,30,.08),0 0 16px -2px color-mix(in srgb,var(--pc,#9CA3AF) 70%,transparent);transition:transform .25s cubic-bezier(.34,1.56,.64,1),box-shadow .25s}
-.mp-pk span{font-size:11.5px;letter-spacing:-.2px}
-.mp-pk:hover{transform:rotate(-45deg) scale(1.12)}
-.mp-pk.sel{transform:rotate(-45deg) scale(1.18);border-color:#29231E;box-shadow:0 0 0 4px rgba(255,90,0,.45),0 8px 18px -4px rgba(41,35,30,.6)}
+/* (094) alfinete 3D: cabeça esférica com brilho e volume na cor do tempo, haste fina, sombra no chão e halo; "cai" quando chega e pulsa quando atrasa */
+.mp-pkw,.mp-pkd{width:30px;height:44px}
+.mp-pkl{top:44px}.mp-pkdot{top:40px}
+.mp-pk{left:1px;top:0;width:28px;height:28px;border-radius:50%;transform:none;border:0;
+  background:radial-gradient(circle at 34% 28%,#fff 0,rgba(255,255,255,.85) 9%,rgba(255,255,255,0) 34%),radial-gradient(circle at 60% 85%,rgba(0,0,0,.45),rgba(0,0,0,0) 62%),var(--pc,#9CA3AF);
+  box-shadow:inset 0 -3px 5px rgba(0,0,0,.35),inset 0 2px 3px rgba(255,255,255,.45),0 0 0 2px #fff,0 0 18px 2px color-mix(in srgb,var(--pc,#9CA3AF) 75%,transparent);
+  transition:transform .25s cubic-bezier(.34,1.56,.64,1),box-shadow .25s}
+.mp-pk::after{content:'';position:absolute;left:50%;top:27px;width:3px;height:14px;margin-left:-1.5px;border-radius:0 0 2px 2px;background:linear-gradient(90deg,#B9B2AC,#fff 45%,#8E8781);box-shadow:0 1px 2px rgba(0,0,0,.4);pointer-events:none}
+.mp-pk span{transform:none;font-size:11.5px;letter-spacing:-.3px;text-shadow:0 1px 2px rgba(0,0,0,.55)}
+.mp-pkd::after{content:'';position:absolute;left:50%;top:39px;width:16px;height:6px;margin-left:-8px;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.6),rgba(0,0,0,0));pointer-events:none;transition:transform .25s,opacity .25s}
+.mp-pk:hover{transform:translateY(-4px) scale(1.1)}
+.mp-pkd:hover::after{transform:scale(.75);opacity:.6}
+.mp-pk.sel{transform:translateY(-6px) scale(1.18);box-shadow:inset 0 -3px 5px rgba(0,0,0,.35),inset 0 2px 3px rgba(255,255,255,.45),0 0 0 3px #fff,0 0 0 6px #FF5A00,0 0 26px 6px rgba(255,90,0,.65)}
+.mp-pk.aj{transform:none;border:0}
 .mp-pkd::before{content:'';position:absolute;left:15px;top:14px;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;pointer-events:none;opacity:0}
 .mp-pkw.novo .mp-pkd{animation:mpCai .7s cubic-bezier(.34,1.56,.64,1) both}
 .mp-pkw.novo .mp-pkd::before{background:rgba(255,90,0,.45);animation:mpOnda 1.4s ease-out 4}
 .mp-pkw.atr:not(.novo) .mp-pkd::before{background:rgba(220,38,38,.35);animation:mpOnda 2.2s ease-out infinite}
 @keyframes mpCai{0%{transform:translateY(-70px) scale(.6);opacity:0}60%{transform:translateY(4px) scale(1.05);opacity:1}100%{transform:none}}
 @keyframes mpOnda{0%{transform:scale(1);opacity:.9}100%{transform:scale(5.5);opacity:0}}
-.mp-base.live{width:46px;height:48px;padding:3px;border-radius:16px;background:#fff;border:2px solid #FF5A00;box-shadow:0 6px 16px -4px rgba(255,90,0,.55);font-size:0}
-.mp-base.live .live-mascote{width:40px}
+.mp-base.live{width:58px;height:62px;padding:0;border:0;border-radius:0;background:none;box-shadow:none;font-size:0;filter:drop-shadow(0 0 10px rgba(255,90,0,.75)) drop-shadow(0 6px 8px rgba(0,0,0,.55))}
+.mp-base.live .live-mascote{width:58px}
 /* cards dos motoboys */
 .mp-mot{border:1px solid #F0E6DE;border-left:6px solid var(--tc,#E5DDD5);border-radius:14px;background:#fff;box-shadow:0 2px 6px -2px rgba(41,35,30,.12);transition:transform .2s,box-shadow .2s}
 .mp-mot:hover{transform:translateY(-1px);box-shadow:0 8px 18px -8px rgba(41,35,30,.35)}
@@ -5748,41 +5757,91 @@ function mpDesenhar(lista){
 }
 var MP_ENQ=true;
 var MP_BASE_MK=null;
-/* (094) mapa com a cara da LiveFood: fundo creme, ruas brancas, avenidas em laranja claro, água suave e sem ícones de comércio/ônibus.
-   Mexe só nas cores das camadas do estilo "liberty" do OpenFreeMap; se uma camada não existir, segue sem erro. */
+/* (094) mapa com a cara da LiveFood, em alto contraste: base grafite/preta, ruas claras, avenidas no laranja da marca,
+   textos brancos e sem ícones de comércio/ônibus. Mexe só nas cores das camadas do estilo "liberty" do OpenFreeMap. */
 function mpEstiloLiveFood(map){
   var L=[]; try{ L=map.getStyle().layers||[]; }catch(e){ return; }
   function pp(id,k,v){ try{ map.setPaintProperty(id,k,v); }catch(e){} }
+  function some(id){ try{ map.setLayoutProperty(id,'visibility','none'); }catch(e){} }
   L.forEach(function(ly){
     var id=ly.id, t=ly.type, s=String(id).toLowerCase();
-    if(t==='background'){ pp(id,'background-color','#FBF6F1'); return; }
+    if(t==='background'){ pp(id,'background-color','#15110F'); return; }
     if(t==='symbol'){
-      if(/poi|transit|airport|aerialway|shield|railway|ferry|oneway|housenumber/.test(s)){ try{ map.setLayoutProperty(id,'visibility','none'); }catch(e){} return; }
-      pp(id,'text-color',/water/.test(s)?'#7FA3B8':(/place|city|town|village|suburb|neighbo/.test(s)?'#5A4D44':'#8C7F76')); pp(id,'text-halo-color','#FBF6F1'); pp(id,'text-halo-width',1.4);
+      if(/poi|transit|airport|aerialway|shield|railway|ferry|oneway|housenumber/.test(s)){ some(id); return; }
+      var lugar=/place|city|town|village|suburb|neighbo|state|country/.test(s);
+      pp(id,'text-color',/water/.test(s)?'#5F8FA8':(lugar?'#FFFFFF':'#C9BDB4')); pp(id,'text-halo-color','#15110F'); pp(id,'text-halo-width',1.6);
       return;
     }
     if(t==='fill'){
-      if(/water|ocean|lake|river/.test(s)) pp(id,'fill-color','#D6E6EE');
-      else if(/park|wood|forest|grass|scrub|wetland|landcover|nature|cemetery/.test(s)){ pp(id,'fill-color','#E8EEDC'); pp(id,'fill-opacity',0.7); }
-      else if(/building/.test(s)){ pp(id,'fill-color','#F1E7DD'); pp(id,'fill-outline-color','#E7D9CC'); }
-      else if(/residential|landuse|suburb|neighbourhood/.test(s)){ pp(id,'fill-color','#F7EFE7'); }
-      else if(/aeroway|industrial|commercial|retail/.test(s)){ pp(id,'fill-color','#F4ECE4'); }
+      if(/water|ocean|lake|river/.test(s)) pp(id,'fill-color','#0C1820');
+      else if(/park|wood|forest|grass|scrub|wetland|landcover|nature|cemetery/.test(s)){ pp(id,'fill-color','#1A2118'); pp(id,'fill-opacity',0.9); }
+      else if(/building/.test(s)){ pp(id,'fill-color','#2A2220'); pp(id,'fill-outline-color','#352B28'); }
+      else if(/aeroway|industrial|commercial|retail/.test(s)) pp(id,'fill-color','#1E1816');
+      else pp(id,'fill-color','#1B1513');
       return;
     }
-    if(t==='fill-extrusion'){ pp(id,'fill-extrusion-color','#F0E4D8'); return; }
+    if(t==='fill-extrusion'){ pp(id,'fill-extrusion-color','#2E2522'); return; }
     if(t==='line'){
-      if(/water|river|stream|canal|waterway/.test(s)){ pp(id,'line-color','#C7DCE7'); return; }
-      if(/boundary|admin/.test(s)){ pp(id,'line-color','#D9C9BC'); return; }
-      if(/rail|transit|ferry|aeroway|path|pedestrian|cycle|track|steps/.test(s)){ try{ map.setLayoutProperty(id,'visibility','none'); }catch(e){} return; }
+      if(/water|river|stream|canal|waterway/.test(s)){ pp(id,'line-color','#16303D'); return; }
+      if(/boundary|admin/.test(s)){ pp(id,'line-color','#4A3D37'); return; }
+      if(/rail|transit|ferry|aeroway|path|pedestrian|cycle|track|steps/.test(s)){ some(id); return; }
       if(/road|highway|bridge|tunnel|street|motorway|trunk|primary|secondary|tertiary|minor|service/.test(s)){
-        if(/casing|outline/.test(s)) pp(id,'line-color','#EBDDD0');
-        else if(/motorway|trunk|primary/.test(s)) pp(id,'line-color','#FFD6B8');
-        else if(/secondary|tertiary/.test(s)) pp(id,'line-color','#FFEBDC');
-        else pp(id,'line-color','#FFFFFF');
+        if(/casing|outline/.test(s)) pp(id,'line-color','#0B0908');
+        else if(/motorway|trunk|primary/.test(s)) pp(id,'line-color','#C8470F');
+        else if(/secondary|tertiary/.test(s)) pp(id,'line-color','#8A6A58');
+        else pp(id,'line-color','#4A3E39');
       }
     }
   });
+  mpRotasPreparar(map);
 }
+/* (094) ROTA DE LUZ: linha curva do restaurante até a entrega, com um "cometa" de luz correndo por ela.
+   Aparece quando um pedido chega (alguns segundos) e fica acesa nos pedidos selecionados. */
+var MP_ROTAS={nov:{},raf:0,t0:0,ult:0};
+function mpRotasPreparar(map){
+  try{
+    if(map.getSource('lf-rotas')) return;
+    map.addSource('lf-rotas',{type:'geojson',lineMetrics:true,data:{type:'FeatureCollection',features:[]}});
+    map.addLayer({id:'lf-rotas-brilho',type:'line',source:'lf-rotas',layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':'#FF6A10','line-width':16,'line-blur':12,'line-opacity':0.7}});
+    map.addLayer({id:'lf-rotas-luz',type:'line',source:'lf-rotas',layout:{'line-cap':'round','line-join':'round'},paint:{'line-width':4,'line-gradient':mpRotaGrad(0.5)}});
+  }catch(e){}
+}
+function mpRotaGrad(t){
+  var base='#FFB27A', s=[[0,base]], a=t-0.2, b=t+0.05;
+  if(a>0.001) s.push([a,base]);
+  s.push([Math.min(0.999,Math.max(0.001,t)),'#FFFFFF']);
+  if(b<0.999) s.push([b,base]);
+  s.push([1,base]);
+  var e=['interpolate',['linear'],['line-progress']], ult=-1;
+  s.forEach(function(x){ if(x[0]>ult+0.0005){ e.push(x[0],x[1]); ult=x[0]; } });
+  return e;
+}
+function mpArco(a,b){
+  var dx=b[0]-a[0], dy=b[1]-a[1], c=[a[0]+dx/2-dy*0.22, a[1]+dy/2+dx*0.22], pts=[], i, u;
+  for(i=0;i<=48;i++){ u=i/48; pts.push([(1-u)*(1-u)*a[0]+2*(1-u)*u*c[0]+u*u*b[0],(1-u)*(1-u)*a[1]+2*(1-u)*u*c[1]+u*u*b[1]]); }
+  return pts;
+}
+function mpRotasAtualizar(){
+  if(!MP_MAP||!MP_MAPA_OK||!PONTO||PONTO.lat==null) return;
+  var src=null; try{ src=MP_MAP.getSource('lf-rotas'); }catch(e){} if(!src) return;
+  var agora=Date.now(), feats=[], k, p, o=[PONTO.lng,PONTO.lat];
+  for(k in MP_ROTAS.nov){ if(MP_ROTAS.nov[k]<agora) delete MP_ROTAS.nov[k]; }
+  var quer={}; for(k in MP_ROTAS.nov) quer[k]=1; for(k in MP_SEL) if(MP_SEL[k]) quer[k]=1;
+  for(k in quer){ p=mpAcharPed(k); if(p&&p.lat!=null&&p.lng!=null&&MP_MODO==='mapa') feats.push({type:'Feature',properties:{},geometry:{type:'LineString',coordinates:mpArco(o,[p.lng,p.lat])}}); }
+  try{ src.setData({type:'FeatureCollection',features:feats}); }catch(e){}
+  if(feats.length&&!MP_ROTAS.raf){ MP_ROTAS.t0=performance.now(); MP_ROTAS.raf=requestAnimationFrame(mpRotasAnimar); }
+}
+function mpRotasAnimar(ts){
+  MP_ROTAS.raf=0;
+  if(!MP_MAP||document.hidden||PAG!=='mapeamento') return;
+  var src=null; try{ src=MP_MAP.getSource('lf-rotas'); }catch(e){}
+  var vivas=Object.keys(MP_ROTAS.nov).length||Object.keys(MP_SEL).some(function(k){ return MP_SEL[k]; });
+  if(!src||!vivas){ mpRotasAtualizar(); return; }
+  if(ts-MP_ROTAS.ult>33){ MP_ROTAS.ult=ts; var t=((ts-MP_ROTAS.t0)%1600)/1600; try{ MP_MAP.setPaintProperty('lf-rotas-luz','line-gradient',mpRotaGrad(t)); }catch(e){} }
+  if(Object.keys(MP_ROTAS.nov).some(function(k){ return MP_ROTAS.nov[k]<Date.now(); })) mpRotasAtualizar();
+  MP_ROTAS.raf=requestAnimationFrame(mpRotasAnimar);
+}
+function mpRotaNova(cod){ MP_ROTAS.nov[cod]=Date.now()+9000; mpRotasAtualizar(); }
 /* o Live (personagem) usado no mapa e na abertura: carrega os mesmos arquivos do site e dos apps */
 var MP_LIVE_CB=null;
 function mpLiveCarregar(cb){
@@ -6309,7 +6368,7 @@ function mpEspalhar(){
     g.forEach(function(x,m){ var a=-Math.PI/2+m*2*Math.PI/n; mpPkDesloc(pts[x].k,cx+Math.cos(a)*r-pts[x].pt.x,cy+Math.sin(a)*r-pts[x].pt.y); });
   }
 }
-function mpPkEstiloTodos(){ for(var k in MP_PK){ var p=mpAcharPed(k); if(p) mpPkEstilo(p); } }
+function mpPkEstiloTodos(){ for(var k in MP_PK){ var p=mpAcharPed(k); if(p) mpPkEstilo(p); } try{ mpRotasAtualizar(); }catch(e){} }
 var MP_PK_VISTOS=null;   /* (094) pedidos já mostrados no mapa: os que chegam depois ganham o efeito de chegada */
 function mpPinosPedidos(enq){
   if(!MP_MAP||!MP_MAPA_OK||MP_MODO!=='mapa') return;
@@ -6321,7 +6380,7 @@ function mpPinosPedidos(enq){
       var mk=new maplibregl.Marker({element:d,anchor:'bottom'}).setLngLat([p.lng,p.lat]).addTo(MP_MAP);
       MP_PK[p.cod]={mk:mk,el:d,in:ii,n:nn,dd:dd,ln:ln,dot:dt};
       /* (094) pedido que acabou de chegar: o alfinete cai no mapa com uma onda de brilho (só depois da 1ª pintura da tela) */
-      if(MP_PK_VISTOS&&!MP_PK_VISTOS[p.cod]){ d.classList.add('novo'); (function(dn){ setTimeout(function(){ dn.classList.remove('novo'); },6500); })(d); }
+      if(MP_PK_VISTOS&&!MP_PK_VISTOS[p.cod]){ d.classList.add('novo'); (function(dn){ setTimeout(function(){ dn.classList.remove('novo'); },6500); })(d); try{ mpRotaNova(p.cod); }catch(e){} }
       (function(cod,dd,mm){
         (function(){ var tm=null, x0=0, y0=0, longo=false;
           ii.addEventListener('pointerdown',function(ev){ longo=false; x0=ev.clientX; y0=ev.clientY; if(tm) clearTimeout(tm); tm=setTimeout(function(){ tm=null; if(MP_AJ===cod) return; longo=true; mpInfoPin(cod); },450); });
