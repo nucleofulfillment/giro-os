@@ -922,8 +922,23 @@ function abrirWhatsPedidos(){
    '<label>Números liberados no teste (com DDD, um por linha)</label><textarea id="wp-teste" rows="3" placeholder="47 99999-0000" style="width:100%;font:inherit;padding:10px;border-radius:10px;border:1px solid #ddd"></textarea>'+
    '<label style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="wp-todos" style="width:auto"> Liberar para todos os clientes (sair do teste)</label>'+
    '<p class="sub" style="margin-top:8px">No teste, só os números da lista falam com o Live. Os demais (motoristas e outros) continuam no fluxo de hoje.</p>'+
+   '<div style="margin-top:14px;border-top:1px solid #eee;padding-top:12px"><div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:14px">Diagnóstico</b><span class="lk" style="cursor:pointer;font-size:13px;font-weight:700;color:var(--roxo,#FF5A00)" onclick="whatsDiag()">↻ atualizar</span></div><div id="wp-diag" class="sub" style="margin-top:6px;max-height:220px;overflow:auto;font-size:12.5px;line-height:1.5">Carregando…</div></div>'+
    '<div class="erro" id="wp-erro"></div><div class="acoes"><button class="btn" onclick="fechar()">Cancelar</button><button class="btn pri" id="wp-btn" onclick="salvarWhatsPedidos()">Salvar</button></div>');
+  whatsDiag(true);
+}
+/* (095) mostra se as mensagens estão chegando e o que o Live fez com cada uma */
+function whatsDiag(preencher){
   chamar('GET','/admin/whats-pedidos').then(function(d){
+    if(!d.ok){ if(el('wp-diag')) el('wp-diag').textContent=d.mensagem||'Erro.'; return; }
+    if(preencher) whatsPreencher(d);
+    var u=d.ultima_recebida, h='<div>Servidor: <b>'+esc(d.versao||'versão antiga (cole o Worker novo)')+'</b></div>';
+    h+='<div>Última mensagem que chegou no WhatsApp (qualquer pessoa): '+(u?('<b>'+esc(u.quando)+'</b> de '+esc(u.fone)):'<b>nenhuma</b>')+'</div>';
+    h+=(d.log&&d.log.length)?('<ul style="margin:6px 0 0;padding-left:18px">'+d.log.map(function(x){ return '<li>'+esc(x)+'</li>'; }).join('')+'</ul>'):'<div style="margin-top:4px">Nenhum acontecimento registrado ainda. Mande uma mensagem e clique em atualizar.</div>';
+    if(el('wp-diag')) el('wp-diag').innerHTML=h;
+  }).catch(function(){});
+}
+function whatsPreencher(d){
+  {
     if(!d.ok){el('wp-estado').textContent=d.mensagem||'Erro.';return;}
     var c=d.config||{}, av=[];
     if(!d.whats) av.push('⚠️ O WhatsApp (Meta) não está conectado neste Worker.');
@@ -931,7 +946,7 @@ function abrirWhatsPedidos(){
     el('wp-estado').textContent=av.length?av.join(' '):(c.on?(c.todos?'✅ Ligado para todos os clientes.':'✅ Ligado em teste.'):'Desligado.');
     el('wp-cli').innerHTML='<option value="">— escolha —</option>'+(d.lojas||[]).map(function(l){return '<option value="'+esc(l.id)+'">'+esc(l.nome||l.id)+'</option>';}).join('');
     el('wp-cli').value=c.cli||''; el('wp-on').checked=!!c.on; el('wp-todos').checked=!!c.todos; el('wp-teste').value=(c.teste||[]).join('\n');
-  }).catch(function(){});
+  }
 }
 function salvarWhatsPedidos(){
   var todos=el('wp-todos').checked;
