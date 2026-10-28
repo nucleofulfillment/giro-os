@@ -868,6 +868,7 @@ a{color:inherit}
           <div class="cfgcard" style="cursor:pointer" onclick="cdAparencia()"><div class="ic">🎨</div><h4>Marca e cores</h4><p>Cadastre a logo e escolha a cor do restaurante. Vale para todo o sistema: login, painel, atendimento, cozinha e cardápio.</p></div>
           <div class="cfgcard" style="cursor:pointer" onclick="cdPagamento()"><div class="ic">💳</div><h4>Configurar checkout</h4><p>Conecte a conta Asaas do restaurante para receber pedidos do cardápio digital por Pix e cartão. Cole a chave de API e teste a conexão.</p><span class="badge b-in">configurar</span></div>
           <div class="cfgcard" style="cursor:pointer" onclick="cdCfgClientes()"><div class="ic">👥</div><h4>Configurações clientes</h4><p>Regras do atendimento por garçom/balcão: bloqueio de cliente inadimplente, fechamento automático da conta pendurada e mensagem da cobrança.</p><span class="badge b-in">configurar</span></div>
+          <div class="cfgcard" style="cursor:pointer" onclick="lvAbrir()"><div class="ic">📺</div><h4>Assistente Live</h4><p>O atendente virtual por voz do totem de autoatendimento. Ligue, escolha o cérebro, escreva o treinamento da sua loja e copie o link do totem.</p><span class="badge b-in" id="lv-badge">configurar</span></div>
           <div class="cfgcard" style="cursor:pointer" onclick="slAbrir()"><div class="ic">🪑</div><h4>Salão</h4><p>Desenhe o mapa do seu salão: mesas, balcão de saída, cozinha, banheiros, entrada e saída. O garçom usa esse mapa no celular para entregar os pedidos e atender os chamados.</p><span class="badge b-in">desenhar</span></div>
         </div>
       </section>
@@ -7730,6 +7731,47 @@ function cdCfgClientesSalvar(){
   fetch(DELTADIS_API+'/painel/atend-cfg',{method:'POST',headers:cdHdr(),body:JSON.stringify({bloq_dias:el('cc-bloq').value,fecha_auto:el('cc-auto').checked,fecha_dias:el('cc-dias').value,msg:el('cc-msg').value})}).then(function(r){return r.json();}).then(function(d){
     if(!d||!d.ok) throw new Error((d&&d.mensagem)||'não salvou'); aviso('Configurações salvas'); fecharTudo();
   }).catch(function(e){ var m=el('cc-m'); if(m){ m.style.color='#f87171'; m.textContent=e.message||'Não salvou'; } });
+}
+/* ── (088) ASSISTENTE LIVE: atendente virtual por voz do totem (as chaves da IA e da voz ficam no servidor) ── */
+var LIVE_URL='http://localhost:5173';   /* endereço do totem; troque pelo endereço publicado (ex.: https://live.livefood.com.br) */
+var LV={};
+function lvAbrir(){
+  el('cd-imp-corpo').innerHTML='<div style="font-size:13px;color:var(--muted)">Carregando…</div>';
+  el('sh-import').querySelector('h3').textContent='Assistente Live'; abrir('sh-import');
+  fetch(DELTADIS_API+'/painel/live-config',{headers:cdHdr()}).then(function(r){return r.json();}).then(function(d){
+    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'erro'); LV=d; var c=d.cfg||{};
+    var link=LIVE_URL+'/?loja='+encodeURIComponent(d.cli)+'&k='+encodeURIComponent(d.chave);
+    var sel=function(id,ops,val){ return '<select class="inp" id="'+id+'" style="margin:6px 0 14px">'+ops.map(function(o){ return '<option value="'+o[0]+'"'+(o[0]===val?' selected':'')+'>'+esc(o[1])+'</option>'; }).join('')+'</select>'; };
+    el('cd-imp-corpo').innerHTML=(d.ia?'':'<div style="background:#3b1d1d;color:#fca5a5;border-radius:10px;padding:10px 12px;font-size:12.5px;margin-bottom:12px">A chave da IA do Live ainda não foi cadastrada no servidor (LIVE_ANTHROPIC_API_KEY). O Live só responde depois disso.</div>')
+      +'<label style="display:flex;gap:8px;align-items:center;font-size:14px;font-weight:800;margin-bottom:14px"><input type="checkbox" id="lv-ativo" '+(c.ativo?'checked':'')+' style="width:18px;height:18px"> Live ligado nesta loja</label>'
+      +'<label style="font-size:12px;font-weight:700;color:var(--muted2)">Cérebro (modelo de IA)</label>'
+      +sel('lv-modelo',[['claude-sonnet-5-5','Sonnet 5.5 · equilibrado (recomendado)'],['claude-haiku-5-5','Haiku 5.5 · mais rápido e econômico'],['claude-opus-5-5','Opus 5.5 · mais inteligente, mais lento']],c.modelo)
+      +'<label style="font-size:12px;font-weight:700;color:var(--muted2)">Velocidade × raciocínio</label>'
+      +sel('lv-esforco',[['minimo','Mínimo · responde na hora (só no Sonnet 5.5)'],['low','Baixo · rápido'],['medium','Médio'],['high','Alto · pensa mais, demora mais']],c.esforco)
+      +'<label style="display:flex;gap:8px;align-items:center;font-size:13.5px;font-weight:700;margin-bottom:4px"><input type="checkbox" id="lv-enviar" '+(c.enviar?'checked':'')+' style="width:18px;height:18px"> Enviar os pedidos do totem para o painel</label>'
+      +'<div style="font-size:12px;color:var(--muted);margin-bottom:14px">Desligado = modo teste (o pedido não vai pra cozinha). Ligado, entra como retirada no balcão, pago no caixa.</div>'
+      +'<label style="font-size:12px;font-weight:700;color:var(--muted2)">Treinamento: orientações da sua loja (uma por linha)</label>'
+      +'<textarea class="inp" id="lv-treino" rows="9" placeholder="Ex.:&#10;- Todos os burgers acompanham fritas.&#10;- Pizza: sempre pergunte o tamanho e os sabores.&#10;- Se pedirem refrigerante, ofereça o suco da casa." style="margin:6px 0 14px">'+esc(c.treino||'')+'</textarea>'
+      +'<label style="font-size:12px;font-weight:700;color:var(--muted2)">Voz do Live (ID da voz na ElevenLabs, opcional)</label>'
+      +'<input class="inp" id="lv-voz" placeholder="'+(d.vozPadrao?'em branco = voz padrão do Live':'em branco = voz do navegador')+'" value="'+esc(c.voz||'')+'" style="margin:6px 0 4px">'
+      +'<div style="font-size:12px;color:var(--muted);margin-bottom:14px">'+(d.vozServidor?'A chave da ElevenLabs já está no servidor.':'A chave da ElevenLabs ainda não está no servidor: o totem usa a voz do navegador.')+'</div>'
+      +'<label style="font-size:12px;font-weight:700;color:var(--muted2)">Link do totem desta loja</label>'
+      +'<div style="display:flex;gap:8px;margin:6px 0 4px"><input class="inp" id="lv-link" readonly value="'+esc(link)+'" style="flex:1;font-size:12px"><button class="btn" type="button" onclick="lvCopiar()">Copiar</button></div>'
+      +'<div style="font-size:12px;color:var(--muted);margin-bottom:14px">Abra esse link no navegador do totem, em tela cheia. Não compartilhe: quem tem o link usa o Live desta loja.</div>'
+      +'<div id="lv-m" style="font-size:12.5px;min-height:18px;margin-bottom:8px"></div><button class="btn pri" type="button" onclick="lvSalvar()">Salvar</button>';
+  }).catch(function(e){ el('cd-imp-corpo').innerHTML='<div style="color:#f87171;font-size:13px">'+esc(e.message||'Não consegui abrir.')+'</div>'; });
+}
+function lvCopiar(){
+  var i=el('lv-link'); i.select();
+  (navigator.clipboard?navigator.clipboard.writeText(i.value):Promise.reject()).then(function(){ aviso('Link copiado'); },function(){ document.execCommand('copy'); aviso('Link copiado'); });
+}
+function lvSalvar(){
+  var body={ativo:el('lv-ativo').checked,modelo:el('lv-modelo').value,esforco:el('lv-esforco').value,enviar:el('lv-enviar').checked,treino:el('lv-treino').value,voz:el('lv-voz').value.trim()};
+  fetch(DELTADIS_API+'/painel/live-config',{method:'POST',headers:cdHdr(),body:JSON.stringify(body)}).then(function(r){return r.json();}).then(function(d){
+    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'não salvou');
+    var b=el('lv-badge'); if(b) b.textContent=d.cfg.ativo?'ligado':'desligado';
+    aviso(d.cfg.ativo?'Live salvo e ligado':'Live salvo (desligado)'); fecharTudo();
+  }).catch(function(e){ var m=el('lv-m'); if(m){ m.style.color='#f87171'; m.textContent=e.message||'Não salvou'; } });
 }
 /* ── (120) SALÃO: desenhar a planta do restaurante (mesas, balcão, cozinha, banheiros, entrada, saída) ── */
 var SL={L:[],sel:0,drag:null,uid:1,v3:false,ang:35};
