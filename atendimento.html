@@ -201,6 +201,10 @@ label.l.big{font-size:14px;margin-top:16px}
 <script src="marca.js?v=8"></script>
 </head>
 <body>
+<!-- abertura com o Live (fundo branco + logo laranja); curta, para não atrasar o garçom -->
+<div id="lf-abertura" data-minimo="1300" style="position:fixed;inset:0;z-index:2147483000;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px"><div class="lfa-live" style="width:140px"></div><img src="livefood-logo.png" alt="LiveFood" style="height:42px;width:auto"><div class="lfa-barra"><i></i></div></div>
+<script>setTimeout(function(){ var a=document.getElementById('lf-abertura'); if(a) a.remove(); },6000);</script>
+<script src="site/js/live-mascote.js"></script><script src="site/js/live-app.js"></script>
 
 <div id="login">
   <div class="c">
@@ -553,7 +557,7 @@ function tiraItem(k){ CART.splice(k,1); if(!CART.length){ fecha(); cartBar(); } 
 function enviaPedido(){
   var b=$('pBt'); b.disabled=true; b.textContent='Enviando…'; $('pErr').textContent='';
   api('/painel/atend-pedido',{modo:COM.modo,mesa:COM.mesa,joia:COM.joia,obs:($('pObs')||{value:''}).value,liberar:COM.liberar,itens:CART.map(function(i){ return {p:i.p,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs,qty:i.qty}; })}).then(function(r){
-    if(r.ok){ var ped={num:r.num,sub:r.sub||0,mesa:COM.mesa,joia:COM.joia,nome:COM.nome,atend:D.usuario,criado:Date.now(),obs:($('pObs')||{value:''}).value,modo:COM.modo,l:CART.map(function(i){ return {p:i.p,nome:i.nome,qty:i.qty,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs}; })}; CART=[]; fecha(); cartBar(); toast('Pedido #'+plab(r)+' enviado para a cozinha'); zeraComanda(); if(impOn()) imprimeAuto(ped); return; }
+    if(r.ok){ var ped={num:r.num,sub:r.sub||0,mesa:COM.mesa,joia:COM.joia,nome:COM.nome,atend:D.usuario,criado:Date.now(),obs:($('pObs')||{value:''}).value,modo:COM.modo,l:CART.map(function(i){ return {p:i.p,nome:i.nome,qty:i.qty,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs}; })}; CART=[]; fecha(); cartBar(); if(window.LiveApp) LiveApp.comemorar({titulo:'Pedido #'+plab(r)+' enviado!',sub:'Já está na cozinha 🍳',ms:1700}); else toast('Pedido #'+plab(r)+' enviado para a cozinha'); zeraComanda(); if(impOn()) imprimeAuto(ped); return; }
     if(r._h===401){ mostraLogin('Entre de novo.'); return; }
     b.disabled=false; b.textContent='Enviar para a cozinha'; $('pErr').innerHTML=esc(r.mensagem||'Não consegui enviar.')+(r.erro==='bloqueado'&&r.pode_liberar?'<br><button class="bt mini r" style="margin-top:8px" onclick="COM.liberar=true;enviaPedido()">Liberar mesmo assim</button>':'');
   });
@@ -587,7 +591,7 @@ function fechaForm(i){
 function fechaFazer(i,forma){
   var c=COMS[i]; $('fcErr').textContent='';
   api('/painel/atend-fechar',{mesa:c.mesa,joia:c.joia,forma:forma}).then(function(r){
-    if(r.ok){ _ab=0; fecha(); toast(forma==='marcar'?'Marcado na conta de '+(c.nome||'cliente')+' · '+brl(r.total):'Conta fechada · '+brl(r.total)); carregaCom(); return; }
+    if(r.ok){ _ab=0; fecha(); if(window.LiveApp) LiveApp.comemorar({titulo:forma==='marcar'?'Marcado na conta!':'Conta fechada!',sub:(forma==='marcar'?(c.nome||'Cliente')+' · ':'')+brl(r.total),ms:1700}); else toast(forma==='marcar'?'Marcado na conta de '+(c.nome||'cliente')+' · '+brl(r.total):'Conta fechada · '+brl(r.total)); carregaCom(); return; }
     if(r._h===401){ mostraLogin('Entre de novo.'); return; } $('fcErr').textContent=r.mensagem||'Não consegui fechar.';
   });
 }
