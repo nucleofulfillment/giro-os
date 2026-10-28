@@ -394,6 +394,37 @@ a{color:inherit}
 .mp-pkl{display:none;position:absolute;left:15px;top:35px;height:2px;margin-top:-1px;background:rgba(41,35,30,.65);transform-origin:0 50%;pointer-events:none;border-radius:2px}
 .mp-pkdot{display:none;position:absolute;left:11px;top:31px;width:8px;height:8px;border-radius:50%;background:#29231E;border:1.5px solid #fff;pointer-events:none}
 .mp-pkw.esp .mp-pkl,.mp-pkw.esp .mp-pkdot{display:block}
+/* (094) visual LiveFood dos alfinetes: gota com brilho na cor do tempo, "cai" quando o pedido chega e pulsa quando atrasa */
+.mp-pk{background:radial-gradient(circle at 32% 28%,rgba(255,255,255,.55),rgba(255,255,255,0) 52%),var(--pc,#9CA3AF);border:3px solid #fff;box-shadow:0 6px 14px -4px rgba(41,35,30,.55),0 0 0 1px rgba(41,35,30,.08),0 0 16px -2px color-mix(in srgb,var(--pc,#9CA3AF) 70%,transparent);transition:transform .25s cubic-bezier(.34,1.56,.64,1),box-shadow .25s}
+.mp-pk span{font-size:11.5px;letter-spacing:-.2px}
+.mp-pk:hover{transform:rotate(-45deg) scale(1.12)}
+.mp-pk.sel{transform:rotate(-45deg) scale(1.18);border-color:#29231E;box-shadow:0 0 0 4px rgba(255,90,0,.45),0 8px 18px -4px rgba(41,35,30,.6)}
+.mp-pkd::before{content:'';position:absolute;left:15px;top:14px;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;pointer-events:none;opacity:0}
+.mp-pkw.novo .mp-pkd{animation:mpCai .7s cubic-bezier(.34,1.56,.64,1) both}
+.mp-pkw.novo .mp-pkd::before{background:rgba(255,90,0,.45);animation:mpOnda 1.4s ease-out 4}
+.mp-pkw.atr:not(.novo) .mp-pkd::before{background:rgba(220,38,38,.35);animation:mpOnda 2.2s ease-out infinite}
+@keyframes mpCai{0%{transform:translateY(-70px) scale(.6);opacity:0}60%{transform:translateY(4px) scale(1.05);opacity:1}100%{transform:none}}
+@keyframes mpOnda{0%{transform:scale(1);opacity:.9}100%{transform:scale(5.5);opacity:0}}
+.mp-base.live{width:46px;height:48px;padding:3px;border-radius:16px;background:#fff;border:2px solid #FF5A00;box-shadow:0 6px 16px -4px rgba(255,90,0,.55);font-size:0}
+.mp-base.live .live-mascote{width:40px}
+/* cards dos motoboys */
+.mp-mot{border:1px solid #F0E6DE;border-left:6px solid var(--tc,#E5DDD5);border-radius:14px;background:#fff;box-shadow:0 2px 6px -2px rgba(41,35,30,.12);transition:transform .2s,box-shadow .2s}
+.mp-mot:hover{transform:translateY(-1px);box-shadow:0 8px 18px -8px rgba(41,35,30,.35)}
+.mp-mot.tem{background:linear-gradient(90deg,color-mix(in srgb,var(--mc) 9%,#fff),#fff 70%)}
+.mp-av{position:relative;width:38px;height:38px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:14px;background:linear-gradient(145deg,color-mix(in srgb,var(--mc) 80%,#fff),var(--mc));box-shadow:0 3px 8px -2px color-mix(in srgb,var(--mc) 70%,transparent)}
+.mp-av .mp-senha{font-style:normal;position:absolute;right:-5px;bottom:-4px;width:19px;height:19px;font-size:10.5px;border:2px solid #fff;background:#29231E}
+.mp-opmot .mp-av .mp-senha{width:19px;height:19px;font-size:10.5px}
+.mp-mot-n{flex:none;min-width:26px;height:26px;padding:0 8px;border-radius:99px;background:var(--mc);color:#fff;font-weight:800;font-size:12.5px;display:flex;align-items:center;justify-content:center}
+.mp-mot-st{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:1px;background:#16A34A}
+.mp-mot-st.off{background:#C7BDB5}
+/* abertura do Mapeamento com o Live */
+#mp-abre{position:fixed;inset:0;z-index:9000;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;transition:opacity .4s,visibility .4s}
+#mp-abre.sai{opacity:0;visibility:hidden}
+#mp-abre .tx{font-weight:800;color:#6C6055;font-size:15px}
+#mp-abre .br{width:140px;height:4px;border-radius:4px;background:#FFE3D1;overflow:hidden}
+#mp-abre .br i{display:block;height:100%;width:35%;border-radius:4px;background:#FF5A00;animation:mpBarra 1s ease-in-out infinite}
+@keyframes mpBarra{0%{transform:translateX(-110%)}100%{transform:translateX(320%)}}
+@media (prefers-reduced-motion:reduce){.mp-pkw.novo .mp-pkd,.mp-pkw .mp-pkd::before{animation:none!important}}
 .maplibregl-popup{z-index:60;font-family:var(--fbody)}.maplibregl-popup-content{padding:10px 12px;border-radius:12px;font-family:var(--fbody)}.mp-info{font-size:12.5px;line-height:1.45;min-width:170px;max-width:220px}.mp-info-t{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-bottom:3px;font-size:13.5px}.mp-info-n{font-weight:700;font-size:13.5px;font-family:var(--fbody)}.mp-info-s{color:var(--muted)}.mp-info-wa{display:inline-block;background:#25D366;color:#fff!important;font-weight:700;font-size:12px;padding:3px 10px;border-radius:99px;text-decoration:none;outline:none}.maplibregl-popup *{outline:none!important}.mp-info-aj{margin-top:5px;font-size:11px}.mp-info-aj a{color:var(--muted2);text-decoration:underline}.mp-info-ga{margin-top:3px;font-size:10px;color:var(--muted2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.8}
 .mp-conf{position:fixed;inset:0;z-index:130;background:rgba(41,35,30,.45);display:none;align-items:center;justify-content:center;padding:16px}
 .mp-conf-box{background:var(--s1);border-radius:16px;box-shadow:0 12px 40px rgba(41,35,30,.4);width:min(520px,100%);max-height:90vh;display:flex;flex-direction:column;padding:18px}
@@ -3485,7 +3516,7 @@ function ir(p){
   if(p==='mapeamento'&&VIVO_ON) setTimeout(function(){ vivoBuscar(); },800);
   if(p==='mensagens') msgAbrirTela(); else clearInterval(MSG.timer);
   if(p==='cte') cteAbrirTela();
-  if(p==='mapeamento' && typeof mpBuscar==='function'){ MP_ENQ=true; setTimeout(mpBuscar,30); }
+  if(p==='mapeamento' && typeof mpBuscar==='function'){ MP_ENQ=true; try{ mpAbertura(); }catch(e){} setTimeout(mpBuscar,30); }
   if(p==='pedidos'){ if(PD_DATA_KEEP){ PD_DATA_KEEP=false; } else { var hjP=hojeISO(), aP=el('pd-data-ini'), bP=el('pd-data-fim'); if(aP) aP.value=hjP; if(bP) bP.value=hjP; try{ pintarPedidos(); }catch(eP){} } }   /* a tela de Pedidos sempre abre no dia de hoje */
   window.scrollTo(0,0);
 }
@@ -5711,12 +5742,70 @@ function mpDesenhar(lista){
     if(!MP_MAP){
       MP_MAP=new maplibregl.Map({container:'mp-map',style:'https://tiles.openfreemap.org/styles/liberty',center:(PONTO&&PONTO.lat!=null)?[PONTO.lng,PONTO.lat]:[-48.55,-27.60],zoom:(PONTO&&PONTO.lat!=null)?13:11,pitch:0,attributionControl:false});
       try{ MP_MAP.addControl(new maplibregl.AttributionControl({compact:true}),'bottom-right'); MP_MAP.addControl(new maplibregl.NavigationControl({showCompass:false}),'top-right'); }catch(e){}
-      MP_MAP.on('moveend',function(){ mpEspalhar(); }); MP_MAP.on('load',function(){ MP_MAPA_OK=true; mpPintarBase(false); mpPintarPontos(MP_MODO==='vivo'?mpEntregas():[],true); if(MP_MODO==='mapa') mpPinosPedidos(true); });
+      MP_MAP.on('moveend',function(){ mpEspalhar(); }); MP_MAP.on('load',function(){ mpEstiloLiveFood(MP_MAP); MP_MAPA_OK=true; mpPintarBase(false); mpPintarPontos(MP_MODO==='vivo'?mpEntregas():[],true); if(MP_MODO==='mapa') mpPinosPedidos(true); });
     } else { MP_MAP.resize(); if(MP_MAPA_OK) mpPintarPontos(lista,MP_ENQ); }
   });
 }
 var MP_ENQ=true;
 var MP_BASE_MK=null;
+/* (094) mapa com a cara da LiveFood: fundo creme, ruas brancas, avenidas em laranja claro, água suave e sem ícones de comércio/ônibus.
+   Mexe só nas cores das camadas do estilo "liberty" do OpenFreeMap; se uma camada não existir, segue sem erro. */
+function mpEstiloLiveFood(map){
+  var L=[]; try{ L=map.getStyle().layers||[]; }catch(e){ return; }
+  function pp(id,k,v){ try{ map.setPaintProperty(id,k,v); }catch(e){} }
+  L.forEach(function(ly){
+    var id=ly.id, t=ly.type, s=String(id).toLowerCase();
+    if(t==='background'){ pp(id,'background-color','#FBF6F1'); return; }
+    if(t==='symbol'){
+      if(/poi|transit|airport|aerialway|shield|railway|ferry|oneway|housenumber/.test(s)){ try{ map.setLayoutProperty(id,'visibility','none'); }catch(e){} return; }
+      pp(id,'text-color',/water/.test(s)?'#7FA3B8':(/place|city|town|village|suburb|neighbo/.test(s)?'#5A4D44':'#8C7F76')); pp(id,'text-halo-color','#FBF6F1'); pp(id,'text-halo-width',1.4);
+      return;
+    }
+    if(t==='fill'){
+      if(/water|ocean|lake|river/.test(s)) pp(id,'fill-color','#D6E6EE');
+      else if(/park|wood|forest|grass|scrub|wetland|landcover|nature|cemetery/.test(s)){ pp(id,'fill-color','#E8EEDC'); pp(id,'fill-opacity',0.7); }
+      else if(/building/.test(s)){ pp(id,'fill-color','#F1E7DD'); pp(id,'fill-outline-color','#E7D9CC'); }
+      else if(/residential|landuse|suburb|neighbourhood/.test(s)){ pp(id,'fill-color','#F7EFE7'); }
+      else if(/aeroway|industrial|commercial|retail/.test(s)){ pp(id,'fill-color','#F4ECE4'); }
+      return;
+    }
+    if(t==='fill-extrusion'){ pp(id,'fill-extrusion-color','#F0E4D8'); return; }
+    if(t==='line'){
+      if(/water|river|stream|canal|waterway/.test(s)){ pp(id,'line-color','#C7DCE7'); return; }
+      if(/boundary|admin/.test(s)){ pp(id,'line-color','#D9C9BC'); return; }
+      if(/rail|transit|ferry|aeroway|path|pedestrian|cycle|track|steps/.test(s)){ try{ map.setLayoutProperty(id,'visibility','none'); }catch(e){} return; }
+      if(/road|highway|bridge|tunnel|street|motorway|trunk|primary|secondary|tertiary|minor|service/.test(s)){
+        if(/casing|outline/.test(s)) pp(id,'line-color','#EBDDD0');
+        else if(/motorway|trunk|primary/.test(s)) pp(id,'line-color','#FFD6B8');
+        else if(/secondary|tertiary/.test(s)) pp(id,'line-color','#FFEBDC');
+        else pp(id,'line-color','#FFFFFF');
+      }
+    }
+  });
+}
+/* o Live (personagem) usado no mapa e na abertura: carrega os mesmos arquivos do site e dos apps */
+var MP_LIVE_CB=null;
+function mpLiveCarregar(cb){
+  if(window.LiveMascote&&window.LiveApp){ cb(); return; }
+  if(MP_LIVE_CB){ MP_LIVE_CB.push(cb); return; } MP_LIVE_CB=[cb];
+  function sc(src,next){ var s=document.createElement('script'); s.src=src; s.onload=next; s.onerror=function(){ MP_LIVE_CB=null; }; document.head.appendChild(s); }
+  sc('site/js/live-mascote.js',function(){ sc('site/js/live-app.js',function(){ var l=MP_LIVE_CB||[]; MP_LIVE_CB=null; l.forEach(function(f){ try{ f(); }catch(e){} }); }); });
+}
+/* abertura do Mapeamento: o Live entra com a barrinha enquanto o mapa e os pedidos carregam (no mínimo 1 s, no máximo 3,5 s) */
+function mpAbertura(){
+  if(el('mp-abre')) return;
+  var o=document.createElement('div'); o.id='mp-abre'; o.innerHTML='<div class="lv" style="width:120px;height:126px"></div><div class="tx">Carregando o mapa…</div><div class="br"><i></i></div>';
+  document.body.appendChild(o);
+  var t0=Date.now(), live=null;
+  mpLiveCarregar(function(){ if(!el('mp-abre')) return; try{ live=LiveMascote.criar(o.querySelector('.lv'),{sombra:true,expressao:'animado'}); live.gesto('boas_vindas').then(function(){ if(live) live.gesto('piscadinha'); }); }catch(e){} });
+  var tm=setInterval(function(){
+    var dt=Date.now()-t0;
+    if((MP_MAPA_OK&&dt>1000)||dt>3500){
+      clearInterval(tm); o.classList.add('sai');
+      setTimeout(function(){ try{ if(live) live.destruir(); }catch(e){} o.remove(); },450);
+    }
+  },120);
+}
 /* ══ (53) MOTORISTA AO VIVO — escolhe um motorista (ou todos) que está com a rota rodando e vê o ícone se mexendo no mapa. Para esconder o recurso: VIVO_ON=false. ══ */
 var VIVO_ON=true, VIVO={itens:[],agora:0,recebido:0,mk:{},sel:'off',rodando:false,centrou:''};
 function vivoIdade(t){ var s=Math.max(0,Math.round((Date.now()-(VIVO.recebido-(VIVO.agora-t)))/1000)); if(s<60) return 'há '+s+' s'; if(s<3600) return 'há '+Math.round(s/60)+' min'; return 'há '+Math.round(s/3600)+' h'; }
@@ -5774,6 +5863,7 @@ function mpPintarBase(centrar){
   if(MP_BASE_MK) MP_BASE_MK.remove();
   var d=document.createElement('div'); d.className='mp-base'; d.textContent='🏢';
   MP_BASE_MK=new maplibregl.Marker({element:d}).setLngLat([PONTO.lng,PONTO.lat]).setPopup(new maplibregl.Popup({offset:24,closeButton:false}).setHTML('<b>Ponto de coleta</b><br>'+esc(PONTO.endereco))).addTo(MP_MAP);
+  mpLiveCarregar(function(){ try{ if(!d.isConnected||d.querySelector('.live-mascote')) return; d.className='mp-base live'; d.textContent=''; LiveMascote.criar(d,{sombra:false,rotulo:'Restaurante'}); }catch(e){} });   /* (094) o restaurante aparece no mapa como o Live */
   if(centrar && !Object.keys(MP_MK).length){ try{ MP_MAP.easeTo({center:[PONTO.lng,PONTO.lat],zoom:13}); }catch(e){} }
 }
 function mpAplicarCheio(on){
@@ -6014,8 +6104,10 @@ function mpMotFila(){ var fora={}; PEDIDOS.forEach(function(p){ if(p.st==='em ro
 function mpMotOpcoes(){ var h='<option value="">Motoboy…</option>',l=mpMotFila(),i; for(i=0;i<l.length;i++) h+='<option value="'+esc(String(l[i].id))+'"'+(String(l[i].id)===MP_MOT?' selected':'')+'>'+(i+1)+' · '+esc(l[i].n)+'</option>'; return h; }
 function mpMotCardsHtml(){
   var mh='',m,ml=mpMotFila(),i,cont={},k; for(k in MP_RASC) cont[MP_RASC[k]]=(cont[MP_RASC[k]]||0)+1;
-  for(i=0;i<ml.length;i++){ m=ml[i]; var on=false, n=cont[String(m.id)]||0, cor=MP_GCORES[i%MP_GCORES.length];
-    mh+='<div class="mp-lr mp-mot'+(on?' sel':'')+'" data-mt="'+esc(String(m.id))+'" style="--tc:'+(n?cor:(on?'#F97316':'#9CA3AF'))+'"><span class="mp-senha"'+(n?' style="background:'+cor+'"':'')+'>'+(mpChkAtivo()&&!CHK_POS[String(m.id)]?'–':(i+1))+'</span><div class="mp-lr-b"><b>'+esc(m.n)+'</b><small>🏍️ '+(mpChkAtivo()&&!CHK_POS[String(m.id)]?'sem check-in':'senha '+(i+1))+(n?' · '+n+' pedido'+(n>1?'s':''):'')+(on?' · escolhido':'')+'</small></div><span class="mp-grip" title="Arraste para mudar a ordem">⋮⋮</span></div>'; }
+  for(i=0;i<ml.length;i++){ m=ml[i]; var n=cont[String(m.id)]||0, cor=MP_GCORES[i%MP_GCORES.length], sem=mpChkAtivo()&&!CHK_POS[String(m.id)];
+    var ini=String(m.n||'?').trim().split(/\s+/).slice(0,2).map(function(w){ return w.charAt(0).toUpperCase(); }).join('');
+    /* (094) card do motoboy: avatar com a cor dele (a mesma do mapa), senha da fila no cantinho e quantos pedidos leva */
+    mh+='<div class="mp-lr mp-mot'+(n?' tem':'')+'" data-mt="'+esc(String(m.id))+'" style="--tc:'+(n?cor:'#E5DDD5')+';--mc:'+cor+'"><span class="mp-av">'+esc(ini)+'<i class="mp-senha">'+(sem?'–':(i+1))+'</i></span><div class="mp-lr-b"><b>'+esc(m.n)+'</b><small><span class="mp-mot-st'+(sem?' off':'')+'"></span>'+(sem?'sem check-in':'disponível · senha '+(i+1))+'</small></div>'+(n?'<span class="mp-mot-n" title="'+n+' pedido(s) nesta saída">'+n+' 🛵</span>':'')+'<span class="mp-grip" title="Arraste para mudar a ordem">⋮⋮</span></div>'; }
   return mh||'<div class="empty" style="padding:10px">Nenhum motoboy cadastrado</div>';
 }
 function mpListaPintar(){
@@ -6190,7 +6282,7 @@ function mpInfoPin(cod){
 var MP_AJ='';   /* pedido em "ajuste de posição": só ele pode ser arrastado */
 function mpPkEstilo(p){
   var o=MP_PK[p.cod]; if(!o) return; var t=mpTemp(p);
-  o.in.className='mp-pk'+(MP_SEL[p.cod]?' sel':'')+(MP_AJ===p.cod?' aj':''); o.el.classList.toggle('conf',p.gq===1); o.el.classList.toggle('urg',!!p.urg);
+  o.in.className='mp-pk'+(MP_SEL[p.cod]?' sel':'')+(MP_AJ===p.cod?' aj':''); o.el.classList.toggle('conf',p.gq===1); o.el.classList.toggle('urg',!!p.urg); o.el.classList.toggle('atr',t.cls==='b-no');
   var g=mpGrupoDe(p.cod); o.in.style.setProperty('--pc',g?g.cor:t.cor); o.dot.style.background=g?g.cor:t.cor; o.n.textContent=mpNumCurto(p);
   o.el.style.zIndex=(MP_SEL[p.cod]||MP_AJ===p.cod)?30:(1+Math.min(20,Math.floor((t.min||0)/10)));   /* o mais atrasado fica por cima */
   o.in.title='#'+pdNum(p)+' · '+(p.cliente||'')+' · '+t.txt+(p.gq===1?' · conferir posição':'');
@@ -6218,6 +6310,7 @@ function mpEspalhar(){
   }
 }
 function mpPkEstiloTodos(){ for(var k in MP_PK){ var p=mpAcharPed(k); if(p) mpPkEstilo(p); } }
+var MP_PK_VISTOS=null;   /* (094) pedidos já mostrados no mapa: os que chegam depois ganham o efeito de chegada */
 function mpPinosPedidos(enq){
   if(!MP_MAP||!MP_MAPA_OK||MP_MODO!=='mapa') return;
   var pool=mpPool(), quer={}, b=new maplibregl.LngLatBounds(), n=0, i, p, k;
@@ -6227,6 +6320,8 @@ function mpPinosPedidos(enq){
       var d=document.createElement('div'), dd=document.createElement('div'), ii=document.createElement('div'), nn=document.createElement('span'), qq=document.createElement('span'), ln=document.createElement('div'), dt=document.createElement('div'); d.className='mp-pkw'; dd.className='mp-pkd'; ln.className='mp-pkl'; dt.className='mp-pkdot'; ii.appendChild(nn); dd.appendChild(ii); qq.className='mp-pkq'; qq.textContent='?'; dd.appendChild(qq); d.appendChild(ln); d.appendChild(dt); d.appendChild(dd);
       var mk=new maplibregl.Marker({element:d,anchor:'bottom'}).setLngLat([p.lng,p.lat]).addTo(MP_MAP);
       MP_PK[p.cod]={mk:mk,el:d,in:ii,n:nn,dd:dd,ln:ln,dot:dt};
+      /* (094) pedido que acabou de chegar: o alfinete cai no mapa com uma onda de brilho (só depois da 1ª pintura da tela) */
+      if(MP_PK_VISTOS&&!MP_PK_VISTOS[p.cod]){ d.classList.add('novo'); (function(dn){ setTimeout(function(){ dn.classList.remove('novo'); },6500); })(d); }
       (function(cod,dd,mm){
         (function(){ var tm=null, x0=0, y0=0, longo=false;
           ii.addEventListener('pointerdown',function(ev){ longo=false; x0=ev.clientX; y0=ev.clientY; if(tm) clearTimeout(tm); tm=setTimeout(function(){ tm=null; if(MP_AJ===cod) return; longo=true; mpInfoPin(cod); },450); });
@@ -6242,6 +6337,7 @@ function mpPinosPedidos(enq){
     mpPkEstilo(p);
   }
   for(k in MP_PK) if(!quer[k]){ try{ MP_PK[k].mk.remove(); }catch(e){} delete MP_PK[k]; }
+  if(!MP_PK_VISTOS) MP_PK_VISTOS={}; for(k in quer) MP_PK_VISTOS[k]=1;
   if(PONTO&&PONTO.lat!=null) b.extend([PONTO.lng,PONTO.lat]);
   mpEspalhar();
   if((enq||MP_PK_ENQ) && n){ MP_PK_ENQ=false; try{ MP_MAP.resize(); MP_MAP.fitBounds(b,{padding:70,maxZoom:15,duration:500}); }catch(e){} }
