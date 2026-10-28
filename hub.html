@@ -39,11 +39,15 @@ h1{font-size:clamp(32px,5vw,52px);font-weight:800;line-height:1.05;letter-spacin
 .sair{font:inherit;font-size:12.5px;font-weight:800;color:#fff;background:rgba(0,0,0,.16);border:0;padding:7px 14px;border-radius:99px;cursor:pointer}
 .sair:hover{background:rgba(0,0,0,.28)}
 /* login em duas colunas: celular do entregador à esquerda, acesso da loja à direita */
-.lg-grid{display:grid;grid-template-columns:290px minmax(0,420px);gap:clamp(40px,7vw,100px);align-items:center}
+.lg-grid{display:grid;grid-template-columns:minmax(0,420px) auto;justify-content:space-between;gap:40px;align-items:center}
 .lg-col{min-width:0}
-@media (min-width:861px){.lg-col{transform:translate(clamp(20px,5vw,80px),-70px)}}
-.fone-wrap{display:flex;flex-direction:column;align-items:center;gap:16px;text-decoration:none;color:#fff}
-.fone{position:relative;width:270px;height:556px;border-radius:46px;background:#141416;padding:11px;box-shadow:0 40px 70px -30px rgba(70,15,0,.85),inset 0 0 0 2px #2C2C30;transform:rotate(-3deg);transition:transform .45s cubic-bezier(.34,1.56,.64,1)}
+.lg-col h1{font-size:clamp(30px,3.4vw,42px)}
+/* tela de login cabe inteira na janela (sem rolagem): o celular encolhe se a janela for baixa */
+body.em-login .wrap{padding-top:clamp(18px,4vh,44px);padding-bottom:20px}
+body.em-login header{margin-bottom:clamp(10px,3vh,32px)}
+body.em-login footer{display:none}
+.fone-wrap{order:2;display:flex;flex-direction:column;align-items:center;gap:16px;text-decoration:none;color:#fff}
+.fone{position:relative;height:min(556px,calc(100vh - 190px));min-height:440px;aspect-ratio:270/556;border-radius:46px;background:#141416;padding:11px;box-shadow:0 40px 70px -30px rgba(70,15,0,.85),inset 0 0 0 2px #2C2C30;transform:rotate(3deg);transition:transform .45s cubic-bezier(.34,1.56,.64,1)}
 .fone-wrap:hover .fone,.fone-wrap:focus-visible .fone{transform:rotate(0) translateY(-8px) scale(1.02)}
 .fone-wrap:focus-visible{outline:none}.fone-wrap:focus-visible .fone{box-shadow:0 0 0 4px #fff,0 40px 70px -30px rgba(70,15,0,.85)}
 .fone::before{content:'';position:absolute;top:19px;left:50%;width:84px;height:24px;margin-left:-42px;border-radius:99px;background:#141416;z-index:6}
@@ -88,8 +92,8 @@ h1{font-size:clamp(32px,5vw,52px);font-weight:800;line-height:1.05;letter-spacin
 .fone-cta{display:inline-flex;align-items:center;gap:8px;font-size:15px;font-weight:800;background:rgba(0,0,0,.18);padding:10px 18px;border-radius:99px;transition:background .2s}
 .fone-wrap:hover .fone-cta{background:rgba(0,0,0,.3)}
 .fone-cta i{font-style:normal;transition:transform .25s}.fone-wrap:hover .fone-cta i{transform:translateX(4px)}
-@media (max-width:860px){.lg-grid{grid-template-columns:1fr;justify-items:center;gap:36px}.lg-col{order:-1;width:100%;max-width:440px}.fone{transform:none}}
-@media (max-width:380px){.fone{width:244px;height:504px}}
+@media (max-width:860px){.lg-grid{grid-template-columns:1fr;justify-items:center;gap:36px}.lg-col{width:100%;max-width:440px}.fone{transform:none;height:556px}body.em-login footer{display:block}}
+@media (max-width:380px){.fone{height:504px}}
 .loja{display:inline-block;margin-bottom:12px;font-size:13px;font-weight:800;background:rgba(255,255,255,.2);padding:6px 12px;border-radius:99px}
 .card:hover,.card:focus-visible{transform:translateY(-6px);box-shadow:0 26px 50px -22px rgba(80,20,0,.75);outline:none}
 .card:focus-visible{box-shadow:0 0 0 4px #1C1C1E,0 26px 50px -22px rgba(80,20,0,.75)}
@@ -183,12 +187,12 @@ var API='https://giro-os-api.nucleofull.workers.dev', TK='', US=null;
 try{ TK=localStorage.getItem('dd_jwt')||''; US=JSON.parse(localStorage.getItem('dd_user')||'null'); }catch(e){}
 function $(i){ return document.getElementById(i); }
 function guarda(tk,us){ TK=tk||''; US=us||null; try{ if(tk){ localStorage.setItem('dd_jwt',tk); localStorage.setItem('dd_user',JSON.stringify(us||null)); } else { localStorage.removeItem('dd_jwt'); localStorage.removeItem('dd_user'); } }catch(e){} }
-function mostraLogin(m){ $('etHub').hidden=true; $('bSair').hidden=true; $('tag').hidden=false; $('etLogin').hidden=false; $('lgM').innerHTML=m||''; setTimeout(function(){ $('lgE').focus(); },50); }
+function mostraLogin(m){ document.body.classList.add('em-login'); $('etHub').hidden=true; $('bSair').hidden=true; $('tag').hidden=false; $('etLogin').hidden=false; $('lgM').innerHTML=m||''; setTimeout(function(){ $('lgE').focus(); },50); }
 function mostraHub(){
   var nome=US&&US.nome?String(US.nome).split(' ')[0]:'';
   $('ola').textContent=nome?'Olá, '+nome+'! Para onde vamos?':'Para onde vamos agora?';
   $('loja').textContent=US&&US.cliente_nome?US.cliente_nome:''; $('loja').hidden=!(US&&US.cliente_nome);
-  $('etLogin').hidden=true; $('tag').hidden=true; $('bSair').hidden=false; $('etHub').hidden=false;
+  document.body.classList.remove('em-login'); $('etLogin').hidden=true; $('tag').hidden=true; $('bSair').hidden=false; $('etHub').hidden=false;
 }
 function entrar(){
   var e=$('lgE').value.trim(), s=$('lgS').value; if(!e||!s){ $('lgM').textContent='Digite o e-mail e a senha.'; return; }
