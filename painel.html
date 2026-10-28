@@ -806,7 +806,7 @@ a{color:inherit}
       </section>
 
       <section class="page" id="pg-mesas">
-        <div class="pghd"><div><h1>Mesas</h1><div class="sub">mesas do salão e etiquetas NFC · <span id="mz-total">—</span></div></div><button class="btn pri" onclick="mzNova()">+ Nova mesa</button></div>
+        <div class="pghd"><div><h1>Mesas</h1><div class="sub">mesas do salão e etiquetas NFC · <span id="mz-total">—</span></div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sec" onclick="mzQrTodos()">🖨 Imprimir QR de todas</button><button class="btn pri" onclick="mzNova()">+ Nova mesa</button></div></div>
         <div class="card">
           <div class="search" style="margin-bottom:14px;max-width:360px"><span>🔎</span><input id="mz-busca" placeholder="buscar mesa" oninput="mzPintar()"></div>
           <div id="mz-lista"></div>
@@ -7600,7 +7600,7 @@ function mzPintar(){
   MZ.lista.forEach(function(m){ if(q&&String(m.num).toLowerCase().indexOf(q)<0) return; n++;
     h+='<div style="border:1px solid var(--border);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px"><div style="display:flex;align-items:center;gap:10px"><div style="width:46px;height:46px;border-radius:50%;background:'+(m.oc?'#16a34a':'var(--pri,#E07B39)')+';color:#fff;font-weight:800;font-size:17px;display:flex;align-items:center;justify-content:center;flex:none">'+esc(m.num)+'</div><div style="min-width:0"><b>Mesa '+esc(m.num)+'</b><div style="font-size:12px;color:var(--muted)">'+(m.oc?'<span style="color:#16a34a;font-weight:700">Comanda aberta</span>':'Livre')+'</div></div></div>'
      +'<div style="font-size:12px;color:var(--muted)">'+(m.lug?'👥 '+m.lug+(m.lug===1?' lugar':' lugares'):'👥 lugares não informados')+' · '+(m.nfc?'🏷️ NFC gravada em '+new Date(m.nfc).toLocaleDateString('pt-BR'):'sem etiqueta NFC')+'</div>'
-     +'<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn sec sm"'+(m.lug>0?' style="background:#16a34a;border-color:#16a34a;color:#fff"':'')+' onclick="mzEdita(\''+esc(m.num)+'\',\'lug\')">Lugares</button><button class="btn sec sm" onclick="mzEdita(\''+esc(m.num)+'\',\'ed\')">Editar</button><button class="btn sec sm" onclick="mzNfc(\''+esc(m.num)+'\')">Gravar NFC</button><button class="btn sec sm" onclick="mzCopia(\''+esc(m.num)+'\')">Copiar link</button><button class="btn sec sm" style="color:var(--red)" onclick="mzApaga(\''+esc(m.num)+'\')">Apagar</button></div></div>'; });
+     +'<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn sec sm"'+(m.lug>0?' style="background:#16a34a;border-color:#16a34a;color:#fff"':'')+' onclick="mzEdita(\''+esc(m.num)+'\',\'lug\')">Lugares</button><button class="btn sec sm" onclick="mzEdita(\''+esc(m.num)+'\',\'ed\')">Editar</button><button class="btn sec sm" onclick="mzNfc(\''+esc(m.num)+'\')">Gravar NFC</button><button class="btn sec sm" style="background:var(--pri,#E07B39);border-color:var(--pri,#E07B39);color:#fff" onclick="mzQr(\''+esc(m.num)+'\')">QR code</button><button class="btn sec sm" onclick="mzCopia(\''+esc(m.num)+'\')">Copiar link</button><button class="btn sec sm" style="color:var(--red)" onclick="mzApaga(\''+esc(m.num)+'\')">Apagar</button></div></div>'; });
   el('mz-total').textContent=MZ.lista.length+(MZ.lista.length===1?' mesa cadastrada':' mesas cadastradas');
   el('mz-lista').innerHTML=n?'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px">'+h+'</div>':'<div class="empty">'+(MZ.lista.length?'Nenhuma mesa encontrada':'Nenhuma mesa cadastrada ainda. Enquanto não houver mesas cadastradas, o atendimento aceita qualquer número.')+'</div>';
 }
@@ -7618,6 +7618,51 @@ function mzSalvar(){
   salva(de).catch(function(e){ er.textContent=e.message||'Não salvou'; });
 }
 function mzApaga(n){ if(!confirm('Apagar a mesa '+n+'? Comandas já abertas nela não são apagadas.')) return; mzApi('/painel/atend-mesas-apagar',{num:n}).then(function(){ mzCarregar(); }).catch(function(){ aviso('Não apagou'); }); }
+/* ── (093) QR code da mesa: endereço curto livefood.tec.br/<loja>/mesa/<n>; baixa como imagem ou imprime ── */
+function mzSlug(cb){ if(CD.slug) return cb(); fetch(DELTADIS_API+'/painel/cardapio',{headers:cdHdr()}).then(function(r){ return r.json(); }).then(function(x){ if(x&&x.ok){ CD.cli=x.cli||CD.cli; CD.slug=x.slug||CD.slug; } cb(); }).catch(function(){ cb(); }); }
+function mzQrLib(cb){ if(window.QRCode) return cb(); var sc=document.createElement('script'); sc.src='https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'; sc.onload=cb; sc.onerror=function(){ aviso('Não consegui carregar o gerador de QR. Verifique a internet.'); }; document.head.appendChild(sc); }
+function mzEmp(){ return (window.DD_USER&&(DD_USER.empresa||DD_USER.cliente))||''; }
+function mzQrData(u){ var box=document.createElement('div'); box.style.cssText='position:absolute;left:-9999px'; document.body.appendChild(box); new QRCode(box,{text:u,width:480,height:480,correctLevel:QRCode.CorrectLevel.M}); var cv=box.querySelector('canvas'), s=''; try{ s=cv.toDataURL('image/png'); }catch(e){} box.remove(); return s; }
+/* cartão da mesa (nome da loja, QR, "Mesa N" e o endereço) desenhado num canvas, pronto para baixar */
+function mzCartao(n,u,qr,cb){
+  var c=document.createElement('canvas'); c.width=900; c.height=1200; var g=c.getContext('2d'), im=new Image();
+  im.onload=function(){
+    g.fillStyle='#fff'; g.fillRect(0,0,900,1200); g.fillStyle='#FF5A00'; g.fillRect(0,0,900,18);
+    g.textAlign='center'; g.fillStyle='#29231E'; g.font='bold 46px Arial'; g.fillText(mzEmp()||'Cardápio digital',450,110);
+    g.drawImage(im,150,170,600,600);
+    g.font='bold 110px Arial'; g.fillText('Mesa '+n,450,910);
+    g.fillStyle='#6C6055'; g.font='34px Arial'; g.fillText('Aponte a câmera do celular para pedir',450,980);
+    g.fillStyle='#FF5A00'; g.font='bold 32px Arial'; g.fillText(u.replace(/^https?:\/\//,''),450,1060);
+    g.fillStyle='#B5ACA5'; g.font='bold 26px Arial'; g.fillText('livefood',450,1150);
+    cb(c.toDataURL('image/png'));
+  };
+  im.src=qr;
+}
+function mzQr(n){
+  if(!mzCliOk()) return;
+  mzSlug(function(){ mzQrLib(function(){
+    var u=mzLink(n), qr=mzQrData(u);
+    el('sh-import').querySelector('h3').textContent='QR code da mesa '+n;
+    el('cd-imp-corpo').innerHTML='<div style="text-align:center"><img src="'+qr+'" alt="QR code da mesa '+esc(n)+'" style="width:240px;max-width:100%;border:1px solid var(--border);border-radius:14px;padding:10px;background:#fff"><div style="font-size:22px;font-weight:800;margin-top:8px">Mesa '+esc(n)+'</div><div style="font-size:13px;color:var(--muted);margin:4px 0 14px;word-break:break-all">'+esc(u)+'</div>'
+      +'<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn pri" id="mzq-baixar">⬇ Baixar imagem</button><button class="btn sec" id="mzq-imp">🖨 Imprimir</button><button class="btn sec" onclick="mzCopia(\''+esc(n)+'\')">Copiar link</button></div></div>';
+    abrir('sh-import');
+    el('mzq-baixar').onclick=function(){ mzCartao(n,u,qr,function(png){ var a=document.createElement('a'); a.href=png; a.download='qrcode-mesa-'+n+'.png'; document.body.appendChild(a); a.click(); a.remove(); }); };
+    el('mzq-imp').onclick=function(){ mzImprimir([{n:n,u:u,qr:qr}]); };
+  }); });
+}
+function mzImprimir(L,w){
+  var emp=esc(mzEmp()), itens=L.map(function(x){ return '<div class="c"><div class="t">'+emp+'</div><img src="'+x.qr+'"><div class="m">Mesa '+esc(x.n)+'</div><div class="s">Aponte a câmera do celular para pedir</div><div class="u">'+esc(x.u.replace(/^https?:\/\//,''))+'</div></div>'; }).join('');
+  w=w||window.open('','_blank'); if(!w){ aviso('O navegador bloqueou a janela. Permita pop-ups e tente de novo.'); return; }
+  w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>QR codes das mesas</title><style>body{font-family:Arial,sans-serif;margin:16px}.g{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.c{border:2px solid #222;border-radius:14px;padding:14px;text-align:center;page-break-inside:avoid}.c img{width:100%;max-width:200px}.t{font-weight:700;font-size:14px}.m{font-size:30px;font-weight:800;margin:4px 0}.s{font-size:12px;color:#555}.u{font-size:11px;color:#FF5A00;font-weight:700;margin-top:4px;word-break:break-all}@media print{body{margin:0}}</style></head><body><div class="g">'+itens+'</div><script>setTimeout(function(){window.print()},400)<\/script></body></html>');
+  w.document.close();
+}
+function mzQrTodos(){
+  if(!MZ.lista.length){ aviso('Cadastre as mesas primeiro.'); return; }
+  if(!mzCliOk()) return;
+  var w=window.open('','_blank'); if(!w){ aviso('O navegador bloqueou a janela. Permita pop-ups e tente de novo.'); return; }
+  w.document.write('<p style="font-family:Arial;padding:20px">Gerando os QR codes…</p>');
+  mzSlug(function(){ mzQrLib(function(){ w.document.open(); mzImprimir(MZ.lista.map(function(m){ var u=mzLink(m.num); return {n:m.num,u:u,qr:mzQrData(u)}; }),w); }); });
+}
 function mzCopia(n){ if(!mzCliOk()) return; var u=mzLink(n); try{ navigator.clipboard.writeText(u).then(function(){ aviso('Link copiado'); },function(){ window.prompt('Copie o link:',u); }); }catch(e){ window.prompt('Copie o link:',u); } }
 function mzNfc(n){
   if(!mzCliOk()) return;
