@@ -4566,7 +4566,9 @@ setInterval(foodSincronizar,10000); setTimeout(foodSincronizar,5000);
 var FD_FASE={};
 function foodStatusPush(){
   if(!REAL||!DD_TOKEN||document.hidden) return;
-  var itens=[]; PEDIDOS.forEach(function(p){ if(!p.cmid||p.cmid.indexOf('fd')!==0||p.tpe==='Mesa') return; var id=p.cmid.slice(2), f=p.st==='entregue'?'entregue':(p.st==='em rota'?'rota':'preparo'); if(FD_FASE[id]!==f) itens.push({id:id,fase:f}); });
+  /* (088) "em preparo" é marcado pela COZINHA (Iniciar preparo). O painel só avisa quando sai em rota ou é entregue;
+     antes, todo pedido importado ia como "preparo" e pulava a coluna Novos da cozinha. */
+  var itens=[]; PEDIDOS.forEach(function(p){ if(!p.cmid||p.cmid.indexOf('fd')!==0||p.tpe==='Mesa') return; var id=p.cmid.slice(2), f=p.st==='entregue'?'entregue':(p.st==='em rota'?'rota':''); if(f&&FD_FASE[id]!==f) itens.push({id:id,fase:f}); });
   if(!itens.length) return;
   fetch(DELTADIS_API+'/painel/food-status',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+DD_TOKEN},body:JSON.stringify({itens:itens})}).then(function(r){ return r.json(); }).then(function(d){ if(d&&d.ok) itens.forEach(function(x){ FD_FASE[x.id]=x.fase; }); }).catch(function(){});
 }
