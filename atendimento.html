@@ -357,7 +357,7 @@ function linkJoia(j){
   var m=$('iMesa'), cur=m.value.trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
   if(AUTOM&&m.value===AUTOM&&(!j||!abertaJoia(j)||String(abertaJoia(j).mesa).toUpperCase()!==AUTOM)){ m.value=''; AUTOM=''; }
   if(!j) return; var c=abertaJoia(j); if(!c||cur) return;
-  if(COM.modo==='balcao') modo('mesa');
+  if(COM.modo==='balcao') return;   /* escolheu balcão: não puxa a mesa da comanda aberta nem troca a seleção */
   m.value=c.mesa; AUTOM=String(c.mesa).toUpperCase(); $('idErr').textContent='';
 }
 function plab(p){ return p.sub?p.num+'-'+p.sub:String(p.num); }
@@ -385,6 +385,7 @@ function buscaJoia(){
 function liberaBloq(){ COM.liberar=true; $('joiaInfo').innerHTML='<div class="aviso am">Liberado pelo gestor para esta comanda.</div>'; }
 function abreComanda(){
   var mesa=$('iMesa').value.trim().toUpperCase().replace(/[^A-Z0-9]/g,''), joia=$('iJoia').value.replace(/\W/g,''), er=$('idErr'); er.textContent='';
+  COM.modo=$('sgB').classList.contains('on')?'balcao':'mesa';   /* vale o botão que está marcado na tela */
   if(COM.modo!=='balcao'&&!mesa){ er.textContent='⚠️ Você não preencheu o número da mesa.'; try{ $('iMesa').focus(); }catch(e){} return; }
   if(COM.modo!=='balcao'&&mesa&&D.mesas&&D.mesas.length&&D.mesas.indexOf(mesa)<0){ er.textContent='⚠️ A mesa '+mesa+' não está cadastrada. Escolha no mapa de mesas.'; return; }
   if(!mesa&&!joia){ er.textContent='Informe a mesa ou a joia do cliente.'; return; }
@@ -399,8 +400,8 @@ function mostraComanda(){
   $('chipT').innerHTML=t.join(' · '); $('chipS').textContent=COM.nome||'Comanda aberta'; $('chip').classList.remove('hide');
 }
 function trocaComanda(){ if(CART.length&&!confirm('Há itens no pedido que ainda não foram enviados. Trocar de comanda mesmo assim?')) return; zeraComanda(); }
-function zeraComanda(){ _ab=0; AUTOJ=''; AUTOM=''; carregaAbertas(); COM={mesa:'',joia:'',nome:'',modo:COM.modo,dev:0,bloq:false,liberar:false}; CART=[]; $('chip').classList.add('hide'); $('iMesa').value=''; $('iJoia').value=''; $('joiaInfo').innerHTML=''; $('sugs').innerHTML=''; $('idErr').textContent=''; limpaBusca(); ['p-cats','p-prods'].forEach(function(i){ $(i).classList.add('hide'); }); $('p-ident').classList.remove('hide'); cartBar(); window.scrollTo(0,0); foco('#iMesa'); }
-function ativaComanda(c){ COM={mesa:c.mesa||'',joia:c.joia||'',nome:c.nome||'',modo:c.joia&&!c.mesa?'balcao':'mesa',dev:0,bloq:false,liberar:false}; CART=[]; mostraComanda(); $('p-ident').classList.add('hide'); aba('ped'); verCats(); }
+function zeraComanda(){ _ab=0; AUTOJ=''; AUTOM=''; carregaAbertas(); COM={mesa:'',joia:'',nome:'',modo:COM.modo,dev:0,bloq:false,liberar:false}; modo(COM.modo); CART=[]; $('chip').classList.add('hide'); $('iMesa').value=''; $('iJoia').value=''; $('joiaInfo').innerHTML=''; $('sugs').innerHTML=''; $('idErr').textContent=''; limpaBusca(); ['p-cats','p-prods'].forEach(function(i){ $(i).classList.add('hide'); }); $('p-ident').classList.remove('hide'); cartBar(); window.scrollTo(0,0); foco('#iMesa'); }
+function ativaComanda(c){ COM={mesa:c.mesa||'',joia:c.joia||'',nome:c.nome||'',modo:c.joia&&!c.mesa?'balcao':'mesa',dev:0,bloq:false,liberar:false}; modo(COM.modo); CART=[]; mostraComanda(); $('p-ident').classList.add('hide'); aba('ped'); verCats(); }
 /* ── cardápio: categorias em cards ── */
 function fotoProd(p){ return p.foto?API+'/food/foto/'+encodeURIComponent(CLI)+'/'+encodeURIComponent(p.id):''; }
 function grupos(){
