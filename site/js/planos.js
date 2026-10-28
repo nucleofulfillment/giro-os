@@ -300,7 +300,7 @@
   });
   document.addEventListener('click', (e) => { if (e.target.closest('[data-abrir-contato]')) { e.preventDefault(); abrirContato(); } });
   // links para o painel: no domínio oficial ficam relativos; em desenvolvimento apontam para o site publicado
-  document.querySelectorAll('[data-painel]').forEach((a) => { a.href = BASE + 'painel.html'; });
+  document.querySelectorAll('[data-painel]').forEach((a) => { a.href = BASE + 'hub.html'; });
 
   // recarrega quando o visitante volta à aba: preço mudou no admin, o site mostra sem publicar nada
   document.addEventListener('visibilitychange', () => { if (!document.hidden && !DEMO && Date.now() - (carregar.ultima || 0) > 60000) { carregar.ultima = Date.now(); carregar(); } });
