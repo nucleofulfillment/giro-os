@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#FF5A00">
+<title>LiveFood — Hub</title>
+<link rel="icon" type="image/svg+xml" href="site/img/favicon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<!-- HUB: atalhos para todas as telas da LiveFood, com o Live espiando pelas bordas (mesmo jeito do totem em espera) -->
+<style>
+:root{--lf:#FF5A00;--lf2:#FF7A1A;--tx:#1C1C1E;--mu:#5E5E66;--f:'Manrope',-apple-system,system-ui,sans-serif}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;font-family:var(--f);color:#fff;-webkit-font-smoothing:antialiased}
+body{min-height:100vh;background:linear-gradient(150deg,var(--lf) 0%,#FF6A10 55%,#FF8A33 100%);overflow-x:hidden;position:relative}
+body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(rgba(255,255,255,.18) 1px,transparent 1.5px);background-size:22px 22px;-webkit-mask-image:radial-gradient(70% 60% at 50% 30%,#000,transparent);mask-image:radial-gradient(70% 60% at 50% 30%,#000,transparent);pointer-events:none}
+.wrap{position:relative;max-width:1080px;margin:0 auto;padding:clamp(28px,6vw,64px) 20px 48px}
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:clamp(28px,5vw,48px)}
+header img{height:38px;width:auto;display:block}
+.tag{font-size:12.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;background:rgba(0,0,0,.16);padding:7px 14px;border-radius:99px}
+h1{font-size:clamp(32px,5vw,52px);font-weight:800;line-height:1.05;letter-spacing:-.02em;margin:0 0 10px}
+.sub{font-size:clamp(15px,1.6vw,18px);font-weight:600;opacity:.92;margin:0 0 clamp(26px,4vw,40px);max-width:560px}
+.grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:16px}
+.card{position:relative;display:flex;flex-direction:column;gap:10px;min-height:190px;padding:20px;border-radius:22px;background:#fff;color:var(--tx);text-decoration:none;box-shadow:0 18px 40px -22px rgba(80,20,0,.6);transition:transform .25s cubic-bezier(.34,1.56,.64,1),box-shadow .25s;opacity:0;transform:translateY(18px)}
+.pronto .card{opacity:1;transform:none;transition:opacity .5s,transform .6s cubic-bezier(.16,1,.3,1),box-shadow .25s}
+.pronto .card:nth-child(2){transition-delay:.06s}.pronto .card:nth-child(3){transition-delay:.12s}.pronto .card:nth-child(4){transition-delay:.18s}.pronto .card:nth-child(5){transition-delay:.24s}
+.card:hover,.card:focus-visible{transform:translateY(-6px);box-shadow:0 26px 50px -22px rgba(80,20,0,.75);outline:none}
+.card:focus-visible{box-shadow:0 0 0 4px #1C1C1E,0 26px 50px -22px rgba(80,20,0,.75)}
+.ic{width:52px;height:52px;border-radius:16px;background:#1C1C1E;color:#fff;display:flex;align-items:center;justify-content:center;transition:background .2s}
+.ic svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.card:hover .ic{background:var(--lf)}
+.card h2{margin:4px 0 0;font-size:20px;font-weight:800}
+.card p{margin:0;font-size:13.5px;line-height:1.45;color:var(--mu);font-weight:600;flex:1}
+.ir{display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:800;color:var(--lf)}
+.ir i{font-style:normal;transition:transform .25s}
+.card:hover .ir i{transform:translateX(4px)}
+footer{margin-top:40px;font-size:12.5px;font-weight:700;opacity:.75;text-align:center}
+#espiao{position:fixed;left:0;top:0;z-index:30;width:clamp(100px,12vw,140px);transform:translate(-300px,40vh);cursor:pointer}
+#balao{position:fixed;left:0;top:0;z-index:31;max-width:min(280px,80vw);padding:11px 16px;border-radius:18px;background:#fff;color:var(--tx);font-weight:800;font-size:16px;box-shadow:0 16px 40px -12px rgba(0,0,0,.45);pointer-events:none;opacity:0;transform:translate(var(--bx,0),var(--by,0)) scale(.5);transform-origin:var(--bo,50% 100%);transition:opacity .2s,transform .35s cubic-bezier(.34,1.56,.64,1)}
+#balao.on{opacity:1;transform:translate(var(--bx,0),var(--by,0)) scale(1)}
+@media (prefers-reduced-motion:reduce){.card,.pronto .card{transition:none;opacity:1;transform:none}#espiao{display:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><img src="livefood-logo-branca.png" alt="LiveFood"><span class="tag">Hub</span></header>
+  <h1>Para onde vamos agora?</h1>
+  <p class="sub">Escolha a tela da operação. Cada uma abre já com o seu acesso.</p>
+  <nav class="grade" aria-label="Telas da LiveFood">
+    <a class="card" href="painel.html" data-fala="Painel na mão: pedidos, salão e financeiro!"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg></span><h2>Painel</h2><p>Pedidos, mapeamento, cardápio, mesas e financeiro.</p><span class="ir">Abrir <i>→</i></span></a>
+    <a class="card" href="cozinha.html" data-fala="Bora pra cozinha! 🍳"><span class="ic"><svg viewBox="0 0 24 24"><path d="M6 13.9A4 4 0 0 1 7 6a5 5 0 0 1 10 0 4 4 0 0 1 1 7.9V20H6z"/><path d="M6 17h12"/></svg></span><h2>Cozinha</h2><p>Novos, em preparo e prontos, para a cozinha e o bar.</p><span class="ir">Abrir <i>→</i></span></a>
+    <a class="card" href="mesa.html" data-fala="Conferência na Mesa, sem erro!"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 9h18M5 9v11M19 9v11M3 9l2-5h14l2 5"/><path d="M9 14h6"/></svg></span><h2>Mesa</h2><p>Bipagem, fotos dos pedidos e fechamento dos motoristas.</p><span class="ir">Abrir <i>→</i></span></a>
+    <a class="card" href="atendimento.html" data-fala="Garçom com superpoderes 😎"><span class="ic"><svg viewBox="0 0 24 24"><path d="M4 18h16M5 18a7 7 0 0 1 14 0"/><path d="M12 8V6M10 6h4"/></svg></span><h2>Atendimento</h2><p>App do garçom: comandas, pedidos e fechamento de conta.</p><span class="ir">Abrir <i>→</i></span></a>
+    <a class="card" href="app.html" data-fala="Pé na estrada! 🛵"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="6" cy="17" r="3"/><circle cx="18" cy="17" r="3"/><path d="M9 17h6l-3-7H9M15 7h3l2 5"/></svg></span><h2>App do motorista</h2><p>Rotas, entregas e caixa do motoboy no celular.</p><span class="ir">Abrir <i>→</i></span></a>
+  </nav>
+  <footer>LiveFood · tecnologia para restaurantes</footer>
+</div>
+<div id="espiao" aria-hidden="true" title="Oi! Eu sou o Live"></div>
+<div id="balao" role="status" aria-live="polite"></div>
+<script src="site/js/live-mascote.js"></script>
+<script src="site/js/live-app.js"></script>
+<script>
+(function(){
+  'use strict';
+  requestAnimationFrame(function(){ document.body.classList.add('pronto'); });
+  if(!window.LiveMascote || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var esp=document.getElementById('espiao'), bal=document.getElementById('balao'), live=LiveMascote.criar(esp,{sombra:false,rotulo:'Live'});
+  var espera=function(ms){ return new Promise(function(r){ setTimeout(r,ms); }); }, sorteio=function(a,b){ return a+Math.random()*(b-a); };
+  var FRASES=['Psiu! Tô aqui! 👀','Escolhe uma tela aí 😉','Bora trabalhar?','Hoje o salão tá cheio!','Achou que eu não tava vendo? 😄'];
+  var ocupado=false, balT=null;
+  function pos(x,y,g){ esp.style.transform='translate3d('+x+'px,'+y+'px,0) rotate('+g+'deg)'; }
+  function mover(de,para,ms,ease){ var a=esp.animate([{transform:'translate3d('+de[0]+'px,'+de[1]+'px,0) rotate('+de[2]+'deg)'},{transform:'translate3d('+para[0]+'px,'+para[1]+'px,0) rotate('+para[2]+'deg)'}],{duration:ms,easing:ease||'cubic-bezier(.34,1.56,.64,1)',fill:'forwards'}); return a.finished.then(function(){ pos(para[0],para[1],para[2]); a.cancel(); }); }
+  function balao(t,lado,ms){
+    clearTimeout(balT); bal.textContent=t; bal.classList.remove('on');
+    var r=esp.querySelector('.live-corpo').getBoundingClientRect(), bw=bal.offsetWidth, bh=bal.offsetHeight, x, y, o;
+    if(lado==='d'){ x=r.right+8; y=r.top+r.height*.2-bh/2; o='0% 50%'; } else if(lado==='e'){ x=r.left-bw-8; y=r.top+r.height*.2-bh/2; o='100% 50%'; } else { x=r.left+r.width/2-bw/2; y=r.top-bh-6; o='50% 100%'; }
+    x=Math.max(10,Math.min(innerWidth-bw-10,x)); y=Math.max(10,Math.min(innerHeight-bh-10,y));
+    bal.style.setProperty('--bx',x+'px'); bal.style.setProperty('--by',y+'px'); bal.style.setProperty('--bo',o);
+    requestAnimationFrame(function(){ bal.classList.add('on'); }); balT=setTimeout(function(){ bal.classList.remove('on'); },ms||2000);
+  }
+  /* espia pela lateral: entra, pisca, às vezes se esconde e volta, fala e dá a piscadinha */
+  async function lado(l,fr){
+    var w=esp.offsetWidth, y=sorteio(innerHeight*.22,innerHeight*.62), g=-l*22;
+    var fora=[l<0?-w*1.4:innerWidth+w*.4,y,g], dentro=[l<0?-w*.42:innerWidth-w*.58,y,g];
+    live.expressao('curioso'); live.olhar(-l,0); pos.apply(null,fora);
+    await mover(fora,dentro,900); live.piscar(); await espera(700);
+    if(Math.random()<.4){ live.expressao('surpreso'); await mover(dentro,fora,220,'cubic-bezier(.2,.8,.3,1)'); await espera(600); live.expressao('animado'); await mover(fora,dentro,420); }
+    live.expressao('feliz'); live.olhar(-l,.2); balao(fr,l<0?'d':'e',2100); live.falar(fr,40);
+    await espera(2000); await live.gesto('piscadinha'); await mover(dentro,fora,500,'cubic-bezier(.65,0,.35,1)');
+  }
+  /* aparece por baixo e olha para cima */
+  async function baixo(fr){
+    var w=esp.offsetWidth, x=sorteio(innerWidth*.15,innerWidth*.85-w), g=sorteio(-10,10), fora=[x,innerHeight+20,g], dentro=[x,innerHeight-w*.62,g], alto=[x,innerHeight-w*.82,g];
+    live.expressao('curioso'); live.olhar(0,-1); pos.apply(null,fora);
+    await mover(fora,dentro,800); await espera(600); live.olhar(Math.random()<.5?-1:1,-.6); await espera(600);
+    live.expressao('animado'); live.olhar(0,-.6); balao(fr,'c',1900); live.falar(fr,40);
+    await mover(dentro,alto,300); await espera(1700); await mover(alto,fora,450,'cubic-bezier(.65,0,.35,1)');
+  }
+  async function espiar(fr){
+    if(ocupado||document.hidden) return; ocupado=true;
+    try{ if(Math.random()<.3) await baixo(fr); else await lado(Math.random()<.5?-1:1,fr); } finally { ocupado=false; }
+  }
+  esp.addEventListener('click',function(){ balao('Hehe, me achou! 😄','c',1500); live.gesto('comemorar'); });
+  /* passou o mouse num card: na próxima espiada ele comenta aquela tela */
+  var proxima=''; [].forEach.call(document.querySelectorAll('.card'),function(c){ c.addEventListener('pointerenter',function(){ proxima=c.getAttribute('data-fala'); }); });
+  (async function ciclo(){ await espera(1200); while(true){ await espiar(proxima||FRASES[Math.floor(Math.random()*FRASES.length)]); proxima=''; await espera(sorteio(3500,7000)); } })();
+})();
+</script>
+</body>
+</html>
