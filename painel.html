@@ -5887,8 +5887,10 @@ function esconderMpTip(){ el('mp-tip').classList.remove('on'); }
 var MP_MODO='lista', MP_SEL={}, MP_MOT='', MP_GR=null, MP_PK={}, MP_PK_ENQ=true, MP_ARR=false, MP_GEO_BUSY=false, MP_GEO_TENT={};
 var MP_GCORES=['#2563EB','#7C3AED','#DB2777','#0891B2','#92400E','#334155'];
 try{ var _m=localStorage.getItem('giro_mp_modo'); if(_m==='lista'||_m==='mapa') MP_MODO=_m; }catch(e){}
+/* (094) só pedido de ENTREGA vai para o mapa e para o motoboy; retirada (app, totem, balcão) e mesa ficam de fora */
+function pdEhEntrega(p){ var t=String(p.tpe||''), b=String(p.bairro||p.bai||''); if(/retirada|balc[aã]o|mesa|consumo/i.test(t)) return false; if(/^(retirada|mesa\b)/i.test(b)) return false; return true; }
 function mpPool(){
-  var out=[],i,p; for(i=0;i<PEDIDOS.length;i++){ p=PEDIDOS[i]; if(p.tr==='gir' && p.st==='coletado') out.push(p); }
+  var out=[],i,p; for(i=0;i<PEDIDOS.length;i++){ p=PEDIDOS[i]; if(p.tr==='gir' && p.st==='coletado' && pdEhEntrega(p)) out.push(p); }
   out.sort(function(a,b){ return ((b.urg?1:0)-(a.urg?1:0)) || ((pdHoraMs(a)||9e15)-(pdHoraMs(b)||9e15)); });   /* urgentes vão pro topo da fila */
   return out;
 }
@@ -6142,13 +6144,25 @@ function mpEditarEnd(cod){
   var o=document.getElementById('mp-ed'); if(o) o.remove();
   o=document.createElement('div'); o.id='mp-ed'; o.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
   function cp(id,rot,val,ex){ return '<div style="'+(ex||'')+'"><label style="font-size:12px;color:var(--muted);font-weight:600">'+rot+'</label><input class="inp" id="mped-'+id+'" value="'+esc(val||'')+'" style="width:100%;box-sizing:border-box"></div>'; }
-  o.innerHTML='<div style="background:#fff;border-radius:16px;padding:18px;width:100%;max-width:420px;box-shadow:0 12px 40px rgba(0,0,0,.3)"><b style="font-size:16px">Editar endereço · #'+esc(pdNum(p))+' '+esc(p.cliente||'')+'</b><div style="display:grid;grid-template-columns:3fr 1fr;gap:10px;margin-top:12px">'+cp('rua','Rua',p.rua)+cp('num','Número',p.num)+'</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">'+cp('bai','Bairro',p.bai||p.bairro)+cp('cid','Cidade',p.cid)+'</div><div style="display:flex;gap:10px;margin-top:16px"><button class="btn sec" style="flex:1" id="mped-x">Cancelar</button><button class="btn pri" style="flex:1" id="mped-ok">Salvar e localizar</button></div></div>';
+  o.innerHTML='<div style="background:#fff;border-radius:16px;padding:18px;width:100%;max-width:440px;box-shadow:0 12px 40px rgba(0,0,0,.3)"><b style="font-size:16px">Editar endereço · #'+esc(pdNum(p))+' '+esc(p.cliente||'')+'</b><div style="display:grid;grid-template-columns:1fr 1.4fr;gap:10px;margin-top:12px">'+cp('cep','CEP',p.cep)+'<div id="mped-cepmsg" style="align-self:end;font-size:11.5px;color:var(--muted);padding-bottom:10px"></div></div><div style="display:grid;grid-template-columns:3fr 1fr;gap:10px;margin-top:10px">'+cp('rua','Rua',p.rua)+cp('num','Número',p.num)+'</div>'+cp('comp','Complemento (apto, bloco, casa…)',p.comp,'margin-top:10px')+'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">'+cp('bai','Bairro',p.bai||p.bairro)+cp('cid','Cidade',p.cid)+'</div><div style="display:flex;gap:10px;margin-top:16px"><button class="btn sec" style="flex:1" id="mped-x">Cancelar</button><button class="btn pri" style="flex:1" id="mped-ok">Salvar e localizar</button></div></div>';
   document.body.appendChild(o);
   document.getElementById('mped-x').onclick=function(){ o.remove(); };
+  /* CEP: preenche rua, bairro e cidade sozinho (mesmas fontes do cadastro de pontos) */
+  var cepEl=document.getElementById('mped-cep'), cepMsg=document.getElementById('mped-cepmsg'), cepUlt='';
+  cepEl.setAttribute('inputmode','numeric'); cepEl.setAttribute('maxlength','9'); cepEl.placeholder='00000-000';
+  cepEl.oninput=function(){
+    var v=cepEl.value.replace(/\D/g,'').slice(0,8); cepEl.value=v.length>5?v.slice(0,5)+'-'+v.slice(5):v;
+    if(v.length!==8){ cepUlt=''; cepMsg.textContent=''; return; } if(v===cepUlt) return; cepUlt=v; cepMsg.textContent='Buscando CEP…';
+    var ok=false, falhas=0;
+    function fim(x){ if(ok) return; ok=true; var s=function(k,val){ if(val) document.getElementById('mped-'+k).value=val; }; s('rua',x.rua); s('bai',x.bairro); s('cid',x.cidade); cepMsg.textContent='✔ Endereço preenchido. Confira o número.'; document.getElementById('mped-num').focus(); }
+    function falhou(){ falhas++; if(falhas>=2&&!ok) cepMsg.textContent='CEP não encontrado. Preencha à mão.'; }
+    fetch('https://brasilapi.com.br/api/cep/v1/'+v).then(function(r){ if(!r.ok) throw 0; return r.json(); }).then(function(j){ fim({rua:j.street,bairro:j.neighborhood,cidade:j.city}); }).catch(falhou);
+    fetch('https://viacep.com.br/ws/'+v+'/json/').then(function(r){ return r.json(); }).then(function(j){ if(j.erro) throw 0; fim({rua:j.logradouro,bairro:j.bairro,cidade:j.localidade}); }).catch(falhou);
+  };
   document.getElementById('mped-ok').onclick=function(){
     var g=function(k){ return String(document.getElementById('mped-'+k).value||'').trim(); };
     if(!g('rua')||g('cid').length<3){ aviso('Preencha a rua e a cidade'); return; }
-    p.rua=g('rua'); p.num=g('num'); p.bai=g('bai'); p.bairro=g('bai'); p.cid=g('cid');
+    p.rua=g('rua'); p.num=g('num'); p.bai=g('bai'); p.bairro=g('bai'); p.cid=g('cid'); p.cep=g('cep'); p.comp=g('comp');
     p.lat=null; p.lng=null; p.gq=0; p.ga=''; delete MP_GEO_TENT[p.cod];
     try{ localStorage.setItem('giro_cidade',p.cid); }catch(e){}
     salvarLocal(); o.remove(); aviso('Endereço salvo. Localizando…'); mpOperador();
