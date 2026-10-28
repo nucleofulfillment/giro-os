@@ -38,6 +38,58 @@ h1{font-size:clamp(32px,5vw,52px);font-weight:800;line-height:1.05;letter-spacin
 .lg-dica{margin:14px 4px 0;font-size:13px;font-weight:600;opacity:.88}
 .sair{font:inherit;font-size:12.5px;font-weight:800;color:#fff;background:rgba(0,0,0,.16);border:0;padding:7px 14px;border-radius:99px;cursor:pointer}
 .sair:hover{background:rgba(0,0,0,.28)}
+/* login em duas colunas: celular do entregador à esquerda, acesso da loja à direita */
+.lg-grid{display:grid;grid-template-columns:290px minmax(0,420px);gap:clamp(40px,7vw,100px);align-items:center}
+.lg-col{min-width:0}
+@media (min-width:861px){.lg-col{transform:translate(clamp(20px,5vw,80px),-70px)}}
+.fone-wrap{display:flex;flex-direction:column;align-items:center;gap:16px;text-decoration:none;color:#fff}
+.fone{position:relative;width:270px;height:556px;border-radius:46px;background:#141416;padding:11px;box-shadow:0 40px 70px -30px rgba(70,15,0,.85),inset 0 0 0 2px #2C2C30;transform:rotate(-3deg);transition:transform .45s cubic-bezier(.34,1.56,.64,1)}
+.fone-wrap:hover .fone,.fone-wrap:focus-visible .fone{transform:rotate(0) translateY(-8px) scale(1.02)}
+.fone-wrap:focus-visible{outline:none}.fone-wrap:focus-visible .fone{box-shadow:0 0 0 4px #fff,0 40px 70px -30px rgba(70,15,0,.85)}
+.fone::before{content:'';position:absolute;top:19px;left:50%;width:84px;height:24px;margin-left:-42px;border-radius:99px;background:#141416;z-index:6}
+.tela{position:relative;width:100%;height:100%;border-radius:36px;overflow:hidden;background:linear-gradient(#FFE9D8,#FFF6EE 38%);isolation:isolate}
+.chao{position:absolute;left:-60%;width:220%;bottom:0;height:600%;transform:perspective(560px) rotateX(60deg);transform-origin:50% 100%;background-repeat:repeat-y;background-size:100% auto}
+.ceu{position:absolute;inset:0 0 auto;height:44%;background:linear-gradient(#FFE6D2 55%,rgba(255,240,228,0));z-index:1;pointer-events:none}
+.skyline{position:absolute;left:0;right:0;top:33%;height:34px;z-index:1;opacity:.5}
+.st-bar{position:absolute;top:16px;left:26px;right:24px;display:flex;justify-content:space-between;font-size:12px;font-weight:800;color:#1C1C1E;z-index:5}
+.st-bar i{font-style:normal;letter-spacing:1px}
+.app-top{position:absolute;top:50px;left:12px;right:12px;display:flex;align-items:center;justify-content:space-between;background:#fff;border-radius:16px;padding:9px 12px;box-shadow:0 8px 20px -12px rgba(0,0,0,.35);z-index:5}
+.app-top b{font-size:16px;font-weight:800;color:#FF5A00;letter-spacing:-.02em}
+.on-chip{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;color:#15803D;background:#EAF7EE;padding:4px 9px;border-radius:99px}
+.on-chip::before{content:'';width:7px;height:7px;border-radius:50%;background:#16A34A;animation:onp 1.6s ease-in-out infinite}
+@keyframes onp{50%{box-shadow:0 0 0 4px rgba(22,163,74,.25)}}
+.rider{position:absolute;left:50%;bottom:118px;width:160px;margin-left:-80px;height:220px;z-index:3;animation:inclina 4.2s ease-in-out infinite;transform-origin:50% 100%}
+.rider-in{position:absolute;inset:0;animation:trepida .26s ease-in-out infinite alternate}
+.parado .rider-in{animation:none}.parado.rider{animation-play-state:paused}
+@keyframes inclina{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+@keyframes trepida{from{transform:translateY(0)}to{transform:translateY(-2px)}}
+.bau{position:absolute;top:34px;left:50%;width:150px;height:76px;margin-left:-75px;border-radius:12px;background:linear-gradient(#2A2A2E,#141416);box-shadow:inset 0 -6px 0 rgba(0,0,0,.3)}
+.bau::after{content:'';position:absolute;left:0;right:0;top:30px;height:9px;background:#FF5A00}
+.cab{position:absolute;top:0;left:50%;width:120px;margin-left:-60px}
+.cab .lv-antena{display:none}
+.capacete{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.moto{position:absolute;left:50%;top:100px;width:160px;margin-left:-80px;overflow:visible}
+.sombra-moto{position:absolute;left:50%;bottom:4px;width:70px;height:12px;margin-left:-35px;border-radius:50%;background:rgba(0,0,0,.25);filter:blur(3px)}
+.farol{position:absolute;left:50%;top:126px;width:150px;height:110px;margin-left:-75px;background:radial-gradient(ellipse 50% 60% at 50% 30%,rgba(255,244,214,.75),rgba(255,244,214,0));mix-blend-mode:screen;pointer-events:none}
+.vento i{position:absolute;top:60px;width:2px;height:24px;border-radius:2px;background:rgba(255,255,255,.95);opacity:0;animation:vento 1.1s linear infinite}
+.vento i:nth-child(1){left:-8px;animation-delay:0s}.vento i:nth-child(2){left:-22px;top:110px;animation-delay:.35s}
+.vento i:nth-child(3){right:-8px;animation-delay:.55s}.vento i:nth-child(4){right:-22px;top:110px;animation-delay:.85s}
+.vento i:nth-child(odd){--vx:-14px}.vento i:nth-child(even){--vx:-18px}.vento i:nth-child(3),.vento i:nth-child(4){--vx:16px}
+@keyframes vento{0%{opacity:0;transform:translate(0,0)}25%{opacity:.9}100%{opacity:0;transform:translate(var(--vx),70px)}}
+.parado .vento i{animation:none;opacity:0}
+.entrega{position:absolute;left:12px;right:12px;bottom:14px;background:#fff;border-radius:20px;padding:13px 14px 14px;box-shadow:0 14px 28px -14px rgba(0,0,0,.45);z-index:5;color:#1C1C1E}
+.entrega small{display:block;font-size:11px;font-weight:800;color:#8A8A92;text-transform:uppercase;letter-spacing:.06em}
+.entrega strong{display:block;font-size:15px;font-weight:800;margin:3px 0 1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.entrega span{font-size:12px;font-weight:700;color:#5E5E66}
+.barra{height:7px;border-radius:99px;background:#F1F1F3;margin-top:10px;overflow:hidden}
+.barra i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#FF7A1A,#FF5A00)}
+.ok-toast{position:absolute;left:50%;bottom:122px;z-index:6;background:#16A34A;color:#fff;font-size:15px;font-weight:800;padding:9px 16px;border-radius:99px;white-space:nowrap;box-shadow:0 12px 24px -10px rgba(21,128,61,.7);transform:translateX(-50%) scale(.4);opacity:0;transition:transform .35s cubic-bezier(.34,1.56,.64,1),opacity .2s}
+.ok-toast.on{opacity:1;transform:translateX(-50%) scale(1)}
+.fone-cta{display:inline-flex;align-items:center;gap:8px;font-size:15px;font-weight:800;background:rgba(0,0,0,.18);padding:10px 18px;border-radius:99px;transition:background .2s}
+.fone-wrap:hover .fone-cta{background:rgba(0,0,0,.3)}
+.fone-cta i{font-style:normal;transition:transform .25s}.fone-wrap:hover .fone-cta i{transform:translateX(4px)}
+@media (max-width:860px){.lg-grid{grid-template-columns:1fr;justify-items:center;gap:36px}.lg-col{order:-1;width:100%;max-width:440px}.fone{transform:none}}
+@media (max-width:380px){.fone{width:244px;height:504px}}
 .loja{display:inline-block;margin-bottom:12px;font-size:13px;font-weight:800;background:rgba(255,255,255,.2);padding:6px 12px;border-radius:99px}
 .card:hover,.card:focus-visible{transform:translateY(-6px);box-shadow:0 26px 50px -22px rgba(80,20,0,.75);outline:none}
 .card:focus-visible{box-shadow:0 0 0 4px #1C1C1E,0 26px 50px -22px rgba(80,20,0,.75)}
@@ -60,6 +112,40 @@ footer{margin-top:40px;font-size:12.5px;font-weight:700;opacity:.75;text-align:c
 <div class="wrap">
   <header><img src="livefood-logo-branca.png" alt="LiveFood"><span class="tag" id="tag">Hub</span><button class="sair" id="bSair" type="button" hidden onclick="sair()">Sair</button></header>
   <section class="etapa" id="etLogin" hidden>
+   <div class="lg-grid">
+    <!-- celular do entregador: o Live de capacete pilotando no mapa; tocar abre o app (login por telefone e PIN) -->
+    <a class="fone-wrap" href="app.html" aria-label="Sou entregador: abrir o app do entregador">
+      <div class="fone"><div class="tela" aria-hidden="true">
+        <div class="chao" id="chao"></div>
+        <svg class="skyline" viewBox="0 0 248 34" preserveAspectRatio="none"><path d="M0 34V20h14v-8h12v12h10V6h16v28h8V16h12v-6h10v24h12V12h18v22h8V18h14V4h12v30h10V14h16v20h12V22h14v12z" fill="#F2C9A8"/></svg>
+        <div class="ceu"></div>
+        <div class="st-bar"><span>9:41</span><i>●●● ▮</i></div>
+        <div class="app-top"><b>livefood</b><span class="on-chip">Online</span></div>
+        <div class="rider" id="rider"><div class="rider-in">
+          <div class="bau"></div>
+          <div class="cab" id="foneLive"></div>
+          <svg class="moto" viewBox="0 0 160 110">
+            <defs><linearGradient id="mtG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF8A33"/><stop offset="1" stop-color="#E64800"/></linearGradient></defs>
+            <path d="M30 24L19 6M130 24l11-18" stroke="#2B2B2E" stroke-width="3" stroke-linecap="round"/>
+            <ellipse cx="17" cy="5" rx="9" ry="5" fill="#1C1C1E"/><ellipse cx="143" cy="5" rx="9" ry="5" fill="#1C1C1E"/>
+            <path d="M8 28Q80 14 152 28" stroke="#2B2B2E" stroke-width="7" fill="none" stroke-linecap="round"/>
+            <rect x="2" y="23" width="16" height="9" rx="4.5" fill="#111"/><rect x="142" y="23" width="16" height="9" rx="4.5" fill="#111"/>
+            <path d="M50 22h60l-9 56q-21 9-42 0z" fill="url(#mtG)"/>
+            <path d="M56 26h22l-4 46q-8 2-12-1z" fill="#fff" opacity=".18"/>
+            <circle cx="80" cy="42" r="12" fill="#FFF6DA" stroke="#fff" stroke-width="3"/><circle cx="80" cy="42" r="5" fill="#fff"/>
+            <path d="M62 80q18-9 36 0l-3 10q-15-6-30 0z" fill="#C93F00"/>
+            <ellipse cx="80" cy="96" rx="11" ry="14" fill="#1C1C1E"/><rect x="77" y="86" width="6" height="3" rx="1.5" fill="#444"/>
+          </svg>
+          <div class="farol"></div>
+          <div class="vento"><i></i><i></i><i></i><i></i></div>
+          <div class="sombra-moto"></div>
+        </div></div>
+        <div class="ok-toast" id="okToast">✓ Entregue!</div>
+        <div class="entrega"><small id="enLb">A caminho</small><strong id="enEnd">Rua das Flores, 120</strong><span id="enInfo">Ana · 2 itens · 4 min</span><div class="barra"><i id="enBar"></i></div></div>
+      </div></div>
+      <span class="fone-cta">🛵 Sou entregador · abrir o app <i>→</i></span>
+    </a>
+    <div class="lg-col">
     <h1>Que bom te ver!</h1>
     <p class="sub">Entre com o seu acesso para escolher a tela da operação.</p>
     <form id="login" onsubmit="entrar();return false" autocomplete="on">
@@ -69,8 +155,9 @@ footer{margin-top:40px;font-size:12.5px;font-weight:700;opacity:.75;text-align:c
         <button id="lgB" type="submit">Entrar</button>
         <p id="lgM" role="alert"></p>
       </div>
-      <p class="lg-dica">Motoboy? O acesso é pelo <a href="app.html" style="color:#fff;font-weight:800">App do motorista</a>, com telefone e PIN.</p>
     </form>
+    </div>
+   </div>
   </section>
   <section class="etapa" id="etHub" hidden>
   <span class="loja" id="loja" hidden></span>
@@ -118,6 +205,54 @@ function sair(){ if(!confirm('Sair da sua conta?')) return; guarda('',null); mos
 /* já tem acesso guardado: mostra os cards e confere no servidor se ainda vale */
 if(TK){ mostraHub(); fetch(API+'/auth/me',{headers:{'Authorization':'Bearer '+TK}}).then(function(r){ if(r.status===401){ guarda('',null); mostraLogin('Sua sessão acabou. Entre de novo.'); return null; } return r.json(); }).then(function(d){ if(d&&d.ok&&d.usuario){ guarda(TK,d.usuario); mostraHub(); } }).catch(function(){}); }
 else mostraLogin('');
+/* cena do celular: mapa em perspectiva passando, o Live de capacete na moto e o cartão da entrega.
+   Encheu a barra: ele para, comemora "Entregue!" e segue para o próximo endereço. */
+(function(){
+  'use strict';
+  var chao=$('chao'), cab=$('foneLive'), rider=$('rider'); if(!chao||!cab) return;
+  var tile="<svg xmlns='http://www.w3.org/2000/svg' width='600' height='300'><rect width='600' height='300' fill='#EEF0EA'/>"
+    +"<rect x='96' y='12' width='60' height='46' rx='6' fill='#DFE2DC'/><rect x='166' y='12' width='76' height='46' rx='6' fill='#E5E2DA'/><rect x='96' y='68' width='146' height='52' rx='6' fill='#E2E5DF'/>"
+    +"<rect x='358' y='12' width='84' height='108' rx='6' fill='#DFE2DC'/><rect x='452' y='12' width='50' height='50' rx='6' fill='#E5E2DA'/><rect x='452' y='72' width='50' height='48' rx='6' fill='#E2E5DF'/>"
+    +"<rect x='96' y='184' width='146' height='100' rx='12' fill='#CDEBCF'/><circle cx='130' cy='214' r='13' fill='#A9DBAD'/><circle cx='176' cy='246' r='16' fill='#A9DBAD'/><circle cx='214' cy='206' r='11' fill='#A9DBAD'/>"
+    +"<rect x='358' y='184' width='60' height='100' rx='6' fill='#E5E2DA'/><rect x='428' y='184' width='74' height='46' rx='6' fill='#DFE2DC'/><rect x='428' y='240' width='74' height='44' rx='6' fill='#E2E5DF'/>"
+    +"<rect y='138' width='600' height='34' fill='#fff'/><rect x='54' width='26' height='300' fill='#fff'/><rect x='520' width='26' height='300' fill='#fff'/>"
+    +"<rect x='258' width='84' height='300' fill='#FFE1C9'/><rect x='258' y='138' width='84' height='34' fill='#FFD7B8'/>"
+    +"<rect x='290' width='20' height='300' fill='#FF5A00' opacity='.22'/><rect x='295' width='10' height='300' fill='#FF5A00'/>"
+    +"<circle cx='246' cy='40' r='9' fill='#9ED3A3'/><circle cx='246' cy='110' r='9' fill='#9ED3A3'/><circle cx='246' cy='210' r='9' fill='#9ED3A3'/><circle cx='246' cy='270' r='9' fill='#9ED3A3'/>"
+    +"<circle cx='354' cy='40' r='9' fill='#9ED3A3'/><circle cx='354' cy='110' r='9' fill='#9ED3A3'/><circle cx='354' cy='210' r='9' fill='#9ED3A3'/><circle cx='354' cy='270' r='9' fill='#9ED3A3'/></svg>";
+  chao.style.backgroundImage='url("data:image/svg+xml,'+encodeURIComponent(tile)+'")';
+  var live=window.LiveMascote?LiveMascote.criar(cab,{sombra:false,flutuar:false,rotulo:'Live de capacete na moto'}):null;
+  if(live){ cab.querySelector('.live-corpo').insertAdjacentHTML('beforeend','<svg class="capacete" viewBox="-110 -130 220 230" aria-hidden="true"><defs><linearGradient id="cpG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3C3C42"/><stop offset="1" stop-color="#141416"/></linearGradient></defs>'
+    +'<path d="M-100,-46 L-100,26" stroke="#141416" stroke-width="7" stroke-linecap="round"/><path d="M100,-46 L100,26" stroke="#141416" stroke-width="7" stroke-linecap="round"/>'
+    +'<path d="M-106,-52 C-108,-106 -62,-128 0,-128 C62,-128 108,-106 106,-52 Z" fill="url(#cpG)"/>'
+    +'<path d="M-12,-127.6 L12,-127.6 L15,-54 L-15,-54 Z" fill="#FF5A00"/>'
+    +'<path d="M-84,-60 Q0,-86 84,-60 L80,-52 Q0,-76 -80,-52 Z" fill="#FF8A33" opacity=".9"/>'
+    +'<ellipse cx="-52" cy="-102" rx="30" ry="8" fill="#fff" opacity=".22" transform="rotate(-20 -52 -102)"/>'
+    +'<rect x="-110" y="-60" width="220" height="15" rx="7.5" fill="#0E0E10"/><rect x="-104" y="-58" width="208" height="4" rx="2" fill="#fff" opacity=".14"/></svg>'); live.expressao('feliz'); }
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches){ $('enBar').style.width='60%'; return; }
+  var ENDS=[['Rua das Flores, 120','Ana · 2 itens'],['Av. Paulista, 900','Bruno · 1 item'],['Rua Augusta, 45','Carla · 3 itens'],['Praça da Liberdade, 12','Diego · 2 itens']];
+  var DUR=6.5, k=0, prog=0, v=0, alvo=1, pos=0, ant=0, parado=false, prox=2.5;
+  function poe(){ var e=ENDS[k%ENDS.length]; $('enLb').textContent='A caminho'; $('enEnd').textContent=e[0]; $('enInfo').textContent=e[1]+' · '+Math.max(1,Math.ceil((1-prog)*4))+' min'; }
+  function chegou(){
+    parado=true; alvo=0; rider.classList.add('parado'); $('enLb').textContent='Chegou'; $('enInfo').textContent=ENDS[k%ENDS.length][1]+' · agora';
+    if(live){ live.olhar(0,0); live.gesto('boas_vindas'); }
+    setTimeout(function(){ $('okToast').classList.add('on'); },250);
+    setTimeout(function(){ $('okToast').classList.remove('on'); if(live) live.gesto('piscadinha'); },1900);
+    setTimeout(function(){ k++; prog=0; parado=false; alvo=1; rider.classList.remove('parado'); poe(); if(live) live.expressao('feliz'); },2600);
+  }
+  function quadro(t){
+    var dt=ant?Math.min(.05,(t-ant)/1000):0; ant=t;
+    v+=(alvo-v)*Math.min(1,dt*(alvo?2.2:5)); pos+=v*150*dt; chao.style.backgroundPositionY=(-pos)+'px';
+    if(!parado){
+      prog=Math.min(1,prog+dt/DUR); $('enBar').style.width=(prog*100)+'%';
+      if(Math.floor(prog*40)!==Math.floor((prog-dt/DUR)*40)) $('enInfo').textContent=ENDS[k%ENDS.length][1]+' · '+Math.max(1,Math.ceil((1-prog)*4))+' min';
+      if(prog>=1) chegou();
+      prox-=dt; if(prox<=0&&live){ prox=LiveMascote.sorteio(2.2,4); var r=Math.random(); if(r<.4){ live.olhar(LiveMascote.sorteio(-.8,.8),LiveMascote.sorteio(-.2,.3)); setTimeout(function(){ if(!parado) live.olhar(0,0); },900); } else if(r<.7) live.piscar(); else live.expressao(Math.random()<.5?'animado':'feliz'); }
+    }
+    requestAnimationFrame(quadro);
+  }
+  poe(); requestAnimationFrame(quadro);
+})();
 (function(){
   'use strict';
   if(!window.LiveMascote || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
