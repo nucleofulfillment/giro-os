@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LiveFood · Tecnologia para restaurantes: delivery, comanda, app e autoatendimento</title>
+<meta name="description" content="A LiveFood conecta delivery, comanda digital, app do restaurante, autoatendimento e atendimento digital em um ecossistema feito para simplificar a operação do seu restaurante.">
+<meta name="theme-color" content="#0B0908">
+<link rel="canonical" href="https://livefood.tec.br/">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:site_name" content="LiveFood">
+<meta property="og:title" content="LiveFood · Seu restaurante merece uma experiência mais inteligente">
+<meta property="og:description" content="Delivery, comanda digital, app do restaurante, autoatendimento com o Live e atendimento digital em um só ecossistema.">
+<meta property="og:url" content="https://livefood.tec.br/">
+<meta property="og:image" content="https://livefood.tec.br/site/img/burger.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/svg+xml" href="site/img/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="site/img/icone-32.png">
+<link rel="apple-touch-icon" href="site/img/icone-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://giro-os-api.nucleofull.workers.dev" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="preload" as="image" href="site/img/burger.jpg" fetchpriority="high">
+<link rel="stylesheet" href="site/css/site.css">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Organization","name":"LiveFood","url":"https://livefood.tec.br/","logo":"https://livefood.tec.br/site/img/livefood-logo.png"}
+</script>
+</head>
+<body>
+<a class="pular" href="#conteudo">Pular para o conteúdo</a>
+
+<!-- abertura -->
+<div id="abertura" aria-hidden="true">
+  <div class="abertura-palco"><div id="abertura-live"></div></div>
+  <img class="abertura-logo" src="site/img/livefood-logo-branca.png" alt="" width="207" height="72">
+  <div class="abertura-barra"><i></i></div>
+</div>
+
+<div id="progresso" aria-hidden="true"><i></i></div>
+<div id="cursor" aria-hidden="true"><i></i></div>
+<div id="cortina" aria-hidden="true"></div>
+
+<header id="topo">
+  <div class="topo-in">
+    <a class="marca" href="#inicio" aria-label="LiveFood, início">
+      <img src="site/img/livefood-logo-branca.png" alt="LiveFood" width="104" height="36">
+    </a>
+    <nav id="menu" aria-label="Principal">
+      <span class="menu-marcador" aria-hidden="true"></span>
+      <a href="#inicio" data-secao="inicio">Início</a>
+      <div class="submenu">
+        <button type="button" class="submenu-btn" aria-expanded="false" aria-controls="submenu-solucoes" data-secao="solucoes">Soluções <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 4l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+        <div class="submenu-lista" id="submenu-solucoes">
+          <a href="#delivery"><b>01</b> Sistema de Delivery</a>
+          <a href="#comanda"><b>02</b> Comanda Digital</a>
+          <a href="#app"><b>03</b> App do Restaurante</a>
+          <a href="#autoatendimento"><b>04</b> Autoatendimento</a>
+          <a href="#atendimento"><b>05</b> Atendimento Digital</a>
+        </div>
+      </div>
+      <a href="#planos" data-secao="planos">Planos</a>
+      <a href="#sobre" data-secao="sobre">Sobre</a>
+      <a href="#contato" data-secao="contato">Contato</a>
+    </nav>
+    <div class="topo-acoes">
+      <a class="link-entrar" data-painel href="painel.html">Entrar</a>
+      <a class="btn btn-pri btn-p mag" href="#planos">Ver planos</a>
+      <button class="hamburguer" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="menu-movel"><i></i><i></i></button>
+    </div>
+  </div>
+</header>
+
+<div id="menu-movel" hidden>
+  <nav aria-label="Menu do celular">
+    <a href="#inicio">Início</a>
+    <a href="#ecossistema">Soluções</a>
+    <a class="sub" href="#delivery">Sistema de Delivery</a>
+    <a class="sub" href="#comanda">Comanda Digital</a>
+    <a class="sub" href="#app">App do Restaurante</a>
+    <a class="sub" href="#autoatendimento">Autoatendimento</a>
+    <a class="sub" href="#atendimento">Atendimento Digital</a>
+    <a href="#planos">Planos</a>
+    <a href="#sobre">Sobre</a>
+    <a href="#contato">Contato</a>
+    <a data-painel href="painel.html">Entrar no painel</a>
+  </nav>
+</div>
+
+<!-- o Live que espia pelas bordas da tela enquanto o visitante rola a página -->
+<div id="espiao" aria-hidden="true"><div class="espiao-cabeca"></div></div>
+<div id="balao" role="status" aria-live="polite"></div>
+
+<main id="conteudo">
+
+  <!-- 1 · HERO -->
+  <section id="inicio" class="hero" data-secao-nome="inicio">
+    <canvas id="brasas" aria-hidden="true"></canvas>
+    <div class="hero-grade" aria-hidden="true"></div>
+    <div class="hero-in">
+      <div class="hero-texto">
+        <p class="selo" data-entra="1"><span class="pulso"></span> Ecossistema para restaurantes</p>
+        <h1 class="titulo-hero" aria-label="Seu restaurante merece uma experiência mais inteligente.">
+          <span class="linha"><span>Seu restaurante</span></span>
+          <span class="linha"><span>merece uma</span></span>
+          <span class="linha"><span>experiência</span></span>
+          <span class="linha"><span class="destaque">mais inteligente.</span></span>
+        </h1>
+        <p class="hero-sub" data-entra="5">A LiveFood conecta delivery, pedidos, atendimento e gestão em um ecossistema desenvolvido para simplificar a operação do seu restaurante.</p>
+        <div class="hero-botoes" data-entra="6">
+          <a class="btn btn-pri mag" href="#ecossistema" data-live-pisca>Conhecer as soluções <span class="seta">→</span></a>
+          <a class="btn btn-vidro mag" href="#planos" data-live-pisca>Ver planos</a>
+          <button class="btn btn-linha mag" type="button" data-abrir-contato>Falar com um especialista</button>
+        </div>
+      </div>
+      <div class="hero-palco" aria-hidden="true">
+        <div class="halo"></div>
+        <div class="anel anel-1"></div>
+        <div class="anel anel-2"></div>
+        <img class="comida comida-burger" src="site/img/burger.jpg" alt="" width="1800" height="1005" fetchpriority="high" data-prof="18">
+        <img class="comida comida-refri" src="site/img/refri.jpg" alt="" width="886" height="1100" data-prof="-28">
+        <img class="comida comida-batata" src="site/img/batata.jpg" alt="" width="1000" height="1000" data-prof="34">
+        <div class="hero-live" id="hero-live" data-prof="10"></div>
+        <div class="chip chip-1" data-prof="-14"><b>🛵</b> Pedido saiu para entrega</div>
+        <div class="chip chip-2" data-prof="22"><b>✓</b> Mesa 7 · enviado à cozinha</div>
+        <div class="chip chip-3" data-prof="-30"><b>⚡</b> Pix confirmado</div>
+      </div>
+    </div>
+    <a class="rolar" href="#ecossistema" aria-label="Rolar para as soluções"><span class="mouse"><i></i></span><span>role para descobrir</span></a>
+  </section>
+
+  <div class="faixa" aria-hidden="true">
+    <div class="faixa-trilho">
+      <span>Sistema de Delivery</span><i>✦</i><span>Comanda Digital</span><i>✦</i><span>App do Restaurante</span><i>✦</i><span>Autoatendimento</span><i>✦</i><span>Atendimento Digital</span><i>✦</i>
+      <span>Sistema de Delivery</span><i>✦</i><span>Comanda Digital</span><i>✦</i><span>App do Restaurante</span><i>✦</i><span>Autoatendimento</span><i>✦</i><span>Atendimento Digital</span><i>✦</i>
+    </div>
+  </div>
+
+  <!-- 2 · ECOSSISTEMA -->
+  <section id="ecossistema" class="secao eco" data-secao-nome="solucoes">
+    <div class="cab-secao">
+      <p class="sobretitulo" data-revela>O ecossistema LiveFood</p>
+      <h2 data-revela>Cinco soluções. <span class="laranja">Uma operação conectada.</span></h2>
+      <p class="lead" data-revela>A LiveFood não é uma ferramenta isolada: cada solução conversa com as outras e com o mesmo painel, do primeiro clique do cliente até a entrega.</p>
+    </div>
+    <div class="eco-palco" data-revela>
+      <svg class="eco-linhas" viewBox="0 0 600 600" aria-hidden="true"></svg>
+      <div class="eco-centro"><div id="eco-live"></div><span>Painel LiveFood</span></div>
+      <div class="eco-nos" role="tablist" aria-label="Soluções da LiveFood"></div>
+    </div>
+    <div class="eco-detalhe" id="eco-detalhe" role="tabpanel" aria-live="polite"></div>
+  </section>
+
+  <!-- 3 · DELIVERY -->
+  <section id="delivery" class="secao solucao" data-secao-nome="solucoes" data-cor="1">
+    <img class="comida-fundo" src="site/img/pizza.jpg" alt="" loading="lazy" width="886" height="1100" data-paralaxe="-0.18">
+    <div class="solucao-in">
+      <div class="solucao-texto">
+        <p class="numero" data-revela>01</p>
+        <p class="sobretitulo" data-revela>Sistema de Delivery</p>
+        <h2 data-revela>Do pedido à porta do cliente, <span class="laranja">sem perder o fio.</span></h2>
+        <p class="lead" data-revela>Seu cardápio online recebe pedidos de entrega e retirada, o painel organiza a fila e o motoboy acompanha tudo pelo app dele.</p>
+        <ul class="beneficios" data-revela-lista>
+          <li><b>Gestão dos pedidos</b> Todos os pedidos chegam em um painel único, com status do preparo à entrega.</li>
+          <li><b>Compra digital</b> O cliente entra com o WhatsApp, salva endereços e paga por Pix.</li>
+          <li><b>Operação organizada</b> Frete por região e app próprio para o motoboy.</li>
+          <li><b>Mais controle</b> Pix automático e financeiro no mesmo lugar.</li>
+        </ul>
+        <button class="btn btn-pri mag" type="button" data-solucao="delivery" data-revela>Conhecer o Delivery <span class="seta">→</span></button>
+      </div>
+      <div class="solucao-visual" data-revela>
+        <div class="mock-mapa" aria-hidden="true">
+          <svg viewBox="0 0 400 300" class="mapa-svg">
+            <defs><pattern id="ruas" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="1"/></pattern></defs>
+            <rect width="400" height="300" fill="url(#ruas)"/>
+            <path class="rota" d="M40 250 C 90 250, 90 170, 150 170 S 220 90, 260 110 S 330 60, 360 50" fill="none" stroke="#FF5A00" stroke-width="4" stroke-linecap="round"/>
+            <circle cx="40" cy="250" r="9" fill="#FF5A00"/><circle cx="360" cy="50" r="9" fill="#fff"/>
+            <g class="moto"><circle r="15" fill="#FF5A00" opacity=".25"/><text y="6" text-anchor="middle" font-size="18">🛵</text></g>
+          </svg>
+          <div class="mapa-rotulo r1">Restaurante</div><div class="mapa-rotulo r2">Cliente</div>
+        </div>
+        <div class="celular" data-tilt>
+          <div class="celular-tela">
+            <div class="app-topo"><span>Pedido #128</span><small>Entrega</small></div>
+            <ol class="linha-tempo" aria-hidden="true">
+              <li>Pedido recebido</li><li>Em preparo</li><li>Saiu para entrega</li><li>Entregue</li>
+            </ol>
+            <div class="app-card"><span>2× Smash burger</span><span>1× Batata</span><span>1× Refri</span></div>
+            <div class="app-pix">Pago com <b>Pix</b> ✓</div>
+          </div>
+        </div>
+        <div class="notif" aria-hidden="true">🔔 <b>Novo pedido</b> · Entrega · Pix</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 · COMANDA -->
+  <section id="comanda" class="secao solucao invertida" data-secao-nome="solucoes">
+    <img class="comida-fundo" src="site/img/batata.jpg" alt="" loading="lazy" width="1000" height="1000" data-paralaxe="0.15">
+    <div class="solucao-in">
+      <div class="solucao-texto">
+        <p class="numero" data-revela>02</p>
+        <p class="sobretitulo" data-revela>Comanda Digital</p>
+        <h2 data-revela>O salão inteiro <span class="laranja">na palma do garçom.</span></h2>
+        <p class="lead" data-revela>O garçom abre a comanda pelo mapa do salão, lança o pedido e ele aparece na hora na tela da cozinha. Sem papel, sem ida e volta.</p>
+        <ul class="beneficios" data-revela-lista>
+          <li><b>Mapa do salão</b> Mesas desenhadas como no seu salão, com o status de cada uma.</li>
+          <li><b>Direto para a cozinha</b> O pedido sai do celular do garçom e chega na tela da cozinha.</li>
+          <li><b>Comandas e clientes</b> Comandas abertas, cadastro de clientes e observações por item.</li>
+          <li><b>Fechamento simples</b> Fecha a conta e gera a cobrança, inclusive pelo WhatsApp.</li>
+        </ul>
+        <button class="btn btn-pri mag" type="button" data-solucao="comanda" data-revela>Conhecer a Comanda Digital <span class="seta">→</span></button>
+      </div>
+      <div class="solucao-visual" data-revela>
+        <div class="tablet" data-tilt aria-hidden="true">
+          <div class="tablet-tela">
+            <div class="salao">
+              <p class="salao-tit">Mapa do salão</p>
+              <div class="mesas"></div>
+            </div>
+            <div class="comanda-painel">
+              <p class="comanda-tit">Mesa <b>7</b></p>
+              <ul class="comanda-itens"></ul>
+              <button type="button" tabindex="-1" class="comanda-enviar">Enviar para a cozinha</button>
+            </div>
+          </div>
+        </div>
+        <div class="cozinha-card" aria-hidden="true"><p>🍳 Cozinha</p><div class="cozinha-fila"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 · APP -->
+  <section id="app" class="secao solucao" data-secao-nome="solucoes">
+    <img class="comida-fundo" src="site/img/acai.jpg" alt="" loading="lazy" width="1000" height="1000" data-paralaxe="-0.12">
+    <div class="solucao-in">
+      <div class="solucao-texto">
+        <p class="numero" data-revela>03</p>
+        <p class="sobretitulo" data-revela>App do Restaurante</p>
+        <h2 data-revela>Seu restaurante <span class="laranja">no celular do cliente.</span></h2>
+        <p class="lead" data-revela>Um link próprio para o cardápio, que o cliente pode instalar no celular. Ele pede para entrega, retirada ou direto da mesa.</p>
+        <ul class="beneficios" data-revela-lista>
+          <li><b>Cardápio com a sua marca</b> Logo e cor do restaurante, com link exclusivo.</li>
+          <li><b>Pedido na mesa</b> Etiqueta NFC ou QR code em cada mesa leva direto ao cardápio.</li>
+          <li><b>Chamar o garçom e fechar a conta</b> Tudo pelo celular, sem levantar a mão.</li>
+          <li><b>Pagamento por Pix</b> Código Pix gerado na hora, com a conta Asaas do restaurante.</li>
+        </ul>
+        <button class="btn btn-pri mag" type="button" data-solucao="app" data-revela>Conhecer o App do Restaurante <span class="seta">→</span></button>
+      </div>
+      <div class="solucao-visual" data-revela>
+        <div class="celular celular-app" data-tilt>
+          <div class="celular-tela telas" aria-hidden="true">
+            <div class="tela-app ativa">
+              <div class="app-topo"><span>Cardápio</span><small>Mesa 4</small></div>
+              <div class="prod"><img src="site/img/burger.jpg" alt="" loading="lazy"><span>Smash burger<small>Pão brioche, cheddar</small></span></div>
+              <div class="prod"><img src="site/img/pizza.jpg" alt="" loading="lazy"><span>Pizza pepperoni<small>Fatia generosa</small></span></div>
+              <div class="prod"><img src="site/img/shake.jpg" alt="" loading="lazy"><span>Milkshake<small>Chocolate</small></span></div>
+            </div>
+            <div class="tela-app">
+              <div class="app-topo"><span>Sacola</span><small>3 itens</small></div>
+              <div class="sacola-linha"><span>1× Smash burger</span></div>
+              <div class="sacola-linha"><span>1× Pizza pepperoni</span></div>
+              <div class="sacola-linha"><span>1× Milkshake</span></div>
+              <div class="app-botoes"><span>🛵 Entrega</span><span class="on">🏪 Retirada</span></div>
+              <div class="app-cta">Fazer pedido</div>
+            </div>
+            <div class="tela-app">
+              <div class="app-topo"><span>Pagamento</span><small>Pix</small></div>
+              <div class="qr"></div>
+              <div class="app-cta sec">Copiar código Pix</div>
+              <div class="app-ok">Pagamento confirmado ✓</div>
+            </div>
+          </div>
+        </div>
+        <div class="pontos-telas" role="tablist" aria-label="Telas do app">
+          <button type="button" class="on" aria-label="Cardápio"></button><button type="button" aria-label="Sacola"></button><button type="button" aria-label="Pagamento"></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 · AUTOATENDIMENTO -->
+  <section id="autoatendimento" class="secao totem-secao" data-secao-nome="solucoes">
+    <div class="holofote" aria-hidden="true"></div>
+    <div class="solucao-in">
+      <div class="solucao-texto">
+        <p class="numero" data-revela>04</p>
+        <p class="sobretitulo" data-revela>Autoatendimento</p>
+        <h2 data-revela>Conheça o Live. <span class="laranja">Ele atende, sugere e fecha o pedido.</span></h2>
+        <p class="lead" data-revela>No totem, o cliente conversa com o Live por voz. Ele entende o pedido, sugere itens do seu cardápio, monta o pedido na tela e envia para o painel da loja.</p>
+        <ul class="beneficios" data-revela-lista>
+          <li><b>Conversa por voz</b> O cliente fala naturalmente e o Live responde, com legenda na tela.</li>
+          <li><b>Seu cardápio, seus preços</b> Tamanhos, sabores, adicionais e promoções vêm do cadastro da loja.</li>
+          <li><b>Treinado pela sua loja</b> Você escreve as orientações e o Live segue o jeito da casa.</li>
+          <li><b>Direto no painel</b> O pedido entra como retirada no balcão, com número real.</li>
+        </ul>
+        <div class="botoes-linha" data-revela>
+          <button class="btn btn-pri mag" type="button" data-solucao="autoatendimento">Conhecer o Autoatendimento <span class="seta">→</span></button>
+          <button class="btn btn-vidro mag" type="button" id="totem-tocar">▶ Ver o Live atendendo</button>
+        </div>
+      </div>
+      <div class="totem-wrap" data-revela>
+        <div class="totem" id="totem">
+          <div class="totem-tela">
+            <img class="totem-logo" src="site/img/livefood-logo.png" alt="" width="86" height="30">
+            <div class="totem-atrair"><p>Bateu a<br><span>fome?</span></p><small>Toque na tela e fale com o Live</small></div>
+            <div class="totem-live" id="totem-live"></div>
+            <div class="totem-balao"></div>
+            <div class="totem-sugestao"><img src="site/img/burger.jpg" alt=""><span>Smash burger</span></div>
+            <div class="totem-legenda"><p class="fala-live"></p><p class="fala-cliente"></p></div>
+            <div class="totem-resumo"><p>Seu pedido</p><ul></ul></div>
+            <div class="totem-final"><div class="ok">✓</div><p>Pedido <b>#042</b></p><small>Pague no caixa e retire no balcão quando chamarem seu número.</small></div>
+            <div class="totem-mic"><i></i></div>
+          </div>
+          <div class="totem-base"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 · ATENDIMENTO DIGITAL -->
+  <section id="atendimento" class="secao solucao invertida" data-secao-nome="solucoes">
+    <img class="comida-fundo" src="site/img/shake.jpg" alt="" loading="lazy" width="886" height="1100" data-paralaxe="0.16">
+    <div class="solucao-in">
+      <div class="solucao-texto">
+        <p class="numero" data-revela>05</p>
+        <p class="sobretitulo" data-revela>Atendimento Digital</p>
+        <h2 data-revela>Cada chamado <span class="laranja">chega na hora certa.</span></h2>
+        <p class="lead" data-revela>O cliente chama o garçom e pede a conta pelo celular. A equipe recebe na fila de atendimento, e a cobrança pode seguir pelo WhatsApp.</p>
+        <ul class="beneficios" data-revela-lista>
+          <li><b>Chamar o garçom</b> Um toque no app da mesa e o chamado entra na fila da equipe.</li>
+          <li><b>Fila e balcão de saída</b> Pedidos prontos no balcão avisam quem vai levar à mesa.</li>
+          <li><b>Conta pelo celular</b> O cliente vê os itens, fecha a conta e paga com Pix.</li>
+          <li><b>Cobrança no WhatsApp</b> A cobrança da comanda pode ir direto para o celular do cliente.</li>
+        </ul>
+        <button class="btn btn-pri mag" type="button" data-solucao="atendimento" data-revela>Conhecer o Atendimento Digital <span class="seta">→</span></button>
+      </div>
+      <div class="solucao-visual" data-revela>
+        <div class="chat" aria-hidden="true">
+          <div class="chat-topo"><div class="chat-avatar" id="chat-live"></div><div><b>Live</b><small>guia da LiveFood</small></div></div>
+          <div class="chat-corpo"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8 · PLANOS -->
+  <section id="planos" class="secao planos" data-secao-nome="planos">
+    <div class="cab-secao">
+      <p class="sobretitulo" data-revela>Planos e preços</p>
+      <h2 data-revela>Escolha o plano e <span class="laranja">comece hoje.</span></h2>
+      <p class="lead" data-revela>Crie sua conta em minutos e já monte o cardápio, tirando foto dele.</p>
+    </div>
+    <div class="planos-palco">
+      <div class="planos-live" id="planos-live" aria-hidden="true"></div>
+      <div class="planos-grade" id="planos-grade" aria-live="polite" aria-busy="true"></div>
+    </div>
+  </section>
+
+  <!-- SOBRE -->
+  <section id="sobre" class="secao sobre" data-secao-nome="sobre">
+    <div class="sobre-in">
+      <h2 class="sobretitulo" data-revela>Sobre a LiveFood</h2>
+      <p class="manifesto" data-palavras>Tecnologia que trabalha junto com a sua equipe: menos papel, menos espera, menos pedido perdido. Mais tempo para o que importa, que é a comida e quem vem comer.</p>
+      <div class="sobre-cards">
+        <div class="sobre-card" data-revela data-tilt><span>📸</span><b>Cardápio por foto</b><p>Tire foto do cardápio e a LiveFood monta a versão digital para você revisar.</p></div>
+        <div class="sobre-card" data-revela data-tilt><span>🔗</span><b>Tudo conectado</b><p>Delivery, salão, cozinha, app e totem falam com o mesmo painel.</p></div>
+        <div class="sobre-card" data-revela data-tilt><span>🎨</span><b>A cara do seu restaurante</b><p>Logo e cor da sua marca em todas as telas que o cliente vê.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9 · CTA FINAL -->
+  <section id="contato" class="final" data-secao-nome="contato">
+    <img class="final-comida f1" src="site/img/refri.jpg" alt="" loading="lazy" width="886" height="1100">
+    <img class="final-comida f2" src="site/img/pizza.jpg" alt="" loading="lazy" width="886" height="1100">
+    <img class="final-comida f3" src="site/img/batata.jpg" alt="" loading="lazy" width="1000" height="1000">
+    <div class="final-in">
+      <div class="final-live" id="final-live" aria-hidden="true"></div>
+      <h2 data-revela>Seu próximo nível <span>começa com a LiveFood.</span></h2>
+      <p data-revela>Descubra como a tecnologia pode transformar a experiência dos seus clientes e simplificar o dia a dia do seu restaurante.</p>
+      <div class="botoes-linha centro" data-revela>
+        <a class="btn btn-branco mag" href="#planos">Conhecer os planos</a>
+        <button class="btn btn-escuro mag" type="button" data-abrir-contato>Falar com a equipe</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer id="rodape">
+  <div class="rodape-in">
+    <div class="rodape-marca">
+      <img src="site/img/livefood-logo-branca.png" alt="LiveFood" width="115" height="40" loading="lazy">
+      <p>Tecnologia para restaurantes, delivery e atendimento digital.</p>
+    </div>
+    <nav aria-label="Soluções">
+      <p>Soluções</p>
+      <a href="#delivery">Sistema de Delivery</a>
+      <a href="#comanda">Comanda Digital</a>
+      <a href="#app">App do Restaurante</a>
+      <a href="#autoatendimento">Autoatendimento</a>
+      <a href="#atendimento">Atendimento Digital</a>
+    </nav>
+    <nav aria-label="LiveFood">
+      <p>LiveFood</p>
+      <a href="#planos">Planos</a>
+      <a href="#sobre">Sobre</a>
+      <button type="button" data-abrir-contato>Fale com a gente</button>
+      <a data-painel href="painel.html">Entrar no painel</a>
+    </nav>
+  </div>
+  <div class="rodape-base"><span>© <span id="ano"></span> LiveFood. Todos os direitos reservados.</span></div>
+</footer>
+
+<!-- detalhes de cada solução (abre por cima, com transição) -->
+<div class="gaveta" id="gaveta" role="dialog" aria-modal="true" aria-labelledby="gaveta-titulo" hidden>
+  <div class="gaveta-fundo" data-fechar></div>
+  <div class="gaveta-painel">
+    <button class="fechar" type="button" data-fechar aria-label="Fechar">×</button>
+    <div class="gaveta-conteudo"></div>
+  </div>
+</div>
+
+<!-- assinar / contato -->
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-titulo" hidden>
+  <div class="modal-fundo" data-fechar></div>
+  <div class="modal-caixa">
+    <button class="fechar" type="button" data-fechar aria-label="Fechar">×</button>
+    <div class="modal-live" id="modal-live" aria-hidden="true"></div>
+    <div class="modal-conteudo"></div>
+  </div>
+</div>
+
+<noscript><style>[data-revela],[data-entra],.titulo-hero .linha>span{opacity:1!important;transform:none!important}#abertura{display:none}</style></noscript>
+<script src="site/js/live-mascote.js"></script>
+<script src="site/js/planos.js"></script>
+<script src="site/js/site.js"></script>
+</body>
+</html>
