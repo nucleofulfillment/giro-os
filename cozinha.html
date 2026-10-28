@@ -154,7 +154,7 @@ body.lgon #top,body.lgon #cols{display:none}
 .card.prio{border-color:#FF5A00;box-shadow:0 0 0 1px #FF5A00}
 .hd{flex-wrap:nowrap;margin-bottom:4px;min-height:44px}
 .tag{font-size:11.5px;padding:3px 10px;border-radius:99px;flex:none}
-.tag.mesa{background:#1C1C1E;color:#fff}.tag.ret{background:#E6F4F1;color:#0F766E}.tag.ent{background:#EAF1FE;color:#1D4ED8}.tag.ag{background:#FFF4E5;color:#9A5B00}
+.tag.mesa{background:#1C1C1E;color:#fff}.tag.ret{background:#E6F4F1;color:#0F766E}.tag.ent{background:#EAF1FE;color:#1D4ED8}.tag.ag{background:#FFF4E5;color:#9A5B00}.tag.wa{background:#E7F8EE;color:#15803D}
 .num{font-size:19px;white-space:nowrap}
 .pri{color:#FF5A00;font-weight:800;font-size:15px}
 .tm{font-size:13px;color:var(--muted);white-space:nowrap}
@@ -297,7 +297,7 @@ function itemHtml(l){
 var ACAO={n:{e:'preparo',ic:'▶',t:'Iniciar preparo'},p:{e:'pronto',ic:'✔',t:'Pronto'},r:{e:'ok',ic:'✕',t:'Retirar da tela'}};
 var VOLTA={p:{e:'',t:'Voltar para Novos'},r:{e:'preparo',t:'Voltar para Em preparo'}};
 function colDe(p){ return p.estado==='preparo'?'p':(p.estado==='pronto'?'r':'n'); }
-function tagHtml(p){ var t=p.modo==='mesa'?'<span class="tag mesa">Mesa '+esc(p.mesa)+'</span>':(p.modo==='retirada'?'<span class="tag ret">Retirada</span>':'<span class="tag ent">Entrega</span>'); if(p.prog_dia) t+='<span class="tag ag">Agendado '+esc(p.prog_hora||'')+'</span>'; return t; }
+function tagHtml(p){ var t=p.modo==='mesa'?'<span class="tag mesa">Mesa '+esc(p.mesa)+'</span>':(p.modo==='retirada'?'<span class="tag ret">Retirada</span>':'<span class="tag ent">Entrega</span>'); if(p.prog_dia) t+='<span class="tag ag">Agendado '+esc(p.prog_hora||'')+'</span>'; if(p.origem==='whats') t+='<span class="tag wa">WhatsApp</span>'; return t; }
 function cardHtml(p,col){
   var m=minutos(p), cl=(col==='r')?'':(m>=25?'d':(m>=15?'w':'')), a=ACAO[col], id=esc(p.id);
   return '<div class="card'+(col==='n'?' novo':'')+(cl==='d'?' atr':'')+(PRIO[p.id]?' prio':'')+'" onclick="abreDet(\''+id+'\')">'

@@ -155,6 +155,14 @@ a{color:inherit}
 .msg-wrap{display:flex;height:calc(100vh - var(--navh) - var(--indbarh) - 150px);min-height:480px;background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:var(--sh2)}
 .msg-lista{width:340px;flex:none;border-right:1px solid #E9EDEF;display:flex;flex-direction:column;background:#fff}
 .msg-busca{padding:10px 12px;background:#F0F2F5}
+/* (094) abas Clientes (pedidos com o Live) e Motoristas */
+.msg-abas{display:none;gap:6px;padding:10px 12px 0;background:#F0F2F5}
+.msg-abas.on{display:flex}
+.msg-abas button{flex:1;border:0;border-radius:10px;padding:8px 10px;font:inherit;font-size:13px;font-weight:800;background:#fff;color:#54656F;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+.msg-abas button.on{background:#1C1C1E;color:#fff}
+.msg-abas button i{font-style:normal;min-width:18px;padding:0 5px;border-radius:99px;background:#FF5A00;color:#fff;font-size:11px;line-height:18px}
+.msg-live{margin-left:auto;border:1px solid #E2E2E6;background:#fff;border-radius:10px;padding:7px 12px;font:inherit;font-size:12.5px;font-weight:800;color:#1C1C1E;cursor:pointer;white-space:nowrap}
+.msg-live.live{background:#FFF1E8;border-color:#FFD2B5;color:#C2410C}
 .msg-busca input{width:100%;border:0;border-radius:10px;background:#fff;padding:9px 12px;font-size:13.5px;outline:none}
 .msg-itens{flex:1;overflow-y:auto}
 .msg-it{display:flex;gap:12px;align-items:center;padding:11px 14px;cursor:pointer;border-bottom:1px solid #F0F2F5}
@@ -925,15 +933,16 @@ a{color:inherit}
 
       <!-- MENSAGENS (WhatsApp com os motoristas) -->
       <section class="page" id="pg-mensagens">
-        <div class="pghd"><div><h1>Mensagens</h1><div class="sub">conversas com os motoristas pelo WhatsApp da DELTADIS · <span style="opacity:.6">DELTADIS-PAINEL-MSG-85-1010</span></div></div></div>
+        <div class="pghd"><div><h1>Mensagens</h1><div class="sub">conversas pelo WhatsApp · clientes (pedidos com o Live) e motoristas</div></div></div>
         <div class="msg-wrap" id="msg-wrap">
           <div class="msg-lista">
+            <div class="msg-abas" id="msg-abas"><button id="msg-aba-cli" onclick="msgAba('cli')">Clientes</button><button id="msg-aba-mot" onclick="msgAba('mot')">Motoristas</button></div>
             <div class="msg-busca"><input id="msg-q" placeholder="Buscar motorista" oninput="msgPintarLista()"></div>
             <div class="msg-itens" id="msg-itens"><div class="msg-vazio">Carregando…</div></div>
           </div>
           <div class="msg-chat" id="msg-chat">
             <div class="msg-vazio" id="msg-vazio"><b>Mensagens da DELTADIS</b>Escolha um motorista ao lado para ver a conversa.<br>Tudo fica guardado aqui no histórico.</div>
-            <div class="msg-hd" id="msg-hd"><button class="voltar" onclick="msgVoltar()">←</button><div class="msg-av" id="msg-hd-av"></div><div><b id="msg-hd-nm"></b><small id="msg-hd-sub"></small></div></div>
+            <div class="msg-hd" id="msg-hd"><button class="voltar" onclick="msgVoltar()">←</button><div class="msg-av" id="msg-hd-av"></div><div><b id="msg-hd-nm"></b><small id="msg-hd-sub"></small></div><button class="msg-live" id="msg-hd-live" style="display:none" onclick="msgLiveAlterna()"></button></div>
             <div class="msg-corpo" id="msg-corpo"></div>
             <div class="msg-aviso" id="msg-aviso"></div>
             <div class="msg-anexo" id="msg-anexo"></div>
@@ -3233,15 +3242,45 @@ function msgIniciarBadge(){
   msgBuscarConv();
   MSG.badge=setInterval(msgBuscarConv,30000);
 }
+/* (094) a aba Clientes mostra as conversas dos pedidos pelo WhatsApp (o Live atende; a equipe pode assumir) */
+MSG.aba='mot'; MSG.cli=[]; MSG.cliOn=false;
+function msgLista(){ return MSG.aba==='cli'?MSG.cli:MSG.conv; }
+function msgConvDe(mt){ var l=MSG.cli.concat(MSG.conv),i; for(i=0;i<l.length;i++) if(l[i].mt===mt) return l[i]; return null; }
 function msgBuscarConv(){
-  return fetch(DELTADIS_API+'/mesa/whats-conversas',{cache:'no-store'}).then(msgLerJson).then(function(d){
+  var p1=fetch(DELTADIS_API+'/mesa/whats-conversas',{cache:'no-store'}).then(msgLerJson).then(function(d){ if(d&&d.ok) MSG.conv=d.conversas||[]; }).catch(function(){});
+  var p2=fetch(DELTADIS_API+'/mesa/whats-clientes',{cache:'no-store'}).then(msgLerJson).then(function(d){
     if(!d||!d.ok) return;
-    MSG.conv=d.conversas||[]; msgPintarBadge();
-    if(PAG==='mensagens') msgPintarLista();
+    var antes=MSG.cliOn; MSG.cli=(d.conversas||[]).map(function(c){ c.tem_fone=1; c.cliente=1; return c; }); MSG.cliOn=!!(d.ativo||MSG.cli.length);
+    if(MSG.cliOn&&!antes&&!MSG.mt) MSG.aba='cli';
   }).catch(function(){});
+  return Promise.all([p1,p2]).then(function(){ msgPintarBadge(); msgPintarAbas(); if(PAG==='mensagens'){ msgPintarLista(); if(MSG.mt) msgPintarLive(); } });
+}
+function msgPintarAbas(){
+  var ab=el('msg-abas'); if(!ab) return; ab.classList.toggle('on',MSG.cliOn);
+  function nl(l){ var t=0; l.forEach(function(c){ t+=Number(c.nao_lidas)||0; }); return t; }
+  var a=nl(MSG.cli), b=nl(MSG.conv);
+  el('msg-aba-cli').className=MSG.aba==='cli'?'on':''; el('msg-aba-cli').innerHTML='Clientes'+(a?' <i>'+a+'</i>':'');
+  el('msg-aba-mot').className=MSG.aba==='mot'?'on':''; el('msg-aba-mot').innerHTML='Motoristas'+(b?' <i>'+b+'</i>':'');
+  el('msg-q').placeholder=MSG.aba==='cli'?'Buscar cliente':'Buscar motorista';
+}
+function msgAba(a){ MSG.aba=a; msgPintarAbas(); msgPintarLista(); }
+function msgPintarLive(){
+  var b=el('msg-hd-live'), c=msgConvDe(MSG.mt); if(!b) return;
+  if(!c||!c.cliente){ b.style.display='none'; return; }
+  b.style.display=''; b.className='msg-live'+(c.humano?'':' live');
+  b.textContent=c.humano?'🤖 Devolver ao Live':'🙋 Assumir conversa';
+  el('msg-hd-sub').textContent=c.humano?'Equipe atendendo · o Live está pausado':'O Live está atendendo';
+}
+function msgLiveAlterna(){
+  var c=msgConvDe(MSG.mt); if(!c||!c.cliente) return;
+  var nv=c.humano?0:1;
+  fetch(DELTADIS_API+'/mesa/whats-cliente-modo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mt:MSG.mt,humano:nv})}).then(msgLerJson).then(function(d){
+    if(!d||!d.ok){ aviso(esc((d&&d.mensagem)||'Não foi possível.')); return; }
+    c.humano=nv; msgPintarLive(); aviso(nv?'Você assumiu a conversa. O Live ficou pausado.':'Conversa devolvida ao Live.');
+  }).catch(function(){ aviso('Sem conexão com o servidor.'); });
 }
 function msgPintarBadge(){
-  var tot=0,i; for(i=0;i<MSG.conv.length;i++) tot+=Number(MSG.conv[i].nao_lidas)||0;
+  var tot=0,i; for(i=0;i<MSG.conv.length;i++) tot+=Number(MSG.conv[i].nao_lidas)||0; for(i=0;i<MSG.cli.length;i++) tot+=Number(MSG.cli[i].nao_lidas)||0;
   var bs=document.querySelectorAll('[data-p="mensagens"]');
   for(i=0;i<bs.length;i++){
     var o=bs[i].querySelector('.nbadge'); if(o) o.parentNode.removeChild(o);
@@ -3260,26 +3299,27 @@ function msgPreview(c){
   return (u.dir==='out'?'Você: ':'')+t;
 }
 function msgPintarLista(){
-  var q=(el('msg-q').value||'').trim().toLowerCase(), h='',i, n=0;
-  for(i=0;i<MSG.conv.length;i++){
-    var c=MSG.conv[i]; if(q && String(c.n||'').toLowerCase().indexOf(q)<0) continue; n++;
+  var q=(el('msg-q').value||'').trim().toLowerCase(), h='',i, n=0, LS=msgLista();
+  for(i=0;i<LS.length;i++){
+    var c=LS[i]; if(q && String(c.n||'').toLowerCase().indexOf(q)<0 && String(c.fone||'').indexOf(q)<0) continue; n++;
     var u=c.ultima, nl=Number(c.nao_lidas)||0;
     h+='<div class="msg-it'+(c.mt===MSG.mt?' on':'')+(c.tem_fone?'':' semfone')+'" onclick="msgAbrir(\''+esc(c.mt)+'\')">'+
       '<div class="msg-av" style="background:'+msgCor(c.n)+'">'+esc(msgIni(c.n))+'</div>'+
       '<div class="mi"><div class="l1"><span class="nm">'+esc(c.n)+'</span><span class="hr'+(nl?' nv':'')+'">'+(u?esc(msgDiaRot(u.t)==='Hoje'?msgHora(u.t):msgDiaRot(u.t)):'')+'</span></div>'+
-      '<div class="l2"><span class="pv">'+esc(msgPreview(c))+'</span>'+(nl?'<span class="nl">'+nl+'</span>':'')+'</div></div></div>';
+      '<div class="l2"><span class="pv">'+(c.cliente?(c.humano?'🙋 ':'🤖 '):'')+esc(msgPreview(c))+'</span>'+(nl?'<span class="nl">'+nl+'</span>':'')+'</div></div></div>';
   }
-  el('msg-itens').innerHTML=h||'<div class="msg-vazio">'+(MSG.conv.length?'Nenhum motorista encontrado.':'Nenhum motorista cadastrado ainda.')+'</div>';
+  el('msg-itens').innerHTML=h||'<div class="msg-vazio">'+(MSG.aba==='cli'?(LS.length?'Nenhum cliente encontrado.':'Nenhum cliente chamou no WhatsApp ainda.'):(LS.length?'Nenhum motorista encontrado.':'Nenhum motorista cadastrado ainda.'))+'</div>';
 }
 function msgAbrir(mt){
   MSG.mt=mt; MSG.primeira=true; MSG.msgs=[]; msgLimparAnexo();
-  var c=null,i; for(i=0;i<MSG.conv.length;i++) if(MSG.conv[i].mt===mt) c=MSG.conv[i];
+  var c=msgConvDe(mt);
   MSG.fone=!!(c&&c.tem_fone);
   el('msg-wrap').classList.add('chat-aberto');
   el('msg-vazio').style.display='none';
   el('msg-hd').style.display='flex'; el('msg-corpo').style.display='block'; el('msg-comp').style.display='flex';
   var av=el('msg-hd-av'); av.style.background=msgCor(c&&c.n); av.textContent=msgIni(c&&c.n);
   el('msg-hd-nm').textContent=(c&&c.n)||''; el('msg-hd-sub').textContent=MSG.fone?'WhatsApp':'sem telefone cadastrado';
+  msgPintarLive();
   var q=el('msg-quem'); q.style.display='block'; q.textContent='Você está respondendo como '+((DD_USER&&DD_USER.nome)||'operador');
   el('msg-corpo').innerHTML='<div class="msg-vazio">Carregando…</div>';
   msgPintarLista(); msgCarregar(false);
@@ -3349,6 +3389,13 @@ function msgPintarRodape(){
   var av=el('msg-aviso'), tx=el('msg-tx'), arq=el('msg-bt-arq'), env=el('msg-bt-env');
   if(!MSG.fone){ av.style.display='block'; av.textContent='Este motorista não tem telefone cadastrado. Cadastre em Motoristas para conversar.'; tx.disabled=true; arq.disabled=true; env.disabled=true; return; }
   tx.disabled=false; env.disabled=false;
+  var cc=msgConvDe(MSG.mt);
+  if(cc&&cc.cliente){   /* (094) cliente: sem anexo por enquanto; fora das 24h só reabre quando ele escrever */
+    arq.disabled=true;
+    if(MSG.janela){ av.style.display=cc.humano?'none':'block'; av.textContent='O Live está atendendo. Se você responder, assume a conversa e o Live pausa.'; tx.placeholder='Digite uma mensagem'; }
+    else{ av.style.display='block'; av.textContent='Passaram 24h da última mensagem do cliente: a conversa reabre quando ele escrever de novo.'; tx.disabled=true; env.disabled=true; tx.placeholder='Conversa fechada'; }
+    return;
+  }
   if(MSG.janela){ av.style.display='none'; arq.disabled=false; tx.placeholder='Digite uma mensagem'; }
   else{ av.style.display='block'; av.innerHTML='<button class="btn pri" style="padding:8px 16px;font-size:13px" onclick="msgChamar()">👋 Chamar motorista</button><span style="margin-left:10px">para liberar a conversa</span>'; arq.disabled=true; tx.disabled=true; env.disabled=true; tx.placeholder='Conversa fechada'; }
 }
@@ -3414,6 +3461,7 @@ function msgEnviar(){
     if(!d||!d.ok) falha=(d&&d.mensagem)||'Não foi possível enviar.';
     else if(d.itens && d.itens[0] && !d.itens[0].ok) falha=d.itens[0].erro==='sem_telefone'?'Motorista sem telefone.':('Não foi possível enviar: '+(d.itens[0].erro||'erro'));
     if(falha){ aviso(esc(falha)); return; }
+    var cc=msgConvDe(MSG.mt); if(cc&&cc.cliente&&d.humano){ cc.humano=1; msgPintarLive(); }   /* (094) respondeu o cliente: a conversa passa para a equipe */
     tx.value=''; msgAuto(tx); msgLimparAnexo(); msgCarregar(false); msgBuscarConv();
   }).catch(function(){ MSG.enviando=false; bt.disabled=false; aviso('Sem conexão com o servidor.'); });
 }
@@ -4556,9 +4604,9 @@ function foodImportar(o,fim){
   var feito=false;
   function criar(n){
     var cod=pref+('000'+n).slice(-4), ms=Date.now(), dh=new Date(ms), hora=('0'+dh.getHours()).slice(-2)+':'+('0'+dh.getMinutes()).slice(-2), e=o.end||{}, ret=(o.modo==='retirada'), ag=!!o.prog_dia, pa=ag?o.prog_dia.split('-'):null;
-    var ped={cod:cod, tr:'gir', mt:null, cliente:o.nome||'', bairro:ret?'Retirada':(e.bairro||''), rua:ret?'':(e.rua||''), num:ret?'':(e.numero||''), comp:ret?'':(e.compl||''), bai:ret?'Retirada':(e.bairro||''), cid:ret?'':(e.cidade||''), endOrig:'', vl:(o.total==null?0:o.total), cep:ret?'':(e.cep||''), area:'', st:'coletado', t1:'', t2:'', tel:o.fone||'', canal:'Cardápio', vend:'', scan:cod, dia:hoje, hora:hora, obs:'em aberto', ent:'', fechId:null,
-      tam:'', hp:ms, pg:(o.pagto==='dinheiro'?'dinheiro':'online'), pgp:(o.pagto==='dinheiro'?0:1), pgr:'', tx:(o.frete==null?null:o.frete), itens:(o.itens||'')+(o.desconto>0?' | Desconto do pedido programado: -R$ '+Number(o.desconto).toFixed(2).replace('.',','):''), atend:'',
-      com:'', atn:'', tpe:ag?'Agendado':(ret?'Retirada':'Entrega'), prz:ag?(o.prog_hora||''):'', prt:ag?('agendado para '+pa[2]+'/'+pa[1]+' às '+o.prog_hora):'', ref:ret?'':(e.ref||''), tpg:null, apg:(o.pagto==='dinheiro'?(o.total||0):0), op:[(o.obs||''),(o.pagto==='dinheiro'?('Cobrar R$ '+Number(o.total||0).toFixed(2).replace('.',',')+' em dinheiro'+(o.troco>0?' · troco para R$ '+Number(o.troco).toFixed(2).replace('.',','):' · sem troco')):'')].filter(Boolean).join(' | '), cmid:'fd'+o.id, urg:ag?1:0};
+    var ped={cod:cod, tr:'gir', mt:null, cliente:o.nome||'', bairro:ret?'Retirada':(e.bairro||''), rua:ret?'':(e.rua||''), num:ret?'':(e.numero||''), comp:ret?'':(e.compl||''), bai:ret?'Retirada':(e.bairro||''), cid:ret?'':(e.cidade||''), endOrig:'', vl:(o.total==null?0:o.total), cep:ret?'':(e.cep||''), area:'', st:'coletado', t1:'', t2:'', tel:o.fone||'', canal:(o.origem==='whats'?'WhatsApp':'Cardápio'), vend:'', scan:cod, dia:hoje, hora:hora, obs:'em aberto', ent:'', fechId:null,
+      tam:'', hp:ms, pg:(o.pagto==='dinheiro'?'dinheiro':o.pagto==='maquina'?'cartao':'online'), pgp:(o.pagto==='dinheiro'||o.pagto==='maquina'?0:1), pgr:'', tx:(o.frete==null?null:o.frete), itens:(o.itens||'')+(o.desconto>0?' | Desconto do pedido programado: -R$ '+Number(o.desconto).toFixed(2).replace('.',','):''), atend:'',
+      com:'', atn:'', tpe:ag?'Agendado':(ret?'Retirada':'Entrega'), prz:ag?(o.prog_hora||''):'', prt:ag?('agendado para '+pa[2]+'/'+pa[1]+' às '+o.prog_hora):'', ref:ret?'':(e.ref||''), tpg:null, apg:(o.pagto==='dinheiro'||o.pagto==='maquina'?(o.total||0):0), op:[(o.obs||''),(o.pagto==='dinheiro'?('Cobrar R$ '+Number(o.total||0).toFixed(2).replace('.',',')+' em dinheiro'+(o.troco>0?' · troco para R$ '+Number(o.troco).toFixed(2).replace('.',','):' · sem troco')):''),(o.pagto==='maquina'?('Cobrar R$ '+Number(o.total||0).toFixed(2).replace('.',',')+' no cartão'+(o.modo==='retirada'?'':' (levar maquininha)')):'')].filter(Boolean).join(' | '), cmid:'fd'+o.id, urg:ag?1:0};
     if(o.modo==='mesa'){   /* (079) pedido de mesa pago: entra em Pedidos/Dashboard como ENTREGUE (não vai pra fila do motoboy) e lança a entrada no Fluxo de Caixa */
       var mz=String((e&&e.mesa)||''), dz=new Date(), entz=ymdLocal(dz)+' '+hora;
       ped.st='entregue'; ped.ent=entz; ped.cliente='Mesa '+mz; ped.bairro='Mesa '+mz; ped.bai=ped.bairro; ped.rua=''; ped.num=''; ped.comp=''; ped.cid=''; ped.cep=''; ped.ref='';
