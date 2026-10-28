@@ -6316,21 +6316,27 @@ var SD_LEU=false;
 function saidasSincronizar(){
   if(!REAL||!DD_TOKEN||document.hidden||SD_LEU) return;
   saidasEnviar();
-  if(!PEDIDOS.some(function(p){ return p.tr==='gir' && p.st==='em rota'; })) return;
+  if(!PEDIDOS.some(function(p){ return p.tr==='gir' && (p.st==='em rota'||((p.st==='entregue'||p.st==='devolvido') && p.mt!=null)); })) return;   /* (097) também confere quando o painel deu baixa num pedido que estava com motoboy */
   SD_LEU=true;
   fetch(DELTADIS_API+'/painel/saidas').then(function(r){ return r.json(); }).then(function(d){
     SD_LEU=false; if(!d||!d.ok||!d.saidas) return;
-    var mud=0, agora=new Date(), forma={dinheiro:'dinheiro',pix:'pix',cartao:'cartao',pago:'online'}, feito={}, ap=saidasAplic(), apNovo={};
+    var mud=0, agora=new Date(), forma={dinheiro:'dinheiro',pix:'pix',cartao:'cartao',pago:'online'}, feito={}, ap=saidasAplic(), apNovo={}, baixa=[];
     /* (v97) o mesmo pedido pode estar em 2 saídas (saiu, voltou e saiu de novo): vale só a mais nova (a lista vem da mais nova pra mais velha).
        E cada situação que o motoboy marcou é aplicada uma vez só: se o painel mudou o pedido depois, não briga de novo a cada 12s. */
     d.saidas.forEach(function(sd){ (sd.paradas||[]).forEach(function(pa){
       if(feito[pa.cod]) return; feito[pa.cod]=1;
       var p=mpAcharPed(pa.cod); if(!p||p.tr!=='gir') return;
-      var ch=sd.id+'|'+pa.cod, vl=pa.st+'|'+(pa.quando||''); apNovo[ch]=vl; if(ap[ch]===vl) return;
+      var ch=sd.id+'|'+pa.cod, vl=pa.st+'|'+(pa.quando||''); apNovo[ch]=vl;
+      /* (097) baixa feita no PAINEL (entregue/devolvido/cancelado) com o pedido ainda pendente na rota do motoboy: tira da rota no app.
+         Só volta o pedido para "em rota" quando foi o MOTOBOY que desfez no app (antes ele tinha marcado). */
+      var desfezApp=/^(entregue|ausente)\|/.test(ap[ch]||'');
+      if(pa.st==='pendente' && sd.status==='ativa' && (p.st==='entregue'||p.st==='devolvido'||p.st==='cancelado') && !desfezApp){ baixa.push({cod:pa.cod,st:p.st==='entregue'?'entregue':'ausente'}); return; }
+      if(ap[ch]===vl) return;
       if(pa.st==='entregue' && p.st==='em rota'){ var dt=new Date(pa.quando||Date.now()); p.st='entregue'; p.ent=ymdLocal(dt)+' '+('0'+dt.getHours()).slice(-2)+':'+('0'+dt.getMinutes()).slice(-2); p.pgr=forma[pa.pgr]||pa.pgr; p.pgp=1; mud++; }
       else if(pa.st==='ausente' && p.st==='em rota'){ p.st='devolvido'; mud++; }
       else if(pa.st==='pendente' && (p.st==='entregue'||p.st==='devolvido') && sd.status==='ativa'){ p.st='em rota'; p.ent=''; p.pgr=''; mud++; }
     }); });
+    if(baixa.length) fetch(DELTADIS_API+'/painel/saida-baixa',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({itens:baixa})}).catch(function(){});
     if(mud){ try{ recalcularReal(); }catch(e){} salvarLocal(); repintarTudo(); if(PAG==='mapeamento') mpOperador(); aviso(mud+' atualização(ões) do motoboy'); }
     saidasAplicSalvar(apNovo);
   }).catch(function(){ SD_LEU=false; });
