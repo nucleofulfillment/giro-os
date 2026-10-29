@@ -234,6 +234,16 @@ html.claro #wzp{filter:invert(1) hue-rotate(180deg)}
 .cc::after{content:"";position:absolute;left:0;right:0;bottom:0;height:55%;background:linear-gradient(transparent,#000c);pointer-events:none}
 .cc .mpr{position:absolute;top:6px;left:6px;z-index:2;background:var(--pri);color:#fff;font-size:9.5px;font-weight:800;padding:2px 6px;border-radius:999px}
 .cc b{position:absolute;left:8px;right:8px;bottom:7px;z-index:2;color:#fff;text-transform:none;letter-spacing:0;font-size:12.5px;line-height:1.15;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-shadow:0 1px 3px #000a}
+/* (114) cartões automáticos do cardápio: Promoção (preto com foguinho) e Ofertas Clube (azul com o diamante girando) */
+.cc.ccp{background:radial-gradient(90% 70% at 50% 35%,#2a1206 0%,#0b0b0d 70%)}
+.cc.ccc{background:radial-gradient(90% 75% at 50% 30%,#3b82f6 0%,#1e3a8a 55%,#0b1a4a 100%)}
+.cc.ccp .mic,.cc.ccc .mic{bottom:22%}
+.fogo2{font-size:44px;line-height:1;display:inline-block;animation:fogo 1.6s ease-in-out infinite;transform-origin:50% 90%;filter:drop-shadow(0 0 10px #ff6a00aa)}
+.cc.ccc .clb-d3{width:50px;height:45px;filter:drop-shadow(0 4px 14px rgba(147,197,253,.8))}
+html.claro #sheet .cc.ccp,html.claro #sheet .cc.ccc{filter:invert(1) hue-rotate(180deg)}   /* tema claro inverte a folha: os dois cartões ficam iguais nos 2 temas */
+.clbcta{display:flex;align-items:center;gap:8px;margin:10px 0 2px;padding:10px 12px;border-radius:12px;background:linear-gradient(90deg,#1e3a8a,#2563eb);color:#fff;font-size:13px;cursor:pointer}
+.clbcta span{flex:1}.clbcta i{font-style:normal;font-weight:900;background:#ffffff2e;padding:4px 10px;border-radius:999px}
+html.claro #sheet .clbcta{filter:invert(1) hue-rotate(180deg)}
 .mp{display:flex;gap:12px;align-items:center;padding:12px 0;border-top:1px solid var(--line);cursor:pointer}
 /* (114) destaques da categoria: grade de 3 por linha no topo da lista */
 .dsqt{font-size:18px;font-weight:900;margin:16px 0 12px}
@@ -1561,10 +1571,19 @@ function menuFotoUrl(g){
   else { var k; for(k=0;k<g.ps.length;k++) if(g.ps[k].foto){ u=fotoUrl(g.ps[k]); break; } }
   return u;
 }
+/* (114) categorias automáticas no topo do cardápio: Promoção (produto com de/por) e Ofertas Clube (produto com preço de Clube) */
+function menuEspeciais(){
+  var ps=Object.keys(D.produtos).map(function(id){ return D.produtos[id]; }).sort(function(a,b){ return String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR',{sensitivity:'base',numeric:true}); }), out=[];
+  var pr=ps.filter(function(p){ var m=minPreco(p); return m.orig>m.min; }); if(pr.length) out.push({id:'_promo',nome:'Promoção',ps:pr});
+  var pl=D.clube&&D.clube.ativo?clbPlanoMembro():null;
+  if(pl){ var cl=ps.filter(function(p){ return clbPreco(p,clbDescPlano(pl)); }); if(cl.length) out.push({id:'_clube',nome:'Ofertas Clube',ps:cl}); }
+  return out;
+}
 function abreMenu(){
   LF_VOLTA='';
   var gs=menuGrupos(), rows=Math.max(1,Math.ceil(gs.length/4));
   var h='<div class="wh"><button class="bk" onclick="fechaSheet()">'+BKI+'</button><b>Cardápio</b></div><div class="wb mfull"><div class="mgrid">';
+  menuEspeciais().forEach(function(g){ h+=g.id==='_promo'?'<div class="cc ccp" onclick="abreCat(\'_promo\')"><span class="mic"><span class="fogo2">🔥</span></span><b>'+esc(g.nome)+'</b></div>':'<div class="cc ccc" onclick="abreCat(\'_clube\')"><span class="mic">'+clbGema()+'</span><b>'+esc(g.nome)+'</b></div>'; });
   gs.forEach(function(g){ var u=menuFotoUrl(g), promo=g.ps.some(function(p){return p.promo&&p.promo.valor>0;});
     h+='<div class="cc" onclick="abreCat(\''+esc(g.id)+'\')" '+(u?'style="background-image:url('+u+')"':'')+'>'+(u?'':'<span class="mic">'+icone(tipoDesenho(g.ps[0]),34)+'</span>')+(promo?'<span class="mpr">Promo</span>':'')+'<b>'+esc(g.nome)+'</b></div>'; });
   h+='</div></div>'; abreFolha(h,true,'fx');
@@ -1577,20 +1596,22 @@ function catFiltra(){
   var dq=$('dsq'); if(dq) dq.style.display=q?'none':'';
 }
 function abreCat(id){
-  var g=null; menuGrupos().forEach(function(x){ if(x.id===id) g=x; }); if(!g){ abreMenu(); return; }
-  if(g.ps.length===1&&(g.ps[0].sabores||[]).length){ LF_VOLTA='menu'; abreSheet(g.ps[0].id); return; }   /* categoria com um produto só, que tem sabores (ex.: Pizzas > Pizza): abre direto os tamanhos e sabores */
+  var g=null; menuEspeciais().concat(menuGrupos()).forEach(function(x){ if(x.id===id) g=x; }); if(!g){ abreMenu(); return; }
+  var fz=id==='_clube';   /* (114) em Ofertas Clube o preço do Clube aparece para todos */
+  if(g.id.charAt(0)!=='_'&&g.ps.length===1&&(g.ps[0].sabores||[]).length){ LF_VOLTA='menu'; abreSheet(g.ps[0].id); return; }   /* categoria com um produto só, que tem sabores (ex.: Pizzas > Pizza): abre direto os tamanhos e sabores */
   LF_VOLTA=id;
   var h='<div class="wh"><button class="bk" onclick="abreMenu()">'+BKI+'</button><b>'+esc(g.nome)+'</b></div><div class="wb"><input class="busca" id="cq" type="search" placeholder="Buscar em '+esc(g.nome)+'" oninput="catFiltra()" style="width:100%;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:#ffffff0f;color:#fff;font-size:15px;margin:10px 0 2px"><div id="cnada" style="display:none;padding:18px 4px;color:var(--mut);font-size:14px">Nenhum produto encontrado.</div>';
+  if(fz&&!clbMembro()) h+='<div class="clbcta" onclick="clbAbre()">'+CLB_MINI+'<span>Preços para quem é do <b>Clube</b></span><i>Assinar</i></div>';
   /* (114) destaques da categoria: no topo, em grade de 3 por linha (como no iFood); somem enquanto o cliente busca */
   var dq=g.ps.filter(function(p){ return p.destaque; });
   if(dq.length){ h+='<div id="dsq"><div class="dsqt">Destaques</div><div class="dsq">';
     dq.forEach(function(p,k){ var pr=minPreco(p), pc=pr.orig>pr.min?Math.round((1-pr.min/pr.orig)*100):0;
       h+='<div class="dsc" style="animation-delay:'+(k*50)+'ms" onclick="abreSheet(\''+esc(p.id)+'\')"><div class="im"'+(p.foto?' style="background-image:url('+fotoUrl(p)+')"':'')+'>'+(p.foto?'':icone(tipoDesenho(p),40))+'</div>'
         +(pr.de?'<div class="ap">a partir de</div>':'')+'<div class="pr"'+(pr.de?' style="margin-top:0"':'')+'>'+brl(pr.min)+'</div>'
-        +(pc>0?'<div class="dr"><s>'+brl(pr.orig)+'</s><span class="pc">-'+pc+'%</span></div>':'')+clbLinhaMembro(p)+'<div class="nm">'+esc(p.nome)+'</div></div>'; });
+        +(pc>0?'<div class="dr"><s>'+brl(pr.orig)+'</s><span class="pc">-'+pc+'%</span></div>':'')+clbLinhaMembro(p,fz)+'<div class="nm">'+esc(p.nome)+'</div></div>'; });
     h+='</div></div>'; }
   g.ps.forEach(function(p){ var pr=minPreco(p), ft=p.foto?'<div class="th" style="width:56px;height:56px;border-radius:10px;background:#2a2a30 center/cover url('+fotoUrl(p)+');flex:none"></div>':'<div style="width:56px;height:56px;border-radius:10px;background:#2a2a30;flex:none;display:flex;align-items:center;justify-content:center;">'+icone(tipoDesenho(p),28)+'</div>';
-    h+='<div class="mp" data-n="'+esc(semAc(p.nome))+'" onclick="abreSheet(\''+esc(p.id)+'\')">'+(p.destaque?'<div class="fgw">'+ft+'<span class="fogo" title="Destaque">🔥</span></div>':ft)+'<div style="flex:1;min-width:0"><b style="font-size:14.5px">'+esc(p.nome)+'</b>'+promoTag(p)+'</div><span class="vl" style="color:var(--pri2);font-weight:800;font-size:13.5px;text-align:right">'+(pr.de?'a partir de ':'')+(pr.orig>pr.min?'<s class="de">'+brl(pr.orig)+'</s> ':'')+brl(pr.min)+clbLinhaMembro(p)+'</span></div>'; });
+    h+='<div class="mp" data-n="'+esc(semAc(p.nome))+'" onclick="abreSheet(\''+esc(p.id)+'\')">'+(p.destaque?'<div class="fgw">'+ft+'<span class="fogo" title="Destaque">🔥</span></div>':ft)+'<div style="flex:1;min-width:0"><b style="font-size:14.5px">'+esc(p.nome)+'</b>'+promoTag(p)+'</div><span class="vl" style="color:var(--pri2);font-weight:800;font-size:13.5px;text-align:right">'+(pr.de?'a partir de ':'')+(pr.orig>pr.min?'<s class="de">'+brl(pr.orig)+'</s> ':'')+brl(pr.min)+clbLinhaMembro(p,fz)+'</span></div>'; });
   h+='</div>'; abreFolha(h,true,'fx');
 }
 
@@ -1855,7 +1876,7 @@ function clbMembro(){ return CLB_VER||!!(CT&&CT.conta&&CT.conta.clube&&CT.conta.
 function clbPlanoMembro(){ var c=D&&D.clube; if(!c||!c.ativo) return null; var k=CT&&CT.conta&&CT.conta.clube&&CT.conta.clube.plano; if(k&&c.planos[k]&&c.planos[k].on) return c.planos[k]; var m=null, mt=null;
   ['tri','sem','anu'].forEach(function(k2){ var pl=c.planos[k2]; if(!pl||!pl.on) return; var t=SAC.length?clbSacTotal(clbDescPlano(pl)):null, d=clbDescPlano(pl), sc=t!=null?-t:(d?(d.tipo==='pct'?d.valor*1000:d.valor):0); if(m==null||sc>mt||(sc===mt&&pl.frete)){ m=pl; mt=sc; } }); return m; }
 /* lista: preço de assinante na pílula laranja com o diamante, embaixo do preço normal */
-function clbLinhaMembro(p){ if(!clbMembro()) return ''; var pl=clbPlanoMembro(); if(!pl) return ''; var r=clbPreco(p,clbDescPlano(pl)); if(!r) return ''; return '<div class="clb-ln"><span class="clb-pill">'+CLB_MINI+brl(r.preco)+'</span></div>'; }
+function clbLinhaMembro(p,fz){ if(!clbMembro()&&!fz) return ''; var pl=clbPlanoMembro(); if(!pl) return ''; var r=clbPreco(p,clbDescPlano(pl)); if(!r) return ''; return '<div class="clb-ln"><span class="clb-pill">'+CLB_MINI+brl(r.preco)+'</span></div>'; }
 /* sacola de quem é do Clube: o desconto já calculado e o frete grátis do plano */
 function clbSacMembro(){ if(!clbMembro()) return ''; var pl=clbPlanoMembro(); if(!pl) return ''; var s=sacTotal(), t=clbSacTotal(clbDescPlano(pl));
   if(t==null||t>=s) return pl.frete?'<div class="clb-sac"><span>'+CLB_MINI+'<span>Clube</span></span><span>Frete grátis</span></div>':'';
