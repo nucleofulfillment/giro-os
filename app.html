@@ -622,6 +622,12 @@ html:has(.ge-rt) #topo{display:none!important}
 /* cena: mapa em perspectiva passando, o Live de capacete na moto */
 .lgx-cena{grid-area:cena;position:relative;height:262px;border-radius:26px;overflow:hidden;background:linear-gradient(#FFE9D8,#FFF6EE 50%);box-shadow:0 24px 50px -26px rgba(80,20,0,.75),inset 0 0 0 1px rgba(255,255,255,.5);isolation:isolate}
 .lgx-chao{position:absolute;left:-60%;width:220%;bottom:0;height:600%;transform:perspective(420px) rotateX(64deg);transform-origin:50% 100%;background-repeat:repeat-y;background-size:100% auto}
+/* (017) o chão desliza por transform (o celular faz sem redesenhar a tela): não pisca no navegador do WhatsApp */
+.lgx-chao{overflow:hidden;backface-visibility:hidden}
+.lgx-chao-in{position:absolute;left:0;right:0;top:0;height:calc(100% + var(--th,300px));background-repeat:repeat-y;background-size:100% auto;will-change:transform;backface-visibility:hidden;animation:lgxAnda var(--dur,2s) linear infinite}
+@keyframes lgxAnda{from{transform:translate3d(0,0,0)}to{transform:translate3d(0,calc(-1 * var(--th,300px)),0)}}
+.lgx-cena.lgx-parada .lgx-chao-in{animation-play-state:paused}
+@media (prefers-reduced-motion:reduce){.lgx-chao-in{animation:none}}
 .lgx-ceu{position:absolute;inset:0 0 auto;height:42%;background:linear-gradient(#FFE6D2 45%,rgba(255,240,228,0));z-index:1}
 .lgx-sky{position:absolute;left:0;right:0;top:14%;height:30px;z-index:1;opacity:.5}
 .lgx-rider{position:absolute;left:50%;bottom:58px;width:160px;margin-left:-80px;height:220px;z-index:3;transform:scale(.74);transform-origin:50% 100%}
@@ -708,7 +714,7 @@ html.dd-digitando .lgx-cena{display:none}   /* teclado aberto: some a cena e sob
  <div class="lgx">
   <div class="lgx-top"><img src="livefood-logo-branca.png" alt="LiveFood"><span class="lgx-tag">Entregador</span></div>
   <div class="lgx-cena" id="lgx-cena" aria-hidden="true">
-    <div class="lgx-chao" id="lgx-chao"></div>
+    <div class="lgx-chao"><div class="lgx-chao-in" id="lgx-chao"></div></div>
     <p class="lgx-tit">Bora rodar?</p>
     <svg class="lgx-sky" viewBox="0 0 248 34" preserveAspectRatio="none"><path d="M0 34V20h14v-8h12v12h10V6h16v28h8V16h12v-6h10v24h12V12h18v22h8V18h14V4h12v30h10V14h16v20h12V22h14v12z" fill="#F2C9A8"/></svg>
     <div class="lgx-ceu"></div>
@@ -5339,6 +5345,10 @@ document.addEventListener('DOMContentLoaded',function(){
     +"<circle cx='246' cy='40' r='9' fill='#9ED3A3'/><circle cx='246' cy='110' r='9' fill='#9ED3A3'/><circle cx='246' cy='210' r='9' fill='#9ED3A3'/><circle cx='246' cy='270' r='9' fill='#9ED3A3'/>"
     +"<circle cx='354' cy='40' r='9' fill='#9ED3A3'/><circle cx='354' cy='110' r='9' fill='#9ED3A3'/><circle cx='354' cy='210' r='9' fill='#9ED3A3'/><circle cx='354' cy='270' r='9' fill='#9ED3A3'/></svg>";
   chao.style.backgroundImage='url("data:image/svg+xml,'+encodeURIComponent(tile)+'")';
+  /* altura de um "quadro" do mapa = largura/2 (o desenho é 600×300); a velocidade fica em ~150 px/s */
+  function lgxMedeChao(){ var w=chao.offsetWidth; if(!w) return; var th=Math.round(w/2); chao.style.setProperty('--th',th+'px'); chao.style.setProperty('--dur',(th/150).toFixed(2)+'s'); }
+  lgxMedeChao(); window.addEventListener('resize',lgxMedeChao); setTimeout(lgxMedeChao,600);
+  var cenaEl=$('lgx-cena');
   var live=null;
   try{ if(window.LiveMascote){ live=LiveMascote.criar(cab,{sombra:false,flutuar:false,rotulo:'Live de capacete na moto'});
     cab.querySelector('.live-corpo').insertAdjacentHTML('beforeend','<svg class="lgx-capacete" viewBox="-110 -130 220 230" aria-hidden="true"><defs><linearGradient id="lgxCp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3C3C42"/><stop offset="1" stop-color="#141416"/></linearGradient></defs>'
@@ -5354,16 +5364,16 @@ document.addEventListener('DOMContentLoaded',function(){
   var DUR=6.5, k=0, prog=0, v=0, alvo=1, pos=0, ant=0, parado=false, prox=2.5;
   function visivel(){ return lg.style.display!=='none' && !document.hidden && lg.offsetParent!==null && $('lgx-cena').offsetHeight>0; }
   function chegou(){
-    parado=true; alvo=0; rider.classList.add('lgx-parado'); $('lgx-lb').textContent='Chegou';
+    parado=true; alvo=0; rider.classList.add('lgx-parado'); if(cenaEl) cenaEl.classList.add('lgx-parada'); $('lgx-lb').textContent='Chegou';
     if(live){ live.olhar(0,0); live.gesto('boas_vindas'); }
     setTimeout(function(){ $('lgx-ok').classList.add('on'); },250);
     setTimeout(function(){ $('lgx-ok').classList.remove('on'); if(live) live.gesto('piscadinha'); },1900);
-    setTimeout(function(){ k++; prog=0; parado=false; alvo=1; rider.classList.remove('lgx-parado'); $('lgx-lb').textContent='A caminho'; $('lgx-end').textContent=ENDS[k%ENDS.length]; if(live) live.expressao('feliz'); },2600);
+    setTimeout(function(){ k++; prog=0; parado=false; alvo=1; rider.classList.remove('lgx-parado'); if(cenaEl) cenaEl.classList.remove('lgx-parada'); $('lgx-lb').textContent='A caminho'; $('lgx-end').textContent=ENDS[k%ENDS.length]; if(live) live.expressao('feliz'); },2600);
   }
   function quadro(t){
     if(!visivel()){ ant=0; setTimeout(function(){ requestAnimationFrame(quadro); },600); return; }
     var dt=ant?Math.min(.05,(t-ant)/1000):0; ant=t;
-    v+=(alvo-v)*Math.min(1,dt*(alvo?2.2:5)); pos+=v*150*dt; chao.style.backgroundPositionY=(-pos)+'px';
+    /* (017) o chão anda sozinho por CSS (sem repintar a tela a cada quadro) */
     if(!parado){
       prog=Math.min(1,prog+dt/DUR); $('lgx-bar').style.width=(prog*100)+'%'; if(prog>=1) chegou();
       prox-=dt; if(prox<=0&&live){ prox=LiveMascote.sorteio(2.2,4); var r=Math.random(); if(r<.4){ live.olhar(LiveMascote.sorteio(-.8,.8),LiveMascote.sorteio(-.2,.3)); setTimeout(function(){ if(!parado) live.olhar(0,0); },900); } else if(r<.7) live.piscar(); else live.expressao(Math.random()<.5?'animado':'feliz'); }
