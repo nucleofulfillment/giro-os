@@ -91,7 +91,7 @@ html,body{margin:0;height:100%;background:#000;color:var(--tx);font-family:Inter
 .bt.c{justify-content:center}
 .tg{display:inline-block;margin-top:5px;background:var(--pri);color:#fff;font-size:10.5px;font-weight:800;letter-spacing:.4px;border-radius:6px;padding:3px 8px;text-transform:uppercase}
 /* (115) etiquetas da listagem lado a lado: de/por (laranja) + Clube (azul com o ícone do Clube) */
-.tgs{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}.tgs .tg{margin-top:0}
+.tgs{display:flex;flex-wrap:nowrap;gap:5px;margin-top:5px;min-width:0}.tgs .tg{margin-top:0;flex:none;white-space:nowrap}
 .tgc{display:inline-flex;align-items:center;gap:4px;background:linear-gradient(90deg,#1e3a8a,#2563eb);text-transform:none;letter-spacing:0}
 .tgc .clb-mini{width:14px;height:12px}.tgc .clb-mie{font-size:11px}
 html.claro #sheet .tgp{color:#000}   /* tema claro inverte a folha: o texto da etiqueta laranja fica branco */
@@ -1591,7 +1591,8 @@ function progSim(){ if(!PGD||!PGD.hora) return; try{ localStorage.setItem('lf_pr
 function pintaStatus(){ var e=$('stt'); if(!e) return; var a=noHorario(); e.textContent=a?'ABERTO':'FECHADO'; e.className=a?'ab':'fc'; }
 setInterval(function(){ try{ pintaStatus(); }catch(e){} },60000);
 /* etiquetas da listagem: desconto (de/por, laranja) e, ao lado, o Clube (azul, com o ícone do Clube) para quem ainda não assina */
-function promoTag(p){ var d=p.promo, h=''; if(d&&d.valor>0) h+='<span class="tg tgp">'+(d.tipo==='pct'?String(d.valor).replace('.',',')+'% OFF':'− '+brl(d.valor))+'</span>'; h+=clbTagLista(p); return h?'<div class="tgs">'+h+'</div>':''; }
+/* o de/por já aparece no preço: a etiqueta mostra só o percentual (ex.: -5% OFF), curta, para caber ao lado da do Clube */
+function promoTag(p){ var d=p.promo, h=''; if(d&&d.valor>0){ var m=minPreco(p), pc=m.orig>m.min?Math.round((1-m.min/m.orig)*100):0; if(pc>0) h+='<span class="tg tgp">-'+pc+'% OFF</span>'; } h+=clbTagLista(p); return h?'<div class="tgs">'+h+'</div>':''; }
 function clbTagLista(p){ var c=D&&D.clube; if(!c||!c.ativo||clbMembro()) return ''; var pl=clbPlanoMembro(); if(!pl) return ''; var r=clbPreco(p,clbDescPlano(pl)); if(!r) return ''; return '<span class="tg tgc">'+clbMini()+'Clube '+brl(r.preco)+'</span>'; }
 function menuMin(ps){ var m=0; ps.forEach(function(p){ var v=minPreco(p).min; if(v>0&&(!m||v<m)) m=v; }); return m; }
 function menuFoto(g){
