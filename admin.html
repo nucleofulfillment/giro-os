@@ -271,6 +271,9 @@ td.vin{color:var(--green);font-weight:800;white-space:nowrap}td.vout{color:var(-
       <div id="apk-info" class="sub2" style="padding:0 2px 8px">O site entrega direto o arquivo enviado aqui.</div>
     </div>
     <div class="card">
+      <h3><span>Paytime</span><span class="sub2">pagamentos na mesa e na maquininha (teste)</span><span class="dir"><span class="lnk" onclick="abrirPaytime()">Testar conexão</span><span class="lnk" onclick="abrirPtEventos()">Avisos recebidos</span></span></h3>
+    </div>
+    <div class="card">
       <h3><span>Fluxo de caixa</span><span class="dir"><span class="lnk" onclick="carregarFluxo();carregarSaldo()">↻ Atualizar</span><span class="lnk" onclick="abrirLanc()">+ Novo lançamento</span></span></h3>
       <div class="filtros" id="fc-filtros"></div>
       <div id="fc-aviso"></div>
@@ -898,6 +901,41 @@ function buscarExtrato(){
     if(!d.ok){el('ex-corpo').innerHTML='<div class="vazio">'+esc(d.mensagem||'Erro.')+'</div>';return;}
     if(!d.itens.length){el('ex-corpo').innerHTML='<div class="vazio">Nenhuma movimentação no período.</div>';return;}
     el('ex-corpo').innerHTML='<div class="tabela-wrap"><table><tr><th>Data</th><th>Descrição</th><th class="n">Valor</th></tr>'+d.itens.map(function(i){return '<tr><td>'+fmtData(i.data)+'</td><td>'+esc(i.descricao||i.tipo)+'</td><td class="n" style="font-weight:800;color:'+(i.valor<0?'var(--red)':'var(--green)')+'">'+reais(Math.round(i.valor*100))+'</td></tr>';}).join('')+'</table></div>'+(d.cortado?'<div class="aviso">Mostrando só as primeiras movimentações. Reduza o período.</div>':'');
+  }).catch(function(){});
+}
+/* ── (121) Paytime (sandbox): testa o login, lista os estabelecimentos, gera um Pix de teste e mostra os avisos (webhooks) ── */
+function abrirPaytime(){
+  abrirModal('<h3>Paytime · teste</h3><p class="sub">As chaves ficam só nos segredos do Worker. Nada aqui movimenta dinheiro de verdade.</p><div id="pt-corpo" class="sub2" style="margin:10px 0">Conectando...</div><div class="acoes"><button class="btn" onclick="fechar()">Fechar</button></div>');
+  chamar('GET','/admin/paytime/teste').then(function(d){
+    var c=el('pt-corpo'); if(!c) return;
+    if(!d.ok){ c.innerHTML='<div class="erro">'+esc(d.mensagem||'Não conectou.')+'</div>'; return; }
+    var es=d.estabelecimentos||[];
+    c.innerHTML='✅ Login OK no <b>'+(d.ambiente==='sandbox'?'sandbox (teste)':'ambiente de produção')+'</b> · '+d.total+' estabelecimento(s)'+(d.webhook?'':' · <span style="color:var(--red)">falta o segredo PAYTIME_WEBHOOK_TOKEN</span>')+
+      (es.length?'<div class="tabela-wrap" style="margin-top:10px"><table><tr><th>ID</th><th>Nome</th><th>Status</th></tr>'+es.map(function(x){return '<tr><td>'+x.id+'</td><td>'+esc(x.nome)+'</td><td>'+esc(x.status)+(x.ativo?'':' · inativo')+'</td></tr>';}).join('')+'</table></div>'+
+      '<label>Estabelecimento para o Pix de teste</label><select id="pt-estab">'+es.map(function(x){return '<option value="'+x.id+'"'+(x.status==='APPROVED'?'':' disabled')+'>'+x.id+' · '+esc(x.nome)+(x.status==='APPROVED'?'':' ('+esc(x.status)+')')+'</option>';}).join('')+'</select>'+
+      '<label>Valor</label><select id="pt-val"><option value="105">R$ 1,05 · aprova sozinho</option><option value="108">R$ 1,08 · fica pendente</option></select>'+
+      '<div class="acoes" style="justify-content:flex-start"><button class="btn pri" id="pt-btn" onclick="ptPix()">Gerar Pix de teste</button></div><div id="pt-res"></div>'
+      :'<div class="aviso">Nenhum estabelecimento no sandbox ainda. Peça à Paytime um estabelecimento de teste aprovado.</div>');
+  }).catch(function(){ var c=el('pt-corpo'); if(c) c.textContent='Erro de conexão.'; });
+}
+function ptPix(){
+  var b=el('pt-btn'); b.disabled=true; el('pt-res').innerHTML='Gerando...';
+  chamar('POST','/admin/paytime/pix',{estab:el('pt-estab').value,centavos:+el('pt-val').value}).then(function(d){
+    b.disabled=false;
+    if(!d.ok){ el('pt-res').innerHTML='<div class="erro">'+esc(d.mensagem||'Erro.')+'</div>'; return; }
+    el('pt-res').innerHTML='<div class="aviso" style="margin-top:10px">Pix criado: <b>'+reais(d.centavos)+'</b> (taxa '+reais(d.taxa||0)+') · status <b id="pt-st">'+esc(d.status)+'</b><br>ID '+esc(d.id)+'</div>'+
+      (d.emv?'<label>Pix copia e cola</label><textarea readonly style="width:100%;height:70px;font-size:11px" onclick="this.select()">'+esc(d.emv)+'</textarea>':'')+
+      '<div class="acoes" style="justify-content:flex-start"><button class="btn" onclick="ptStatus(\''+esc(d.id)+'\')">Conferir status</button></div>';
+  }).catch(function(){ b.disabled=false; el('pt-res').textContent='Erro de conexão.'; });
+}
+function ptStatus(id){
+  chamar('GET','/admin/paytime/transacao?id='+encodeURIComponent(id)).then(function(d){ var s=el('pt-st'); if(s) s.textContent=d.ok?d.status:(d.mensagem||'erro'); toast(d.ok?('Status: '+d.status):(d.mensagem||'Erro'),!d.ok); }).catch(function(){});
+}
+function abrirPtEventos(){
+  abrirModal('<h3>Avisos da Paytime</h3><p class="sub">O que a Paytime avisou pelo webhook (os 30 mais recentes).</p><div id="pt-ev" class="sub2">Carregando...</div><div class="acoes"><button class="btn" onclick="abrirPtEventos()">↻ Atualizar</button><button class="btn" onclick="fechar()">Fechar</button></div>');
+  chamar('GET','/admin/paytime/eventos').then(function(d){
+    var c=el('pt-ev'); if(!c) return; if(!d.ok){ c.innerHTML='<div class="erro">'+esc(d.mensagem||'Erro.')+'</div>'; return; }
+    c.innerHTML=(d.eventos||[]).length?'<div class="tabela-wrap"><table><tr><th>Quando</th><th>Evento</th><th>Status</th><th>ID</th></tr>'+d.eventos.map(function(x){return '<tr><td>'+new Date(x.criado).toLocaleString('pt-BR')+'</td><td>'+esc(x.evento)+'</td><td>'+esc(x.status||'')+'</td><td style="font-size:11px">'+esc(x.ref||'')+'</td></tr>';}).join('')+'</table></div>':'Nenhum aviso ainda.';
   }).catch(function(){});
 }
 function abrirAsaasCfg(){
