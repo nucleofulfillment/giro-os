@@ -950,7 +950,7 @@ function ptPix(){
   chamar('POST','/admin/paytime/pix',{estab:el('pt-estab').value,centavos:+el('pt-val').value}).then(function(d){
     b.disabled=false;
     if(!d.ok){ el('pt-res').innerHTML='<div class="erro">'+esc(d.mensagem||'Erro.')+'</div>'; return; }
-    el('pt-res').innerHTML='<div class="aviso" style="margin-top:10px">Pix criado: <b>'+reais(d.centavos)+'</b> (taxa '+reais(d.taxa||0)+') · status <b id="pt-st">'+esc(d.status)+'</b><br>ID '+esc(d.id)+'</div>'+
+    el('pt-res').innerHTML='<div class="aviso" style="margin-top:10px">Pix criado: cliente paga <b>'+reais(Math.max(d.bruto||0,d.centavos||0))+'</b> · restaurante recebe '+reais(Math.min(d.bruto||d.centavos||0,d.centavos||0))+' (taxa '+reais(d.taxa||0)+') · status <b id="pt-st">'+esc(d.status)+'</b><br>ID '+esc(d.id)+'</div>'+
       (d.emv?'<label>Pix copia e cola</label><textarea readonly style="width:100%;height:70px;font-size:11px" onclick="this.select()">'+esc(d.emv)+'</textarea>':'')+
       '<div class="acoes" style="justify-content:flex-start"><button class="btn" onclick="ptStatus(\''+esc(d.id)+'\')">Conferir status</button></div>';
   }).catch(function(){ b.disabled=false; el('pt-res').textContent='Erro de conexão.'; });
