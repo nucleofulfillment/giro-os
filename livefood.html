@@ -271,24 +271,17 @@ html.claro #wzp{filter:invert(1) hue-rotate(180deg)}
 @keyframes ovZoom{0%{transform:scale(.2);opacity:0}65%{transform:scale(1.1);opacity:1}100%{transform:none}}
 @keyframes ovAnel{0%{transform:scale(1);opacity:.85}100%{transform:scale(1.45,1.7);opacity:0}}
 @media (prefers-reduced-motion:reduce){.ov *,.ov *::after{animation:none!important}}
-/* (111) Clube de assinatura: preço do clube (laranja), diamante 3D, selo na página do produto e o modal dos planos */
-.clb-ln{display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-top:4px;flex-wrap:wrap}
-.clb-ln small{font-size:11px;font-weight:800;color:var(--pri);white-space:nowrap}
-.clb-ln small i{font-style:normal;color:#FACC15}
-.clb-pill{position:relative;display:inline-flex;align-items:center;background:var(--pri);color:#fff;border-radius:8px;padding:1px 8px 1px 13px;margin-left:9px;font-weight:800;font-size:12.5px;line-height:1.55;white-space:nowrap}
-.clb-mini{position:absolute;left:-10px;top:50%;width:19px;height:17px;transform:translateY(-55%);filter:drop-shadow(0 1px 3px rgba(20,90,130,.55))}
-.clb-fr{flex-basis:100%;font-size:11px;font-weight:800;color:var(--tx);white-space:nowrap;text-align:right}
-.mp .vl{text-align:right!important;max-width:128px;flex:none}
-/* tema claro inverte a folha: desinverte o diamante (fica azul) e deixa o valor da pílula branco */
+/* (111) Clube de assinatura: linha do Clube na sacola, diamante 3D e o modal dos planos */
+.clb-mini{width:20px;height:18px;flex:none;filter:drop-shadow(0 1px 3px rgba(20,90,130,.55))}
+/* tema claro inverte a folha: desinverte o diamante (fica azul) */
 html.claro #sheet .clb-mini{filter:drop-shadow(0 1px 3px rgba(20,90,130,.55)) invert(1) hue-rotate(180deg)}
-html.claro #sheet .clb-pill{color:#000}
 /* linha do Clube embaixo do subtotal da sacola */
 .clb-sac{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;font-size:14px;font-weight:800;color:#5CC8F2;cursor:pointer}
-.clb-sac>span:first-child{display:inline-flex;align-items:center;gap:7px}
-.clb-sac .clb-mini{position:static;transform:none;width:20px;height:18px}
+.clb-sac>span:first-child{display:inline-flex;align-items:flex-start;gap:7px}
+.clb-sac>span:first-child>span{display:flex;flex-direction:column;line-height:1.2}
+.clb-sac i{font-style:normal;font-size:11px;font-weight:800;color:var(--pri);text-decoration:underline;text-underline-offset:2px;margin-top:2px}
 .clb-sac small{display:block;font-size:11px;font-weight:600;color:var(--tx);opacity:.7;text-align:right;margin-top:1px}
 .clb-sac>span:last-child{text-align:right}
-.mp .clb-ln{max-width:128px;row-gap:2px}
 /* diamante 3D: 4 lâminas cruzadas giram juntas, então ele nunca fica fino */
 .clb-d3{position:relative;perspective:260px;display:inline-block}
 .clb-d3 .gr{position:absolute;inset:0;transform-style:preserve-3d;animation:clbGira 6s linear infinite}
@@ -303,9 +296,6 @@ html.claro #sheet .clb-pill{color:#000}
 @keyframes clbBrilho{0%,55%{left:-70%}85%,100%{left:130%}}
 #mside button.clb-sh{font-size:8.5px;letter-spacing:0;white-space:nowrap}
 #mside button.clb-sh .clb-d3{width:26px;height:23px;filter:drop-shadow(0 2px 6px rgba(92,200,242,.7))}
-.clb-selo{position:absolute;right:10px;top:10px;z-index:4;width:40px;height:36px;pointer-events:none;filter:drop-shadow(0 4px 8px rgba(42,168,220,.55))}
-.clb-selo .clb-d3{width:40px;height:36px}
-.clb-selo b{position:absolute;left:0;right:0;top:9px;z-index:2;text-align:center;color:#fff;font-weight:900;font-size:10px;letter-spacing:-.2px;text-shadow:0 1px 3px rgba(10,60,90,.95)}
 #clbM{position:fixed;inset:0;z-index:2147481000;background:rgba(6,8,18,.72);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);display:flex;align-items:flex-end;justify-content:center;opacity:0;transition:opacity .3s}
 #clbM.on{opacity:1}
 #clbM .cx{position:relative;width:100%;max-width:440px;max-height:92vh;overflow:auto;background:radial-gradient(120% 60% at 50% 0%,#1E3A8A 0%,#0B1022 46%,#07090F 100%);color:#fff;border-radius:28px 28px 0 0;padding:22px 18px calc(22px + env(safe-area-inset-bottom));box-shadow:0 -20px 60px rgba(0,0,0,.6);transform:translateY(40px);transition:transform .45s cubic-bezier(.2,1.2,.4,1)}
@@ -504,7 +494,7 @@ function ofPedir(oid){
   if(!ids.length){ abreMenu(); return; }
   var h='<div class="wh"><button class="bk" onclick="fechaSheet()">'+XI+'</button><b>'+esc((o&&o.nome)||'Oferta')+'</b></div><div class="wb">';
   ids.forEach(function(id){ var p=D.produtos[id], pr=minPreco(p), ft=p.foto?'<div class="th" style="width:56px;height:56px;border-radius:10px;background:#2a2a30 center/cover url('+fotoUrl(p)+');flex:none"></div>':'<div style="width:56px;height:56px;border-radius:10px;background:#2a2a30;flex:none;display:flex;align-items:center;justify-content:center">'+icone(tipoDesenho(p),28)+'</div>';
-    h+='<div class="mp" onclick="abreSheet(\''+esc(p.id)+'\')">'+ft+'<div style="flex:1;min-width:0"><b style="font-size:14.5px">'+esc(p.nome)+'</b>'+promoTag(p)+'</div><span class="vl" style="color:var(--pri2);font-weight:800;font-size:13.5px;text-align:right">'+(pr.de?'a partir de ':'')+brl(pr.min)+clbLinha(p)+'</span></div>'; });
+    h+='<div class="mp" onclick="abreSheet(\''+esc(p.id)+'\')">'+ft+'<div style="flex:1;min-width:0"><b style="font-size:14.5px">'+esc(p.nome)+'</b>'+promoTag(p)+'</div><span class="vl" style="color:var(--pri2);font-weight:800;font-size:13.5px;text-align:right">'+(pr.de?'a partir de ':'')+brl(pr.min)+'</span></div>'; });
   h+='</div>'; abreFolha(h,true);
 }
 function ofMascara(t){ if(!t||t.mascara===false) return ''; var f=t.mascaraForca||45; return 'linear-gradient(180deg,rgba(0,0,0,'+(f*0.0022).toFixed(3)+'),rgba(0,0,0,'+(f/100).toFixed(2)+'))'; }
@@ -789,7 +779,7 @@ function wPinta(novo){
   var p=W.p, k=W.passos[W.passo], last=W.passo===W.passos.length-1, h='', i;
   h+='<div class="wh"><button class="bk" onclick="'+(W.passo?'wVolta()':'fechaSheet()')+'">'+(W.passo?'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 5l-7 7 7 7"/></svg>':'<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg>')+'</button><b>'+esc(p.nome)+'</b><span class="hp" id="artPr"></span></div>';
   h+='<div class="pg">'; for(i=0;i<W.passos.length;i++) h+='<i class="'+(i<=W.passo?'on':'')+'"></i>'; h+='</div>';
-  h+='<div class="art'+(k==='fim'?' big':'')+(p.vid&&!(p.sabores||[]).length?' hv':'')+'">'+(p.vid&&!(p.sabores||[]).length?'<video class="pv" src="'+API+'/food/video/'+encodeURIComponent(D.cli||CLI)+'/'+encodeURIComponent(p.vid)+'" autoplay muted loop playsinline preload="auto"></video>':'')+'<div class="al">'+artLista()+'</div><div class="sv">'+(p.vid&&!(p.sabores||[]).length?'':artSvg())+'</div>'+(p.desc?'<button class="infb" onclick="var q=document.getElementById(\'infp\');q.style.display=q.style.display===\'block\'?\'none\':\'block\'">+</button><div class="infp" id="infp" onclick="this.style.display=\'none\'">'+esc(p.desc)+'</div>':'')+clbSelo(p)+'</div>';
+  h+='<div class="art'+(k==='fim'?' big':'')+(p.vid&&!(p.sabores||[]).length?' hv':'')+'">'+(p.vid&&!(p.sabores||[]).length?'<video class="pv" src="'+API+'/food/video/'+encodeURIComponent(D.cli||CLI)+'/'+encodeURIComponent(p.vid)+'" autoplay muted loop playsinline preload="auto"></video>':'')+'<div class="al">'+artLista()+'</div><div class="sv">'+(p.vid&&!(p.sabores||[]).length?'':artSvg())+'</div>'+(p.desc?'<button class="infb" onclick="var q=document.getElementById(\'infp\');q.style.display=q.style.display===\'block\'?\'none\':\'block\'">+</button><div class="infp" id="infp" onclick="this.style.display=\'none\'">'+esc(p.desc)+'</div>':'')+'</div>';
   h+='<div class="wb'+(k==='fim'?' fm':'')+'" id="wb">';
   h+=wCorpo(k);
   h+='</div><div id="wtl"></div><div class="rod"><button class="vlt" type="button" onclick="'+(W.passo?'wVolta()':'voltaOrig()')+'">‹ Voltar</button><div class="qt"><button onclick="wQtd(-1)">−</button><span id="wq">'+W.qty+'</span><button onclick="wQtd(1)">+</button></div><button class="bt'+(last?'':' c')+'" id="wbt" onclick="wAvanca()"></button></div>';
@@ -1540,7 +1530,7 @@ function abreCat(id){
   LF_VOLTA=id;
   var h='<div class="wh"><button class="bk" onclick="abreMenu()">'+BKI+'</button><b>'+esc(g.nome)+'</b></div><div class="wb"><input class="busca" id="cq" type="search" placeholder="Buscar em '+esc(g.nome)+'" oninput="catFiltra()" style="width:100%;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:#ffffff0f;color:#fff;font-size:15px;margin:10px 0 2px"><div id="cnada" style="display:none;padding:18px 4px;color:var(--mut);font-size:14px">Nenhum produto encontrado.</div>';
   g.ps.forEach(function(p){ var pr=minPreco(p), ft=p.foto?'<div class="th" style="width:56px;height:56px;border-radius:10px;background:#2a2a30 center/cover url('+fotoUrl(p)+');flex:none"></div>':'<div style="width:56px;height:56px;border-radius:10px;background:#2a2a30;flex:none;display:flex;align-items:center;justify-content:center;">'+icone(tipoDesenho(p),28)+'</div>';
-    h+='<div class="mp" data-n="'+esc(semAc(p.nome))+'" onclick="abreSheet(\''+esc(p.id)+'\')">'+ft+'<div style="flex:1;min-width:0"><b style="font-size:14.5px">'+esc(p.nome)+'</b>'+promoTag(p)+'</div><span class="vl" style="color:var(--pri2);font-weight:800;font-size:13.5px;text-align:right">'+(pr.de?'a partir de ':'')+(pr.orig>pr.min?'<s class="de">'+brl(pr.orig)+'</s> ':'')+brl(pr.min)+clbLinha(p)+'</span></div>'; });
+    h+='<div class="mp" data-n="'+esc(semAc(p.nome))+'" onclick="abreSheet(\''+esc(p.id)+'\')">'+ft+'<div style="flex:1;min-width:0"><b style="font-size:14.5px">'+esc(p.nome)+'</b>'+promoTag(p)+'</div><span class="vl" style="color:var(--pri2);font-weight:800;font-size:13.5px;text-align:right">'+(pr.de?'a partir de ':'')+(pr.orig>pr.min?'<s class="de">'+brl(pr.orig)+'</s> ':'')+brl(pr.min)+'</span></div>'; });
   h+='</div>'; abreFolha(h,true,'fx');
 }
 
@@ -1556,11 +1546,11 @@ function clbGema(){ return '<span class="clb-d3">'+CLB_GEMA+'</span>'; }
 function clbMembro(){ return !!(CT&&CT.conta&&CT.conta.clube&&CT.conta.clube.ativo); }   /* a assinatura de verdade chega na próxima etapa */
 function clbHoje(){ var d=new Date(Date.now()-3*3600000); return {dia:d.getUTCDay(),data:d.toISOString().slice(0,10)}; }
 /* preço do produto para quem é do clube: oferta do dia > preço específico do produto > regra geral (loja, categorias ou produtos) */
-function clbPreco(p){
+function clbPreco(p,dx){
   var c=D&&D.clube; if(!c||!c.ativo||!p) return null; var base=minPreco(p).min, h=clbHoje(), v=null;
   (c.ofertas||[]).forEach(function(o){ if(v==null&&o.p===p.id&&o.dias.indexOf(h.dia)>=0&&(!o.de||h.data>=o.de)&&(!o.ate||h.data<=o.ate)) v=o.preco; });
   if(v==null&&p.clube&&p.clube.preco>0) v=p.clube.preco;
-  if(v==null){ var ok=c.escopo==='loja'||(c.escopo==='cats'&&(c.cats||[]).indexOf(p.cat)>=0)||(c.escopo==='prods'&&(c.prods||[]).indexOf(p.id)>=0), dg=clbDescGeral(); if(ok&&dg) v=dg.tipo==='pct'?base*(1-dg.valor/100):base-dg.valor; }
+  if(v==null){ var ok=c.escopo==='loja'||(c.escopo==='cats'&&(c.cats||[]).indexOf(p.cat)>=0)||(c.escopo==='prods'&&(c.prods||[]).indexOf(p.id)>=0), dg=dx||clbDescGeral(); if(ok&&dg) v=dg.tipo==='pct'?base*(1-dg.valor/100):base-dg.valor; }
   if(v==null||!(base>0)) return null; v=Math.max(0,Math.round(v*100)/100); if(Math.abs(v-base)<0.005) return null;
   return {preco:v,pct:Math.round((1-v/base)*100)};
 }
@@ -1568,15 +1558,14 @@ function clbPreco(p){
 function clbDescGeral(){ var c=D.clube; if(c.valor>0) return {tipo:c.tipo,valor:c.valor}; var m=null; ['tri','sem','anu'].forEach(function(k){ var p=c.planos[k], d=p&&p.on&&p.desc; if(d&&d.valor>0&&(!m||(d.tipo===m.tipo?d.valor>m.valor:d.tipo==='pct'))) m=d; }); return m; }
 function clbDescPlano(p){ var c=D.clube; return (p.desc&&p.desc.valor>0)?p.desc:(c.valor>0?{tipo:c.tipo,valor:c.valor}:null); }
 function clbFrete(){ var c=D&&D.clube; if(!c||!c.ativo) return false; return ['tri','sem','anu'].some(function(k){ return c.planos[k]&&c.planos[k].on&&c.planos[k].frete; }); }
-/* linha do preço do clube, embaixo do preço normal: "Clube ⭐ [R$ 22,90]" e a tag de entrega grátis colada */
-function clbLinha(p){ var r=clbPreco(p); if(!r) return ''; return '<div class="clb-ln"><span class="clb-pill">'+CLB_MINI+brl(r.preco)+'</span>'+(clbFrete()?'<span class="clb-fr">+ Frete grátis</span>':'')+'</div>'; }
-/* sacola: quanto daria o subtotal no Clube (o desconto do produto sai de cada unidade); toque abre os planos */
-function clbSac(){ if(clbMembro()||!D||!D.clube||!D.clube.ativo) return ''; var t=0, tem=false;
-  SAC.forEach(function(i){ var p=D.produtos[i.p], r=p&&clbPreco(p), u=i.unit; if(r){ u=Math.max(0,u-(minPreco(p).min-r.preco)); tem=true; } t+=u*i.qty; });
-  t=Math.round(t*100)/100; var s=sacTotal(); if(!tem||t>=s) return '';
-  return '<div class="clb-sac" onclick="clbAbre()"><span>'+CLB_MINI+'Clube</span><span>'+brl(t)+'<small>no Clube você economiza '+brl(s-t)+(clbFrete()?' + frete grátis':'')+'</small></span></div>'; }
-/* selo do diamante com o % de economia, no canto da página do produto (só para quem ainda não assina) */
-function clbSelo(p){ if(clbMembro()) return ''; var r=clbPreco(p); if(!r||!(r.pct>0)) return ''; return '<div class="clb-selo">'+clbGema()+'<b>-'+r.pct+'%</b></div>'; }
+/* sacola: quanto daria o subtotal no Clube, sempre pelo plano de maior economia (em geral o anual); toque abre os planos */
+function clbSacTotal(dx){ var t=0, tem=false;
+  SAC.forEach(function(i){ var p=D.produtos[i.p], r=p&&clbPreco(p,dx), u=i.unit; if(r){ u=Math.max(0,u-(minPreco(p).min-r.preco)); tem=true; } t+=u*i.qty; });
+  return tem?Math.round(t*100)/100:null; }
+function clbSac(){ var c=D&&D.clube; if(clbMembro()||!c||!c.ativo) return ''; var s=sacTotal(), m=null;
+  ['tri','sem','anu'].forEach(function(k){ var pl=c.planos[k]; if(!pl||!pl.on) return; var t=clbSacTotal(clbDescPlano(pl)); if(t!=null&&(!m||t<m.t||(t===m.t&&pl.frete))) m={t:t,frete:pl.frete}; });
+  if(!m||m.t>=s) return '';
+  return '<div class="clb-sac" onclick="clbAbre()"><span>'+CLB_MINI+'<span>Clube<i>Assinar</i></span></span><span>'+brl(m.t)+'<small>no Clube você economiza '+brl(s-m.t)+(m.frete?' + frete grátis':'')+'</small></span></div>'; }
 /* diamante na home: gira devagar com um brilho; abre os planos */
 function clbInit(){ var b=$('clbBtn'), sd=$('mside'); if(!D.clube||!D.clube.ativo||clbMembro()||!sd){ if(b) b.remove(); return; } if(b) return; b=document.createElement('button'); b.id='clbBtn'; b.type='button'; b.className='clb-sh'; b.setAttribute('aria-label','Assinar o clube'); b.innerHTML=clbGema()+'ASSINAR CLUBE'; b.onclick=function(e){ e.stopPropagation(); clbAbre(); }; sd.insertBefore(b,sd.firstChild); }
 function clbAbre(){
