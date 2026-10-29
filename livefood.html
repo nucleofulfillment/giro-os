@@ -274,6 +274,7 @@ html.clbbar #mside{bottom:calc(233px + env(safe-area-inset-bottom))}
 .cc.ccp .mic,.cc.ccc .mic{bottom:22%}
 .fogo2{font-size:44px;line-height:1;display:inline-block;animation:fogo 1.6s ease-in-out infinite;transform-origin:50% 90%;filter:drop-shadow(0 0 10px #ff6a00aa)}
 .cc.ccc .clb-d3{width:50px;height:45px;filter:drop-shadow(0 4px 14px rgba(147,197,253,.8))}
+html.loja .art .al{display:none}html.loja .art .infb::after{content:'Detalhes'}
 html.claro #sheet .cc.ccp,html.claro #sheet .cc.ccc{filter:invert(1) hue-rotate(180deg)}   /* tema claro inverte a folha: os dois cartões ficam iguais nos 2 temas */
 /* (133) inverter duas vezes não volta a cor saturada (amarelo vira laranja, o azul muda): na grade de categorias a folha não inverte;
    só o cabeçalho e os cartões sem foto invertem, e os cartões coloridos e com foto aparecem com a cor exata, igual ao tema escuro */
@@ -921,7 +922,7 @@ function wPinta(novo){
   abreFolha(h,true,true); W.prev=W.prevNx; W.prevL=W.nxL; wTl(); if(k==='sab'||(k==='opc'&&(p.sabores||[]).length)) wLista(); wRod();
 }
 function wResumo(){
-  var r='<textarea placeholder="Alguma observação? Ex.: sem cebola" oninput="W.obs=this.value">'+esc(W.obs)+'</textarea>';
+  var r='<textarea placeholder="Alguma observação? Ex.: '+(ehRest()?'sem cebola':'entregar na portaria')+'" oninput="W.obs=this.value">'+esc(W.obs)+'</textarea>';
   if(W.sab.some(function(id){ var s=sabPorId(id); return s&&s.balcao; })) r+='<div class="nt">⚠ Um dos sabores é só para retirada no balcão — esse pedido não poderá ser entregue.</div>';
   return r;
 }
@@ -1010,7 +1011,7 @@ function wAdd2(){
 function voaSacola(foto){
   try{
     var al=$('nv-sac'); if(!al) return; var r=al.getBoundingClientRect(), x1=r.left+r.width/2, y1=r.top+r.height/2, x0=innerWidth/2, y0=innerHeight*.38;
-    var d=document.createElement('div'); d.className='voa'; if(foto) d.style.backgroundImage='url("'+foto+'")'; else { d.style.background='var(--pri,#f97316)'; d.style.display='flex'; d.style.alignItems='center'; d.style.justifyContent='center'; d.style.fontSize='30px'; d.textContent='🍽'; }
+    var d=document.createElement('div'); d.className='voa'; if(foto) d.style.backgroundImage='url("'+foto+'")'; else { d.style.background='var(--pri,#f97316)'; d.style.display='flex'; d.style.alignItems='center'; d.style.justifyContent='center'; d.style.fontSize='30px'; d.textContent=ehRest()?'🍽':'🛍'; }
     d.style.left=x0+'px'; d.style.top=y0+'px'; document.body.appendChild(d);
     requestAnimationFrame(function(){ requestAnimationFrame(function(){ d.style.transform='translate('+(x1-x0)+'px,'+(y1-y0)+'px) scale(.28)'; d.style.opacity='.35'; }); });
     setTimeout(function(){ if(d.parentNode) d.parentNode.removeChild(d); var b=$('nSac')||al; b.classList.remove('bump'); void b.offsetWidth; b.classList.add('bump'); },780);
@@ -1175,7 +1176,7 @@ function ctCartaoDel(id){ ctApi('/food/conta/cartao-del',{id:id}).then(function(
 var GAR={ult:0};
 function mesaInit(force){
   if(!MESA){ var s0=$('mside'); if(s0){ s0.style.display='flex'; s0.children[1].style.display='none'; s0.children[2].style.display='none'; } return; }
-  if(geoCfg()) geoPega(function(ok){ var cf=geoCfg(); if(!ok){ toast('Ative a localização para fazer pedidos pela mesa'); return; } if(geoDist(GEO.lat,GEO.lng,cf.lat,cf.lng)-Math.min(GEO.acc,100)>cf.raio) toast('Você está longe do restaurante: dá para ver o cardápio, mas não para pedir'); });
+  if(geoCfg()) geoPega(function(ok){ var cf=geoCfg(); if(!ok){ toast('Ative a localização para fazer pedidos pela mesa'); return; } if(geoDist(GEO.lat,GEO.lng,cf.lat,cf.lng)-Math.min(GEO.acc,100)>cf.raio) toast('Você está longe '+lojaDo()+': dá para ver '+catRef()+', mas não para pedir'); });
   var sd=$('mside'); if(sd) sd.style.display='flex'; var nc=$('nv-conta'); if(nc) nc.style.display='none';
   var k='lf_splash_'+(D.cli||CLI)+'_'+MESA, vis=false; try{ vis=!!sessionStorage.getItem(k); }catch(e){}
   if(vis&&force!==true) return;
@@ -1232,7 +1233,7 @@ function ckResumo(){
   h+='</div><div class="rsm" id="ck-sm" style="align-items:center;'+(CK.anim?'display:none':'')+'"><div class="tx"><b>'+nIt+(nIt>1?' itens':' item')+'</b><small>Subtotal '+brl(sub)+'</small></div><button class="lk" id="ck-vi" onclick="ckItens()">'+(CK.open?'− esconder itens':'+ ver meus itens')+'</button></div>';
   if(!MESA) h+='<div style="margin:12px 0 0;font-size:15px">Olá, <b>'+esc(c.nome||'')+'</b>! <button class="lk" onclick="ctSair()">Não sou eu</button></div>';
   if(MESA) h+='<div class="ad on" style="cursor:default;margin-top:12px"><div class="tx"><b>🍽️ Mesa '+esc(MESA)+'</b><small>O pedido vai direto para a cozinha. Você paga no final, em Fechar conta.</small></div></div>'; else h+='<div class="seg"><button class="'+(EN.modo==='entrega'?'on':'')+'" onclick="ctModo(\'entrega\')">🛵 Entrega</button><button class="'+(EN.modo==='retirada'?'on':'')+'" onclick="ctModo(\'retirada\')">🏪 Retirada</button></div>';
-  if(MESA){} else if(EN.modo==='retirada') h+='<div class="nt" style="font-size:14px;color:#fff;margin-top:12px">Você retira o pedido no balcão do restaurante. Avisamos pelo WhatsApp quando estiver pronto.</div>';
+  if(MESA){} else if(EN.modo==='retirada') h+='<div class="nt" style="font-size:14px;color:#fff;margin-top:12px">Você retira o pedido no balcão '+lojaDo()+'. Avisamos pelo WhatsApp quando estiver pronto.</div>';
   else { ends.forEach(function(e){ h+='<div class="ad'+(e.id===EN.end?' on':'')+'" onclick="ctSelEnd(\''+esc(e.id)+'\')"><div class="rd"></div><div class="tx"><b>'+esc(e.apelido||'Endereço')+'</b><small>'+ctEndTxt(e)+'</small></div><div class="ac"><button class="lk" onclick="event.stopPropagation();ctEndForm(\''+esc(e.id)+'\')">Editar</button></div></div>'; });
     h+='<button class="bt c" style="flex:none;width:100%;margin-top:12px;background:transparent;border:2px solid var(--pri);color:#fff" onclick="ctEndForm(\'novo\')">+ '+(ends.length?'Outro endereço':'Cadastrar endereço')+'</button>'; }
   if(fechado) h+=pg?'<div class="ad on" style="cursor:default"><div class="tx"><b>🕒 Pedido agendado</b><small>'+esc(progFmt(pg))+'</small></div><div class="ac"><button class="lk" onclick="abreAgenda()">Alterar</button></div></div>':'<div class="ad" style="cursor:default;border-color:#f87171"><div class="tx"><b>Estamos fechados agora</b><small>Agende o pedido para um horário em que estaremos abertos.</small></div></div>';
@@ -1433,7 +1434,7 @@ function buscaLista(){
     h+='<div class="mp" onclick="abreSheet(\''+esc(p.id)+'\')">'+(p.destaque?'<div class="fgw">'+ft+'<span class="fogo" title="Destaque">🔥</span></div>':ft)+'<div style="flex:1;min-width:0"><b style="font-size:14.5px">'+esc(p.nome)+'</b>'+promoTag(p)+'</div><span class="vl" style="color:var(--pri2);font-weight:800;font-size:13.5px;text-align:right">'+(pr.min>0?(pr.de?'a partir de ':'')+(pr.orig>pr.min?'<s class="de">'+brl(pr.orig)+'</s> ':'')+brl(pr.min):'')+'</span></div>'; });
   $('bl').innerHTML=h||'<div class="nt">Nada encontrado.</div>';
 }
-function pedAjuda(num){ var w=String((D.cfg&&(D.cfg.whats||D.cfg.whatsapp||D.cfg.fone))||'').replace(/\D/g,''); if(w.length<10){ toast('Contato do restaurante ainda não cadastrado'); return; } window.open('https://wa.me/'+(w.length<=11?'55':'')+w+'?text='+encodeURIComponent('Olá! Preciso de ajuda com o pedido #'+num),'_blank'); }
+function pedAjuda(num){ var w=String((D.cfg&&(D.cfg.whats||D.cfg.whatsapp||D.cfg.fone))||'').replace(/\D/g,''); if(w.length<10){ toast('Contato '+lojaDo()+' ainda não cadastrado'); return; } window.open('https://wa.me/'+(w.length<=11?'55':'')+w+'?text='+encodeURIComponent('Olá! Preciso de ajuda com o pedido #'+num),'_blank'); }
 function pedRepete(i){
   var p=PEDS[i]; if(!p||!p.linhas||!p.linhas.length){ toast('Não consegui repetir este pedido'); return; }
   var n=0, perd=0, sv=W;
@@ -1446,7 +1447,7 @@ function pedRepete(i){
     var os=outros().map(function(a){return a.nome;}); (l.adds||[]).forEach(function(nm){ var k=os.indexOf(nm); if(k>=0) W.add.push(k); });
     var it=wMontaItem(), ex=SAC.filter(function(x){return x.k===it.k;})[0]; if(ex) ex.qty=Math.min(50,ex.qty+it.qty); else SAC.push(it); n++;
   });
-  W=sv; sacGrava(); if(!n){ toast('Esses itens não estão mais no cardápio'); return; } abreSacola(); toast(perd?'Adicionado (alguns itens saíram do cardápio)':'Itens adicionados à sacola');
+  W=sv; sacGrava(); if(!n){ toast('Esses itens não estão mais disponíveis'); return; } abreSacola(); toast(perd?'Adicionado (alguns itens não estão mais disponíveis)':'Itens adicionados à sacola');
 }
 
 function pedAndando(p){ return (p.status==='aguardando_pagto'||p.status==='pago'||p.status==='novo')&&p.fase!=='entregue'; }
@@ -1467,10 +1468,10 @@ function acpPinta(p,sem){
     pag:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>'};
   var nomes=mesa?['Preparo','Pronto','Servido']:ret?['Preparo','Pronto','Retirado']:['Preparo','A caminho','Entregue'], icons=[ic.prep,ret?ic.pronto:ic.rota,ic.ok];
   var cur=ix<=1?0:(ix===2?1:2), done=ix===3, hero={
-    '-1':['Aguardando pagamento','Assim que o Pix for confirmado, o restaurante começa a preparar.',ic.pag],
-    '0':['Pedido recebido','O restaurante já recebeu o seu pedido.',ic.prep],
+    '-1':['Aguardando pagamento','Assim que o Pix for confirmado, '+(ehRest()?'o restaurante começa a preparar.':'a loja começa a separar.'),ic.pag],
+    '0':['Pedido recebido',(ehRest()?'O restaurante':'A loja')+' já recebeu o seu pedido.',ic.prep],
     '1':['Em preparo','Estamos preparando o seu pedido com carinho.',ic.prep],
-    '2':[mesa?'Pedido pronto':ret?'Pronto para retirar':'A caminho','Pode vir buscar no balcão.'.replace('Pode vir buscar no balcão.',mesa?'O garçom está levando até a sua mesa.':ret?'Pode vir buscar no balcão do restaurante.':'O motoboy está levando o seu pedido.'),ret?ic.pronto:ic.rota],
+    '2':[mesa?'Pedido pronto':ret?'Pronto para retirar':'A caminho','Pode vir buscar no balcão.'.replace('Pode vir buscar no balcão.',mesa?'O garçom está levando até a sua mesa.':ret?'Pode vir buscar no balcão '+lojaDo()+'.':'O motoboy está levando o seu pedido.'),ret?ic.pronto:ic.rota],
     '3':[mesa?'Pedido servido':ret?'Pedido retirado':'Pedido entregue','Bom apetite! Obrigado pela preferência.',ic.ok]}[String(ix)];
   var pct=ix<0?0:(done?100:cur*50);
   var h=ctCab('Pedido #'+p.num,'abreConta(\'pedidos\')')+'<div class="wb" id="acp-b">';
@@ -1512,7 +1513,7 @@ function geoGate(cb){
   var cf=geoCfg(); if(!cf) return cb(undefined);
   geoPega(function(ok){
     if(!ok) return geoFalha('Para pedir pela mesa precisamos da sua localização. Permita o acesso à localização no navegador e tente de novo.');
-    if(geoDist(GEO.lat,GEO.lng,cf.lat,cf.lng)-Math.min(GEO.acc,100)>cf.raio) return geoFalha('Você precisa estar no restaurante para pedir pela mesa. Você pode ver o cardápio normalmente.');
+    if(geoDist(GEO.lat,GEO.lng,cf.lat,cf.lng)-Math.min(GEO.acc,100)>cf.raio) return geoFalha('Você precisa estar '+(ehRest()?'no restaurante':'na loja')+' para pedir pela mesa. Você pode ver '+catRef()+' normalmente.');
     cb({lat:GEO.lat,lng:GEO.lng,acc:Math.round(GEO.acc)});
   });
 }
@@ -1680,12 +1681,16 @@ function catNome(){ return catCfg().nome||'Cardápio'; }
 function catEhCardapio(){ var n=catNome().toLowerCase(); return n==='cardápio'||n==='cardapio'; }
 /* "o cardápio" no restaurante; o nome escolhido nos outros ("Medicamentos", "Produtos") */
 function catRef(){ return catEhCardapio()?'o cardápio':catNome(); }
+/* (133) loja que não é restaurante (farmácia, mercado...): textos neutros, sem montagem do prato */
+function ehRest(){ return catEhCardapio()||catCfg().icone==='cardapio'; }
+function lojaDo(){ return ehRest()?'do restaurante':'da loja'; }
 function catAplica(){
   var c=catCfg(), b=$('mnb'); if(!b) return;
   var sp=b.querySelector('span'), svg=b.querySelector('svg');
   if(svg) svg.innerHTML=CAT_IC[c.icone]||CAT_IC.cardapio;
   var nm=String(c.nome||'Cardápio').toUpperCase(); sp.textContent=nm; sp.style.fontSize=nm.length>10?'8px':nm.length>8?'9px':''; sp.style.letterSpacing=nm.length>8?'.2px':'';
   b.title=c.nome||'Cardápio';
+  document.documentElement.classList.toggle('loja',!ehRest()); var ot=$('obs-tx'); if(ot) ot.placeholder=ehRest()?'Ex.: sem cebola, ponto da carne…':'Ex.: entregar na portaria, troco para R$ 50…';
   var wb=$('wi-btn'); if(wb&&!catEhCardapio()) wb.textContent='Ver '+catNome();
 }
 function abreMenu(){
@@ -2197,7 +2202,7 @@ function waEnviar(){
     .then(function(r){ return r.json().catch(function(){ return {ok:false}; }); })
     .then(function(d){
       if(!d||!d.ok){ volta((d&&d.mensagem)||'Não consegui preparar o pedido. Tente de novo.'); return; }
-      var L=['Oi! Quero fazer este pedido pelo cardápio:',''];
+      var L=['Oi! Quero fazer este pedido pel'+(ehRest()?'o cardápio':'o site')+':',''];
       SAC.forEach(function(i){ var x=[i.tam,(i.sab||[]).join(' + '),i.borda?'borda '+i.borda:'',(i.adds||[]).length?'+ '+i.adds.join(', '):'',i.obs?'obs: '+i.obs:''].filter(Boolean).join(' · ');
         L.push('• '+i.qty+'x '+i.nome+(x?' ('+x+')':'')); });
       L.push('','Subtotal: '+brl(d.subtotal),'Código do pedido: '+d.codigo);
