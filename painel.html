@@ -8704,8 +8704,9 @@ function slSalvar(){
   fetch(DELTADIS_API+'/painel/salao',{method:'POST',headers:cdHdr(),body:JSON.stringify({pecas:SL.L,areas:SL.areas})}).then(function(r){return r.json();}).then(function(d){
     if(!d||!d.ok) throw new Error((d&&d.mensagem)||'não salvou');
     /* (121) servidor antigo descarta peças/formatos que não conhece: avisa e mantém o desenho na tela (nada se perde) */
-    var env=SL.L.length, vol=(d.pecas||[]).length, perdeuForma=SL.areas.some(function(a){ return a.pontos; })&&!(d.areas||[]).some(function(a){ return a.pontos; });
-    if(vol<env||perdeuForma||!d.areas){ SL.sujo=true; m.style.color='#DC2626'; m.innerHTML='⚠️ O servidor está numa versão antiga e <b>não guardou '+(vol<env?(env-vol)+' peça(s)':'o formato da área')+'</b> (decoração, equipamentos, giro ou formato livre). Cole o <b>Worker 120</b> na Cloudflare e toque em Salvar de novo: o desenho continua aqui.'; aviso('Salvo pela metade: cole o Worker 120'); return; }
+    /* (123) o Worker 120 não devolve as áreas no salvar: só confere o formato quando elas vêm na resposta */
+    var env=SL.L.length, vol=(d.pecas||[]).length, perdeuForma=!!d.areas&&SL.areas.some(function(a){ return a.pontos; })&&!d.areas.some(function(a){ return a.pontos; });
+    if(vol<env||perdeuForma){ SL.sujo=true; m.style.color='#DC2626'; m.innerHTML='⚠️ O servidor está numa versão antiga e <b>não guardou '+(vol<env?(env-vol)+' peça(s)':'o formato da área')+'</b> (decoração, equipamentos, giro ou formato livre). Cole o <b>Worker 120</b> na Cloudflare e toque em Salvar de novo: o desenho continua aqui.'; aviso('Salvo pela metade: cole o Worker 120'); return; }
     SL.L=d.pecas||[]; if(d.areas) SL.areas=d.areas; SL.sel=0; SL.sujo=false; slAreasPinta(); slDesenha(); var nm=SL.L.filter(function(p){return p.t==='mesa';}).length, sb=SL.L.some(function(p){return p.t==='balcao';});
     m.style.color='#16A34A'; m.textContent='Salão salvo ✓ ('+nm+(nm===1?' mesa':' mesas')+')'+(sb?'':' · falta colocar o balcão de saída'); aviso('Salão salvo');
   }).catch(function(e){ m.style.color='#DC2626'; m.textContent=e.message||'Não salvou'; });
