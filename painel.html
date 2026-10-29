@@ -8300,7 +8300,10 @@ var SL_AREA0={id:'principal',nome:'Salão',tipo:'interno',andar:'terreo',larg:24
 function slAr(){ return SL.areas.filter(function(a){ return a.id===SL.area; })[0]||SL.areas[0]||SL_AREA0; }
 function slWH(){ var a=slAr(); return {W:Math.round(a.larg*25),H:Math.round(a.comp*25)}; }
 function slDaArea(){ var a0=(SL.areas[0]||SL_AREA0).id; return SL.L.filter(function(p){ return (p.area||a0)===SL.area; }); }
-var SL_T={mesa:{nome:'Mesa'},balcao:{nome:'Balcão de saída',w:110,h:30,label:'BALCÃO'},cozinha:{nome:'Cozinha e bar',w:96,h:230,label:'COZINHA'},banheiro:{nome:'Banheiro',w:52,h:40,label:'WC'},entrada:{nome:'Entrada',w:84,h:16,label:'ENTRADA'},saida:{nome:'Saída',w:84,h:16,label:'SAÍDA'}};
+var SL_T={mesa:{nome:'Mesa'},balcao:{nome:'Balcão de saída',w:110,h:30,label:'BALCÃO'},cozinha:{nome:'Cozinha e bar',w:96,h:230,label:'COZINHA'},banheiro:{nome:'Banheiro',w:52,h:40,label:'WC'},entrada:{nome:'Entrada',w:84,h:16,label:'ENTRADA'},saida:{nome:'Saída',w:84,h:16,label:'SAÍDA'},
+  /* (120) decoração e equipamentos: tamanho editável (25 pontos = 1 m) */
+  vaso:{nome:'Vaso / planta',w:13,h:13,label:'',ic:'🪴',cor:'#DCEFD8',deco:1},tv:{nome:'TV',w:30,h:6,label:'',ic:'📺',cor:'#3A3A40',deco:1},cervejeira:{nome:'Cervejeira',w:16,h:16,label:'',ic:'🍺',cor:'#E3E6EA',deco:1},
+  freezer:{nome:'Freezer',w:33,h:18,label:'',ic:'🧊',cor:'#EAF4FB',deco:1},picole:{nome:'Freezer de picolé',w:25,h:16,label:'',ic:'🍦',cor:'#FCE4EF',deco:1},buffet:{nome:'Carrinho de buffet',w:40,h:18,label:'',ic:'🍽️',cor:'#EEF0F2',deco:1},prateleira:{nome:'Prateleira de bebidas',w:38,h:10,label:'',ic:'🍾',cor:'#F3E3CF',deco:1}};
 function slModelo(){
   var L=[],id=1; function add(t,x,y,n,label,w,h){ var d=SL_T[t]; L.push({id:id++,t:t,x:x,y:y,n:n||0,label:label||'',w:w||d.w||44,h:h||d.h||44}); }
   add('cozinha',57,150,0,'',96,230); add('balcao',150,185,0,'',30,110);
@@ -8311,7 +8314,10 @@ function slModelo(){
 function slPeca(id){ return SL.L.filter(function(p){return p.id===id;})[0]; }
 function slFormas(p){
   var h='';
-  if(p.t==='mesa'){ var dm=p.w||44, fz=Math.max(11,Math.min(30,Math.round(dm*0.36))); h+='<circle cx="'+p.x+'" cy="'+p.y+'" r="'+(dm/2)+'" fill="#E8E8EB" stroke="#E3C9B8" stroke-width="2"/><text x="'+p.x+'" y="'+(p.y+fz*0.37)+'" text-anchor="middle" font-size="'+fz+'" font-weight="800" fill="#1C1C1E">'+p.n+'</text>'; }
+  if(p.t==='mesa'){ var dm=p.w||44, qd=p.forma==='quadrada', mh=qd?(p.h||dm):dm, fz=Math.max(8,Math.min(30,Math.round(Math.min(dm,mh)*0.5)));
+    h+=(qd?'<rect x="'+(p.x-dm/2)+'" y="'+(p.y-mh/2)+'" width="'+dm+'" height="'+mh+'" rx="2" fill="#E8E8EB" stroke="#E3C9B8" stroke-width="1.5"/>':'<circle cx="'+p.x+'" cy="'+p.y+'" r="'+(dm/2)+'" fill="#E8E8EB" stroke="#E3C9B8" stroke-width="1.5"/>')+'<text x="'+p.x+'" y="'+(p.y+fz*0.37)+'" text-anchor="middle" font-size="'+fz+'" font-weight="800" fill="#1C1C1E" transform="rotate('+(-(p.rot||0))+' '+p.x+' '+p.y+')">'+p.n+'</text>'; }
+  else if(SL_T[p.t]&&SL_T[p.t].deco){ var dt=SL_T[p.t], fi=Math.max(6,Math.min(22,Math.round(Math.min(p.w,p.h)*0.7)));   /* (120) decoração e equipamentos */
+    h+='<rect x="'+(p.x-p.w/2)+'" y="'+(p.y-p.h/2)+'" width="'+p.w+'" height="'+p.h+'" rx="'+(p.t==='vaso'?p.w/2:2)+'" fill="'+dt.cor+'" stroke="#B9B9C2" stroke-width="1"/><text x="'+p.x+'" y="'+(p.y+fi*0.36)+'" text-anchor="middle" font-size="'+fi+'" transform="rotate('+(-(p.rot||0))+' '+p.x+' '+p.y+')">'+dt.ic+'</text>'; }
   else if(p.t==='entrada'||p.t==='saida'){ h+='<rect x="'+(p.x-p.w/2)+'" y="'+(p.y-p.h/2)+'" width="'+p.w+'" height="'+p.h+'" rx="4" fill="'+(p.t==='entrada'?'#16A34A':'#DC2626')+'" opacity=".9"/><text '+(p.h>p.w?'transform="rotate(-90 '+p.x+' '+p.y+')" ':'')+'x="'+p.x+'" y="'+(p.y+4)+'" text-anchor="middle" font-size="10" font-weight="800" fill="#fff">'+esc(p.label||SL_T[p.t].label)+'</text>'; }
   else {
     var forte=p.t==='balcao', lab=esc(p.label||SL_T[p.t].label);
@@ -8321,13 +8327,23 @@ function slFormas(p){
   }
   return h;
 }
+/* (120) contorno da área: pontos em metros (sem pontos = retângulo de largura × comprimento) */
+function slPts(a){ a=a||slAr(); return (a.pontos&&a.pontos.length>=3)?a.pontos:[[0,0],[a.larg,0],[a.larg,a.comp],[0,a.comp]]; }
 function slPlanta(){
-  var z=slWH(), W=z.W, H=z.H, ex=slAr().tipo==='externo', s='<rect x="2" y="2" width="'+(W-4)+'" height="'+(H-4)+'" rx="10" fill="'+(ex?'#F1F5EC':'none')+'" stroke="'+(ex?'#A7C495':'#D9CFC6')+'" stroke-width="3" vector-effect="non-scaling-stroke"'+(ex?' stroke-dasharray="10 6"':'')+'/>', gx, gy;
+  var z=slWH(), W=z.W, H=z.H, ex=slAr().tipo==='externo', pts=slPts(), pp=pts.map(function(q){ return (q[0]*25)+','+(q[1]*25); }).join(' '), rv=Math.max(4,Math.max(W,H)/90), gx, gy;
+  var s='<polygon points="'+pp+'" fill="'+(ex?'#F1F5EC':'#FFFFFF')+'" stroke="'+(ex?'#A7C495':'#C9BBAE')+'" stroke-width="3" stroke-linejoin="round" vector-effect="non-scaling-stroke"'+(ex?' stroke-dasharray="10 6"':'')+'/>';
   for(gx=25;gx<W;gx+=25) s+='<line x1="'+gx+'" y1="4" x2="'+gx+'" y2="'+(H-4)+'" stroke="'+(gx%125?'#E6E6EA':'#CFCFD6')+'" stroke-width="'+(gx%125?.6:1)+'" vector-effect="non-scaling-stroke"/>';
   for(gy=25;gy<H;gy+=25) s+='<line x1="4" y1="'+gy+'" x2="'+(W-4)+'" y2="'+gy+'" stroke="'+(gy%125?'#E6E6EA':'#CFCFD6')+'" stroke-width="'+(gy%125?.6:1)+'" vector-effect="non-scaling-stroke"/>';
+  /* bordas (dois cliques criam um ponto) e pontos (arrastar muda o formato; dois cliques apagam) */
+  pts.forEach(function(q,i){ var r=pts[(i+1)%pts.length]; s+='<line data-e="'+i+'" x1="'+q[0]*25+'" y1="'+q[1]*25+'" x2="'+r[0]*25+'" y2="'+r[1]*25+'" stroke="transparent" stroke-width="14" vector-effect="non-scaling-stroke" style="cursor:copy"><title>Dois cliques para criar um ponto</title></line>'; });
+  pts.forEach(function(q,i){ s+='<circle data-v="'+i+'" cx="'+q[0]*25+'" cy="'+q[1]*25+'" r="'+rv+'" fill="#fff" stroke="#8B7B6E" stroke-width="2" vector-effect="non-scaling-stroke" style="cursor:move"><title>Arraste para mudar o formato · dois cliques apagam</title></circle>'; });
+  var sels=slSels(), um=sels.length===1;
   slDaArea().forEach(function(p){
-    s+='<g data-id="'+p.id+'" style="cursor:grab">'+slFormas(p);
-    if(SL.sel===p.id){ var pw=p.w||44, ph=p.t==='mesa'?pw:p.h, r={x:p.x-pw/2-4,y:p.y-ph/2-4,w:pw+8,h:ph+8}; s+='<rect x="'+r.x+'" y="'+r.y+'" width="'+r.w+'" height="'+r.h+'" rx="8" fill="none" stroke="#FF5A00" stroke-width="2.5" stroke-dasharray="5 4" style="pointer-events:none"/><rect data-h="1" x="'+(p.x+pw/2-8)+'" y="'+(p.y+ph/2-8)+'" width="18" height="18" rx="4" fill="#FF5A00" stroke="#fff" stroke-width="2.5" style="cursor:nwse-resize"/>'; }
+    /* (120) cada peça gira em volta do próprio centro; selecionadas ficam com o contorno laranja (a alça de tamanho só com uma selecionada) */
+    s+='<g data-id="'+p.id+'" style="cursor:grab"'+(p.rot?' transform="rotate('+p.rot+' '+p.x+' '+p.y+')"':'')+'>'+slFormas(p);
+    if(slEhSel(p.id)){ var pw=p.w||44, ph=(p.t==='mesa'&&p.forma!=='quadrada')?pw:(p.h||pw), r={x:p.x-pw/2-3,y:p.y-ph/2-3,w:pw+6,h:ph+6}, hs=Math.max(6,Math.min(16,Math.round(Math.max(pw,ph)*0.35)));
+      s+='<rect x="'+r.x+'" y="'+r.y+'" width="'+r.w+'" height="'+r.h+'" rx="4" fill="none" stroke="#FF5A00" stroke-width="2" vector-effect="non-scaling-stroke" stroke-dasharray="5 4" style="pointer-events:none"/>';
+      if(um) s+='<rect data-h="1" x="'+(p.x+pw/2-hs/2)+'" y="'+(p.y+ph/2-hs/2)+'" width="'+hs+'" height="'+hs+'" rx="2" fill="#FF5A00" stroke="#fff" stroke-width="1.5" vector-effect="non-scaling-stroke" style="cursor:nwse-resize"/>'; }
     s+='</g>';
   });
   return s;
@@ -8362,31 +8378,52 @@ function slMonta(){
     +(cheia?'<button class="btn sec" id="sl-bfull" type="button" style="'+bs+'" onclick="slTelaCheia()">Tela cheia</button>':'')
     +'<button class="btn pri" type="button" style="'+bs+'" onclick="slSalvar()">Salvar salão</button></div>'
     +'<div style="flex:1;min-height:0;display:flex;flex-direction:column;gap:10px;padding:12px 14px">'
-    +'<div style="font-size:12.5px;color:var(--muted2);line-height:1.45">Toque numa peça para colocar e <b>arraste</b> até o lugar certo. Para <b>aumentar ou diminuir</b>, arraste o quadradinho laranja do canto. Para <b>mudar o nome</b>, toque duas vezes no texto. O garçom vai ver este mapa no celular, com o balcão na base. Cada quadradinho = 1 metro (linha mais forte a cada 5 m).</div>'
+    +'<div style="font-size:12.5px;color:var(--muted2);line-height:1.45">Toque numa peça para colocar e <b>arraste</b> até o lugar certo. Para <b>aumentar ou diminuir</b>, arraste o quadradinho laranja do canto. Para <b>mudar o nome</b>, toque duas vezes no texto. Para <b>selecionar várias</b>, segure <b>Shift</b> (ou Ctrl) e clique. O garçom vai ver este mapa no celular, com o balcão na base. Cada quadradinho = 1 metro (linha mais forte a cada 5 m).</div>'
     +'<div id="sl-areas"></div>'
-    +'<div id="sl-tools" style="display:flex;flex-wrap:wrap;gap:6px">'+['mesa','balcao','cozinha','banheiro','entrada','saida'].map(function(t){ return '<button class="btn sec" type="button" style="padding:7px 11px;font-size:12.5px" onclick="slAdd(\''+t+'\')">+ '+SL_T[t].nome+'</button>'; }).join('')+'<button class="btn sec" type="button" style="padding:7px 11px;font-size:12.5px;margin-left:auto;border-color:var(--pri,#E07B39);color:var(--pri,#E07B39);font-weight:700" onclick="slSync()" title="Deixa o desenho igual ao menu Mesas">⟳ Sincronizar com as mesas cadastradas</button><button class="btn sec" type="button" style="padding:7px 11px;font-size:12.5px" onclick="slExemplo()">Usar modelo de exemplo</button></div>'
+    +'<div id="sl-tools" style="display:flex;flex-wrap:wrap;gap:6px">'+['mesa','balcao','cozinha','banheiro','entrada','saida'].map(function(t){ return '<button class="btn sec" type="button" style="padding:7px 11px;font-size:12.5px" onclick="slAdd(\''+t+'\')">+ '+SL_T[t].nome+'</button>'; }).join('')
+    +'<select class="inp" style="padding:6px 9px;font-size:12.5px;width:auto" onchange="if(this.value){ slAdd(this.value); this.value=\'\'; }" title="Decoração e equipamentos"><option value="">+ Decoração e equipamentos…</option>'+Object.keys(SL_T).filter(function(t){ return SL_T[t].deco; }).map(function(t){ return '<option value="'+t+'">'+SL_T[t].ic+' '+SL_T[t].nome+'</option>'; }).join('')+'</select>'
+    +'<button class="btn sec" type="button" style="padding:7px 11px;font-size:12.5px;margin-left:auto;border-color:var(--pri,#E07B39);color:var(--pri,#E07B39);font-weight:700" onclick="slSync()" title="Deixa o desenho igual ao menu Mesas">⟳ Sincronizar com as mesas cadastradas</button><button class="btn sec" type="button" style="padding:7px 11px;font-size:12.5px" onclick="slExemplo()">Usar modelo de exemplo</button></div>'
     +'<div id="sl-bar3" style="display:none;gap:6px;align-items:center;flex-wrap:wrap"><button class="btn sec" type="button" style="padding:7px 11px;font-size:12.5px" onclick="slGira3(-45)">↺ Girar</button><button class="btn sec" type="button" style="padding:7px 11px;font-size:12.5px" onclick="slGira3(45)">Girar ↻</button><span style="font-size:12.5px;color:var(--muted2)">Visão 3D só para olhar. Arraste a imagem para girar. Para editar, volte ao 2D.</span></div>'
     +'<div style="flex:1;min-height:0"><svg id="sl-svg" viewBox="0 0 600 360" style="width:100%;height:100%;display:block;border-radius:12px;background:#FAFAFA;border:1px solid var(--border2);touch-action:none" role="img" aria-label="Planta do salão"></svg><svg id="sl-svg3" viewBox="0 0 900 520" style="width:100%;height:100%;display:none;border-radius:12px;background:#F3F3F5;border:1px solid var(--border2);touch-action:none;cursor:grab" role="img" aria-label="Salão em 3D"></svg></div>'
     +'<div id="sl-prop" style="min-height:44px"></div><div id="sl-m" style="font-size:12.5px;min-height:18px"></div></div>';
   var s=el('sl-svg');
+  /* (120) Shift (ou Ctrl) + clique: soma ou tira da seleção; arrastar uma selecionada move todas juntas */
   s.addEventListener('pointerdown',function(e){
-    var g=e.target.closest('g[data-id]'); if(!g){ SL.sel=0; SL.ult=0; slDesenha(); return; }
+    var vt=e.target.getAttribute&&e.target.getAttribute('data-v');
+    if(vt!=null){ var a0=slAr(); a0.pontos=slPts(a0).map(function(q){ return q.slice(); }); SL.drag={mode:'vert',i:+vt}; s.setPointerCapture(e.pointerId); return; }   /* (120) arrastar um ponto da borda */
+    var g=e.target.closest('g[data-id]'), add=e.shiftKey||e.ctrlKey||e.metaKey;
+    if(!g){ if(!add){ SL.sel=0; SL.multi=[]; } SL.ult=0; slDesenha(); return; }
     var id=+g.getAttribute('data-id'), p=slPeca(id), q=slPt(e);
     if(e.target.getAttribute&&e.target.getAttribute('data-h')){ SL.drag={id:id,mode:'size'}; s.setPointerCapture(e.pointerId); return; }
-    var agora=Date.now(), dbl=(SL.ult===id&&agora-SL.ultT<380);
-    SL.ult=id; SL.ultT=agora; SL.sel=id;
-    if(dbl){ SL.drag=null; SL.abrirEd=true; slDesenha(); return; }
-    SL.drag={id:id,mode:'move',dx:q.x-p.x,dy:q.y-p.y}; s.setPointerCapture(e.pointerId); slDesenha(true);
+    if(add){ var ms=slSels().map(function(x){ return x.id; }), k=ms.indexOf(id); if(k>=0) ms.splice(k,1); else ms.push(id); SL.multi=ms; SL.sel=ms.length?(k>=0?ms[ms.length-1]:id):0; SL.ult=0;
+      if(k>=0){ slDesenha(); return; } }
+    else if(!slEhSel(id)||slSels().length<2){ SL.multi=[id]; SL.sel=id; }
+    var agora=Date.now(), dbl=!add&&(SL.ult===id&&agora-SL.ultT<380);
+    SL.ult=id; SL.ultT=agora;
+    if(dbl){ SL.drag=null; SL.multi=[id]; SL.sel=id; SL.abrirEd=true; slDesenha(); return; }
+    var of={}; slSels().forEach(function(x){ of[x.id]={dx:q.x-x.x,dy:q.y-x.y}; });
+    SL.drag={id:id,mode:'move',of:of}; s.setPointerCapture(e.pointerId); slDesenha(true);
   });
   s.addEventListener('pointermove',function(e){
     if(!SL.drag) return; var p=slPeca(SL.drag.id), q=slPt(e); SL.sujo=true;
+    if(SL.drag.mode==='vert'){ var av=slAr(), pv=av.pontos[SL.drag.i]; if(pv){ pv[0]=Math.max(0,Math.min(av.larg,Math.round(q.x/25*20)/20)); pv[1]=Math.max(0,Math.min(av.comp,Math.round(q.y/25*20)/20)); } s.innerHTML=slPlanta(); return; }
     if(SL.drag.mode==='size'){
-      var dx=Math.abs(q.x-p.x), dy=Math.abs(q.y-p.y);
-      if(p.t==='mesa'){ p.w=p.h=Math.max(12,Math.min(150,Math.round(2*Math.max(dx,dy)))); }
-      else { p.w=Math.max(5,Math.min(2000,Math.round(2*dx/2.5)*2.5)); p.h=Math.max(5,Math.min(2000,Math.round(2*dy/2.5)*2.5)); }
-    } else { var zz=slWH(); p.x=Math.max(5,Math.min(zz.W-5,Math.round((q.x-SL.drag.dx)/5)*5)); p.y=Math.max(5,Math.min(zz.H-5,Math.round((q.y-SL.drag.dy)/5)*5)); SL.ult=0; }
+      /* mede no "jeito" da peça (desfaz o giro) para a alça funcionar com a peça girada */
+      var a=-(p.rot||0)*Math.PI/180, vx=q.x-p.x, vy=q.y-p.y, lx=Math.abs(vx*Math.cos(a)-vy*Math.sin(a)), ly=Math.abs(vx*Math.sin(a)+vy*Math.cos(a));
+      if(p.t==='mesa'&&p.forma!=='quadrada'){ p.w=p.h=Math.max(10,Math.min(150,Math.round(2*Math.max(lx,ly)))); }
+      else if(p.t==='mesa'){ p.w=Math.max(10,Math.min(150,Math.round(2*lx))); p.h=Math.max(10,Math.min(150,Math.round(2*ly))); }
+      else { p.w=Math.max(5,Math.min(2000,Math.round(2*lx/2.5)*2.5)); p.h=Math.max(5,Math.min(2000,Math.round(2*ly/2.5)*2.5)); }
+    } else { var zz=slWH(); slSels().forEach(function(x){ var o=SL.drag.of[x.id]; if(!o) return; x.x=Math.max(5,Math.min(zz.W-5,Math.round((q.x-o.dx)/2.5)*2.5)); x.y=Math.max(5,Math.min(zz.H-5,Math.round((q.y-o.dy)/2.5)*2.5)); }); SL.ult=0; }
     s.innerHTML=slPlanta();
   });
+  /* (120) dois cliques na borda: cria um ponto ali; dois cliques num ponto: apaga (mínimo 3) */
+  s.addEventListener('dblclick',function(e){
+    var ed=e.target.getAttribute&&e.target.getAttribute('data-e'), vv=e.target.getAttribute&&e.target.getAttribute('data-v'), a=slAr(); if(ed==null&&vv==null) return;
+    a.pontos=slPts(a).map(function(q){ return q.slice(); }); SL.sujo=true;
+    if(vv!=null){ if(a.pontos.length>3) a.pontos.splice(+vv,1); else aviso('A área precisa de pelo menos 3 pontos.'); }
+    else { var i=+ed, A=a.pontos[i], B=a.pontos[(i+1)%a.pontos.length], q=slPt(e), mx=q.x/25, my=q.y/25, dx=B[0]-A[0], dy=B[1]-A[1], t=Math.max(0.05,Math.min(0.95,((mx-A[0])*dx+(my-A[1])*dy)/((dx*dx+dy*dy)||1)));
+      a.pontos.splice(i+1,0,[Math.round((A[0]+dx*t)*20)/20,Math.round((A[1]+dy*t)*20)/20]); }
+    slAreasPinta(); slDesenha(); });
   s.addEventListener('pointerup',function(){ SL.drag=null; if(SL.abrirEd){ SL.abrirEd=false; setTimeout(slEditaTexto,70); } }); s.addEventListener('pointercancel',function(){ SL.drag=null; });
   var s3=el('sl-svg3'), r3x=null;
   s3.addEventListener('pointerdown',function(e){ r3x={x:e.clientX,a:SL.ang}; s3.setPointerCapture(e.pointerId); });
@@ -8407,9 +8444,10 @@ function slEditaTexto(){
   inp.addEventListener('blur',function(){ fim(true); });
 }
 function slTam(f){
-  var p=slPeca(SL.sel); if(!p) return; SL.sujo=true;
-  if(p.t==='mesa'){ p.w=p.h=Math.max(12,Math.min(150,Math.round(p.w*(f>0?1.12:0.89)))); }
-  else { p.w=Math.max(5,Math.min(2000,Math.round(p.w*(f>0?1.12:0.89)))); p.h=Math.max(5,Math.min(2000,Math.round(p.h*(f>0?1.12:0.89)))); }
+  var ps=slSels(); if(!ps.length) return; SL.sujo=true; var k=f>0?1.12:0.89;
+  ps.forEach(function(p){
+    if(p.t==='mesa'){ p.w=Math.max(10,Math.min(150,Math.round(p.w*k))); p.h=p.forma==='quadrada'?Math.max(10,Math.min(150,Math.round((p.h||p.w)*k))):p.w; }
+    else { p.w=Math.max(5,Math.min(2000,Math.round(p.w*k))); p.h=Math.max(5,Math.min(2000,Math.round(p.h*k))); } });
   slDesenha();
 }
 /* visão 3D (isométrica, girável): só olhar, a edição é no 2D */
@@ -8463,19 +8501,57 @@ function slVista(){
 }
 function slGira3(d){ SL.ang=((SL.ang+d)%360+360)%360; slDesenha3(); }
 function slPt(e){ var s=el('sl-svg'), m=s.getScreenCTM().inverse(), q=s.createSVGPoint(); q.x=e.clientX; q.y=e.clientY; return q.matrixTransform(m); }
+/* (120) seleção: várias peças (Shift/Ctrl + clique) ou uma */
+function slSels(){ var ms=(SL.multi&&SL.multi.length)?SL.multi:(SL.sel?[SL.sel]:[]); return ms.map(slPeca).filter(function(p){ return p&&(p.area||SL.area)===SL.area; }); }
+function slEhSel(id){ return slSels().some(function(p){ return p.id===id; }); }
+/* meia largura/altura que a peça ocupa na tela, já girada (para alinhar pelas bordas) */
+function slMeio(p){ var w=p.w||44, h=(p.t==='mesa'&&p.forma!=='quadrada')?w:(p.h||w), a=(p.rot||0)*Math.PI/180, c=Math.abs(Math.cos(a)), s=Math.abs(Math.sin(a)); return {hw:(w*c+h*s)/2,hh:(w*s+h*c)/2}; }
+function slAlinha(m){ var ps=slSels(); if(ps.length<2) return; SL.sujo=true;
+  var b=ps.map(function(p){ var e=slMeio(p); return {p:p,l:p.x-e.hw,r:p.x+e.hw,t:p.y-e.hh,b:p.y+e.hh,e:e}; }), mn=function(k){ return Math.min.apply(null,b.map(function(x){ return x[k]; })); }, mx=function(k){ return Math.max.apply(null,b.map(function(x){ return x[k]; })); };
+  var L=mn('l'), R=mx('r'), T=mn('t'), B=mx('b');
+  b.forEach(function(x){ if(m==='esq') x.p.x=L+x.e.hw; else if(m==='dir') x.p.x=R-x.e.hw; else if(m==='cx') x.p.x=(L+R)/2; else if(m==='topo') x.p.y=T+x.e.hh; else if(m==='base') x.p.y=B-x.e.hh; else if(m==='cy') x.p.y=(T+B)/2; });
+  slDesenha(); }
+/* distribui com o mesmo espaço entre as peças (as das pontas ficam onde estão) */
+function slDistribui(ax){ var ps=slSels(); if(ps.length<3){ aviso('Selecione 3 peças ou mais para distribuir.'); return; } SL.sujo=true;
+  var k=ax==='h'?'x':'y', ek=ax==='h'?'hw':'hh', o=ps.slice().sort(function(a,b){ return a[k]-b[k]; }), es=o.map(slMeio);
+  var ini=o[0][k]-es[0][ek], fim=o[o.length-1][k]+es[o.length-1][ek], tot=es.reduce(function(s,e){ return s+2*e[ek]; },0), gap=(fim-ini-tot)/(o.length-1), pos=ini;
+  o.forEach(function(p,i){ p[k]=Math.round((pos+es[i][ek])*10)/10; pos+=2*es[i][ek]+gap; }); slDesenha(); }
+/* tamanho de todas as selecionadas de uma vez (cm); vazio = não muda */
+function slTamLote(){ var cw=parseFloat(el('sl-lw').value), ch=parseFloat(el('sl-lh').value); if(!(cw>0)&&!(ch>0)) return; SL.sujo=true;
+  slSels().forEach(function(p){ var r=p.t==='mesa'&&p.forma!=='quadrada';
+    if(cw>0){ p.w=Math.max(p.t==='mesa'?10:5,Math.min(p.t==='mesa'?150:2000,Math.round(cw/4))); if(r) p.h=p.w; }
+    if(ch>0&&!r) p.h=Math.max(p.t==='mesa'?10:5,Math.min(p.t==='mesa'?150:2000,Math.round(ch/4))); });
+  slDesenha(); }
+/* girar: soma graus (d) ou define o ângulo exato (abs) */
+function slRot(d,abs){ SL.sujo=true; slSels().forEach(function(p){ var v=abs!=null?abs:(p.rot||0)+d; p.rot=((Math.round(v)%360)+360)%360; }); slDesenha(); }
+function slForma(f){ var p=slPeca(SL.sel); if(!p||p.t!=='mesa') return; SL.sujo=true; p.forma=f; if(f!=='quadrada') p.h=p.w; slDesenha(); }
 function slDesenha(manterProp){
   var z=slWH(); el('sl-svg').setAttribute('viewBox','0 0 '+z.W+' '+z.H);
   el('sl-svg').innerHTML=slPlanta();
-  var pr=el('sl-prop'), p=SL.sel&&slPeca(SL.sel);
-  if(!p){ pr.innerHTML='<div style="font-size:12.5px;color:var(--muted)">Toque numa peça do mapa para mudar o nome ou o número, girar ou remover.</div>'; return; }
-  if(manterProp&&el('sl-n')) return;
+  var pr=el('sl-prop'), ps=slSels(), p=ps.length===1?ps[0]:null, bt='class="btn sec" type="button" style="padding:7px 10px;font-size:12.5px"', lb='font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px';
+  var giro='<span style="display:flex;align-items:center;gap:4px"><button '+bt+' onclick="slRot(-15)" title="Girar 15° para a esquerda">↺ 15°</button><button '+bt+' onclick="slRot(15)" title="Girar 15° para a direita">15° ↻</button><button '+bt+' onclick="slRot(90)">90°</button>'
+    +'<label style="'+lb+'"><input class="inp" id="sl-rot" type="number" min="0" max="359" step="1" value="'+(p?(p.rot||0):'')+'" placeholder="°" style="width:66px" onchange="slRot(0,+this.value)" title="Ângulo exato">°</label></span>';
+  if(!ps.length){ pr.innerHTML='<div style="font-size:12.5px;color:var(--muted)">Toque numa peça para editar. Segure <b>Shift</b> (ou Ctrl) e clique para selecionar várias e alinhar, distribuir, girar ou mudar o tamanho de todas de uma vez.</div>'; return; }
+  if(manterProp&&(el('sl-n')||el('sl-lw'))) return;
+  if(!p){   /* várias selecionadas */
+    var h='<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b style="font-size:13px">'+ps.length+' peças selecionadas</b>'
+      +'<span style="display:flex;gap:4px;flex-wrap:wrap"><button '+bt+' onclick="slAlinha(\'esq\')" title="Alinhar à esquerda">⇤ Esquerda</button><button '+bt+' onclick="slAlinha(\'cx\')" title="Centralizar na horizontal">↔ Centro</button><button '+bt+' onclick="slAlinha(\'dir\')" title="Alinhar à direita">Direita ⇥</button>'
+      +'<button '+bt+' onclick="slAlinha(\'topo\')" title="Alinhar pelo topo">⤒ Topo</button><button '+bt+' onclick="slAlinha(\'cy\')" title="Alinhar pelo meio">↕ Meio</button><button '+bt+' onclick="slAlinha(\'base\')" title="Alinhar pela base">⤓ Base</button></span>'
+      +'<span style="display:flex;gap:4px"><button '+bt+' onclick="slDistribui(\'h\')" title="Mesmo espaço entre elas, na horizontal">⇹ Distribuir na horizontal</button><button '+bt+' onclick="slDistribui(\'v\')" title="Mesmo espaço entre elas, na vertical">⇳ Distribuir na vertical</button></span></div>'
+      +'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px"><span style="font-size:12px;font-weight:800;color:var(--muted2)">Tamanho de todas:</span>'
+      +'<label style="'+lb+'">Largura / diâmetro<input class="inp" id="sl-lw" type="number" min="20" max="8000" step="5" placeholder="cm" style="width:84px">cm</label><label style="'+lb+'">Comprimento<input class="inp" id="sl-lh" type="number" min="20" max="8000" step="5" placeholder="cm" style="width:84px">cm</label><button '+bt+' onclick="slTamLote()">Aplicar</button>'
+      +'<span style="width:1px;height:24px;background:var(--border)"></span>'+giro+'<button '+bt+' onclick="slRemove()" style="padding:7px 10px;font-size:12.5px;color:var(--red)">Remover '+ps.length+'</button></div>';
+    pr.innerHTML=h; return;
+  }
   var h='<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b style="font-size:13px">'+SL_T[p.t].nome+'</b>';
-  if(p.t==='mesa') h+='<input class="inp" id="sl-n" type="number" min="1" max="999" value="'+p.n+'" style="width:110px" oninput="slEdita()" aria-label="Número da mesa">';
-  else h+='<input class="inp" id="sl-l" type="text" maxlength="14" value="'+esc(p.label||SL_T[p.t].label)+'" style="width:170px" oninput="slEdita()" aria-label="Nome na planta">';
-  /* (119) tamanho real: diâmetro da mesa em cm; largura e comprimento das outras peças em metros */
-  if(p.t==='mesa') h+='<label style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px">Diâmetro<input class="inp" id="sl-cm" type="number" min="50" max="600" step="5" value="'+Math.round(p.w*4)+'" style="width:90px" oninput="slMedida()">cm</label>';
-  else h+='<label style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px">Largura<input class="inp" id="sl-mw" type="number" min="0.2" max="80" step="0.1" value="'+(Math.round(p.w/2.5)/10)+'" style="width:80px" oninput="slMedida()">m</label><label style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px">Comprimento<input class="inp" id="sl-mh" type="number" min="0.2" max="80" step="0.1" value="'+(Math.round(p.h/2.5)/10)+'" style="width:80px" oninput="slMedida()">m</label>';
-  h+='<button class="btn sec" type="button" style="padding:7px 11px;font-size:12.5px" onclick="slTam(-1)">− Menor</button><button class="btn sec" type="button" style="padding:7px 11px;font-size:12.5px" onclick="slTam(1)">+ Maior</button>'+(p.t==='mesa'?'':'<button class="btn sec" type="button" style="padding:7px 11px;font-size:12.5px" onclick="slGira()">Girar</button>')+'<button class="btn sec" type="button" style="padding:7px 11px;font-size:12.5px" onclick="slRemove()">Remover</button></div>';
+  if(p.t==='mesa') h+='<input class="inp" id="sl-n" type="number" min="1" max="999" value="'+p.n+'" style="width:90px" oninput="slEdita()" aria-label="Número da mesa">'
+    +'<select class="inp" style="padding:7px 9px;width:auto" onchange="slForma(this.value)" title="Formato da mesa"><option value="redonda"'+(p.forma!=='quadrada'?' selected':'')+'>⚪ Redonda</option><option value="quadrada"'+(p.forma==='quadrada'?' selected':'')+'>⬜ Quadrada / retangular</option></select>';
+  else if(!SL_T[p.t].deco) h+='<input class="inp" id="sl-l" type="text" maxlength="14" value="'+esc(p.label||SL_T[p.t].label)+'" style="width:150px" oninput="slEdita()" aria-label="Nome na planta">';
+  /* (119/120) tamanho real: mesa redonda em diâmetro (cm); quadrada e as outras peças em largura × comprimento */
+  if(p.t==='mesa'&&p.forma!=='quadrada') h+='<label style="'+lb+'">Diâmetro<input class="inp" id="sl-cm" type="number" min="40" max="600" step="5" value="'+Math.round(p.w*4)+'" style="width:84px" oninput="slMedida()">cm</label>';
+  else if(p.t==='mesa') h+='<label style="'+lb+'">Largura<input class="inp" id="sl-qw" type="number" min="40" max="600" step="5" value="'+Math.round(p.w*4)+'" style="width:84px" oninput="slMedida()">cm</label><label style="'+lb+'">Comprimento<input class="inp" id="sl-qh" type="number" min="40" max="600" step="5" value="'+Math.round((p.h||p.w)*4)+'" style="width:84px" oninput="slMedida()">cm</label>';
+  else h+='<label style="'+lb+'">Largura<input class="inp" id="sl-mw" type="number" min="0.2" max="80" step="0.1" value="'+(Math.round(p.w/2.5)/10)+'" style="width:76px" oninput="slMedida()">m</label><label style="'+lb+'">Comprimento<input class="inp" id="sl-mh" type="number" min="0.2" max="80" step="0.1" value="'+(Math.round(p.h/2.5)/10)+'" style="width:76px" oninput="slMedida()">m</label>';
+  h+='<button '+bt+' onclick="slTam(-1)">− Menor</button><button '+bt+' onclick="slTam(1)">+ Maior</button>'+giro+'<button '+bt+' onclick="slRemove()">Remover</button></div>';
   pr.innerHTML=h;
 }
 /* (119) barra de áreas: abas + medidas da área escolhida (nome, interna/externa, térreo/superior, largura e comprimento em metros) */
@@ -8490,6 +8566,7 @@ function slAreasPinta(){
     +'<label style="font-size:11.5px;color:var(--muted);display:flex;flex-direction:column;gap:2px">Andar<select class="inp" id="sl-aa" style="padding:6px 9px" onchange="slAreaMuda()"><option value="terreo"'+(a.andar==='terreo'?' selected':'')+'>Térreo (piso)</option><option value="superior"'+(a.andar==='superior'?' selected':'')+'>Superior</option></select></label>'
     +'<label style="font-size:11.5px;color:var(--muted);display:flex;flex-direction:column;gap:2px">Largura (m)<input class="inp" id="sl-al" type="number" min="3" max="80" step="0.5" value="'+a.larg+'" style="width:90px;padding:6px 9px" onchange="slAreaMuda()"></label>'
     +'<label style="font-size:11.5px;color:var(--muted);display:flex;flex-direction:column;gap:2px">Comprimento (m)<input class="inp" id="sl-ac" type="number" min="3" max="80" step="0.5" value="'+a.comp+'" style="width:90px;padding:6px 9px" onchange="slAreaMuda()"></label>'
+    +'<div style="font-size:11.5px;color:var(--muted);align-self:center;max-width:260px;line-height:1.35">Formato: <b>dois cliques na borda</b> criam um ponto; arraste os pontos (canto quebrado, L, chanfro).'+(a.pontos?' <a href="#" onclick="slAreaRet();return false">Voltar ao retângulo</a>':'')+'</div>'
     +(SL.areas.length>1?'<button class="btn sec" type="button" style="'+bs+';color:var(--red);margin-left:auto" onclick="slAreaApaga()">Apagar área</button>':'')+'</div>';
   b.innerHTML=h;
 }
@@ -8497,21 +8574,33 @@ function slAreaVai(id){ SL.area=id; SL.sel=0; slAreasPinta(); if(SL.v3) slDesenh
 function slAreaMuda(){ var a=slAr(), n=function(v,d){ var x=parseFloat(String(v).replace(',','.')); return x>=3&&x<=80?Math.round(x*10)/10:d; };
   a.nome=el('sl-an').value.trim()||a.nome; a.tipo=el('sl-at').value; a.andar=el('sl-aa').value; a.larg=n(el('sl-al').value,a.larg); a.comp=n(el('sl-ac').value,a.comp); SL.sujo=true;
   var z=slWH(); slDaArea().forEach(function(p){ p.x=Math.min(p.x,z.W-5); p.y=Math.min(p.y,z.H-5); });   /* área menor: peças ficam dentro */
+  if(a.pontos) a.pontos.forEach(function(q){ q[0]=Math.min(q[0],a.larg); q[1]=Math.min(q[1],a.comp); });
   var foco=document.activeElement&&document.activeElement.id; slAreasPinta(); if(foco&&el(foco)){ el(foco).focus(); if(el(foco).setSelectionRange&&el(foco).type==='text'){ var v=el(foco).value.length; el(foco).setSelectionRange(v,v); } }
   if(SL.v3) slDesenha3(); else slDesenha(); }
+function slAreaRet(){ var a=slAr(); delete a.pontos; SL.sujo=true; slAreasPinta(); slDesenha(); }
 function slAreaNova(){ var i=1; while(SL.areas.some(function(a){ return a.id==='a'+i; })) i++; var ext=SL.areas.some(function(a){ return a.tipo==='interno'; });
   SL.areas.push({id:'a'+i,nome:ext?'Área externa':'Área interna',tipo:ext?'externo':'interno',andar:'terreo',larg:12,comp:8}); SL.area='a'+i; SL.sel=0; SL.sujo=true; slAreasPinta(); slDesenha(); }
 function slAreaApaga(){ var a=slAr(), n=slDaArea().length; if(SL.areas.length<2) return; if(!window.confirm('Apagar a área "'+a.nome+'"'+(n?' e as '+n+' peças dela':'')+'?')) return;
   SL.L=SL.L.filter(function(p){ return p.area!==a.id; }); SL.areas=SL.areas.filter(function(x){ return x.id!==a.id; }); SL.area=SL.areas[0].id; SL.sel=0; SL.sujo=true; slAreasPinta(); slDesenha(); }
-function slMedida(){ var p=slPeca(SL.sel); if(!p) return; SL.sujo=true; if(p.t==='mesa'){ var cm=parseFloat(el('sl-cm').value); if(cm>=50) p.w=p.h=Math.max(12,Math.min(150,Math.round(cm/4))); } else { var mw=parseFloat(String(el('sl-mw').value).replace(',','.')), mh=parseFloat(String(el('sl-mh').value).replace(',','.')); if(mw>0) p.w=Math.max(5,Math.min(2000,Math.round(mw*25))); if(mh>0) p.h=Math.max(5,Math.min(2000,Math.round(mh*25))); } el('sl-svg').innerHTML=slPlanta(); }
+function slMedida(){ var p=slPeca(SL.sel); if(!p) return; SL.sujo=true;
+  if(p.t==='mesa'&&p.forma==='quadrada'){ var qw=parseFloat(el('sl-qw').value), qh=parseFloat(el('sl-qh').value); if(qw>=40) p.w=Math.max(10,Math.min(150,Math.round(qw/4))); if(qh>=40) p.h=Math.max(10,Math.min(150,Math.round(qh/4))); }
+  else if(p.t==='mesa'){ var cm=parseFloat(el('sl-cm').value); if(cm>=40) p.w=p.h=Math.max(10,Math.min(150,Math.round(cm/4))); } else { var mw=parseFloat(String(el('sl-mw').value).replace(',','.')), mh=parseFloat(String(el('sl-mh').value).replace(',','.')); if(mw>0) p.w=Math.max(5,Math.min(2000,Math.round(mw*25))); if(mh>0) p.h=Math.max(5,Math.min(2000,Math.round(mh*25))); } el('sl-svg').innerHTML=slPlanta(); }
 function slEdita(){ var p=slPeca(SL.sel); if(!p) return; SL.sujo=true; if(p.t==='mesa'){ var v=parseInt(el('sl-n').value,10); if(v>0) p.n=v; } else p.label=el('sl-l').value; el('sl-svg').innerHTML=slPlanta(); }
-function slGira(){ var p=slPeca(SL.sel); if(!p) return; SL.sujo=true; var t=p.w; p.w=p.h; p.h=t; slDesenha(); }
-function slRemove(){ SL.sujo=true; SL.L=SL.L.filter(function(p){return p.id!==SL.sel;}); SL.sel=0; slDesenha(); }
+function slGira(){ slRot(90); }
+function slRemove(){ var ids=slSels().map(function(p){ return p.id; }); if(!ids.length) return; if(ids.length>1&&!window.confirm('Remover as '+ids.length+' peças selecionadas?')) return; SL.sujo=true; SL.L=SL.L.filter(function(p){ return ids.indexOf(p.id)<0; }); SL.sel=0; SL.multi=[]; slDesenha(); }
+/* (120) teclado no editor: Delete remove a seleção, Esc limpa, setas movem 10 cm (com Shift, 1 m) */
+document.addEventListener('keydown',function(e){
+  var t=el('sl-tela'); if(!t||t.style.display==='none'||SL.v3) return; var tg=e.target&&e.target.tagName; if(tg==='INPUT'||tg==='SELECT'||tg==='TEXTAREA') return;
+  var ps=slSels(); if(e.key==='Escape'){ SL.sel=0; SL.multi=[]; slDesenha(); return; }
+  if(!ps.length) return;
+  if(e.key==='Delete'||e.key==='Backspace'){ e.preventDefault(); slRemove(); return; }
+  var dd={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[e.key]; if(!dd) return; e.preventDefault();
+  var st=e.shiftKey?25:2.5, z=slWH(); SL.sujo=true; ps.forEach(function(p){ p.x=Math.max(5,Math.min(z.W-5,p.x+dd[0]*st)); p.y=Math.max(5,Math.min(z.H-5,p.y+dd[1]*st)); }); slDesenha(true); });
 function slAdd(t){
   var m=el('sl-m'); m.textContent='';
   if(t==='balcao'&&slDaArea().some(function(p){return p.t==='balcao';})){ m.style.color='#B08A00'; m.textContent='Já existe um balcão: arraste o que está no mapa.'; return; }
   var n=0; if(t==='mesa'){ var us={}; SL.L.forEach(function(p){ if(p.t==='mesa') us[p.n]=1; }); n=1; while(us[n]) n++; }
-  var d=SL_T[t], z=slWH(), p={id:SL.uid++,t:t,area:SL.area,x:Math.round(z.W/2),y:Math.round(z.H/2),n:n,label:t==='banheiro'?'WC':'',w:t==='mesa'?22:(d.w||44),h:t==='mesa'?22:(d.h||44)};   /* mesa nova: 88 cm */ SL.L.push(p); SL.sel=p.id; SL.sujo=true; slDesenha();
+  var d=SL_T[t], z=slWH(), p={id:SL.uid++,t:t,area:SL.area,x:Math.round(z.W/2),y:Math.round(z.H/2),n:n,label:t==='banheiro'?'WC':'',w:t==='mesa'?22:(d.w||44),h:t==='mesa'?22:(d.h||44),rot:0,forma:t==='mesa'?'redonda':undefined};   /* mesa nova: 88 cm */ SL.L.push(p); SL.sel=p.id; SL.multi=[p.id]; SL.sujo=true; slDesenha();
 }
 /* (113) espaços vazios no desenho para N mesas novas: varre o salão em grade e só aceita onde não encosta em nenhuma peça */
 function slVagas(L,qtd,W,H){
