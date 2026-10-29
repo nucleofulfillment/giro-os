@@ -406,6 +406,12 @@ html.claro #sheet .clb-pill{color:#000}
 .rsr{display:flex;flex-direction:column;gap:10px;margin-top:6px}.rsr label{font-size:12.5px;font-weight:700;opacity:.8}
 .rsr input,.rsr textarea{width:100%;background:#26262c;border:1px solid #ffffff22;border-radius:12px;padding:13px;color:#fff;font:inherit;font-size:15px;outline:none}.rsr input:focus,.rsr textarea:focus{border-color:var(--pri)}
 .rsc{background:linear-gradient(135deg,#1f1b18,#2a211b);border:1px solid #ffffff1c;border-radius:16px;padding:14px;display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;margin-bottom:14px}
+/* (116) cliente logado: nome e celular do cadastro numa linha só, com "Trocar" */
+.rsq1{display:flex;align-items:center;gap:12px;background:#26262c;border:1px solid #ffffff22;border-radius:14px;padding:12px;margin-bottom:12px}
+.rsq1 .av{width:40px;height:40px;border-radius:50%;background:var(--pri);color:#fff;font-weight:900;font-size:17px;display:flex;align-items:center;justify-content:center;flex:none}
+.rsq1>div{flex:1;min-width:0}.rsq1 b{display:block;font-size:15px}.rsq1 small{font-size:12.5px;opacity:.7}
+.rsq1 button{border:0;background:transparent;color:var(--pri);font-weight:800;font-size:13.5px;cursor:pointer;padding:6px}
+html.claro #sheet .rsq1 .av{color:#000}   /* tema claro inverte a folha: a inicial fica branca no círculo laranja */
 .rsc div{font-size:11.5px;opacity:.7;font-weight:700}.rsc b{display:block;font-size:16px;opacity:1;color:#fff;margin-top:2px}
 .rsok{text-align:center;padding:26px 6px 6px}.rsok .ck{width:86px;height:86px;margin:0 auto 14px;border-radius:50%;background:#16a34a;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 0 #16a34a88;animation:rsOk 1.6s ease-out infinite}
 @keyframes rsOk{0%{box-shadow:0 0 0 0 #16a34a88}100%{box-shadow:0 0 0 26px #16a34a00}}
@@ -584,8 +590,10 @@ function ofOverlay(t,oid){
   var v='--ov-cor:'+(t.cor||'#ffffff')+';--ov-tit:'+((t.escTitulo||100)/100)+';--ov-apoio:'+((t.escApoio||100)/100)+';--ov-btn:'+((t.btnEsc||100)/100)+';--ov-raio:'+(t.btnRaio==null?14:t.btnRaio)+';--ov-bf:'+(t.btnFundo||'#f97316')+';--ov-bt:'+(t.btnTexto||'#ffffff');
   return '<div class="ov p-'+(t.pos||'base')+' a-'+(t.alin||'esq')+' e-'+(t.efeito||'nenhum')+(t.pulso?' pulso':'')+'" style="'+v+'">'
     +(t.apoio?'<div class="ov-apoio">'+esc(t.apoio)+'</div>':'')+(t.titulo?'<div class="ov-tit">'+esc(t.titulo)+'</div>':'')
-    +(t.botao?'<a class="ov-btn '+(t.btnEstilo||'cheio')+'" onclick="'+(t.acao==='reserva'?'rsvAbre()':'ofPedir(\''+esc(oid||'')+'\')')+'">'+esc(t.botao)+'</a>':'')+'</div>';
+    +(t.botao?'<a class="ov-btn '+(t.btnEstilo||'cheio')+'" onclick="'+(ofEhReserva(t)?'rsvAbre()':'ofPedir(\''+esc(oid||'')+'\')')+'">'+esc(t.botao)+'</a>':'')+'</div>';
 }
+/* (116) botão de oferta que abre a reserva: escolhido no painel, ou oferta antiga cujo botão fala em reserva (com as reservas ligadas) */
+function ofEhReserva(t){ return t.acao==='reserva'||(!!(D&&D.cfg&&D.cfg.reserva)&&/reserv/i.test(String(t.botao||''))); }
 function ofPedir(oid){
   var o=null; (D.ofertas||[]).forEach(function(x){ if(x.id===oid) o=x; });
   var ids=((o&&o.produtos)||[]).filter(function(id){ return D.produtos[id]; });
@@ -1750,11 +1758,13 @@ function rsvToque(n){
 }
 function rsvDados(){
   var o=$('r3d'); if(o){ o.classList.remove('on'); setTimeout(function(){ o.style.display='none'; },320); }
-  var nm=(CT.conta&&CT.conta.nome)||RSV.nome||'', fn=RSV.fone||CT.fone||'';
+  /* (116) cliente logado: nome e celular do cadastro, já prontos (pode trocar); sem login: preenche nome e WhatsApp, e entra na base de clientes */
+  var log=!!(CT.tok&&CT.fone), nm=(CT.conta&&CT.conta.nome)||RSV.nome||'', fn=log?CT.fone:(RSV.fone||CT.fone||''), pronto=log&&nm.length>1;
   var h='<div class="wh"><button class="bk" onclick="rsvVoltaMapa()">'+BKI+'</button><b>Confirmar reserva</b></div><div class="wb">'
     +'<div class="rsc"><div>Mesa<b>'+RSV.mesa+'</b></div><div>Pessoas<b>'+RSV.pes+'</b></div><div>Dia<b>'+esc(rsvQuando().split(' às ')[0])+'</b></div><div>Horário<b>'+esc(RSV.hora)+'</b></div></div>'
-    +'<div class="rsr"><label>Nome da reserva</label><input id="rs-nome" maxlength="60" autocomplete="name" value="'+esc(nm)+'" placeholder="Seu nome">'
-    +'<label>WhatsApp</label><input id="rs-fone" inputmode="tel" autocomplete="tel" value="'+esc(rsvMasc(fn))+'" placeholder="(00) 00000-0000" oninput="this.value=rsvMasc(this.value)">'
+    +(pronto?'<div class="rsq1" id="rs-log"><span class="av">'+esc(nm.charAt(0).toUpperCase())+'</span><div><b>'+esc(nm)+'</b><small>'+esc(rsvMasc(fn))+' · do seu cadastro</small></div><button type="button" onclick="$(\'rs-log\').style.display=\'none\';$(\'rs-campos\').style.display=\'\'">Trocar</button></div>':'')
+    +'<div class="rsr"><div id="rs-campos" class="rsr" style="margin:0'+(pronto?';display:none':'')+'"><label>Nome da reserva</label><input id="rs-nome" maxlength="60" autocomplete="name" value="'+esc(nm)+'" placeholder="Seu nome">'
+    +'<label>WhatsApp</label><input id="rs-fone" inputmode="tel" autocomplete="tel" value="'+esc(rsvMasc(fn))+'" placeholder="(00) 00000-0000" oninput="this.value=rsvMasc(this.value)"></div>'
     +'<label>Observação <span style="opacity:.6;font-weight:500">(opcional)</span></label><input id="rs-obs" maxlength="200" placeholder="Ex.: aniversário, cadeira de bebê"></div>'
     +'<div class="nt" style="margin-top:12px">📲 Você recebe a confirmação no WhatsApp. No dia, a gente pede para confirmar; se não puder vir, é só responder que a mesa fica livre.</div>'
     +'<div id="rs-erro" style="color:#f87171;font-size:13px;margin-top:10px;font-weight:700"></div></div><div class="rod"><button class="bt c" id="rs-bt" onclick="rsvEnviar()">Confirmar reserva</button></div>';
