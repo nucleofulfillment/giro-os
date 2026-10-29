@@ -59,6 +59,13 @@ html,body{margin:0;height:100%;background:#000;color:var(--tx);font-family:Inter
 .cd .pr{margin-top:5px;font-weight:900;font-size:15px;color:var(--pri2)}
 .cd .pr small{font-size:10.5px;font-weight:700;color:var(--mut);margin-right:4px}
 .cd .ds{font-size:11.5px;color:var(--mut);margin-top:2px;max-height:28px;overflow:hidden}
+/* (132) cartão da oferta na inicial: 2 linhas de texto (nome e descrição, uma cada) e o preço numa pílula da cor do tema, branca nos 2 temas */
+#cards .cd{min-width:0}#cards .cd>div:last-child{flex:1;min-width:0}
+#cards .cd .nm,#cards .cd .ds{max-height:none;white-space:nowrap;text-overflow:ellipsis}
+#cards .cd .pr{display:flex;align-items:center;flex-wrap:wrap;gap:2px 6px;margin-top:6px}
+#cards .cd .pr small{flex-basis:100%;margin:0}
+#cards .cd .pr .de{font-size:11.5px;font-weight:700;color:var(--mut)}
+#cards .cd .pr .vp{display:inline-block;background:var(--pri);color:#fff;font-size:15px;font-weight:900;padding:4px 11px;border-radius:99px;box-shadow:0 3px 10px #0004}
 #som{position:absolute;z-index:6;left:50%;top:46%;transform:translate(-50%,-50%);padding:12px 18px;border-radius:99px;background:var(--glass);backdrop-filter:blur(10px);border:1px solid var(--line);font-weight:800;font-size:14px;cursor:pointer;display:none;white-space:nowrap}
 #vazio{pointer-events:none;position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px;gap:8px;z-index:7;background:radial-gradient(circle at 50% 30%,#2a1608,#0b0b0d 70%)}
 #vazio h2{margin:0;font-size:22px}#vazio p{margin:0;color:var(--mut);font-size:14px;max-width:300px;line-height:1.5}
@@ -309,9 +316,9 @@ html.claro #sheet .dsc .pc{filter:invert(1) hue-rotate(180deg)}   /* tema claro 
 .ov-btn.cheio{background:var(--ov-bf,#f97316);color:var(--ov-bt,#fff)}
 .ov-btn.contorno{border:.09em solid var(--ov-bt,#fff);color:var(--ov-bt,#fff);background:transparent}
 .ov-btn.link{color:var(--ov-bt,#fff);padding:.2em 0;text-decoration:underline}
-#stage .ov{--ov-t:calc(84px + env(safe-area-inset-top));--ov-b:calc(172px + env(safe-area-inset-bottom));font-size:16px}
+#stage .ov{--ov-t:calc(84px + env(safe-area-inset-top));--ov-b:max(calc(172px + env(safe-area-inset-bottom)),var(--ov-min,0px));font-size:16px}
 /* (115) com a barrinha do Clube na inicial, o texto e o botão da oferta sobem junto com os cartões; à esquerda, não passam por baixo do Compartilhar */
-html.clbbar #stage .ov{--ov-b:calc(232px + env(safe-area-inset-bottom))}
+html.clbbar #stage .ov{--ov-b:max(calc(232px + env(safe-area-inset-bottom)),var(--ov-min,0px))}
 #stage .ov.p-base.a-esq{padding-right:96px}
 #omask{position:absolute;inset:0;pointer-events:none;z-index:3}
 .ov.e-cair .ov-apoio,.ov.e-cair .ov-tit,.ov.e-cair .ov-btn{animation:ovCair .85s cubic-bezier(.2,1.3,.4,1) both}
@@ -591,10 +598,13 @@ function cartoes(o){
       +'<div class="ph" style="'+(p.foto?'background-image:url('+fotoUrl(p)+')':'')+'"></div>'
       +'<div style="min-width:0"><div class="nm">'+esc(p.nome)+'</div>'
       +(p.desc?'<div class="ds">'+esc(p.desc)+'</div>':'')
-      +'<div class="pr">'+(pr.de?'<small>a partir de</small>':'')+(pr.orig>pr.min?'<s class="de">'+brl(pr.orig)+'</s> ':'')+brl(pr.min)+'</div></div></div>';
+      +'<div class="pr">'+(pr.de?'<small>a partir de</small>':'')+(pr.orig>pr.min?'<s class="de">'+brl(pr.orig)+'</s> ':'')+'<b class="vp">'+brl(pr.min)+'</b></div></div></div>';
   });
-  $('cards').innerHTML=h; $('cards').scrollLeft=0;
+  $('cards').innerHTML=h; $('cards').scrollLeft=0; ovAcimaCards(); setTimeout(ovAcimaCards,700);   /* de novo depois da animação de entrada e da barrinha do Clube */
 }
+/* (132) o texto e o botão da oferta ficam sempre acima dos cartões, qualquer que seja a altura deles */
+function ovAcimaCards(){ try{ var s=$('stage'), c=$('cards'); if(!s||!c) return; var h=c.children.length?Math.ceil(s.getBoundingClientRect().bottom-c.getBoundingClientRect().top+14):0; s.style.setProperty('--ov-min',h+'px'); }catch(e){} }
+addEventListener('resize',function(){ ovAcimaCards(); });
 
 /* texto e botão sobre o vídeo (mesmo desenho do painel) */
 function ofOverlay(t,oid){
