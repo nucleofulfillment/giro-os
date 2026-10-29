@@ -8549,8 +8549,11 @@ function slDesenha(manterProp){
   var sep='<span style="width:1px;height:22px;background:var(--border);flex:none"></span>';
   var giro='<button '+bt+' onclick="slRot(-15)" title="Girar 15° para a esquerda">↺</button><button '+bt+' onclick="slRot(15)" title="Girar 15° para a direita">↻</button><button '+bt+' onclick="slRot(90)" title="Girar 90°">⟳ 90°</button>'
     +'<input class="inp" id="sl-rot" type="number" min="0" max="359" step="1" value="'+(p?(p.rot||0):'')+'" placeholder="°" style="'+ip+';width:56px" onchange="slRot(0,+this.value)" title="Ângulo exato (graus)">';
-  if(!ps.length){ pr.innerHTML='<div style="font-size:12.5px;color:var(--muted)">Toque numa peça para editar. Segure <b>Shift</b> (ou Ctrl) e clique para selecionar várias e alinhar, distribuir, girar ou mudar o tamanho de todas de uma vez.</div>'; return; }
-  if(manterProp&&(el('sl-n')||el('sl-lw'))) return;
+  /* (123) a barra só fica como está se a seleção é a mesma (antes ficava a barra de uma mesa só ao somar outra com Shift) */
+  var sig=ps.map(function(x){ return x.id; }).join(',');
+  if(!ps.length){ pr.dataset.sig=''; pr.innerHTML='<div style="font-size:12.5px;color:var(--muted)">Toque numa peça para editar. Segure <b>Shift</b> (ou Ctrl) e clique para selecionar várias e alinhar, distribuir, girar ou mudar o tamanho de todas de uma vez.</div>'; return; }
+  if(manterProp&&pr.dataset.sig===sig&&(el('sl-n')||el('sl-lw')||el('sl-l')||el('sl-cm')||el('sl-qw')||el('sl-mw'))) return;
+  pr.dataset.sig=sig;
   if(!p){   /* várias selecionadas */
     var nMs=ps.filter(function(x){ return x.t==='mesa'; }).length, fs={}; ps.forEach(function(x){ if(x.t==='mesa') fs[x.forma==='quadrada'?'quadrada':'redonda']=1; }); var f1=Object.keys(fs).length===1?Object.keys(fs)[0]:'';
     var h='<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><b style="font-size:13px">'+ps.length+' sel.</b>'
