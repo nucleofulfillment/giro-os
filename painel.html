@@ -848,7 +848,7 @@ a{color:inherit}
       </section>
 
       <section class="page" id="pg-mesas">
-        <div class="pghd"><div><h1>Mesas</h1><div class="sub">mesas do salão e etiquetas NFC · <span id="mz-total">—</span></div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sec" onclick="mzQrTodos()">🖨 Imprimir QR de todas</button><button class="btn pri" onclick="mzNova()">+ Nova mesa</button></div></div>
+        <div class="pghd"><div><h1>Mesas</h1><div class="sub">mesas do salão e etiquetas NFC · <span id="mz-total">—</span></div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sec" onclick="rvAbrir()">🪑 Reservas</button><button class="btn sec" onclick="mzQrTodos()">🖨 Imprimir QR de todas</button><button class="btn pri" onclick="mzNova()">+ Nova mesa</button></div></div>
         <div class="card">
           <div class="search" style="margin-bottom:14px;max-width:360px"><span>🔎</span><input id="mz-busca" placeholder="buscar mesa" oninput="mzPintar()"></div>
           <div id="mz-lista"></div>
@@ -1400,7 +1400,8 @@ a{color:inherit}
       <div style="flex:1;min-width:230px">
         <input class="inp" id="cd-ov-apoio" maxlength="80" placeholder="Texto pequeno (ex: só hoje)" oninput="cdOvPrev()" style="margin-bottom:6px">
         <input class="inp" id="cd-ov-titulo" maxlength="120" placeholder="Título grande (ex: Pizza Gigante por R$ 99)" oninput="cdOvPrev()" style="margin-bottom:6px">
-        <div style="margin-bottom:6px"><input class="inp" id="cd-ov-botao" maxlength="30" placeholder="Texto do botão (ex: Pedir agora) — leva direto ao produto da oferta" oninput="cdOvPrev()"></div>
+        <div style="display:grid;grid-template-columns:1fr auto;gap:6px;margin-bottom:6px"><input class="inp" id="cd-ov-botao" maxlength="30" placeholder="Texto do botão (ex: Pedir agora)" oninput="cdOvPrev()"><select class="inp" id="cd-ov-acao" onchange="cdOvAcao()" title="O que acontece quando o cliente toca no botão"><option value="produto">Abre o produto</option><option value="reserva">Reservar mesa</option></select></div>
+        <div id="cd-ov-acao-av" style="display:none;font-size:11.5px;color:var(--muted);margin:-2px 0 8px">🪑 O botão abre o salão em 3D para o cliente escolher a mesa e reservar. Os produtos ficam opcionais. <a href="#" onclick="rvAbrir();return false">Configurar reservas</a></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px"><select class="inp" id="cd-ov-pos" onchange="cdOvPrev()"><option value="base">Posição: embaixo</option><option value="centro">Posição: centro</option><option value="topo">Posição: topo</option></select><select class="inp" id="cd-ov-alin" onchange="cdOvPrev()"><option value="esq">Alinhado à esquerda</option><option value="centro">Centralizado</option><option value="dir">Alinhado à direita</option></select></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px"><label style="font-size:11.5px;color:var(--muted)">Tamanho do título<input type="range" id="cd-ov-et" min="50" max="250" value="100" oninput="cdOvPrev()" style="width:100%"></label><label style="font-size:11.5px;color:var(--muted)">Tamanho do texto pequeno<input type="range" id="cd-ov-ea" min="50" max="250" value="100" oninput="cdOvPrev()" style="width:100%"></label></div>
         <div style="display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center;margin-bottom:8px"><select class="inp" id="cd-ov-ef" onchange="cdOvPrev()"><option value="nenhum">Efeito: sem efeito</option><option value="cair">Efeito: cai de cima</option><option value="lateral">Efeito: entra pela lateral</option><option value="zoom">Efeito: surge com zoom</option></select><button class="btn sec sm" type="button" onclick="cdOvPrev()" title="Ver o efeito de novo">↻ rever</button></div>
@@ -1427,6 +1428,10 @@ a{color:inherit}
   <div style="flex-shrink:0;border-top:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--s1);border-radius:0 0 18px 18px"><button class="btn pri" id="cd-of-salvar" onclick="cdOfSalvar()">Salvar</button><button class="btn sec" onclick="cdAbrirOfertas()">Voltar à lista</button><button class="btn sec" id="cd-of-dup" onclick="cdOfDuplicarAberto()">Duplicar</button><button class="btn sec" id="cd-of-apagar" onclick="cdOfApagarAberto()" style="color:var(--red);margin-left:auto">Apagar</button></div>
 </div>
 
+<div class="sheet wide" id="sh-reservas">
+  <div class="sh-hd"><h3>🪑 Reservas de mesa</h3><button onclick="fecharTudo()">✕</button></div>
+  <div class="sh-bd" id="rv-bd"><div style="color:var(--muted);font-size:13px">Carregando…</div></div>
+</div>
 <div class="sheet" id="sh-mesa">
   <div class="sh-hd"><h3 id="mz-tit">Nova mesa</h3><button onclick="fecharTudo()">✕</button></div>
   <div class="sh-bd">
@@ -7685,8 +7690,10 @@ function ofOverlay(t){
 function ofMascara(t){ if(!t||t.mascara===false) return ''; var f=t.mascaraForca||45; return 'linear-gradient(180deg,rgba(0,0,0,'+(f*0.0022).toFixed(3)+'),rgba(0,0,0,'+(f/100).toFixed(2)+'))'; }
 function cdOvColher(){
   var g=function(i){ return el(i).value; };
-  return {apoio:g('cd-ov-apoio').trim(),titulo:g('cd-ov-titulo').trim(),botao:g('cd-ov-botao').trim(),link:'',pos:g('cd-ov-pos'),alin:g('cd-ov-alin'),mascara:el('cd-ov-masc').checked,mascaraForca:+g('cd-ov-mf'),cor:g('cd-ov-cor'),efeito:g('cd-ov-ef'),pulso:el('cd-ov-pu').checked,escTitulo:+g('cd-ov-et'),escApoio:+g('cd-ov-ea'),btnEstilo:g('cd-ov-be'),btnEsc:+g('cd-ov-bes'),btnFundo:g('cd-ov-bf'),btnTexto:g('cd-ov-bt'),btnRaio:+g('cd-ov-br')};
+  return {apoio:g('cd-ov-apoio').trim(),titulo:g('cd-ov-titulo').trim(),botao:g('cd-ov-botao').trim(),link:'',pos:g('cd-ov-pos'),alin:g('cd-ov-alin'),mascara:el('cd-ov-masc').checked,mascaraForca:+g('cd-ov-mf'),cor:g('cd-ov-cor'),efeito:g('cd-ov-ef'),pulso:el('cd-ov-pu').checked,escTitulo:+g('cd-ov-et'),escApoio:+g('cd-ov-ea'),btnEstilo:g('cd-ov-be'),btnEsc:+g('cd-ov-bes'),btnFundo:g('cd-ov-bf'),btnTexto:g('cd-ov-bt'),btnRaio:+g('cd-ov-br'),acao:g('cd-ov-acao')};
 }
+/* (113) botão "Reservar mesa": mostra o aviso e deixa os produtos opcionais */
+function cdOvAcao(){ var r=el('cd-ov-acao').value==='reserva'; el('cd-ov-acao-av').style.display=r?'block':'none'; if(r&&!el('cd-ov-botao').value.trim()) el('cd-ov-botao').value='Reservar mesa'; cdOvPrev(); }
 var CD_OV_RG=['cd-ov-et','cd-ov-ea','cd-ov-bes','cd-ov-mf','cd-ov-br'];
 function cdOvNums(){
   CD_OV_RG.forEach(function(id){
@@ -7703,6 +7710,7 @@ function cdOvPreencher(t){
   s('cd-ov-apoio',t.apoio||''); s('cd-ov-titulo',t.titulo||''); s('cd-ov-botao',t.botao||''); s('cd-ov-pos',t.pos||'base'); s('cd-ov-alin',t.alin||'esq');
   el('cd-ov-masc').checked=t.mascara!==false; s('cd-ov-mf',t.mascaraForca||45); s('cd-ov-cor',t.cor||'#ffffff'); s('cd-ov-ef',t.efeito||(t.titulo||t.apoio||t.botao?'nenhum':'cair')); el('cd-ov-pu').checked=!!t.pulso; s('cd-ov-et',t.escTitulo||100); s('cd-ov-ea',t.escApoio||100);
   s('cd-ov-be',t.btnEstilo||'cheio'); s('cd-ov-bes',t.btnEsc||100); s('cd-ov-bf',t.btnFundo||'#f97316'); s('cd-ov-bt',t.btnTexto||'#ffffff'); s('cd-ov-br',t.btnRaio==null?14:t.btnRaio);
+  s('cd-ov-acao',t.acao==='reserva'?'reserva':'produto'); el('cd-ov-acao-av').style.display=t.acao==='reserva'?'block':'none';
   cdOvPrev();
 }
 function cdOvPrev(nn){
@@ -7927,11 +7935,51 @@ function mzPintar(){
   var q=(el('mz-busca').value||'').toLowerCase().trim(), h='', n=0;
   MZ.lista.sort(function(a,b){ var x=String(a.num), y=String(b.num), nx=/^\d+$/.test(x), ny=/^\d+$/.test(y); if(nx&&ny) return parseInt(x,10)-parseInt(y,10); if(nx!==ny) return nx?-1:1; return x<y?-1:x>y?1:0; });
   MZ.lista.forEach(function(m){ if(q&&String(m.num).toLowerCase().indexOf(q)<0) return; n++;
-    h+='<div style="border:1px solid var(--border);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px"><div style="display:flex;align-items:center;gap:10px"><div style="width:46px;height:46px;border-radius:50%;background:'+(m.oc?'#16a34a':'var(--pri,#E07B39)')+';color:#fff;font-weight:800;font-size:17px;display:flex;align-items:center;justify-content:center;flex:none">'+esc(m.num)+'</div><div style="min-width:0"><b>Mesa '+esc(m.num)+'</b><div style="font-size:12px;color:var(--muted)">'+(m.oc?'<span style="color:#16a34a;font-weight:700">Comanda aberta</span>':'Livre')+'</div></div></div>'
+    h+='<div style="border:1px solid var(--border);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px"><div style="display:flex;align-items:center;gap:10px"><div style="width:46px;height:46px;border-radius:50%;background:'+(m.oc?'#16a34a':'var(--pri,#E07B39)')+';color:#fff;font-weight:800;font-size:17px;display:flex;align-items:center;justify-content:center;flex:none">'+esc(m.num)+'</div><div style="min-width:0"><b>Mesa '+esc(m.num)+'</b><div style="font-size:12px;color:var(--muted)">'+(m.oc?'<span style="color:#16a34a;font-weight:700">Comanda aberta</span>':'Livre')+'</div></div>'+mzTagRsv(m)+'</div>'
      +'<div style="font-size:12px;color:var(--muted)">'+(m.lug?'👥 '+m.lug+(m.lug===1?' lugar':' lugares'):'👥 lugares não informados')+' · '+(m.nfc?'🏷️ NFC gravada em '+new Date(m.nfc).toLocaleDateString('pt-BR'):'sem etiqueta NFC')+'</div>'
      +'<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn sec sm"'+(m.lug>0?' style="background:#16a34a;border-color:#16a34a;color:#fff"':'')+' onclick="mzEdita(\''+esc(m.num)+'\',\'lug\')">Lugares</button><button class="btn sec sm" onclick="mzEdita(\''+esc(m.num)+'\',\'ed\')">Editar</button><button class="btn sec sm" onclick="mzNfc(\''+esc(m.num)+'\')">Gravar NFC</button><button class="btn sec sm" style="background:var(--pri,#E07B39);border-color:var(--pri,#E07B39);color:#fff" onclick="mzQr(\''+esc(m.num)+'\')">QR code</button><button class="btn sec sm" onclick="mzCopia(\''+esc(m.num)+'\')">Copiar link</button><button class="btn sec sm" style="color:var(--red)" onclick="mzApaga(\''+esc(m.num)+'\')">Apagar</button></div></div>'; });
   el('mz-total').textContent=MZ.lista.length+(MZ.lista.length===1?' mesa cadastrada':' mesas cadastradas');
   el('mz-lista').innerHTML=n?'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px">'+h+'</div>':'<div class="empty">'+(MZ.lista.length?'Nenhuma mesa encontrada':'Nenhuma mesa cadastrada ainda. Enquanto não houver mesas cadastradas, o atendimento aceita qualquer número.')+'</div>';
+}
+/* (113) RESERVAS: liga/desliga, regras (duração, antecedência, dias, pessoas) e a lista dos próximos dias com confirmar / chegou / cancelar */
+var RV={cfg:null,lista:[]};
+function rvAbrir(){ abrir('sh-reservas'); el('rv-bd').innerHTML='<div style="color:var(--muted);font-size:13px">Carregando…</div>';
+  Promise.all([mzApi('/painel/reserva-config'),mzApi('/painel/reservas')]).then(function(a){ if(!a[0]||!a[0].ok) throw new Error((a[0]&&a[0].mensagem)||'Suba o Worker 113 para usar as reservas.'); RV.cfg=a[0].reserva; RV.lista=(a[1]&&a[1].reservas)||[]; rvPintar(); })
+  .catch(function(e){ el('rv-bd').innerHTML='<div style="color:var(--red);font-size:13px">'+esc(e.message||'Não carregou')+'</div>'; }); }
+function rvPintar(){
+  var c=RV.cfg, lb='display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted)', h='';
+  h+='<label style="display:flex;align-items:center;gap:10px;font-size:14px;font-weight:800;cursor:pointer;margin-bottom:12px"><input type="checkbox" id="rv-on"'+(c.on?' checked':'')+'> Aceitar reservas de mesa (cardápio e WhatsApp)</label>';
+  h+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px">'
+   +'<label style="'+lb+'">Cada reserva dura<select class="inp" id="rv-dur">'+[60,90,120,150,180,240].map(function(v){ return '<option value="'+v+'"'+(c.dur===v?' selected':'')+'>'+(v%60?Math.floor(v/60)+'h'+(v%60):v/60+'h')+'</option>'; }).join('')+'</select></label>'
+   +'<label style="'+lb+'">Antecedência mínima<select class="inp" id="rv-ant">'+[[0,'Sem mínimo'],[30,'30 min'],[60,'1 hora'],[120,'2 horas'],[240,'4 horas'],[1440,'1 dia']].map(function(v){ return '<option value="'+v[0]+'"'+(c.antec===v[0]?' selected':'')+'>'+v[1]+'</option>'; }).join('')+'</select></label>'
+   +'<label style="'+lb+'">Reservar até<select class="inp" id="rv-dias">'+[7,14,30,60].map(function(v){ return '<option value="'+v+'"'+(c.dias===v?' selected':'')+'>'+v+' dias à frente</option>'; }).join('')+'</select></label>'
+   +'<label style="'+lb+'">Horários de<select class="inp" id="rv-passo">'+[15,30,60].map(function(v){ return '<option value="'+v+'"'+(c.passo===v?' selected':'')+'>'+v+' em '+v+' min</option>'; }).join('')+'</select></label>'
+   +'<label style="'+lb+'">Máximo de pessoas<input class="inp" id="rv-max" type="number" min="1" max="50" value="'+c.maxPessoas+'"></label></div>';
+  h+='<label style="'+lb+';margin-top:10px">Aviso para o cliente (opcional)<input class="inp" id="rv-aviso" maxlength="200" placeholder="Ex.: tolerância de 15 minutos" value="'+esc(c.aviso||'')+'"></label>';
+  h+='<div style="font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.5">Os horários seguem o funcionamento da loja (até 1h antes de fechar). O mapa usa o desenho do salão e os lugares de cada mesa. Seis horas antes, o cliente recebe no WhatsApp o pedido de confirmação com Sim/Não; se responder Não, a mesa é liberada.</div>';
+  h+='<div style="display:flex;justify-content:flex-end;margin:12px 0 18px"><button class="btn pri" id="rv-salvar" onclick="rvSalvar()">Salvar</button></div>';
+  var ST={ok:['Reservada','#6d28d9','#ede9fe'],confirmada:['Confirmada','#15803d','#dcfce7'],chegou:['Chegou','#0369a1','#e0f2fe'],cancelada:['Cancelada','#b91c1c','#fee2e2']}, dia='';
+  h+='<h4 style="margin:0 0 8px">Próximas reservas</h4>';
+  if(!RV.lista.length) h+='<div class="empty">Nenhuma reserva ainda.</div>';
+  RV.lista.forEach(function(r){
+    if(r.dia!==dia){ dia=r.dia; h+='<div style="font-size:12px;font-weight:800;color:var(--muted2);margin:12px 0 6px;text-transform:uppercase">'+esc(r.quando.split(' às ')[0])+'</div>'; }
+    var s=ST[r.status]||ST.ok, ativa=r.status==='ok'||r.status==='confirmada';
+    h+='<div style="border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap'+(ativa?'':';opacity:.6')+'"><b style="font-size:16px;min-width:48px">'+esc(r.hora)+'</b><div style="flex:1;min-width:160px"><b>'+esc(r.nome)+'</b> · Mesa '+esc(r.mesa)+' · '+r.pessoas+(r.pessoas>1?' pessoas':' pessoa')+'<div style="font-size:12px;color:var(--muted)">'+esc(r.fone||'')+(r.origem==='whats'?' · pelo WhatsApp':' · pelo cardápio')+(r.obs?' · '+esc(r.obs):'')+'</div></div>'
+     +'<span style="background:'+s[2]+';color:'+s[1]+';font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px">'+s[0]+'</span>'
+     +(ativa?'<div style="display:flex;gap:6px"><button class="btn sec sm" onclick="rvAcao(\''+r.id+'\',\'chegou\')">Chegou</button>'+(r.status==='ok'?'<button class="btn sec sm" onclick="rvAcao(\''+r.id+'\',\'confirmar\')">Confirmar</button>':'')+'<button class="btn sec sm" style="color:var(--red)" onclick="rvAcao(\''+r.id+'\',\'cancelar\')">Cancelar</button></div>':'')+'</div>';
+  });
+  el('rv-bd').innerHTML=h;
+}
+function rvSalvar(){ var b=el('rv-salvar'), c={on:el('rv-on').checked?1:0,dur:+el('rv-dur').value,antec:+el('rv-ant').value,dias:+el('rv-dias').value,passo:+el('rv-passo').value,maxPessoas:+el('rv-max').value||12,aviso:el('rv-aviso').value.trim()};
+  b.disabled=true; b.textContent='Salvando…';
+  mzApi('/painel/reserva-config',c).then(function(d){ b.disabled=false; b.textContent='Salvar'; if(!d||!d.ok) throw new Error((d&&d.mensagem)||'Não salvou'); RV.cfg=d.reserva; aviso(c.on?'Reservas ligadas':'Reservas desligadas'); }).catch(function(e){ b.disabled=false; b.textContent='Salvar'; aviso(e.message||'Não salvou'); }); }
+function rvAcao(id,acao){ if(acao==='cancelar'&&!confirm('Cancelar esta reserva? A mesa fica livre de novo.')) return;
+  mzApi('/painel/reserva-acao',{id:id,acao:acao}).then(function(d){ if(!d||!d.ok) throw new Error('Não salvou'); RV.lista.forEach(function(r){ if(r.id===id) r.status={cancelar:'cancelada',confirmar:'confirmada',chegou:'chegou'}[acao]; }); rvPintar(); if(MZ.lista.length) mzCarregar(); }).catch(function(e){ aviso(e.message); }); }
+/* (113) tag "Reservada" na mesa: a próxima reserva de hoje (hora, nome e pessoas); confirmada pelo cliente fica verde */
+function mzTagRsv(m){
+  var r=(m.rsv||[])[0]; if(!r) return '';
+  var ok=r.st==='confirmada', mais=(m.rsv.length>1?' +'+(m.rsv.length-1):'');
+  return '<span title="'+esc(m.rsv.map(function(x){ return x.hora+' · '+x.nome+' ('+x.pessoas+')'+(x.st==='confirmada'?' ✓':''); }).join('\n'))+'" style="margin-left:auto;align-self:flex-start;background:'+(ok?'#dcfce7':'#ede9fe')+';color:'+(ok?'#15803d':'#6d28d9')+';border:1px solid '+(ok?'#86efac':'#c4b5fd')+';font-size:11px;font-weight:800;padding:3px 8px;border-radius:999px;white-space:nowrap">🪑 Reservada '+esc(r.hora)+(ok?' ✓':'')+mais+'</span>';
 }
 function mzTela(modo){ var novo=modo==='novo', lug=modo==='lug'; el('mz-tit').textContent=novo?'Nova mesa':lug?'Lugares da mesa':'Editar mesa'; el('mz-bt').textContent=novo?'Criar':'Salvar'; el('mz-ateW').style.display=novo?'':'none'; el('mz-ajuda').style.display=novo?'':'none'; el('mz-lugW').style.display=''; el('mz-deL').textContent=novo?'De':'Número da mesa'; el('mz-de').style.display=lug?'none':''; el('mz-deL').style.display=lug?'none':''; el('mz-de').readOnly=false; MZ.modo=modo; }
 function mzNova(){ mzTela('novo'); el('mz-de').value=''; el('mz-ate').value=''; el('mz-lug').value=''; el('mz-erro').textContent=''; abrir('sh-mesa'); }
@@ -8656,7 +8704,8 @@ function cdOfColher(){ var o=CD.of; return {id:o.id||undefined,ordem:o.ordem,nom
 function cdOfSalvar(){
   var it=cdOfColher(), er=el('cd-of-erro'); if(!it.nome){ er.textContent='Falta o nome da oferta.'; return; }
   if(!it.vid){ er.textContent='Escolha o vídeo da oferta.'; return; }
-  if(!it.produtos.length){ er.textContent='Marque pelo menos um produto.'; return; }
+  if(!it.produtos.length&&it.txt.acao!=='reserva'){ er.textContent='Marque pelo menos um produto.'; return; }
+  if(it.txt.acao==='reserva'&&!it.txt.botao){ er.textContent='Escreva o texto do botão (ex: Reservar mesa).'; return; }
   if(!it.id) it.ordem=Date.now();
   var b=el('cd-of-salvar'); b.disabled=true; b.textContent='Salvando…'; er.textContent='';
   cdOfSalvarApi(it).then(function(){ b.disabled=false; b.textContent='Salvar'; CD.sel={}; return cdOfRecarregar(); }).then(function(){ aviso('Oferta salva'); cdAbrirOfertas(); })
