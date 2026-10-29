@@ -831,7 +831,7 @@ a{color:inherit}
 
       <!-- CARDÁPIO (1A): produtos, categorias e adicionais do restaurante -->
       <section class="page" id="pg-cardapio">
-        <div class="pghd"><div><h1>Cardápio</h1><div class="sub">produtos do seu restaurante · <span style="opacity:.6">GIRO-OS-081</span></div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn sec" onclick="cdAbrirCats()">Categorias</button><button class="btn sec" onclick="cdLinkCardapio()">🔗 Link do cardápio</button><button class="btn sec" onclick="cdEtiquetas()">Etiquetas</button><button class="btn sec" onclick="window.open('configurar.html','_blank')">📷 Cardápio por foto</button><button class="btn sec" onclick="cdAparencia()">🎨 Marca e cores</button><button class="btn sec" onclick="cdHorario()">🕒 Horário</button><button class="btn sec" onclick="cdFrete()">🛵 Entrega</button><button class="btn sec" onclick="cdGeo()">📍 Mesa</button><button class="btn sec" onclick="cdMesas()">🍽️ Mesas <span id="ms-bd" style="display:none;background:#ef4444;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px"></span></button><button class="btn sec" onclick="window.open('atendimento.html','_blank')">🧾 Atendimento (garçom/balcão)</button><button class="btn sec" onclick="cdAbrirOfertas()">▶ Ofertas</button><button class="btn sec" onclick="cdAbrirImport()">Importar planilha</button><button class="btn sec" onclick="cdFotosLote()">📷 Fotos em lote</button><button class="btn pri" onclick="cdNovo()">+ Novo produto</button></div></div>
+        <div class="pghd"><div><h1>Cardápio</h1><div class="sub">produtos do seu restaurante · <span style="opacity:.6">GIRO-OS-081</span></div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn sec" onclick="cdAbrirCats()">Categorias</button><button class="btn sec" onclick="cdLinkCardapio()">🔗 Link do cardápio</button><button class="btn sec" onclick="cdEtiquetas()">Etiquetas</button><button class="btn sec" onclick="window.open('configurar.html','_blank')">📷 Cardápio por foto</button><button class="btn sec" onclick="cdAparencia()">🎨 Marca e cores</button><button class="btn sec" onclick="cdHorario()">🕒 Horário</button><button class="btn sec" onclick="cdFrete()">🛵 Entrega</button><button class="btn sec" onclick="cdGeo()">📍 Mesa</button><button class="btn sec" onclick="cdMesas()">🍽️ Mesas <span id="ms-bd" style="display:none;background:#ef4444;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px"></span></button><button class="btn sec" onclick="window.open('atendimento.html','_blank')">🧾 Atendimento (garçom/balcão)</button><button class="btn sec" onclick="cdAbrirOfertas()">▶ Ofertas</button><button class="btn sec" onclick="clbAbrir()">💎 Clube de assinatura</button><button class="btn sec" onclick="cdAbrirImport()">Importar planilha</button><button class="btn sec" onclick="cdFotosLote()">📷 Fotos em lote</button><button class="btn pri" onclick="cdNovo()">+ Novo produto</button></div></div>
         <div class="card">
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px"><input class="inp" id="cd-busca" placeholder="Buscar produto" oninput="cdPintar()" style="flex:1;min-width:200px"><select class="inp" id="cd-fcat" onchange="cdPintar()" style="width:210px;max-width:100%"></select></div>
           <div id="cd-selbar" style="display:none;align-items:center;gap:10px;flex-wrap:wrap;background:var(--s2);border-radius:12px;padding:8px 12px;margin-bottom:10px;font-size:13px"><span id="cd-seltxt" style="font-weight:700"></span><button class="btn pri sm" onclick="cdExibirOferta()">▶ Exibir oferta</button><button class="btn sec sm" onclick="cdLimparSel()">Limpar</button></div>
@@ -1305,6 +1305,12 @@ a{color:inherit}
       <div style="display:flex;gap:8px;margin:6px 0 8px"><select class="inp" id="cd-dsc-t" onchange="cdDscMostra()" style="flex:1"><option value="">Sem desconto</option><option value="pct">Porcentagem (%)</option><option value="val">Valor fixo (R$)</option></select><input class="inp" id="cd-dsc-v" inputmode="decimal" placeholder="0" style="width:110px"></div>
       <div id="cd-dsc-datas" style="display:none"><div style="display:flex;gap:8px;flex-wrap:wrap"><div style="flex:1;min-width:150px"><div style="font-size:11.5px;color:var(--muted);margin-bottom:3px">Começa em (vazio = já)</div><input class="inp" type="datetime-local" id="cd-dsc-de"></div><div style="flex:1;min-width:150px"><div style="font-size:11.5px;color:var(--muted);margin-bottom:3px">Termina em (vazio = sem fim)</div><input class="inp" type="datetime-local" id="cd-dsc-ate"></div></div><div style="font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.45">Vale para o preço do produto e dos tamanhos (adicionais não entram). Horário de Brasília. Liga e desliga sozinho.</div></div>
     </div>
+    <!-- (111) preço específico para quem é do Clube de assinatura (vale no lugar da regra geral do clube) -->
+    <div style="margin:10px 0 4px;padding:12px;border:1px solid var(--border);border-radius:12px">
+      <label style="font-size:12px;font-weight:700;color:var(--muted2)">⭐ Preço no Clube <span style="font-weight:500">(opcional · vazio = segue a regra do Clube)</span></label>
+      <input class="inp" id="cd-clb" inputmode="decimal" placeholder="Ex.: 24,90" style="margin-top:6px">
+      <div style="font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.45">Pode ser maior ou menor que o desconto geral do Clube. Só aparece quando o Clube está ligado.</div>
+    </div>
     <label style="font-size:12px;font-weight:700;color:var(--muted2)">Descrição <span style="font-weight:500">(opcional)</span></label>
     <textarea class="inp" id="cd-desc" rows="2" maxlength="300" placeholder="Ingredientes, tamanho..." style="margin:4px 0 12px;resize:vertical"></textarea>
     <label style="font-size:12px;font-weight:700;color:var(--muted2)">Tamanhos <span style="font-weight:500">(opcional · ex: Broto, Média, Gigante 16 fatias)</span></label>
@@ -1354,6 +1360,11 @@ a{color:inherit}
 @keyframes ovAnel{0%{transform:scale(1);opacity:.85}100%{transform:scale(1.45,1.7);opacity:0}}
 @media (prefers-reduced-motion:reduce){.ov *,.ov *::after{animation:none!important}}
 </style>
+<!-- (111) Clube de assinatura: desconto, planos, entrega grátis, prioridade e ofertas por dia -->
+<div class="sheet wide" id="sh-clube">
+  <div class="sh-hd"><h3>💎 Clube de assinatura</h3><button onclick="fecharTudo()">✕</button></div>
+  <div class="sh-bd" id="clb-bd"><div style="color:var(--muted);font-size:13px">Carregando…</div></div>
+</div>
 <div class="sheet wide" id="sh-ofertas">
   <div class="sh-hd"><h3>Ofertas com vídeo</h3><button onclick="fecharTudo()">✕</button></div>
   <div class="sh-bd">
@@ -7367,6 +7378,74 @@ document.addEventListener('DOMContentLoaded',function(){
 /* ══ CARDÁPIO (1A) — produtos, categorias e adicionais; tudo guardado por cliente no Worker (/painel/cardapio*) ══ */
 var CD={ofs:[],cli:'',sel:{},of:null,cats:[],prods:[],carregou:false,edit:null,foto:'',tam:[],sab:[],sabIdx:-1};
 function cdHdr(){ return {'Content-Type':'application/json','Authorization':'Bearer '+DD_TOKEN}; }
+/* ── (111) CLUBE DE ASSINATURA ── */
+var CLB={c:null};
+var CLB_DIAS=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+function clbAbrir(){
+  fecharTudo(); abrir('sh-clube'); el('clb-bd').innerHTML='<div style="color:var(--muted);font-size:13px">Carregando…</div>';
+  var pr=CD.carregou?Promise.resolve():(typeof cdCarregar==='function'?Promise.resolve(cdCarregar()):Promise.resolve());
+  pr.then(function(){ return fetch(DELTADIS_API+'/painel/clube-config',{headers:cdHdr()}); }).then(function(r){ return r.json(); }).then(function(d){
+    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'não carregou'); CLB.c=d.clube; clbPintar();
+  }).catch(function(e){ el('clb-bd').innerHTML='<div style="color:#ef4444;font-size:13px">Não carregou: '+esc(e.message)+'</div>'; });
+}
+function clbPintar(){
+  var c=CLB.c, h='', sec=function(t,sub){ return '<div style="font-weight:800;font-size:14px;margin:18px 0 4px">'+t+'</div>'+(sub?'<div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:8px">'+sub+'</div>':''); };
+  h+='<label style="display:flex;align-items:center;gap:10px;padding:12px;border:1px solid var(--border);border-radius:12px;cursor:pointer"><input type="checkbox" id="clb-on" '+(c.ativo?'checked':'')+' style="width:20px;height:20px"><div><b>Clube ligado</b><div style="font-size:12px;color:var(--muted)">Desligado, o cardápio fica exatamente como hoje.</div></div></label>';
+  h+='<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><div style="flex:1;min-width:140px"><div style="font-size:11.5px;color:var(--muted);margin-bottom:3px">Nome do clube</div><input class="inp" id="clb-tit" maxlength="40" value="'+esc(c.titulo||'Clube')+'"></div><div style="flex:2;min-width:200px"><div style="font-size:11.5px;color:var(--muted);margin-bottom:3px">Frase de chamada (aparece no topo dos planos)</div><input class="inp" id="clb-cha" maxlength="120" placeholder="Ex.: Economize em todo pedido e ganhe vantagens" value="'+esc(c.chamada||'')+'"></div></div>';
+  h+=sec('Desconto do Clube','Quanto o assinante paga a menos. Produto com "Preço no Clube" no cadastro usa o preço dele.');
+  h+='<div style="display:flex;gap:8px"><select class="inp" id="clb-tipo" style="flex:1"><option value="pct"'+(c.tipo==='pct'?' selected':'')+'>Porcentagem (%)</option><option value="val"'+(c.tipo==='val'?' selected':'')+'>Valor fixo (R$)</option></select><input class="inp" id="clb-val" inputmode="decimal" placeholder="0" style="width:110px" value="'+(c.valor?String(c.valor).replace('.',','):'')+'"></div>';
+  h+='<div style="font-size:11.5px;color:var(--muted);margin:10px 0 4px">Onde vale</div><div style="display:flex;gap:6px;flex-wrap:wrap">'
+    +[['loja','Loja inteira'],['cats','Categorias'],['prods','Produtos']].map(function(o){ return '<label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid var(--border);border-radius:10px;cursor:pointer;font-size:13px"><input type="radio" name="clb-esc" value="'+o[0]+'" '+(c.escopo===o[0]?'checked':'')+' onchange="clbEscopo()">'+o[1]+'</label>'; }).join('')+'</div>';
+  h+='<div id="clb-lista" style="margin-top:8px"></div>';
+  h+=sec('Planos','Ligue os planos que quer vender. Cada um tem o seu preço, as vantagens que aparecem para o cliente, entrega grátis e prioridade na fila.');
+  h+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px">';
+  ['tri','sem','anu'].forEach(function(k){ var p=c.planos[k];
+    h+='<div style="border:1px solid var(--border);border-radius:12px;padding:12px"><label style="display:flex;align-items:center;gap:8px;font-weight:800"><input type="checkbox" id="clb-'+k+'-on" '+(p.on?'checked':'')+'>'+p.nome+' <span style="font-weight:500;color:var(--muted);font-size:12px">('+p.meses+' meses)</span></label>'
+      +'<div style="font-size:11.5px;color:var(--muted);margin:8px 0 3px">Preço total do plano (R$)</div><input class="inp" id="clb-'+k+'-preco" inputmode="decimal" placeholder="0,00" value="'+(p.preco?String(p.preco).replace('.',','):'')+'">'
+      +'<div style="font-size:11.5px;color:var(--muted);margin:8px 0 3px">Vantagens (uma por linha)</div><textarea class="inp" id="clb-'+k+'-vant" rows="3" placeholder="Ex.: 10% em todo o cardápio">'+esc((p.vant||[]).join('\n'))+'</textarea>'
+      +'<label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px"><input type="checkbox" id="clb-'+k+'-frete" '+(p.frete?'checked':'')+'>🛵 Entrega grátis</label>'
+      +'<label style="display:flex;align-items:center;gap:8px;margin-top:6px;font-size:13px"><input type="checkbox" id="clb-'+k+'-prio" '+(p.prio?'checked':'')+'>⚡ Prioridade na fila (cozinha e entrega)</label>'
+      +(k==='anu'?'<label style="display:flex;align-items:center;gap:8px;margin-top:6px;font-size:13px"><input type="checkbox" id="clb-anu-pix" '+(p.pix?'checked':'')+'>Aceitar Pix (pagamento único)</label>':'')
+      +'<label style="display:flex;align-items:center;gap:8px;margin-top:6px;font-size:13px"><input type="checkbox" id="clb-'+k+'-dest" '+(p.destaque?'checked':'')+'>⭐ Destacar como "mais escolhido"</label></div>';
+  });
+  h+='</div><div style="font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.45">Pagamento: cartão de crédito com renovação automática em todos os planos. Pix só no anual.</div>';
+  h+=sec('Ofertas do Clube por dia','Preço especial de um produto para assinantes em dias da semana escolhidos (ex.: toda terça, burger do clube por R$ 19,90).');
+  h+='<div id="clb-ofs"></div><button class="btn sec sm" style="margin-top:8px" onclick="clbOfNova()">+ Oferta do dia</button>';
+  h+='<div id="clb-erro" style="color:#ef4444;font-size:12.5px;margin-top:12px"></div><button class="btn pri wide" id="clb-salvar" style="margin-top:12px" onclick="clbSalvar()">Salvar Clube</button>';
+  el('clb-bd').innerHTML=h; clbEscopo(); clbOfPintar();
+}
+function clbEscopo(){
+  var c=CLB.c, e=(document.querySelector('input[name="clb-esc"]:checked')||{}).value||'loja'; c.escopo=e; var box=el('clb-lista');
+  if(e==='loja'){ box.innerHTML=''; return; }
+  var lista=e==='cats'?CD.cats:CD.prods, sel=e==='cats'?c.cats:c.prods;
+  box.innerHTML=(e==='prods'?'<input class="inp" placeholder="Buscar produto…" oninput="clbFiltra(this.value)" style="margin-bottom:6px">':'')+'<div id="clb-ck" style="max-height:220px;overflow:auto;border:1px solid var(--border);border-radius:10px;padding:6px 10px">'
+    +(lista||[]).map(function(x){ return '<label class="clb-it" data-n="'+esc(String(x.nome||'').toLowerCase())+'" style="display:flex;align-items:center;gap:8px;padding:5px 0;font-size:13px"><input type="checkbox" value="'+esc(x.id)+'" '+(sel.indexOf(x.id)>=0?'checked':'')+'>'+esc(x.nome||'')+'</label>'; }).join('')+'</div>';
+}
+function clbFiltra(q){ q=String(q||'').toLowerCase(); document.querySelectorAll('#clb-ck .clb-it').forEach(function(l){ l.style.display=l.getAttribute('data-n').indexOf(q)>=0?'flex':'none'; }); }
+function clbOfNova(){ clbOfLer(); CLB.c.ofertas.push({p:'',dias:[],preco:0,de:'',ate:''}); clbOfPintar(); }
+function clbOfApaga(i){ clbOfLer(); CLB.c.ofertas.splice(i,1); clbOfPintar(); }
+function clbOfPintar(){
+  var opt=function(sel){ return '<option value="">Produto…</option>'+(CD.prods||[]).map(function(p){ return '<option value="'+esc(p.id)+'"'+(p.id===sel?' selected':'')+'>'+esc(p.nome)+'</option>'; }).join(''); };
+  el('clb-ofs').innerHTML=(CLB.c.ofertas||[]).map(function(o,i){
+    return '<div class="clb-of" style="border:1px solid var(--border);border-radius:12px;padding:10px;margin-top:8px"><div style="display:flex;gap:8px;flex-wrap:wrap"><select class="inp clb-of-p" style="flex:2;min-width:160px">'+opt(o.p)+'</select><input class="inp clb-of-v" inputmode="decimal" placeholder="Preço R$" style="width:110px" value="'+(o.preco?String(o.preco).replace('.',','):'')+'"><button class="btn sec sm" onclick="clbOfApaga('+i+')">Remover</button></div>'
+      +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">'+CLB_DIAS.map(function(d,j){ return '<label style="display:flex;align-items:center;gap:4px;font-size:12.5px;padding:5px 8px;border:1px solid var(--border);border-radius:8px"><input type="checkbox" class="clb-of-d" value="'+j+'" '+(o.dias.indexOf(j)>=0?'checked':'')+'>'+d+'</label>'; }).join('')+'</div>'
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><div style="flex:1;min-width:130px"><div style="font-size:11px;color:var(--muted)">De (opcional)</div><input class="inp clb-of-de" type="date" value="'+(o.de||'')+'"></div><div style="flex:1;min-width:130px"><div style="font-size:11px;color:var(--muted)">Até (opcional)</div><input class="inp clb-of-ate" type="date" value="'+(o.ate||'')+'"></div></div></div>';
+  }).join('');
+}
+function clbOfLer(){
+  var l=[]; document.querySelectorAll('#clb-ofs .clb-of').forEach(function(b){ l.push({p:b.querySelector('.clb-of-p').value,preco:cdPreco(b.querySelector('.clb-of-v').value),dias:[].slice.call(b.querySelectorAll('.clb-of-d:checked')).map(function(x){ return +x.value; }),de:b.querySelector('.clb-of-de').value,ate:b.querySelector('.clb-of-ate').value}); });
+  if(CLB.c) CLB.c.ofertas=l;
+}
+function clbSalvar(){
+  var c=CLB.c; clbOfLer(); if(c.escopo!=='loja'){ var ck=[].slice.call(document.querySelectorAll('#clb-ck input:checked')).map(function(x){ return x.value; }); if(c.escopo==='cats') c.cats=ck; else c.prods=ck; }
+  var pl={}; ['tri','sem','anu'].forEach(function(k){ pl[k]={on:el('clb-'+k+'-on').checked,preco:cdPreco(el('clb-'+k+'-preco').value),vant:el('clb-'+k+'-vant').value.split('\n'),frete:el('clb-'+k+'-frete').checked,prio:el('clb-'+k+'-prio').checked,pix:k==='anu'&&el('clb-anu-pix').checked,destaque:el('clb-'+k+'-dest').checked}; });
+  var corpo={ativo:el('clb-on').checked,titulo:el('clb-tit').value,chamada:el('clb-cha').value,tipo:el('clb-tipo').value,valor:cdPreco(el('clb-val').value),escopo:c.escopo,cats:c.cats,prods:c.prods,planos:pl,ofertas:c.ofertas};
+  if(corpo.ativo&&!(corpo.valor>0)&&corpo.escopo!=='loja'){ }
+  var b=el('clb-salvar'); b.disabled=true; b.textContent='Salvando…'; el('clb-erro').textContent='';
+  fetch(DELTADIS_API+'/painel/clube-config',{method:'POST',headers:cdHdr(),body:JSON.stringify(corpo)}).then(function(r){ return r.json(); }).then(function(d){
+    b.disabled=false; b.textContent='Salvar Clube'; if(!d||!d.ok) throw new Error((d&&d.mensagem)||'não salvou'); CLB.c=d.clube; aviso(d.clube.ativo?'Clube salvo e ligado 💎':'Clube salvo (desligado)'); clbPintar();
+  }).catch(function(e){ b.disabled=false; b.textContent='Salvar Clube'; el('clb-erro').textContent=e.message; });
+}
 function cdPreco(v){ var n=Number(String(v==null?'':v).replace(/\./g,'').replace(',','.')); if(String(v).indexOf(',')<0&&String(v).indexOf('.')>=0) n=Number(String(v)); return isFinite(n)&&n>=0?n:0; }
 function cdCarregar(){
   var l=el('cd-lista'); if(l&&!CD.carregou) l.innerHTML='<div style="padding:24px;text-align:center;color:var(--muted)">Carregando…</div>';
@@ -7440,7 +7519,7 @@ function cdAbrirForm(p){
   CD.edit=p?p.id:null; CD.foto=(p&&p.foto)||''; CD.vid=(p&&p.vid)||''; CD.vtipo=(p&&p.vtipo)||'video/mp4'; cdPVPinta();
   el('cd-tit').textContent=p?'Editar produto':'Novo produto';
   el('cd-nome').value=p?p.nome:''; el('cd-preco').value=(p&&p.preco)?String(p.preco).replace('.',','):'';
-  el('cd-desc').value=(p&&p.desc)||''; el('cd-des').value=(p&&p.desenho)||''; var dq=(p&&p.desconto)||{}; el('cd-dsc-t').value=dq.tipo||''; el('cd-dsc-v').value=dq.valor?String(dq.valor).replace('.',','):''; el('cd-dsc-de').value=dq.de||''; el('cd-dsc-ate').value=dq.ate||''; cdDscMostra(); el('cd-ativo').checked=!p||p.ativo!==false; el('cd-erro').textContent='';
+  el('cd-desc').value=(p&&p.desc)||''; el('cd-des').value=(p&&p.desenho)||''; var dq=(p&&p.desconto)||{}; el('cd-dsc-t').value=dq.tipo||''; el('cd-dsc-v').value=dq.valor?String(dq.valor).replace('.',','):''; el('cd-dsc-de').value=dq.de||''; el('cd-dsc-ate').value=dq.ate||''; cdDscMostra(); el('cd-clb').value=(p&&p.clube&&p.clube.preco)?String(p.clube.preco).replace('.',','):''; el('cd-ativo').checked=!p||p.ativo!==false; el('cd-erro').textContent='';
   cdOpcoesCat(p&&p.cat); cdFotoBox();
   el('cd-ads').innerHTML=''; var ad=(p&&p.adicionais)||[], i; for(i=0;i<ad.length;i++) cdAdLinha(ad[i]);
   CD.tam=JSON.parse(JSON.stringify((p&&p.tamanhos)||[])); CD.sab=JSON.parse(JSON.stringify((p&&p.sabores)||[])); cdRenderTam(); el('cd-sab-busca').value=''; cdRenderSab(); cdCarregarFotos(p);
@@ -7488,7 +7567,7 @@ function cdColher(){
   var tms=[], sbs=[], j;
   for(j=0;j<CD.tam.length;j++){ var t=CD.tam[j]; if((t.nome||'').trim()) tms.push({id:t.id,nome:t.nome.trim(),preco:cdPreco(t.preco),med:(t.med||'').trim(),max:parseInt(t.max,10)||1}); }
   for(j=0;j<CD.sab.length;j++){ var sb=CD.sab[j]; if((sb.nome||'').trim()){ var pr={},k; for(k in (sb.precos||{})){ var pv=cdPreco(sb.precos[k]); if(pv>0) pr[k]=pv; } sbs.push({id:sb.id,nome:sb.nome.trim(),desc:(sb.desc||'').trim(),grupo:(sb.grupo||'').trim(),extra4:cdPreco(sb.extra4),novidade:!!sb.novidade,balcao:!!sb.balcao,foto:sb._mud?(sb.foto||''):(sb.foto?'1':''),precos:pr}); } }
-  return {nome:el('cd-nome').value.trim(),preco:cdPreco(el('cd-preco').value),cat:el('cd-cat').value,desc:el('cd-desc').value.trim(),desenho:el('cd-des').value,desconto:cdDscLer(),foto:CD.foto,vid:CD.vid||'',vtipo:CD.vtipo||'video/mp4',adicionais:ads,tamanhos:tms,sabores:sbs,ativo:el('cd-ativo').checked};
+  return {nome:el('cd-nome').value.trim(),preco:cdPreco(el('cd-preco').value),cat:el('cd-cat').value,desc:el('cd-desc').value.trim(),desenho:el('cd-des').value,desconto:cdDscLer(),clube:(cdPreco(el('cd-clb').value)>0?{preco:cdPreco(el('cd-clb').value)}:null),foto:CD.foto,vid:CD.vid||'',vtipo:CD.vtipo||'video/mp4',adicionais:ads,tamanhos:tms,sabores:sbs,ativo:el('cd-ativo').checked};
 }
 function cdSalvar(){
   var it=cdColher(); if(!it.nome){ el('cd-erro').textContent='Falta o nome do produto.'; return; }
