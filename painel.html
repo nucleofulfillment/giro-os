@@ -8563,7 +8563,7 @@ function slDesenha(manterProp){
       +'<button '+bt+' onclick="slDistribui(\'h\')" title="Distribuir na horizontal (mesmo espaço entre elas)">⇹</button><button '+bt+' onclick="slDistribui(\'v\')" title="Distribuir na vertical (mesmo espaço entre elas)">⇳</button>'
       +sep+'<label style="'+lb+'" title="Largura (ou diâmetro) de todas, em cm">L<input class="inp" id="sl-lw" type="number" min="20" max="8000" step="5" placeholder="cm" style="'+ip+';width:64px"></label><label style="'+lb+'" title="Comprimento de todas, em cm">C<input class="inp" id="sl-lh" type="number" min="20" max="8000" step="5" placeholder="cm" style="'+ip+';width:64px"></label><button '+bt+' onclick="slTamLote()" title="Aplicar o tamanho em todas">✓</button>'
       +'<button '+bt+' onclick="slTam(-1)" title="Diminuir todas">−</button><button '+bt+' onclick="slTam(1)" title="Aumentar todas">+</button>'
-      +sep+giro+sep+'<button '+bt+' onclick="slRemove()" style="padding:5px 9px;font-size:13px;color:var(--red)" title="Remover as '+ps.length+' selecionadas">🗑</button></div>';
+      +sep+giro+sep+'<button '+bt+' onclick="slDuplica()" title="Duplicar (Ctrl+D) · copiar e colar: Ctrl+C / Ctrl+V">⧉</button><button '+bt+' onclick="slRemove()" style="padding:5px 9px;font-size:13px;color:var(--red)" title="Remover as '+ps.length+' selecionadas">🗑</button></div>';
     pr.innerHTML=h; return;
   }
   var h='<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><b style="font-size:13px">'+(p.t==='mesa'?'Mesa':SL_T[p.t].nome)+'</b>';
@@ -8574,7 +8574,7 @@ function slDesenha(manterProp){
   if(p.t==='mesa'&&p.forma!=='quadrada') h+='<label style="'+lb+'" title="Diâmetro em cm">Ø<input class="inp" id="sl-cm" type="number" min="40" max="600" step="5" value="'+Math.round(p.w*4)+'" style="'+ip+';width:64px" oninput="slMedida()">cm</label>';
   else if(p.t==='mesa') h+='<label style="'+lb+'" title="Largura em cm">L<input class="inp" id="sl-qw" type="number" min="40" max="600" step="5" value="'+Math.round(p.w*4)+'" style="'+ip+';width:64px" oninput="slMedida()"></label><label style="'+lb+'" title="Comprimento em cm">C<input class="inp" id="sl-qh" type="number" min="40" max="600" step="5" value="'+Math.round((p.h||p.w)*4)+'" style="'+ip+';width:64px" oninput="slMedida()">cm</label>';
   else h+='<label style="'+lb+'" title="Largura em metros">L<input class="inp" id="sl-mw" type="number" min="0.2" max="80" step="0.1" value="'+(Math.round(p.w/2.5)/10)+'" style="'+ip+';width:60px" oninput="slMedida()"></label><label style="'+lb+'" title="Comprimento em metros">C<input class="inp" id="sl-mh" type="number" min="0.2" max="80" step="0.1" value="'+(Math.round(p.h/2.5)/10)+'" style="'+ip+';width:60px" oninput="slMedida()">m</label>';
-  h+='<button '+bt+' onclick="slTam(-1)" title="Diminuir">−</button><button '+bt+' onclick="slTam(1)" title="Aumentar">+</button>'+sep+giro+sep+'<button '+bt+' onclick="slRemove()" style="padding:5px 9px;font-size:13px;color:var(--red)" title="Remover">🗑</button></div>';
+  h+='<button '+bt+' onclick="slTam(-1)" title="Diminuir">−</button><button '+bt+' onclick="slTam(1)" title="Aumentar">+</button>'+sep+giro+sep+'<button '+bt+' onclick="slDuplica()" title="Duplicar (Ctrl+D) · copiar e colar: Ctrl+C / Ctrl+V">⧉</button><button '+bt+' onclick="slRemove()" style="padding:5px 9px;font-size:13px;color:var(--red)" title="Remover">🗑</button></div>';
   pr.innerHTML=h;
 }
 /* (119) barra de áreas: abas + medidas da área escolhida (nome, interna/externa, térreo/superior, largura e comprimento em metros) */
@@ -8615,7 +8615,23 @@ function slDesfaz(){ SL.hist=SL.hist||[]; if(!SL.hist.length) return; (SL.refaz=
 function slRefaz(){ SL.refaz=SL.refaz||[]; if(!SL.refaz.length) return; (SL.hist=SL.hist||[]).push(slFoto()); slVolta(SL.refaz.pop()); }
 function slHistBt(){ var a=el('sl-undo'), b=el('sl-redo'); if(a) a.disabled=!(SL.hist&&SL.hist.length); if(b) b.disabled=!(SL.refaz&&SL.refaz.length); }
 document.addEventListener('keydown',function(e){ var t=el('sl-tela'); if(!t||t.style.display==='none'||!(e.ctrlKey||e.metaKey)) return; var tg=e.target&&e.target.tagName; if(tg==='INPUT'||tg==='TEXTAREA') return;
-  var k=String(e.key||'').toLowerCase(); if(k==='z'&&!e.shiftKey){ e.preventDefault(); slDesfaz(); } else if(k==='y'||(k==='z'&&e.shiftKey)){ e.preventDefault(); slRefaz(); } });
+  var k=String(e.key||'').toLowerCase(); if(k==='z'&&!e.shiftKey){ e.preventDefault(); slDesfaz(); } else if(k==='y'||(k==='z'&&e.shiftKey)){ e.preventDefault(); slRefaz(); }
+  else if(k==='c'&&!SL.v3){ if(slCopia()) e.preventDefault(); } else if(k==='v'&&!SL.v3){ e.preventDefault(); slCola(); } else if(k==='d'&&!SL.v3){ e.preventDefault(); slDuplica(); } });
+/* (123) copiar, colar e duplicar peças: a cópia entra um pouco deslocada e já selecionada.
+   Mesa colada pega primeiro um número do cadastro que ainda não está no mapa; sem isso, o próximo número livre (e avisa para cadastrar) */
+function slCopia(){ var ps=slSels(); if(!ps.length) return false; SL.clip=JSON.parse(JSON.stringify(ps)); SL.colas=0; var m=el('sl-m'); m.style.color='var(--muted)'; m.textContent=ps.length+' peça(s) copiada(s). Ctrl+V cola.'; return true; }
+function slCola(){ if(!SL.clip||!SL.clip.length) return; slHist(); SL.colas=(SL.colas||0)+1;
+  var z=slWH(), d=12.5*SL.colas, us={}, novos=[], semCad=[], pulou=0, livres=Object.keys(SL.lugs||{}).filter(function(n){ return /^\d+$/.test(n); }).map(Number).sort(function(a,b){ return a-b; });
+  SL.L.forEach(function(p){ if(p.t==='mesa') us[p.n]=1; });
+  SL.clip.forEach(function(c){
+    if(c.t==='balcao'&&slDaArea().some(function(p){ return p.t==='balcao'; })){ pulou++; return; }
+    var p=JSON.parse(JSON.stringify(c)); p.id=SL.uid++; p.area=SL.area; p.x=Math.max(5,Math.min(z.W-5,c.x+d)); p.y=Math.max(5,Math.min(z.H-5,c.y+d));
+    if(p.t==='mesa'){ var n=livres.filter(function(x){ return !us[x]; })[0]; if(!n){ n=1; while(us[n]) n++; semCad.push(n); } p.n=n; us[n]=1; }
+    SL.L.push(p); novos.push(p.id); });
+  if(!novos.length) return; SL.multi=novos; SL.sel=novos[novos.length-1]; SL.sujo=true; slDesenha();
+  var m=el('sl-m'); m.style.color=semCad.length?'#B08A00':'var(--muted)';
+  m.textContent=novos.length+' peça(s) colada(s).'+(pulou?' O balcão não foi copiado (só pode ter um).':'')+(semCad.length?' Cadastre a(s) mesa(s) '+semCad.join(', ')+' no menu Mesas, senão ela(s) sai(em) do mapa ao reabrir.':''); }
+function slDuplica(){ if(slCopia()) slCola(); }
 function slAreaRet(){ slHist(); var a=slAr(); delete a.pontos; SL.sujo=true; slAreasPinta(); slDesenha(); }
 function slAreaNova(){ slHist(); var i=1; while(SL.areas.some(function(a){ return a.id==='a'+i; })) i++; var ext=SL.areas.some(function(a){ return a.tipo==='interno'; });
   SL.areas.push({id:'a'+i,nome:ext?'Área externa':'Área interna',tipo:ext?'externo':'interno',andar:'terreo',larg:12,comp:8}); SL.area='a'+i; SL.sel=0; SL.sujo=true; slAreasPinta(); slDesenha(); }
