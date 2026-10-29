@@ -529,7 +529,7 @@ function carregar(primeira){
   if(!CLI){ vazio('Bem-vindo ao LiveFood','Escaneie o QR Code da sua mesa ou abra o link do restaurante para ver o cardápio.'); try{ var vz=$('vazio'); if(vz&&!$('vz-lg')){ var g=document.createElement('img'); g.id='vz-lg'; g.src='livefood-logo.png'; g.alt='LiveFood'; g.style.cssText='height:46px;margin-bottom:18px'; vz.insertBefore(g,vz.firstChild); } }catch(e){} return Promise.resolve(); }
   return fetch(API+'/food/cardapio/'+encodeURIComponent(CLI)).then(function(r){return r.json();}).then(function(d){
     if(!d||!d.ok){ if(primeira) vazio('Cardápio não encontrado',(d&&d.mensagem)||'Confira o link.'); return; }
-    if(primeira){ D=d; CLI=d.cli||CLI; sacLer(); aplicaTema(); navOn('inicio'); temaAplica(); wizPill(); mesaInit(); document.title=(d.empresa||'Cardápio'); $('emp').innerHTML=((d.cfg&&d.cfg.logo)?'<img class="lg" src="'+API+'/food/foto/'+encodeURIComponent(d.cli||CLI)+'/_logo?v='+(d.cfg.v||0)+'" alt="'+esc(d.empresa)+'" onerror="this.outerHTML=\''+esc(d.empresa).replace(/'/g,'')+'\'">':esc(d.empresa))+'<small id="stt"></small>'; pintaStatus(); try{ if(!estaAberto()&&!sessionStorage.getItem('lf_fcm_'+(d.cli||CLI))){ sessionStorage.setItem('lf_fcm_'+(d.cli||CLI),'1'); setTimeout(abreFechado,600); } }catch(e){} manifesto(); iniciar(); clbInit(); }
+    if(primeira){ D=d; CLI=d.cli||CLI; sacLer(); aplicaTema(); navOn('inicio'); temaAplica(); wizPill(); mesaInit(); document.title=(d.empresa||'Cardápio'); $('emp').innerHTML=((d.cfg&&d.cfg.logo)?'<img class="lg" src="'+API+'/food/foto/'+encodeURIComponent(d.cli||CLI)+'/_logo?v='+(d.cfg.v||0)+'" alt="'+esc(d.empresa)+'" onerror="this.outerHTML=\''+esc(d.empresa).replace(/'/g,'')+'\'">':esc(d.empresa))+'<small id="stt"></small>'; pintaStatus(); try{ if(!estaAberto()&&!sessionStorage.getItem('lf_fcm_'+(d.cli||CLI))){ sessionStorage.setItem('lf_fcm_'+(d.cli||CLI),'1'); setTimeout(abreFechado,600); } }catch(e){} manifesto(); iniciar(); clbInit(); catAplica(); }
     else novoD=d;
   }).catch(function(){ if(primeira) vazio('Sem conexão','Não consegui abrir o cardápio. Tente de novo.'); });
 }
@@ -538,8 +538,8 @@ function vazio(t,p){ $('vzB').style.display='none'; $('vzT').textContent=t; $('v
 /* sem ofertas no ar: mostra os produtos cadastrados (botão + abre a lista) e o aviso */
 function semOfertas(abre){
   var tem=Object.keys(D.produtos||{}).length;
-  if(!tem){ vazio('Cardápio em breve','Ainda não há ofertas no ar. Volte daqui a pouco.'); return; }
-  vazio('Cadastre suas ofertas','Cadastre suas ofertas no painel para exibir aqui. Enquanto isso, o cardápio já está disponível.'); $('vzB').style.display='block';
+  if(!tem){ vazio(catNome()+' em breve','Ainda não há ofertas no ar. Volte daqui a pouco.'); return; }
+  vazio('Cadastre suas ofertas','Cadastre suas ofertas no painel para exibir aqui. Enquanto isso, '+(catEhCardapio()?'o cardápio já está disponível':catNome()+' já está disponível')+'.'); $('vzB').style.display='block'; if(!catEhCardapio()) $('vzB').textContent='Ver '+catNome();
   if(abre) setTimeout(function(){ try{ abreMenu(); }catch(e){} },300);
 }
 function iniciar(){
@@ -1279,7 +1279,7 @@ function ckConfere(){
 function ckOk(p){
   SAC=[]; sacGrava(); try{ localStorage.removeItem('lf_prog_'+(D.cli||CLI)); }catch(e){}
   if(window.LiveApp) LiveApp.comemorar({titulo:'Pedido #'+p.num+(p.pagto==='dinheiro'||p.pagto==='caixa'||p.pagto==='conta'?' enviado!':' confirmado!'),sub:p.modo==='mesa'?'Já estamos preparando! 🍳':'Já estamos preparando o seu pedido 🍳'});
-  abreFolha('<div class="wb" style="text-align:center;padding:36px 20px 24px"><svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg><div style="font-size:22px;font-weight:800;margin-top:14px">Pedido #'+p.num+(p.pagto==='dinheiro'||p.pagto==='caixa'||p.pagto==='conta'?' enviado!':' confirmado!')+'</div><div style="margin-top:8px;color:var(--mut);font-size:14.5px;line-height:1.5">'+(p.pagto==='conta'?'Para pagar, toque em <b style="color:#fff">Fechar conta</b> quando quiser.':p.pagto==='caixa'?'Pague <b style="color:#fff">'+brl(p.total)+'</b> no caixa (cartão ou dinheiro).':p.pagto==='dinheiro'?'Pague <b style="color:#fff">'+brl(p.total)+'</b> em dinheiro '+(p.modo==='retirada'?'na retirada':'ao entregador')+'.':'Pagamento recebido: <b style="color:#fff">'+brl(p.total)+'</b>.')+'<br>'+(p.prog_dia?'Agendado para <b style="color:#fff">'+esc(progFmt({dia:p.prog_dia,hora:p.prog_hora}))+'</b>, com prioridade na fila.':(p.modo==='mesa'?'Já estamos preparando! Levamos até a sua mesa.':p.modo==='retirada'?'Avisaremos quando estiver pronto para retirar.':'Já estamos preparando o seu pedido.'))+'</div></div><div class="rod"><button class="bt c" onclick="'+(p.modo==='mesa'?'fechaSheet();mesaInit(true)':'fechaSheet()')+'">'+(p.modo==='mesa'?'Voltar ao início':'Voltar ao cardápio')+'</button></div>',true);
+  abreFolha('<div class="wb" style="text-align:center;padding:36px 20px 24px"><svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg><div style="font-size:22px;font-weight:800;margin-top:14px">Pedido #'+p.num+(p.pagto==='dinheiro'||p.pagto==='caixa'||p.pagto==='conta'?' enviado!':' confirmado!')+'</div><div style="margin-top:8px;color:var(--mut);font-size:14.5px;line-height:1.5">'+(p.pagto==='conta'?'Para pagar, toque em <b style="color:#fff">Fechar conta</b> quando quiser.':p.pagto==='caixa'?'Pague <b style="color:#fff">'+brl(p.total)+'</b> no caixa (cartão ou dinheiro).':p.pagto==='dinheiro'?'Pague <b style="color:#fff">'+brl(p.total)+'</b> em dinheiro '+(p.modo==='retirada'?'na retirada':'ao entregador')+'.':'Pagamento recebido: <b style="color:#fff">'+brl(p.total)+'</b>.')+'<br>'+(p.prog_dia?'Agendado para <b style="color:#fff">'+esc(progFmt({dia:p.prog_dia,hora:p.prog_hora}))+'</b>, com prioridade na fila.':(p.modo==='mesa'?'Já estamos preparando! Levamos até a sua mesa.':p.modo==='retirada'?'Avisaremos quando estiver pronto para retirar.':'Já estamos preparando o seu pedido.'))+'</div></div><div class="rod"><button class="bt c" onclick="'+(p.modo==='mesa'?'fechaSheet();mesaInit(true)':'fechaSheet()')+'">'+(p.modo==='mesa'?'Voltar ao início':(catEhCardapio()?'Voltar ao cardápio':'Voltar para '+esc(catNome())))+'</button></div>',true);
 }
 /* ── (052) FECHAR CONTA da mesa: soma tudo que a mesa pediu; Pix paga na hora, cartão/dinheiro no caixa ── */
 var MC={forma:'pix',d:null,tmr:null};
@@ -1401,7 +1401,7 @@ function navIr(k){
   else abreConta('dados');
 }
 function abreBusca(){
-  abreFolha('<div class="wh"><button class="bk" onclick="navIr(\'inicio\')">'+XI+'</button><b>Buscar no cardápio</b></div><div class="wb"><input class="busca" id="bq" placeholder="O que você quer comer?" oninput="buscaLista()" style="width:100%;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:#ffffff0f;color:#fff;font-size:15px;margin:10px 0"><div id="bl"></div></div>',true,'fx');
+  abreFolha('<div class="wh"><button class="bk" onclick="navIr(\'inicio\')">'+XI+'</button><b>'+(catEhCardapio()?'Buscar no cardápio':'Buscar em '+esc(catNome()))+'</b></div><div class="wb"><input class="busca" id="bq" placeholder="'+(catEhCardapio()?'O que você quer comer?':'O que você procura?')+'" oninput="buscaLista()" style="width:100%;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:#ffffff0f;color:#fff;font-size:15px;margin:10px 0"><div id="bl"></div></div>',true,'fx');
   buscaLista(); setTimeout(function(){ var e=$('bq'); if(e) e.focus(); },350);
 }
 function buscaLista(){
@@ -1504,7 +1504,7 @@ function alinhaShare(){
 (function(){ var ob=$('ovbox'); if(ob&&window.MutationObserver) new MutationObserver(function(){ setTimeout(alinhaShare,30); }).observe(ob,{childList:true}); window.addEventListener('resize',alinhaShare); })();
 function compartilhaLink(){
   var u=CLI?lfLink(MESA):location.origin+location.pathname, t=(D&&D.empresa)||document.title||'Cardápio';
-  if(navigator.share){ navigator.share({title:t,text:'Veja o cardápio de '+t,url:u}).catch(function(){}); return; }
+  if(navigator.share){ navigator.share({title:t,text:'Veja '+catRef()+' de '+t,url:u}).catch(function(){}); return; }
   function ok(){ toast('Link copiado'); }
   try{ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(u).then(ok,function(){ prompt('Copie o link:',u); }); return; } }catch(e){}
   try{ var ta=document.createElement('textarea'); ta.value=u; ta.style.cssText='position:fixed;opacity:0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); ok(); }catch(e){ prompt('Copie o link:',u); }
@@ -1597,7 +1597,7 @@ function abreFechado(){
    +'<div style="font-size:20px;font-weight:800;margin-top:8px">Estamos fechados agora</div>'
    
    +tk+'<div class="nt" style="margin-top:10px;font-size:13px">Pedido programado entra com <b>prioridade na fila</b> assim que abrirmos.</div>'
-   +'<div style="display:flex;flex-direction:column;gap:10px;margin-top:16px"><button class="bt c" style="flex:none;width:100%" onclick="abreAgenda()">Reservar meu pedido</button><button class="bt c" style="flex:none;width:100%;background:transparent;border:2px solid #ffffff44;color:#fff" onclick="fechaSheet()">Só ver o cardápio</button></div></div>';
+   +'<div style="display:flex;flex-direction:column;gap:10px;margin-top:16px"><button class="bt c" style="flex:none;width:100%" onclick="abreAgenda()">Reservar meu pedido</button><button class="bt c" style="flex:none;width:100%;background:transparent;border:2px solid #ffffff44;color:#fff" onclick="fechaSheet()">Só ver '+esc(catRef())+'</button></div></div>';
   abreFolha(h);
 }
 function abreAgenda(){
@@ -1643,10 +1643,26 @@ function menuEspeciais(){
   if(pl){ var cl=ps.filter(function(p){ return clbPreco(p,clbDescPlano(pl)); }); if(cl.length&&mc.clube.on) out.push({id:'_clube',nome:mc.clube.nome||'Ofertas Clube',pos:mc.clube.pos||2,ps:cl}); }
   return out;
 }
+/* (130) BOTÃO DO CATÁLOGO: nome e ícone escolhidos no painel (Ofertas): "Cardápio" no restaurante, "Medicamentos" na farmácia, "Produtos" no mercado... */
+var CAT_IC={medicamentos:'💊',mercado:'🛒',catalogo:'📦',padaria:'🥖',pet:'🐾'};
+function catCfg(){ return (D&&D.cfg&&D.cfg.menu&&D.cfg.menu.catalogo)||{nome:'Cardápio',icone:'cardapio'}; }
+function catNome(){ return catCfg().nome||'Cardápio'; }
+function catEhCardapio(){ var n=catNome().toLowerCase(); return n==='cardápio'||n==='cardapio'; }
+/* "o cardápio" no restaurante; o nome escolhido nos outros ("Medicamentos", "Produtos") */
+function catRef(){ return catEhCardapio()?'o cardápio':catNome(); }
+function catAplica(){
+  var c=catCfg(), b=$('mnb'); if(!b) return;
+  var ic=CAT_IC[c.icone], sp=b.querySelector('span'), svg=b.querySelector('svg'), em=b.querySelector('.catic');
+  if(ic){ if(svg) svg.style.display='none'; if(!em){ em=document.createElement('i'); em.className='catic'; em.style.cssText='font-style:normal;font-size:26px;line-height:1'; b.insertBefore(em,sp); } em.textContent=ic; }
+  else { if(svg) svg.style.display=''; if(em) em.remove(); }
+  var nm=String(c.nome||'Cardápio').toUpperCase(); sp.textContent=nm; sp.style.fontSize=nm.length>10?'8px':nm.length>8?'9px':''; sp.style.letterSpacing=nm.length>8?'.2px':'';
+  b.title=c.nome||'Cardápio';
+  var wb=$('wi-btn'); if(wb&&!catEhCardapio()) wb.textContent='Ver '+catNome();
+}
 function abreMenu(){
   LF_VOLTA='';
   var gs=menuGrupos(), rows=Math.max(1,Math.ceil(gs.length/4));
-  var h='<div class="wh"><button class="bk" onclick="fechaSheet()">'+BKI+'</button><b>Cardápio</b></div><div class="wb mfull"><div class="mgrid">';
+  var h='<div class="wh"><button class="bk" onclick="fechaSheet()">'+BKI+'</button><b>'+esc(catNome())+'</b></div><div class="wb mfull"><div class="mgrid">';
   var cards=gs.map(function(g){ var u=menuFotoUrl(g), promo=g.ps.some(function(p){return p.promo&&p.promo.valor>0;});
     return '<div class="cc" onclick="abreCat(\''+esc(g.id)+'\')" '+(u?'style="background-image:url('+u+')"':'')+'>'+(u?'':'<span class="mic">'+icone(tipoDesenho(g.ps[0]),34)+'</span>')+(promo?'<span class="mpr">'+promoIco()+' Promo</span>':'')+'<b>'+esc(g.nome)+'</b></div>'; });
   /* (115) Promoção e Ofertas Clube entram na posição escolhida no painel (1 = primeiro cartão) */
@@ -1824,7 +1840,7 @@ function rsvEnviar(){
 function rsvFeito(r){
   var h='<div class="wh"><button class="bk" onclick="fechaSheet()">'+XI+'</button><b>Reserva feita</b></div><div class="wb"><div class="rsok"><div class="ck"><svg viewBox="0 0 24 24" width="46" height="46" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>'
     +'<div style="font-size:22px;font-weight:900">Mesa '+esc(r.mesa)+' reservada!</div><div class="nt" style="margin-top:6px;font-size:14.5px">'+esc(rsvQuando())+' · '+r.pessoas+(r.pessoas>1?' pessoas':' pessoa')+'<br>Reserva <b>'+esc(r.id)+'</b> no nome de '+esc(r.nome)+'</div>'
-    +'<div class="nt" style="margin-top:14px">📲 A confirmação vai chegar no seu WhatsApp.</div></div></div><div class="rod"><button class="bt c" onclick="fechaSheet()">Ver o cardápio</button></div>';
+    +'<div class="nt" style="margin-top:14px">📲 A confirmação vai chegar no seu WhatsApp.</div></div></div><div class="rod"><button class="bt c" onclick="fechaSheet()">Ver '+esc(catRef())+'</button></div>';
   abreFolha(h,true);
 }
 /* ── salão em 3D (Three.js): piso de madeira, paredes que somem quando ficam na frente da câmera, mesas com cadeiras e plaquinhas ── */
@@ -2170,7 +2186,7 @@ function waIntro(){
     +'<div class="wi-sac" id="wi-sac"><svg class="wt" viewBox="0 0 330 520" aria-hidden="true"><path d="M100 118 C100 22 230 22 230 118" fill="none" stroke="#B83F00" stroke-width="18" stroke-linecap="round"/><path d="M100 118 C100 34 230 34 230 118" fill="none" stroke="#FF8A33" stroke-width="6" stroke-linecap="round" opacity=".6"/><path d="M18 112 H312 L306 140 H24 Z" fill="#7A2A00"/></svg>'
     +'<div class="wi-fotos" id="wi-fotos"></div>'
     +'<svg class="wf" viewBox="0 0 330 520" aria-hidden="true"><defs><linearGradient id="wi-gs" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF8A33"/><stop offset=".5" stop-color="#FF5A00"/><stop offset="1" stop-color="#E64800"/></linearGradient><linearGradient id="wi-gl" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity=".18"/><stop offset=".3" stop-color="#fff" stop-opacity="0"/><stop offset=".85" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#5a1d00" stop-opacity=".28"/></linearGradient></defs><path d="M8 128 H322 L304 500 Q303 514 289 514 H41 Q27 514 26 500 Z" fill="url(#wi-gs)"/><path d="M8 128 H322 L304 500 Q303 514 289 514 H41 Q27 514 26 500 Z" fill="url(#wi-gl)"/><path d="M8 128 H322 L321 146 H9 Z" fill="#fff" opacity=".22"/><path d="M8 146 H322" stroke="#C94600" stroke-width="2" opacity=".6"/></svg>'
-    +'<div class="wi-frente"><div class="wi-marca" id="wi-marca">'+((D.cfg&&D.cfg.logo)?'<img src="'+API+'/food/foto/'+encodeURIComponent(D.cli||CLI)+'/_logo?v='+(D.cfg.v||0)+'" alt="'+esc(D.empresa)+'" onerror="this.outerHTML=\'<b>'+esc(D.empresa).replace(/'/g,'')+'</b>\'">':'<b>'+esc(D.empresa)+'</b>')+'</div><button class="wi-btn" id="wi-btn" type="button">Ver cardápio</button><img class="wi-logo" src="livefood-logo.png" alt="livefood"></div><div class="wi-badge" id="wi-badge">0</div></div>'
+    +'<div class="wi-frente"><div class="wi-marca" id="wi-marca">'+((D.cfg&&D.cfg.logo)?'<img src="'+API+'/food/foto/'+encodeURIComponent(D.cli||CLI)+'/_logo?v='+(D.cfg.v||0)+'" alt="'+esc(D.empresa)+'" onerror="this.outerHTML=\'<b>'+esc(D.empresa).replace(/'/g,'')+'</b>\'">':'<b>'+esc(D.empresa)+'</b>')+'</div><button class="wi-btn" id="wi-btn" type="button">'+(catEhCardapio()?'Ver cardápio':'Ver '+esc(catNome()))+'</button><img class="wi-logo" src="livefood-logo.png" alt="livefood"></div><div class="wi-badge" id="wi-badge">0</div></div>'
     +'<div class="wi-esp" id="wi-esp"></div></div>';
   document.body.appendChild(w);
   var cena=$('wi-cena'), aj=function(){ var k=Math.min(innerWidth/360,innerHeight/760,1.25); cena.style.transform='translate(-50%,-50%) scale('+k+')'; }; aj(); addEventListener('resize',aj);
