@@ -851,7 +851,9 @@ a{color:inherit}
       <section class="page" id="pg-mesas">
         <div class="pghd"><div><h1>Mesas</h1><div class="sub">mesas do salão e etiquetas NFC · <span id="mz-total">—</span></div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sec" onclick="rvAbrir()">🪑 Reservas</button><button class="btn sec" onclick="mzQrTodos()">🖨 Imprimir QR de todas</button><button class="btn pri" onclick="mzNova()">+ Nova mesa</button></div></div>
         <div class="card">
-          <div class="search" style="margin-bottom:14px;max-width:360px"><span>🔎</span><input id="mz-busca" placeholder="buscar mesa" oninput="mzPintar()"></div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px"><div class="search" style="margin:0;max-width:360px;flex:1;min-width:180px"><span>🔎</span><input id="mz-busca" placeholder="buscar mesa" oninput="mzPintar()"></div>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--muted)">📅 Reservas do dia <input type="date" class="inp" id="mz-dia" style="width:auto;padding:7px 9px" onchange="mzDia()"></label>
+            <button class="btn sec sm" id="mz-dia-hoje" style="display:none" onclick="el('mz-dia').value='';mzDia()">Hoje</button><span id="mz-dia-info" style="font-size:12.5px;color:var(--muted)"></span></div>
           <div id="mz-lista"></div>
         </div>
       </section>
@@ -7955,7 +7957,7 @@ function mzApi(path,body){ var o=body?{method:'POST',headers:cdHdr(),body:JSON.s
 function mzCarregar(){
   mzCliBusca();
   el('mz-lista').innerHTML='<div style="padding:14px;color:var(--muted)">Carregando…</div>';
-  mzApi('/painel/atend-mesas').then(function(d){ if(!d||!d.ok) throw new Error((d&&d.mensagem)||'erro'); MZ.lista=d.mesas||[]; mzPintar(); })
+  mzApi('/painel/atend-mesas').then(function(d){ if(!d||!d.ok) throw new Error((d&&d.mensagem)||'erro'); MZ.lista=d.mesas||[]; if(el('mz-dia')&&el('mz-dia').value&&el('mz-dia').value!==mzHoje()) mzDia(); else mzPintar(); })
   .catch(function(e){ el('mz-lista').innerHTML='<div style="padding:14px;color:var(--red)">'+esc(e.message||'Não carregou')+'</div>'; });
 }
 function mzLink(n){ return etUrl(n); }
@@ -7986,7 +7988,7 @@ function rvPintar(){
    +'<label style="'+lb+'">Reservar até<select class="inp" id="rv-dias">'+[7,14,30,60].map(function(v){ return '<option value="'+v+'"'+(c.dias===v?' selected':'')+'>'+v+' dias à frente</option>'; }).join('')+'</select></label>'
    +'<label style="'+lb+'">Horários de<select class="inp" id="rv-passo">'+[15,30,60].map(function(v){ return '<option value="'+v+'"'+(c.passo===v?' selected':'')+'>'+v+' em '+v+' min</option>'; }).join('')+'</select></label></div>';
   h+='<label style="'+lb+';margin-top:10px">Aviso para o cliente (opcional)<input class="inp" id="rv-aviso" maxlength="200" placeholder="Ex.: tolerância de 15 minutos" value="'+esc(c.aviso||'')+'"></label>';
-  h+='<div style="font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.5">O cliente escolhe o <b>horário de chegada</b> dentro do horário de funcionamento da loja (Cardápio → Horário). Com "a noite toda", a mesa fica com ele até a casa fechar, sem hora para sair. Quantas pessoas cabem vem do cadastro de cada mesa (botão Lugares em Mesas). Seis horas antes, o cliente recebe no WhatsApp o pedido de confirmação com Sim/Não: <b>Sim</b> deixa a reserva <b>Confirmada</b>; <b>Não</b> deixa <b>Cancelada</b> e a mesa volta a ficar livre.</div>';
+  h+='<div style="font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.5">O cliente escolhe o <b>horário de chegada</b> dentro do horário de funcionamento da loja (Cardápio → Horário). Com "a noite toda", a mesa fica com ele até a casa fechar, sem hora para sair. Quantas pessoas cabem vem do cadastro de cada mesa (botão Lugares em Mesas). Seis horas antes, o cliente recebe no WhatsApp o pedido de confirmação com Sim/Não: <b>Sim</b> deixa a reserva <b>Confirmada</b>; <b>Não</b> deixa <b>Cancelada</b> e a mesa volta a ficar livre. Reserva feita a menos de 6h do horário já entra <b>Confirmada</b>.</div>';
   h+='<div style="display:flex;justify-content:flex-end;margin:12px 0 18px"><button class="btn pri" id="rv-salvar" onclick="rvSalvar()">Salvar</button></div>';
   var ST={ok:['Reservada','#6d28d9','#ede9fe'],confirmada:['Confirmada','#15803d','#dcfce7'],chegou:['Confirmada','#15803d','#dcfce7'],cancelada:['Cancelada','#b91c1c','#fee2e2']}, dia='';
   h+='<h4 style="margin:0 0 8px">Próximas reservas</h4>';
@@ -7994,9 +7996,11 @@ function rvPintar(){
   RV.lista.forEach(function(r){
     if(r.dia!==dia){ dia=r.dia; h+='<div style="font-size:12px;font-weight:800;color:var(--muted2);margin:12px 0 6px;text-transform:uppercase">'+esc(r.quando.split(' às ')[0])+'</div>'; }
     var s=ST[r.status]||ST.ok, ativa=r.status==='ok'||r.status==='confirmada';
-    h+='<div style="border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap'+(ativa?'':';opacity:.6')+'"><b style="font-size:16px;min-width:48px">'+esc(r.hora)+'</b><div style="flex:1;min-width:160px"><b>'+esc(r.nome)+'</b> · Mesa '+esc(r.mesa)+' · '+r.pessoas+(r.pessoas>1?' pessoas':' pessoa')+'<div style="font-size:12px;color:var(--muted)">'+esc(rvFone(r.fone))+(r.origem==='whats'?' · pelo WhatsApp':' · pelo cardápio')+(r.obs?' · '+esc(r.obs):'')+'</div></div>'
+    /* (124) a confirmação é do cliente, pelo WhatsApp (6h antes): o painel só mostra em que ponto está, sem botão manual */
+    var cf=r.status!=='ok'?'':(+r.lembrete===1?'⏳ pedido de confirmação enviado, aguardando o cliente':+r.lembrete===2?'':'⏰ o pedido de confirmação vai 6h antes, pelo WhatsApp');
+    h+='<div style="border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap'+(ativa?'':';opacity:.6')+'"><b style="font-size:16px;min-width:48px">'+esc(r.hora)+'</b><div style="flex:1;min-width:160px"><b>'+esc(r.nome)+'</b> · Mesa '+esc(r.mesa)+' · '+r.pessoas+(r.pessoas>1?' pessoas':' pessoa')+'<div style="font-size:12px;color:var(--muted)">'+esc(rvFone(r.fone))+(r.origem==='whats'?' · pelo WhatsApp':' · pelo cardápio')+(r.obs?' · '+esc(r.obs):'')+'</div>'+(cf?'<div style="font-size:11.5px;color:var(--muted2);margin-top:2px">'+cf+'</div>':'')+'</div>'
      +'<span style="background:'+s[2]+';color:'+s[1]+';font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px">'+s[0]+'</span>'
-     +(ativa?'<div style="display:flex;gap:6px">'+(r.status==='ok'?'<button class="btn sec sm" onclick="rvAcao(\''+r.id+'\',\'confirmar\')">Confirmar</button>':'')+'<button class="btn sec sm" style="color:var(--red)" onclick="rvAcao(\''+r.id+'\',\'cancelar\')">Cancelar</button></div>':'')+'</div>';
+     +(ativa?'<div style="display:flex;gap:6px"><button class="btn sec sm" style="color:var(--red)" onclick="rvAcao(\''+r.id+'\',\'cancelar\')">Cancelar</button></div>':'')+'</div>';
   });
   el('rv-bd').innerHTML=h;
 }
@@ -8006,10 +8010,28 @@ function rvSalvar(){ var b=el('rv-salvar'), c={on:el('rv-on').checked?1:0,dur:+e
 function rvAcao(id,acao){ if(acao==='cancelar'&&!confirm('Cancelar esta reserva? A mesa fica livre de novo.')) return;
   mzApi('/painel/reserva-acao',{id:id,acao:acao}).then(function(d){ if(!d||!d.ok) throw new Error('Não salvou'); RV.lista.forEach(function(r){ if(r.id===id) r.status={cancelar:'cancelada',confirmar:'confirmada',chegou:'chegou'}[acao]; }); rvPintar(); if(MZ.lista.length) mzCarregar(); }).catch(function(e){ aviso(e.message); }); }
 /* (113) tag "Reservada" na mesa: a próxima reserva de hoje (hora, nome e pessoas); confirmada pelo cliente fica verde */
+/* (124) filtro de data: escolhendo outro dia, as etiquetas mostram as reservas daquele dia (vazio ou hoje = o que o servidor manda para hoje) */
+function mzHoje(){ var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function mzDia(){
+  var v=el('mz-dia').value, info=el('mz-dia-info'), hoje=mzHoje();
+  el('mz-dia-hoje').style.display=(v&&v!==hoje)?'':'none';
+  if(!v||v===hoje){ MZ.rsvDia=null; MZ.diaTx=''; info.textContent=''; mzPintar(); return; }
+  info.textContent='Carregando…';
+  mzApi('/painel/reservas?de='+v).then(function(d){
+    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'Não carregou as reservas');
+    if(el('mz-dia').value!==v) return;   /* trocou de data enquanto carregava */
+    var mp={}, n=0, tx='';
+    (d.reservas||[]).forEach(function(r){ if(r.dia!==v||(r.status!=='ok'&&r.status!=='confirmada')) return; n++; tx=tx||String(r.quando||'').split(' às ')[0]; (mp[String(r.mesa)]=mp[String(r.mesa)]||[]).push({hora:r.hora,nome:r.nome,pessoas:r.pessoas,st:r.status}); });
+    MZ.rsvDia=mp; MZ.diaTx=tx||v.split('-').reverse().join('/');
+    info.innerHTML=n?'<b>'+n+'</b> '+(n===1?'reserva':'reservas')+' em '+esc(MZ.diaTx):'Nenhuma reserva em '+esc(v.split('-').reverse().join('/'));
+    mzPintar();
+  }).catch(function(e){ info.textContent=e.message; });
+}
 function mzTagRsv(m){
-  var r=(m.rsv||[])[0]; if(!r) return '';
-  var ok=r.st==='confirmada', mais=(m.rsv.length>1?' +'+(m.rsv.length-1):'');
-  return '<span title="'+esc(m.rsv.map(function(x){ return x.hora+' · '+x.nome+' ('+x.pessoas+')'+(x.st==='confirmada'?' ✓':''); }).join('\n'))+'" style="margin-left:auto;align-self:flex-start;background:'+(ok?'#dcfce7':'#ede9fe')+';color:'+(ok?'#15803d':'#6d28d9')+';border:1px solid '+(ok?'#86efac':'#c4b5fd')+';font-size:11px;font-weight:800;padding:3px 8px;border-radius:999px;white-space:nowrap">🪑 Reservada '+esc(r.hora)+(ok?' ✓':'')+mais+'</span>';
+  var lst=MZ.rsvDia?(MZ.rsvDia[String(m.num)]||[]):(m.rsv||[]);
+  var r=lst[0]; if(!r) return '';
+  var ok=r.st==='confirmada', mais=(lst.length>1?' +'+(lst.length-1):'');
+  return '<span title="'+esc(lst.map(function(x){ return x.hora+' · '+x.nome+' ('+x.pessoas+')'+(x.st==='confirmada'?' ✓':''); }).join('\n'))+'" style="margin-left:auto;align-self:flex-start;background:'+(ok?'#dcfce7':'#ede9fe')+';color:'+(ok?'#15803d':'#6d28d9')+';border:1px solid '+(ok?'#86efac':'#c4b5fd')+';font-size:11px;font-weight:800;padding:3px 8px;border-radius:999px;white-space:nowrap">🪑 Reservada '+esc(r.hora)+(ok?' ✓':'')+mais+'</span>';
 }
 function mzTela(modo){ var novo=modo==='novo', lug=modo==='lug'; el('mz-tit').textContent=novo?'Nova mesa':lug?'Lugares da mesa':'Editar mesa'; el('mz-bt').textContent=novo?'Criar':'Salvar'; el('mz-ateW').style.display=novo?'':'none'; el('mz-ajuda').style.display=novo?'':'none'; el('mz-lugW').style.display=''; el('mz-deL').textContent=novo?'De':'Número da mesa'; el('mz-de').style.display=lug?'none':''; el('mz-deL').style.display=lug?'none':''; el('mz-de').readOnly=false; MZ.modo=modo; }
 function mzNova(){ mzTela('novo'); el('mz-de').value=''; el('mz-ate').value=''; el('mz-lug').value=''; el('mz-erro').textContent=''; abrir('sh-mesa'); }
