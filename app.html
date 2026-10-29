@@ -1150,7 +1150,7 @@ function ctrMarca(cb){
     if(!d||!d.ok){ cb(); return; }
     if(d.nome) CTR_MARCA.nome=d.nome; if(/^#[0-9a-fA-F]{6}$/.test(d.cor||'')) CTR_VIN=d.cor;
     if(!d.logo){ cb(); return; }
-    CTR_MARCA.url=RP_API+'/food/foto/'+encodeURIComponent(cli)+'/_logo?v='+(d.v||0);
+    CTR_MARCA.url=RP_API+'/food/foto/'+encodeURIComponent(cli)+'/_logop?v='+(d.v||0);
     fetch(CTR_MARCA.url).then(function(r){ return r.blob(); }).then(function(b){ var fr=new FileReader(); fr.onload=function(){ CTR_MARCA.dataUrl=String(fr.result||''); cb(); }; fr.onerror=function(){ cb(); }; fr.readAsDataURL(b); }).catch(function(){ cb(); });
   }).catch(function(){ cb(); });
 }

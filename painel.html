@@ -7772,35 +7772,43 @@ function cdOvPrev(nn){
 function cdDscMostra(){ var t=el('cd-dsc-t').value; el('cd-dsc-datas').style.display=t?'block':'none'; el('cd-dsc-v').style.display=t?'':'none'; }
 function cdDscLer(){ var t=el('cd-dsc-t').value, v=cdPreco(el('cd-dsc-v').value); if(!t||!(v>0)) return null; return {tipo:t,valor:v,de:el('cd-dsc-de').value||'',ate:el('cd-dsc-ate').value||''}; }
 /* ── aparência do app do restaurante: cor do tema + logo (056) ── */
-var CDAP={cor:'',logo:''};
+/* (131) duas logos: "logo" vai no app do cliente (LiveFood); "logoPainel" nas telas de gestão. Sem a do painel, vale a do app */
+var CDAP={cor:'',logo:'',logoPainel:''};
 function cdAparencia(){
   el('cd-imp-corpo').innerHTML='<div style="font-size:13px;color:var(--muted)">Carregando…</div>';
   el('sh-import').querySelector('h3').textContent='Marca e cores'; abrir('sh-import');
   fetch(DELTADIS_API+'/painel/cardapio-config',{headers:cdHdr()}).then(function(r){return r.json();}).then(function(d){
-    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'erro'); CDAP={cor:d.cor||'',logo:d.logo||''}; cdApPintar();
+    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'erro'); CDAP={cor:d.cor||'',logo:d.logo||'',logoPainel:d.logoPainel||''}; cdApPintar();
   }).catch(function(e){ el('cd-imp-corpo').innerHTML='<div style="color:#f87171;font-size:13px">'+esc(e.message||'Não consegui abrir.')+'</div>'; });
 }
 function cdApPintar(){
   var cores=['#f97316','#ef4444','#e11d48','#a855f7','#3b82f6','#06b6d4','#22c55e','#eab308'], c=CDAP.cor||'#f97316', h='';
-  h+='<div style="font-size:13px;color:var(--muted2);line-height:1.5;margin-bottom:12px">Cadastre a logo e escolha a cor do restaurante. Valem para todo o sistema: telas de login, painel, atendimento, cozinha e o cardápio do cliente.</div>';
+  h+='<div style="font-size:13px;color:var(--muted2);line-height:1.5;margin-bottom:12px">Escolha a cor e as logos do restaurante. A cor vale para todo o sistema. A logo do app aparece para o cliente no LiveFood; a logo do painel aparece no login, painel, atendimento e cozinha.</div>';
   h+='<label style="font-size:12px;font-weight:700;color:var(--muted2)">Cor do tema</label><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0 14px">';
   cores.forEach(function(x){ h+='<button type="button" onclick="cdApCor(\''+x+'\')" style="width:34px;height:34px;border-radius:50%;border:'+(x.toLowerCase()===c.toLowerCase()?'3px solid #fff':'2px solid #ffffff33')+';background:'+x+';cursor:pointer"></button>'; });
   h+='<input type="color" id="cd-ap-cor" value="'+esc(c)+'" onchange="cdApCor(this.value)" style="width:42px;height:34px;border:0;background:none;padding:0;cursor:pointer" title="Outra cor"></div>';
-  h+='<label style="font-size:12px;font-weight:700;color:var(--muted2)">Logo do restaurante</label><div style="display:flex;gap:12px;align-items:center;margin:8px 0 14px">';
-  h+='<div style="width:84px;height:84px;border-radius:14px;border:1px solid var(--line,#ffffff22);background:#111 center/contain no-repeat'+(CDAP.logo?' url('+CDAP.logo+')':'')+'"></div>';
-  h+='<div><input type="file" id="cd-ap-file" accept="image/png,image/jpeg,image/webp" style="display:none" onchange="cdApLogo(this.files[0])"><button class="btn sec" onclick="el(\'cd-ap-file\').click()">Escolher logo</button>'+(CDAP.logo?' <button class="btn sec" onclick="CDAP.logo=\'\';cdApPintar()">Remover</button>':'')+'<div style="font-size:11.5px;color:var(--muted);margin-top:6px">De preferência PNG com fundo transparente.</div></div></div>';
+  h+=cdApCampo('logo','Logo do app (LiveFood)','Aparece para o cliente no LiveFood: use a versão em branco ou preto.','#111');
+  h+=cdApCampo('logoPainel','Logo do painel','Login, painel, atendimento e cozinha. Pode ser a colorida. Sem ela, o painel usa a logo do app.','linear-gradient(90deg,#111 50%,#f4f4f5 50%)');
+  h+='<div style="font-size:11.5px;color:var(--muted);margin:-4px 0 14px">De preferência PNG com fundo transparente.</div>';
   h+='<button class="btn pri" onclick="cdApSalvar()">Salvar</button>';
   el('cd-imp-corpo').innerHTML=h;
 }
+function cdApCampo(k,tit,dica,fundo){
+  var v=CDAP[k], h='<label style="font-size:12px;font-weight:700;color:var(--muted2)">'+tit+'</label><div style="display:flex;gap:12px;align-items:center;margin:8px 0 14px">';
+  h+='<div style="width:120px;height:84px;flex:none;border-radius:14px;border:1px solid var(--line,#ffffff22);background:'+(v?'url('+v+') center/contain no-repeat,':'')+fundo+'"></div>';
+  h+='<div><input type="file" id="cd-ap-f-'+k+'" accept="image/png,image/jpeg,image/webp" style="display:none" onchange="cdApLogo(this.files[0],\''+k+'\')"><button class="btn sec" onclick="el(\'cd-ap-f-'+k+'\').click()">Escolher logo</button>'+(v?' <button class="btn sec" onclick="CDAP.'+k+'=\'\';cdApPintar()">Remover</button>':'')+'<div style="font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.4">'+dica+'</div></div></div>';
+  return h;
+}
 function cdApCor(x){ CDAP.cor=x; cdApPintar(); }
-function cdApLogo(f){
-  if(!f) return; var im=new Image(), u=URL.createObjectURL(f);
-  im.onload=function(){ var m=Math.max(im.width,im.height), k=Math.min(1,320/m), cv=document.createElement('canvas'); cv.width=Math.round(im.width*k); cv.height=Math.round(im.height*k); cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height); URL.revokeObjectURL(u); CDAP.logo=cv.toDataURL('image/png'); if(CDAP.logo.length>380000) CDAP.logo=cv.toDataURL('image/webp',0.85); cdApPintar(); };
+function cdApLogo(f,k){
+  if(!f) return; k=k||'logo'; var im=new Image(), u=URL.createObjectURL(f);
+  /* até 480 px no lado maior: logo horizontal continua nítida na barra */
+  im.onload=function(){ var m=Math.max(im.width,im.height), q=Math.min(1,480/m), cv=document.createElement('canvas'); cv.width=Math.round(im.width*q); cv.height=Math.round(im.height*q); cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height); URL.revokeObjectURL(u); var d=cv.toDataURL('image/png'); if(d.length>380000) d=cv.toDataURL('image/webp',0.85); CDAP[k]=d; cdApPintar(); };
   im.onerror=function(){ aviso('Não consegui ler essa imagem'); };
   im.src=u;
 }
 function cdApSalvar(){
-  fetch(DELTADIS_API+'/painel/cardapio-config',{method:'POST',headers:cdHdr(),body:JSON.stringify({cor:CDAP.cor,logo:CDAP.logo})}).then(function(r){return r.json();}).then(function(d){
+  fetch(DELTADIS_API+'/painel/cardapio-config',{method:'POST',headers:cdHdr(),body:JSON.stringify({cor:CDAP.cor,logo:CDAP.logo,logoPainel:CDAP.logoPainel})}).then(function(r){return r.json();}).then(function(d){
     if(!d||!d.ok) throw new Error((d&&d.mensagem)||'não salvou'); aviso('Marca salva'); try{ window.GiroMarca&&GiroMarca.refresh(); }catch(e){} fecharTudo();
   }).catch(function(e){ aviso(e.message||'Não salvou'); });
 }

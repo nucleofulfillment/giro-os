@@ -350,7 +350,7 @@ function busca(){
     BUSY=0; if(_est!==EST) return;
     if(d._h===401||d._h===403){ mostraLogin('Entre de novo.'); return; }
     if(!d||!d.ok) return;
-    OFF=(d.agora||Date.now())-Date.now(); CLI=d.cli||CLI; try{ window.GiroMarca&&GiroMarca.set(CLI); }catch(e){} if(d.empresa){ EMP=d.empresa; marcaEst(); } if(CLI&&!$('lo').getAttribute('src')){ $('lo').onerror=function(){ this.style.display='none'; }; $('lo').onload=function(){ this.style.display=''; try{ if(window.GiroMarca&&GiroMarca.ajusta) GiroMarca.ajusta(this,'claro'); }catch(e){} }; $('lo').src=API+'/food/foto/'+encodeURIComponent(CLI)+'/_logo'; }
+    OFF=(d.agora||Date.now())-Date.now(); CLI=d.cli||CLI; try{ window.GiroMarca&&GiroMarca.set(CLI); }catch(e){} if(d.empresa){ EMP=d.empresa; marcaEst(); } if(CLI&&!$('lo').getAttribute('src')){ $('lo').onerror=function(){ this.style.display='none'; }; $('lo').onload=function(){ this.style.display=''; try{ if(window.GiroMarca&&GiroMarca.ajusta) GiroMarca.ajusta(this,'claro'); }catch(e){} }; $('lo').src=API+'/food/foto/'+encodeURIComponent(CLI)+'/_logop'; }
     var novo=0; d.pedidos.forEach(function(p){ if(!VISTO[p.id]){ VISTO[p.id]=1; if(INIT&&p.estado==='') novo++; } });
     var agr=Date.now(); d.pedidos.forEach(function(p){ var q=PEND[p.id]; if(q){ if(p.estado===q.e||agr-q.t>15000) delete PEND[p.id]; else p.estado=q.e; } });
     PED=d.pedidos.filter(function(p){ var q=PEND[p.id]; return !(q&&q.e==='ok'); }); INIT=1; pinta(); if(novo) bip();

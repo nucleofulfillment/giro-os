@@ -28,7 +28,7 @@
   }
 
   /* ---- logo ---- */
-  function urlLogo(d){ return API+'/food/foto/'+encodeURIComponent(d.cli)+'/_logo?v='+(d.v||0); }
+  function urlLogo(d){ return API+'/food/foto/'+encodeURIComponent(d.cli)+'/_logop?v='+(d.v||0); }
   /* luminância média da logo (0 escura … 1 clara): logo branca some em fundo claro, logo preta some em fundo escuro */
   function luminancia(url,cb){
     if(M.lum[url]!==undefined) return cb(M.lum[url]);
