@@ -8294,7 +8294,12 @@ function lvSalvar(){
   }).catch(function(e){ var m=el('lv-m'); if(m){ m.style.color='#f87171'; m.textContent=e.message||'Não salvou'; } });
 }
 /* ── (120) SALÃO: desenhar a planta do restaurante (mesas, balcão, cozinha, banheiros, entrada, saída) ── */
-var SL={L:[],sel:0,drag:null,uid:1,v3:false,ang:35};
+var SL={L:[],sel:0,drag:null,uid:1,v3:false,ang:35,areas:[],area:''};
+/* (119) ÁREAS do salão (interna/externa, térreo/superior) com medidas em metros; o desenho de cada área é proporcional: 25 pontos = 1 metro */
+var SL_AREA0={id:'principal',nome:'Salão',tipo:'interno',andar:'terreo',larg:24,comp:14.4};
+function slAr(){ return SL.areas.filter(function(a){ return a.id===SL.area; })[0]||SL.areas[0]||SL_AREA0; }
+function slWH(){ var a=slAr(); return {W:Math.round(a.larg*25),H:Math.round(a.comp*25)}; }
+function slDaArea(){ var a0=(SL.areas[0]||SL_AREA0).id; return SL.L.filter(function(p){ return (p.area||a0)===SL.area; }); }
 var SL_T={mesa:{nome:'Mesa'},balcao:{nome:'Balcão de saída',w:110,h:30,label:'BALCÃO'},cozinha:{nome:'Cozinha e bar',w:96,h:230,label:'COZINHA'},banheiro:{nome:'Banheiro',w:52,h:40,label:'WC'},entrada:{nome:'Entrada',w:84,h:16,label:'ENTRADA'},saida:{nome:'Saída',w:84,h:16,label:'SAÍDA'}};
 function slModelo(){
   var L=[],id=1; function add(t,x,y,n,label,w,h){ var d=SL_T[t]; L.push({id:id++,t:t,x:x,y:y,n:n||0,label:label||'',w:w||d.w||44,h:h||d.h||44}); }
@@ -8317,10 +8322,10 @@ function slFormas(p){
   return h;
 }
 function slPlanta(){
-  var s='<rect x="2" y="2" width="596" height="356" rx="10" fill="none" stroke="#D9CFC6" stroke-width="3"/>', gx, gy;
-  for(gx=25;gx<600;gx+=25) s+='<line x1="'+gx+'" y1="4" x2="'+gx+'" y2="356" stroke="#DFDFE4" stroke-width=".6"/>';
-  for(gy=25;gy<360;gy+=25) s+='<line x1="4" y1="'+gy+'" x2="596" y2="'+gy+'" stroke="#DFDFE4" stroke-width=".6"/>';
-  SL.L.forEach(function(p){
+  var z=slWH(), W=z.W, H=z.H, ex=slAr().tipo==='externo', s='<rect x="2" y="2" width="'+(W-4)+'" height="'+(H-4)+'" rx="10" fill="'+(ex?'#F1F5EC':'none')+'" stroke="'+(ex?'#A7C495':'#D9CFC6')+'" stroke-width="3" vector-effect="non-scaling-stroke"'+(ex?' stroke-dasharray="10 6"':'')+'/>', gx, gy;
+  for(gx=25;gx<W;gx+=25) s+='<line x1="'+gx+'" y1="4" x2="'+gx+'" y2="'+(H-4)+'" stroke="'+(gx%125?'#E6E6EA':'#CFCFD6')+'" stroke-width="'+(gx%125?.6:1)+'" vector-effect="non-scaling-stroke"/>';
+  for(gy=25;gy<H;gy+=25) s+='<line x1="4" y1="'+gy+'" x2="'+(W-4)+'" y2="'+gy+'" stroke="'+(gy%125?'#E6E6EA':'#CFCFD6')+'" stroke-width="'+(gy%125?.6:1)+'" vector-effect="non-scaling-stroke"/>';
+  slDaArea().forEach(function(p){
     s+='<g data-id="'+p.id+'" style="cursor:grab">'+slFormas(p);
     if(SL.sel===p.id){ var pw=p.w||44, ph=p.t==='mesa'?pw:p.h, r={x:p.x-pw/2-4,y:p.y-ph/2-4,w:pw+8,h:ph+8}; s+='<rect x="'+r.x+'" y="'+r.y+'" width="'+r.w+'" height="'+r.h+'" rx="8" fill="none" stroke="#FF5A00" stroke-width="2.5" stroke-dasharray="5 4" style="pointer-events:none"/><rect data-h="1" x="'+(p.x+pw/2-8)+'" y="'+(p.y+ph/2-8)+'" width="18" height="18" rx="4" fill="#FF5A00" stroke="#fff" stroke-width="2.5" style="cursor:nwse-resize"/>'; }
     s+='</g>';
@@ -8335,7 +8340,8 @@ function slAbrir(){
   t.innerHTML='<div style="padding:24px;font-size:13px;color:var(--muted)">Carregando…</div>';
   fetch(DELTADIS_API+'/painel/salao',{headers:cdHdr()}).then(function(r){return r.json();}).then(function(d){
     if(!d||!d.ok) throw new Error((d&&d.mensagem)||'erro');
-    SL.L=d.pecas||[]; SL.uid=1; SL.L.forEach(function(p){ if(p.id>=SL.uid) SL.uid=p.id+1; }); slMonta();
+    SL.areas=(d.areas&&d.areas.length)?d.areas:[JSON.parse(JSON.stringify(SL_AREA0))]; SL.area=SL.areas[0].id;
+    SL.L=d.pecas||[]; SL.uid=1; SL.L.forEach(function(p){ if(!p.area) p.area=SL.area; if(p.id>=SL.uid) SL.uid=p.id+1; }); slMonta();
   }).catch(function(e){ t.innerHTML='<div style="padding:24px;font-size:13px"><button class="btn sec" type="button" onclick="slFecha()">← Voltar ao painel</button><div style="color:#f87171;margin-top:14px">'+esc(e.message||'Não consegui abrir.')+'</div></div>'; });
 }
 function slFecha(){
@@ -8356,7 +8362,8 @@ function slMonta(){
     +(cheia?'<button class="btn sec" id="sl-bfull" type="button" style="'+bs+'" onclick="slTelaCheia()">Tela cheia</button>':'')
     +'<button class="btn pri" type="button" style="'+bs+'" onclick="slSalvar()">Salvar salão</button></div>'
     +'<div style="flex:1;min-height:0;display:flex;flex-direction:column;gap:10px;padding:12px 14px">'
-    +'<div style="font-size:12.5px;color:var(--muted2);line-height:1.45">Toque numa peça para colocar e <b>arraste</b> até o lugar certo. Para <b>aumentar ou diminuir</b>, arraste o quadradinho laranja do canto. Para <b>mudar o nome</b>, toque duas vezes no texto. O garçom vai ver este mapa no celular, com o balcão na base. Escala: 25 pontos = 1 metro.</div>'
+    +'<div style="font-size:12.5px;color:var(--muted2);line-height:1.45">Toque numa peça para colocar e <b>arraste</b> até o lugar certo. Para <b>aumentar ou diminuir</b>, arraste o quadradinho laranja do canto. Para <b>mudar o nome</b>, toque duas vezes no texto. O garçom vai ver este mapa no celular, com o balcão na base. Cada quadradinho = 1 metro (linha mais forte a cada 5 m).</div>'
+    +'<div id="sl-areas"></div>'
     +'<div id="sl-tools" style="display:flex;flex-wrap:wrap;gap:6px">'+['mesa','balcao','cozinha','banheiro','entrada','saida'].map(function(t){ return '<button class="btn sec" type="button" style="padding:7px 11px;font-size:12.5px" onclick="slAdd(\''+t+'\')">+ '+SL_T[t].nome+'</button>'; }).join('')+'<button class="btn sec" type="button" style="padding:7px 11px;font-size:12.5px;margin-left:auto;border-color:var(--pri,#E07B39);color:var(--pri,#E07B39);font-weight:700" onclick="slSync()" title="Deixa o desenho igual ao menu Mesas">⟳ Sincronizar com as mesas cadastradas</button><button class="btn sec" type="button" style="padding:7px 11px;font-size:12.5px" onclick="slExemplo()">Usar modelo de exemplo</button></div>'
     +'<div id="sl-bar3" style="display:none;gap:6px;align-items:center;flex-wrap:wrap"><button class="btn sec" type="button" style="padding:7px 11px;font-size:12.5px" onclick="slGira3(-45)">↺ Girar</button><button class="btn sec" type="button" style="padding:7px 11px;font-size:12.5px" onclick="slGira3(45)">Girar ↻</button><span style="font-size:12.5px;color:var(--muted2)">Visão 3D só para olhar. Arraste a imagem para girar. Para editar, volte ao 2D.</span></div>'
     +'<div style="flex:1;min-height:0"><svg id="sl-svg" viewBox="0 0 600 360" style="width:100%;height:100%;display:block;border-radius:12px;background:#FAFAFA;border:1px solid var(--border2);touch-action:none" role="img" aria-label="Planta do salão"></svg><svg id="sl-svg3" viewBox="0 0 900 520" style="width:100%;height:100%;display:none;border-radius:12px;background:#F3F3F5;border:1px solid var(--border2);touch-action:none;cursor:grab" role="img" aria-label="Salão em 3D"></svg></div>'
@@ -8375,9 +8382,9 @@ function slMonta(){
     if(!SL.drag) return; var p=slPeca(SL.drag.id), q=slPt(e); SL.sujo=true;
     if(SL.drag.mode==='size'){
       var dx=Math.abs(q.x-p.x), dy=Math.abs(q.y-p.y);
-      if(p.t==='mesa'){ p.w=p.h=Math.max(30,Math.min(90,Math.round(2*Math.max(dx,dy)/5)*5)); }
-      else { p.w=Math.max(10,Math.min(300,Math.round(2*dx/5)*5)); p.h=Math.max(10,Math.min(300,Math.round(2*dy/5)*5)); }
-    } else { p.x=Math.max(10,Math.min(590,Math.round((q.x-SL.drag.dx)/5)*5)); p.y=Math.max(10,Math.min(350,Math.round((q.y-SL.drag.dy)/5)*5)); SL.ult=0; }
+      if(p.t==='mesa'){ p.w=p.h=Math.max(12,Math.min(150,Math.round(2*Math.max(dx,dy)))); }
+      else { p.w=Math.max(5,Math.min(2000,Math.round(2*dx/2.5)*2.5)); p.h=Math.max(5,Math.min(2000,Math.round(2*dy/2.5)*2.5)); }
+    } else { var zz=slWH(); p.x=Math.max(5,Math.min(zz.W-5,Math.round((q.x-SL.drag.dx)/5)*5)); p.y=Math.max(5,Math.min(zz.H-5,Math.round((q.y-SL.drag.dy)/5)*5)); SL.ult=0; }
     s.innerHTML=slPlanta();
   });
   s.addEventListener('pointerup',function(){ SL.drag=null; if(SL.abrirEd){ SL.abrirEd=false; setTimeout(slEditaTexto,70); } }); s.addEventListener('pointercancel',function(){ SL.drag=null; });
@@ -8385,7 +8392,7 @@ function slMonta(){
   s3.addEventListener('pointerdown',function(e){ r3x={x:e.clientX,a:SL.ang}; s3.setPointerCapture(e.pointerId); });
   s3.addEventListener('pointermove',function(e){ if(!r3x) return; SL.ang=((r3x.a+(e.clientX-r3x.x)*0.5)%360+360)%360; slDesenha3(); });
   s3.addEventListener('pointerup',function(){ r3x=null; }); s3.addEventListener('pointercancel',function(){ r3x=null; });
-  SL.v3=false; slDesenha(); slConfere();
+  SL.v3=false; slAreasPinta(); slDesenha(); slConfere();
 }
 function slEditaTexto(){
   var p=slPeca(SL.sel); if(!p) return; var old=el('sl-ed'); if(old) old.remove();
@@ -8401,14 +8408,15 @@ function slEditaTexto(){
 }
 function slTam(f){
   var p=slPeca(SL.sel); if(!p) return; SL.sujo=true;
-  if(p.t==='mesa'){ p.w=p.h=Math.max(30,Math.min(90,Math.round(p.w*(f>0?1.15:0.87)/5)*5)); }
-  else { p.w=Math.max(10,Math.min(300,Math.round(p.w*(f>0?1.15:0.87)/5)*5)); p.h=Math.max(10,Math.min(300,Math.round(p.h*(f>0?1.15:0.87)/5)*5)); }
+  if(p.t==='mesa'){ p.w=p.h=Math.max(12,Math.min(150,Math.round(p.w*(f>0?1.12:0.89)))); }
+  else { p.w=Math.max(5,Math.min(2000,Math.round(p.w*(f>0?1.12:0.89)))); p.h=Math.max(5,Math.min(2000,Math.round(p.h*(f>0?1.12:0.89)))); }
   slDesenha();
 }
 /* visão 3D (isométrica, girável): só olhar, a edição é no 2D */
-function slRender3D(L,ang){
-  var S=0.95,K=0.55,C=0.82,cx=450,cy=290,th=ang*Math.PI/180,co=Math.cos(th),si=Math.sin(th);
-  function P(x,y,z){ var dx=x-300,dy=y-180,xr=dx*co-dy*si,yr=dx*si+dy*co; return {x:cx+xr*S,y:cy+yr*S*K-z*S*C,d:yr}; }
+function slRender3D(L,ang,W,H){
+  W=W||600; H=H||360;   /* (119) medidas da área */
+  var S=0.95*Math.min(600/W,360/H),K=0.55,C=0.82,cx=450,cy=290,th=ang*Math.PI/180,co=Math.cos(th),si=Math.sin(th);
+  function P(x,y,z){ var dx=x-W/2,dy=y-H/2,xr=dx*co-dy*si,yr=dx*si+dy*co; return {x:cx+xr*S,y:cy+yr*S*K-z*S*C,d:yr}; }
   function f1(n){ return Math.round(n*10)/10; }
   function poly(pts,fill,op){ return '<polygon points="'+pts.map(function(q){return f1(q.x)+','+f1(q.y);}).join(' ')+'" fill="'+fill+'" stroke="rgba(22,22,26,.28)" stroke-width="1" stroke-linejoin="round"'+(op?' opacity="'+op+'"':'')+'/>'; }
   var objs=[], labs=[];
@@ -8422,10 +8430,10 @@ function slRender3D(L,ang){
     var b=P(x,y,0), t=P(x,y,hz), rx=r*S, ry=r*S*K;
     return {d:b.d,svg:'<path d="M'+f1(t.x-rx)+' '+f1(t.y)+' L'+f1(b.x-rx)+' '+f1(b.y)+' A'+f1(rx)+' '+f1(ry)+' 0 0 0 '+f1(b.x+rx)+' '+f1(b.y)+' L'+f1(t.x+rx)+' '+f1(t.y)+' Z" fill="'+cSide+'" stroke="rgba(22,22,26,.28)" stroke-width="1"/><ellipse cx="'+f1(t.x)+'" cy="'+f1(t.y)+'" rx="'+f1(rx)+'" ry="'+f1(ry)+'" fill="'+cTop+'" stroke="rgba(22,22,26,.28)" stroke-width="1"/>'};
   }
-  var o='', cor=[[0,0],[600,0],[600,360],[0,360]], fl=cor.map(function(q){return P(q[0],q[1],0);}), g, k;
+  var o='', cor=[[0,0],[W,0],[W,H],[0,H]], fl=cor.map(function(q){return P(q[0],q[1],0);}), g, k;
   o+=poly(fl,'#FAFAFA');
-  for(g=50;g<600;g+=50){ var a1=P(g,0,0),a2=P(g,360,0); o+='<line x1="'+f1(a1.x)+'" y1="'+f1(a1.y)+'" x2="'+f1(a2.x)+'" y2="'+f1(a2.y)+'" stroke="#DFDFE4" stroke-width=".8"/>'; }
-  for(g=50;g<360;g+=50){ var b1=P(0,g,0),b2=P(600,g,0); o+='<line x1="'+f1(b1.x)+'" y1="'+f1(b1.y)+'" x2="'+f1(b2.x)+'" y2="'+f1(b2.y)+'" stroke="#DFDFE4" stroke-width=".8"/>'; }
+  for(g=50;g<W;g+=50){ var a1=P(g,0,0),a2=P(g,H,0); o+='<line x1="'+f1(a1.x)+'" y1="'+f1(a1.y)+'" x2="'+f1(a2.x)+'" y2="'+f1(a2.y)+'" stroke="#DFDFE4" stroke-width=".8"/>'; }
+  for(g=50;g<H;g+=50){ var b1=P(0,g,0),b2=P(W,g,0); o+='<line x1="'+f1(b1.x)+'" y1="'+f1(b1.y)+'" x2="'+f1(b2.x)+'" y2="'+f1(b2.y)+'" stroke="#DFDFE4" stroke-width=".8"/>'; }
   var walls=[], wf='';
   for(k=0;k<4;k++){ var q1=cor[k],q2=cor[(k+1)%4], w0=P(q1[0],q1[1],0), w1=P(q2[0],q2[1],0), w2=P(q2[0],q2[1],24), w3=P(q1[0],q1[1],24); walls.push({d:(w0.d+w1.d)/2,pts:[w0,w1,w2,w3]}); }
   walls.forEach(function(w){ if(w.d<0) o+=poly(w.pts,'#E2E2E6'); });
@@ -8445,7 +8453,7 @@ function slRender3D(L,ang){
   labs.forEach(function(l){ o+='<text x="'+f1(l.x)+'" y="'+f1(l.y)+'" text-anchor="middle" font-size="'+l.f+'" font-weight="800" fill="#1C1C1E" style="paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round">'+esc(l.t)+'</text>'; });
   return o;
 }
-function slDesenha3(){ el('sl-svg3').innerHTML=slRender3D(SL.L,SL.ang); }
+function slDesenha3(){ var z=slWH(); el('sl-svg3').innerHTML=slRender3D(slDaArea(),SL.ang,z.W,z.H); }
 function slVista(){
   SL.v3=!SL.v3; SL.sel=0; var o=el('sl-ed'); if(o) o.remove();
   el('sl-svg').style.display=SL.v3?'none':'block'; el('sl-svg3').style.display=SL.v3?'block':'none';
@@ -8456,6 +8464,7 @@ function slVista(){
 function slGira3(d){ SL.ang=((SL.ang+d)%360+360)%360; slDesenha3(); }
 function slPt(e){ var s=el('sl-svg'), m=s.getScreenCTM().inverse(), q=s.createSVGPoint(); q.x=e.clientX; q.y=e.clientY; return q.matrixTransform(m); }
 function slDesenha(manterProp){
+  var z=slWH(); el('sl-svg').setAttribute('viewBox','0 0 '+z.W+' '+z.H);
   el('sl-svg').innerHTML=slPlanta();
   var pr=el('sl-prop'), p=SL.sel&&slPeca(SL.sel);
   if(!p){ pr.innerHTML='<div style="font-size:12.5px;color:var(--muted)">Toque numa peça do mapa para mudar o nome ou o número, girar ou remover.</div>'; return; }
@@ -8463,22 +8472,52 @@ function slDesenha(manterProp){
   var h='<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b style="font-size:13px">'+SL_T[p.t].nome+'</b>';
   if(p.t==='mesa') h+='<input class="inp" id="sl-n" type="number" min="1" max="999" value="'+p.n+'" style="width:110px" oninput="slEdita()" aria-label="Número da mesa">';
   else h+='<input class="inp" id="sl-l" type="text" maxlength="14" value="'+esc(p.label||SL_T[p.t].label)+'" style="width:170px" oninput="slEdita()" aria-label="Nome na planta">';
+  /* (119) tamanho real: diâmetro da mesa em cm; largura e comprimento das outras peças em metros */
+  if(p.t==='mesa') h+='<label style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px">Diâmetro<input class="inp" id="sl-cm" type="number" min="50" max="600" step="5" value="'+Math.round(p.w*4)+'" style="width:90px" oninput="slMedida()">cm</label>';
+  else h+='<label style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px">Largura<input class="inp" id="sl-mw" type="number" min="0.2" max="80" step="0.1" value="'+(Math.round(p.w/2.5)/10)+'" style="width:80px" oninput="slMedida()">m</label><label style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px">Comprimento<input class="inp" id="sl-mh" type="number" min="0.2" max="80" step="0.1" value="'+(Math.round(p.h/2.5)/10)+'" style="width:80px" oninput="slMedida()">m</label>';
   h+='<button class="btn sec" type="button" style="padding:7px 11px;font-size:12.5px" onclick="slTam(-1)">− Menor</button><button class="btn sec" type="button" style="padding:7px 11px;font-size:12.5px" onclick="slTam(1)">+ Maior</button>'+(p.t==='mesa'?'':'<button class="btn sec" type="button" style="padding:7px 11px;font-size:12.5px" onclick="slGira()">Girar</button>')+'<button class="btn sec" type="button" style="padding:7px 11px;font-size:12.5px" onclick="slRemove()">Remover</button></div>';
   pr.innerHTML=h;
 }
+/* (119) barra de áreas: abas + medidas da área escolhida (nome, interna/externa, térreo/superior, largura e comprimento em metros) */
+function slAreasPinta(){
+  var b=el('sl-areas'); if(!b) return; var a=slAr(), bs='padding:6px 11px;font-size:12.5px', ic=function(x){ return (x.tipo==='externo'?'🌳':'🏠')+(x.andar==='superior'?'⬆️':''); };
+  var h='<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:6px"><span style="font-size:12px;font-weight:800;color:var(--muted2);margin-right:2px">Áreas:</span>'
+    +SL.areas.map(function(x){ return '<button class="btn '+(x.id===SL.area?'pri':'sec')+'" type="button" style="'+bs+'" onclick="slAreaVai(\''+x.id+'\')">'+ic(x)+' '+esc(x.nome)+' <span style="opacity:.7;font-weight:500">'+String(x.larg).replace('.',',')+'×'+String(x.comp).replace('.',',')+'m</span></button>'; }).join('')
+    +(SL.areas.length<8?'<button class="btn sec" type="button" style="'+bs+'" onclick="slAreaNova()">+ Nova área</button>':'')+'</div>'
+    +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;padding:8px 10px;border:1px solid var(--border);border-radius:10px;margin-bottom:6px">'
+    +'<label style="font-size:11.5px;color:var(--muted);display:flex;flex-direction:column;gap:2px">Nome<input class="inp" id="sl-an" maxlength="30" value="'+esc(a.nome)+'" style="width:150px;padding:6px 9px" oninput="slAreaMuda()"></label>'
+    +'<label style="font-size:11.5px;color:var(--muted);display:flex;flex-direction:column;gap:2px">Tipo<select class="inp" id="sl-at" style="padding:6px 9px" onchange="slAreaMuda()"><option value="interno"'+(a.tipo==='interno'?' selected':'')+'>Área interna</option><option value="externo"'+(a.tipo==='externo'?' selected':'')+'>Área externa</option></select></label>'
+    +'<label style="font-size:11.5px;color:var(--muted);display:flex;flex-direction:column;gap:2px">Andar<select class="inp" id="sl-aa" style="padding:6px 9px" onchange="slAreaMuda()"><option value="terreo"'+(a.andar==='terreo'?' selected':'')+'>Térreo (piso)</option><option value="superior"'+(a.andar==='superior'?' selected':'')+'>Superior</option></select></label>'
+    +'<label style="font-size:11.5px;color:var(--muted);display:flex;flex-direction:column;gap:2px">Largura (m)<input class="inp" id="sl-al" type="number" min="3" max="80" step="0.5" value="'+a.larg+'" style="width:90px;padding:6px 9px" onchange="slAreaMuda()"></label>'
+    +'<label style="font-size:11.5px;color:var(--muted);display:flex;flex-direction:column;gap:2px">Comprimento (m)<input class="inp" id="sl-ac" type="number" min="3" max="80" step="0.5" value="'+a.comp+'" style="width:90px;padding:6px 9px" onchange="slAreaMuda()"></label>'
+    +(SL.areas.length>1?'<button class="btn sec" type="button" style="'+bs+';color:var(--red);margin-left:auto" onclick="slAreaApaga()">Apagar área</button>':'')+'</div>';
+  b.innerHTML=h;
+}
+function slAreaVai(id){ SL.area=id; SL.sel=0; slAreasPinta(); if(SL.v3) slDesenha3(); else slDesenha(); }
+function slAreaMuda(){ var a=slAr(), n=function(v,d){ var x=parseFloat(String(v).replace(',','.')); return x>=3&&x<=80?Math.round(x*10)/10:d; };
+  a.nome=el('sl-an').value.trim()||a.nome; a.tipo=el('sl-at').value; a.andar=el('sl-aa').value; a.larg=n(el('sl-al').value,a.larg); a.comp=n(el('sl-ac').value,a.comp); SL.sujo=true;
+  var z=slWH(); slDaArea().forEach(function(p){ p.x=Math.min(p.x,z.W-5); p.y=Math.min(p.y,z.H-5); });   /* área menor: peças ficam dentro */
+  var foco=document.activeElement&&document.activeElement.id; slAreasPinta(); if(foco&&el(foco)){ el(foco).focus(); if(el(foco).setSelectionRange&&el(foco).type==='text'){ var v=el(foco).value.length; el(foco).setSelectionRange(v,v); } }
+  if(SL.v3) slDesenha3(); else slDesenha(); }
+function slAreaNova(){ var i=1; while(SL.areas.some(function(a){ return a.id==='a'+i; })) i++; var ext=SL.areas.some(function(a){ return a.tipo==='interno'; });
+  SL.areas.push({id:'a'+i,nome:ext?'Área externa':'Área interna',tipo:ext?'externo':'interno',andar:'terreo',larg:12,comp:8}); SL.area='a'+i; SL.sel=0; SL.sujo=true; slAreasPinta(); slDesenha(); }
+function slAreaApaga(){ var a=slAr(), n=slDaArea().length; if(SL.areas.length<2) return; if(!window.confirm('Apagar a área "'+a.nome+'"'+(n?' e as '+n+' peças dela':'')+'?')) return;
+  SL.L=SL.L.filter(function(p){ return p.area!==a.id; }); SL.areas=SL.areas.filter(function(x){ return x.id!==a.id; }); SL.area=SL.areas[0].id; SL.sel=0; SL.sujo=true; slAreasPinta(); slDesenha(); }
+function slMedida(){ var p=slPeca(SL.sel); if(!p) return; SL.sujo=true; if(p.t==='mesa'){ var cm=parseFloat(el('sl-cm').value); if(cm>=50) p.w=p.h=Math.max(12,Math.min(150,Math.round(cm/4))); } else { var mw=parseFloat(String(el('sl-mw').value).replace(',','.')), mh=parseFloat(String(el('sl-mh').value).replace(',','.')); if(mw>0) p.w=Math.max(5,Math.min(2000,Math.round(mw*25))); if(mh>0) p.h=Math.max(5,Math.min(2000,Math.round(mh*25))); } el('sl-svg').innerHTML=slPlanta(); }
 function slEdita(){ var p=slPeca(SL.sel); if(!p) return; SL.sujo=true; if(p.t==='mesa'){ var v=parseInt(el('sl-n').value,10); if(v>0) p.n=v; } else p.label=el('sl-l').value; el('sl-svg').innerHTML=slPlanta(); }
 function slGira(){ var p=slPeca(SL.sel); if(!p) return; SL.sujo=true; var t=p.w; p.w=p.h; p.h=t; slDesenha(); }
 function slRemove(){ SL.sujo=true; SL.L=SL.L.filter(function(p){return p.id!==SL.sel;}); SL.sel=0; slDesenha(); }
 function slAdd(t){
   var m=el('sl-m'); m.textContent='';
-  if(t==='balcao'&&SL.L.some(function(p){return p.t==='balcao';})){ m.style.color='#B08A00'; m.textContent='Já existe um balcão: arraste o que está no mapa.'; return; }
+  if(t==='balcao'&&slDaArea().some(function(p){return p.t==='balcao';})){ m.style.color='#B08A00'; m.textContent='Já existe um balcão: arraste o que está no mapa.'; return; }
   var n=0; if(t==='mesa'){ var us={}; SL.L.forEach(function(p){ if(p.t==='mesa') us[p.n]=1; }); n=1; while(us[n]) n++; }
-  var d=SL_T[t], p={id:SL.uid++,t:t,x:300,y:180,n:n,label:t==='banheiro'?'WC':'',w:d.w||44,h:d.h||44}; SL.L.push(p); SL.sel=p.id; SL.sujo=true; slDesenha();
+  var d=SL_T[t], z=slWH(), p={id:SL.uid++,t:t,area:SL.area,x:Math.round(z.W/2),y:Math.round(z.H/2),n:n,label:t==='banheiro'?'WC':'',w:t==='mesa'?22:(d.w||44),h:t==='mesa'?22:(d.h||44)};   /* mesa nova: 88 cm */ SL.L.push(p); SL.sel=p.id; SL.sujo=true; slDesenha();
 }
 /* (113) espaços vazios no desenho para N mesas novas: varre o salão em grade e só aceita onde não encosta em nenhuma peça */
-function slVagas(L,qtd){
+function slVagas(L,qtd,W,H){
+  W=W||600; H=H||360;
   var occ=L.map(function(p){ return {x:p.x,y:p.y,rw:p.w/2,rh:p.h/2}; }), out=[], passos=[65,45,30], i, x, y;
-  for(i=0;i<passos.length&&out.length<qtd;i++){ for(y=40;y<=320&&out.length<qtd;y+=passos[i]){ for(x=40;x<=560&&out.length<qtd;x+=passos[i]){
+  for(i=0;i<passos.length&&out.length<qtd;i++){ for(y=40;y<=H-40&&out.length<qtd;y+=passos[i]){ for(x=40;x<=W-40&&out.length<qtd;x+=passos[i]){
     if(occ.some(function(o){ return Math.abs(o.x-x)<o.rw+46&&Math.abs(o.y-y)<o.rh+46; })) continue;
     out.push({x:x,y:y}); occ.push({x:x,y:y,rw:22,rh:22}); } } }
   return out;
@@ -8492,8 +8531,8 @@ function slSync(){
     if(!nums.length){ m.style.color='#B08A00'; m.textContent='Nenhuma mesa cadastrada (com número) no menu Mesas.'; return; }
     nums.forEach(function(n){ cad[n]=1; });
     var tem={}, tirou=[]; SL.L=SL.L.filter(function(p){ if(p.t!=='mesa') return true; if(cad[String(p.n)]&&!tem[p.n]){ tem[p.n]=1; return true; } tirou.push(p.n); return false; });
-    var falta=nums.filter(function(n){ return !tem[n]; }).map(Number).sort(function(a,b){ return a-b; }), vg=slVagas(SL.L,falta.length), sobra=0;
-    falta.forEach(function(n,i){ var v=vg[i]; if(!v){ v={x:40+(sobra%11)*52,y:335}; sobra++; } SL.L.push({id:SL.uid++,t:'mesa',x:v.x,y:v.y,n:n,label:'',w:44,h:44}); });
+    var falta=nums.filter(function(n){ return !tem[n]; }).map(Number).sort(function(a,b){ return a-b; }), z=slWH(), vg=slVagas(slDaArea(),falta.length,z.W,z.H), sobra=0;
+    falta.forEach(function(n,i){ var v=vg[i]; if(!v){ v={x:Math.min(z.W-20,30+(sobra%Math.max(1,Math.floor((z.W-40)/40)))*40),y:z.H-20}; sobra++; } SL.L.push({id:SL.uid++,t:'mesa',area:SL.area,x:v.x,y:v.y,n:n,label:'',w:22,h:22}); });
     SL.sel=0; SL.sujo=true; slDesenha();
     m.style.color=sobra?'#B08A00':'#16a34a';
     m.textContent=(falta.length||tirou.length)?('Pronto: '+(falta.length?falta.length+' mesa(s) colocada(s) ('+falta.join(', ')+')':'')+(falta.length&&tirou.length?' e ':'')+(tirou.length?tirou.length+' tirada(s) do desenho ('+tirou.join(', ')+')':'')+'. '+(sobra?sobra+' ficaram na faixa de baixo por falta de espaço: arraste para o lugar certo. ':'Arraste para o lugar certo e ')+'toque em Salvar salão.'):'O desenho já está igual às mesas cadastradas.';
@@ -8508,15 +8547,15 @@ function slConfere(){
     if(falta||sob){ m.style.color='#B08A00'; m.innerHTML='⚠️ O desenho tem '+Object.keys(des).length+' mesas e o cadastro tem '+nums.length+'. <a href="#" onclick="slSync();return false" style="font-weight:800">Sincronizar agora</a>'; }
   }).catch(function(){});
 }
-function slExemplo(){ if(SL.L.length&&!window.confirm('Isso troca o desenho atual pelo modelo de exemplo. Continuar?')) return; SL.L=slModelo(); SL.uid=SL.L.length+1; SL.sel=0; SL.sujo=true; slDesenha(); }
+function slExemplo(){ if(SL.L.length&&!window.confirm('Isso troca o desenho atual pelo modelo de exemplo. Continuar?')) return; SL.areas=[JSON.parse(JSON.stringify(SL_AREA0))]; SL.area=SL.areas[0].id; slAreasPinta(); SL.L=slModelo().map(function(p){ p.area=SL.area; return p; }); SL.uid=SL.L.length+1; SL.sel=0; SL.sujo=true; slDesenha(); }
 function slSalvar(){
   var m=el('sl-m'), us={}, dup=0; SL.L.forEach(function(p){ if(p.t==='mesa'){ if(us[p.n]) dup=p.n; us[p.n]=1; } });
   m.style.color='#DC2626';
   if(dup){ m.textContent='Duas mesas com o número '+dup+'. Troque o número de uma delas.'; return; }
   m.style.color='var(--muted)'; m.textContent='Salvando…';
-  fetch(DELTADIS_API+'/painel/salao',{method:'POST',headers:cdHdr(),body:JSON.stringify({pecas:SL.L})}).then(function(r){return r.json();}).then(function(d){
+  fetch(DELTADIS_API+'/painel/salao',{method:'POST',headers:cdHdr(),body:JSON.stringify({pecas:SL.L,areas:SL.areas})}).then(function(r){return r.json();}).then(function(d){
     if(!d||!d.ok) throw new Error((d&&d.mensagem)||'não salvou');
-    SL.L=d.pecas||[]; SL.sel=0; SL.sujo=false; slDesenha(); var nm=SL.L.filter(function(p){return p.t==='mesa';}).length, sb=SL.L.some(function(p){return p.t==='balcao';});
+    SL.L=d.pecas||[]; if(d.areas) SL.areas=d.areas; SL.sel=0; SL.sujo=false; slAreasPinta(); slDesenha(); var nm=SL.L.filter(function(p){return p.t==='mesa';}).length, sb=SL.L.some(function(p){return p.t==='balcao';});
     m.style.color='#16A34A'; m.textContent='Salão salvo ✓ ('+nm+(nm===1?' mesa':' mesas')+')'+(sb?'':' · falta colocar o balcão de saída'); aviso('Salão salvo');
   }).catch(function(e){ m.style.color='#DC2626'; m.textContent=e.message||'Não salvou'; });
 }
