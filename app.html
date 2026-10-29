@@ -1026,6 +1026,30 @@ document.addEventListener('click', function _destravarAudio(){
   var ctx=_getAudioCtx();
   if(ctx && ctx.state==='suspended') ctx.resume().catch(function(){});
 }, {once:true});
+/* (017) "plim-plim" de caixa registradora, curto e baixo: toca quando o entregador marca Entregue */
+function somCaixa(){
+  try{
+    var ctx=_getAudioCtx(); if(!ctx) return;
+    if(ctx.state==='suspended') ctx.resume().catch(function(){});
+    var t=ctx.currentTime+0.02;
+    /* gaveta: estalo curto e abafado */
+    var n=Math.floor(ctx.sampleRate*0.05), buf=ctx.createBuffer(1,n,ctx.sampleRate), d=buf.getChannelData(0), i;
+    for(i=0;i<n;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/n,3);
+    var src=ctx.createBufferSource(), lp=ctx.createBiquadFilter(), gN=ctx.createGain();
+    src.buffer=buf; lp.type='lowpass'; lp.frequency.value=1800; gN.gain.value=0.07;
+    src.connect(lp); lp.connect(gN); gN.connect(ctx.destination); src.start(t);
+    /* sininho em duas batidas (plim-plim), com o brilho sumindo devagar */
+    [[0.07,1568,2349],[0.19,2093,3136]].forEach(function(b){
+      [b[1],b[2]].forEach(function(f,k){
+        var o=ctx.createOscillator(), g=ctx.createGain(), t0=t+b[0];
+        o.type='triangle'; o.frequency.value=f; o.connect(g); g.connect(ctx.destination);
+        g.gain.setValueAtTime(0,t0); g.gain.linearRampToValueAtTime(k?0.035:0.09,t0+0.008); g.gain.exponentialRampToValueAtTime(0.0008,t0+0.55);
+        o.start(t0); o.stop(t0+0.6);
+      });
+    });
+    try{ if(navigator.vibrate) navigator.vibrate(60); }catch(e){}
+  }catch(e){}
+}
 function _tom(freq, inicioSeg, durSeg, volume){
   try{
     var ctx=_getAudioCtx(); if(!ctx) return;
@@ -1611,6 +1635,7 @@ function geMarcar(cod,acao,pg){
     GE.envio=false;
     if(d&&d.ok){ GE.saida=d.saida; GE.sel=null; GE.erro=''; geBadge(); geHomePintar(); gePintar();
       /* (GIRO-OS-016) entrega concluída: o Live comemora; na última da saída, comemoração de saída concluída */
+      if(acao==='entregue') somCaixa();   /* (017) plim-plim de caixa registradora */
       if(acao==='entregue'&&window.LiveApp){ var fim=false; try{ fim=!!(GE.saida&&GE.saida.paradas&&geOrdenar(GE.saida.paradas).pend.length===0); }catch(e){} LiveApp.comemorar(fim?{titulo:'Saída concluída! 🎉',sub:'Todas as entregas foram feitas. Bom trabalho!',ms:2600}:{titulo:'Entrega concluída!',sub:'Bora para a próxima 🛵',ms:1500}); }
       else aviso(acao==='entregue'?'Entrega marcada':(acao==='desfazer'?'Desfeito':'Anotado')); }
     else aviso((d&&d.mensagem)||'Não consegui salvar. Tente de novo.');
