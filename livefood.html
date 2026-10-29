@@ -622,7 +622,7 @@ function ofPedir(oid){
   if(ids.length===1){ abreSheet(ids[0]); return; }
   if(!ids.length){ abreMenu(); return; }
   var h='<div class="wh"><button class="bk" onclick="fechaSheet()">'+XI+'</button><b>'+esc((o&&o.nome)||'Oferta')+'</b></div><div class="wb">';
-  ids.forEach(function(id){ var p=D.produtos[id], pr=minPreco(p), ft=p.foto?'<div class="th" style="width:56px;height:56px;border-radius:10px;background:#2a2a30 center/cover url('+fotoUrl(p)+');flex:none"></div>':'<div style="width:56px;height:56px;border-radius:10px;background:#2a2a30;flex:none;display:flex;align-items:center;justify-content:center">'+icone(tipoDesenho(p),28)+'</div>';
+  ids.forEach(function(id){ var p=D.produtos[id], pr=minPreco(p), ft=p.foto?'<div class="th" style="width:68px;height:68px;border-radius:10px;background:#2a2a30 center/cover url('+fotoUrl(p)+');flex:none"></div>':'<div style="width:68px;height:68px;border-radius:10px;background:#2a2a30;flex:none;display:flex;align-items:center;justify-content:center">'+icone(tipoDesenho(p),28)+'</div>';
     h+='<div class="mp" onclick="abreSheet(\''+esc(p.id)+'\')">'+(p.destaque?'<div class="fgw">'+ft+'<span class="fogo" title="Destaque">🔥</span></div>':ft)+'<div style="flex:1;min-width:0"><b style="font-size:14.5px">'+esc(p.nome)+'</b>'+promoTag(p)+'</div><span class="vl" style="color:var(--pri2);font-weight:800;font-size:13.5px;text-align:right">'+(pr.de?'a partir de ':'')+brl(pr.min)+clbLinhaMembro(p)+'</span></div>'; });
   h+='</div>'; abreFolha(h,true);
 }
@@ -1721,7 +1721,7 @@ function abreCat(id){
         +(pr.de?'<div class="ap">a partir de</div>':'')+'<div class="pr"'+(pr.de?' style="margin-top:0"':'')+'>'+brl(pr.min)+'</div>'
         +(pc>0?'<div class="dr"><s>'+brl(pr.orig)+'</s><span class="pc">-'+pc+'%</span></div>':'')+clbLinhaMembro(p,fz)+'<div class="nm">'+esc(p.nome)+'</div></div>'; });
     h+='</div></div>'; }
-  g.ps.forEach(function(p){ var pr=minPreco(p), ft=p.foto?'<div class="th" style="width:56px;height:56px;border-radius:10px;background:#2a2a30 center/cover url('+fotoUrl(p)+');flex:none"></div>':'<div style="width:56px;height:56px;border-radius:10px;background:#2a2a30;flex:none;display:flex;align-items:center;justify-content:center;">'+icone(tipoDesenho(p),28)+'</div>';
+  g.ps.forEach(function(p){ var pr=minPreco(p), ft=p.foto?'<div class="th" style="width:68px;height:68px;border-radius:10px;background:#2a2a30 center/cover url('+fotoUrl(p)+');flex:none"></div>':'<div style="width:68px;height:68px;border-radius:10px;background:#2a2a30;flex:none;display:flex;align-items:center;justify-content:center;">'+icone(tipoDesenho(p),28)+'</div>';
     h+='<div class="mp" data-n="'+esc(semAc(p.nome))+'" onclick="abreSheet(\''+esc(p.id)+'\')">'+(p.destaque?'<div class="fgw">'+ft+'<span class="fogo" title="Destaque">🔥</span></div>':ft)+'<div style="flex:1;min-width:0"><b style="font-size:14.5px">'+esc(p.nome)+'</b>'+promoTag(p)+'</div><span class="vl" style="color:var(--pri2);font-weight:800;font-size:13.5px;text-align:right">'+(pr.de?'a partir de ':'')+(pr.orig>pr.min?'<s class="de">'+brl(pr.orig)+'</s> ':'')+brl(pr.min)+clbLinhaMembro(p)+'</span></div>'; });   /* (132) na lista o Clube aparece uma vez só: etiqueta azul p/ quem não assina, pílula p/ quem assina */
   h+='</div>'; abreFolha(h,true,'fx');
 }
