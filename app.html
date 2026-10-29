@@ -5,6 +5,8 @@
 <link rel="icon" type="image/svg+xml" href="/site/img/favicon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="/site/img/icone-32.png">
 <link rel="apple-touch-icon" href="/site/img/icone-180.png">
+<link rel="manifest" href="/app.webmanifest">
+<meta name="theme-color" content="#FF5A00">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <script>/* (208) APK: sem "viewport-fit=cover" o Android empurra o app para dentro das barras dele (cima e botões de baixo) em todas as telas */try{ if(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform()){ var mv=document.querySelector('meta[name=viewport]'); mv.setAttribute('content',mv.getAttribute('content').replace(/,\s*viewport-fit=cover/,'')); } }catch(e){}</script>
 <title>LiveFood — App do Motorista · GIRO-OS-017</title>
@@ -651,6 +653,7 @@ html:has(.ge-rt) #topo{display:none!important}
 .lgx-ok{position:absolute;left:50%;top:16px;z-index:6;background:#16A34A;color:#fff;font-size:14px;font-weight:800;padding:8px 15px;border-radius:99px;white-space:nowrap;box-shadow:0 12px 24px -10px rgba(21,128,61,.7);transform:translateX(-50%) scale(.4);opacity:0;transition:transform .35s cubic-bezier(.34,1.56,.64,1),opacity .2s}
 .lgx-ok.on{opacity:1;transform:translateX(-50%) scale(1)}
 .lgx-tit{display:none}
+#login .lgx-instalar{display:block;width:100%;margin:10px 0 0;padding:12px;border:1.5px dashed #FF5A00;border-radius:14px;background:#FFF4EC;color:#C2410C;font:inherit;font-size:14px;font-weight:800;cursor:pointer}
 /* celular: "Bora rodar?" vai por cima do mapa, sem a frase de apoio, e tudo cabe na tela sem rolagem */
 @media (max-width:899px){
   .lgx{gap:12px}
@@ -743,6 +746,7 @@ html.dd-digitando .lgx-cena{display:none}   /* teclado aberto: some a cena e sob
     <div class="field"><label>PIN (4 a 6 números)</label><input class="inp" type="password" inputmode="numeric" autocomplete="current-password" id="lg-senha" placeholder="••••"></div>
     <button class="btn pri wide" id="lg-btn" onclick="entrar()">Entrar</button>
     <button class="btn wide" id="lg-prim-link" style="margin-top:10px;background:transparent;border:0;color:var(--roxo);font-weight:800;box-shadow:none" onclick="primeiroAbrir()">Primeiro acesso / esqueci o PIN</button>
+    <button type="button" id="lgx-instalar" class="lgx-instalar" style="display:none" onclick="appInstalar()">📲 Instalar o app no celular</button>
     <div class="lgx-mini"><p class="demo">LiveFood · GIRO-OS-017</p><button type="button" onclick="alternarTelaCheia()">⛶ Tela cheia</button></div>
   </div>
  </div>
@@ -1381,14 +1385,20 @@ function geCarregar(manual){
   rpApi('/motoboy/rota').then(function(d){
     GE.busy=false; if(!d) return;
     if(!d.ok){ if(d.erro!=='sessao_invalida') GE.erro=d.mensagem||'Não consegui buscar as entregas.'; if(PAG==='entregas'&&!document.querySelector('.ge-bg')) gePintar(); return; }
-    GE.erro=''; var novo=d.saida&&d.saida.id!==geVisto()&&PAG!=='entregas';
+    GE.erro=''; GE.falhas=0; var novo=d.saida&&d.saida.id!==geVisto()&&PAG!=='entregas';
     GE.saida=d.saida; geBadge(); geHomePintar();
     rpApi('/motoboy/fila').then(function(f){ if(f&&f.ok){ GE.fila=f; geHomePintar(); if(PAG==='entregas'&&!document.querySelector('.ge-bg')) gePintar(); } }).catch(function(){});
     if(novo) geAviso(d.saida);
     if(PAG==='entregas'&&!document.querySelector('.ge-bg')){ geMarcarVisto(); gePintar(); }
     if(manual) aviso('Atualizado');
-  }).catch(function(){ GE.busy=false; GE.erro='Sem conexão com o servidor.'; if(PAG==='entregas'&&!document.querySelector('.ge-bg')) gePintar(); });
+  }).catch(function(e){
+    /* (017) uma falha solta não vira aviso: tenta de novo em 3s; só mostra o erro (com o motivo certo) se falhar 2 vezes seguidas */
+    GE.busy=false; GE.falhas=(GE.falhas||0)+1;
+    if(GE.falhas<2){ setTimeout(function(){ geCarregar(); },3000); return; }
+    GE.erro=rpErroTxt(e); if(PAG==='entregas'&&!document.querySelector('.ge-bg')) gePintar();
+  });
 }
+window.addEventListener('online',function(){ GE.falhas=0; if(GE.erro){ GE.erro=''; geCarregar(); } });
 function geAbrir(){ GE.exp=false; geMarcarVisto(); var b=el('ge-banner'); if(b) b.classList.remove('on'); gePintar(); geCarregar(); geGps(); }
 function geDist(a,b){ var r=Math.PI/180, dx=(b.lng-a.lng)*Math.cos((a.lat+b.lat)/2*r), dy=b.lat-a.lat; return Math.sqrt(dx*dx+dy*dy); }
 function geOrdenar(par){
@@ -2021,6 +2031,11 @@ function bipFilaEnviar(){
   })();
 }
 window.addEventListener('online',bipFilaEnviar); setInterval(bipFilaEnviar,30000); setTimeout(bipFilaEnviar,4000);
+/* (017) instalar o app no celular: com ele instalado, o botão "ABRIR O APP" do WhatsApp abre o próprio app (mesma janela, só atualiza) */
+var APP_INST=null;
+window.addEventListener('beforeinstallprompt',function(e){ e.preventDefault(); APP_INST=e; var b=el('lgx-instalar'); if(b) b.style.display='block'; });
+window.addEventListener('appinstalled',function(){ APP_INST=null; var b=el('lgx-instalar'); if(b) b.style.display='none'; aviso('App instalado! Agora ele abre direto pelo ícone e pelos avisos do WhatsApp.'); });
+function appInstalar(){ if(!APP_INST){ aviso('No menu do navegador (⋮), toque em "Instalar app" ou "Adicionar à tela inicial".'); return; } APP_INST.prompt(); APP_INST.userChoice.then(function(){ APP_INST=null; var b=el('lgx-instalar'); if(b) b.style.display='none'; }).catch(function(){}); }
 try{ if('serviceWorker' in navigator) window.addEventListener('load',function(){ navigator.serviceWorker.register('/sw.js').catch(function(){}); }); }catch(e){}
 /* pacote que ganhou endereço depois (estava no fim da fila): entra na posição mais próxima, ao lado do vizinho mais perto */
 function rlEncaixar(q){
@@ -2351,10 +2366,18 @@ function rpApi(caminho,opts){
     var tm=null; try{ if(!opts.signal){ var ctl=new AbortController(); opts.signal=ctl.signal; tm=setTimeout(function(){ ctl.abort(); },25000); } }catch(e){}   /* (78b) sem resposta em 25s: desiste em vez de travar a tela */
     return fetch(RP_API+caminho,opts).then(function(r){ if(tm) clearTimeout(tm);
       if(r.status===401){ ddGuardarM('',null); if(el('app')&&el('app').style.display!=='none'){ sair(); var m=el('lg-msg'); if(m) m.textContent='Sua sessão acabou. Entre de novo.'; } }
-      return r.json();
-    },function(e){ if(tm) clearTimeout(tm); throw e; });
+      /* (017) resposta que não é JSON (erro do servidor) não é "falta de internet": guarda o código para a mensagem certa */
+      return r.text().then(function(t){ try{ return JSON.parse(t); }catch(eJ){ var er=new Error('servidor '+r.status); er.servidor=r.status||1; throw er; } });
+    },function(e){ if(tm) clearTimeout(tm); var er=new Error(String((e&&e.message)||'rede')); er.rede=1; er.demorou=!!(e&&e.name==='AbortError'); er.offline=(navigator.onLine===false); throw er; });
   }
   return fetch(RP_API+caminho+(caminho.indexOf('?')>=0?'&':'?')+'key='+encodeURIComponent(RP_KEY),opts).then(function(r){return r.json();});
+}
+/* (017) mensagem certa para cada tipo de falha (antes tudo virava "Sem conexão") */
+function rpErroTxt(e){
+  if(e&&e.offline) return 'Seu celular está sem internet. Assim que o sinal voltar, eu atualizo sozinho.';
+  if(e&&e.demorou) return 'O servidor demorou para responder. Tentando de novo…';
+  if(e&&e.servidor) return 'O servidor respondeu com erro ('+e.servidor+'). Tentando de novo…';
+  return 'Não consegui falar com o servidor agora. Tentando de novo…';
 }
 var RP_TESTE=/[?&]teste=1/.test(location.search);   /* modo teste: só com ?teste=1 no endereço aparece o limite de paradas */
 /* ponto de coleta: o endereço vem do painel (Configurações → Ponto de coleta). O motorista pode trocar o dele; se não trocar, vale o do painel. */
