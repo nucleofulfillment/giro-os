@@ -8315,7 +8315,8 @@ function lvAbrir(){
       +sel('lv-esforco',[['minimo','Mínimo · responde na hora (só no Sonnet 5.5)'],['low','Baixo · rápido'],['medium','Médio'],['high','Alto · pensa mais, demora mais']],c.esforco)
       +'<label style="display:flex;gap:8px;align-items:center;font-size:13.5px;font-weight:700;margin-bottom:4px"><input type="checkbox" id="lv-enviar" '+(c.enviar?'checked':'')+' style="width:18px;height:18px"> Enviar os pedidos do totem para o painel</label>'
       +'<div style="font-size:12px;color:var(--muted);margin-bottom:14px">Desligado = modo teste (o pedido não vai pra cozinha). Ligado, entra como retirada no balcão, pago no caixa.</div>'
-      +'<label style="font-size:12px;font-weight:700;color:var(--muted2)">Treinamento: orientações da sua loja (uma por linha)</label>'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap"><label style="font-size:12px;font-weight:700;color:var(--muted2)">Treinamento: orientações da sua loja (uma por linha)</label><button class="btn sec" type="button" id="lv-gerar" onclick="lvGerar()">✨ Gerar pelos produtos</button></div>'
+      +'<div style="font-size:12px;color:var(--muted);margin-top:4px">O Live lê todos os produtos da loja e escreve as orientações para o tipo de loja (restaurante, farmácia, mercado…). Confira e clique em Salvar.</div>'
       +'<textarea class="inp" id="lv-treino" rows="9" placeholder="Ex.:&#10;- Todos os burgers acompanham fritas.&#10;- Pizza: sempre pergunte o tamanho e os sabores.&#10;- Se pedirem refrigerante, ofereça o suco da casa." style="margin:6px 0 14px">'+esc(c.treino||'')+'</textarea>'
       +'<label style="font-size:12px;font-weight:700;color:var(--muted2)">Voz do Live (ID da voz na ElevenLabs, opcional)</label>'
       +'<input class="inp" id="lv-voz" placeholder="'+(d.vozPadrao?'em branco = voz padrão do Live':'em branco = voz do navegador')+'" value="'+esc(c.voz||'')+'" style="margin:6px 0 4px">'
@@ -8325,6 +8326,16 @@ function lvAbrir(){
       +'<div style="font-size:12px;color:var(--muted);margin-bottom:14px">Abra esse link no navegador do totem, em tela cheia. Não compartilhe: quem tem o link usa o Live desta loja.</div>'
       +'<div id="lv-m" style="font-size:12.5px;min-height:18px;margin-bottom:8px"></div><button class="btn pri" type="button" onclick="lvSalvar()">Salvar</button>';
   }).catch(function(e){ el('cd-imp-corpo').innerHTML='<div style="color:#f87171;font-size:13px">'+esc(e.message||'Não consegui abrir.')+'</div>'; });
+}
+/* (132) treinamento escrito pela IA a partir dos produtos cadastrados; só preenche o campo, quem salva é o dono */
+function lvGerar(){
+  var b=el('lv-gerar'), tx=el('lv-treino'), m=el('lv-m'); if(!b||b.disabled) return;
+  b.disabled=true; b.textContent='Lendo os produtos…'; if(m){ m.style.color='var(--muted)'; m.textContent='Isso leva uns 20 segundos.'; }
+  fetch(DELTADIS_API+'/painel/live-treino',{method:'POST',headers:cdHdr(),body:JSON.stringify({atual:tx.value})}).then(function(r){return r.json();}).then(function(d){
+    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'Não consegui gerar.');
+    tx.value=d.treino; if(m){ m.style.color='#4ade80'; m.textContent='Treinamento gerado a partir de '+d.produtos+' produtos. Confira e clique em Salvar.'; }
+  }).catch(function(e){ if(m){ m.style.color='#f87171'; m.textContent=e.message||'Não consegui gerar.'; } })
+  .then(function(){ b.disabled=false; b.textContent='✨ Gerar pelos produtos'; });
 }
 function lvCopiar(){
   var i=el('lv-link'); i.select();
