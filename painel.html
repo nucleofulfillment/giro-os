@@ -429,11 +429,12 @@ a{color:inherit}
 .mp-mot-st{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:1px;background:#16A34A}
 .mp-mot-st.off{background:#C7BDB5}
 /* abertura do Mapeamento com o Live */
-#mp-abre{position:absolute;inset:0;z-index:50;border-radius:inherit;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;transition:opacity .4s,visibility .4s}
-#mp-abre.sai{opacity:0;visibility:hidden}
-#mp-abre .tx{font-weight:800;color:#5E5E66;font-size:15px}
-#mp-abre .br{width:140px;height:4px;border-radius:4px;background:#FFE3D1;overflow:hidden}
-#mp-abre .br i{display:block;height:100%;width:35%;border-radius:4px;background:#FF5A00;animation:mpBarra 1s ease-in-out infinite}
+#mp-abre,#sl-c3{position:absolute;inset:0;z-index:50;border-radius:inherit;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;transition:opacity .4s,visibility .4s}
+#sl-c3{border-radius:12px}
+#mp-abre.sai,#sl-c3.sai{opacity:0;visibility:hidden}
+#mp-abre .tx,#sl-c3 .tx{font-weight:800;color:#5E5E66;font-size:15px}
+#mp-abre .br,#sl-c3 .br{width:140px;height:4px;border-radius:4px;background:#FFE3D1;overflow:hidden}
+#mp-abre .br i,#sl-c3 .br i{display:block;height:100%;width:35%;border-radius:4px;background:#FF5A00;animation:mpBarra 1s ease-in-out infinite}
 @keyframes mpBarra{0%{transform:translateX(-110%)}100%{transform:translateX(320%)}}
 @media (prefers-reduced-motion:reduce){.mp-pkw.novo .mp-pkd,.mp-pkw .mp-pkd::before{animation:none!important}}
 .maplibregl-popup{z-index:60;font-family:var(--fbody)}.maplibregl-popup-content{padding:10px 12px;border-radius:12px;font-family:var(--fbody)}.mp-info{font-size:12.5px;line-height:1.45;min-width:170px;max-width:220px}.mp-info-t{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-bottom:3px;font-size:13.5px}.mp-info-n{font-weight:700;font-size:13.5px;font-family:var(--fbody)}.mp-info-s{color:var(--muted)}.mp-info-wa{display:inline-block;background:#25D366;color:#fff!important;font-weight:700;font-size:12px;padding:3px 10px;border-radius:99px;text-decoration:none;outline:none}.maplibregl-popup *{outline:none!important}.mp-info-aj{margin-top:5px;font-size:11px}.mp-info-aj a{color:var(--muted2);text-decoration:underline}.mp-info-ga{margin-top:3px;font-size:10px;color:var(--muted2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.8}
@@ -8519,7 +8520,7 @@ function slVista(){
   SL.v3=!SL.v3; SL.sel=0; SL.multi=[]; var o=el('sl-ed'); if(o) o.remove();
   el('sl-svg').style.display=SL.v3?'none':'block'; el('sl-if3').style.display=SL.v3?'block':'none'; el('sl-zoom').style.display=SL.v3?'none':'flex';
   el('sl-tools').style.display=SL.v3?'none':'flex'; el('sl-prop').style.display=SL.v3?'none':'block'; el('sl-areas').style.display=SL.v3?'none':'block';
-  el('sl-b3').textContent=SL.v3?'Voltar ao 2D (editar)':'Ver em 3D'; if(!SL.v3){ slCarr3d(false); var f3=el('sl-if3'); if(f3&&f3.dataset.ok==='1') try{ f3.contentWindow.postMessage({tipo:'salao3d-pausa'},'*'); }catch(e){} }
+  el('sl-b3').textContent=SL.v3?'Voltar ao 2D (editar)':'Ver em 3D'; if(!SL.v3){ slCarr3d(false,true); var f3=el('sl-if3'); if(f3&&f3.dataset.ok==='1') try{ f3.contentWindow.postMessage({tipo:'salao3d-pausa'},'*'); }catch(e){} }
   if(SL.v3) slEnvia3d(); else slDesenha();
 }
 function slEnvia3d(){
@@ -8537,11 +8538,16 @@ window.addEventListener('message',function(e){ var f=el('sl-if3'), m=e.data; if(
   else if(m.tipo==='prev3d-erro'){ slCarr3d(false); var s=el('sl-m'); if(s){ s.style.color='#DC2626'; s.textContent='O 3D não abriu: '+(m.msg||'erro')+'. Toque em Voltar ao 2D e em Ver em 3D de novo.'; } }
 });
 /* (124) "Montando o 3D…" por cima da janelinha até o 3D avisar que desenhou (com muitas peças demora uns segundos) */
-function slCarr3d(on){ var mp=el('sl-mapa'), c=el('sl-c3'); if(!mp) return;
-  if(!on){ if(c) c.remove(); return; } if(c) return;
-  c=document.createElement('div'); c.id='sl-c3'; c.style.cssText='position:absolute;inset:0;border-radius:12px;background:#110d0a;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:#f5e9dc;font:600 14px inherit;z-index:3';
-  c.innerHTML='<style>@keyframes slGira{to{transform:rotate(360deg)}}</style><span style="width:34px;height:34px;border-radius:50%;border:3px solid rgba(255,255,255,.18);border-top-color:#E07B39;animation:slGira .8s linear infinite"></span>Montando o salão em 3D…';
-  mp.appendChild(c); }
+/* (125) igual à abertura do mapa: o Live animado + barrinha laranja; fica no mínimo 1,2 s (não pisca) e some com transição */
+function slCarr3d(on,ja){ var mp=el('sl-mapa'), c=el('sl-c3'); if(!mp) return;
+  if(!on&&ja){ if(c){ try{ if(SL.live3) SL.live3.destruir(); }catch(e){} SL.live3=null; c.remove(); } return; }   /* voltou ao 2D: some na hora */
+  if(!on){ if(!c||c.dataset.sai) return; c.dataset.sai='1'; var falta=Math.max(0,1200-(Date.now()-(+c.dataset.t||0)));
+    setTimeout(function(){ c.classList.add('sai'); setTimeout(function(){ try{ if(SL.live3) SL.live3.destruir(); }catch(e){} SL.live3=null; c.remove(); },450); },falta); return; }
+  if(c&&!c.dataset.sai) return; if(c) c.remove();
+  c=document.createElement('div'); c.id='sl-c3'; c.dataset.t=Date.now();
+  c.innerHTML='<div class="lv" style="width:110px;height:116px"></div><div class="tx">Montando o salão em 3D…</div><div class="br"><i></i></div>';
+  mp.appendChild(c);
+  mpLiveCarregar(function(){ if(!c.isConnected) return; try{ SL.live3=LiveMascote.criar(c.querySelector('.lv'),{sombra:true,expressao:'animado'}); SL.live3.gesto('boas_vindas').then(function(){ if(SL.live3) SL.live3.gesto('piscadinha'); }); }catch(e){} }); }
 function slDesenha3(){ slEnvia3d(); }
 function slGira3(d){ SL.ang=((SL.ang+d)%360+360)%360; slDesenha3(); }
 function slPt(e){ var s=el('sl-svg'), m=s.getScreenCTM().inverse(), q=s.createSVGPoint(); q.x=e.clientX; q.y=e.clientY; return q.matrixTransform(m); }

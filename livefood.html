@@ -1743,13 +1743,14 @@ function rsvSalao(){
   o.innerHTML='<div id="r3c"></div><div class="r3h"><button onclick="rsvVoltaAgenda()" aria-label="Voltar">'+BKI+'</button><div><b>Escolha sua mesa</b><small>'+RSV.pes+(RSV.pes>1?' pessoas':' pessoa')+' · '+esc(rsvQuando())+'</small></div></div>'
     +'<div class="r3l"><span><i style="background:#22c55e"></i>Livre</span><span><i style="background:#ef4444"></i>Reservada</span><span><i style="background:#71717a"></i>Menos lugares</span></div>'
     +'<div class="r3as" id="r3as" style="display:none"></div>'
-    +'<div class="r3v"><i></i>Montando o salão…</div><div class="r3dica" style="opacity:0">☝️ Arraste para girar · toque numa mesa livre</div><div class="r3p" id="r3p"></div>';
+    +'<div class="r3v"><div class="r3lv" style="width:104px;height:110px"></div>Montando o salão…</div><div class="r3dica" style="opacity:0">☝️ Arraste para girar · toque numa mesa livre</div><div class="r3p" id="r3p"></div>';
   o.style.display='flex'; setTimeout(function(){ o.classList.add('on'); },20);
+  r3LiveCarrega(o);
   Promise.all([rsvLib(),fetch(API+'/food/reserva/'+encodeURIComponent(D.cli||CLI)+'?dia='+RSV.dia+'&hora='+RSV.hora).then(function(r){ return r.json(); })]).then(function(a){
     var d=a[1]; if(!d||!d.ok||!d.on) throw new Error('reservas indisponíveis');
     RSV.oc=(d.ocupadas||[]).map(String); RSV.d.salao=d.salao; RSV.d.areas=d.areas||null;
     if(!r3Areas().some(function(x){ return x.id===RSV.area; })) RSV.area=r3AreaInicial();   /* (119) abre na área que tem mesa livre */
-    var v=o.querySelector('.r3v'); if(v) v.remove();
+    r3LiveTira(o);
     r3AreasBarra(); r3Monta();
     var livres=d.salao.filter(function(p){ return p.t==='mesa'&&p.lug>=RSV.pes&&RSV.oc.indexOf(String(p.n))<0; });
     if(!livres.length) r3Painel('<div class="l1"><div class="nm" style="background:#ef4444">!</div><div class="tx"><b>Tudo reservado nesse horário</b><small>Não há mesa livre para '+RSV.pes+(RSV.pes>1?' pessoas':' pessoa')+'. Tente outro horário.</small></div></div><button class="bt c" onclick="rsvVoltaAgenda()">Trocar horário</button>');
@@ -1759,6 +1760,9 @@ function rsvSalao(){
 function rsvFechar3d(){ var o=$('r3d'); if(!o) return; r3Solta(); o.classList.remove('on'); setTimeout(function(){ o.style.display='none'; o.innerHTML=''; },320); }
 function rsvVoltaAgenda(){ rsvFechar3d(); rsvAgenda(); }
 function r3Painel(h){ var p=$('r3p'); if(!p) return; p.innerHTML=h; p.classList.add('on'); }
+/* (125) carregando do 3D com o Live (igual à abertura do mapa do painel) */
+function r3LiveCarrega(o){ var c=o.querySelector('.r3lv'); if(!c||!window.LiveMascote) return; try{ RSV.live=LiveMascote.criar(c,{sombra:true,expressao:'animado'}); RSV.live.gesto('boas_vindas').then(function(){ if(RSV.live) RSV.live.gesto('piscadinha'); }); }catch(e){ RSV.live=null; } }
+function r3LiveTira(o){ try{ if(RSV.live) RSV.live.destruir(); }catch(e){} RSV.live=null; var v=o.querySelector('.r3v'); if(v) v.remove(); }
 /* (121) pré-visualização do painel (?prev3d=1): o editor do salão manda o desenho por mensagem e aqui aparece o mesmo 3D do cliente, só para olhar */
 var PREV3D=Q.get('prev3d')==='1';
 function r3LugPadrao(p){ if(p.forma==='quadrada'){ var m2=(p.w/25)*((p.h||p.w)/25); return m2<=0.55?2:m2<=1?4:m2<=1.6?6:8; } var d=p.w/25; return d<=0.75?2:d<=1.1?4:d<=1.5?6:8; }
@@ -1779,8 +1783,9 @@ if(PREV3D){
   if(document.readyState==='complete') avisaPronto(); else window.addEventListener('load',avisaPronto);
 }
 function rsvToque(n){
-  if(PREV3D) return;   /* pré-visualização: só olhar */
   var m=RSV.d.salao.filter(function(p){ return p.t==='mesa'&&p.n===n; })[0]; if(!m) return;
+  /* (125) pré-visualização do painel: tocar destaca a mesa e mostra os lugares, sem botão de reservar */
+  if(PREV3D){ r3Seleciona(n); r3Painel('<div class="l1"><div class="nm">'+n+'</div><div class="tx"><b>Mesa '+n+' · '+m.lug+' lugares</b><small>pré-visualização do salão</small></div></div>'); return; }
   if(RSV.oc.indexOf(String(n))>=0){ toast('A mesa '+n+' já está reservada nesse horário'); return; }
   if(m.lug<RSV.pes){ toast('A mesa '+n+' tem '+m.lug+' lugares. Escolha uma para '+RSV.pes); return; }
   RSV.mesa=n; r3Seleciona(n);
@@ -1924,7 +1929,7 @@ function r3Monta(){
   var ren=new T.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
   ren.setPixelRatio(Math.min(window.devicePixelRatio||1,2)); ren.setSize(W,H); ren.outputEncoding=T.sRGBEncoding; ren.toneMapping=T.ACESFilmicToneMapping; ren.toneMappingExposure=1.1;
   ren.shadowMap.enabled=true; ren.shadowMap.type=T.PCFSoftShadowMap; box.appendChild(ren.domElement);
-  var sc=new T.Scene(); sc.background=new T.Color(0x110d0a); sc.fog=new T.Fog(0x110d0a,26,60);
+  var sc=new T.Scene(); sc.background=new T.Color(0x110d0a);   /* (125) sem névoa: ela escurecia o salão ao afastar o zoom */
   if(T.RoomEnvironment){ try{ var pm=new T.PMREMGenerator(ren); sc.environment=pm.fromScene(new T.RoomEnvironment(),0.04).texture; }catch(e){} }
   /* limites: as medidas da área (largura × comprimento) ou o que as peças ocuparem */
   var x0=0,y0=0,x1=Math.round(AR.larg*25),y1=Math.round(AR.comp*25); P.forEach(function(p){ x0=Math.min(x0,p.x-p.w/2-12); y0=Math.min(y0,p.y-p.h/2-12); x1=Math.max(x1,p.x+p.w/2+12); y1=Math.max(y1,p.y+p.h/2+12); });
