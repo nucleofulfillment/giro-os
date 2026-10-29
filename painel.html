@@ -1371,6 +1371,7 @@ a{color:inherit}
 <div class="sheet wide" id="sh-ofertas">
   <div class="sh-hd"><h3>Ofertas com vídeo</h3><button onclick="fecharTudo()">✕</button></div>
   <div class="sh-bd">
+    <div id="mc-promo" style="margin-bottom:12px"></div>
     <p style="margin:0 0 6px;font-size:12.5px;color:var(--muted);line-height:1.5">Cada oferta é um vídeo com os produtos que aparecem enquanto ele toca. Use ↑ ↓ para escolher a ordem em que rodam.</p>
     <div style="border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:12px">
       <div style="font-weight:800;font-size:13.5px;margin-bottom:4px">🎁 Benefício do pedido programado</div>
@@ -7421,8 +7422,9 @@ function clbPintar(){
   h+=sec('Ofertas do Clube por dia','Preço especial de um produto para assinantes em dias da semana escolhidos (ex.: toda terça, burger do clube por R$ 19,90).');
   h+='<div id="clb-ofs"></div><button class="btn sec sm" style="margin-top:8px" onclick="clbOfNova()">+ Oferta do dia</button>';
   h+='<div id="clb-erro" style="color:#ef4444;font-size:12.5px;margin-top:12px"></div><button class="btn pri wide" id="clb-salvar" style="margin-top:12px" onclick="clbSalvar()">Salvar Clube</button>'
-    +'<button class="btn sec wide" type="button" style="margin-top:8px" onclick="clbVer()">👁 Ver o cardápio como assinante</button><div style="font-size:11.5px;color:var(--muted);margin-top:6px;text-align:center">Abre o cardápio como se você fosse do Clube, só para conferir. Salve antes para ver as mudanças.</div>';
-  el('clb-bd').innerHTML=h; clbEscopo(); clbOfPintar();
+    +'<button class="btn sec wide" type="button" style="margin-top:8px" onclick="clbVer()">👁 Ver o cardápio como assinante</button><div style="font-size:11.5px;color:var(--muted);margin-top:6px;text-align:center">Abre o cardápio como se você fosse do Clube, só para conferir. Salve antes para ver as mudanças.</div>'
+    +'<div id="mc-clube" style="margin-top:18px"></div>';
+  el('clb-bd').innerHTML=h; clbEscopo(); clbOfPintar(); mcCarrega('clube');
 }
 function clbEscopo(){
   var c=CLB.c, e=(document.querySelector('input[name="clb-esc"]:checked')||{}).value||'loja'; c.escopo=e; var box=el('clb-lista');
@@ -8645,7 +8647,35 @@ function cdExibirOferta(){
 }
 function cdOfSorted(){ return CD.ofs.slice().sort(function(a,b){ return (a.ordem||0)-(b.ordem||0); }); }
 function cdNomeProd(id){ var p=cdProd(id); return p?p.nome:'(produto apagado)'; }
-function cdAbrirOfertas(){ fecharTudo(); cdPintarOfertas(); cdPgCarrega(); abrir('sh-ofertas'); }
+function cdAbrirOfertas(){ fecharTudo(); cdPintarOfertas(); cdPgCarrega(); abrir('sh-ofertas'); mcCarrega('promo'); }
+/* (115) cartões automáticos do cardápio (Promoção / Ofertas Clube): nome, mostrar, posição e ícone — o ícone vale em todo o cardápio */
+var MC={c:null}, MC_IC={promo:[['fogo','🔥','Fogo'],['etiqueta','🏷️','Etiqueta'],['raio','⚡','Raio']],clube:[['diamante','💎','Diamante'],['coroa','👑','Coroa'],['estrela','⭐','Estrela']]};
+function mcCarrega(t){ var b=el('mc-'+t); if(!b) return; b.innerHTML='<div style="font-size:12.5px;color:var(--muted)">Carregando o cartão…</div>';
+  fetch(DELTADIS_API+'/painel/menu-config',{headers:cdHdr()}).then(function(r){ return r.json(); }).then(function(d){ if(!d||!d.ok) throw new Error((d&&d.mensagem)||'Suba o Worker 115 para editar o cartão.'); MC.c=d.menu; mcPinta(t); })
+  .catch(function(e){ b.innerHTML='<div style="font-size:12.5px;color:var(--red)">'+esc(e.message||'Não carregou')+'</div>'; }); }
+function mcPinta(t){
+  var c=MC.c[t], promo=t==='promo', bg=mcFundo(c.cor||(promo?'#121214':'#1e3a8a')), ic=MC_IC[t].filter(function(x){ return x[0]===c.icone; })[0]||MC_IC[t][0];
+  var h='<div style="border:1px solid var(--border);border-radius:12px;padding:12px"><div style="font-weight:800;font-size:13.5px;margin-bottom:2px">'+(promo?'🔥 Cartão "Promoção" no cardápio':'💎 Cartão "Ofertas Clube" no cardápio')+'</div>'
+    +'<div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:10px">'+(promo?'Reúne sozinho os produtos com desconto (de/por).':'Reúne sozinho os produtos com preço de Clube.')+' O ícone escolhido vale em todo o cardápio.</div>'
+    +'<div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap"><div style="flex:none;text-align:center"><div id="mc-pv-'+t+'" style="width:110px;height:110px;border-radius:14px;background:'+bg+';position:relative;overflow:hidden;color:#fff;box-shadow:0 6px 18px #0003"><div style="position:absolute;inset:0 0 24% 0;display:flex;align-items:center;justify-content:center;font-size:44px;filter:drop-shadow(0 4px 10px #0006)">'+ic[1]+'</div><div style="position:absolute;left:0;right:0;bottom:0;height:55%;background:linear-gradient(transparent,#000c)"></div><b style="position:absolute;left:9px;right:9px;bottom:8px;font-size:12.5px;line-height:1.15;z-index:1">'+esc(c.nome)+'</b></div><div style="font-size:11px;color:var(--muted);margin-top:5px">Prévia no cardápio</div></div>'
+    +'<div style="flex:1;min-width:220px;display:flex;flex-direction:column;gap:8px">'
+    +'<div style="display:grid;grid-template-columns:1fr 92px;gap:8px"><label style="font-size:11.5px;color:var(--muted)">Nome no cartão<input class="inp" id="mc-nm-'+t+'" maxlength="24" value="'+esc(c.nome)+'" oninput="mcPrev(\''+t+'\')"></label><label style="font-size:11.5px;color:var(--muted)">Posição<input class="inp" id="mc-pos-'+t+'" type="number" min="1" max="99" value="'+c.pos+'" title="1 = primeiro cartão do cardápio"></label></div>'
+    +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span style="font-size:11.5px;color:var(--muted);margin-right:2px">Cor de fundo</span>'+(promo?['#121214','#7f1d1d','#c2410c','#9d174d','#14532d']:['#1e3a8a','#0369a1','#4c1d95','#0f766e','#121214']).map(function(x){ return '<button type="button" onclick="mcCor(\''+t+'\',\''+x+'\')" title="'+x+'" style="width:26px;height:26px;border-radius:50%;cursor:pointer;background:'+x+';border:'+(x===c.cor?'3px solid var(--pri,#E07B39)':'2px solid var(--border)')+'"></button>'; }).join('')+'<input type="color" id="mc-cor-'+t+'" value="'+(c.cor||'#121214')+'" oninput="mcCor(\''+t+'\',this.value,1)" title="Outra cor" style="width:34px;height:28px;border:0;padding:0;background:none;cursor:pointer"></div>'
+    +'<div style="display:flex;gap:6px">'+MC_IC[t].map(function(x){ return '<button type="button" class="btn sec sm" data-ic="'+x[0]+'" onclick="mcIc(\''+t+'\',\''+x[0]+'\')" style="flex:1;padding:8px 4px;'+(x[0]===c.icone?'border-color:var(--pri,#E07B39);background:var(--s2);font-weight:800':'')+'"><span style="font-size:20px;display:block">'+x[1]+'</span>'+x[2]+'</button>'; }).join('')+'</div>'
+    +'<label style="display:flex;align-items:center;gap:8px;font-size:12.5px;cursor:pointer"><input type="checkbox" id="mc-on-'+t+'"'+(c.on?' checked':'')+'> Mostrar o cartão no cardápio</label>'
+    +'<div style="display:flex;justify-content:flex-end"><button class="btn pri sm" type="button" id="mc-bt-'+t+'" onclick="mcSalvar(\''+t+'\')">Salvar cartão</button></div></div></div></div>';
+  el('mc-'+t).innerHTML=h;
+}
+/* fundo do cartão: a cor escolhida com um brilho suave no meio (igual ao cardápio) */
+function mcFundo(cor){ return 'radial-gradient(90% 70% at 50% 32%,rgba(255,255,255,.24),rgba(255,255,255,0) 68%),'+cor; }
+function mcGuarda(t){ MC.c[t].nome=el('mc-nm-'+t).value.trim()||MC.c[t].nome; MC.c[t].pos=+el('mc-pos-'+t).value||MC.c[t].pos; MC.c[t].on=el('mc-on-'+t).checked?1:0; }
+function mcIc(t,ic){ mcGuarda(t); MC.c[t].icone=ic; mcPinta(t); }
+function mcCor(t,cor,ao){ MC.c[t].cor=cor; if(ao){ el('mc-pv-'+t).style.background=mcFundo(cor); return; } mcGuarda(t); mcPinta(t); }
+function mcPrev(t){ var b=document.querySelector('#mc-pv-'+t+' b'); if(b) b.textContent=el('mc-nm-'+t).value.trim()||(t==='promo'?'Promoção':'Ofertas Clube'); }
+function mcSalvar(t){ var b=el('mc-bt-'+t), o={}; o[t]={nome:el('mc-nm-'+t).value.trim(),pos:+el('mc-pos-'+t).value||1,on:el('mc-on-'+t).checked?1:0,icone:MC.c[t].icone,cor:MC.c[t].cor};
+  b.disabled=true; b.textContent='Salvando…';
+  fetch(DELTADIS_API+'/painel/menu-config',{method:'POST',headers:cdHdr(),body:JSON.stringify(o)}).then(function(r){ return r.json(); }).then(function(d){ b.disabled=false; b.textContent='Salvar cartão'; if(!d||!d.ok) throw new Error((d&&d.mensagem)||'Não salvou'); MC.c=d.menu; mcPinta(t); aviso('Cartão salvo'); })
+  .catch(function(e){ b.disabled=false; b.textContent='Salvar cartão'; aviso(e.message||'Não salvou'); }); }
 function cdPgMostra(){ var t=el('cd-pg-t').value; el('cd-pg-v').style.display=(t==='pct'||t==='val')?'':'none'; el('cd-pg-i').style.display=t==='item'?'':'none'; el('cd-pg-v').placeholder=t==='pct'?'% (ex: 10)':'R$ (ex: 10)'; }
 function cdPgCarrega(){
   var o='<option value="">Escolha o item grátis…</option>'; CD.prods.forEach(function(x){ o+='<option value="'+esc(x.id)+'">'+esc(x.nome)+'</option>'; }); el('cd-pg-i').innerHTML=o;
