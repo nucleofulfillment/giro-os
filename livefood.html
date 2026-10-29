@@ -140,6 +140,15 @@ html.claro #wzp{filter:invert(1) hue-rotate(180deg)}
 #nav .bg{right:auto!important;width:auto!important;left:calc(50% + 3px)!important;top:4px!important;height:17px!important;padding:0 4px!important}
 #toast{bottom:calc(76px + env(safe-area-inset-bottom))!important}
 #cards{bottom:calc(60px + env(safe-area-inset-bottom))!important;padding-bottom:12px!important}
+/* (115) barrinha do Clube na página inicial, logo acima do menu de baixo: os cartões, o aviso e a pílula sobem junto */
+#clbHome{position:fixed;left:10px;right:10px;bottom:calc(66px + env(safe-area-inset-bottom));margin:0 auto;max-width:500px;z-index:26;box-shadow:0 8px 24px #0008;animation:clbHomeEntra .5s cubic-bezier(.2,1.2,.4,1) backwards}
+@keyframes clbHomeEntra{from{transform:translateY(20px);opacity:0}to{transform:none;opacity:1}}
+html.clbbar #cards{bottom:calc(112px + env(safe-area-inset-bottom))!important}
+html.clbbar #wzp{bottom:calc(118px + env(safe-area-inset-bottom))}
+html.clbbar #toast{bottom:calc(122px + env(safe-area-inset-bottom))!important}
+html.clbbar #mnb{bottom:calc(128px + env(safe-area-inset-bottom))!important}
+/* a barrinha some quando uma tela (cardápio, sacola, produto) está aberta por cima da inicial */
+#sheet.on~#clbHome,html:has(#sheet.on) #clbHome{opacity:0;pointer-events:none;transform:translateY(20px);transition:opacity .2s,transform .2s}
 #mnb{bottom:calc(76px + env(safe-area-inset-bottom))!important}
 #sheet{bottom:calc(60px + env(safe-area-inset-bottom))!important;max-height:calc(82% - 60px)!important}
 #sheet.fz{height:calc(100% - 60px - env(safe-area-inset-bottom))!important;max-height:none!important}
@@ -243,7 +252,12 @@ html.claro #wzp{filter:invert(1) hue-rotate(180deg)}
 html.claro #sheet .cc.ccp,html.claro #sheet .cc.ccc{filter:invert(1) hue-rotate(180deg)}   /* tema claro inverte a folha: os dois cartões ficam iguais nos 2 temas */
 .clbcta{display:flex;align-items:center;gap:8px;margin:10px 0 2px;padding:10px 12px;border-radius:12px;background:linear-gradient(90deg,#1e3a8a,#2563eb);color:#fff;font-size:13px;cursor:pointer}
 .clbcta span{flex:1}.clbcta i{font-style:normal;font-weight:900;background:#ffffff2e;padding:4px 10px;border-radius:999px}
-html.claro #sheet .clbcta{filter:invert(1) hue-rotate(180deg)}
+html.claro #sheet .clbcta,html.claro #sheet .prmcta{filter:invert(1) hue-rotate(180deg)}
+html.claro #sheet .clbcta .clb-mini{filter:drop-shadow(0 1px 3px rgba(20,90,130,.55))}   /* a barrinha já é desinvertida: o diamante não inverte de novo (fica claro nos 2 temas) */
+/* (115) barrinha de Promoções nas categorias que têm produto em promoção: mesmo estilo da do Clube, em laranja */
+.prmcta{display:flex;align-items:center;gap:8px;margin:10px 0 2px;padding:10px 12px;border-radius:12px;background:linear-gradient(90deg,#c2410c,#f97316);color:#fff;font-size:13px;cursor:pointer}
+.prmcta .ic{font-size:17px;line-height:1;display:inline-block;animation:fogo 1.6s ease-in-out infinite;transform-origin:50% 90%}
+.prmcta .ic{flex:none}.prmcta span:not(.ic){flex:1}.prmcta i{font-style:normal;font-weight:900;background:#ffffff33;padding:4px 10px;border-radius:999px;white-space:nowrap}
 .mp{display:flex;gap:12px;align-items:center;padding:12px 0;border-top:1px solid var(--line);cursor:pointer}
 /* (114) destaques da categoria: grade de 3 por linha no topo da lista */
 .dsqt{font-size:18px;font-weight:900;margin:16px 0 12px}
@@ -1455,7 +1469,7 @@ function compartilhaLink(){
   try{ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(u).then(ok,function(){ prompt('Copie o link:',u); }); return; } }catch(e){}
   try{ var ta=document.createElement('textarea'); ta.value=u; ta.style.cssText='position:fixed;opacity:0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); ok(); }catch(e){ prompt('Copie o link:',u); }
 }
-function temaLer(){ try{ return localStorage.getItem('lf_tema')==='claro'?'claro':'escuro'; }catch(e){ return 'escuro'; } }
+function temaLer(){ try{ return localStorage.getItem('lf_tema')==='escuro'?'escuro':'claro'; }catch(e){ return 'claro'; } }   /* (115) tema claro é o padrão; o escuro só se o cliente escolher */
 function setTema(m){ try{ localStorage.setItem('lf_tema',m); }catch(e){} temaAplica(); }
 function alternaTema(){ setTema(temaLer()==='claro'?'escuro':'claro'); }
 function temaAplica(){
@@ -1613,6 +1627,8 @@ function abreCat(id){
   LF_VOLTA=id;
   var h='<div class="wh"><button class="bk" onclick="abreMenu()">'+BKI+'</button><b>'+esc(g.nome)+'</b></div><div class="wb"><input class="busca" id="cq" type="search" placeholder="Buscar em '+esc(g.nome)+'" oninput="catFiltra()" style="width:100%;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:#ffffff0f;color:#fff;font-size:15px;margin:10px 0 2px"><div id="cnada" style="display:none;padding:18px 4px;color:var(--mut);font-size:14px">Nenhum produto encontrado.</div>';
   if(fz&&!clbMembro()) h+='<div class="clbcta" onclick="clbAbre()">'+clbMini()+'<span>Preços para quem é do <b>Clube</b></span><i>Assinar</i></div>';
+  /* (115) categoria com produto em promoção: barrinha laranja que abre todas as promoções */
+  if(id!=='_promo'&&g.ps.some(function(p){ var m=minPreco(p); return m.orig>m.min; })&&menuEspeciais().some(function(x){ return x.id==='_promo'; })) h+='<div class="prmcta" onclick="abreCat(\'_promo\')"><span class="ic">'+promoIco()+'</span><span>Produtos em <b>promoção</b></span><i>Ver todas</i></div>';
   /* (114) destaques da categoria: no topo, em grade de 3 por linha (como no iFood); somem enquanto o cliente busca */
   var dq=g.ps.filter(function(p){ return p.destaque; });
   if(dq.length){ h+='<div id="dsq"><div class="dsqt">Destaques</div><div class="dsq">';
@@ -1927,7 +1943,18 @@ function clbSac(){ var c=D&&D.clube; if(clbMembro()||!c||!c.ativo) return ''; va
   if(!m||m.t>=s) return '';
   return '<div class="clb-sac" onclick="clbAbre()"><span>'+clbMini()+'<span>Clube<i>Assinar</i></span></span><span>'+brl(m.t)+'<small>no Clube você economiza '+brl(s-m.t)+(m.frete?' + frete grátis':'')+'</small></span></div>'; }
 /* diamante na home: gira devagar com um brilho; abre os planos */
-function clbInit(){ clbVerFaixa(); var b=$('clbBtn'), sd=$('mside'); if(!D.clube||!D.clube.ativo||clbMembro()||!sd){ if(b) b.remove(); return; } if(b) return; b=document.createElement('button'); b.id='clbBtn'; b.type='button'; b.className='clb-sh'; b.setAttribute('aria-label','Assinar o clube'); b.innerHTML=clbGema()+'ASSINAR CLUBE'; b.onclick=function(e){ e.stopPropagation(); clbAbre(); }; sd.insertBefore(b,sd.firstChild); }
+/* (115) barrinha do Clube na página inicial, logo acima do menu de baixo (substitui o botão "Assinar Clube" ao lado do Compartilhar).
+   Toque na frase abre as Ofertas Clube; toque em "Assinar" abre os planos */
+function clbInit(){
+  clbVerFaixa(); var b=$('clbBtn'); if(b) b.remove();
+  var x=$('clbHome'), on=D.clube&&D.clube.ativo&&!clbMembro();
+  if(!on){ if(x) x.remove(); document.documentElement.classList.remove('clbbar'); return; }
+  if(!x){ x=document.createElement('div'); x.id='clbHome'; x.className='clbcta'; document.body.appendChild(x); }
+  var temCat=menuEspeciais().some(function(g){ return g.id==='_clube'; });
+  x.innerHTML=clbMini()+'<span>Preços para quem é do <b>Clube</b></span><i>Assinar</i>';
+  x.onclick=function(e){ if(e.target.closest('i')||!temCat) clbAbre(); else abreCat('_clube'); };
+  document.documentElement.classList.add('clbbar');
+}
 function clbAbre(){
   var c=D.clube; if(!c||!c.ativo||$('clbM')) return;
   var pls=['tri','sem','anu'].filter(function(k){ return c.planos[k]&&c.planos[k].on; }), h='';
