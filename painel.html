@@ -614,6 +614,7 @@ a{color:inherit}
 .gos-card{display:inline-flex;align-items:center;background:#fff;border-radius:14px;padding:9px 16px;box-shadow:0 6px 18px rgba(31,35,41,.16)}
 .indbar{display:none!important}
 .cc-g{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.cc-g .kpi{margin:0;height:100%;box-sizing:border-box}@media(max-width:760px){.cc-g{grid-template-columns:1fr 1fr}.cc-g .cc-w{grid-column:1/-1!important;grid-row:auto!important}.cc-g .cc-s{grid-column:auto!important;grid-row:auto!important}}
+.cd-li{transition:background .15s}.cd-li:hover{background:var(--s2,#f4f4f5)}
 </style>
 <style>html.dd-ret #login{visibility:hidden}</style><script>try{if(localStorage.getItem('dd_jwt'))document.documentElement.classList.add('dd-ret');}catch(e){}</script>
 <script src="marca.js?v=9"></script>
@@ -7468,12 +7469,30 @@ function cdDscTag(p){
   var now=new Date(Date.now()-3*3600000).toISOString().slice(0,16), de=d.de||'', ate=d.ate||'';
   var v=d.tipo==='pct'?(String(d.valor).replace('.',',')+'% OFF'):('R$ '+Number(d.valor).toFixed(2).replace('.',',')+' OFF');
   function fm(s){ var m=/^(\d{4})-(\d\d)-(\d\d)T(\d\d:\d\d)/.exec(s||''); return m?(m[3]+'/'+m[2]+' '+m[4]):''; }
-  var st='font-size:10.5px;font-weight:800;border-radius:6px;padding:2px 7px;margin-left:8px;vertical-align:middle;white-space:nowrap;';
+  var st='font-size:10.5px;font-weight:800;border-radius:6px;padding:2px 7px;vertical-align:middle;white-space:nowrap;';
   if(ate&&now>ate) return '<span style="'+st+'background:var(--s3);color:var(--muted)" title="O desconto já terminou">Desconto encerrado</span>';
   if(de&&now<de) return '<span style="'+st+'background:#fef3c7;color:#92400e" title="Começa em '+fm(de)+'">⏰ '+v+' · começa '+fm(de)+'</span>';
   return '<span style="'+st+'background:#dc2626;color:#fff" title="'+(ate?'Até '+fm(ate):'Sem data para terminar')+'">🏷 '+v+(ate?' · até '+fm(ate):'')+'</span>';
 }
+/* (114) tag do Clube na lista: oferta do dia, preço específico do produto ou desconto da categoria/produto (o da loja inteira não marca, para não poluir) */
+function cdClbTag(p){
+  var c=CLB.c; if(!c||!c.ativo) return '';
+  var st='font-size:10.5px;font-weight:800;border-radius:6px;padding:2px 7px;white-space:nowrap;background:#e0f2fe;color:#0369a1;border:1px solid #7dd3fc', br=function(v){ return 'R$ '+Number(v).toFixed(2).replace('.',','); };
+  var of=(c.ofertas||[]).filter(function(o){ return o.p===p.id; })[0];
+  if(of) return '<span style="'+st+'" title="Oferta do Clube por dia da semana">💎 Oferta Clube '+br(of.preco)+' · '+(of.dias||[]).map(function(d){ return CLB_DIAS[d]; }).join(', ')+'</span>';
+  if(p.clube&&p.clube.preco>0) return '<span style="'+st+'" title="Preço específico para quem é do Clube">💎 Clube '+br(p.clube.preco)+'</span>';
+  var no=(c.escopo==='cats'&&(c.cats||[]).indexOf(p.cat)>=0)||(c.escopo==='prods'&&(c.prods||[]).indexOf(p.id)>=0);
+  if(no&&c.valor>0) return '<span style="'+st+'" title="Entra no desconto do Clube">💎 Clube '+(c.tipo==='pct'?String(c.valor).replace('.',',')+'% OFF':br(c.valor)+' OFF')+'</span>';
+  return '';
+}
+function cdTags(p){
+  var t=cdDscTag(p)+cdClbTag(p)+(p.destaque?'<span style="font-size:10.5px;font-weight:800;border-radius:6px;padding:2px 7px;white-space:nowrap;background:#ffedd5;color:#c2410c;border:1px solid #fdba74">🔥 Destaque</span>':'');
+  return t?'<div style="display:flex;flex-wrap:wrap;gap:4px;margin:3px 0 2px">'+t+'</div>':'';
+}
+/* configuração do Clube para as tags (carrega uma vez) */
+function cdClbCarrega(){ if(CLB.c||CLB.carregando) return; CLB.carregando=1; fetch(DELTADIS_API+'/painel/clube-config',{headers:cdHdr()}).then(function(r){ return r.json(); }).then(function(d){ if(d&&d.ok&&d.clube){ CLB.c=d.clube; cdPintar(); } }).catch(function(){}).then(function(){ CLB.carregando=0; }); }
 function cdPintar(){
+  cdClbCarrega();
   var fc=el('cd-fcat'), atual=fc.value, h='<option value="">Todas as categorias</option>', i;
   for(i=0;i<CD.cats.length;i++) h+='<option value="'+esc(CD.cats[i].id)+'">'+esc(CD.cats[i].nome)+'</option>';
   fc.innerHTML=h; fc.value=atual;
@@ -7487,10 +7506,10 @@ function cdPintar(){
     if(cat&&p.cat!==cat) continue;
     n++;
     var nad=(p.adicionais||[]).length;
-    out+='<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--border);'+(p.ativo===false?'opacity:.55':'')+'">'
+    out+='<div class="cd-li" onclick="cdLinhaClique(event,\''+p.id+'\')" title="Clique para editar" style="display:flex;align-items:center;gap:12px;padding:10px 8px;margin:0 -8px;border-top:1px solid var(--border);border-radius:10px;cursor:pointer;'+(p.ativo===false?'opacity:.55':'')+'">'
       +'<input type="checkbox" '+(CD.sel[p.id]?'checked ':'')+'onchange="cdSelProd(\''+p.id+'\',this.checked)" title="Selecionar para exibir oferta" style="width:18px;height:18px;flex:none;cursor:pointer">'
       +'<div style="width:56px;height:56px;flex:none;border-radius:12px;background:var(--s3) center/cover no-repeat;'+(p.foto?'background-image:url('+p.foto+')':'')+'"></div>'
-      +'<div style="flex:1;min-width:0"><div style="font-weight:800;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(comOf[p.id]?'<span title="Este produto tem oferta com vídeo" style="color:var(--pri,#f97316);margin-right:6px">▶</span>':'')+esc(p.nome)+cdDscTag(p)+'</div>'
+      +'<div style="flex:1;min-width:0"><div style="font-weight:800;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(comOf[p.id]?'<span title="Este produto tem oferta com vídeo" style="color:var(--pri,#f97316);margin-right:6px">▶</span>':'')+esc(p.nome)+'</div>'+cdTags(p)
       +'<div style="font-size:12px;color:var(--muted)">'+esc(cdNomeCat(p.cat)||'Sem categoria')+((p.tamanhos||[]).length?' · '+p.tamanhos.length+' tamanho'+(p.tamanhos.length>1?'s':''):'')+((p.sabores||[]).length?' · '+p.sabores.length+' sabor'+(p.sabores.length>1?'es':''):'')+(nad?' · '+nad+' adicional'+(nad>1?'is':''):'')+'</div></div>'
       +'<div style="font-weight:800;font-size:14px;white-space:nowrap">'+cdPrecoLista(p)+'</div>'
       +'<button class="btn sec sm" onclick="cdAlternar(\''+p.id+'\')" title="Clique para ativar/pausar">'+(p.ativo===false?'Pausado':'Ativo')+'</button>'
@@ -7501,6 +7520,8 @@ function cdPintar(){
   if(!n) out='<div style="padding:28px;text-align:center;color:var(--muted)">'+(CD.prods.length?'Nenhum produto encontrado.':'Nenhum produto ainda. Clique em <b>+ Novo produto</b> para começar.')+'</div>';
   el('cd-lista').innerHTML=out;
 }
+/* (114) clicar no cartão do produto abre a edição (menos nos botões e na caixinha de seleção) */
+function cdLinhaClique(e,id){ if(e.target.closest('button,input,a,label')) return; cdEditar(id); }
 function cdProd(id){ var i; for(i=0;i<CD.prods.length;i++) if(CD.prods[i].id===id) return CD.prods[i]; return null; }
 function cdSalvarApi(tipo,item){
   return fetch(DELTADIS_API+'/painel/cardapio-salvar',{method:'POST',headers:cdHdr(),body:JSON.stringify({tipo:tipo,item:item})}).then(function(r){ return r.json(); }).then(function(d){ if(!d||!d.ok) throw new Error((d&&d.mensagem)||'não salvou'); return d; });
