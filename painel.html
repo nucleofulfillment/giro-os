@@ -1311,6 +1311,8 @@ a{color:inherit}
       <input class="inp" id="cd-clb" inputmode="decimal" placeholder="Ex.: 24,90" style="margin-top:6px">
       <div style="font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.45">Pode ser maior ou menor que o desconto geral do Clube. Só aparece quando o Clube está ligado.</div>
     </div>
+    <!-- (114) destaque: o produto aparece no topo da categoria, em grade de 3 por linha -->
+    <label style="display:flex;align-items:center;gap:10px;margin:4px 0 12px;padding:12px;border:1px solid var(--border);border-radius:12px;cursor:pointer"><input type="checkbox" id="cd-dsq" style="width:18px;height:18px"><span><b style="font-size:13px">🔥 Destaque</b><span style="display:block;font-size:11.5px;color:var(--muted);margin-top:2px">Aparece no topo da categoria, em grade de 3 por linha, com foto grande.</span></span></label>
     <label style="font-size:12px;font-weight:700;color:var(--muted2)">Descrição <span style="font-weight:500">(opcional)</span></label>
     <textarea class="inp" id="cd-desc" rows="2" maxlength="300" placeholder="Ingredientes, tamanho..." style="margin:4px 0 12px;resize:vertical"></textarea>
     <label style="font-size:12px;font-weight:700;color:var(--muted2)">Tamanhos <span style="font-weight:500">(opcional · ex: Broto, Média, Gigante 16 fatias)</span></label>
@@ -7525,7 +7527,7 @@ function cdAbrirForm(p){
   CD.edit=p?p.id:null; CD.foto=(p&&p.foto)||''; CD.vid=(p&&p.vid)||''; CD.vtipo=(p&&p.vtipo)||'video/mp4'; cdPVPinta();
   el('cd-tit').textContent=p?'Editar produto':'Novo produto';
   el('cd-nome').value=p?p.nome:''; el('cd-preco').value=(p&&p.preco)?String(p.preco).replace('.',','):'';
-  el('cd-desc').value=(p&&p.desc)||''; el('cd-des').value=(p&&p.desenho)||''; var dq=(p&&p.desconto)||{}; el('cd-dsc-t').value=dq.tipo||''; el('cd-dsc-v').value=dq.valor?String(dq.valor).replace('.',','):''; el('cd-dsc-de').value=dq.de||''; el('cd-dsc-ate').value=dq.ate||''; cdDscMostra(); el('cd-clb').value=(p&&p.clube&&p.clube.preco)?String(p.clube.preco).replace('.',','):''; el('cd-ativo').checked=!p||p.ativo!==false; el('cd-erro').textContent='';
+  el('cd-desc').value=(p&&p.desc)||''; el('cd-des').value=(p&&p.desenho)||''; var dq=(p&&p.desconto)||{}; el('cd-dsc-t').value=dq.tipo||''; el('cd-dsc-v').value=dq.valor?String(dq.valor).replace('.',','):''; el('cd-dsc-de').value=dq.de||''; el('cd-dsc-ate').value=dq.ate||''; cdDscMostra(); el('cd-clb').value=(p&&p.clube&&p.clube.preco)?String(p.clube.preco).replace('.',','):''; el('cd-ativo').checked=!p||p.ativo!==false; el('cd-dsq').checked=!!(p&&p.destaque); el('cd-erro').textContent='';
   cdOpcoesCat(p&&p.cat); cdFotoBox();
   el('cd-ads').innerHTML=''; var ad=(p&&p.adicionais)||[], i; for(i=0;i<ad.length;i++) cdAdLinha(ad[i]);
   CD.tam=JSON.parse(JSON.stringify((p&&p.tamanhos)||[])); CD.sab=JSON.parse(JSON.stringify((p&&p.sabores)||[])); cdRenderTam(); el('cd-sab-busca').value=''; cdRenderSab(); cdCarregarFotos(p);
@@ -7573,7 +7575,7 @@ function cdColher(){
   var tms=[], sbs=[], j;
   for(j=0;j<CD.tam.length;j++){ var t=CD.tam[j]; if((t.nome||'').trim()) tms.push({id:t.id,nome:t.nome.trim(),preco:cdPreco(t.preco),med:(t.med||'').trim(),max:parseInt(t.max,10)||1}); }
   for(j=0;j<CD.sab.length;j++){ var sb=CD.sab[j]; if((sb.nome||'').trim()){ var pr={},k; for(k in (sb.precos||{})){ var pv=cdPreco(sb.precos[k]); if(pv>0) pr[k]=pv; } sbs.push({id:sb.id,nome:sb.nome.trim(),desc:(sb.desc||'').trim(),grupo:(sb.grupo||'').trim(),extra4:cdPreco(sb.extra4),novidade:!!sb.novidade,balcao:!!sb.balcao,foto:sb._mud?(sb.foto||''):(sb.foto?'1':''),precos:pr}); } }
-  return {nome:el('cd-nome').value.trim(),preco:cdPreco(el('cd-preco').value),cat:el('cd-cat').value,desc:el('cd-desc').value.trim(),desenho:el('cd-des').value,desconto:cdDscLer(),clube:(cdPreco(el('cd-clb').value)>0?{preco:cdPreco(el('cd-clb').value)}:null),foto:CD.foto,vid:CD.vid||'',vtipo:CD.vtipo||'video/mp4',adicionais:ads,tamanhos:tms,sabores:sbs,ativo:el('cd-ativo').checked};
+  return {nome:el('cd-nome').value.trim(),preco:cdPreco(el('cd-preco').value),cat:el('cd-cat').value,desc:el('cd-desc').value.trim(),desenho:el('cd-des').value,desconto:cdDscLer(),clube:(cdPreco(el('cd-clb').value)>0?{preco:cdPreco(el('cd-clb').value)}:null),foto:CD.foto,vid:CD.vid||'',vtipo:CD.vtipo||'video/mp4',adicionais:ads,tamanhos:tms,sabores:sbs,ativo:el('cd-ativo').checked,destaque:el('cd-dsq').checked};
 }
 function cdSalvar(){
   var it=cdColher(); if(!it.nome){ el('cd-erro').textContent='Falta o nome do produto.'; return; }

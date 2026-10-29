@@ -235,6 +235,17 @@ html.claro #wzp{filter:invert(1) hue-rotate(180deg)}
 .cc .mpr{position:absolute;top:6px;left:6px;z-index:2;background:var(--pri);color:#fff;font-size:9.5px;font-weight:800;padding:2px 6px;border-radius:999px}
 .cc b{position:absolute;left:8px;right:8px;bottom:7px;z-index:2;color:#fff;text-transform:none;letter-spacing:0;font-size:12.5px;line-height:1.15;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-shadow:0 1px 3px #000a}
 .mp{display:flex;gap:12px;align-items:center;padding:12px 0;border-top:1px solid var(--line);cursor:pointer}
+/* (114) destaques da categoria: grade de 3 por linha no topo da lista */
+.dsqt{font-size:18px;font-weight:900;margin:16px 0 12px}
+.dsq{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 10px;margin-bottom:14px}
+.dsc{cursor:pointer;min-width:0;animation:dsqEntra .4s cubic-bezier(.2,1.2,.4,1) both}
+@keyframes dsqEntra{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.dsc .im{aspect-ratio:1/1;border-radius:16px;background:#2a2a30 center/cover no-repeat;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px #0004}
+.dsc .ap{font-size:11.5px;opacity:.6;margin-top:8px}
+.dsc .pr{font-size:15.5px;font-weight:800;color:var(--pri2);margin-top:8px;line-height:1.2}
+.dsc .dr{display:flex;align-items:center;gap:5px;margin-top:3px;flex-wrap:wrap}.dsc .dr s{font-size:12px;opacity:.55}
+.dsc .pc{background:#16a34a;color:#fff;font-size:11px;font-weight:800;padding:1px 6px;border-radius:999px}
+.dsc .nm{font-size:13.5px;line-height:1.3;margin-top:5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 
 #sheet .fh{height:220px;background:#222 center/cover no-repeat;border-radius:24px 24px 0 0;position:relative}
 #sheet .x{position:absolute;right:12px;top:12px}
@@ -1554,12 +1565,21 @@ function catFiltra(){
   var q=semAc(($('cq')||{}).value||'').trim(), ls=document.querySelectorAll('.mp[data-n]'), n=0, i;
   for(i=0;i<ls.length;i++){ var ok=!q||ls[i].getAttribute('data-n').indexOf(q)>=0; ls[i].style.display=ok?'':'none'; if(ok) n++; }
   var m=$('cnada'); if(m) m.style.display=n?'none':'block';
+  var dq=$('dsq'); if(dq) dq.style.display=q?'none':'';
 }
 function abreCat(id){
   var g=null; menuGrupos().forEach(function(x){ if(x.id===id) g=x; }); if(!g){ abreMenu(); return; }
   if(g.ps.length===1&&(g.ps[0].sabores||[]).length){ LF_VOLTA='menu'; abreSheet(g.ps[0].id); return; }   /* categoria com um produto só, que tem sabores (ex.: Pizzas > Pizza): abre direto os tamanhos e sabores */
   LF_VOLTA=id;
   var h='<div class="wh"><button class="bk" onclick="abreMenu()">'+BKI+'</button><b>'+esc(g.nome)+'</b></div><div class="wb"><input class="busca" id="cq" type="search" placeholder="Buscar em '+esc(g.nome)+'" oninput="catFiltra()" style="width:100%;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:#ffffff0f;color:#fff;font-size:15px;margin:10px 0 2px"><div id="cnada" style="display:none;padding:18px 4px;color:var(--mut);font-size:14px">Nenhum produto encontrado.</div>';
+  /* (114) destaques da categoria: no topo, em grade de 3 por linha (como no iFood); somem enquanto o cliente busca */
+  var dq=g.ps.filter(function(p){ return p.destaque; });
+  if(dq.length){ h+='<div id="dsq"><div class="dsqt">Destaques</div><div class="dsq">';
+    dq.forEach(function(p,k){ var pr=minPreco(p), pc=pr.orig>pr.min?Math.round((1-pr.min/pr.orig)*100):0;
+      h+='<div class="dsc" style="animation-delay:'+(k*50)+'ms" onclick="abreSheet(\''+esc(p.id)+'\')"><div class="im"'+(p.foto?' style="background-image:url('+fotoUrl(p)+')"':'')+'>'+(p.foto?'':icone(tipoDesenho(p),40))+'</div>'
+        +(pr.de?'<div class="ap">a partir de</div>':'')+'<div class="pr"'+(pr.de?' style="margin-top:0"':'')+'>'+brl(pr.min)+'</div>'
+        +(pc>0?'<div class="dr"><s>'+brl(pr.orig)+'</s><span class="pc">-'+pc+'%</span></div>':'')+'<div class="nm">'+esc(p.nome)+'</div></div>'; });
+    h+='</div></div>'; }
   g.ps.forEach(function(p){ var pr=minPreco(p), ft=p.foto?'<div class="th" style="width:56px;height:56px;border-radius:10px;background:#2a2a30 center/cover url('+fotoUrl(p)+');flex:none"></div>':'<div style="width:56px;height:56px;border-radius:10px;background:#2a2a30;flex:none;display:flex;align-items:center;justify-content:center;">'+icone(tipoDesenho(p),28)+'</div>';
     h+='<div class="mp" data-n="'+esc(semAc(p.nome))+'" onclick="abreSheet(\''+esc(p.id)+'\')">'+ft+'<div style="flex:1;min-width:0"><b style="font-size:14.5px">'+esc(p.nome)+'</b>'+promoTag(p)+'</div><span class="vl" style="color:var(--pri2);font-weight:800;font-size:13.5px;text-align:right">'+(pr.de?'a partir de ':'')+(pr.orig>pr.min?'<s class="de">'+brl(pr.orig)+'</s> ':'')+brl(pr.min)+'</span></div>'; });
   h+='</div>'; abreFolha(h,true,'fx');
