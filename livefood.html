@@ -1499,7 +1499,8 @@ function waEnviar(){
 }
 /* abertura da versão do WhatsApp: a sacola com o Live, os 3 passos e os ícones caindo; aparece só no primeiro acesso a cada loja */
 function waIntro(){
-  if(!waOn()||$('wi')) return; var ch='lf_wa_intro_'+(D.cli||CLI); try{ if(localStorage.getItem(ch)) return; }catch(e){}
+  /* ?intro=1 no link mostra a abertura de novo (para conferir como ficou), mesmo para quem já viu */
+  if(!waOn()||$('wi')) return; var ch='lf_wa_intro_'+(D.cli||CLI); try{ if(localStorage.getItem(ch)&&Q.get('intro')!=='1') return; }catch(e){}
   var nm=['🍔','🥤','🍟','🍺','🍕','🧃','🌭','🥟'], w=document.createElement('div'); w.id='wi';
   w.innerHTML='<div class="wi-cena" id="wi-cena"><h1 class="wi-tit">Monte seu pedido aqui e envie<br>direto pro nosso <span class="wi-pill">'+WA_ICO+'WhatsApp</span></h1>'
     +'<div class="wi-passos"><div class="wi-passo"><i>1</i><span>Escolha<br>os itens</span></div><div class="wi-passo"><i>2</i><span>Coloque<br>na sacola</span></div><div class="wi-passo w"><i>3</i><span>Envie pelo<br>WhatsApp</span></div></div>'
