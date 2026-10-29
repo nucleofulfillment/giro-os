@@ -1763,14 +1763,17 @@ function r3Painel(h){ var p=$('r3p'); if(!p) return; p.innerHTML=h; p.classList.
 var PREV3D=Q.get('prev3d')==='1';
 function r3LugPadrao(p){ if(p.forma==='quadrada'){ var m2=(p.w/25)*((p.h||p.w)/25); return m2<=0.55?2:m2<=1?4:m2<=1.6?6:8; } var d=p.w/25; return d<=0.75?2:d<=1.1?4:d<=1.5?6:8; }
 if(PREV3D){
-  window.addEventListener('message',function(e){ var m=e.data; if(!m||m.tipo!=='salao3d') return;
+  window.addEventListener('message',function(e){ var m=e.data; if(m&&m.tipo==='salao3d-pausa'){ r3Solta(); return; }   /* (124) painel voltou ao 2D: desliga o 3D */
+    if(!m||m.tipo!=='salao3d') return;
     RSV.d={cfg:{dur:0,maxPessoas:99},dias:[],areas:m.areas,salao:(m.pecas||[]).map(function(p){ if(p.t==='mesa'&&!(p.lug>0)) p.lug=r3LugPadrao(p); return p; })};
     RSV.pes=1; RSV.oc=[]; RSV.area=m.area; RSV.mesa=null; var ab=$('lf-abertura'); if(ab) ab.remove();
     var o=$('r3d'); if(!o){ o=document.createElement('div'); o.id='r3d'; document.body.appendChild(o); }
     var erro=function(e){ o.style.display='flex'; o.classList.add('on'); o.innerHTML='<div style="margin:auto;color:#fff;font:600 14px system-ui;text-align:center;padding:20px">Não consegui montar o 3D.<br><span style="opacity:.6;font-weight:400">'+String((e&&e.message)||e||'').replace(/</g,'&lt;').slice(0,160)+'</span></div>'; try{ parent.postMessage({tipo:'prev3d-erro',msg:String((e&&e.message)||e)},'*'); }catch(x){} };
     rsvLib().then(function(){ try{
       if(!$('r3c')){ o.innerHTML='<div id="r3c"></div><div class="r3as" id="r3as" style="top:12px;display:none"></div><div class="r3p" id="r3p"></div>'; }
-      o.style.display='flex'; o.classList.add('on'); r3AreasBarra(); r3Monta(); }catch(e){ erro(e); } }).catch(erro); });
+      o.style.display='flex'; o.classList.add('on'); r3AreasBarra(); r3Monta();
+      setTimeout(function(){ try{ parent.postMessage({tipo:'prev3d-ok'},'*'); }catch(x){} },60);   /* (124) painel tira o "carregando" */
+    }catch(e){ erro(e); } }).catch(erro); });
   /* (123) avisa o painel que já pode mandar o desenho (o "onload" sozinho às vezes chegava antes ou se perdia) */
   var avisaPronto=function(){ try{ parent.postMessage({tipo:'prev3d-pronto'},'*'); }catch(e){} };
   if(document.readyState==='complete') avisaPronto(); else window.addEventListener('load',avisaPronto);
@@ -1819,7 +1822,10 @@ function rsvFeito(r){
 }
 /* ── salão em 3D (Three.js): piso de madeira, paredes que somem quando ficam na frente da câmera, mesas com cadeiras e plaquinhas ── */
 var R3=null;
-function r3Solta(){ if(!R3) return; cancelAnimationFrame(R3.raf); window.removeEventListener('resize',R3.rs); try{ R3.ctl.dispose(); R3.ren.dispose(); R3.ren.forceContextLoss(); }catch(e){} R3=null; }
+/* (124) solta o 3D de verdade: para o quadro, libera formas, materiais e texturas e tira o canvas da tela (antes cada "Ver em 3D" deixava o anterior para trás e acabava travando) */
+function r3Solta(){ if(!R3) return; cancelAnimationFrame(R3.raf); window.removeEventListener('resize',R3.rs);
+  try{ R3.sc.traverse(function(o){ if(o.geometry) o.geometry.dispose(); var ms=o.material?(Array.isArray(o.material)?o.material:[o.material]):[]; ms.forEach(function(m){ if(m.map) m.map.dispose(); m.dispose(); }); }); }catch(e){}
+  try{ R3.ctl.dispose(); R3.ren.dispose(); R3.ren.forceContextLoss(); var cv=R3.ren.domElement; if(cv&&cv.parentNode) cv.parentNode.removeChild(cv); }catch(e){} R3=null; }
 function r3Canvas(w,h){ var c=document.createElement('canvas'); c.width=w; c.height=h; return c; }
 function r3Tex(c,rep){ var t=new THREE.CanvasTexture(c); t.encoding=THREE.sRGBEncoding; t.anisotropy=8; if(rep){ t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(rep[0],rep[1]); } return t; }
 function r3Madeira(){

@@ -8497,13 +8497,13 @@ function slVista(){
   SL.v3=!SL.v3; SL.sel=0; SL.multi=[]; var o=el('sl-ed'); if(o) o.remove();
   el('sl-svg').style.display=SL.v3?'none':'block'; el('sl-if3').style.display=SL.v3?'block':'none'; el('sl-zoom').style.display=SL.v3?'none':'flex';
   el('sl-tools').style.display=SL.v3?'none':'flex'; el('sl-prop').style.display=SL.v3?'none':'block'; el('sl-areas').style.display=SL.v3?'none':'block';
-  el('sl-b3').textContent=SL.v3?'Voltar ao 2D (editar)':'Ver em 3D';
+  el('sl-b3').textContent=SL.v3?'Voltar ao 2D (editar)':'Ver em 3D'; if(!SL.v3){ slCarr3d(false); var f3=el('sl-if3'); if(f3&&f3.dataset.ok==='1') try{ f3.contentWindow.postMessage({tipo:'salao3d-pausa'},'*'); }catch(e){} }
   if(SL.v3) slEnvia3d(); else slDesenha();
 }
 function slEnvia3d(){
   var f=el('sl-if3'); if(!f) return;
   var msg=function(){ return {tipo:'salao3d',areas:JSON.parse(JSON.stringify(SL.areas)),area:SL.area,pecas:SL.L.map(function(p){ var c=JSON.parse(JSON.stringify(p)); if(c.t==='mesa'&&SL.lugs&&SL.lugs[String(c.n)]) c.lug=SL.lugs[String(c.n)]; return c; })}; };
-  SL.msg3d=msg;
+  SL.msg3d=msg; slCarr3d(true);
   if(f.dataset.ok==='1'){ f.contentWindow.postMessage(msg(),'*'); return; }
   /* (123) manda o desenho quando o 3D avisa que está pronto ("prev3d-pronto"); o onload fica de reserva */
   f.onload=function(){ setTimeout(function(){ if(f.dataset.ok!=='1'){ f.dataset.ok='1'; f.contentWindow.postMessage(msg(),'*'); } },1500); };
@@ -8511,8 +8511,15 @@ function slEnvia3d(){
 }
 window.addEventListener('message',function(e){ var f=el('sl-if3'), m=e.data; if(!f||!m||e.source!==f.contentWindow) return;
   if(m.tipo==='prev3d-pronto'){ f.dataset.ok='1'; if(SL.msg3d) f.contentWindow.postMessage(SL.msg3d(),'*'); }
-  else if(m.tipo==='prev3d-erro'){ var s=el('sl-m'); if(s){ s.style.color='#DC2626'; s.textContent='O 3D não abriu: '+(m.msg||'erro')+'. Toque em Voltar ao 2D e em Ver em 3D de novo.'; } }
+  else if(m.tipo==='prev3d-ok') slCarr3d(false);
+  else if(m.tipo==='prev3d-erro'){ slCarr3d(false); var s=el('sl-m'); if(s){ s.style.color='#DC2626'; s.textContent='O 3D não abriu: '+(m.msg||'erro')+'. Toque em Voltar ao 2D e em Ver em 3D de novo.'; } }
 });
+/* (124) "Montando o 3D…" por cima da janelinha até o 3D avisar que desenhou (com muitas peças demora uns segundos) */
+function slCarr3d(on){ var mp=el('sl-mapa'), c=el('sl-c3'); if(!mp) return;
+  if(!on){ if(c) c.remove(); return; } if(c) return;
+  c=document.createElement('div'); c.id='sl-c3'; c.style.cssText='position:absolute;inset:0;border-radius:12px;background:#110d0a;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:#f5e9dc;font:600 14px inherit;z-index:3';
+  c.innerHTML='<style>@keyframes slGira{to{transform:rotate(360deg)}}</style><span style="width:34px;height:34px;border-radius:50%;border:3px solid rgba(255,255,255,.18);border-top-color:#E07B39;animation:slGira .8s linear infinite"></span>Montando o salão em 3D…';
+  mp.appendChild(c); }
 function slDesenha3(){ slEnvia3d(); }
 function slGira3(d){ SL.ang=((SL.ang+d)%360+360)%360; slDesenha3(); }
 function slPt(e){ var s=el('sl-svg'), m=s.getScreenCTM().inverse(), q=s.createSVGPoint(); q.x=e.clientX; q.y=e.clientY; return q.matrixTransform(m); }
