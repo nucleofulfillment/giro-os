@@ -1667,8 +1667,10 @@ function abreCat(id){
   /* (115) categoria com produto em promoção: barrinha laranja que abre todas as promoções */
   if(id!=='_promo'&&g.ps.some(function(p){ var m=minPreco(p); return m.orig>m.min; })&&menuEspeciais().some(function(x){ return x.id==='_promo'; })) h+='<div class="prmcta" onclick="abreCat(\'_promo\')"><span class="ic">'+promoIco()+'</span><span>Produtos em <b>promoção</b></span><i>Ver todas</i></div>';
   /* (114) destaques da categoria: no topo, em grade de 3 por linha (como no iFood); somem enquanto o cliente busca */
-  var dq=g.ps.filter(function(p){ return p.destaque; });
-  if(dq.length){ h+='<div id="dsq"><div class="dsqt">Destaques</div><div class="dsq">';
+  /* (116) na Promoção, o topo mostra as 3 promoções com o maior desconto em % (as marcadas como destaque repetiriam a lista) */
+  var pcDe=function(p){ var m=minPreco(p); return m.orig>m.min?(1-m.min/m.orig):0; };
+  var dq=id==='_promo'?g.ps.slice().sort(function(a,b){ return pcDe(b)-pcDe(a); }).slice(0,3):g.ps.filter(function(p){ return p.destaque; });
+  if(dq.length){ h+='<div id="dsq"><div class="dsqt">'+(id==='_promo'?'Maiores descontos':'Destaques')+'</div><div class="dsq">';
     dq.forEach(function(p,k){ var pr=minPreco(p), pc=pr.orig>pr.min?Math.round((1-pr.min/pr.orig)*100):0;
       h+='<div class="dsc" style="animation-delay:'+(k*50)+'ms" onclick="abreSheet(\''+esc(p.id)+'\')"><div class="im"'+(p.foto?' style="background-image:url('+fotoUrl(p)+')"':'')+'>'+(p.foto?'':icone(tipoDesenho(p),40))+'</div>'
         +(pr.de?'<div class="ap">a partir de</div>':'')+'<div class="pr"'+(pr.de?' style="margin-top:0"':'')+'>'+brl(pr.min)+'</div>'
