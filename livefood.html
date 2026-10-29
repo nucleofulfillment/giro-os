@@ -272,8 +272,8 @@ html.claro #wzp{filter:invert(1) hue-rotate(180deg)}
 @keyframes ovAnel{0%{transform:scale(1);opacity:.85}100%{transform:scale(1.45,1.7);opacity:0}}
 @media (prefers-reduced-motion:reduce){.ov *,.ov *::after{animation:none!important}}
 /* (109) versão do WhatsApp: botão verde da sacola e abertura com a sacola (só no primeiro acesso) */
-.wa-env{display:flex;align-items:center;justify-content:center;gap:10px;background:#25D366!important;color:#fff!important;animation:waPulsa 1.8s ease-in-out infinite}
-.wa-env svg{width:22px;height:22px;fill:#fff;flex:none}
+.wa-env{display:flex;align-items:center;justify-content:center;gap:10px;background:#25D366!important;background-image:none!important;color:#fff!important;opacity:1!important;filter:none!important;animation:waPulsa 1.8s ease-in-out infinite}
+.wa-env svg{width:24px;height:24px;fill:#fff;flex:none}.wa-env svg path{fill:#fff!important}
 .wa-env[disabled]{opacity:.7;animation:none}
 @keyframes waPulsa{0%,100%{box-shadow:0 0 0 0 rgba(37,211,102,.55);transform:scale(1)}50%{box-shadow:0 0 0 10px rgba(37,211,102,0);transform:scale(1.02)}}
 #wi{position:fixed;inset:0;z-index:2147482000;background:rgba(12,9,7,.66);-webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px);overflow:hidden;opacity:0;transition:opacity .35s}
@@ -291,13 +291,14 @@ html.claro #wzp{filter:invert(1) hue-rotate(180deg)}
 #wi .wi-sac svg.wt,#wi .wi-sac svg.wf{position:absolute;left:0;top:0;width:330px;height:520px;overflow:visible}
 #wi .wi-sac svg.wf{z-index:3}
 #wi .wi-fotos{position:absolute;inset:0;z-index:2;pointer-events:none}
-#wi .wi-q{position:absolute;left:0;top:0;width:84px;height:84px;background:#fff;padding:5px;border:3px solid #1C1C1E;border-radius:6px;box-shadow:5px 5px 0 #1C1C1E;will-change:transform}
-#wi .wi-q span{display:flex;width:100%;height:100%;align-items:center;justify-content:center;font-size:46px;line-height:1;border-radius:3px;background:#FFF4E8}
-#wi .wi-q b{position:absolute;left:-10px;top:-14px;background:#FFD43B;color:#1C1C1E;border:3px solid #1C1C1E;border-radius:8px;padding:0 6px;font-size:12px;font-weight:800;transform:rotate(-8deg)}
+#wi .wi-q{position:absolute;left:0;top:0;width:96px;height:96px;display:flex;align-items:center;justify-content:center;font-size:68px;line-height:1;filter:drop-shadow(0 8px 10px rgba(0,0,0,.35));will-change:transform}
+#wi .wi-marca{position:absolute;left:45px;top:178px;width:240px;height:164px;display:flex;align-items:center;justify-content:center}
+#wi .wi-marca img{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 6px 12px rgba(80,25,0,.35))}
+#wi .wi-marca b{font-size:30px;font-weight:900;line-height:1.15;color:#fff;text-align:center;word-break:break-word;text-shadow:0 3px 12px rgba(80,25,0,.4)}
+#wi .wi-esp{position:absolute;left:0;top:0;width:128px;z-index:6;pointer-events:none;will-change:transform}
 #wi .wi-badge{position:absolute;right:20px;top:96px;z-index:5;min-width:34px;height:34px;padding:0 9px;border-radius:17px;background:#25D366;color:#fff;font-weight:800;font-size:16px;display:flex;align-items:center;justify-content:center;border:3px solid #fff;transform:scale(0)}
 #wi .wi-frente{position:absolute;inset:0;z-index:4;pointer-events:none}
-#wi .wi-live{position:absolute;left:72px;top:150px;width:186px}
-#wi .wi-logo{position:absolute;left:127px;top:440px;width:76px;height:auto;filter:brightness(0) invert(1);opacity:.7}
+#wi .wi-logo{position:absolute;left:125px;top:466px;width:80px;height:auto;filter:brightness(0) invert(1)}
 #wi .wi-btn{position:absolute;left:52px;right:52px;top:362px;height:56px;border:0;border-radius:16px;background:#fff;color:#FF5A00;font-family:inherit;font-weight:800;font-size:18px;cursor:pointer;pointer-events:auto;box-shadow:0 10px 22px rgba(80,25,0,.35)}
 @media (prefers-reduced-motion:reduce){.wa-env{animation:none}}
 </style>
@@ -1478,7 +1479,7 @@ function abreCat(id){
 $('stage').addEventListener('click',function(e){ if(e.target.closest('#cards')||e.target.closest('.rb')||e.target.closest('#somc')||e.target.closest('#mnb')||e.target.closest('.ov-btn')) return; var x=e.clientX-$('stage').getBoundingClientRect().left, w=$('stage').clientWidth; if(ordem.length>1&&x>w*0.7){ cur=1-cur; tocar(idx+1); } else if(ordem.length>1&&x<w*0.3){ cur=1-cur; tocar(idx-1); } else mostraSom(); });
 document.addEventListener('visibilitychange',function(){ var v=vs[cur]; if(!document.hidden&&v&&v.paused&&ordem.length) v.play().catch(function(){}); });
 /* ── (109) versão do WhatsApp ── */
-var WA_ICO='<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16.04 3C9.4 3 4 8.33 4 14.9c0 2.1.56 4.15 1.62 5.95L4 27l6.33-1.64a12.1 12.1 0 0 0 5.71 1.44h.01c6.63 0 12.03-5.34 12.03-11.9C28.08 8.33 22.68 3 16.04 3zm5.5 14.4c-.3-.15-1.78-.87-2.06-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.95 1.17-.17.2-.35.22-.65.07-.3-.15-1.27-.46-2.42-1.47-.9-.79-1.5-1.77-1.68-2.07-.17-.3-.02-.46.13-.6.14-.14.3-.35.45-.52.15-.18.2-.3.3-.5.1-.2.05-.38-.02-.53-.08-.15-.67-1.6-.92-2.2-.24-.57-.49-.5-.67-.5h-.57c-.2 0-.52.07-.8.37-.27.3-1.04 1.01-1.04 2.47 0 1.45 1.07 2.86 1.22 3.06.15.2 2.1 3.17 5.08 4.44.71.3 1.27.49 1.7.62.71.23 1.36.2 1.88.12.57-.09 1.78-.72 2.03-1.42.25-.7.25-1.3.17-1.42-.07-.13-.27-.2-.57-.35z"/></svg>';
+var WA_ICO='<svg viewBox="0 0 32 32" aria-hidden="true"><path fill="#fff" d="M16.04 3C9.4 3 4 8.33 4 14.9c0 2.1.56 4.15 1.62 5.95L4 27l6.33-1.64a12.1 12.1 0 0 0 5.71 1.44h.01c6.63 0 12.03-5.34 12.03-11.9C28.08 8.33 22.68 3 16.04 3zm0 21.8h-.01a10 10 0 0 1-5.1-1.39l-.37-.22-3.76.97 1-3.63-.24-.37a9.8 9.8 0 0 1-1.52-5.26c0-5.45 4.5-9.88 10.02-9.88 5.52 0 10 4.43 10 9.88 0 5.46-4.49 9.9-10.02 9.9zm5.5-7.4c-.3-.15-1.78-.87-2.06-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.95 1.17-.17.2-.35.22-.65.07-.3-.15-1.27-.46-2.42-1.47-.9-.79-1.5-1.77-1.68-2.07-.17-.3-.02-.46.13-.6.14-.14.3-.35.45-.52.15-.18.2-.3.3-.5.1-.2.05-.38-.02-.53-.08-.15-.67-1.6-.92-2.2-.24-.57-.49-.5-.67-.5h-.57c-.2 0-.52.07-.8.37-.27.3-1.04 1.01-1.04 2.47 0 1.45 1.07 2.86 1.22 3.06.15.2 2.1 3.17 5.08 4.44.71.3 1.27.49 1.7.62.71.23 1.36.2 1.88.12.57-.09 1.78-.72 2.03-1.42.25-.7.25-1.3.17-1.42-.07-.13-.27-.2-.57-.35z"/></svg>';
 /* nessa versão o pedido termina no WhatsApp: sem as abas de pedidos e conta do site */
 function waInit(){ if(!waOn()) return; ['nv-pedidos','nv-conta'].forEach(function(id){ var b=$(id); if(b) b.style.display='none'; }); }
 /* o botão guarda a sacola no sistema (com um código) e abre o WhatsApp da loja com a lista escrita; o Live recebe o código e já monta o carrinho certinho */
@@ -1507,17 +1508,27 @@ function waIntro(){
     +'<div class="wi-sac" id="wi-sac"><svg class="wt" viewBox="0 0 330 520" aria-hidden="true"><path d="M100 118 C100 22 230 22 230 118" fill="none" stroke="#B83F00" stroke-width="18" stroke-linecap="round"/><path d="M100 118 C100 34 230 34 230 118" fill="none" stroke="#FF8A33" stroke-width="6" stroke-linecap="round" opacity=".6"/><path d="M18 112 H312 L306 140 H24 Z" fill="#7A2A00"/></svg>'
     +'<div class="wi-fotos" id="wi-fotos"></div>'
     +'<svg class="wf" viewBox="0 0 330 520" aria-hidden="true"><defs><linearGradient id="wi-gs" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF8A33"/><stop offset=".5" stop-color="#FF5A00"/><stop offset="1" stop-color="#E64800"/></linearGradient><linearGradient id="wi-gl" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity=".18"/><stop offset=".3" stop-color="#fff" stop-opacity="0"/><stop offset=".85" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#5a1d00" stop-opacity=".28"/></linearGradient></defs><path d="M8 128 H322 L304 500 Q303 514 289 514 H41 Q27 514 26 500 Z" fill="url(#wi-gs)"/><path d="M8 128 H322 L304 500 Q303 514 289 514 H41 Q27 514 26 500 Z" fill="url(#wi-gl)"/><path d="M8 128 H322 L321 146 H9 Z" fill="#fff" opacity=".22"/><path d="M8 146 H322" stroke="#C94600" stroke-width="2" opacity=".6"/></svg>'
-    +'<div class="wi-frente"><div class="wi-live" id="wi-live"></div><button class="wi-btn" id="wi-btn" type="button">Ver cardápio</button><img class="wi-logo" src="livefood-logo.png" alt="livefood"></div><div class="wi-badge" id="wi-badge">0</div></div></div>';
+    +'<div class="wi-frente"><div class="wi-marca" id="wi-marca">'+((D.cfg&&D.cfg.logo)?'<img src="'+API+'/food/foto/'+encodeURIComponent(D.cli||CLI)+'/_logo?v='+(D.cfg.v||0)+'" alt="'+esc(D.empresa)+'" onerror="this.outerHTML=\'<b>'+esc(D.empresa).replace(/'/g,'')+'</b>\'">':'<b>'+esc(D.empresa)+'</b>')+'</div><button class="wi-btn" id="wi-btn" type="button">Ver cardápio</button><img class="wi-logo" src="livefood-logo.png" alt="livefood"></div><div class="wi-badge" id="wi-badge">0</div></div>'
+    +'<div class="wi-esp" id="wi-esp"></div></div>';
   document.body.appendChild(w);
   var cena=$('wi-cena'), aj=function(){ var k=Math.min(innerWidth/360,innerHeight/760,1.25); cena.style.transform='translate(-50%,-50%) scale('+k+')'; }; aj(); addEventListener('resize',aj);
   requestAnimationFrame(function(){ w.classList.add('on'); });
   var anima=!!w.animate;
   if(anima) w.querySelectorAll('.wi-passo').forEach(function(p,i){ p.animate([{opacity:0,transform:'translateY(16px)'},{opacity:1,transform:'none'}],{duration:420,delay:250+i*160,fill:'forwards',easing:'cubic-bezier(.2,1.3,.4,1)'}); }); else w.querySelectorAll('.wi-passo').forEach(function(p){ p.style.opacity=1; });
-  var live=null; try{ if(window.LiveMascote) live=LiveMascote.criar($('wi-live'),{expressao:'feliz',sombra:false}); }catch(e){}
-  if(live) setTimeout(function(){ live.gesto('acenar'); },900);
-  var sac=$('wi-sac'), fotos=$('wi-fotos'), bd=$('wi-badge'), n=0, tm=[], vivo=true;
+  var sac=$('wi-sac'), fotos=$('wi-fotos'), bd=$('wi-badge'), marca=$('wi-marca'), n=0, tm=[], vivo=true;
+  /* o Live espia pelos cantos da tela (sempre feliz): aparece de um lado, acena, se esconde e surge em outro canto */
+  var esp=$('wi-esp'), live=null; try{ if(window.LiveMascote) live=LiveMascote.criar(esp,{expressao:'feliz',sombra:false}); }catch(e){}
+  var cantos=[{x0:-140,x1:-30,y:232,r:22},{x0:372,x1:262,y:540,r:-22},{x0:-140,x1:-32,y:610,r:18},{x0:372,x1:264,y:236,r:-18}], ce=0;
+  function espia(){
+    if(!vivo||!live||!anima) return; var c=cantos[ce++%cantos.length], fora='translate('+c.x0+'px,'+c.y+'px) rotate('+c.r+'deg)', dentro='translate('+c.x1+'px,'+c.y+'px) rotate('+c.r+'deg)';
+    esp.getAnimations().forEach(function(a){ a.cancel(); }); esp.style.transform=fora;   /* uma espiada por vez: a anterior sai da fila */
+    esp.animate([{transform:fora,easing:'cubic-bezier(.3,1.3,.5,1)'},{transform:dentro,offset:.18,easing:'linear'},{transform:dentro,offset:.82,easing:'ease-in'},{transform:fora}],{duration:3200});   /* o quique fica só na entrada (no tempo todo, ele passava do ponto e não aparecia) */
+    tm.push(setTimeout(function(){ if(vivo) live.gesto('acenar'); },700));
+    tm.push(setTimeout(espia,4100));
+  }
+  esp.style.transform='translate(-140px,232px)'; tm.push(setTimeout(espia,500));
   function joga(ic,i){
-    if(!vivo||!anima) return; var q=document.createElement('div'); q.className='wi-q'; q.innerHTML='<span>'+ic+'</span>'+(i%2?'':'<b>+1</b>'); fotos.appendChild(q);
+    if(!vivo||!anima) return; var q=document.createElement('div'); q.className='wi-q'; q.textContent=ic; fotos.appendChild(q);
     var esq=i%2===0, x0=esq?-150:400, y0=150+(i%3)*70, bx=123+(esq?-24:24), by=70, pk=[esq?40:210,24-(i%3)*12], r0=esq?-24:24;
     q.animate([{transform:'translate('+x0+'px,'+y0+'px) rotate('+r0+'deg) scale(1)'},{transform:'translate('+pk[0]+'px,'+pk[1]+'px) rotate('+(-r0/2)+'deg) scale(1)',offset:.55},{transform:'translate('+bx+'px,'+by+'px) rotate('+(r0/4)+'deg) scale(.82)',offset:.84},{transform:'translate('+bx+'px,'+(by+110)+'px) rotate(0deg) scale(.7)'}],{duration:1300,easing:'cubic-bezier(.3,.1,.4,1)',fill:'forwards'}).onfinish=function(){ q.remove(); };
     tm.push(setTimeout(cai,1118));
@@ -1526,7 +1537,7 @@ function waIntro(){
     if(!vivo) return; n++; bd.textContent=n;
     bd.animate([{transform:'scale(0)'},{transform:'scale(1.3)'},{transform:'scale(1)'}],{duration:320,fill:'forwards',easing:'ease-out'});
     sac.animate([{transform:'scale(1)'},{transform:'scale(1.03,.97)'},{transform:'scale(.99,1.01)'},{transform:'scale(1)'}],{duration:420,easing:'ease-out'});
-    if(live&&n%3===0) live.animar({salto:-26},220).then(function(){ live.animar({salto:0},320); });
+    if(marca) marca.animate([{transform:'translateY(0)'},{transform:'translateY(-8px)'},{transform:'translateY(0)'}],{duration:320,easing:'ease-out'});
   }
   function ciclo(){
     if(!vivo) return; n=0; if(anima) bd.animate([{transform:'scale(1)'},{transform:'scale(0)'}],{duration:200,fill:'forwards'});
