@@ -8371,28 +8371,32 @@ function slTelaCheia(){
 document.addEventListener('fullscreenchange',function(){ var b=el('sl-bfull'); if(b) b.textContent=document.fullscreenElement?'Sair da tela cheia':'Tela cheia'; });
 function slMonta(){
   var bs='padding:8px 12px;font-size:13px', cheia=!!(document.documentElement.requestFullscreen);
-  el('sl-tela').innerHTML='<div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--s1);border-bottom:1px solid var(--border);flex-wrap:wrap">'
-    +'<button class="btn sec" type="button" style="'+bs+'" onclick="slFecha()">← Voltar ao painel</button>'
-    +'<b style="font-size:16px;margin-left:4px">Salão</b><span style="flex:1"></span>'
+  /* (121) tudo em uma linha em cima (voltar, áreas, 3D, salvar); peças numa coluna à esquerda; o mapa fica com a altura toda */
+  var tb='display:block;width:100%;text-align:left;padding:8px 10px;font-size:12.5px';
+  el('sl-tela').innerHTML='<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--s1);border-bottom:1px solid var(--border);flex-wrap:wrap">'
+    +'<button class="btn sec" type="button" style="'+bs+'" onclick="slFecha()">← Voltar</button>'
+    +'<b style="font-size:16px;margin:0 4px">Salão</b><div id="sl-atabs" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"></div><span style="flex:1"></span>'
     +'<button class="btn sec" id="sl-b3" type="button" style="'+bs+'" onclick="slVista()">Ver em 3D</button>'
     +(cheia?'<button class="btn sec" id="sl-bfull" type="button" style="'+bs+'" onclick="slTelaCheia()">Tela cheia</button>':'')
     +'<button class="btn pri" type="button" style="'+bs+'" onclick="slSalvar()">Salvar salão</button></div>'
-    +'<div style="flex:1;min-height:0;display:flex;flex-direction:column;gap:10px;padding:12px 14px">'
-    +'<div style="font-size:12.5px;color:var(--muted2);line-height:1.45">Toque numa peça para colocar e <b>arraste</b> até o lugar certo. Para <b>aumentar ou diminuir</b>, arraste o quadradinho laranja do canto. Para <b>mudar o nome</b>, toque duas vezes no texto. Para <b>selecionar várias</b>, segure <b>Shift</b> (ou Ctrl) e clique. O garçom vai ver este mapa no celular, com o balcão na base. Cada quadradinho = 1 metro (linha mais forte a cada 5 m).</div>'
+    +'<div style="flex:1;min-height:0;display:flex;gap:10px;padding:10px 12px">'
+    +'<div id="sl-tools" style="width:178px;flex:none;display:flex;flex-direction:column;gap:6px;overflow:auto">'
+    +['mesa','balcao','cozinha','banheiro','entrada','saida'].map(function(t){ return '<button class="btn sec" type="button" style="'+tb+'" onclick="slAdd(\''+t+'\')">+ '+SL_T[t].nome+'</button>'; }).join('')
+    +'<select class="inp" style="padding:8px 9px;font-size:12.5px;width:100%" onchange="if(this.value){ slAdd(this.value); this.value=\'\'; }" title="Decoração e equipamentos"><option value="">+ Decoração…</option>'+Object.keys(SL_T).filter(function(t){ return SL_T[t].deco; }).map(function(t){ return '<option value="'+t+'">'+SL_T[t].ic+' '+SL_T[t].nome+'</option>'; }).join('')+'</select>'
+    +'<button class="btn sec" type="button" style="'+tb+';margin-top:6px;border-color:var(--pri,#E07B39);color:var(--pri,#E07B39);font-weight:700" onclick="slSync()" title="Deixa o desenho igual ao menu Mesas">⟳ Sincronizar</button></div>'
+    +'<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:8px">'
     +'<div id="sl-areas"></div>'
-    +'<div id="sl-tools" style="display:flex;flex-wrap:wrap;gap:6px">'+['mesa','balcao','cozinha','banheiro','entrada','saida'].map(function(t){ return '<button class="btn sec" type="button" style="padding:7px 11px;font-size:12.5px" onclick="slAdd(\''+t+'\')">+ '+SL_T[t].nome+'</button>'; }).join('')
-    +'<select class="inp" style="padding:6px 9px;font-size:12.5px;width:auto" onchange="if(this.value){ slAdd(this.value); this.value=\'\'; }" title="Decoração e equipamentos"><option value="">+ Decoração e equipamentos…</option>'+Object.keys(SL_T).filter(function(t){ return SL_T[t].deco; }).map(function(t){ return '<option value="'+t+'">'+SL_T[t].ic+' '+SL_T[t].nome+'</option>'; }).join('')+'</select>'
-    +'<button class="btn sec" type="button" style="padding:7px 11px;font-size:12.5px;margin-left:auto;border-color:var(--pri,#E07B39);color:var(--pri,#E07B39);font-weight:700" onclick="slSync()" title="Deixa o desenho igual ao menu Mesas">⟳ Sincronizar com as mesas cadastradas</button><button class="btn sec" type="button" style="padding:7px 11px;font-size:12.5px" onclick="slExemplo()">Usar modelo de exemplo</button></div>'
-    +'<div id="sl-bar3" style="display:none;gap:6px;align-items:center;flex-wrap:wrap"><button class="btn sec" type="button" style="padding:7px 11px;font-size:12.5px" onclick="slGira3(-45)">↺ Girar</button><button class="btn sec" type="button" style="padding:7px 11px;font-size:12.5px" onclick="slGira3(45)">Girar ↻</button><span style="font-size:12.5px;color:var(--muted2)">Visão 3D só para olhar. Arraste a imagem para girar. Para editar, volte ao 2D.</span></div>'
-    +'<div style="flex:1;min-height:0"><svg id="sl-svg" viewBox="0 0 600 360" style="width:100%;height:100%;display:block;border-radius:12px;background:#FAFAFA;border:1px solid var(--border2);touch-action:none" role="img" aria-label="Planta do salão"></svg><svg id="sl-svg3" viewBox="0 0 900 520" style="width:100%;height:100%;display:none;border-radius:12px;background:#F3F3F5;border:1px solid var(--border2);touch-action:none;cursor:grab" role="img" aria-label="Salão em 3D"></svg></div>'
-    +'<div id="sl-prop" style="min-height:44px"></div><div id="sl-m" style="font-size:12.5px;min-height:18px"></div></div>';
+    +'<div id="sl-mapa" style="flex:1;min-height:0;position:relative"><svg id="sl-svg" viewBox="0 0 600 360" style="width:100%;height:100%;display:block;border-radius:12px;background:#FAFAFA;border:1px solid var(--border2);touch-action:none" role="img" aria-label="Planta do salão"></svg><svg id="sl-svg3" viewBox="0 0 900 520" style="display:none"></svg>'
+    +'<iframe id="sl-if3" title="Salão em 3D" style="display:none;width:100%;height:100%;border:0;border-radius:12px;background:#110d0a"></iframe>'
+    +'<div id="sl-zoom" style="position:absolute;right:10px;bottom:10px;display:flex;gap:4px;background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:4px;box-shadow:0 4px 14px rgba(0,0,0,.12)"><button class="btn sec" type="button" style="padding:4px 10px;font-size:15px;font-weight:800" onclick="slZoom(1/1.25)" title="Afastar">−</button><span id="sl-zv" style="align-self:center;font-size:12px;min-width:42px;text-align:center;color:var(--muted)">100%</span><button class="btn sec" type="button" style="padding:4px 10px;font-size:15px;font-weight:800" onclick="slZoom(1.25)" title="Aproximar">+</button><button class="btn sec" type="button" style="padding:4px 10px;font-size:12px" onclick="slZoom(0)" title="Mostrar a área inteira">Ajustar</button></div></div>'
+    +'<div id="sl-prop" style="min-height:40px"></div><div id="sl-m" style="font-size:12.5px;min-height:18px"></div></div></div>';
   var s=el('sl-svg');
   /* (120) Shift (ou Ctrl) + clique: soma ou tira da seleção; arrastar uma selecionada move todas juntas */
   s.addEventListener('pointerdown',function(e){
     var vt=e.target.getAttribute&&e.target.getAttribute('data-v');
     if(vt!=null){ var a0=slAr(); a0.pontos=slPts(a0).map(function(q){ return q.slice(); }); SL.drag={mode:'vert',i:+vt}; s.setPointerCapture(e.pointerId); return; }   /* (120) arrastar um ponto da borda */
     var g=e.target.closest('g[data-id]'), add=e.shiftKey||e.ctrlKey||e.metaKey;
-    if(!g){ if(!add){ SL.sel=0; SL.multi=[]; } SL.ult=0; slDesenha(); return; }
+    if(!g){ SL.drag={mode:'pan',sx:e.clientX,sy:e.clientY,vx:SL.vx||0,vy:SL.vy||0,moveu:false,add:add}; s.setPointerCapture(e.pointerId); return; }   /* (121) fundo: arrastar anda pelo mapa; só clicar limpa a seleção */
     var id=+g.getAttribute('data-id'), p=slPeca(id), q=slPt(e);
     if(e.target.getAttribute&&e.target.getAttribute('data-h')){ SL.drag={id:id,mode:'size'}; s.setPointerCapture(e.pointerId); return; }
     if(add){ var ms=slSels().map(function(x){ return x.id; }), k=ms.indexOf(id); if(k>=0) ms.splice(k,1); else ms.push(id); SL.multi=ms; SL.sel=ms.length?(k>=0?ms[ms.length-1]:id):0; SL.ult=0;
@@ -8405,7 +8409,9 @@ function slMonta(){
     SL.drag={id:id,mode:'move',of:of}; s.setPointerCapture(e.pointerId); slDesenha(true);
   });
   s.addEventListener('pointermove',function(e){
-    if(!SL.drag) return; var p=slPeca(SL.drag.id), q=slPt(e); SL.sujo=true;
+    if(!SL.drag) return;
+    if(SL.drag.mode==='pan'){ var dpx=e.clientX-SL.drag.sx, dpy=e.clientY-SL.drag.sy; if(Math.abs(dpx)+Math.abs(dpy)>4) SL.drag.moveu=true; if(!SL.drag.moveu||(SL.z||1)<=1) return; var esc=s.getBoundingClientRect().width/(slWH().W/(SL.z||1)); SL.vx=SL.drag.vx-dpx/esc; SL.vy=SL.drag.vy-dpy/esc; slVB(); return; }
+    var p=slPeca(SL.drag.id), q=slPt(e); SL.sujo=true;
     if(SL.drag.mode==='vert'){ var av=slAr(), pv=av.pontos[SL.drag.i]; if(pv){ pv[0]=Math.max(0,Math.min(av.larg,Math.round(q.x/25*20)/20)); pv[1]=Math.max(0,Math.min(av.comp,Math.round(q.y/25*20)/20)); } s.innerHTML=slPlanta(); return; }
     if(SL.drag.mode==='size'){
       /* mede no "jeito" da peça (desfaz o giro) para a alça funcionar com a peça girada */
@@ -8424,12 +8430,11 @@ function slMonta(){
     else { var i=+ed, A=a.pontos[i], B=a.pontos[(i+1)%a.pontos.length], q=slPt(e), mx=q.x/25, my=q.y/25, dx=B[0]-A[0], dy=B[1]-A[1], t=Math.max(0.05,Math.min(0.95,((mx-A[0])*dx+(my-A[1])*dy)/((dx*dx+dy*dy)||1)));
       a.pontos.splice(i+1,0,[Math.round((A[0]+dx*t)*20)/20,Math.round((A[1]+dy*t)*20)/20]); }
     slAreasPinta(); slDesenha(); });
-  s.addEventListener('pointerup',function(){ SL.drag=null; if(SL.abrirEd){ SL.abrirEd=false; setTimeout(slEditaTexto,70); } }); s.addEventListener('pointercancel',function(){ SL.drag=null; });
-  var s3=el('sl-svg3'), r3x=null;
-  s3.addEventListener('pointerdown',function(e){ r3x={x:e.clientX,a:SL.ang}; s3.setPointerCapture(e.pointerId); });
-  s3.addEventListener('pointermove',function(e){ if(!r3x) return; SL.ang=((r3x.a+(e.clientX-r3x.x)*0.5)%360+360)%360; slDesenha3(); });
-  s3.addEventListener('pointerup',function(){ r3x=null; }); s3.addEventListener('pointercancel',function(){ r3x=null; });
-  SL.v3=false; slAreasPinta(); slDesenha(); slConfere();
+  s.addEventListener('pointerup',function(){ var d=SL.drag; SL.drag=null; if(d&&d.mode==='pan'&&!d.moveu){ if(!d.add){ SL.sel=0; SL.multi=[]; } SL.ult=0; slDesenha(); return; } if(SL.abrirEd){ SL.abrirEd=false; setTimeout(slEditaTexto,70); } }); s.addEventListener('pointercancel',function(){ SL.drag=null; });
+  /* (121) rodinha do mouse: aproxima/afasta no ponto do cursor */
+  s.addEventListener('wheel',function(e){ e.preventDefault(); var q=slPt(e), z0=SL.z||1, z1=Math.max(1,Math.min(8,z0*(e.deltaY<0?1.15:1/1.15))); if(z1===z0) return; var z=slWH();
+    SL.vx=q.x-(q.x-(SL.vx||0))*z0/z1; SL.vy=q.y-(q.y-(SL.vy||0))*z0/z1; SL.z=z1; slVB(); },{passive:false});
+  SL.v3=false; SL.z=1; SL.vx=0; SL.vy=0; slAreasPinta(); slDesenha(); slSync(true);
 }
 function slEditaTexto(){
   var p=slPeca(SL.sel); if(!p) return; var old=el('sl-ed'); if(old) old.remove();
@@ -8491,14 +8496,22 @@ function slRender3D(L,ang,W,H){
   labs.forEach(function(l){ o+='<text x="'+f1(l.x)+'" y="'+f1(l.y)+'" text-anchor="middle" font-size="'+l.f+'" font-weight="800" fill="#1C1C1E" style="paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round">'+esc(l.t)+'</text>'; });
   return o;
 }
-function slDesenha3(){ var z=slWH(); el('sl-svg3').innerHTML=slRender3D(slDaArea(),SL.ang,z.W,z.H); }
+/* (121) "Ver em 3D": o mesmo 3D do cardápio (o painel abre o cardápio num quadro e manda o desenho atual, mesmo sem salvar) */
 function slVista(){
-  SL.v3=!SL.v3; SL.sel=0; var o=el('sl-ed'); if(o) o.remove();
-  el('sl-svg').style.display=SL.v3?'none':'block'; el('sl-svg3').style.display=SL.v3?'block':'none';
-  el('sl-tools').style.display=SL.v3?'none':'flex'; el('sl-prop').style.display=SL.v3?'none':'block'; el('sl-bar3').style.display=SL.v3?'flex':'none';
+  SL.v3=!SL.v3; SL.sel=0; SL.multi=[]; var o=el('sl-ed'); if(o) o.remove();
+  el('sl-svg').style.display=SL.v3?'none':'block'; el('sl-if3').style.display=SL.v3?'block':'none'; el('sl-zoom').style.display=SL.v3?'none':'flex';
+  el('sl-tools').style.display=SL.v3?'none':'flex'; el('sl-prop').style.display=SL.v3?'none':'block'; el('sl-areas').style.display=SL.v3?'none':'block';
   el('sl-b3').textContent=SL.v3?'Voltar ao 2D (editar)':'Ver em 3D';
-  if(SL.v3) slDesenha3(); else slDesenha();
+  if(SL.v3) slEnvia3d(); else slDesenha();
 }
+function slEnvia3d(){
+  var f=el('sl-if3'); if(!f) return;
+  var msg=function(){ return {tipo:'salao3d',areas:JSON.parse(JSON.stringify(SL.areas)),area:SL.area,pecas:SL.L.map(function(p){ var c=JSON.parse(JSON.stringify(p)); if(c.t==='mesa'&&SL.lugs&&SL.lugs[String(c.n)]) c.lug=SL.lugs[String(c.n)]; return c; })}; };
+  if(f.dataset.ok==='1'){ f.contentWindow.postMessage(msg(),'*'); return; }
+  f.onload=function(){ f.dataset.ok='1'; setTimeout(function(){ f.contentWindow.postMessage(msg(),'*'); },400); };
+  if(!f.dataset.src){ f.dataset.src='1'; f.src='livefood.html?c='+encodeURIComponent(CD.slug||CD.cli||'')+'&prev3d=1'; }
+}
+function slDesenha3(){ slEnvia3d(); }
 function slGira3(d){ SL.ang=((SL.ang+d)%360+360)%360; slDesenha3(); }
 function slPt(e){ var s=el('sl-svg'), m=s.getScreenCTM().inverse(), q=s.createSVGPoint(); q.x=e.clientX; q.y=e.clientY; return q.matrixTransform(m); }
 /* (120) seleção: várias peças (Shift/Ctrl + clique) ou uma */
@@ -8525,8 +8538,12 @@ function slTamLote(){ var cw=parseFloat(el('sl-lw').value), ch=parseFloat(el('sl
 /* girar: soma graus (d) ou define o ângulo exato (abs) */
 function slRot(d,abs){ SL.sujo=true; slSels().forEach(function(p){ var v=abs!=null?abs:(p.rot||0)+d; p.rot=((Math.round(v)%360)+360)%360; }); slDesenha(); }
 function slForma(f){ var p=slPeca(SL.sel); if(!p||p.t!=='mesa') return; SL.sujo=true; p.forma=f; if(f!=='quadrada') p.h=p.w; slDesenha(); }
+/* (121) zoom do mapa: SL.z (1 a 8×) e o canto da vista (SL.vx, SL.vy), sempre dentro da área */
+function slVB(){ var z=slWH(), k=SL.z||1, vw=z.W/k, vh=z.H/k; SL.vx=Math.max(0,Math.min(z.W-vw,SL.vx||0)); SL.vy=Math.max(0,Math.min(z.H-vh,SL.vy||0));
+  var s=el('sl-svg'); if(s) s.setAttribute('viewBox',(k>1?SL.vx+' '+SL.vy+' '+vw+' '+vh:'0 0 '+z.W+' '+z.H)); var zv=el('sl-zv'); if(zv) zv.textContent=Math.round(k*100)+'%'; }
+function slZoom(f){ var z=slWH(), k0=SL.z||1; if(!f){ SL.z=1; SL.vx=0; SL.vy=0; slVB(); return; } var k1=Math.max(1,Math.min(8,k0*f)), cx=(SL.vx||0)+z.W/k0/2, cy=(SL.vy||0)+z.H/k0/2; SL.z=k1; SL.vx=cx-z.W/k1/2; SL.vy=cy-z.H/k1/2; slVB(); }
 function slDesenha(manterProp){
-  var z=slWH(); el('sl-svg').setAttribute('viewBox','0 0 '+z.W+' '+z.H);
+  slVB();
   el('sl-svg').innerHTML=slPlanta();
   var pr=el('sl-prop'), ps=slSels(), p=ps.length===1?ps[0]:null, bt='class="btn sec" type="button" style="padding:7px 10px;font-size:12.5px"', lb='font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px';
   var giro='<span style="display:flex;align-items:center;gap:4px"><button '+bt+' onclick="slRot(-15)" title="Girar 15° para a esquerda">↺ 15°</button><button '+bt+' onclick="slRot(15)" title="Girar 15° para a direita">15° ↻</button><button '+bt+' onclick="slRot(90)">90°</button>'
@@ -8556,11 +8573,11 @@ function slDesenha(manterProp){
 }
 /* (119) barra de áreas: abas + medidas da área escolhida (nome, interna/externa, térreo/superior, largura e comprimento em metros) */
 function slAreasPinta(){
-  var b=el('sl-areas'); if(!b) return; var a=slAr(), bs='padding:6px 11px;font-size:12.5px', ic=function(x){ return (x.tipo==='externo'?'🌳':'🏠')+(x.andar==='superior'?'⬆️':''); };
-  var h='<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:6px"><span style="font-size:12px;font-weight:800;color:var(--muted2);margin-right:2px">Áreas:</span>'
-    +SL.areas.map(function(x){ return '<button class="btn '+(x.id===SL.area?'pri':'sec')+'" type="button" style="'+bs+'" onclick="slAreaVai(\''+x.id+'\')">'+ic(x)+' '+esc(x.nome)+' <span style="opacity:.7;font-weight:500">'+String(x.larg).replace('.',',')+'×'+String(x.comp).replace('.',',')+'m</span></button>'; }).join('')
-    +(SL.areas.length<8?'<button class="btn sec" type="button" style="'+bs+'" onclick="slAreaNova()">+ Nova área</button>':'')+'</div>'
-    +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;padding:8px 10px;border:1px solid var(--border);border-radius:10px;margin-bottom:6px">'
+  var b=el('sl-areas'); if(!b) return; var a=slAr(), bs='padding:6px 11px;font-size:12.5px';
+  /* (121) abas das áreas na barra de cima (sem ícone); o formulário da área fica numa linha em cima do mapa */
+  var at=el('sl-atabs'); if(at) at.innerHTML=SL.areas.map(function(x){ return '<button class="btn '+(x.id===SL.area?'pri':'sec')+'" type="button" style="'+bs+'" onclick="slAreaVai(\''+x.id+'\')">'+esc(x.nome)+' <span style="opacity:.7;font-weight:500">'+String(x.larg).replace('.',',')+'×'+String(x.comp).replace('.',',')+'m</span></button>'; }).join('')
+    +(SL.areas.length<8?'<button class="btn sec" type="button" style="'+bs+'" onclick="slAreaNova()">+ Nova área</button>':'');
+  var h='<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;padding:6px 10px;border:1px solid var(--border);border-radius:10px">'
     +'<label style="font-size:11.5px;color:var(--muted);display:flex;flex-direction:column;gap:2px">Nome<input class="inp" id="sl-an" maxlength="30" value="'+esc(a.nome)+'" style="width:150px;padding:6px 9px" oninput="slAreaMuda()"></label>'
     +'<label style="font-size:11.5px;color:var(--muted);display:flex;flex-direction:column;gap:2px">Tipo<select class="inp" id="sl-at" style="padding:6px 9px" onchange="slAreaMuda()"><option value="interno"'+(a.tipo==='interno'?' selected':'')+'>Área interna</option><option value="externo"'+(a.tipo==='externo'?' selected':'')+'>Área externa</option></select></label>'
     +'<label style="font-size:11.5px;color:var(--muted);display:flex;flex-direction:column;gap:2px">Andar<select class="inp" id="sl-aa" style="padding:6px 9px" onchange="slAreaMuda()"><option value="terreo"'+(a.andar==='terreo'?' selected':'')+'>Térreo (piso)</option><option value="superior"'+(a.andar==='superior'?' selected':'')+'>Superior</option></select></label>'
@@ -8570,7 +8587,7 @@ function slAreasPinta(){
     +(SL.areas.length>1?'<button class="btn sec" type="button" style="'+bs+';color:var(--red);margin-left:auto" onclick="slAreaApaga()">Apagar área</button>':'')+'</div>';
   b.innerHTML=h;
 }
-function slAreaVai(id){ SL.area=id; SL.sel=0; slAreasPinta(); if(SL.v3) slDesenha3(); else slDesenha(); }
+function slAreaVai(id){ SL.area=id; SL.sel=0; SL.multi=[]; SL.z=1; SL.vx=0; SL.vy=0; slAreasPinta(); if(SL.v3) slEnvia3d(); else slDesenha(); }
 function slAreaMuda(){ var a=slAr(), n=function(v,d){ var x=parseFloat(String(v).replace(',','.')); return x>=3&&x<=80?Math.round(x*10)/10:d; };
   a.nome=el('sl-an').value.trim()||a.nome; a.tipo=el('sl-at').value; a.andar=el('sl-aa').value; a.larg=n(el('sl-al').value,a.larg); a.comp=n(el('sl-ac').value,a.comp); SL.sujo=true;
   var z=slWH(); slDaArea().forEach(function(p){ p.x=Math.min(p.x,z.W-5); p.y=Math.min(p.y,z.H-5); });   /* área menor: peças ficam dentro */
@@ -8612,20 +8629,24 @@ function slVagas(L,qtd,W,H){
   return out;
 }
 /* (113) deixa o desenho igual ao cadastro de Mesas: tira as mesas que não existem mais e coloca as que faltam nos espaços vazios */
-function slSync(){
-  var m=el('sl-m'); m.style.color='var(--muted)'; m.textContent='Conferindo as mesas cadastradas…';
+/* (121) auto = ao abrir o editor: mesa cadastrada que falta entra sozinha no mapa (sem mensagem quando já está tudo igual) */
+function slSync(auto){
+  var m=el('sl-m'); if(!auto){ m.style.color='var(--muted)'; m.textContent='Conferindo as mesas cadastradas…'; }
   fetch(DELTADIS_API+'/painel/atend-mesas',{headers:cdHdr()}).then(function(r){ return r.json(); }).then(function(d){
     if(!d||!d.ok) throw new Error((d&&d.mensagem)||'Não consegui ler as mesas');
+    SL.lugs={}; (d.mesas||[]).forEach(function(x){ SL.lugs[String(x.num)]=x.lug||0; });   /* lugares do cadastro (para o 3D) */
     var cad={}, nums=(d.mesas||[]).map(function(x){ return String(x.num); }).filter(function(n){ return /^\d+$/.test(n); });
-    if(!nums.length){ m.style.color='#B08A00'; m.textContent='Nenhuma mesa cadastrada (com número) no menu Mesas.'; return; }
+    if(!nums.length){ if(!auto){ m.style.color='#B08A00'; m.textContent='Nenhuma mesa cadastrada (com número) no menu Mesas.'; } return; }
     nums.forEach(function(n){ cad[n]=1; });
     var tem={}, tirou=[]; SL.L=SL.L.filter(function(p){ if(p.t!=='mesa') return true; if(cad[String(p.n)]&&!tem[p.n]){ tem[p.n]=1; return true; } tirou.push(p.n); return false; });
     var falta=nums.filter(function(n){ return !tem[n]; }).map(Number).sort(function(a,b){ return a-b; }), z=slWH(), vg=slVagas(slDaArea(),falta.length,z.W,z.H), sobra=0;
+    if(auto&&!falta.length&&!tirou.length) return;   /* já está igual ao cadastro */
     falta.forEach(function(n,i){ var v=vg[i]; if(!v){ v={x:Math.min(z.W-20,30+(sobra%Math.max(1,Math.floor((z.W-40)/40)))*40),y:z.H-20}; sobra++; } SL.L.push({id:SL.uid++,t:'mesa',area:SL.area,x:v.x,y:v.y,n:n,label:'',w:22,h:22}); });
     SL.sel=0; SL.sujo=true; slDesenha();
     m.style.color=sobra?'#B08A00':'#16a34a';
+    if(auto){ m.style.color='#16a34a'; m.textContent=(falta.length?falta.length+' mesa(s) do cadastro entraram no mapa ('+falta.join(', ')+')':'')+(falta.length&&tirou.length?' e ':'')+(tirou.length?tirou.length+' que não existem mais saíram ('+tirou.join(', ')+')':'')+'. Arraste para o lugar certo e toque em Salvar salão.'; return; }
     m.textContent=(falta.length||tirou.length)?('Pronto: '+(falta.length?falta.length+' mesa(s) colocada(s) ('+falta.join(', ')+')':'')+(falta.length&&tirou.length?' e ':'')+(tirou.length?tirou.length+' tirada(s) do desenho ('+tirou.join(', ')+')':'')+'. '+(sobra?sobra+' ficaram na faixa de baixo por falta de espaço: arraste para o lugar certo. ':'Arraste para o lugar certo e ')+'toque em Salvar salão.'):'O desenho já está igual às mesas cadastradas.';
-  }).catch(function(e){ m.style.color='#DC2626'; m.textContent=e.message||'Não consegui sincronizar'; });
+  }).catch(function(e){ if(auto) return; m.style.color='#DC2626'; m.textContent=e.message||'Não consegui sincronizar'; });
 }
 /* (113) ao abrir: avisa se o desenho não bate com o cadastro de Mesas */
 function slConfere(){
