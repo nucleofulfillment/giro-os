@@ -962,7 +962,9 @@ function abrirPtEventos(){
   abrirModal('<h3>Avisos da Paytime</h3><p class="sub">O que a Paytime avisou pelo webhook (os 30 mais recentes).</p><div id="pt-ev" class="sub2">Carregando...</div><div class="acoes"><button class="btn" onclick="abrirPtEventos()">↻ Atualizar</button><button class="btn" onclick="fechar()">Fechar</button></div>');
   chamar('GET','/admin/paytime/eventos').then(function(d){
     var c=el('pt-ev'); if(!c) return; if(!d.ok){ c.innerHTML='<div class="erro">'+esc(d.mensagem||'Erro.')+'</div>'; return; }
-    c.innerHTML=(d.eventos||[]).length?'<div class="tabela-wrap"><table><tr><th>Quando</th><th>Evento</th><th>Status</th><th>ID</th></tr>'+d.eventos.map(function(x){return '<tr><td>'+new Date(x.criado).toLocaleString('pt-BR')+'</td><td>'+esc(x.evento)+'</td><td>'+esc(x.status||'')+'</td><td style="font-size:11px">'+esc(x.ref||'')+'</td></tr>';}).join('')+'</table></div>':'Nenhum aviso ainda.';
+    c.innerHTML=((d.eventos||[]).length?'<div class="tabela-wrap"><table><tr><th>Quando</th><th>Evento</th><th>Status</th><th>ID</th></tr>'+d.eventos.map(function(x){return '<tr><td>'+new Date(x.criado).toLocaleString('pt-BR')+'</td><td>'+esc(x.evento)+'</td><td>'+esc(x.status||'')+'</td><td style="font-size:11px">'+esc(x.ref||'')+'</td></tr>';}).join('')+'</table></div>':'Nenhum aviso ainda.')
+      /* (128) toda chamada que chegou no endereço do webhook, aceita ou recusada (mostra se a Paytime está chamando e se a senha bate) */
+      +'<h4 style="margin:14px 0 6px">Tentativas de entrega</h4>'+((d.tentativas||[]).length?'<div class="tabela-wrap"><table><tr><th>Quando</th><th>Evento</th><th>Resultado</th><th>Senha</th></tr>'+d.tentativas.map(function(x){return '<tr><td>'+new Date(x.t).toLocaleString('pt-BR')+'</td><td>'+esc(x.evento)+'</td><td style="color:'+(x.ok?'var(--green)':'var(--red)')+';font-weight:700">'+(x.ok?'aceito':'recusado')+'</td><td style="font-size:12px">'+esc(x.auth)+(x.user?' · usuário '+esc(x.user):'')+' · '+esc(x.senha)+'</td></tr>';}).join('')+'</table></div>':'<div>Nenhuma chamada chegou ainda no endereço do webhook.</div>');
   }).catch(function(){});
 }
 function abrirAsaasCfg(){
