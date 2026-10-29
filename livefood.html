@@ -1784,6 +1784,8 @@ if(PREV3D){
 }
 function rsvToque(n){
   var m=RSV.d.salao.filter(function(p){ return p.t==='mesa'&&p.n===n; })[0]; if(!m) return;
+  /* (125) tocar de novo na mesa já selecionada tira a seleção (e fecha o cartão de baixo) */
+  if(R3&&R3.sel===n){ r3Seleciona(null); RSV.mesa=null; var pc=$('r3p'); if(pc) pc.classList.remove('on'); return; }
   /* (125) pré-visualização do painel: tocar destaca a mesa e mostra os lugares, sem botão de reservar */
   if(PREV3D){ r3Seleciona(n); r3Painel('<div class="l1"><div class="nm">'+n+'</div><div class="tx"><b>Mesa '+n+' · '+m.lug+' lugares</b><small>pré-visualização do salão</small></div></div>'); return; }
   if(RSV.oc.indexOf(String(n))>=0){ toast('A mesa '+n+' já está reservada nesse horário'); return; }
