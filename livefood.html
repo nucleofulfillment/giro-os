@@ -271,6 +271,35 @@ html.claro #wzp{filter:invert(1) hue-rotate(180deg)}
 @keyframes ovZoom{0%{transform:scale(.2);opacity:0}65%{transform:scale(1.1);opacity:1}100%{transform:none}}
 @keyframes ovAnel{0%{transform:scale(1);opacity:.85}100%{transform:scale(1.45,1.7);opacity:0}}
 @media (prefers-reduced-motion:reduce){.ov *,.ov *::after{animation:none!important}}
+/* (109) versão do WhatsApp: botão verde da sacola e abertura com a sacola (só no primeiro acesso) */
+.wa-env{display:flex;align-items:center;justify-content:center;gap:10px;background:#25D366!important;color:#fff!important;animation:waPulsa 1.8s ease-in-out infinite}
+.wa-env svg{width:22px;height:22px;fill:#fff;flex:none}
+.wa-env[disabled]{opacity:.7;animation:none}
+@keyframes waPulsa{0%,100%{box-shadow:0 0 0 0 rgba(37,211,102,.55);transform:scale(1)}50%{box-shadow:0 0 0 10px rgba(37,211,102,0);transform:scale(1.02)}}
+#wi{position:fixed;inset:0;z-index:2147482000;background:rgba(12,9,7,.66);-webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px);overflow:hidden;opacity:0;transition:opacity .35s}
+#wi.on{opacity:1}
+#wi .wi-cena{position:absolute;left:50%;top:50%;width:360px;height:760px;transform-origin:50% 50%;font-family:inherit}
+#wi .wi-tit{position:absolute;left:0;right:0;top:34px;text-align:center;color:#fff;font-weight:800;font-size:19px;line-height:1.6;white-space:nowrap;text-shadow:0 2px 14px rgba(0,0,0,.35)}
+#wi .wi-pill{display:inline-flex;align-items:center;gap:6px;background:#25D366;color:#fff;border-radius:9px;padding:0 8px 1px;box-shadow:0 0 0 3px rgba(37,211,102,.35);text-shadow:none}
+#wi .wi-pill svg{width:18px;height:18px;fill:#fff}
+#wi .wi-passos{position:absolute;left:14px;right:14px;top:120px;display:flex;gap:8px}
+#wi .wi-passo{flex:1;background:#fff;color:#1C1C1E;border-radius:14px;padding:9px 6px 8px;text-align:center;box-shadow:0 8px 20px rgba(0,0,0,.25);opacity:0}
+#wi .wi-passo i{display:inline-flex;width:24px;height:24px;border-radius:50%;background:#FF5A00;color:#fff;font-weight:800;font-size:13px;font-style:normal;align-items:center;justify-content:center}
+#wi .wi-passo.w i{background:#25D366}
+#wi .wi-passo span{display:block;margin-top:4px;font-size:12px;font-weight:700;line-height:1.2}
+#wi .wi-sac{position:absolute;left:15px;top:212px;width:330px;height:520px;transform-origin:50% 100%}
+#wi .wi-sac svg.wt,#wi .wi-sac svg.wf{position:absolute;left:0;top:0;width:330px;height:520px;overflow:visible}
+#wi .wi-sac svg.wf{z-index:3}
+#wi .wi-fotos{position:absolute;inset:0;z-index:2;pointer-events:none}
+#wi .wi-q{position:absolute;left:0;top:0;width:84px;height:84px;background:#fff;padding:5px;border:3px solid #1C1C1E;border-radius:6px;box-shadow:5px 5px 0 #1C1C1E;will-change:transform}
+#wi .wi-q span{display:flex;width:100%;height:100%;align-items:center;justify-content:center;font-size:46px;line-height:1;border-radius:3px;background:#FFF4E8}
+#wi .wi-q b{position:absolute;left:-10px;top:-14px;background:#FFD43B;color:#1C1C1E;border:3px solid #1C1C1E;border-radius:8px;padding:0 6px;font-size:12px;font-weight:800;transform:rotate(-8deg)}
+#wi .wi-badge{position:absolute;right:20px;top:96px;z-index:5;min-width:34px;height:34px;padding:0 9px;border-radius:17px;background:#25D366;color:#fff;font-weight:800;font-size:16px;display:flex;align-items:center;justify-content:center;border:3px solid #fff;transform:scale(0)}
+#wi .wi-frente{position:absolute;inset:0;z-index:4;pointer-events:none}
+#wi .wi-live{position:absolute;left:72px;top:150px;width:186px}
+#wi .wi-logo{position:absolute;left:127px;top:440px;width:76px;height:auto;filter:brightness(0) invert(1);opacity:.7}
+#wi .wi-btn{position:absolute;left:52px;right:52px;top:362px;height:56px;border:0;border-radius:16px;background:#fff;color:#FF5A00;font-family:inherit;font-weight:800;font-size:18px;cursor:pointer;pointer-events:auto;box-shadow:0 10px 22px rgba(80,25,0,.35)}
+@media (prefers-reduced-motion:reduce){.wa-env{animation:none}}
 </style>
 </head>
 <body>
@@ -301,7 +330,10 @@ html.claro #wzp{filter:invert(1) hue-rotate(180deg)}
 var API='https://giro-os-api.nucleofull.workers.dev';
 /* (092) a loja vem do link: livefood.tec.br/<loja>/mesa/7 (LF_ROTA, montado pelo 404.html) ou o formato antigo livefood.html?c=<código>&mesa=7 */
 var Q=new URLSearchParams(location.search), ROTA=window.LF_ROTA||{}, CLI=(ROTA.c||Q.get('c')||Q.get('loja')||'').replace(/[^A-Za-z0-9_-]/g,''), MESA=(ROTA.mesa||Q.get('mesa')||'').replace(/\D/g,'').slice(0,3);
-function lfLink(mesa){ var s=(D&&D.slug)||CLI; return location.origin+'/'+encodeURIComponent(s)+(mesa?'/mesa/'+mesa:''); }
+/* (109) versão do WhatsApp: livefood.tec.br/<loja>/cardapio — o cliente monta a sacola e envia o pedido pelo WhatsApp da loja */
+var WA=!MESA&&!!(ROTA.wa||Q.get('wa')==='1');
+function lfLink(mesa){ var s=(D&&D.slug)||CLI; return location.origin+'/'+encodeURIComponent(s)+(mesa?'/mesa/'+mesa:(WA?'/cardapio':'')); }
+function waOn(){ return WA&&!!(D&&D.cfg&&D.cfg.wa); }
 var SAC=[], LT=0, D={ofertas:[],produtos:{},empresa:''}, ordem=[], idx=-1, cur=0, vs=[document.getElementById('v0'),document.getElementById('v1')], somOn=false, tick=null, novoD=null;
 function $(i){return document.getElementById(i);}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
@@ -819,7 +851,7 @@ function abreSacola(){ navOn('sac'); CK.on=0; CK.open=0;
   h+=sacLista();
   h+='</div>';
   if(SAC.length&&!estaAberto()){ var pg=progLer(); h+='<div class="nt" style="text-align:center;padding:10px 16px 0;color:var(--pri2)">'+(pg?'🕒 Pedido programado para '+progFmt(pg)+' · <u onclick="abreAgenda()" style="cursor:pointer">alterar</u>':'🕒 Estamos fechados. <u onclick="abreAgenda()" style="cursor:pointer">Agendar este pedido</u>')+'</div>'; }
-  if(SAC.length) h+='<div class="rod" style="flex-direction:column;align-items:stretch;gap:8px">'+(sacEcon()>0?'<div class="tt" style="padding:0;font-size:13px;color:#4ade80"><span>Desconto aplicado</span><span>− '+brl(sacEcon())+'</span></div>':'')+'<div class="tt" style="padding:0"><span>Subtotal</span><span>'+brl(sacTotal())+'</span></div><button class="bt c" style="flex:none;width:100%" onclick="sacContinuar()">'+(MESA?'Fazer pedido':'Continuar')+'</button><button class="bt c" style="flex:none;width:100%;background:transparent;border:2px solid var(--pri);color:var(--pri)" onclick="abreMenu()">Continuar comprando</button></div>';
+  if(SAC.length) h+='<div class="rod" style="flex-direction:column;align-items:stretch;gap:8px">'+(sacEcon()>0?'<div class="tt" style="padding:0;font-size:13px;color:#4ade80"><span>Desconto aplicado</span><span>− '+brl(sacEcon())+'</span></div>':'')+'<div class="tt" style="padding:0"><span>Subtotal</span><span>'+brl(sacTotal())+'</span></div>'+(waOn()?'<button class="bt c wa-env" id="wa-env" style="flex:none;width:100%" onclick="waEnviar()">'+WA_ICO+'Enviar lista para o WhatsApp</button>':'<button class="bt c" style="flex:none;width:100%" onclick="sacContinuar()">'+(MESA?'Fazer pedido':'Continuar')+'</button>')+'<button class="bt c" style="flex:none;width:100%;background:transparent;border:2px solid var(--pri);color:var(--pri)" onclick="abreMenu()">Continuar comprando</button></div>';
   abreFolha(h,true);
 }
 /* ── conta do cliente (5B): entra pelo WhatsApp com código, guarda nome e endereços ── */
@@ -1445,7 +1477,71 @@ function abreCat(id){
 /* toque no vídeo: pula pra próxima oferta */
 $('stage').addEventListener('click',function(e){ if(e.target.closest('#cards')||e.target.closest('.rb')||e.target.closest('#somc')||e.target.closest('#mnb')||e.target.closest('.ov-btn')) return; var x=e.clientX-$('stage').getBoundingClientRect().left, w=$('stage').clientWidth; if(ordem.length>1&&x>w*0.7){ cur=1-cur; tocar(idx+1); } else if(ordem.length>1&&x<w*0.3){ cur=1-cur; tocar(idx-1); } else mostraSom(); });
 document.addEventListener('visibilitychange',function(){ var v=vs[cur]; if(!document.hidden&&v&&v.paused&&ordem.length) v.play().catch(function(){}); });
-carregar(true).then(function(){ if(window.LiveApp) LiveApp.pronto(); }); setInterval(function(){ carregar(false); },60000);
+/* ── (109) versão do WhatsApp ── */
+var WA_ICO='<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16.04 3C9.4 3 4 8.33 4 14.9c0 2.1.56 4.15 1.62 5.95L4 27l6.33-1.64a12.1 12.1 0 0 0 5.71 1.44h.01c6.63 0 12.03-5.34 12.03-11.9C28.08 8.33 22.68 3 16.04 3zm5.5 14.4c-.3-.15-1.78-.87-2.06-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.95 1.17-.17.2-.35.22-.65.07-.3-.15-1.27-.46-2.42-1.47-.9-.79-1.5-1.77-1.68-2.07-.17-.3-.02-.46.13-.6.14-.14.3-.35.45-.52.15-.18.2-.3.3-.5.1-.2.05-.38-.02-.53-.08-.15-.67-1.6-.92-2.2-.24-.57-.49-.5-.67-.5h-.57c-.2 0-.52.07-.8.37-.27.3-1.04 1.01-1.04 2.47 0 1.45 1.07 2.86 1.22 3.06.15.2 2.1 3.17 5.08 4.44.71.3 1.27.49 1.7.62.71.23 1.36.2 1.88.12.57-.09 1.78-.72 2.03-1.42.25-.7.25-1.3.17-1.42-.07-.13-.27-.2-.57-.35z"/></svg>';
+/* nessa versão o pedido termina no WhatsApp: sem as abas de pedidos e conta do site */
+function waInit(){ if(!waOn()) return; ['nv-pedidos','nv-conta'].forEach(function(id){ var b=$(id); if(b) b.style.display='none'; }); }
+/* o botão guarda a sacola no sistema (com um código) e abre o WhatsApp da loja com a lista escrita; o Live recebe o código e já monta o carrinho certinho */
+function waEnviar(){
+  if(!SAC.length||!waOn()) return; var b=$('wa-env'); if(b){ if(b.disabled) return; b.disabled=true; b.lastChild.textContent='Preparando seu pedido…'; }
+  var volta=function(m){ if(b){ b.disabled=false; b.lastChild.textContent='Enviar lista para o WhatsApp'; } if(m) toast(m); };
+  fetch(API+'/food/rascunho',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cli:D.cli||CLI,itens:SAC.map(function(i){ return {p:i.p,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs,qty:i.qty}; })})})
+    .then(function(r){ return r.json().catch(function(){ return {ok:false}; }); })
+    .then(function(d){
+      if(!d||!d.ok){ volta((d&&d.mensagem)||'Não consegui preparar o pedido. Tente de novo.'); return; }
+      var L=['Oi! Quero fazer este pedido pelo cardápio:',''];
+      SAC.forEach(function(i){ var x=[i.tam,(i.sab||[]).join(' + '),i.borda?'borda '+i.borda:'',(i.adds||[]).length?'+ '+i.adds.join(', '):'',i.obs?'obs: '+i.obs:''].filter(Boolean).join(' · ');
+        L.push('• '+i.qty+'x '+i.nome+(x?' ('+x+')':'')); });
+      L.push('','Subtotal: '+brl(d.subtotal),'Código do pedido: '+d.codigo);
+      volta(); toast('Abrindo o WhatsApp…',true);
+      location.href='https://wa.me/'+String(d.wa).replace(/\D/g,'')+'?text='+encodeURIComponent(L.join('\n'));
+    }).catch(function(){ volta('Sem conexão. Tente de novo.'); });
+}
+/* abertura da versão do WhatsApp: a sacola com o Live, os 3 passos e os ícones caindo; aparece só no primeiro acesso a cada loja */
+function waIntro(){
+  if(!waOn()||$('wi')) return; var ch='lf_wa_intro_'+(D.cli||CLI); try{ if(localStorage.getItem(ch)) return; }catch(e){}
+  var nm=['🍔','🥤','🍟','🍺','🍕','🧃','🌭','🥟'], w=document.createElement('div'); w.id='wi';
+  w.innerHTML='<div class="wi-cena" id="wi-cena"><h1 class="wi-tit">Monte seu pedido aqui e envie<br>direto pro nosso <span class="wi-pill">'+WA_ICO+'WhatsApp</span></h1>'
+    +'<div class="wi-passos"><div class="wi-passo"><i>1</i><span>Escolha<br>os itens</span></div><div class="wi-passo"><i>2</i><span>Coloque<br>na sacola</span></div><div class="wi-passo w"><i>3</i><span>Envie pelo<br>WhatsApp</span></div></div>'
+    +'<div class="wi-sac" id="wi-sac"><svg class="wt" viewBox="0 0 330 520" aria-hidden="true"><path d="M100 118 C100 22 230 22 230 118" fill="none" stroke="#B83F00" stroke-width="18" stroke-linecap="round"/><path d="M100 118 C100 34 230 34 230 118" fill="none" stroke="#FF8A33" stroke-width="6" stroke-linecap="round" opacity=".6"/><path d="M18 112 H312 L306 140 H24 Z" fill="#7A2A00"/></svg>'
+    +'<div class="wi-fotos" id="wi-fotos"></div>'
+    +'<svg class="wf" viewBox="0 0 330 520" aria-hidden="true"><defs><linearGradient id="wi-gs" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF8A33"/><stop offset=".5" stop-color="#FF5A00"/><stop offset="1" stop-color="#E64800"/></linearGradient><linearGradient id="wi-gl" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity=".18"/><stop offset=".3" stop-color="#fff" stop-opacity="0"/><stop offset=".85" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#5a1d00" stop-opacity=".28"/></linearGradient></defs><path d="M8 128 H322 L304 500 Q303 514 289 514 H41 Q27 514 26 500 Z" fill="url(#wi-gs)"/><path d="M8 128 H322 L304 500 Q303 514 289 514 H41 Q27 514 26 500 Z" fill="url(#wi-gl)"/><path d="M8 128 H322 L321 146 H9 Z" fill="#fff" opacity=".22"/><path d="M8 146 H322" stroke="#C94600" stroke-width="2" opacity=".6"/></svg>'
+    +'<div class="wi-frente"><div class="wi-live" id="wi-live"></div><button class="wi-btn" id="wi-btn" type="button">Ver cardápio</button><img class="wi-logo" src="livefood-logo.png" alt="livefood"></div><div class="wi-badge" id="wi-badge">0</div></div></div>';
+  document.body.appendChild(w);
+  var cena=$('wi-cena'), aj=function(){ var k=Math.min(innerWidth/360,innerHeight/760,1.25); cena.style.transform='translate(-50%,-50%) scale('+k+')'; }; aj(); addEventListener('resize',aj);
+  requestAnimationFrame(function(){ w.classList.add('on'); });
+  var anima=!!w.animate;
+  if(anima) w.querySelectorAll('.wi-passo').forEach(function(p,i){ p.animate([{opacity:0,transform:'translateY(16px)'},{opacity:1,transform:'none'}],{duration:420,delay:250+i*160,fill:'forwards',easing:'cubic-bezier(.2,1.3,.4,1)'}); }); else w.querySelectorAll('.wi-passo').forEach(function(p){ p.style.opacity=1; });
+  var live=null; try{ if(window.LiveMascote) live=LiveMascote.criar($('wi-live'),{expressao:'feliz',sombra:false}); }catch(e){}
+  if(live) setTimeout(function(){ live.gesto('acenar'); },900);
+  var sac=$('wi-sac'), fotos=$('wi-fotos'), bd=$('wi-badge'), n=0, tm=[], vivo=true;
+  function joga(ic,i){
+    if(!vivo||!anima) return; var q=document.createElement('div'); q.className='wi-q'; q.innerHTML='<span>'+ic+'</span>'+(i%2?'':'<b>+1</b>'); fotos.appendChild(q);
+    var esq=i%2===0, x0=esq?-150:400, y0=150+(i%3)*70, bx=123+(esq?-24:24), by=70, pk=[esq?40:210,24-(i%3)*12], r0=esq?-24:24;
+    q.animate([{transform:'translate('+x0+'px,'+y0+'px) rotate('+r0+'deg) scale(1)'},{transform:'translate('+pk[0]+'px,'+pk[1]+'px) rotate('+(-r0/2)+'deg) scale(1)',offset:.55},{transform:'translate('+bx+'px,'+by+'px) rotate('+(r0/4)+'deg) scale(.82)',offset:.84},{transform:'translate('+bx+'px,'+(by+110)+'px) rotate(0deg) scale(.7)'}],{duration:1300,easing:'cubic-bezier(.3,.1,.4,1)',fill:'forwards'}).onfinish=function(){ q.remove(); };
+    tm.push(setTimeout(cai,1118));
+  }
+  function cai(){
+    if(!vivo) return; n++; bd.textContent=n;
+    bd.animate([{transform:'scale(0)'},{transform:'scale(1.3)'},{transform:'scale(1)'}],{duration:320,fill:'forwards',easing:'ease-out'});
+    sac.animate([{transform:'scale(1)'},{transform:'scale(1.03,.97)'},{transform:'scale(.99,1.01)'},{transform:'scale(1)'}],{duration:420,easing:'ease-out'});
+    if(live&&n%3===0) live.animar({salto:-26},220).then(function(){ live.animar({salto:0},320); });
+  }
+  function ciclo(){
+    if(!vivo) return; n=0; if(anima) bd.animate([{transform:'scale(1)'},{transform:'scale(0)'}],{duration:200,fill:'forwards'});
+    nm.forEach(function(ic,i){ tm.push(setTimeout(function(){ joga(ic,i); },700+i*760)); });
+    tm.push(setTimeout(ciclo,700+nm.length*760+2400));
+  }
+  tm.push(setTimeout(ciclo,600));
+  $('wi-btn').onclick=function(){
+    try{ localStorage.setItem(ch,'1'); }catch(e){}
+    vivo=false; tm.forEach(clearTimeout); removeEventListener('resize',aj); w.classList.remove('on');
+    setTimeout(function(){ try{ if(live&&live.destruir) live.destruir(); }catch(e){} w.remove(); },380);
+  };
+}
+/* a abertura do WhatsApp entra depois que a tela de carregamento (Live + logo) sai */
+function waDepoisAbertura(){ var t0=Date.now(); (function espera(){ if(!$('lf-abertura')||Date.now()-t0>9000) waIntro(); else setTimeout(espera,150); })(); }
+carregar(true).then(function(){ if(window.LiveApp) LiveApp.pronto(); waInit(); waDepoisAbertura(); }); setInterval(function(){ carregar(false); },60000);
 </script>
 </body>
 </html>

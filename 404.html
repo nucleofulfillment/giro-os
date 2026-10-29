@@ -22,18 +22,20 @@
 (function () {
   var p = location.pathname.replace(/^\/+|\/+$/g, '').split('/');
   var loja = /^[A-Za-z0-9_-]{2,40}$/.test(p[0] || '') ? p[0] : '';
-  var ok = loja && (p.length === 1 || (p.length === 3 && p[1].toLowerCase() === 'mesa' && /^\d{1,3}$/.test(p[2])));
+  /* (109) livefood.tec.br/<loja>/cardapio → versão do WhatsApp: monta a sacola e envia o pedido pelo WhatsApp da loja */
+  var wa = p.length === 2 && p[1].toLowerCase() === 'cardapio';
+  var ok = loja && (p.length === 1 || wa || (p.length === 3 && p[1].toLowerCase() === 'mesa' && /^\d{1,3}$/.test(p[2])));
   if (!ok) {
     document.addEventListener('DOMContentLoaded', function () {
       document.body.innerHTML = '<div class="nf"><img src="/livefood-logo.png" alt="LiveFood"><h1>Página não encontrada</h1><p>Confira o endereço ou volte para o início.</p><a href="/">Ir para a LiveFood</a></div>';
     });
     return;
   }
-  var rota = { c: loja.toLowerCase(), mesa: p[2] || '' };
+  var rota = { c: loja.toLowerCase(), mesa: wa ? '' : (p[2] || ''), wa: wa ? 1 : 0 };
   fetch('/livefood.html', { cache: 'no-cache' }).then(function (r) { return r.text(); }).then(function (h) {
     h = h.replace(/<head>/i, '<head><base href="/"><script>window.LF_ROTA=' + JSON.stringify(rota) + '<\/script>');
     document.open(); document.write(h); document.close();
-  }).catch(function () { location.replace('/livefood.html?c=' + encodeURIComponent(rota.c) + (rota.mesa ? '&mesa=' + rota.mesa : '')); });
+  }).catch(function () { location.replace('/livefood.html?c=' + encodeURIComponent(rota.c) + (rota.mesa ? '&mesa=' + rota.mesa : '') + (rota.wa ? '&wa=1' : '')); });
 })();
 </script>
 </head>
