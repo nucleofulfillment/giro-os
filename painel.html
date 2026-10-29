@@ -8537,7 +8537,8 @@ function slTamLote(){ var cw=parseFloat(el('sl-lw').value), ch=parseFloat(el('sl
   slDesenha(); }
 /* girar: soma graus (d) ou define o ângulo exato (abs) */
 function slRot(d,abs){ SL.sujo=true; slSels().forEach(function(p){ var v=abs!=null?abs:(p.rot||0)+d; p.rot=((Math.round(v)%360)+360)%360; }); slDesenha(); }
-function slForma(f){ var p=slPeca(SL.sel); if(!p||p.t!=='mesa') return; SL.sujo=true; p.forma=f; if(f!=='quadrada') p.h=p.w; slDesenha(); }
+/* (121) formato vale para todas as mesas selecionadas (não só a primeira) */
+function slForma(f){ var ms=slSels().filter(function(p){ return p.t==='mesa'; }); if(!ms.length||!f) return; SL.sujo=true; ms.forEach(function(p){ p.forma=f; if(f!=='quadrada') p.h=p.w; }); slDesenha(); }
 /* (121) zoom do mapa: SL.z (1 a 8×) e o canto da vista (SL.vx, SL.vy), sempre dentro da área */
 function slVB(){ var z=slWH(), k=SL.z||1, vw=z.W/k, vh=z.H/k; SL.vx=Math.max(0,Math.min(z.W-vw,SL.vx||0)); SL.vy=Math.max(0,Math.min(z.H-vh,SL.vy||0));
   var s=el('sl-svg'); if(s) s.setAttribute('viewBox',(k>1?SL.vx+' '+SL.vy+' '+vw+' '+vh:'0 0 '+z.W+' '+z.H)); var zv=el('sl-zv'); if(zv) zv.textContent=Math.round(k*100)+'%'; }
@@ -8551,7 +8552,9 @@ function slDesenha(manterProp){
   if(!ps.length){ pr.innerHTML='<div style="font-size:12.5px;color:var(--muted)">Toque numa peça para editar. Segure <b>Shift</b> (ou Ctrl) e clique para selecionar várias e alinhar, distribuir, girar ou mudar o tamanho de todas de uma vez.</div>'; return; }
   if(manterProp&&(el('sl-n')||el('sl-lw'))) return;
   if(!p){   /* várias selecionadas */
+    var nMs=ps.filter(function(x){ return x.t==='mesa'; }).length, fs={}; ps.forEach(function(x){ if(x.t==='mesa') fs[x.forma==='quadrada'?'quadrada':'redonda']=1; }); var f1=Object.keys(fs).length===1?Object.keys(fs)[0]:'';
     var h='<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b style="font-size:13px">'+ps.length+' peças selecionadas</b>'
+      +(nMs?'<select class="inp" style="padding:7px 9px;width:auto" onchange="slForma(this.value)" title="Formato de todas as mesas selecionadas">'+(f1?'':'<option value="" selected>Formato: misturado</option>')+'<option value="redonda"'+(f1==='redonda'?' selected':'')+'>⚪ Redondas</option><option value="quadrada"'+(f1==='quadrada'?' selected':'')+'>⬜ Quadradas / retangulares</option></select>':'')
       +'<span style="display:flex;gap:4px;flex-wrap:wrap"><button '+bt+' onclick="slAlinha(\'esq\')" title="Alinhar à esquerda">⇤ Esquerda</button><button '+bt+' onclick="slAlinha(\'cx\')" title="Centralizar na horizontal">↔ Centro</button><button '+bt+' onclick="slAlinha(\'dir\')" title="Alinhar à direita">Direita ⇥</button>'
       +'<button '+bt+' onclick="slAlinha(\'topo\')" title="Alinhar pelo topo">⤒ Topo</button><button '+bt+' onclick="slAlinha(\'cy\')" title="Alinhar pelo meio">↕ Meio</button><button '+bt+' onclick="slAlinha(\'base\')" title="Alinhar pela base">⤓ Base</button></span>'
       +'<span style="display:flex;gap:4px"><button '+bt+' onclick="slDistribui(\'h\')" title="Mesmo espaço entre elas, na horizontal">⇹ Distribuir na horizontal</button><button '+bt+' onclick="slDistribui(\'v\')" title="Mesmo espaço entre elas, na vertical">⇳ Distribuir na vertical</button></span></div>'
