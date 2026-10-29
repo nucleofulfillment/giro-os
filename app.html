@@ -1672,7 +1672,7 @@ function entrar(){
       .then(function(d){
         b.disabled=false; b.textContent='Entrar';
         if(d&&d.ok){ try{ localStorage.removeItem('dd_cod_pend'); }catch(e){} ddGuardarM(d.token,d.usuario); el('lg-senha').value=''; abrirApp(); try{ pinNovoAbrir(pin); }catch(eP){} }
-        else if(d&&d.erro==='escolher_loja'&&d.lojas&&d.lojas.length){ try{ localStorage.removeItem('dd_cod_pend'); }catch(e){} lojasAbrir(d.lojas,d.mensagem); }   /* (017) PIN criado e vale nas lojas dele: escolhe em qual entrar */
+        else if(d&&d.erro==='escolher_loja'&&d.lojas&&d.lojas.length){ try{ localStorage.removeItem('dd_cod_pend'); }catch(e){} LJ_COD=pin; lojasAbrir(d.lojas,d.mensagem); }   /* (017) PIN criado e vale nas lojas dele: escolhe em qual entrar (e depois cria o PIN dele) */
         else entrarNormal();
       }).catch(function(){ b.disabled=false; b.textContent='Entrar'; entrarNormal(); });
     return;
@@ -1685,6 +1685,7 @@ function lojasAbrir(lojas,msg){
   el('lj-lista').innerHTML=(lojas||[]).map(function(l){ return '<button class="lj-op" onclick="lojasEscolher(\''+String(l.id).replace(/[^A-Za-z0-9_-]/g,'')+'\')"><span>'+String(l.nome||l.id).replace(/[&<>"]/g,'')+'</span><i>→</i></button>'; }).join('');
   el('lj-modal').style.display='flex';
 }
+var LJ_COD='';   /* código do WhatsApp do primeiro acesso: depois de escolher a loja, pede para criar o PIN de verdade */
 function lojasFechar(){ el('lj-modal').style.display='none'; }
 function lojasEscolher(id){ lojasFechar(); entrarNormal(id); }
 function entrarNormal(cliente){
@@ -1699,6 +1700,7 @@ function entrarNormal(cliente){
       b.disabled=false; b.textContent='Entrar';
       if(d&&d.erro==='escolher_loja'&&d.lojas&&d.lojas.length){ lojasAbrir(d.lojas,d.mensagem); return; }
       if(!d||!d.ok){ m.textContent=(d&&d.mensagem)||'Não foi possível entrar. Tente de novo.'; return; }
+      if(LJ_COD){ var cdL=LJ_COD; LJ_COD=''; setTimeout(function(){ try{ pinNovoAbrir(cdL); }catch(eP){} },400); }
       ddGuardarM(d.token,d.usuario); el('lg-senha').value=''; abrirApp();
     }).catch(function(){ b.disabled=false; b.textContent='Entrar'; m.textContent='Sem conexão com o servidor. Tente de novo.'; });
 }
