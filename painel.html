@@ -8503,10 +8503,16 @@ function slVista(){
 function slEnvia3d(){
   var f=el('sl-if3'); if(!f) return;
   var msg=function(){ return {tipo:'salao3d',areas:JSON.parse(JSON.stringify(SL.areas)),area:SL.area,pecas:SL.L.map(function(p){ var c=JSON.parse(JSON.stringify(p)); if(c.t==='mesa'&&SL.lugs&&SL.lugs[String(c.n)]) c.lug=SL.lugs[String(c.n)]; return c; })}; };
+  SL.msg3d=msg;
   if(f.dataset.ok==='1'){ f.contentWindow.postMessage(msg(),'*'); return; }
-  f.onload=function(){ f.dataset.ok='1'; setTimeout(function(){ f.contentWindow.postMessage(msg(),'*'); },400); };
-  if(!f.dataset.src){ f.dataset.src='1'; f.src='livefood.html?c='+encodeURIComponent(CD.slug||CD.cli||'')+'&prev3d=1'; }
+  /* (123) manda o desenho quando o 3D avisa que está pronto ("prev3d-pronto"); o onload fica de reserva */
+  f.onload=function(){ setTimeout(function(){ if(f.dataset.ok!=='1'){ f.dataset.ok='1'; f.contentWindow.postMessage(msg(),'*'); } },1500); };
+  if(!f.dataset.src){ f.dataset.src='1'; mzSlug(function(){ f.src='livefood.html?c='+encodeURIComponent(CD.slug||CD.cli||'')+'&prev3d=1&v='+Date.now(); }); }
 }
+window.addEventListener('message',function(e){ var f=el('sl-if3'), m=e.data; if(!f||!m||e.source!==f.contentWindow) return;
+  if(m.tipo==='prev3d-pronto'){ f.dataset.ok='1'; if(SL.msg3d) f.contentWindow.postMessage(SL.msg3d(),'*'); }
+  else if(m.tipo==='prev3d-erro'){ var s=el('sl-m'); if(s){ s.style.color='#DC2626'; s.textContent='O 3D não abriu: '+(m.msg||'erro')+'. Toque em Voltar ao 2D e em Ver em 3D de novo.'; } }
+});
 function slDesenha3(){ slEnvia3d(); }
 function slGira3(d){ SL.ang=((SL.ang+d)%360+360)%360; slDesenha3(); }
 function slPt(e){ var s=el('sl-svg'), m=s.getScreenCTM().inverse(), q=s.createSVGPoint(); q.x=e.clientX; q.y=e.clientY; return q.matrixTransform(m); }

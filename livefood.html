@@ -1766,9 +1766,14 @@ if(PREV3D){
   window.addEventListener('message',function(e){ var m=e.data; if(!m||m.tipo!=='salao3d') return;
     RSV.d={cfg:{dur:0,maxPessoas:99},dias:[],areas:m.areas,salao:(m.pecas||[]).map(function(p){ if(p.t==='mesa'&&!(p.lug>0)) p.lug=r3LugPadrao(p); return p; })};
     RSV.pes=1; RSV.oc=[]; RSV.area=m.area; RSV.mesa=null; var ab=$('lf-abertura'); if(ab) ab.remove();
-    rsvLib().then(function(){ var o=$('r3d'); if(!o){ o=document.createElement('div'); o.id='r3d'; document.body.appendChild(o); }
+    var o=$('r3d'); if(!o){ o=document.createElement('div'); o.id='r3d'; document.body.appendChild(o); }
+    var erro=function(e){ o.style.display='flex'; o.classList.add('on'); o.innerHTML='<div style="margin:auto;color:#fff;font:600 14px system-ui;text-align:center;padding:20px">Não consegui montar o 3D.<br><span style="opacity:.6;font-weight:400">'+String((e&&e.message)||e||'').replace(/</g,'&lt;').slice(0,160)+'</span></div>'; try{ parent.postMessage({tipo:'prev3d-erro',msg:String((e&&e.message)||e)},'*'); }catch(x){} };
+    rsvLib().then(function(){ try{
       if(!$('r3c')){ o.innerHTML='<div id="r3c"></div><div class="r3as" id="r3as" style="top:12px;display:none"></div><div class="r3p" id="r3p"></div>'; }
-      o.style.display='flex'; o.classList.add('on'); r3AreasBarra(); r3Monta(); }); });
+      o.style.display='flex'; o.classList.add('on'); r3AreasBarra(); r3Monta(); }catch(e){ erro(e); } }).catch(erro); });
+  /* (123) avisa o painel que já pode mandar o desenho (o "onload" sozinho às vezes chegava antes ou se perdia) */
+  var avisaPronto=function(){ try{ parent.postMessage({tipo:'prev3d-pronto'},'*'); }catch(e){} };
+  if(document.readyState==='complete') avisaPronto(); else window.addEventListener('load',avisaPronto);
 }
 function rsvToque(n){
   if(PREV3D) return;   /* pré-visualização: só olhar */
