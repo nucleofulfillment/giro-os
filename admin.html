@@ -917,7 +917,7 @@ function abrirPaytime(){
       '<label>Estabelecimento para o Pix de teste</label><select id="pt-estab" onchange="ptGateways()">'+es.map(function(x){return '<option value="'+x.id+'"'+(x.status==='APPROVED'?'':' disabled')+'>'+x.id+' · '+esc(x.nome)+(x.status==='APPROVED'?'':' ('+esc(x.status)+')')+'</option>';}).join('')+'</select>'+
       '<div id="pt-gw" class="sub2" style="margin-top:8px"></div>'+
       '<label>Valor</label><select id="pt-val"><option value="105">R$ 1,05 · aprova sozinho</option><option value="108">R$ 1,08 · fica pendente</option></select>'+
-      '<div class="acoes" style="justify-content:flex-start"><button class="btn pri" id="pt-btn" onclick="ptPix()">Gerar Pix de teste</button></div><div id="pt-res"></div>'
+      '<div class="acoes" style="justify-content:flex-start"><button class="btn pri" id="pt-btn" onclick="ptPix()">Gerar Pix de teste</button><button class="btn" id="pt-ck" onclick="ptCheckout()">Testar pagamento (Smart Checkout)</button></div><div id="pt-res"></div>'
       :'<div class="aviso">Nenhum estabelecimento no sandbox ainda. Peça à Paytime um estabelecimento de teste aprovado.</div>');
     if(es.length) ptGateways();
   }).catch(function(){ var c=el('pt-corpo'); if(c) c.textContent='Erro de conexão.'; });
@@ -953,6 +953,16 @@ function ptPix(){
     el('pt-res').innerHTML='<div class="aviso" style="margin-top:10px">Pix criado: cliente paga <b>'+reais(Math.max(d.bruto||0,d.centavos||0))+'</b> · restaurante recebe '+reais(Math.min(d.bruto||d.centavos||0,d.centavos||0))+' (taxa '+reais(d.taxa||0)+') · status <b id="pt-st">'+esc(d.status)+'</b><br>ID '+esc(d.id)+'</div>'+
       (d.emv?'<label>Pix copia e cola</label><textarea readonly style="width:100%;height:70px;font-size:11px" onclick="this.select()">'+esc(d.emv)+'</textarea>':'')+
       '<div class="acoes" style="justify-content:flex-start"><button class="btn" onclick="ptStatus(\''+esc(d.id)+'\')">Conferir status</button></div>';
+  }).catch(function(){ b.disabled=false; el('pt-res').textContent='Erro de conexão.'; });
+}
+/* (129) Smart Checkout: página de pagamento da Paytime; no sandbox ela simula o Pix PAGO sozinha em ~30 s e manda os avisos */
+function ptCheckout(){
+  var b=el('pt-ck'); b.disabled=true; el('pt-res').innerHTML='Criando o checkout...';
+  chamar('POST','/admin/paytime/checkout',{estab:el('pt-estab').value,centavos:+el('pt-val').value}).then(function(d){
+    b.disabled=false;
+    if(!d.ok){ el('pt-res').innerHTML='<div class="erro">'+esc(d.mensagem||'Erro.')+'</div>'; return; }
+    el('pt-res').innerHTML='<div class="aviso" style="margin-top:10px">✅ Checkout criado (ref. '+esc(d.referencia)+'). No sandbox, em uns <b>30 segundos</b> a Paytime simula o Pix <b>PAGO</b> sozinha. Depois abra <b>Avisos recebidos</b>: devem aparecer <b>new-sub-transaction</b> e <b>updated-sub-transaction</b>.</div>'+
+      '<div class="acoes" style="justify-content:flex-start"><a class="btn" href="'+esc(d.url)+'" target="_blank" rel="noopener">Abrir a página de pagamento</a><button class="btn" onclick="setTimeout(abrirPtEventos,0)">Ver avisos</button></div>';
   }).catch(function(){ b.disabled=false; el('pt-res').textContent='Erro de conexão.'; });
 }
 function ptStatus(id){
