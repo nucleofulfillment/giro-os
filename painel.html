@@ -8349,7 +8349,7 @@ function slPlanta(){
   return s;
 }
 function slAbrir(){
-  SL.sel=0; SL.sujo=false;
+  SL.sel=0; SL.sujo=false; SL.hist=[]; SL.refaz=[];
   var t=el('sl-tela');
   if(!t){ t=document.createElement('div'); t.id='sl-tela'; t.style.cssText='position:fixed;inset:0;z-index:300;background:var(--bg);display:flex;flex-direction:column'; document.body.appendChild(t); }
   t.style.display='flex'; document.body.style.overflow='hidden';
@@ -8376,6 +8376,7 @@ function slMonta(){
   el('sl-tela').innerHTML='<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--s1);border-bottom:1px solid var(--border);flex-wrap:wrap">'
     +'<button class="btn sec" type="button" style="'+bs+'" onclick="slFecha()">← Voltar</button>'
     +'<b style="font-size:16px;margin:0 4px">Salão</b><div id="sl-atabs" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"></div><span style="flex:1"></span>'
+    +'<button class="btn sec" id="sl-undo" type="button" style="'+bs+';font-size:16px;padding:5px 11px" onclick="slDesfaz()" title="Desfazer (Ctrl+Z)">↶</button><button class="btn sec" id="sl-redo" type="button" style="'+bs+';font-size:16px;padding:5px 11px" onclick="slRefaz()" title="Refazer (Ctrl+Y)">↷</button>'
     +'<button class="btn sec" id="sl-b3" type="button" style="'+bs+'" onclick="slVista()">Ver em 3D</button>'
     +(cheia?'<button class="btn sec" id="sl-bfull" type="button" style="'+bs+'" onclick="slTelaCheia()">Tela cheia</button>':'')
     +'<button class="btn pri" type="button" style="'+bs+'" onclick="slSalvar()">Salvar salão</button></div>'
@@ -8393,12 +8394,16 @@ function slMonta(){
   var s=el('sl-svg');
   /* (120) Shift (ou Ctrl) + clique: soma ou tira da seleção; arrastar uma selecionada move todas juntas */
   s.addEventListener('pointerdown',function(e){
-    var vt=e.target.getAttribute&&e.target.getAttribute('data-v');
-    if(vt!=null){ var a0=slAr(); a0.pontos=slPts(a0).map(function(q){ return q.slice(); }); SL.drag={mode:'vert',i:+vt}; s.setPointerCapture(e.pointerId); return; }   /* (120) arrastar um ponto da borda */
+    var vt=e.target.getAttribute&&e.target.getAttribute('data-v'), et=e.target.getAttribute&&e.target.getAttribute('data-e'), ag=Date.now();
+    /* (122) dois cliques na borda: novo ponto (detectado aqui; o "dblclick" se perdia porque o primeiro clique redesenhava o mapa) */
+    if(et!=null){ if(SL.ultE===+et&&ag-(SL.ultET||0)<450){ SL.ultE=null; slPontoNovo(+et,slPt(e)); } else { SL.ultE=+et; SL.ultET=ag; } return; }
+    if(vt!=null){
+      if(SL.ultV===+vt&&ag-(SL.ultVT||0)<450){ SL.ultV=null; slPontoApaga(+vt); return; }   /* dois cliques num ponto: apaga */
+      SL.ultV=+vt; SL.ultVT=ag; slHist(); var a0=slAr(); a0.pontos=slPts(a0).map(function(q){ return q.slice(); }); SL.drag={mode:'vert',i:+vt}; s.setPointerCapture(e.pointerId); return; }   /* (120) arrastar um ponto da borda */
     var g=e.target.closest('g[data-id]'), add=e.shiftKey||e.ctrlKey||e.metaKey;
     if(!g){ SL.drag={mode:'pan',sx:e.clientX,sy:e.clientY,vx:SL.vx||0,vy:SL.vy||0,moveu:false,add:add}; s.setPointerCapture(e.pointerId); return; }   /* (121) fundo: arrastar anda pelo mapa; só clicar limpa a seleção */
     var id=+g.getAttribute('data-id'), p=slPeca(id), q=slPt(e);
-    if(e.target.getAttribute&&e.target.getAttribute('data-h')){ SL.drag={id:id,mode:'size'}; s.setPointerCapture(e.pointerId); return; }
+    if(e.target.getAttribute&&e.target.getAttribute('data-h')){ slHist(); SL.drag={id:id,mode:'size'}; s.setPointerCapture(e.pointerId); return; }
     if(add){ var ms=slSels().map(function(x){ return x.id; }), k=ms.indexOf(id); if(k>=0) ms.splice(k,1); else ms.push(id); SL.multi=ms; SL.sel=ms.length?(k>=0?ms[ms.length-1]:id):0; SL.ult=0;
       if(k>=0){ slDesenha(); return; } }
     else if(!slEhSel(id)||slSels().length<2){ SL.multi=[id]; SL.sel=id; }
@@ -8406,7 +8411,7 @@ function slMonta(){
     SL.ult=id; SL.ultT=agora;
     if(dbl){ SL.drag=null; SL.multi=[id]; SL.sel=id; SL.abrirEd=true; slDesenha(); return; }
     var of={}; slSels().forEach(function(x){ of[x.id]={dx:q.x-x.x,dy:q.y-x.y}; });
-    SL.drag={id:id,mode:'move',of:of}; s.setPointerCapture(e.pointerId); slDesenha(true);
+    slHist(); SL.drag={id:id,mode:'move',of:of}; s.setPointerCapture(e.pointerId); slDesenha(true);
   });
   s.addEventListener('pointermove',function(e){
     if(!SL.drag) return;
@@ -8422,19 +8427,11 @@ function slMonta(){
     } else { var zz=slWH(); slSels().forEach(function(x){ var o=SL.drag.of[x.id]; if(!o) return; x.x=Math.max(5,Math.min(zz.W-5,Math.round((q.x-o.dx)/2.5)*2.5)); x.y=Math.max(5,Math.min(zz.H-5,Math.round((q.y-o.dy)/2.5)*2.5)); }); SL.ult=0; }
     s.innerHTML=slPlanta();
   });
-  /* (120) dois cliques na borda: cria um ponto ali; dois cliques num ponto: apaga (mínimo 3) */
-  s.addEventListener('dblclick',function(e){
-    var ed=e.target.getAttribute&&e.target.getAttribute('data-e'), vv=e.target.getAttribute&&e.target.getAttribute('data-v'), a=slAr(); if(ed==null&&vv==null) return;
-    a.pontos=slPts(a).map(function(q){ return q.slice(); }); SL.sujo=true;
-    if(vv!=null){ if(a.pontos.length>3) a.pontos.splice(+vv,1); else aviso('A área precisa de pelo menos 3 pontos.'); }
-    else { var i=+ed, A=a.pontos[i], B=a.pontos[(i+1)%a.pontos.length], q=slPt(e), mx=q.x/25, my=q.y/25, dx=B[0]-A[0], dy=B[1]-A[1], t=Math.max(0.05,Math.min(0.95,((mx-A[0])*dx+(my-A[1])*dy)/((dx*dx+dy*dy)||1)));
-      a.pontos.splice(i+1,0,[Math.round((A[0]+dx*t)*20)/20,Math.round((A[1]+dy*t)*20)/20]); }
-    slAreasPinta(); slDesenha(); });
   s.addEventListener('pointerup',function(){ var d=SL.drag; SL.drag=null; if(d&&d.mode==='pan'&&!d.moveu){ if(!d.add){ SL.sel=0; SL.multi=[]; } SL.ult=0; slDesenha(); return; } if(SL.abrirEd){ SL.abrirEd=false; setTimeout(slEditaTexto,70); } }); s.addEventListener('pointercancel',function(){ SL.drag=null; });
   /* (121) rodinha do mouse: aproxima/afasta no ponto do cursor */
   s.addEventListener('wheel',function(e){ e.preventDefault(); var q=slPt(e), z0=SL.z||1, z1=Math.max(1,Math.min(8,z0*(e.deltaY<0?1.15:1/1.15))); if(z1===z0) return; var z=slWH();
     SL.vx=q.x-(q.x-(SL.vx||0))*z0/z1; SL.vy=q.y-(q.y-(SL.vy||0))*z0/z1; SL.z=z1; slVB(); },{passive:false});
-  SL.v3=false; SL.z=1; SL.vx=0; SL.vy=0; slAreasPinta(); slDesenha(); slSync(true);
+  SL.v3=false; SL.z=1; SL.vx=0; SL.vy=0; slAreasPinta(); slDesenha(); slHistBt(); slSync(true);
 }
 function slEditaTexto(){
   var p=slPeca(SL.sel); if(!p) return; var old=el('sl-ed'); if(old) old.remove();
@@ -8444,12 +8441,12 @@ function slEditaTexto(){
   inp.style.cssText='position:fixed;z-index:400;width:'+(mesa?84:150)+'px;left:'+Math.round(cx-(mesa?42:75))+'px;top:'+Math.round(cy-20)+'px;text-align:center;font-weight:800;box-shadow:0 6px 20px rgba(0,0,0,.25);border-color:#FF5A00';
   el('sl-tela').appendChild(inp); inp.focus(); inp.select();
   var feito=false;
-  function fim(ok){ if(feito) return; feito=true; if(ok){ if(mesa){ var v=parseInt(inp.value,10); if(v>0&&v<1000){ p.n=v; SL.sujo=true; } } else { p.label=inp.value.replace(/[<>"]/g,'').slice(0,14); SL.sujo=true; } } inp.remove(); slDesenha(); }
+  function fim(ok){ if(feito) return; feito=true; if(ok){ slHist(); if(mesa){ var v=parseInt(inp.value,10); if(v>0&&v<1000){ p.n=v; SL.sujo=true; } } else { p.label=inp.value.replace(/[<>"]/g,'').slice(0,14); SL.sujo=true; } } inp.remove(); slDesenha(); }
   inp.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); fim(true); } else if(e.key==='Escape'){ fim(false); } });
   inp.addEventListener('blur',function(){ fim(true); });
 }
 function slTam(f){
-  var ps=slSels(); if(!ps.length) return; SL.sujo=true; var k=f>0?1.12:0.89;
+  var ps=slSels(); if(!ps.length) return; slHist('tam'); SL.sujo=true; var k=f>0?1.12:0.89;
   ps.forEach(function(p){
     if(p.t==='mesa'){ p.w=Math.max(10,Math.min(150,Math.round(p.w*k))); p.h=p.forma==='quadrada'?Math.max(10,Math.min(150,Math.round((p.h||p.w)*k))):p.w; }
     else { p.w=Math.max(5,Math.min(2000,Math.round(p.w*k))); p.h=Math.max(5,Math.min(2000,Math.round(p.h*k))); } });
@@ -8519,26 +8516,26 @@ function slSels(){ var ms=(SL.multi&&SL.multi.length)?SL.multi:(SL.sel?[SL.sel]:
 function slEhSel(id){ return slSels().some(function(p){ return p.id===id; }); }
 /* meia largura/altura que a peça ocupa na tela, já girada (para alinhar pelas bordas) */
 function slMeio(p){ var w=p.w||44, h=(p.t==='mesa'&&p.forma!=='quadrada')?w:(p.h||w), a=(p.rot||0)*Math.PI/180, c=Math.abs(Math.cos(a)), s=Math.abs(Math.sin(a)); return {hw:(w*c+h*s)/2,hh:(w*s+h*c)/2}; }
-function slAlinha(m){ var ps=slSels(); if(ps.length<2) return; SL.sujo=true;
+function slAlinha(m){ var ps=slSels(); if(ps.length<2) return; slHist(); SL.sujo=true;
   var b=ps.map(function(p){ var e=slMeio(p); return {p:p,l:p.x-e.hw,r:p.x+e.hw,t:p.y-e.hh,b:p.y+e.hh,e:e}; }), mn=function(k){ return Math.min.apply(null,b.map(function(x){ return x[k]; })); }, mx=function(k){ return Math.max.apply(null,b.map(function(x){ return x[k]; })); };
   var L=mn('l'), R=mx('r'), T=mn('t'), B=mx('b');
   b.forEach(function(x){ if(m==='esq') x.p.x=L+x.e.hw; else if(m==='dir') x.p.x=R-x.e.hw; else if(m==='cx') x.p.x=(L+R)/2; else if(m==='topo') x.p.y=T+x.e.hh; else if(m==='base') x.p.y=B-x.e.hh; else if(m==='cy') x.p.y=(T+B)/2; });
   slDesenha(); }
 /* distribui com o mesmo espaço entre as peças (as das pontas ficam onde estão) */
-function slDistribui(ax){ var ps=slSels(); if(ps.length<3){ aviso('Selecione 3 peças ou mais para distribuir.'); return; } SL.sujo=true;
+function slDistribui(ax){ var ps=slSels(); if(ps.length<3){ aviso('Selecione 3 peças ou mais para distribuir.'); return; } slHist(); SL.sujo=true;
   var k=ax==='h'?'x':'y', ek=ax==='h'?'hw':'hh', o=ps.slice().sort(function(a,b){ return a[k]-b[k]; }), es=o.map(slMeio);
   var ini=o[0][k]-es[0][ek], fim=o[o.length-1][k]+es[o.length-1][ek], tot=es.reduce(function(s,e){ return s+2*e[ek]; },0), gap=(fim-ini-tot)/(o.length-1), pos=ini;
   o.forEach(function(p,i){ p[k]=Math.round((pos+es[i][ek])*10)/10; pos+=2*es[i][ek]+gap; }); slDesenha(); }
 /* tamanho de todas as selecionadas de uma vez (cm); vazio = não muda */
-function slTamLote(){ var cw=parseFloat(el('sl-lw').value), ch=parseFloat(el('sl-lh').value); if(!(cw>0)&&!(ch>0)) return; SL.sujo=true;
+function slTamLote(){ var cw=parseFloat(el('sl-lw').value), ch=parseFloat(el('sl-lh').value); if(!(cw>0)&&!(ch>0)) return; slHist(); SL.sujo=true;
   slSels().forEach(function(p){ var r=p.t==='mesa'&&p.forma!=='quadrada';
     if(cw>0){ p.w=Math.max(p.t==='mesa'?10:5,Math.min(p.t==='mesa'?150:2000,Math.round(cw/4))); if(r) p.h=p.w; }
     if(ch>0&&!r) p.h=Math.max(p.t==='mesa'?10:5,Math.min(p.t==='mesa'?150:2000,Math.round(ch/4))); });
   slDesenha(); }
 /* girar: soma graus (d) ou define o ângulo exato (abs) */
-function slRot(d,abs){ SL.sujo=true; slSels().forEach(function(p){ var v=abs!=null?abs:(p.rot||0)+d; p.rot=((Math.round(v)%360)+360)%360; }); slDesenha(); }
+function slRot(d,abs){ slHist(abs!=null?'rotv':''); SL.sujo=true; slSels().forEach(function(p){ var v=abs!=null?abs:(p.rot||0)+d; p.rot=((Math.round(v)%360)+360)%360; }); slDesenha(); }
 /* (121) formato vale para todas as mesas selecionadas (não só a primeira) */
-function slForma(f){ var ms=slSels().filter(function(p){ return p.t==='mesa'; }); if(!ms.length||!f) return; SL.sujo=true; ms.forEach(function(p){ p.forma=f; if(f!=='quadrada') p.h=p.w; }); slDesenha(); }
+function slForma(f){ slHist(); var ms=slSels().filter(function(p){ return p.t==='mesa'; }); if(!ms.length||!f) return; SL.sujo=true; ms.forEach(function(p){ p.forma=f; if(f!=='quadrada') p.h=p.w; }); slDesenha(); }
 /* (121) zoom do mapa: SL.z (1 a 8×) e o canto da vista (SL.vx, SL.vy), sempre dentro da área */
 function slVB(){ var z=slWH(), k=SL.z||1, vw=z.W/k, vh=z.H/k; SL.vx=Math.max(0,Math.min(z.W-vw,SL.vx||0)); SL.vy=Math.max(0,Math.min(z.H-vh,SL.vy||0));
   var s=el('sl-svg'); if(s) s.setAttribute('viewBox',(k>1?SL.vx+' '+SL.vy+' '+vw+' '+vh:'0 0 '+z.W+' '+z.H)); var zv=el('sl-zv'); if(zv) zv.textContent=Math.round(k*100)+'%'; }
@@ -8594,23 +8591,38 @@ function slAreasPinta(){
   b.innerHTML=h;
 }
 function slAreaVai(id){ SL.area=id; SL.sel=0; SL.multi=[]; SL.z=1; SL.vx=0; SL.vy=0; slAreasPinta(); if(SL.v3) slEnvia3d(); else slDesenha(); }
-function slAreaMuda(){ var a=slAr(), n=function(v,d){ var x=parseFloat(String(v).replace(',','.')); return x>=3&&x<=80?Math.round(x*10)/10:d; };
+function slAreaMuda(){ slHist('area'+SL.area); var a=slAr(), n=function(v,d){ var x=parseFloat(String(v).replace(',','.')); return x>=3&&x<=80?Math.round(x*10)/10:d; };
   a.nome=el('sl-an').value.trim()||a.nome; a.tipo=el('sl-at').value; a.andar=el('sl-aa').value; a.larg=n(el('sl-al').value,a.larg); a.comp=n(el('sl-ac').value,a.comp); SL.sujo=true;
   var z=slWH(); slDaArea().forEach(function(p){ p.x=Math.min(p.x,z.W-5); p.y=Math.min(p.y,z.H-5); });   /* área menor: peças ficam dentro */
   if(a.pontos) a.pontos.forEach(function(q){ q[0]=Math.min(q[0],a.larg); q[1]=Math.min(q[1],a.comp); });
   var foco=document.activeElement&&document.activeElement.id; slAreasPinta(); if(foco&&el(foco)){ el(foco).focus(); if(el(foco).setSelectionRange&&el(foco).type==='text'){ var v=el(foco).value.length; el(foco).setSelectionRange(v,v); } }
   if(SL.v3) slDesenha3(); else slDesenha(); }
-function slAreaRet(){ var a=slAr(); delete a.pontos; SL.sujo=true; slAreasPinta(); slDesenha(); }
-function slAreaNova(){ var i=1; while(SL.areas.some(function(a){ return a.id==='a'+i; })) i++; var ext=SL.areas.some(function(a){ return a.tipo==='interno'; });
+/* (122) borda da área: novo ponto no lado i, onde o cliente clicou (q em pontos do mapa); apagar ponto (mínimo 3) */
+function slPontoNovo(i,q){ var a=slAr(); slHist(); a.pontos=slPts(a).map(function(x){ return x.slice(); }); SL.sujo=true;
+  var A=a.pontos[i], B=a.pontos[(i+1)%a.pontos.length], mx=q.x/25, my=q.y/25, dx=B[0]-A[0], dy=B[1]-A[1], t=Math.max(0.05,Math.min(0.95,((mx-A[0])*dx+(my-A[1])*dy)/((dx*dx+dy*dy)||1)));
+  a.pontos.splice(i+1,0,[Math.round((A[0]+dx*t)*20)/20,Math.round((A[1]+dy*t)*20)/20]); slAreasPinta(); slDesenha(); aviso('Ponto criado: arraste para quebrar a parede'); }
+function slPontoApaga(i){ var a=slAr(), pts=slPts(a); if(pts.length<=3){ aviso('A área precisa de pelo menos 3 pontos.'); return; } slHist(); a.pontos=pts.map(function(x){ return x.slice(); }); a.pontos.splice(i,1); SL.sujo=true; slAreasPinta(); slDesenha(); }
+/* (122) DESFAZER / REFAZER: guarda uma foto do desenho (peças + áreas) antes de cada mudança; mudanças seguidas no mesmo campo viram um passo só */
+function slFoto(){ return JSON.stringify({L:SL.L,areas:SL.areas,area:SL.area}); }
+function slHist(tag){ SL.hist=SL.hist||[]; var ag=Date.now(); if(tag&&SL.hTag===tag&&ag-(SL.hT||0)<1500){ SL.hT=ag; return; } SL.hTag=tag||''; SL.hT=ag;
+  var f=slFoto(); if(SL.hist[SL.hist.length-1]!==f){ SL.hist.push(f); if(SL.hist.length>80) SL.hist.shift(); } SL.refaz=[]; slHistBt(); }
+function slVolta(f){ var o=JSON.parse(f); SL.L=o.L; SL.areas=o.areas; SL.area=SL.areas.some(function(a){ return a.id===o.area; })?o.area:SL.areas[0].id; SL.sel=0; SL.multi=[]; SL.sujo=true; SL.hTag=''; slAreasPinta(); slDesenha(); slHistBt(); }
+function slDesfaz(){ SL.hist=SL.hist||[]; if(!SL.hist.length) return; (SL.refaz=SL.refaz||[]).push(slFoto()); slVolta(SL.hist.pop()); }
+function slRefaz(){ SL.refaz=SL.refaz||[]; if(!SL.refaz.length) return; (SL.hist=SL.hist||[]).push(slFoto()); slVolta(SL.refaz.pop()); }
+function slHistBt(){ var a=el('sl-undo'), b=el('sl-redo'); if(a) a.disabled=!(SL.hist&&SL.hist.length); if(b) b.disabled=!(SL.refaz&&SL.refaz.length); }
+document.addEventListener('keydown',function(e){ var t=el('sl-tela'); if(!t||t.style.display==='none'||!(e.ctrlKey||e.metaKey)) return; var tg=e.target&&e.target.tagName; if(tg==='INPUT'||tg==='TEXTAREA') return;
+  var k=String(e.key||'').toLowerCase(); if(k==='z'&&!e.shiftKey){ e.preventDefault(); slDesfaz(); } else if(k==='y'||(k==='z'&&e.shiftKey)){ e.preventDefault(); slRefaz(); } });
+function slAreaRet(){ slHist(); var a=slAr(); delete a.pontos; SL.sujo=true; slAreasPinta(); slDesenha(); }
+function slAreaNova(){ slHist(); var i=1; while(SL.areas.some(function(a){ return a.id==='a'+i; })) i++; var ext=SL.areas.some(function(a){ return a.tipo==='interno'; });
   SL.areas.push({id:'a'+i,nome:ext?'Área externa':'Área interna',tipo:ext?'externo':'interno',andar:'terreo',larg:12,comp:8}); SL.area='a'+i; SL.sel=0; SL.sujo=true; slAreasPinta(); slDesenha(); }
 function slAreaApaga(){ var a=slAr(), n=slDaArea().length; if(SL.areas.length<2) return; if(!window.confirm('Apagar a área "'+a.nome+'"'+(n?' e as '+n+' peças dela':'')+'?')) return;
-  SL.L=SL.L.filter(function(p){ return p.area!==a.id; }); SL.areas=SL.areas.filter(function(x){ return x.id!==a.id; }); SL.area=SL.areas[0].id; SL.sel=0; SL.sujo=true; slAreasPinta(); slDesenha(); }
-function slMedida(){ var p=slPeca(SL.sel); if(!p) return; SL.sujo=true;
+  slHist(); SL.L=SL.L.filter(function(p){ return p.area!==a.id; }); SL.areas=SL.areas.filter(function(x){ return x.id!==a.id; }); SL.area=SL.areas[0].id; SL.sel=0; SL.sujo=true; slAreasPinta(); slDesenha(); }
+function slMedida(){ var p=slPeca(SL.sel); if(!p) return; slHist('med'+p.id); SL.sujo=true;
   if(p.t==='mesa'&&p.forma==='quadrada'){ var qw=parseFloat(el('sl-qw').value), qh=parseFloat(el('sl-qh').value); if(qw>=40) p.w=Math.max(10,Math.min(150,Math.round(qw/4))); if(qh>=40) p.h=Math.max(10,Math.min(150,Math.round(qh/4))); }
   else if(p.t==='mesa'){ var cm=parseFloat(el('sl-cm').value); if(cm>=40) p.w=p.h=Math.max(10,Math.min(150,Math.round(cm/4))); } else { var mw=parseFloat(String(el('sl-mw').value).replace(',','.')), mh=parseFloat(String(el('sl-mh').value).replace(',','.')); if(mw>0) p.w=Math.max(5,Math.min(2000,Math.round(mw*25))); if(mh>0) p.h=Math.max(5,Math.min(2000,Math.round(mh*25))); } el('sl-svg').innerHTML=slPlanta(); }
-function slEdita(){ var p=slPeca(SL.sel); if(!p) return; SL.sujo=true; if(p.t==='mesa'){ var v=parseInt(el('sl-n').value,10); if(v>0) p.n=v; } else p.label=el('sl-l').value; el('sl-svg').innerHTML=slPlanta(); }
+function slEdita(){ var p=slPeca(SL.sel); if(!p) return; slHist('ed'+p.id); SL.sujo=true; if(p.t==='mesa'){ var v=parseInt(el('sl-n').value,10); if(v>0) p.n=v; } else p.label=el('sl-l').value; el('sl-svg').innerHTML=slPlanta(); }
 function slGira(){ slRot(90); }
-function slRemove(){ var ids=slSels().map(function(p){ return p.id; }); if(!ids.length) return; if(ids.length>1&&!window.confirm('Remover as '+ids.length+' peças selecionadas?')) return; SL.sujo=true; SL.L=SL.L.filter(function(p){ return ids.indexOf(p.id)<0; }); SL.sel=0; SL.multi=[]; slDesenha(); }
+function slRemove(){ slHist(); var ids=slSels().map(function(p){ return p.id; }); if(!ids.length) return; if(ids.length>1&&!window.confirm('Remover as '+ids.length+' peças selecionadas?')) return; SL.sujo=true; SL.L=SL.L.filter(function(p){ return ids.indexOf(p.id)<0; }); SL.sel=0; SL.multi=[]; slDesenha(); }
 /* (120) teclado no editor: Delete remove a seleção, Esc limpa, setas movem 10 cm (com Shift, 1 m) */
 document.addEventListener('keydown',function(e){
   var t=el('sl-tela'); if(!t||t.style.display==='none'||SL.v3) return; var tg=e.target&&e.target.tagName; if(tg==='INPUT'||tg==='SELECT'||tg==='TEXTAREA') return;
@@ -8618,8 +8630,8 @@ document.addEventListener('keydown',function(e){
   if(!ps.length) return;
   if(e.key==='Delete'||e.key==='Backspace'){ e.preventDefault(); slRemove(); return; }
   var dd={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[e.key]; if(!dd) return; e.preventDefault();
-  var st=e.shiftKey?25:2.5, z=slWH(); SL.sujo=true; ps.forEach(function(p){ p.x=Math.max(5,Math.min(z.W-5,p.x+dd[0]*st)); p.y=Math.max(5,Math.min(z.H-5,p.y+dd[1]*st)); }); slDesenha(true); });
-function slAdd(t){
+  var st=e.shiftKey?25:2.5, z=slWH(); slHist('seta'); SL.sujo=true; ps.forEach(function(p){ p.x=Math.max(5,Math.min(z.W-5,p.x+dd[0]*st)); p.y=Math.max(5,Math.min(z.H-5,p.y+dd[1]*st)); }); slDesenha(true); });
+function slAdd(t){ slHist();
   var m=el('sl-m'); m.textContent='';
   if(t==='balcao'&&slDaArea().some(function(p){return p.t==='balcao';})){ m.style.color='#B08A00'; m.textContent='Já existe um balcão: arraste o que está no mapa.'; return; }
   var n=0; if(t==='mesa'){ var us={}; SL.L.forEach(function(p){ if(p.t==='mesa') us[p.n]=1; }); n=1; while(us[n]) n++; }
