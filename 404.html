@@ -35,7 +35,7 @@
   fetch('/livefood.html', { cache: 'no-cache' }).then(function (r) { return r.text(); }).then(function (h) {
     h = h.replace(/<head>/i, '<head><base href="/"><script>window.LF_ROTA=' + JSON.stringify(rota) + '<\/script>');
     document.open(); document.write(h); document.close();
-  }).catch(function () { location.replace('/livefood.html?c=' + encodeURIComponent(rota.c) + (rota.mesa ? '&mesa=' + rota.mesa : '') + (rota.wa ? '&wa=1' : '')); });
+  }).catch(function () { location.replace('/livefood.html?c=' + encodeURIComponent(rota.c) + (rota.mesa ? '&mesa=' + rota.mesa : '') + (rota.wa ? '&wa=1' : '') + (/[?&]clube=ver\b/.test(location.search) ? '&clube=ver' : '')); });
 })();
 </script>
 </head>

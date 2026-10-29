@@ -237,7 +237,7 @@ html.claro #wzp{filter:invert(1) hue-rotate(180deg)}
 .mp{display:flex;gap:12px;align-items:center;padding:12px 0;border-top:1px solid var(--line);cursor:pointer}
 /* (114) destaques da categoria: grade de 3 por linha no topo da lista */
 .dsqt{font-size:18px;font-weight:900;margin:16px 0 12px}
-.fogo{margin-right:5px;display:inline-block;animation:fogo 1.6s ease-in-out infinite;transform-origin:50% 90%}@keyframes fogo{0%,100%{transform:scale(1) rotate(-4deg)}50%{transform:scale(1.15) rotate(4deg)}}
+.fgw{position:relative;flex:none}.fogo{position:absolute;top:-8px;right:-8px;font-size:18px;line-height:1;display:inline-block;animation:fogo 1.6s ease-in-out infinite;transform-origin:50% 90%;filter:drop-shadow(0 2px 3px #000a);pointer-events:none}html.claro #sheet .fogo{filter:invert(1) hue-rotate(180deg) drop-shadow(0 2px 3px #0006)}@keyframes fogo{0%,100%{transform:scale(1) rotate(-4deg)}50%{transform:scale(1.15) rotate(4deg)}}
 .dsq{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 10px;margin-bottom:14px}
 .dsc{cursor:pointer;min-width:0;animation:dsqEntra .4s cubic-bezier(.2,1.2,.4,1) both}
 @keyframes dsqEntra{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
@@ -288,6 +288,13 @@ html.claro #sheet .dsc .pc{filter:invert(1) hue-rotate(180deg)}   /* tema claro 
 .clb-mini{width:20px;height:18px;flex:none;filter:drop-shadow(0 1px 3px rgba(20,90,130,.55))}
 /* tema claro inverte a folha: desinverte o diamante (fica azul) */
 html.claro #sheet .clb-mini{filter:drop-shadow(0 1px 3px rgba(20,90,130,.55)) invert(1) hue-rotate(180deg)}
+/* (114) preço de assinante na lista (quem é do Clube ou modo visualização): pílula laranja com o diamante na ponta */
+.clb-ln{display:flex;justify-content:flex-end;margin-top:4px}.dsc .clb-ln{justify-content:flex-start;margin-top:5px}
+.clb-pill{position:relative;display:inline-flex;align-items:center;background:var(--pri);color:#fff;border-radius:8px;padding:1px 8px 1px 13px;margin-left:9px;font-weight:800;font-size:12.5px;line-height:1.55;white-space:nowrap}
+.clb-pill .clb-mini{position:absolute;left:-10px;top:50%;width:19px;height:17px;transform:translateY(-55%)}
+html.claro #sheet .clb-pill{color:#000}
+#clbVer{position:fixed;left:8px;right:8px;top:calc(66px + env(safe-area-inset-top));z-index:2147482000;display:flex;align-items:center;gap:9px;padding:8px 8px 8px 12px;border-radius:14px;background:linear-gradient(90deg,#0c4a6e,#1e3a8a);color:#fff;font-size:12.5px;line-height:1.35;box-shadow:0 8px 24px #0007}
+#clbVer span{flex:1}#clbVer button{border:0;border-radius:10px;background:#ffffff26;color:#fff;font-weight:800;font-size:12.5px;padding:7px 12px;cursor:pointer}
 /* linha do Clube embaixo do subtotal da sacola */
 .clb-sac{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;font-size:14px;font-weight:800;color:#5CC8F2;cursor:pointer}
 .clb-sac>span:first-child{display:inline-flex;align-items:flex-start;gap:7px}
@@ -538,7 +545,7 @@ function ofPedir(oid){
   if(!ids.length){ abreMenu(); return; }
   var h='<div class="wh"><button class="bk" onclick="fechaSheet()">'+XI+'</button><b>'+esc((o&&o.nome)||'Oferta')+'</b></div><div class="wb">';
   ids.forEach(function(id){ var p=D.produtos[id], pr=minPreco(p), ft=p.foto?'<div class="th" style="width:56px;height:56px;border-radius:10px;background:#2a2a30 center/cover url('+fotoUrl(p)+');flex:none"></div>':'<div style="width:56px;height:56px;border-radius:10px;background:#2a2a30;flex:none;display:flex;align-items:center;justify-content:center">'+icone(tipoDesenho(p),28)+'</div>';
-    h+='<div class="mp" onclick="abreSheet(\''+esc(p.id)+'\')">'+ft+'<div style="flex:1;min-width:0"><b style="font-size:14.5px">'+(p.destaque?'<span class="fogo" title="Destaque">🔥</span>':'')+esc(p.nome)+'</b>'+promoTag(p)+'</div><span class="vl" style="color:var(--pri2);font-weight:800;font-size:13.5px;text-align:right">'+(pr.de?'a partir de ':'')+brl(pr.min)+'</span></div>'; });
+    h+='<div class="mp" onclick="abreSheet(\''+esc(p.id)+'\')">'+(p.destaque?'<div class="fgw">'+ft+'<span class="fogo" title="Destaque">🔥</span></div>':ft)+'<div style="flex:1;min-width:0"><b style="font-size:14.5px">'+esc(p.nome)+'</b>'+promoTag(p)+'</div><span class="vl" style="color:var(--pri2);font-weight:800;font-size:13.5px;text-align:right">'+(pr.de?'a partir de ':'')+brl(pr.min)+clbLinhaMembro(p)+'</span></div>'; });
   h+='</div>'; abreFolha(h,true);
 }
 function ofMascara(t){ if(!t||t.mascara===false) return ''; var f=t.mascaraForca||45; return 'linear-gradient(180deg,rgba(0,0,0,'+(f*0.0022).toFixed(3)+'),rgba(0,0,0,'+(f/100).toFixed(2)+'))'; }
@@ -955,7 +962,7 @@ function abreSacola(){ navOn('sac'); CK.on=0; CK.open=0;
   h+=sacLista();
   h+='</div>';
   if(SAC.length&&!estaAberto()){ var pg=progLer(); h+='<div class="nt" style="text-align:center;padding:10px 16px 0;color:var(--pri2)">'+(pg?'🕒 Pedido programado para '+progFmt(pg)+' · <u onclick="abreAgenda()" style="cursor:pointer">alterar</u>':'🕒 Estamos fechados. <u onclick="abreAgenda()" style="cursor:pointer">Agendar este pedido</u>')+'</div>'; }
-  if(SAC.length) h+='<div class="rod" style="flex-direction:column;align-items:stretch;gap:8px">'+(sacEcon()>0?'<div class="tt" style="padding:0;font-size:13px;color:#4ade80"><span>Desconto aplicado</span><span>− '+brl(sacEcon())+'</span></div>':'')+'<div class="tt" style="padding:0"><span>Subtotal</span><span>'+brl(sacTotal())+'</span></div>'+clbSac()+(waOn()?'<button class="bt c wa-env" id="wa-env" style="flex:none;width:100%" onclick="waEnviar()">'+WA_ICO+'Enviar lista para o WhatsApp</button>':'<button class="bt c" style="flex:none;width:100%" onclick="sacContinuar()">'+(MESA?'Fazer pedido':'Continuar')+'</button>')+'<button class="bt c" style="flex:none;width:100%;background:transparent;border:2px solid var(--pri);color:var(--pri)" onclick="abreMenu()">Continuar comprando</button></div>';
+  if(SAC.length) h+='<div class="rod" style="flex-direction:column;align-items:stretch;gap:8px">'+(sacEcon()>0?'<div class="tt" style="padding:0;font-size:13px;color:#4ade80"><span>Desconto aplicado</span><span>− '+brl(sacEcon())+'</span></div>':'')+'<div class="tt" style="padding:0"><span>Subtotal</span><span>'+brl(sacTotal())+'</span></div>'+clbSac()+clbSacMembro()+(waOn()?'<button class="bt c wa-env" id="wa-env" style="flex:none;width:100%" onclick="waEnviar()">'+WA_ICO+'Enviar lista para o WhatsApp</button>':'<button class="bt c" style="flex:none;width:100%" onclick="sacContinuar()">'+(MESA?'Fazer pedido':'Continuar')+'</button>')+'<button class="bt c" style="flex:none;width:100%;background:transparent;border:2px solid var(--pri);color:var(--pri)" onclick="abreMenu()">Continuar comprando</button></div>';
   abreFolha(h,true);
 }
 /* ── conta do cliente (5B): entra pelo WhatsApp com código, guarda nome e endereços ── */
@@ -1339,7 +1346,7 @@ function buscaLista(){
   var q=(($('bq')||{}).value||'').trim().toLowerCase(), h='', ps=Object.keys(D.produtos).map(function(k){ return D.produtos[k]; }).sort(function(a,b){ return String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR',{sensitivity:'base',numeric:true}); });
   if(q) ps=ps.filter(function(p){ return (p.nome+' '+(p.desc||'')+' '+(p.sabores||[]).map(function(s){return s.nome;}).join(' ')).toLowerCase().indexOf(q)>=0; });
   ps.slice(0,40).forEach(function(p){ var pr=minPreco(p), ft=p.foto?'<div style="width:56px;height:56px;border-radius:10px;background:#2a2a30 center/cover url('+fotoUrl(p)+');flex:none"></div>':'<div style="width:56px;height:56px;border-radius:10px;background:#ffffff0f;display:flex;align-items:center;justify-content:center;flex:none">'+icone(tipoDesenho(p),26)+'</div>';
-    h+='<div class="mp" onclick="abreSheet(\''+esc(p.id)+'\')">'+ft+'<div style="flex:1;min-width:0"><b style="font-size:14.5px">'+(p.destaque?'<span class="fogo" title="Destaque">🔥</span>':'')+esc(p.nome)+'</b>'+promoTag(p)+'</div><span class="vl" style="color:var(--pri2);font-weight:800;font-size:13.5px;text-align:right">'+(pr.min>0?(pr.de?'a partir de ':'')+(pr.orig>pr.min?'<s class="de">'+brl(pr.orig)+'</s> ':'')+brl(pr.min):'')+'</span></div>'; });
+    h+='<div class="mp" onclick="abreSheet(\''+esc(p.id)+'\')">'+(p.destaque?'<div class="fgw">'+ft+'<span class="fogo" title="Destaque">🔥</span></div>':ft)+'<div style="flex:1;min-width:0"><b style="font-size:14.5px">'+esc(p.nome)+'</b>'+promoTag(p)+'</div><span class="vl" style="color:var(--pri2);font-weight:800;font-size:13.5px;text-align:right">'+(pr.min>0?(pr.de?'a partir de ':'')+(pr.orig>pr.min?'<s class="de">'+brl(pr.orig)+'</s> ':'')+brl(pr.min):'')+'</span></div>'; });
   $('bl').innerHTML=h||'<div class="nt">Nada encontrado.</div>';
 }
 function pedAjuda(num){ var w=String((D.cfg&&(D.cfg.whats||D.cfg.whatsapp||D.cfg.fone))||'').replace(/\D/g,''); if(w.length<10){ toast('Contato do restaurante ainda não cadastrado'); return; } window.open('https://wa.me/'+(w.length<=11?'55':'')+w+'?text='+encodeURIComponent('Olá! Preciso de ajuda com o pedido #'+num),'_blank'); }
@@ -1580,10 +1587,10 @@ function abreCat(id){
     dq.forEach(function(p,k){ var pr=minPreco(p), pc=pr.orig>pr.min?Math.round((1-pr.min/pr.orig)*100):0;
       h+='<div class="dsc" style="animation-delay:'+(k*50)+'ms" onclick="abreSheet(\''+esc(p.id)+'\')"><div class="im"'+(p.foto?' style="background-image:url('+fotoUrl(p)+')"':'')+'>'+(p.foto?'':icone(tipoDesenho(p),40))+'</div>'
         +(pr.de?'<div class="ap">a partir de</div>':'')+'<div class="pr"'+(pr.de?' style="margin-top:0"':'')+'>'+brl(pr.min)+'</div>'
-        +(pc>0?'<div class="dr"><s>'+brl(pr.orig)+'</s><span class="pc">-'+pc+'%</span></div>':'')+'<div class="nm">'+esc(p.nome)+'</div></div>'; });
+        +(pc>0?'<div class="dr"><s>'+brl(pr.orig)+'</s><span class="pc">-'+pc+'%</span></div>':'')+clbLinhaMembro(p)+'<div class="nm">'+esc(p.nome)+'</div></div>'; });
     h+='</div></div>'; }
   g.ps.forEach(function(p){ var pr=minPreco(p), ft=p.foto?'<div class="th" style="width:56px;height:56px;border-radius:10px;background:#2a2a30 center/cover url('+fotoUrl(p)+');flex:none"></div>':'<div style="width:56px;height:56px;border-radius:10px;background:#2a2a30;flex:none;display:flex;align-items:center;justify-content:center;">'+icone(tipoDesenho(p),28)+'</div>';
-    h+='<div class="mp" data-n="'+esc(semAc(p.nome))+'" onclick="abreSheet(\''+esc(p.id)+'\')">'+ft+'<div style="flex:1;min-width:0"><b style="font-size:14.5px">'+(p.destaque?'<span class="fogo" title="Destaque">🔥</span>':'')+esc(p.nome)+'</b>'+promoTag(p)+'</div><span class="vl" style="color:var(--pri2);font-weight:800;font-size:13.5px;text-align:right">'+(pr.de?'a partir de ':'')+(pr.orig>pr.min?'<s class="de">'+brl(pr.orig)+'</s> ':'')+brl(pr.min)+'</span></div>'; });
+    h+='<div class="mp" data-n="'+esc(semAc(p.nome))+'" onclick="abreSheet(\''+esc(p.id)+'\')">'+(p.destaque?'<div class="fgw">'+ft+'<span class="fogo" title="Destaque">🔥</span></div>':ft)+'<div style="flex:1;min-width:0"><b style="font-size:14.5px">'+esc(p.nome)+'</b>'+promoTag(p)+'</div><span class="vl" style="color:var(--pri2);font-weight:800;font-size:13.5px;text-align:right">'+(pr.de?'a partir de ':'')+(pr.orig>pr.min?'<s class="de">'+brl(pr.orig)+'</s> ':'')+brl(pr.min)+clbLinhaMembro(p)+'</span></div>'; });
   h+='</div>'; abreFolha(h,true,'fx');
 }
 
@@ -1841,7 +1848,22 @@ var CLB_MINI='<svg class="clb-mini" viewBox="0 0 64 56" aria-hidden="true"><defs
 var CLB_LAMINA='<div class="lm"><svg viewBox="0 0 64 56" preserveAspectRatio="none" aria-hidden="true"><g fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="1.3"><path d="M1.5 18.5h61M14 2.5l6 16 12-16 12 16 6-16M20 18.5l12 35 12-35"/></g><path d="M14 2.5L1.5 18.5h18.5z" fill="#fff" fill-opacity=".45"/></svg></div>';
 var CLB_GEMA='<div class="gr">'+CLB_LAMINA+CLB_LAMINA+CLB_LAMINA+CLB_LAMINA+'<div class="bri"></div></div>';
 function clbGema(){ return '<span class="clb-d3">'+CLB_GEMA+'</span>'; }
-function clbMembro(){ return !!(CT&&CT.conta&&CT.conta.clube&&CT.conta.clube.ativo); }   /* a assinatura de verdade chega na próxima etapa */
+/* (114) modo visualização (?clube=ver, aberto pelo painel): o cardápio mostra o que o assinante vê, sem assinatura (só para conferir; o pedido segue com o preço normal) */
+var CLB_VER=Q.get('clube')==='ver';
+function clbMembro(){ return CLB_VER||!!(CT&&CT.conta&&CT.conta.clube&&CT.conta.clube.ativo); }   /* a assinatura de verdade chega na próxima etapa */
+/* plano de quem é do Clube: o da assinatura; na visualização, o de maior economia */
+function clbPlanoMembro(){ var c=D&&D.clube; if(!c||!c.ativo) return null; var k=CT&&CT.conta&&CT.conta.clube&&CT.conta.clube.plano; if(k&&c.planos[k]&&c.planos[k].on) return c.planos[k]; var m=null, mt=null;
+  ['tri','sem','anu'].forEach(function(k2){ var pl=c.planos[k2]; if(!pl||!pl.on) return; var t=SAC.length?clbSacTotal(clbDescPlano(pl)):null, d=clbDescPlano(pl), sc=t!=null?-t:(d?(d.tipo==='pct'?d.valor*1000:d.valor):0); if(m==null||sc>mt||(sc===mt&&pl.frete)){ m=pl; mt=sc; } }); return m; }
+/* lista: preço de assinante na pílula laranja com o diamante, embaixo do preço normal */
+function clbLinhaMembro(p){ if(!clbMembro()) return ''; var pl=clbPlanoMembro(); if(!pl) return ''; var r=clbPreco(p,clbDescPlano(pl)); if(!r) return ''; return '<div class="clb-ln"><span class="clb-pill">'+CLB_MINI+brl(r.preco)+'</span></div>'; }
+/* sacola de quem é do Clube: o desconto já calculado e o frete grátis do plano */
+function clbSacMembro(){ if(!clbMembro()) return ''; var pl=clbPlanoMembro(); if(!pl) return ''; var s=sacTotal(), t=clbSacTotal(clbDescPlano(pl));
+  if(t==null||t>=s) return pl.frete?'<div class="clb-sac"><span>'+CLB_MINI+'<span>Clube</span></span><span>Frete grátis</span></div>':'';
+  return '<div class="clb-sac"><span>'+CLB_MINI+'<span>Desconto Clube</span></span><span>− '+brl(s-t)+'<small>total no Clube '+brl(t)+(pl.frete?' + frete grátis':'')+'</small></span></div>'; }
+/* faixa do modo visualização */
+function clbVerFaixa(){ if(!CLB_VER||$('clbVer')) return; var c=D&&D.clube, f=document.createElement('div'); f.id='clbVer';
+  f.innerHTML=CLB_MINI+'<span>'+(c&&c.ativo?'<b>Visualização do Clube</b> · você está vendo como assinante. Pedidos seguem com o preço normal.':'<b>Visualização do Clube</b> · o Clube está desligado no painel.')+'</span><button type="button" onclick="clbVerSair()">Sair</button>'; document.body.appendChild(f); }
+function clbVerSair(){ var u=new URL(location.href); u.searchParams.delete('clube'); location.href=u.toString(); }
 function clbHoje(){ var d=new Date(Date.now()-3*3600000); return {dia:d.getUTCDay(),data:d.toISOString().slice(0,10)}; }
 /* preço do produto para quem é do clube: oferta do dia > preço específico do produto > regra geral (loja, categorias ou produtos) */
 function clbPreco(p,dx){
@@ -1865,7 +1887,7 @@ function clbSac(){ var c=D&&D.clube; if(clbMembro()||!c||!c.ativo) return ''; va
   if(!m||m.t>=s) return '';
   return '<div class="clb-sac" onclick="clbAbre()"><span>'+CLB_MINI+'<span>Clube<i>Assinar</i></span></span><span>'+brl(m.t)+'<small>no Clube você economiza '+brl(s-m.t)+(m.frete?' + frete grátis':'')+'</small></span></div>'; }
 /* diamante na home: gira devagar com um brilho; abre os planos */
-function clbInit(){ var b=$('clbBtn'), sd=$('mside'); if(!D.clube||!D.clube.ativo||clbMembro()||!sd){ if(b) b.remove(); return; } if(b) return; b=document.createElement('button'); b.id='clbBtn'; b.type='button'; b.className='clb-sh'; b.setAttribute('aria-label','Assinar o clube'); b.innerHTML=clbGema()+'ASSINAR CLUBE'; b.onclick=function(e){ e.stopPropagation(); clbAbre(); }; sd.insertBefore(b,sd.firstChild); }
+function clbInit(){ clbVerFaixa(); var b=$('clbBtn'), sd=$('mside'); if(!D.clube||!D.clube.ativo||clbMembro()||!sd){ if(b) b.remove(); return; } if(b) return; b=document.createElement('button'); b.id='clbBtn'; b.type='button'; b.className='clb-sh'; b.setAttribute('aria-label','Assinar o clube'); b.innerHTML=clbGema()+'ASSINAR CLUBE'; b.onclick=function(e){ e.stopPropagation(); clbAbre(); }; sd.insertBefore(b,sd.firstChild); }
 function clbAbre(){
   var c=D.clube; if(!c||!c.ativo||$('clbM')) return;
   var pls=['tri','sem','anu'].filter(function(k){ return c.planos[k]&&c.planos[k].on; }), h='';

@@ -7420,7 +7420,8 @@ function clbPintar(){
   h+='</div><div style="font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.45">Pagamento: cartão de crédito com renovação automática em todos os planos. Pix só no anual.</div>';
   h+=sec('Ofertas do Clube por dia','Preço especial de um produto para assinantes em dias da semana escolhidos (ex.: toda terça, burger do clube por R$ 19,90).');
   h+='<div id="clb-ofs"></div><button class="btn sec sm" style="margin-top:8px" onclick="clbOfNova()">+ Oferta do dia</button>';
-  h+='<div id="clb-erro" style="color:#ef4444;font-size:12.5px;margin-top:12px"></div><button class="btn pri wide" id="clb-salvar" style="margin-top:12px" onclick="clbSalvar()">Salvar Clube</button>';
+  h+='<div id="clb-erro" style="color:#ef4444;font-size:12.5px;margin-top:12px"></div><button class="btn pri wide" id="clb-salvar" style="margin-top:12px" onclick="clbSalvar()">Salvar Clube</button>'
+    +'<button class="btn sec wide" type="button" style="margin-top:8px" onclick="clbVer()">👁 Ver o cardápio como assinante</button><div style="font-size:11.5px;color:var(--muted);margin-top:6px;text-align:center">Abre o cardápio como se você fosse do Clube, só para conferir. Salve antes para ver as mudanças.</div>';
   el('clb-bd').innerHTML=h; clbEscopo(); clbOfPintar();
 }
 function clbEscopo(){
@@ -7431,6 +7432,8 @@ function clbEscopo(){
     +(lista||[]).map(function(x){ return '<label class="clb-it" data-n="'+esc(String(x.nome||'').toLowerCase())+'" style="display:flex;align-items:center;gap:8px;padding:5px 0;font-size:13px"><input type="checkbox" value="'+esc(x.id)+'" '+(sel.indexOf(x.id)>=0?'checked':'')+'>'+esc(x.nome||'')+'</label>'; }).join('')+'</div>';
 }
 function clbFiltra(q){ q=String(q||'').toLowerCase(); document.querySelectorAll('#clb-ck .clb-it').forEach(function(l){ l.style.display=l.getAttribute('data-n').indexOf(q)>=0?'flex':'none'; }); }
+/* (114) abre o cardápio no modo visualização do Clube (preços de assinante, sem assinar) */
+function clbVer(){ var u=cdLinkUrl(); window.open(u+(u.indexOf('?')>=0?'&':'?')+'clube=ver','_blank','noopener'); }
 function clbOfNova(){ clbOfLer(); CLB.c.ofertas.push({p:'',dias:[],preco:0,de:'',ate:''}); clbOfPintar(); }
 function clbOfApaga(i){ clbOfLer(); CLB.c.ofertas.splice(i,1); clbOfPintar(); }
 function clbOfPintar(){
