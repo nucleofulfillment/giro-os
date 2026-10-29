@@ -237,7 +237,7 @@ body.lgon #top,body.lgon #cols{display:none}
 
 <!-- ══════════ APP ══════════ -->
 <div id="top"><img class="lo" id="lo" alt="" style="display:none"><h1 id="emp">Cozinha</h1><label class="busca"><span aria-hidden="true">🔍</span><input id="busca" type="search" inputmode="search" placeholder="Mesa ou nº do pedido" autocomplete="off" oninput="pinta()"></label><span class="seg" id="seg"><button id="sCozinha" onclick="setEst('cozinha')">🍳 Cozinha</button><button id="sBar" onclick="setEst('bar')">🍺 Bar</button><button id="sTodos" onclick="setEst('todos')">Unificado</button></span><span id="rel"></span><button class="ib" id="bSom" onclick="somAlterna()">🔔 Som</button><button class="ib" onclick="telaCheia()">⛶</button><button class="ib" onclick="sair()">Sair</button></div>
-<div id="cols"><div class="col n"><h2><span>Novos</span><span id="cN">0</span></h2><div id="lN"></div></div><div class="col p"><h2><span>Em preparo</span><span id="cP">0</span></h2><div id="lP"></div></div><div class="col r"><h2><span>Prontos</span><span id="cR">0</span></h2><div id="lR"></div></div></div>
+<div id="cols"><div class="col n"><h2><span>Novos</span><span id="cN">0</span></h2><div id="lN"></div></div><div class="col p"><h2><span id="tP">Em preparo</span><span id="cP">0</span></h2><div id="lP"></div></div><div class="col r"><h2><span>Prontos</span><span id="cR">0</span></h2><div id="lR"></div></div></div>
 <div id="det" onclick="if(event.target===this)fechaDet()"><div class="det-box" role="dialog" aria-modal="true" aria-label="Detalhes do pedido"><button class="det-x" onclick="fechaDet()" aria-label="Fechar">×</button><div id="det-c"></div></div></div>
 <div id="som"><button onclick="somLiga()">🔔 Toque para ativar o som dos pedidos</button></div>
 <script>
@@ -258,7 +258,7 @@ function entrar(){
     $('login').classList.remove('on'); document.body.classList.remove('lgon'); $('lgS').value=''; busca(); somPergunta();
   }).catch(function(){ b.disabled=false; b.textContent='Entrar'; $('lgM').textContent='Sem conexão. Tente de novo.'; });
 }
-function sair(){ if(!confirm('Sair da cozinha?')) return; mostraLogin(''); PED=[]; pinta(); }
+function sair(){ if(!confirm(LOJA?'Sair da separação?':'Sair da cozinha?')) return; mostraLogin(''); PED=[]; pinta(); }
 function somPergunta(){ if(SOM&&!AC) $('som').style.display='flex'; }
 function somLiga(){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); bip(); }catch(e){} $('som').style.display='none'; }
 function somAlterna(){ SOM=!SOM; $('bSom').textContent=SOM?'🔔 Som':'🔕 Mudo'; $('bSom').classList.toggle('on',!SOM); if(SOM&&!AC) somLiga(); }
@@ -282,6 +282,9 @@ function hhmm(ms){ var d=new Date(ms); return ('0'+d.getHours()).slice(-2)+':'+(
 function fotoHtml(f){ if(!f||!f.length) return '<div class="ft">🍽️</div>'; if(f.length===1) return '<div class="ft" style="background-image:url(\''+API+f[0]+'\')"></div>'; return '<div class="ft m">'+f.slice(0,2).map(function(u){ return '<i style="background-image:url(\''+API+u+'\')"></i>'; }).join('')+'</div>'; }
 try{ var _e=localStorage.getItem('coz_est'); if(_e==='cozinha'||_e==='bar'||_e==='todos') EST=_e; }catch(e){}
 var NOMEST={cozinha:'Cozinha',bar:'Bar',todos:'Cozinha + Bar'};
+/* (133) loja que não é restaurante (farmácia, mercado...): a tela vira SEPARAÇÃO, sem Cozinha/Bar; o tipo vem do botão do catálogo escolhido em Ofertas */
+var LOJA=0, LOJA_LIDA='';
+function lojaTipo(cli){ if(!cli||LOJA_LIDA===cli) return; LOJA_LIDA=cli; fetch(API+'/food/cardapio/'+encodeURIComponent(cli)).then(function(r){ return r.json(); }).then(function(d){ var c=(d&&d.cfg&&d.cfg.menu&&d.cfg.menu.catalogo)||{}, n=String(c.nome||'Cardápio').toLowerCase(); var rest=n==='cardápio'||n==='cardapio'||c.icone==='cardapio'; if(rest) return; LOJA=1; if(EST!=='todos'){ EST='todos'; PED=[]; PEND={}; VISTO={}; INIT=0; BUSY=0; } NOMEST.todos='Separação'; ACAO.n.t='Iniciar separação'; VOLTA.r.t='Voltar para Separando'; var s=$('seg'); if(s) s.style.display='none'; var tp=$('tP'); if(tp) tp.textContent='Separando'; marcaEst(); pinta(); busca(); }).catch(function(){}); }
 function setEst(e){ if(e===EST) return; EST=e; try{ localStorage.setItem('coz_est',e); }catch(x){} PED=[]; PEND={}; VISTO={}; INIT=0; marcaEst(); pinta(); BUSY=0; busca(); }
 function marcaEst(){ $('sCozinha').classList.toggle('on',EST==='cozinha'); $('sBar').classList.toggle('on',EST==='bar'); $('sTodos').classList.toggle('on',EST==='todos'); if(EMP) $('emp').innerHTML=esc(EMP); try{ document.title='LiveFood — '+NOMEST[EST]+(EMP?' · '+EMP:''); }catch(e){} }
 var EMP='';
@@ -291,7 +294,7 @@ function itemHtml(l){
   if(l.borda) d.push('<div>Borda: <b style="display:inline;font-size:15px">'+esc(l.borda)+'</b></div>');
   (l.adds||[]).forEach(function(a){ d.push('<div class="ad">+ '+esc(a)+'</div>'); });
   if(l.obs) d.push('<div class="ob">Obs: '+esc(l.obs)+'</div>');
-  return '<div class="it">'+fotoHtml(l.fotos)+'<div class="tx"><b><span class="qb'+((l.qty||1)>1?' multi':'')+'">'+(l.qty||1)+'</span>'+esc(l.nome)+(EST==='todos'?(l.dest==='bar'?'<span class="bdg">🍺 Bar</span>':'<span class="bdg k">🍳 Cozinha</span>'):'')+'</b>'+d.join('')+'</div></div>';
+  return '<div class="it">'+fotoHtml(l.fotos)+'<div class="tx"><b><span class="qb'+((l.qty||1)>1?' multi':'')+'">'+(l.qty||1)+'</span>'+esc(l.nome)+(EST==='todos'&&!LOJA?(l.dest==='bar'?'<span class="bdg">🍺 Bar</span>':'<span class="bdg k">🍳 Cozinha</span>'):'')+'</b>'+d.join('')+'</div></div>';
 }
 /* (COZINHA-18) card mais limpo: ação no canto de cima (sempre na mesma altura, mesmo com lista longa); toque no card abre os detalhes e a prioridade */
 var ACAO={n:{e:'preparo',ic:'▶',t:'Iniciar preparo'},p:{e:'pronto',ic:'✔',t:'Pronto'},r:{e:'ok',ic:'✕',t:'Retirar da tela'}};
@@ -316,7 +319,7 @@ function pinta(){
   var c=colunas(), q=($('busca')&&$('busca').value.trim())||'', vivos={};
   PED.forEach(function(p){ vivos[p.id]=1; }); var mud=0; for(var k0 in PRIO) if(!vivos[k0]&&INIT){ delete PRIO[k0]; mud=1; } if(mud) prioGrava();
   ['n','p','r'].forEach(function(k){ var id=k.toUpperCase(), L=c[k].filter(function(p){ return bate(p,q); });
-    $('l'+id).innerHTML=L.length?L.map(function(p){ return cardHtml(p,k); }).join(''):'<div class="vz">'+(q?'Nada com "'+esc(q)+'"':(k==='n'?'Nenhum pedido novo':k==='p'?'Nada em preparo':'Nada pronto'))+'</div>'; $('c'+id).textContent=L.length; });
+    $('l'+id).innerHTML=L.length?L.map(function(p){ return cardHtml(p,k); }).join(''):'<div class="vz">'+(q?'Nada com "'+esc(q)+'"':(k==='n'?'Nenhum pedido novo':k==='p'?(LOJA?'Nada em separação':'Nada em preparo'):'Nada pronto'))+'</div>'; $('c'+id).textContent=L.length; });
   if(DET) detPinta();
 }
 /* janela de detalhes do pedido: itens completos, mudar etapa e prioridade */
@@ -350,7 +353,7 @@ function busca(){
     BUSY=0; if(_est!==EST) return;
     if(d._h===401||d._h===403){ mostraLogin('Entre de novo.'); return; }
     if(!d||!d.ok) return;
-    OFF=(d.agora||Date.now())-Date.now(); CLI=d.cli||CLI; try{ window.GiroMarca&&GiroMarca.set(CLI); }catch(e){} if(d.empresa){ EMP=d.empresa; marcaEst(); } if(CLI&&!$('lo').getAttribute('src')){ $('lo').onerror=function(){ this.style.display='none'; }; $('lo').onload=function(){ this.style.display=''; try{ if(window.GiroMarca&&GiroMarca.ajusta) GiroMarca.ajusta(this,'claro'); }catch(e){} }; $('lo').src=API+'/food/foto/'+encodeURIComponent(CLI)+'/_logop'; }
+    OFF=(d.agora||Date.now())-Date.now(); CLI=d.cli||CLI; try{ window.GiroMarca&&GiroMarca.set(CLI); }catch(e){} lojaTipo(CLI); if(d.empresa){ EMP=d.empresa; marcaEst(); } if(CLI&&!$('lo').getAttribute('src')){ $('lo').onerror=function(){ this.style.display='none'; }; $('lo').onload=function(){ this.style.display=''; try{ if(window.GiroMarca&&GiroMarca.ajusta) GiroMarca.ajusta(this,'claro'); }catch(e){} }; $('lo').src=API+'/food/foto/'+encodeURIComponent(CLI)+'/_logop'; }
     var novo=0; d.pedidos.forEach(function(p){ if(!VISTO[p.id]){ VISTO[p.id]=1; if(INIT&&p.estado==='') novo++; } });
     var agr=Date.now(); d.pedidos.forEach(function(p){ var q=PEND[p.id]; if(q){ if(p.estado===q.e||agr-q.t>15000) delete PEND[p.id]; else p.estado=q.e; } });
     PED=d.pedidos.filter(function(p){ var q=PEND[p.id]; return !(q&&q.e==='ok'); }); INIT=1; pinta(); if(novo) bip();

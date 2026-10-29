@@ -616,6 +616,7 @@ a{color:inherit}
 .indbar{display:none!important}
 .cc-g{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.cc-g .kpi{margin:0;height:100%;box-sizing:border-box}@media(max-width:760px){.cc-g{grid-template-columns:1fr 1fr}.cc-g .cc-w{grid-column:1/-1!important;grid-row:auto!important}.cc-g .cc-s{grid-column:auto!important;grid-row:auto!important}}
 .cd-li{transition:background .15s}.cd-li:hover{background:var(--s2,#f4f4f5)}
+html.loja-p .cd-dest{display:none!important}
 </style>
 <style>html.dd-ret #login{visibility:hidden}</style><script>try{if(localStorage.getItem('dd_jwt'))document.documentElement.classList.add('dd-ret');}catch(e){}</script>
 <script src="marca.js?v=9"></script>
@@ -3535,6 +3536,8 @@ function navOculto(id){ return id==='mesa'&&!(DD_USER&&DD_USER.perfil==='mesa');
 var CAT_PAINEL=null, CAT_PAINEL_PEDIU=false;
 function catPainelAplica(c){
   if(c) CAT_PAINEL=c; c=CAT_PAINEL; if(!c) return;
+  /* (133) farmácia, mercado...: não tem Cozinha/Bar, some o destino da categoria */
+  var nmL=String(c.nome||'Cardápio').toLowerCase(); document.documentElement.classList.toggle('loja-p',!(nmL==='cardápio'||nmL==='cardapio'||!c.icone||c.icone==='cardapio'));
   var nm=c.nome||'Cardápio', svg=(typeof MC_CAT_SVG!=='undefined'&&c.icone&&c.icone!=='cardapio')?MC_CAT_SVG[c.icone]:null;
   NAV_DESKTOP.forEach(function(n){ if(n.id==='cardapio'){ n.lb=nm; if(!n.ic0) n.ic0=n.ic; n.ic=svg||n.ic0; } });
   var h1=document.querySelector('#pg-cardapio .pghd h1'); if(h1) h1.textContent=nm;
@@ -9296,7 +9299,7 @@ function cdPintarCats(){
   for(i=0;i<CD.cats.length;i++){
     var c=CD.cats[i], n=0, j; for(j=0;j<CD.prods.length;j++) if(CD.prods[j].cat===c.id) n++;
     h+='<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--border)"><div onclick="cdCatFotoEsc(\''+c.id+'\')" title="Foto da categoria" style="width:46px;height:46px;border-radius:10px;flex:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;background:var(--border) center/cover'+(c.foto?' url('+c.foto+')':'')+'">'+(c.foto?'':'📷')+'</div><div style="flex:1;font-weight:700;font-size:13.5px">'+esc(c.nome)+' <span style="font-weight:500;color:var(--muted);font-size:12px">· '+n+' produto'+(n===1?'':'s')+'</span></div>'
-      +'<select class="inp" onchange="cdCatDest(\''+c.id+'\',this.value)" title="Para onde vai o pedido desta categoria" style="width:auto;padding:6px 8px;font-size:12.5px"><option value="cozinha"'+(cdDestDe(c)==='bar'?'':' selected')+'>🍳 Cozinha</option><option value="bar"'+(cdDestDe(c)==='bar'?' selected':'')+'>🍺 Bar</option></select><button class="btn sec sm" onclick="cdRenCat(\''+c.id+'\')">Renomear</button><button class="btn sec sm" onclick="cdDelCat(\''+c.id+'\')" style="color:var(--red)">Apagar</button></div>';
+      +'<select class="inp cd-dest" onchange="cdCatDest(\''+c.id+'\',this.value)" title="Para onde vai o pedido desta categoria" style="width:auto;padding:6px 8px;font-size:12.5px"><option value="cozinha"'+(cdDestDe(c)==='bar'?'':' selected')+'>🍳 Cozinha</option><option value="bar"'+(cdDestDe(c)==='bar'?' selected':'')+'>🍺 Bar</option></select><button class="btn sec sm" onclick="cdRenCat(\''+c.id+'\')">Renomear</button><button class="btn sec sm" onclick="cdDelCat(\''+c.id+'\')" style="color:var(--red)">Apagar</button></div>';
   }
   el('cd-cats-lista').innerHTML=h||'<div style="color:var(--muted);font-size:13px">Nenhuma categoria ainda.</div>';
 }
