@@ -8441,7 +8441,8 @@ function slMonta(){
     if(!SL.drag) return;
     if(SL.drag.mode==='pan'){ var dpx=e.clientX-SL.drag.sx, dpy=e.clientY-SL.drag.sy; if(Math.abs(dpx)+Math.abs(dpy)>4) SL.drag.moveu=true; if(!SL.drag.moveu||(SL.z||1)<=1) return; var esc=s.getBoundingClientRect().width/((slWH().W+2*slPad())/(SL.z||1)); SL.vx=SL.drag.vx-dpx/esc; SL.vy=SL.drag.vy-dpy/esc; slVB(); return; }
     var p=slPeca(SL.drag.id), q=slPt(e); SL.sujo=true;
-    if(SL.drag.mode==='vert'){ var av=slAr(), pv=av.pontos[SL.drag.i]; if(pv){ pv[0]=Math.max(0,Math.min(av.larg,Math.round(q.x/25*20)/20)); pv[1]=Math.max(0,Math.min(av.comp,Math.round(q.y/25*20)/20)); } s.innerHTML=slPlanta(); return; }
+    /* (125) o ponto pode sair da área: ao soltar, a largura e o comprimento acompanham (slPtsAjusta) */
+    if(SL.drag.mode==='vert'){ var av=slAr(), pv=av.pontos[SL.drag.i]; if(pv){ pv[0]=Math.max(-20,Math.min(100,Math.round(q.x/25*20)/20)); pv[1]=Math.max(-20,Math.min(100,Math.round(q.y/25*20)/20)); } s.innerHTML=slPlanta(); return; }
     if(SL.drag.mode==='size'){
       /* mede no "jeito" da peça (desfaz o giro) para a alça funcionar com a peça girada */
       var a=-(p.rot||0)*Math.PI/180, vx=q.x-p.x, vy=q.y-p.y, lx=Math.abs(vx*Math.cos(a)-vy*Math.sin(a)), ly=Math.abs(vx*Math.sin(a)+vy*Math.cos(a));
@@ -8451,7 +8452,7 @@ function slMonta(){
     } else { var zz=slWH(); slSels().forEach(function(x){ var o=SL.drag.of[x.id]; if(!o) return; x.x=Math.max(5,Math.min(zz.W-5,Math.round((q.x-o.dx)/2.5)*2.5)); x.y=Math.max(5,Math.min(zz.H-5,Math.round((q.y-o.dy)/2.5)*2.5)); }); SL.ult=0; }
     s.innerHTML=slPlanta();
   });
-  s.addEventListener('pointerup',function(){ var d=SL.drag; SL.drag=null; if(d&&d.mode==='pan'&&!d.moveu){ if(!d.add){ SL.sel=0; SL.multi=[]; } SL.ult=0; slDesenha(); return; } if(SL.abrirEd){ SL.abrirEd=false; setTimeout(slEditaTexto,70); } }); s.addEventListener('pointercancel',function(){ SL.drag=null; });
+  s.addEventListener('pointerup',function(){ var d=SL.drag; SL.drag=null; if(d&&d.mode==='vert'){ slPtsAjusta(); return; } if(d&&d.mode==='pan'&&!d.moveu){ if(!d.add){ SL.sel=0; SL.multi=[]; } SL.ult=0; slDesenha(); return; } if(SL.abrirEd){ SL.abrirEd=false; setTimeout(slEditaTexto,70); } }); s.addEventListener('pointercancel',function(){ SL.drag=null; });
   /* (121) rodinha do mouse: aproxima/afasta no ponto do cursor */
   s.addEventListener('wheel',function(e){ e.preventDefault(); var q=slPt(e), z0=SL.z||1, z1=Math.max(1,Math.min(8,z0*(e.deltaY<0?1.15:1/1.15))); if(z1===z0) return; var z=slWH();
     SL.vx=q.x-(q.x-(SL.vx||0))*z0/z1; SL.vy=q.y-(q.y-(SL.vy||0))*z0/z1; SL.z=z1; slVB(); },{passive:false});
@@ -8648,7 +8649,18 @@ function slAreaMuda(){ slHist('area'+SL.area); var a=slAr(), n=function(v,d){ va
 function slPontoNovo(i,q){ var a=slAr(); slHist(); a.pontos=slPts(a).map(function(x){ return x.slice(); }); SL.sujo=true;
   var A=a.pontos[i], B=a.pontos[(i+1)%a.pontos.length], mx=q.x/25, my=q.y/25, dx=B[0]-A[0], dy=B[1]-A[1], t=Math.max(0.05,Math.min(0.95,((mx-A[0])*dx+(my-A[1])*dy)/((dx*dx+dy*dy)||1)));
   a.pontos.splice(i+1,0,[Math.round((A[0]+dx*t)*20)/20,Math.round((A[1]+dy*t)*20)/20]); slAreasPinta(); slDesenha(); aviso('Ponto criado: arraste para quebrar a parede'); }
-function slPontoApaga(i){ var a=slAr(), pts=slPts(a); if(pts.length<=3){ aviso('A área precisa de pelo menos 3 pontos.'); return; } slHist(); a.pontos=pts.map(function(x){ return x.slice(); }); a.pontos.splice(i,1); SL.sujo=true; slAreasPinta(); slDesenha(); }
+function slPontoApaga(i){ var a=slAr(), pts=slPts(a); if(pts.length<=3){ aviso('A área precisa de pelo menos 3 pontos.'); return; } slHist(); a.pontos=pts.map(function(x){ return x.slice(); }); a.pontos.splice(i,1); SL.sujo=true; slPtsAjusta(); }
+/* (125) depois de mexer nos pontos, a largura e o comprimento acompanham o formato: ponto puxado para fora aumenta a área; se ele passar
+   para a esquerda ou para cima do zero, tudo (pontos e peças da área) anda junto para o desenho começar no 0 sem nada sair do lugar */
+function slPtsAjusta(){
+  var a=slAr(); if(!a.pontos||a.pontos.length<3){ slAreasPinta(); slDesenha(); return; }
+  var r=function(v){ return Math.round(v*20)/20; }, xs=a.pontos.map(function(p){ return p[0]; }), ys=a.pontos.map(function(p){ return p[1]; });
+  var mx=Math.min.apply(null,xs), my=Math.min.apply(null,ys), Mx=Math.max.apply(null,xs), My=Math.max.apply(null,ys);
+  if(mx||my){ a.pontos.forEach(function(p){ p[0]=r(p[0]-mx); p[1]=r(p[1]-my); }); slDaArea().forEach(function(p){ p.x=Math.round((p.x-mx*25)*10)/10; p.y=Math.round((p.y-my*25)*10)/10; }); }
+  a.larg=Math.max(3,Math.min(80,r(Mx-mx))); a.comp=Math.max(3,Math.min(80,r(My-my)));
+  a.pontos.forEach(function(p){ p[0]=Math.min(a.larg,p[0]); p[1]=Math.min(a.comp,p[1]); });   /* limite de 80 m do servidor */
+  SL.sujo=true; SL.z=1; SL.vx=0; SL.vy=0; slAreasPinta(); slDesenha();
+}
 /* (122) DESFAZER / REFAZER: guarda uma foto do desenho (peças + áreas) antes de cada mudança; mudanças seguidas no mesmo campo viram um passo só */
 function slFoto(){ return JSON.stringify({L:SL.L,areas:SL.areas,area:SL.area}); }
 function slHist(tag){ SL.hist=SL.hist||[]; var ag=Date.now(); if(tag&&SL.hTag===tag&&ag-(SL.hT||0)<1500){ SL.hT=ag; return; } SL.hTag=tag||''; SL.hT=ag;
