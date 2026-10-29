@@ -272,13 +272,22 @@ html.claro #wzp{filter:invert(1) hue-rotate(180deg)}
 @keyframes ovAnel{0%{transform:scale(1);opacity:.85}100%{transform:scale(1.45,1.7);opacity:0}}
 @media (prefers-reduced-motion:reduce){.ov *,.ov *::after{animation:none!important}}
 /* (111) Clube de assinatura: preço do clube (laranja), diamante 3D, selo na página do produto e o modal dos planos */
-.clb-ln{display:flex;align-items:center;justify-content:flex-start;gap:6px;margin-top:4px;flex-wrap:wrap}
+.clb-ln{display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-top:4px;flex-wrap:wrap}
 .clb-ln small{font-size:11px;font-weight:800;color:var(--pri);white-space:nowrap}
 .clb-ln small i{font-style:normal;color:#FACC15}
 .clb-pill{position:relative;display:inline-flex;align-items:center;background:var(--pri);color:#fff;border-radius:8px;padding:1px 8px 1px 13px;margin-left:9px;font-weight:800;font-size:12.5px;line-height:1.55;white-space:nowrap}
 .clb-mini{position:absolute;left:-10px;top:50%;width:19px;height:17px;transform:translateY(-55%);filter:drop-shadow(0 1px 3px rgba(20,90,130,.55))}
-.clb-fr{flex-basis:100%;font-size:11px;font-weight:800;color:var(--tx);white-space:nowrap}
-.mp .vl{text-align:left!important;max-width:128px;flex:none}
+.clb-fr{flex-basis:100%;font-size:11px;font-weight:800;color:var(--tx);white-space:nowrap;text-align:right}
+.mp .vl{text-align:right!important;max-width:128px;flex:none}
+/* tema claro inverte a folha: desinverte o diamante (fica azul) e deixa o valor da pílula branco */
+html.claro #sheet .clb-mini{filter:drop-shadow(0 1px 3px rgba(20,90,130,.55)) invert(1) hue-rotate(180deg)}
+html.claro #sheet .clb-pill{color:#000}
+/* linha do Clube embaixo do subtotal da sacola */
+.clb-sac{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;font-size:14px;font-weight:800;color:#5CC8F2;cursor:pointer}
+.clb-sac>span:first-child{display:inline-flex;align-items:center;gap:7px}
+.clb-sac .clb-mini{position:static;transform:none;width:20px;height:18px}
+.clb-sac small{display:block;font-size:11px;font-weight:600;color:var(--tx);opacity:.7;text-align:right;margin-top:1px}
+.clb-sac>span:last-child{text-align:right}
 .mp .clb-ln{max-width:128px;row-gap:2px}
 /* diamante 3D: 4 lâminas cruzadas giram juntas, então ele nunca fica fino */
 .clb-d3{position:relative;perspective:260px;display:inline-block}
@@ -297,19 +306,19 @@ html.claro #wzp{filter:invert(1) hue-rotate(180deg)}
 .clb-selo{position:absolute;right:10px;top:10px;z-index:4;width:40px;height:36px;pointer-events:none;filter:drop-shadow(0 4px 8px rgba(42,168,220,.55))}
 .clb-selo .clb-d3{width:40px;height:36px}
 .clb-selo b{position:absolute;left:0;right:0;top:9px;z-index:2;text-align:center;color:#fff;font-weight:900;font-size:10px;letter-spacing:-.2px;text-shadow:0 1px 3px rgba(10,60,90,.95)}
-#clbM{position:fixed;inset:0;z-index:2147481000;background:rgba(8,6,4,.72);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);display:flex;align-items:flex-end;justify-content:center;opacity:0;transition:opacity .3s}
+#clbM{position:fixed;inset:0;z-index:2147481000;background:rgba(6,8,18,.72);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);display:flex;align-items:flex-end;justify-content:center;opacity:0;transition:opacity .3s}
 #clbM.on{opacity:1}
-#clbM .cx{position:relative;width:100%;max-width:440px;max-height:92vh;overflow:auto;background:radial-gradient(120% 55% at 50% 0%,rgba(255,90,0,.38) 0%,#141110 45%,#0B0A09 100%);color:#fff;border-radius:28px 28px 0 0;padding:22px 18px calc(22px + env(safe-area-inset-bottom));box-shadow:0 -20px 60px rgba(0,0,0,.6);transform:translateY(40px);transition:transform .45s cubic-bezier(.2,1.2,.4,1)}
+#clbM .cx{position:relative;width:100%;max-width:440px;max-height:92vh;overflow:auto;background:radial-gradient(120% 60% at 50% 0%,#1E3A8A 0%,#0B1022 46%,#07090F 100%);color:#fff;border-radius:28px 28px 0 0;padding:22px 18px calc(22px + env(safe-area-inset-bottom));box-shadow:0 -20px 60px rgba(0,0,0,.6);transform:translateY(40px);transition:transform .45s cubic-bezier(.2,1.2,.4,1)}
 #clbM.on .cx{transform:none}
 #clbM .fx{position:absolute;right:14px;top:14px;width:36px;height:36px;border-radius:50%;border:0;background:rgba(255,255,255,.1);color:#fff;font-size:18px;cursor:pointer;z-index:2}
 #clbM .topo{text-align:center;padding:4px 10px 6px}
 #clbM .topo .clb-d3{width:70px;height:63px;margin:0 auto 10px;display:block;filter:drop-shadow(0 10px 22px rgba(92,200,242,.55))}
 #clbM h2{margin:0;font-size:23px;font-weight:900;letter-spacing:-.01em}
-#clbM h2 span{color:var(--pri)}
-#clbM .topo p{margin:6px 0 0;font-size:14px;color:rgba(255,255,255,.75);line-height:1.45}
-#clbM .pl{position:relative;margin-top:12px;border-radius:18px;padding:14px 14px 12px;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.12);opacity:0;transform:translateY(14px);animation:clbEntra .5s cubic-bezier(.2,1.2,.4,1) forwards}
+#clbM h2 span{background:linear-gradient(90deg,#93C5FD,#fff,#93C5FD);-webkit-background-clip:text;background-clip:text;color:transparent}
+#clbM .topo p{margin:6px 0 0;font-size:14px;color:#BFDBFE;line-height:1.45}
+#clbM .pl{position:relative;margin-top:12px;border-radius:18px;padding:14px 14px 12px;background:rgba(255,255,255,.05);border:1.5px solid rgba(147,197,253,.25);opacity:0;transform:translateY(14px);animation:clbEntra .5s cubic-bezier(.2,1.2,.4,1) forwards}
 #clbM .pl.meio{border-color:rgba(37,211,102,.55);background:rgba(37,211,102,.08)}
-#clbM .pl.dest{background:linear-gradient(#1A1411,#1A1411) padding-box,linear-gradient(120deg,#FF5A00,#FFB37A,#FF5A00) border-box;border:2px solid transparent;background-size:100% 100%,220% 100%;animation:clbEntra .5s cubic-bezier(.2,1.2,.4,1) forwards,clbBorda 4s linear infinite}
+#clbM .pl.dest{background:linear-gradient(#0E1530,#0E1530) padding-box,linear-gradient(120deg,#60A5FA,#FF5A00,#60A5FA) border-box;border:2px solid transparent;background-size:100% 100%,220% 100%;animation:clbEntra .5s cubic-bezier(.2,1.2,.4,1) forwards,clbBorda 4s linear infinite}
 #clbM .pl.meio.dest{background:linear-gradient(#10190F,#10190F) padding-box,linear-gradient(120deg,#25D366,#A7F3C4,#25D366) border-box}
 @keyframes clbEntra{to{opacity:1;transform:none}}
 @keyframes clbBorda{to{background-position:0 0,220% 0}}
@@ -318,17 +327,18 @@ html.claro #wzp{filter:invert(1) hue-rotate(180deg)}
 #clbM .pl .l1{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
 #clbM .pl .nm{font-size:16px;font-weight:900}
 #clbM .pl .vl2{font-size:22px;font-weight:900;white-space:nowrap}
-#clbM .pl .ms{font-size:12px;color:rgba(255,255,255,.6);text-align:right;margin-top:1px}
+#clbM .pl .ms{font-size:12px;color:#93C5FD;text-align:right;margin-top:1px}
 #clbM .pl ul{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:5px}
-#clbM .pl li{font-size:13.5px;color:rgba(255,255,255,.88);display:flex;gap:7px;line-height:1.35}
-#clbM .pl li::before{content:"✓";color:var(--pri);font-weight:900}
+#clbM .pl li{font-size:13.5px;color:#E0E7FF;display:flex;gap:7px;line-height:1.35}
+#clbM .pl li::before{content:"✓";color:#60A5FA;font-weight:900}
 #clbM .pl.meio li::before{color:#25D366}
 #clbM .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
-#clbM .chips span{font-size:11.5px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,90,0,.16);color:#FFD2B3}
+#clbM .chips span{font-size:11.5px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(96,165,250,.16);color:#BFDBFE}
 #clbM .pl.meio .chips span{background:rgba(37,211,102,.16);color:#BBF7D0}
-#clbM .ass{width:100%;margin-top:12px;height:46px;border:0;border-radius:13px;font-family:inherit;font-weight:900;font-size:15.5px;color:#fff;background:linear-gradient(90deg,#FF5A00,#FF8A33);box-shadow:0 8px 20px rgba(255,90,0,.35);cursor:pointer}
+#clbM .ass{width:100%;margin-top:12px;height:46px;border:0;border-radius:13px;font-family:inherit;font-weight:900;font-size:15.5px;color:#fff;background:linear-gradient(90deg,#2563EB,#3B82F6);box-shadow:0 8px 20px rgba(37,99,235,.4);cursor:pointer}
+#clbM .pl.dest .ass{background:linear-gradient(90deg,#FF5A00,#FF8A33);box-shadow:0 8px 20px rgba(255,90,0,.4)}
 #clbM .pl.meio .ass{background:#25D366;box-shadow:0 8px 20px rgba(37,211,102,.35)}
-#clbM .pg{font-size:11.5px;color:rgba(255,255,255,.55);text-align:center;margin-top:6px}
+#clbM .pg{font-size:11.5px;color:#93C5FD;text-align:center;margin-top:6px}
 @media (prefers-reduced-motion:reduce){.clb-d3 .gr,.clb-d3 .bri::after,#clbM .pl.dest{animation:none}#clbM .pl{opacity:1;transform:none}}
 /* (109) versão do WhatsApp: botão verde da sacola e abertura com a sacola (só no primeiro acesso) */
 .wa-env{display:flex;align-items:center;justify-content:center;gap:10px;background:#25D366!important;background-image:none!important;color:#fff!important;opacity:1!important;filter:none!important;animation:waPulsa 1.8s ease-in-out infinite}
@@ -911,7 +921,7 @@ function abreSacola(){ navOn('sac'); CK.on=0; CK.open=0;
   h+=sacLista();
   h+='</div>';
   if(SAC.length&&!estaAberto()){ var pg=progLer(); h+='<div class="nt" style="text-align:center;padding:10px 16px 0;color:var(--pri2)">'+(pg?'🕒 Pedido programado para '+progFmt(pg)+' · <u onclick="abreAgenda()" style="cursor:pointer">alterar</u>':'🕒 Estamos fechados. <u onclick="abreAgenda()" style="cursor:pointer">Agendar este pedido</u>')+'</div>'; }
-  if(SAC.length) h+='<div class="rod" style="flex-direction:column;align-items:stretch;gap:8px">'+(sacEcon()>0?'<div class="tt" style="padding:0;font-size:13px;color:#4ade80"><span>Desconto aplicado</span><span>− '+brl(sacEcon())+'</span></div>':'')+'<div class="tt" style="padding:0"><span>Subtotal</span><span>'+brl(sacTotal())+'</span></div>'+(waOn()?'<button class="bt c wa-env" id="wa-env" style="flex:none;width:100%" onclick="waEnviar()">'+WA_ICO+'Enviar lista para o WhatsApp</button>':'<button class="bt c" style="flex:none;width:100%" onclick="sacContinuar()">'+(MESA?'Fazer pedido':'Continuar')+'</button>')+'<button class="bt c" style="flex:none;width:100%;background:transparent;border:2px solid var(--pri);color:var(--pri)" onclick="abreMenu()">Continuar comprando</button></div>';
+  if(SAC.length) h+='<div class="rod" style="flex-direction:column;align-items:stretch;gap:8px">'+(sacEcon()>0?'<div class="tt" style="padding:0;font-size:13px;color:#4ade80"><span>Desconto aplicado</span><span>− '+brl(sacEcon())+'</span></div>':'')+'<div class="tt" style="padding:0"><span>Subtotal</span><span>'+brl(sacTotal())+'</span></div>'+clbSac()+(waOn()?'<button class="bt c wa-env" id="wa-env" style="flex:none;width:100%" onclick="waEnviar()">'+WA_ICO+'Enviar lista para o WhatsApp</button>':'<button class="bt c" style="flex:none;width:100%" onclick="sacContinuar()">'+(MESA?'Fazer pedido':'Continuar')+'</button>')+'<button class="bt c" style="flex:none;width:100%;background:transparent;border:2px solid var(--pri);color:var(--pri)" onclick="abreMenu()">Continuar comprando</button></div>';
   abreFolha(h,true);
 }
 /* ── conta do cliente (5B): entra pelo WhatsApp com código, guarda nome e endereços ── */
@@ -1560,6 +1570,11 @@ function clbDescPlano(p){ var c=D.clube; return (p.desc&&p.desc.valor>0)?p.desc:
 function clbFrete(){ var c=D&&D.clube; if(!c||!c.ativo) return false; return ['tri','sem','anu'].some(function(k){ return c.planos[k]&&c.planos[k].on&&c.planos[k].frete; }); }
 /* linha do preço do clube, embaixo do preço normal: "Clube ⭐ [R$ 22,90]" e a tag de entrega grátis colada */
 function clbLinha(p){ var r=clbPreco(p); if(!r) return ''; return '<div class="clb-ln"><span class="clb-pill">'+CLB_MINI+brl(r.preco)+'</span>'+(clbFrete()?'<span class="clb-fr">+ Frete grátis</span>':'')+'</div>'; }
+/* sacola: quanto daria o subtotal no Clube (o desconto do produto sai de cada unidade); toque abre os planos */
+function clbSac(){ if(clbMembro()||!D||!D.clube||!D.clube.ativo) return ''; var t=0, tem=false;
+  SAC.forEach(function(i){ var p=D.produtos[i.p], r=p&&clbPreco(p), u=i.unit; if(r){ u=Math.max(0,u-(minPreco(p).min-r.preco)); tem=true; } t+=u*i.qty; });
+  t=Math.round(t*100)/100; var s=sacTotal(); if(!tem||t>=s) return '';
+  return '<div class="clb-sac" onclick="clbAbre()"><span>'+CLB_MINI+'Clube</span><span>'+brl(t)+'<small>no Clube você economiza '+brl(s-t)+(clbFrete()?' + frete grátis':'')+'</small></span></div>'; }
 /* selo do diamante com o % de economia, no canto da página do produto (só para quem ainda não assina) */
 function clbSelo(p){ if(clbMembro()) return ''; var r=clbPreco(p); if(!r||!(r.pct>0)) return ''; return '<div class="clb-selo">'+clbGema()+'<b>-'+r.pct+'%</b></div>'; }
 /* diamante na home: gira devagar com um brilho; abre os planos */
