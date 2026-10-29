@@ -153,9 +153,12 @@ html.clbbar #cards{bottom:calc(112px + env(safe-area-inset-bottom))!important}
 html.clbbar #wzp{bottom:calc(118px + env(safe-area-inset-bottom))}
 html.clbbar #toast{bottom:calc(122px + env(safe-area-inset-bottom))!important}
 html.clbbar #mnb{bottom:calc(128px + env(safe-area-inset-bottom))!important}
-/* (115) Compartilhar logo acima do botão Cardápio (mesma coluna, 10px de espaço) */
-#mside{top:auto!important;transform:none!important;right:12px!important;bottom:calc(174px + env(safe-area-inset-bottom))}
-html.clbbar #mside{bottom:calc(226px + env(safe-area-inset-bottom))}
+/* (115) Compartilhar na coluna do botão Cardápio, na mesma linha do botão da oferta (o texto da oferta fica a 172px / 232px do fundo) */
+#mside{top:auto!important;transform:none!important;right:12px!important;bottom:calc(173px + env(safe-area-inset-bottom))}
+html.clbbar #mside{bottom:calc(233px + env(safe-area-inset-bottom))}
+/* só o ícone flutuando, sem moldura e sem o texto */
+#mside #bShare{background:none!important;border:0!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;font-size:0!important;height:44px;padding:0!important;justify-content:center;filter:drop-shadow(0 2px 6px #000b)}
+#mside #bShare svg{width:30px;height:30px}
 /* a barrinha some quando uma tela (cardápio, sacola, produto) está aberta por cima da inicial */
 #sheet.on~#clbHome,html:has(#sheet.on) #clbHome{opacity:0;pointer-events:none;transform:translateY(20px);transition:opacity .2s,transform .2s}
 #mnb{bottom:calc(76px + env(safe-area-inset-bottom))!important}
@@ -312,6 +315,7 @@ html.clbbar #stage .ov{--ov-b:calc(232px + env(safe-area-inset-bottom))}
 .ov.e-cair .ov-apoio,.ov.e-lateral .ov-apoio,.ov.e-zoom .ov-apoio{animation-delay:.05s}
 .ov.e-cair .ov-tit,.ov.e-lateral .ov-tit,.ov.e-zoom .ov-tit{animation-delay:.25s}
 .ov.e-cair .ov-btn,.ov.e-lateral .ov-btn,.ov.e-zoom .ov-btn{animation-delay:.5s}
+html.lfab .ov *,html.lfab .ov *::after{animation-play-state:paused!important}   /* (115) parado atrás da abertura; começa quando ela sai */
 .ov.pulso .ov-btn:not(.link){position:relative}
 .ov.pulso .ov-btn:not(.link)::after{content:'';position:absolute;inset:0;border-radius:inherit;border:.18em solid var(--ov-bf,#f97316);animation:ovAnel 1.7s ease-out 1.4s infinite;pointer-events:none}
 .ov.pulso .ov-btn.contorno::after{border-color:var(--ov-bt,#fff)}
@@ -458,7 +462,9 @@ html.claro #sheet .clb-pill{color:#000}
 <body>
 <!-- abertura com o Live (fundo branco + logo laranja); some quando o cardápio da loja carrega -->
 <div id="lf-abertura" data-minimo="1700" data-esperar="1" style="position:fixed;inset:0;z-index:2147483000;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px"><div class="lfa-live" style="width:150px"></div><img src="livefood-logo.png" alt="LiveFood" style="height:44px;width:auto"><div class="lfa-barra"><i></i></div></div>
-<script>setTimeout(function(){ var a=document.getElementById('lf-abertura'); if(a) a.remove(); },7000);</script>
+<script>setTimeout(function(){ var a=document.getElementById('lf-abertura'); if(a) a.remove(); },7000);
+/* (115) enquanto a abertura (personagem + barra) está na tela, os efeitos do texto da oferta (cair, lateral, zoom) ficam parados; começam quando ela sai */
+(function(){ var h=document.documentElement; h.classList.add('lfab'); (function v(){ var a=document.getElementById('lf-abertura'); if(!a||a.classList.contains('sai')) h.classList.remove('lfab'); else setTimeout(v,80); })(); })();</script>
 <script src="site/js/live-mascote.js"></script><script src="site/js/live-app.js"></script>
 <div id="stage">
   <video class="vd" id="v0" muted playsinline preload="auto"></video>
@@ -1474,6 +1480,14 @@ function geoGate(cb){
     cb({lat:GEO.lat,lng:GEO.lng,acc:Math.round(GEO.acc)});
   });
 }
+/* (115) o ícone do Compartilhar fica na mesma linha do botão da oferta (mede o botão sem o efeito de entrada); oferta sem botão: posição padrão do CSS */
+function alinhaShare(){
+  var s=$('mside'), sh=$('bShare'), b=document.querySelector('#stage .ov-btn'), ov=b&&b.closest('.ov'); if(!s||!sh) return;
+  if(!b||!ov||!s.offsetHeight){ s.style.bottom=''; return; }
+  var cy=ov.getBoundingClientRect().top+b.offsetTop+b.offsetHeight/2, abaixo=s.offsetHeight-sh.offsetTop-sh.offsetHeight;
+  s.style.bottom=Math.round(innerHeight-cy-sh.offsetHeight/2-abaixo)+'px';
+}
+(function(){ var ob=$('ovbox'); if(ob&&window.MutationObserver) new MutationObserver(function(){ setTimeout(alinhaShare,30); }).observe(ob,{childList:true}); window.addEventListener('resize',alinhaShare); })();
 function compartilhaLink(){
   var u=CLI?lfLink(MESA):location.origin+location.pathname, t=(D&&D.empresa)||document.title||'Cardápio';
   if(navigator.share){ navigator.share({title:t,text:'Veja o cardápio de '+t,url:u}).catch(function(){}); return; }
@@ -1968,7 +1982,7 @@ function clbInit(){
   var temCat=menuEspeciais().some(function(g){ return g.id==='_clube'; });
   x.innerHTML=clbMini()+'<span>Preços para quem é do <b>Clube</b></span><i>Ver ofertas</i>';
   x.onclick=function(){ if(temCat) abreCat('_clube'); else clbAbre(); };   /* o objetivo é ver as ofertas do Clube (lá dentro tem o Assinar) */
-  document.documentElement.classList.add('clbbar');
+  document.documentElement.classList.add('clbbar'); setTimeout(alinhaShare,60);
 }
 function clbAbre(){
   var c=D.clube; if(!c||!c.ativo||$('clbM')) return;
