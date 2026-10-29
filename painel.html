@@ -8336,14 +8336,32 @@ function lvRotGerar(c){ return (c&&String(c.treino||'').trim())?'🔄 Atualizar 
 function lvAvisoNovos(c,d){ var n=(d&&d.produtos)||0, g=(c&&c.treinoN)||0, dt=(c&&c.treinoEm)?new Date(c.treinoEm).toLocaleDateString('pt-BR'):''; if(!g) return ''; var h='<div style="font-size:12px;color:var(--muted);margin-top:4px">Última geração: '+dt+', com '+g+' produtos.</div>'; if(n>g) h+='<div id="lv-novos" style="background:#3b2a0b;color:#fcd34d;border-radius:10px;padding:8px 12px;font-size:12.5px;margin-top:6px">Entraram '+(n-g)+' produto'+(n-g===1?'':'s')+' desde a última geração. Clique em <b>Atualizar pelos produtos</b> para o Live conhecer.</div>'; return h; }
 function lvGerar(){
   var b=el('lv-gerar'), tx=el('lv-treino'), m=el('lv-m'); if(!b||b.disabled) return;
-  b.disabled=true; b.textContent='Lendo os produtos…'; if(m){ m.style.color='var(--muted)'; m.textContent='Lendo todos os produtos e escrevendo o treinamento. Leva até 1 minuto.'; }
-  fetch(DELTADIS_API+'/painel/live-treino',{method:'POST',headers:cdHdr(),body:JSON.stringify({atual:tx.value})}).then(function(r){return r.json();}).then(function(d){
-    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'Não consegui gerar.');
-    tx.value=d.treino; LV.gerN=d.produtos; LV.gerEm=d.em||Date.now(); var av=el('lv-novos'); if(av) av.style.display='none';
-    if(m){ m.style.color='#4ade80'; m.textContent='Treinamento gerado a partir de '+d.produtos+' produtos. Confira e clique em Salvar.'; }
-  }).catch(function(e){ if(m){ m.style.color='#f87171'; m.textContent=e.message||'Não consegui gerar.'; } })
+  var antes=tx.value, nP=LV.produtos||0;
+  b.disabled=true; b.textContent='Escrevendo…'; if(m){ m.style.color='var(--muted)'; m.textContent='Lendo todos os produtos e escrevendo o treinamento. O texto vai aparecendo abaixo; leva de 1 a 2 minutos.'; }
+  var fim=function(txt,n,corte){
+    txt=lvLimpaTreino(txt); if(!txt) throw new Error('A IA não devolveu o treinamento. Tente de novo.');
+    tx.value=txt; LV.gerN=n||nP; LV.gerEm=Date.now(); var av=el('lv-novos'); if(av) av.style.display='none';
+    if(m){ m.style.color=corte?'#fcd34d':'#4ade80'; m.textContent=corte?'O texto ficou maior que o limite e foi cortado no fim. Confira a última parte antes de salvar.':'Treinamento gerado a partir de '+(n||nP)+' produtos. Confira e clique em Salvar.'; }
+  };
+  /* (135) o treinamento chega aos poucos (stream): aparece no campo enquanto a IA escreve */
+  fetch(DELTADIS_API+'/painel/live-treino',{method:'POST',headers:cdHdr(),body:JSON.stringify({atual:antes,stream:true})}).then(function(r){
+    if(!/event-stream/.test(r.headers.get('Content-Type')||'')) return r.json().then(function(d){ if(!d||!d.ok) throw new Error((d&&d.mensagem)||'Não consegui gerar.'); fim(d.treino,d.produtos,false); });
+    var rd=r.body.getReader(), dec=new TextDecoder(), buf='', txt='', parou='';
+    tx.value=''; tx.scrollTop=0;
+    var passo=function(){ return rd.read().then(function(o){
+      if(o.done){ fim(txt,nP,parou==='max_tokens'); return; }
+      buf+=dec.decode(o.value,{stream:true}); var ls=buf.split('\n'); buf=ls.pop();
+      ls.forEach(function(l){ if(l.indexOf('data:')!==0) return; var j=null; try{ j=JSON.parse(l.slice(5)); }catch(e){ return; }
+        if(j.type==='content_block_delta'&&j.delta&&j.delta.type==='text_delta'){ txt+=j.delta.text; }
+        else if(j.type==='message_delta'&&j.delta&&j.delta.stop_reason) parou=j.delta.stop_reason;
+        else if(j.type==='error') throw new Error('A IA parou no meio. Tente de novo.'); });
+      tx.value=txt; tx.scrollTop=tx.scrollHeight; return passo(); }); };
+    return passo();
+  }).catch(function(e){ tx.value=antes; if(m){ m.style.color='#f87171'; m.textContent=e.message||'Não consegui gerar.'; } })
   .then(function(){ b.disabled=false; b.textContent=lvRotGerar({treino:tx.value}); });
 }
+/* mesma limpeza do servidor: só títulos (## ) e orientações (- ), uma linha em branco antes de cada título */
+function lvLimpaTreino(s){ return String(s||'').split('\n').map(function(l){ return l.trim(); }).filter(function(l){ return /^(- |## )/.test(l); }).join('\n').replace(/\n## /g,'\n\n## ').replace(/\*\*/g,'').slice(0,16000); }
 function lvCopiar(){
   var i=el('lv-link'); i.select();
   (navigator.clipboard?navigator.clipboard.writeText(i.value):Promise.reject()).then(function(){ aviso('Link copiado'); },function(){ document.execCommand('copy'); aviso('Link copiado'); });
