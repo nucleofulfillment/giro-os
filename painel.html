@@ -7978,13 +7978,15 @@ function rvPintar(){
   var c=RV.cfg, lb='display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted)', h='';
   h+='<label style="display:flex;align-items:center;gap:10px;font-size:14px;font-weight:800;cursor:pointer;margin-bottom:12px"><input type="checkbox" id="rv-on"'+(c.on?' checked':'')+'> Aceitar reservas de mesa (cardápio e WhatsApp)</label>';
   h+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px">'
-   +'<label style="'+lb+'">Cada reserva dura<select class="inp" id="rv-dur">'+[60,90,120,150,180,240].map(function(v){ return '<option value="'+v+'"'+(c.dur===v?' selected':'')+'>'+(v%60?Math.floor(v/60)+'h'+(v%60):v/60+'h')+'</option>'; }).join('')+'</select></label>'
+   +'<label style="'+lb+'">A mesa fica reservada<select class="inp" id="rv-dur">'+[[0,'A noite toda (até fechar)'],[120,'Por 2 horas'],[180,'Por 3 horas'],[240,'Por 4 horas']].map(function(v){ return '<option value="'+v[0]+'"'+(c.dur===v[0]?' selected':'')+'>'+v[1]+'</option>'; }).join('')+'</select></label>'
+   +'<label style="'+lb+'">Chegada a partir das<input class="inp" id="rv-c1" type="time" value="'+esc(c.cheg1||'')+'" title="Vazio = desde a abertura da loja"></label>'
+   +'<label style="'+lb+'">Chegada até as<input class="inp" id="rv-c2" type="time" value="'+esc(c.cheg2||'')+'" title="Vazio = até 1h antes de fechar"></label>'
    +'<label style="'+lb+'">Antecedência mínima<select class="inp" id="rv-ant">'+[[0,'Sem mínimo'],[30,'30 min'],[60,'1 hora'],[120,'2 horas'],[240,'4 horas'],[1440,'1 dia']].map(function(v){ return '<option value="'+v[0]+'"'+(c.antec===v[0]?' selected':'')+'>'+v[1]+'</option>'; }).join('')+'</select></label>'
    +'<label style="'+lb+'">Reservar até<select class="inp" id="rv-dias">'+[7,14,30,60].map(function(v){ return '<option value="'+v+'"'+(c.dias===v?' selected':'')+'>'+v+' dias à frente</option>'; }).join('')+'</select></label>'
    +'<label style="'+lb+'">Horários de<select class="inp" id="rv-passo">'+[15,30,60].map(function(v){ return '<option value="'+v+'"'+(c.passo===v?' selected':'')+'>'+v+' em '+v+' min</option>'; }).join('')+'</select></label>'
    +'<label style="'+lb+'">Máximo de pessoas<input class="inp" id="rv-max" type="number" min="1" max="50" value="'+c.maxPessoas+'"></label></div>';
   h+='<label style="'+lb+';margin-top:10px">Aviso para o cliente (opcional)<input class="inp" id="rv-aviso" maxlength="200" placeholder="Ex.: tolerância de 15 minutos" value="'+esc(c.aviso||'')+'"></label>';
-  h+='<div style="font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.5">Os horários seguem o funcionamento da loja (até 1h antes de fechar). O mapa usa o desenho do salão e os lugares de cada mesa. Seis horas antes, o cliente recebe no WhatsApp o pedido de confirmação com Sim/Não; se responder Não, a mesa é liberada.</div>';
+  h+='<div style="font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.5">O cliente escolhe o <b>horário de chegada</b> dentro da janela acima (vazio = da abertura até 1h antes de fechar). Com "a noite toda", a mesa fica com ele até a casa fechar, sem hora para sair. O mapa usa o desenho do salão e os lugares de cada mesa. Seis horas antes, o cliente recebe no WhatsApp o pedido de confirmação com Sim/Não; se responder Não, a mesa é liberada.</div>';
   h+='<div style="display:flex;justify-content:flex-end;margin:12px 0 18px"><button class="btn pri" id="rv-salvar" onclick="rvSalvar()">Salvar</button></div>';
   var ST={ok:['Reservada','#6d28d9','#ede9fe'],confirmada:['Confirmada','#15803d','#dcfce7'],chegou:['Chegou','#0369a1','#e0f2fe'],cancelada:['Cancelada','#b91c1c','#fee2e2']}, dia='';
   h+='<h4 style="margin:0 0 8px">Próximas reservas</h4>';
@@ -7998,7 +8000,7 @@ function rvPintar(){
   });
   el('rv-bd').innerHTML=h;
 }
-function rvSalvar(){ var b=el('rv-salvar'), c={on:el('rv-on').checked?1:0,dur:+el('rv-dur').value,antec:+el('rv-ant').value,dias:+el('rv-dias').value,passo:+el('rv-passo').value,maxPessoas:+el('rv-max').value||12,aviso:el('rv-aviso').value.trim()};
+function rvSalvar(){ var b=el('rv-salvar'), c={on:el('rv-on').checked?1:0,dur:+el('rv-dur').value,cheg1:el('rv-c1').value,cheg2:el('rv-c2').value,antec:+el('rv-ant').value,dias:+el('rv-dias').value,passo:+el('rv-passo').value,maxPessoas:+el('rv-max').value||12,aviso:el('rv-aviso').value.trim()};
   b.disabled=true; b.textContent='Salvando…';
   mzApi('/painel/reserva-config',c).then(function(d){ b.disabled=false; b.textContent='Salvar'; if(!d||!d.ok) throw new Error((d&&d.mensagem)||'Não salvou'); RV.cfg=d.reserva; aviso(c.on?'Reservas ligadas':'Reservas desligadas'); }).catch(function(e){ b.disabled=false; b.textContent='Salvar'; aviso(e.message||'Não salvou'); }); }
 function rvAcao(id,acao){ if(acao==='cancelar'&&!confirm('Cancelar esta reserva? A mesa fica livre de novo.')) return;

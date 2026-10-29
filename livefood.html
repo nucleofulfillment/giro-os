@@ -1715,7 +1715,7 @@ function rsvAgenda(){
   var sc=document.querySelector('.pgd'), sl=sc?sc.scrollLeft:0;
   var h='<div class="wh"><button class="bk" onclick="rsvPessoas()">'+BKI+'</button><b>Mesa para '+RSV.pes+(RSV.pes>1?' pessoas':' pessoa')+'</b></div><div class="wb"><div class="nt" style="margin-bottom:8px">Escolha o dia</div><div class="pgd">';
   ds.forEach(function(d){ h+='<button class="pgc'+(d.key===RSV.dia?' on':'')+'" onclick="RSV.dia=\''+d.key+'\';RSV.hora=\'\';rsvAgenda()">'+esc(d.lab)+'</button>'; });
-  h+='</div><div class="nt" style="margin:16px 0 8px">Escolha o horário <span style="opacity:.7">(a mesa fica sua por '+(RSV.d.cfg.dur%60?Math.floor(RSV.d.cfg.dur/60)+'h'+(RSV.d.cfg.dur%60):RSV.d.cfg.dur/60+'h')+')</span></div><div class="pgh">';
+  h+='</div><div class="nt" style="margin:16px 0 8px">Horário de chegada <span style="opacity:.7">('+(RSV.d.cfg.dur>0?'a mesa fica sua por '+(RSV.d.cfg.dur%60?Math.floor(RSV.d.cfg.dur/60)+'h'+(RSV.d.cfg.dur%60):RSV.d.cfg.dur/60+'h'):'a mesa fica sua a noite toda')+')</span></div><div class="pgh">';
   cur.sl.forEach(function(x){ h+='<button class="pgc'+(x===RSV.hora?' on':'')+'" onclick="RSV.hora=\''+x+'\';rsvAgenda()">'+x+'</button>'; });
   h+='</div></div><div class="rod"><button class="bt c" '+(RSV.hora?'':'disabled ')+'onclick="rsvSalao()">Ver as mesas no salão</button></div>';
   abreFolha(h,true);
