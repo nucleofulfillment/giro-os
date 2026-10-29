@@ -153,6 +153,9 @@ html.clbbar #cards{bottom:calc(112px + env(safe-area-inset-bottom))!important}
 html.clbbar #wzp{bottom:calc(118px + env(safe-area-inset-bottom))}
 html.clbbar #toast{bottom:calc(122px + env(safe-area-inset-bottom))!important}
 html.clbbar #mnb{bottom:calc(128px + env(safe-area-inset-bottom))!important}
+/* (115) Compartilhar logo acima do botão Cardápio (mesma coluna, 10px de espaço) */
+#mside{top:auto!important;transform:none!important;right:12px!important;bottom:calc(174px + env(safe-area-inset-bottom))}
+html.clbbar #mside{bottom:calc(226px + env(safe-area-inset-bottom))}
 /* a barrinha some quando uma tela (cardápio, sacola, produto) está aberta por cima da inicial */
 #sheet.on~#clbHome,html:has(#sheet.on) #clbHome{opacity:0;pointer-events:none;transform:translateY(20px);transition:opacity .2s,transform .2s}
 #mnb{bottom:calc(76px + env(safe-area-inset-bottom))!important}
@@ -298,6 +301,9 @@ html.claro #sheet .dsc .pc{filter:invert(1) hue-rotate(180deg)}   /* tema claro 
 .ov-btn.contorno{border:.09em solid var(--ov-bt,#fff);color:var(--ov-bt,#fff);background:transparent}
 .ov-btn.link{color:var(--ov-bt,#fff);padding:.2em 0;text-decoration:underline}
 #stage .ov{--ov-t:calc(84px + env(safe-area-inset-top));--ov-b:calc(172px + env(safe-area-inset-bottom));font-size:16px}
+/* (115) com a barrinha do Clube na inicial, o texto e o botão da oferta sobem junto com os cartões; à esquerda, não passam por baixo do Compartilhar */
+html.clbbar #stage .ov{--ov-b:calc(232px + env(safe-area-inset-bottom))}
+#stage .ov.p-base.a-esq{padding-right:96px}
 #omask{position:absolute;inset:0;pointer-events:none;z-index:3}
 .ov.e-cair .ov-apoio,.ov.e-cair .ov-tit,.ov.e-cair .ov-btn{animation:ovCair .85s cubic-bezier(.2,1.3,.4,1) both}
 .ov.e-lateral{--ox:-130%}.ov.e-lateral.a-dir{--ox:130%}
@@ -1952,15 +1958,15 @@ function clbSac(){ var c=D&&D.clube; if(clbMembro()||!c||!c.ativo) return ''; va
   return '<div class="clb-sac" onclick="clbAbre()"><span>'+clbMini()+'<span>Clube<i>Assinar</i></span></span><span>'+brl(m.t)+'<small>no Clube você economiza '+brl(s-m.t)+(m.frete?' + frete grátis':'')+'</small></span></div>'; }
 /* diamante na home: gira devagar com um brilho; abre os planos */
 /* (115) barrinha do Clube na página inicial, logo acima do menu de baixo (substitui o botão "Assinar Clube" ao lado do Compartilhar).
-   Toque na frase abre as Ofertas Clube; toque em "Assinar" abre os planos */
+   Toque em qualquer parte abre as Ofertas Clube ("Ver ofertas"); sem produto no Clube, abre os planos */
 function clbInit(){
   clbVerFaixa(); var b=$('clbBtn'); if(b) b.remove();
   var x=$('clbHome'), on=D.clube&&D.clube.ativo&&!clbMembro();
   if(!on){ if(x) x.remove(); document.documentElement.classList.remove('clbbar'); return; }
   if(!x){ x=document.createElement('div'); x.id='clbHome'; x.className='clbcta'; document.body.appendChild(x); }
   var temCat=menuEspeciais().some(function(g){ return g.id==='_clube'; });
-  x.innerHTML=clbMini()+'<span>Preços para quem é do <b>Clube</b></span><i>Assinar</i>';
-  x.onclick=function(e){ if(e.target.closest('i')||!temCat) clbAbre(); else abreCat('_clube'); };
+  x.innerHTML=clbMini()+'<span>Preços para quem é do <b>Clube</b></span><i>Ver ofertas</i>';
+  x.onclick=function(){ if(temCat) abreCat('_clube'); else clbAbre(); };   /* o objetivo é ver as ofertas do Clube (lá dentro tem o Assinar) */
   document.documentElement.classList.add('clbbar');
 }
 function clbAbre(){
