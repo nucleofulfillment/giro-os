@@ -8400,6 +8400,8 @@ function slMonta(){
     +'<button class="btn sec" type="button" style="'+bs+'" onclick="slFecha()">← Voltar</button>'
     +'<b style="font-size:16px;margin:0 4px">Salão</b><div id="sl-atabs" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"></div><span style="flex:1"></span>'
     +'<button class="btn sec" id="sl-undo" type="button" style="'+bs+';font-size:16px;padding:5px 11px" onclick="slDesfaz()" title="Desfazer (Ctrl+Z)">↶</button><button class="btn sec" id="sl-redo" type="button" style="'+bs+';font-size:16px;padding:5px 11px" onclick="slRefaz()" title="Refazer (Ctrl+Y)">↷</button>'
+    /* (125) zoom na barra de cima (antes ficava sobre o canto do mapa e tapava os pontos ali) */
+    +'<div id="sl-zoom" style="display:flex;gap:4px;align-items:center;border:1px solid var(--border);border-radius:10px;padding:3px"><button class="btn sec" type="button" style="padding:4px 10px;font-size:15px;font-weight:800" onclick="slZoom(1/1.25)" title="Afastar">−</button><span id="sl-zv" style="font-size:12px;min-width:40px;text-align:center;color:var(--muted)">100%</span><button class="btn sec" type="button" style="padding:4px 10px;font-size:15px;font-weight:800" onclick="slZoom(1.25)" title="Aproximar">+</button><button class="btn sec" type="button" style="padding:4px 10px;font-size:12px" onclick="slZoom(0)" title="Mostrar a área inteira">Ajustar</button></div>'
     +'<button class="btn sec" id="sl-b3" type="button" style="'+bs+'" onclick="slVista()">Ver em 3D</button>'
     +(cheia?'<button class="btn sec" id="sl-bfull" type="button" style="'+bs+'" onclick="slTelaCheia()">Tela cheia</button>':'')
     +'<button class="btn pri" type="button" style="'+bs+'" onclick="slSalvar()">Salvar salão</button></div>'
@@ -8411,7 +8413,7 @@ function slMonta(){
     +'<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:8px">'
     +'<div id="sl-mapa" style="flex:1;min-height:0;position:relative"><svg id="sl-svg" viewBox="0 0 600 360" style="width:100%;height:100%;display:block;border-radius:12px;background:#FAFAFA;border:1px solid var(--border2);touch-action:none" role="img" aria-label="Planta do salão"></svg><svg id="sl-svg3" viewBox="0 0 900 520" style="display:none"></svg>'
     +'<iframe id="sl-if3" title="Salão em 3D" style="display:none;width:100%;height:100%;border:0;border-radius:12px;background:#110d0a"></iframe>'
-    +'<div id="sl-zoom" style="position:absolute;right:10px;bottom:10px;display:flex;gap:4px;background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:4px;box-shadow:0 4px 14px rgba(0,0,0,.12)"><button class="btn sec" type="button" style="padding:4px 10px;font-size:15px;font-weight:800" onclick="slZoom(1/1.25)" title="Afastar">−</button><span id="sl-zv" style="align-self:center;font-size:12px;min-width:42px;text-align:center;color:var(--muted)">100%</span><button class="btn sec" type="button" style="padding:4px 10px;font-size:15px;font-weight:800" onclick="slZoom(1.25)" title="Aproximar">+</button><button class="btn sec" type="button" style="padding:4px 10px;font-size:12px" onclick="slZoom(0)" title="Mostrar a área inteira">Ajustar</button></div></div>'
+    +'</div>'
     +'<div id="sl-prop" style="min-height:40px"></div><div id="sl-m" style="font-size:12.5px;min-height:18px"></div></div></div>';
   var s=el('sl-svg');
   /* (120) Shift (ou Ctrl) + clique: soma ou tira da seleção; arrastar uma selecionada move todas juntas */
