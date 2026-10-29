@@ -908,17 +908,38 @@ function abrirPaytime(){
   abrirModal('<h3>Paytime · teste</h3><p class="sub">As chaves ficam só nos segredos do Worker. Nada aqui movimenta dinheiro de verdade.</p><div id="pt-corpo" class="sub2" style="margin:10px 0">Conectando...</div><div class="acoes"><button class="btn" onclick="fechar()">Fechar</button></div>');
   chamar('GET','/admin/paytime/teste').then(function(d){
     var c=el('pt-corpo'); if(!c) return;
-    if(!d.ok){ c.innerHTML='<div class="erro">'+esc(d.mensagem||'Não conectou.')+'</div>'; return; }
+    if(!d.ok){ c.innerHTML='<div class="erro">'+esc(d.mensagem||'Não conectou.')+'</div>'+((d.diag||[]).length?'<div class="sub2" style="margin-top:8px">Como as chaves chegaram no Worker (só tamanho e formato):<ul style="margin:4px 0 0;padding-left:18px">'+d.diag.map(function(x){ return '<li>'+esc(x)+'</li>'; }).join('')+'</ul></div>':''); return; }
     var es=d.estabelecimentos||[];
     var av=(d.avisos||[]).length;
     c.innerHTML='✅ Login OK no <b>'+(d.ambiente==='sandbox'?'sandbox (teste)':'ambiente de produção')+'</b> · '+d.total+' estabelecimento(s)'+
       '<div style="margin-top:8px">'+(av>=d.avisosTotal?'✅ Avisos (webhook) ligados':'<span style="color:var(--red)">Avisos (webhook) '+(av?'ligados em parte ('+av+' de '+d.avisosTotal+')':'desligados')+'</span> <button class="btn peq" id="pt-av" onclick="ptAvisos()">Ligar avisos</button>')+'</div>'+
       (es.length?'<div class="tabela-wrap" style="margin-top:10px"><table><tr><th>ID</th><th>Nome</th><th>Status</th></tr>'+es.map(function(x){return '<tr><td>'+x.id+'</td><td>'+esc(x.nome)+'</td><td>'+esc(x.status)+(x.ativo?'':' · inativo')+'</td></tr>';}).join('')+'</table></div>'+
-      '<label>Estabelecimento para o Pix de teste</label><select id="pt-estab">'+es.map(function(x){return '<option value="'+x.id+'"'+(x.status==='APPROVED'?'':' disabled')+'>'+x.id+' · '+esc(x.nome)+(x.status==='APPROVED'?'':' ('+esc(x.status)+')')+'</option>';}).join('')+'</select>'+
+      '<label>Estabelecimento para o Pix de teste</label><select id="pt-estab" onchange="ptGateways()">'+es.map(function(x){return '<option value="'+x.id+'"'+(x.status==='APPROVED'?'':' disabled')+'>'+x.id+' · '+esc(x.nome)+(x.status==='APPROVED'?'':' ('+esc(x.status)+')')+'</option>';}).join('')+'</select>'+
+      '<div id="pt-gw" class="sub2" style="margin-top:8px"></div>'+
       '<label>Valor</label><select id="pt-val"><option value="105">R$ 1,05 · aprova sozinho</option><option value="108">R$ 1,08 · fica pendente</option></select>'+
       '<div class="acoes" style="justify-content:flex-start"><button class="btn pri" id="pt-btn" onclick="ptPix()">Gerar Pix de teste</button></div><div id="pt-res"></div>'
       :'<div class="aviso">Nenhum estabelecimento no sandbox ainda. Peça à Paytime um estabelecimento de teste aprovado.</div>');
+    if(es.length) ptGateways();
   }).catch(function(){ var c=el('pt-corpo'); if(c) c.textContent='Erro de conexão.'; });
+}
+/* (126) gateways do estabelecimento escolhido + botão para ligar o gateway Paytime com os planos ativos */
+function ptGateways(){
+  var g=el('pt-gw'), s=el('pt-estab'); if(!g||!s) return; g.textContent='Conferindo os gateways...';
+  chamar('GET','/admin/paytime/gateways?estab='+encodeURIComponent(s.value)).then(function(d){
+    if(!el('pt-gw')) return;
+    if(!d.ok){ g.innerHTML='<span style="color:var(--red)">'+esc(d.mensagem||'Erro ao ler os gateways.')+'</span>'; return; }
+    var gw=d.gateways||[], pay=gw.filter(function(x){ return x.gid===4||/paytime/i.test(String(x.gateway))&&!/bank/i.test(String(x.gateway)); })[0];
+    g.innerHTML='Gateways: '+(gw.length?gw.map(function(x){ return '<b>'+esc(x.gateway)+'</b> '+esc(x.status)+(x.ativo?'':' (inativo)'); }).join(' · '):'nenhum ligado')+
+      '<br>Planos ativos: '+((d.planos||[]).map(function(p){ return p.id+' '+esc(p.modalidade||p.nome); }).join(', ')||'nenhum')+
+      (pay&&pay.ativo&&pay.status==='APPROVED'?'':'<div style="margin-top:6px"><button class="btn peq" id="pt-at" onclick="ptAtivar()">Ativar Paytime neste estabelecimento</button></div>');
+  }).catch(function(){});
+}
+function ptAtivar(){
+  var b=el('pt-at'); if(b) b.disabled=true;
+  chamar('POST','/admin/paytime/ativar',{estab:el('pt-estab').value}).then(function(d){
+    if(!d.ok){ if(b) b.disabled=false; el('pt-gw').insertAdjacentHTML('beforeend','<div class="erro" style="margin-top:6px">'+esc(d.mensagem||'Não ativou.')+'</div>'); return; }
+    toast('Paytime ativada ('+(d.status||'ok')+'). Planos: '+(d.planos||[]).join(', ')); ptGateways();
+  }).catch(function(){ if(b) b.disabled=false; });
 }
 function ptAvisos(){
   var b=el('pt-av'); if(b) b.disabled=true;
