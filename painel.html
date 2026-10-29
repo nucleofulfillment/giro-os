@@ -8318,9 +8318,9 @@ function lvAbrir(){
       +sel('lv-esforco',[['minimo','Mínimo · responde na hora (só no Sonnet 5.5)'],['low','Baixo · rápido'],['medium','Médio'],['high','Alto · pensa mais, demora mais']],c.esforco)
       +'<label style="display:flex;gap:8px;align-items:center;font-size:13.5px;font-weight:700;margin-bottom:4px"><input type="checkbox" id="lv-enviar" '+(c.enviar?'checked':'')+' style="width:18px;height:18px"> Enviar os pedidos do totem para o painel</label>'
       +'<div style="font-size:12px;color:var(--muted);margin-bottom:14px">Desligado = modo teste (o pedido não vai pra cozinha). Ligado, entra como retirada no balcão, pago no caixa.</div>'
-      +'<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap"><label style="font-size:12px;font-weight:700;color:var(--muted2)">Treinamento: orientações da sua loja (uma por linha)</label><button class="btn sec" type="button" id="lv-gerar" onclick="lvGerar()">✨ Gerar pelos produtos</button></div>'
-      +'<div style="font-size:12px;color:var(--muted);margin-top:4px">O Live lê todos os produtos da loja e escreve as orientações para o tipo de loja (restaurante, farmácia, mercado…). Confira e clique em Salvar.</div>'
-      +'<textarea class="inp" id="lv-treino" rows="9" placeholder="Ex.:&#10;- Todos os burgers acompanham fritas.&#10;- Pizza: sempre pergunte o tamanho e os sabores.&#10;- Se pedirem refrigerante, ofereça o suco da casa." style="margin:6px 0 14px">'+esc(c.treino||'')+'</textarea>'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap"><label style="font-size:12px;font-weight:700;color:var(--muted2)">Treinamento: orientações da sua loja (uma por linha)</label><button class="btn sec" type="button" id="lv-gerar" onclick="lvGerar()">'+lvRotGerar(c)+'</button></div>'
+      +'<div style="font-size:12px;color:var(--muted);margin-top:4px">O Live lê todos os produtos da loja e escreve um treinamento completo para o tipo de loja (restaurante, farmácia, mercado…). Quando entrarem produtos novos, clique em Atualizar: ele mantém o que você escreveu e inclui o que entrou. Confira e clique em Salvar.</div>'+lvAvisoNovos(c,d)
+      +'<textarea class="inp" id="lv-treino" rows="16" placeholder="Ex.:&#10;- Todos os burgers acompanham fritas.&#10;- Pizza: sempre pergunte o tamanho e os sabores.&#10;- Se pedirem refrigerante, ofereça o suco da casa." style="margin:6px 0 14px">'+esc(c.treino||'')+'</textarea>'
       +'<label style="font-size:12px;font-weight:700;color:var(--muted2)">Voz do Live (ID da voz na ElevenLabs, opcional)</label>'
       +'<input class="inp" id="lv-voz" placeholder="'+(d.vozPadrao?'em branco = voz padrão do Live':'em branco = voz do navegador')+'" value="'+esc(c.voz||'')+'" style="margin:6px 0 4px">'
       +'<div style="font-size:12px;color:var(--muted);margin-bottom:14px">'+(d.vozServidor?'A chave da ElevenLabs já está no servidor.':'A chave da ElevenLabs ainda não está no servidor: o totem usa a voz do navegador.')+'</div>'
@@ -8331,21 +8331,25 @@ function lvAbrir(){
   }).catch(function(e){ el('cd-imp-corpo').innerHTML='<div style="color:#f87171;font-size:13px">'+esc(e.message||'Não consegui abrir.')+'</div>'; });
 }
 /* (132) treinamento escrito pela IA a partir dos produtos cadastrados; só preenche o campo, quem salva é o dono */
+/* (134) com treinamento já escrito o botão vira Atualizar; e o painel avisa quando entraram produtos desde a última geração */
+function lvRotGerar(c){ return (c&&String(c.treino||'').trim())?'🔄 Atualizar pelos produtos':'✨ Gerar pelos produtos'; }
+function lvAvisoNovos(c,d){ var n=(d&&d.produtos)||0, g=(c&&c.treinoN)||0, dt=(c&&c.treinoEm)?new Date(c.treinoEm).toLocaleDateString('pt-BR'):''; if(!g) return ''; var h='<div style="font-size:12px;color:var(--muted);margin-top:4px">Última geração: '+dt+', com '+g+' produtos.</div>'; if(n>g) h+='<div id="lv-novos" style="background:#3b2a0b;color:#fcd34d;border-radius:10px;padding:8px 12px;font-size:12.5px;margin-top:6px">Entraram '+(n-g)+' produto'+(n-g===1?'':'s')+' desde a última geração. Clique em <b>Atualizar pelos produtos</b> para o Live conhecer.</div>'; return h; }
 function lvGerar(){
   var b=el('lv-gerar'), tx=el('lv-treino'), m=el('lv-m'); if(!b||b.disabled) return;
-  b.disabled=true; b.textContent='Lendo os produtos…'; if(m){ m.style.color='var(--muted)'; m.textContent='Isso leva uns 20 segundos.'; }
+  b.disabled=true; b.textContent='Lendo os produtos…'; if(m){ m.style.color='var(--muted)'; m.textContent='Lendo todos os produtos e escrevendo o treinamento. Leva até 1 minuto.'; }
   fetch(DELTADIS_API+'/painel/live-treino',{method:'POST',headers:cdHdr(),body:JSON.stringify({atual:tx.value})}).then(function(r){return r.json();}).then(function(d){
     if(!d||!d.ok) throw new Error((d&&d.mensagem)||'Não consegui gerar.');
-    tx.value=d.treino; if(m){ m.style.color='#4ade80'; m.textContent='Treinamento gerado a partir de '+d.produtos+' produtos. Confira e clique em Salvar.'; }
+    tx.value=d.treino; LV.gerN=d.produtos; LV.gerEm=d.em||Date.now(); var av=el('lv-novos'); if(av) av.style.display='none';
+    if(m){ m.style.color='#4ade80'; m.textContent='Treinamento gerado a partir de '+d.produtos+' produtos. Confira e clique em Salvar.'; }
   }).catch(function(e){ if(m){ m.style.color='#f87171'; m.textContent=e.message||'Não consegui gerar.'; } })
-  .then(function(){ b.disabled=false; b.textContent='✨ Gerar pelos produtos'; });
+  .then(function(){ b.disabled=false; b.textContent=lvRotGerar({treino:tx.value}); });
 }
 function lvCopiar(){
   var i=el('lv-link'); i.select();
   (navigator.clipboard?navigator.clipboard.writeText(i.value):Promise.reject()).then(function(){ aviso('Link copiado'); },function(){ document.execCommand('copy'); aviso('Link copiado'); });
 }
 function lvSalvar(){
-  var body={ativo:el('lv-ativo').checked,modelo:el('lv-modelo').value,esforco:el('lv-esforco').value,enviar:el('lv-enviar').checked,treino:el('lv-treino').value,voz:el('lv-voz').value.trim()};
+  var body={ativo:el('lv-ativo').checked,modelo:el('lv-modelo').value,esforco:el('lv-esforco').value,enviar:el('lv-enviar').checked,treino:el('lv-treino').value,voz:el('lv-voz').value.trim(),treinoN:LV.gerN||(LV.cfg&&LV.cfg.treinoN)||0,treinoEm:LV.gerEm||(LV.cfg&&LV.cfg.treinoEm)||0};
   fetch(DELTADIS_API+'/painel/live-config',{method:'POST',headers:cdHdr(),body:JSON.stringify(body)}).then(function(r){return r.json();}).then(function(d){
     if(!d||!d.ok) throw new Error((d&&d.mensagem)||'não salvou');
     var b=el('lv-badge'); if(b) b.textContent=d.cfg.ativo?'ligado':'desligado';
