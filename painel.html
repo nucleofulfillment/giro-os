@@ -8384,8 +8384,7 @@ function slMonta(){
     +'<div id="sl-tools" style="width:190px;flex:none;display:flex;flex-direction:column;gap:6px;overflow:auto">'
     +'<div id="sl-areas"></div>'
     +['mesa','balcao','cozinha','banheiro','entrada','saida'].map(function(t){ return '<button class="btn sec" type="button" style="'+tb+'" onclick="slAdd(\''+t+'\')">+ '+SL_T[t].nome+'</button>'; }).join('')
-    +'<select class="inp" style="padding:8px 9px;font-size:12.5px;width:100%" onchange="if(this.value){ slAdd(this.value); this.value=\'\'; }" title="Decoração e equipamentos"><option value="">+ Decoração…</option>'+Object.keys(SL_T).filter(function(t){ return SL_T[t].deco; }).map(function(t){ return '<option value="'+t+'">'+SL_T[t].ic+' '+SL_T[t].nome+'</option>'; }).join('')+'</select>'
-    +'<button class="btn sec" type="button" style="'+tb+';margin-top:6px;border-color:var(--pri,#E07B39);color:var(--pri,#E07B39);font-weight:700" onclick="slSync()" title="Deixa o desenho igual ao menu Mesas">⟳ Sincronizar</button></div>'
+    +'<select class="inp" style="padding:8px 9px;font-size:12.5px;width:100%" onchange="if(this.value){ slAdd(this.value); this.value=\'\'; }" title="Decoração e equipamentos"><option value="">+ Decoração…</option>'+Object.keys(SL_T).filter(function(t){ return SL_T[t].deco; }).map(function(t){ return '<option value="'+t+'">'+SL_T[t].ic+' '+SL_T[t].nome+'</option>'; }).join('')+'</select>'+'</div>'
     +'<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:8px">'
     +'<div id="sl-mapa" style="flex:1;min-height:0;position:relative"><svg id="sl-svg" viewBox="0 0 600 360" style="width:100%;height:100%;display:block;border-radius:12px;background:#FAFAFA;border:1px solid var(--border2);touch-action:none" role="img" aria-label="Planta do salão"></svg><svg id="sl-svg3" viewBox="0 0 900 520" style="display:none"></svg>'
     +'<iframe id="sl-if3" title="Salão em 3D" style="display:none;width:100%;height:100%;border:0;border-radius:12px;background:#110d0a"></iframe>'
@@ -8415,7 +8414,7 @@ function slMonta(){
   });
   s.addEventListener('pointermove',function(e){
     if(!SL.drag) return;
-    if(SL.drag.mode==='pan'){ var dpx=e.clientX-SL.drag.sx, dpy=e.clientY-SL.drag.sy; if(Math.abs(dpx)+Math.abs(dpy)>4) SL.drag.moveu=true; if(!SL.drag.moveu||(SL.z||1)<=1) return; var esc=s.getBoundingClientRect().width/(slWH().W/(SL.z||1)); SL.vx=SL.drag.vx-dpx/esc; SL.vy=SL.drag.vy-dpy/esc; slVB(); return; }
+    if(SL.drag.mode==='pan'){ var dpx=e.clientX-SL.drag.sx, dpy=e.clientY-SL.drag.sy; if(Math.abs(dpx)+Math.abs(dpy)>4) SL.drag.moveu=true; if(!SL.drag.moveu||(SL.z||1)<=1) return; var esc=s.getBoundingClientRect().width/((slWH().W+2*slPad())/(SL.z||1)); SL.vx=SL.drag.vx-dpx/esc; SL.vy=SL.drag.vy-dpy/esc; slVB(); return; }
     var p=slPeca(SL.drag.id), q=slPt(e); SL.sujo=true;
     if(SL.drag.mode==='vert'){ var av=slAr(), pv=av.pontos[SL.drag.i]; if(pv){ pv[0]=Math.max(0,Math.min(av.larg,Math.round(q.x/25*20)/20)); pv[1]=Math.max(0,Math.min(av.comp,Math.round(q.y/25*20)/20)); } s.innerHTML=slPlanta(); return; }
     if(SL.drag.mode==='size'){
@@ -8536,9 +8535,11 @@ function slTamLote(){ var cw=parseFloat(el('sl-lw').value), ch=parseFloat(el('sl
 function slRot(d,abs){ slHist(abs!=null?'rotv':''); SL.sujo=true; slSels().forEach(function(p){ var v=abs!=null?abs:(p.rot||0)+d; p.rot=((Math.round(v)%360)+360)%360; }); slDesenha(); }
 /* (121) formato vale para todas as mesas selecionadas (não só a primeira) */
 function slForma(f){ slHist(); var ms=slSels().filter(function(p){ return p.t==='mesa'; }); if(!ms.length||!f) return; SL.sujo=true; ms.forEach(function(p){ p.forma=f; if(f!=='quadrada') p.h=p.w; }); slDesenha(); }
+/* (122) folga em volta da área para o desenho não encostar na borda do quadro */
+function slPad(){ var z=slWH(); return Math.max(20,Math.round(Math.max(z.W,z.H)*0.05)); }
 /* (121) zoom do mapa: SL.z (1 a 8×) e o canto da vista (SL.vx, SL.vy), sempre dentro da área */
 function slVB(){ var z=slWH(), k=SL.z||1, vw=z.W/k, vh=z.H/k; SL.vx=Math.max(0,Math.min(z.W-vw,SL.vx||0)); SL.vy=Math.max(0,Math.min(z.H-vh,SL.vy||0));
-  var s=el('sl-svg'); if(s) s.setAttribute('viewBox',(k>1?SL.vx+' '+SL.vy+' '+vw+' '+vh:'0 0 '+z.W+' '+z.H)); var zv=el('sl-zv'); if(zv) zv.textContent=Math.round(k*100)+'%'; }
+  var p=slPad()/k, s=el('sl-svg'); if(s) s.setAttribute('viewBox',[SL.vx-p,SL.vy-p,vw+2*p,vh+2*p].join(' ')); var zv=el('sl-zv'); if(zv) zv.textContent=Math.round(k*100)+'%'; }
 function slZoom(f){ var z=slWH(), k0=SL.z||1; if(!f){ SL.z=1; SL.vx=0; SL.vy=0; slVB(); return; } var k1=Math.max(1,Math.min(8,k0*f)), cx=(SL.vx||0)+z.W/k0/2, cy=(SL.vy||0)+z.H/k0/2; SL.z=k1; SL.vx=cx-z.W/k1/2; SL.vy=cy-z.H/k1/2; slVB(); }
 function slDesenha(manterProp){
   slVB();
