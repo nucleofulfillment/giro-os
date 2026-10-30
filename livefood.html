@@ -632,6 +632,21 @@ function cartoes(o){
       +'<div class="pr">'+(pr.de?'<small>a partir de</small>':'')+(pr.orig>pr.min?'<s class="de">'+brl(pr.orig)+'</s> ':'')+'<b class="vp">'+brl(pr.min)+'</b></div></div></div>';
   });
   $('cards').innerHTML=h; $('cards').scrollLeft=0; ovAcimaCards(); setTimeout(ovAcimaCards,700);   /* de novo depois da animação de entrada e da barrinha do Clube */
+  cardsRolaInicia();
+}
+/* (141) os cartões da oferta passam sozinhos, um de cada vez (a cada 3,5 s); no fim voltam ao primeiro.
+   Se o cliente tocar ou arrastar, a rolagem automática para por 8 s e depois continua de onde ele deixou. */
+var CR={t:null,para:0};
+function cardsRolaInicia(){
+  var c=$('cards'); if(!c) return; clearInterval(CR.t);
+  if(!c._crOk){ c._crOk=1; ['touchstart','pointerdown','wheel'].forEach(function(ev){ c.addEventListener(ev,function(){ CR.para=Date.now()+8000; },{passive:true}); }); }
+  if(c.children.length<2) return;
+  CR.t=setInterval(function(){
+    if(Date.now()<CR.para||document.hidden||($('sheet')&&$('sheet').classList.contains('on'))) return;
+    var pad=parseFloat(getComputedStyle(c).paddingLeft)||0, cs=[].slice.call(c.children), x=c.scrollLeft;   /* #cards é posicionado: offsetLeft dos cartões já é relativo a ele */
+    var prox=cs.filter(function(e){ return e.offsetLeft-pad>x+8; })[0], fim=x+c.clientWidth>=c.scrollWidth-8;
+    c.scrollTo({left:(fim||!prox)?0:prox.offsetLeft-pad,behavior:'smooth'});
+  },3500);
 }
 /* (132) o texto e o botão da oferta ficam sempre acima dos cartões, qualquer que seja a altura deles */
 function ovAcimaCards(){ try{ var s=$('stage'), c=$('cards'); if(!s||!c) return; var h=c.children.length?Math.ceil(s.getBoundingClientRect().bottom-c.getBoundingClientRect().top+14):0; s.style.setProperty('--ov-min',h+'px'); }catch(e){} }
