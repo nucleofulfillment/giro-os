@@ -280,7 +280,9 @@ function bip(){
   }catch(e){}
 }
 function telaCheia(){ var d=document.documentElement; try{ if(document.fullscreenElement) document.exitFullscreen(); else (d.requestFullscreen||d.webkitRequestFullscreen).call(d); }catch(e){} }
-function minutos(p){ return Math.max(0,Math.floor((Date.now()+OFF-p.criado)/60000)); }
+/* agendado conta a partir da hora marcada, não de quando foi feito */
+function refMs(p){ return p.ref||p.criado; }
+function minutos(p){ return Math.max(0,Math.floor((Date.now()+OFF-refMs(p))/60000)); }
 function hhmm(ms){ var d=new Date(ms); return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); }
 function fotoHtml(f){ if(!f||!f.length) return '<div class="ft">🍽️</div>'; if(f.length===1) return '<div class="ft" style="background-image:url(\''+API+f[0]+'\')"></div>'; return '<div class="ft m">'+f.slice(0,2).map(function(u){ return '<i style="background-image:url(\''+API+u+'\')"></i>'; }).join('')+'</div>'; }
 try{ var _e=localStorage.getItem('coz_est'); if(_e==='cozinha'||_e==='bar'||_e==='todos') EST=_e; }catch(e){}
@@ -308,7 +310,7 @@ function cardHtml(p,col){
   var m=minutos(p), cl=(col==='r')?'':(m>=25?'d':(m>=15?'w':'')), a=ACAO[col], id=esc(p.id);
   return '<div class="card'+(col==='n'?' novo':'')+(cl==='d'?' atr':'')+(PRIO[p.id]?' prio':'')+'" onclick="abreDet(\''+id+'\')">'
     +'<div class="hd">'+tagHtml(p)+'<span class="num">#'+p.num+(p.sub?'-'+p.sub:'')+'</span>'+(PRIO[p.id]?'<span class="pri" title="Prioridade">⬆</span>':'')
-    +'<span class="tm '+cl+'">'+(cl?m+' min':hhmm(p.criado))+'</span>'
+    +'<span class="tm '+cl+'">'+(cl?m+' min':hhmm(refMs(p)))+'</span>'
     +'<button class="imp" title="Reimprimir pedido" aria-label="Reimprimir pedido" onclick="event.stopPropagation();reimprime(\''+id+'\',this)">'+IC_IMP+'</button>'
     +'<button class="acao '+col+'" title="'+a.t+'" aria-label="'+a.t+'" onclick="event.stopPropagation();muda(\''+id+'\',\''+a.e+'\')">'+a.ic+'</button></div>'
     +(p.modo!=='mesa'&&p.nome?'<div class="nm">'+esc(p.nome)+'</div>':'')+p.itens.map(itemHtml).join('')+(p.obs?'<div class="po">'+esc(p.obs)+'</div>':'')+'</div>';
@@ -336,7 +338,7 @@ function reimprime(id,bt){
   if(bt){ bt.disabled=true; setTimeout(function(){ bt.disabled=false; },3000); }
   var fila=impFila(p), lab=p.num+(p.sub?'-'+p.sub:''), ehMesa=p.modo==='mesa';
   /* entrega e retirada saem identificadas na etiqueta: o campo "joia" é o que o programa instalado já imprime junto do nome */
-  var nomeMesa=/^mesa\b/i.test(p.nome||''), obsImp=[p.cli_end?'ENTREGAR EM: '+p.cli_end:'',p.obs].filter(Boolean).join(' | ');
+  var nomeMesa=/^mesa\b/i.test(p.nome||''), obsImp=[p.prog_dia?'AGENDADO PARA '+(p.prog_hora||''):'',p.cli_end?'ENTREGAR EM: '+p.cli_end:'',p.obs].filter(Boolean).join(' | ');
   var corpo={lab:lab,mesa:ehMesa?p.mesa:'',modo:ehMesa?'mesa':p.modo,joia:ehMesa?(p.nome&&!nomeMesa?'MESA':''):(p.modo==='retirada'?'RETIRADA':'ENTREGA'),nome:[p.nome,p.cli_fone].filter(Boolean).join(' - '),atend:'',criado:p.criado,obs:obsImp,reimp:1,empresa:EMP||'',fila:fila.map(function(x){ return {setor:x.setor,l:x.l.map(function(l){ return {nome:l.nome,qty:l.qty,tam:l.tam,sab:l.sab,borda:l.borda,adds:l.adds,obs:l.obs}; })}; })};
   fetch(API+'/painel/atend-imprimir',{method:'POST',headers:hdr(),body:JSON.stringify(corpo)}).then(function(r){ return r.json(); }).then(function(d){
     if(d&&d.ok&&d.agente) tst('Pedido #'+lab+' enviado para a impressora'); else impNavegador(p,fila,lab);
@@ -360,7 +362,7 @@ function fechaDet(){ DET=''; $('det').classList.remove('on'); }
 function detPinta(){
   var p=null; PED.forEach(function(x){ if(x.id===DET) p=x; }); if(!p){ fechaDet(); return; }
   var col=colDe(p), a=ACAO[col], v=VOLTA[col], lista=colunas()[col], pos=lista.indexOf(p), m=minutos(p), id=esc(p.id);
-  $('det-c').innerHTML='<div class="hd">'+tagHtml(p)+'<span class="num">#'+p.num+(p.sub?'-'+p.sub:'')+'</span><span class="tm">'+hhmm(p.criado)+' · '+m+' min</span></div>'
+  $('det-c').innerHTML='<div class="hd">'+tagHtml(p)+'<span class="num">#'+p.num+(p.sub?'-'+p.sub:'')+'</span><span class="tm">'+hhmm(refMs(p))+(refMs(p)>Date.now()+OFF?' · agendado':' · '+m+' min')+'</span></div>'
     +(p.nome?'<div class="nm">'+esc(p.nome)+'</div>':'')+p.itens.map(itemHtml).join('')+(p.obs?'<div class="po">'+esc(p.obs)+'</div>':'')
     +'<div class="det-pos">Posição na fila: <b>'+(pos+1)+'º de '+lista.length+'</b>'+(PRIO[p.id]?' · com prioridade':'')+'</div>'
     +'<div class="det-bts"><button class="db" onclick="prioSobe(\''+id+'\')"'+(pos<=0?' disabled':'')+'>⬆ Subir uma posição</button><button class="db" onclick="prioTopo(\''+id+'\')"'+(pos<=0?' disabled':'')+'>⏫ Colocar no topo</button>'+(PRIO[p.id]?'<button class="db" onclick="prioTira(\''+id+'\')">Tirar prioridade</button>':'')+'<button class="db" onclick="reimprime(\''+id+'\',this)">🖨️ Reimprimir</button></div>'
