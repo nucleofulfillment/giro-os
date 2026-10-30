@@ -1324,7 +1324,7 @@ function ckConfere(){
 }
 function ckOk(p){
   SAC=[]; sacGrava(); try{ localStorage.removeItem('lf_prog_'+(D.cli||CLI)); }catch(e){}
-  if(window.LiveApp) LiveApp.comemorar({titulo:'Pedido #'+p.num+(p.pagto==='dinheiro'||p.pagto==='maquina'||p.pagto==='caixa'||p.pagto==='conta'?' enviado!':' confirmado!'),sub:p.modo==='mesa'?'Já estamos preparando! 🍳':'Já estamos preparando o seu pedido 🍳'});
+  if(window.LiveApp) LiveApp.comemorar({titulo:'Pedido #'+p.num+(p.pagto==='dinheiro'||p.pagto==='maquina'||p.pagto==='caixa'||p.pagto==='conta'?' enviado!':' confirmado!'),sub:p.modo==='mesa'?'Já estamos preparando! 🍳':ehRest()?'Já estamos preparando o seu pedido 🍳':'Já estamos separando o seu pedido 🛍️'});
   abreFolha('<div class="wb" style="text-align:center;padding:36px 20px 24px"><svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg><div style="font-size:22px;font-weight:800;margin-top:14px">Pedido #'+p.num+(p.pagto==='dinheiro'||p.pagto==='maquina'||p.pagto==='caixa'||p.pagto==='conta'?' enviado!':' confirmado!')+'</div><div style="margin-top:8px;color:var(--mut);font-size:14.5px;line-height:1.5">'+(p.pagto==='conta'?'Para pagar, toque em <b style="color:#fff">Fechar conta</b> quando quiser.':p.pagto==='caixa'?'Pague <b style="color:#fff">'+brl(p.total)+'</b> no caixa (cartão ou dinheiro).':p.pagto==='dinheiro'?'Pague <b style="color:#fff">'+brl(p.total)+'</b> em dinheiro '+(p.modo==='retirada'?'na retirada':'ao entregador')+'.':'Pagamento recebido: <b style="color:#fff">'+brl(p.total)+'</b>.')+'<br>'+(p.prog_dia?'Agendado para <b style="color:#fff">'+esc(progFmt({dia:p.prog_dia,hora:p.prog_hora}))+'</b>, com prioridade na fila.':(p.modo==='mesa'?'Já estamos preparando! Levamos até a sua mesa.':p.modo==='retirada'?'Avisaremos quando estiver pronto para retirar.':'Já estamos preparando o seu pedido.'))+'</div></div><div class="rod"><button class="bt c" onclick="'+(p.modo==='mesa'?'fechaSheet();mesaInit(true)':'fechaSheet()')+'">'+(p.modo==='mesa'?'Voltar ao início':(catEhCardapio()?'Voltar ao cardápio':'Voltar para '+esc(catNome())))+'</button></div>',true);
 }
 /* ── (052) FECHAR CONTA da mesa: soma tudo que a mesa pediu; Pix paga na hora, cartão/dinheiro no caixa ── */
@@ -1577,7 +1577,10 @@ sobremesa:'<path d="M4 20h16M6 20l-1-8h14l-1 8"/><path d="M5 12a4 4 0 014-4 4 4 
 acai:'<path d="M5 11h14l-2 9H7z"/><path d="M5 11c0-3 3-5 7-5s7 2 7 5"/><path d="M15 3l-2 5"/>',
 outro:'<circle cx="12" cy="12" r="6.5"/><circle cx="12" cy="12" r="3"/><path d="M3 4v6a2 2 0 002 2M5 4v16M21 4c-2 1-3 4-3 8h3v8"/>'
 };
-function icone(t,s){ s=s||30; return '<svg viewBox="0 0 24 24" width="'+s+'" height="'+s+'" fill="none" stroke="var(--pri2)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'+(ICO[t]||ICO.outro)+'</svg>'; }
+/* (137) produto sem foto: em loja que não é restaurante o desenho é o ícone do catálogo (remédio, carrinho, pata...), não prato e talheres */
+function icone(t,s){ s=s||30; var d=ICO[t]||ICO.outro; if(!ehRest()&&(t==='outro'||!ICO[t])) d=CAT_IC[catCfg().icone]||CAT_IC.catalogo; return '<svg viewBox="0 0 24 24" width="'+s+'" height="'+s+'" fill="none" stroke="var(--pri2)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'+d+'</svg>'; }
+/* ícones que caem na abertura da versão do WhatsApp, conforme o tipo de loja */
+function catEmojis(){ var i=catCfg().icone, cn=(D.cats||[]).map(function(c){ return c.nome||''; }).join(' '); if(/medicament|farm|vitamin|dermo|fralda|higiene/i.test(cn)) i='medicamentos'; return i==='medicamentos'?['💊','🧴','🍼','💄','🌿','🩹','🧼','🛍️']:i==='mercado'?['🛒','🥖','🍎','🧀','🥛','🧻','🥫','🍝']:i==='pet'?['🐾','🦴','🐶','🐱','🐟','🧸','🛍️','🦮']:i==='padaria'?['🥖','🥐','🍞','🧁','☕','🍰','🥨','🍩']:['🛍️','📦','✨','🎁','🛒','💳','⭐','🏷️']; }
 var BKI='<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 5l-7 7 7 7"/></svg>';
 function menuGrupos(){
   var cats={}, g=[]; (D.cats||[]).forEach(function(c){ cats[c.id]={id:c.id,nome:c.nome,foto:c.foto,v:c.v,ps:[]}; g.push(cats[c.id]); });
@@ -2237,7 +2240,7 @@ function waEnviar(){
 function waIntro(){
   /* ?intro=1 no link mostra a abertura de novo (para conferir como ficou), mesmo para quem já viu */
   if(!waOn()||$('wi')) return; var ch='lf_wa_intro_'+(D.cli||CLI); try{ if(localStorage.getItem(ch)&&Q.get('intro')!=='1') return; }catch(e){}
-  var nm=['🍔','🥤','🍟','🍺','🍕','🧃','🌭','🥟'], w=document.createElement('div'); w.id='wi';
+  var nm=ehRest()?['🍔','🥤','🍟','🍺','🍕','🧃','🌭','🥟']:catEmojis(), w=document.createElement('div'); w.id='wi';
   w.innerHTML='<div class="wi-cena" id="wi-cena"><h1 class="wi-tit">Monte seu pedido aqui e envie<br>direto pro nosso <span class="wi-pill">'+WA_ICO+'WhatsApp</span></h1>'
     +'<div class="wi-passos"><div class="wi-passo"><i>1</i><span>Escolha<br>os itens</span></div><div class="wi-passo"><i>2</i><span>Coloque<br>na sacola</span></div><div class="wi-passo w"><i>3</i><span>Envie pelo<br>WhatsApp</span></div></div>'
     +'<div class="wi-sac" id="wi-sac"><svg class="wt" viewBox="0 0 330 520" aria-hidden="true"><path d="M100 118 C100 22 230 22 230 118" fill="none" stroke="#B83F00" stroke-width="18" stroke-linecap="round"/><path d="M100 118 C100 34 230 34 230 118" fill="none" stroke="#FF8A33" stroke-width="6" stroke-linecap="round" opacity=".6"/><path d="M18 112 H312 L306 140 H24 Z" fill="#7A2A00"/></svg>'
