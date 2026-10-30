@@ -1411,7 +1411,7 @@ html.loja-p .cd-dest{display:none!important}
         <input class="inp" id="cd-ov-apoio" maxlength="80" placeholder="Texto pequeno (ex: só hoje)" oninput="cdOvPrev()" style="margin-bottom:6px">
         <input class="inp" id="cd-ov-titulo" maxlength="120" placeholder="Título grande (ex: Pizza Gigante por R$ 99)" oninput="cdOvPrev()" style="margin-bottom:6px">
         <div style="display:grid;grid-template-columns:1fr auto;gap:6px;margin-bottom:6px"><input class="inp" id="cd-ov-botao" maxlength="30" placeholder="Texto do botão (ex: Pedir agora)" oninput="cdOvPrev()"><select class="inp" id="cd-ov-acao" onchange="cdOvAcao()" title="O que acontece quando o cliente toca no botão"><option value="produto">Abre o produto</option><option value="reserva">Reservar mesa</option></select></div>
-        <div id="cd-ov-acao-av" style="display:none;font-size:11.5px;color:var(--muted);margin:-2px 0 8px">🪑 O botão abre o salão em 3D para o cliente escolher a mesa e reservar. Os produtos ficam opcionais. <a href="#" onclick="rvAbrir();return false">Configurar reservas</a></div>
+        <div id="cd-ov-acao-av" style="display:none;font-size:11.5px;color:var(--muted);margin:-2px 0 8px">🪑 O botão abre o salão em 3D para o cliente escolher a mesa e reservar. Os produtos ficam opcionais. Ao salvar, as reservas da loja são ligadas; se você desligá-las depois, a oferta continua no ar sem esse botão. <a href="#" onclick="rvAbrir();return false">Configurar reservas</a></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px"><select class="inp" id="cd-ov-pos" onchange="cdOvPrev()"><option value="base">Posição: embaixo</option><option value="centro">Posição: centro</option><option value="topo">Posição: topo</option></select><select class="inp" id="cd-ov-alin" onchange="cdOvPrev()"><option value="esq">Alinhado à esquerda</option><option value="centro">Centralizado</option><option value="dir">Alinhado à direita</option></select></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px"><label style="font-size:11.5px;color:var(--muted)">Tamanho do título<input type="range" id="cd-ov-et" min="50" max="250" value="100" oninput="cdOvPrev()" style="width:100%"></label><label style="font-size:11.5px;color:var(--muted)">Tamanho do texto pequeno<input type="range" id="cd-ov-ea" min="50" max="250" value="100" oninput="cdOvPrev()" style="width:100%"></label></div>
         <div style="display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center;margin-bottom:8px"><select class="inp" id="cd-ov-ef" onchange="cdOvPrev()"><option value="nenhum">Efeito: sem efeito</option><option value="cair">Efeito: cai de cima</option><option value="lateral">Efeito: entra pela lateral</option><option value="zoom">Efeito: surge com zoom</option></select><button class="btn sec sm" type="button" onclick="cdOvPrev()" title="Ver o efeito de novo">↻ rever</button></div>
@@ -9165,9 +9165,12 @@ function cdOfSalvar(){
   if(it.txt.acao==='reserva'&&!it.txt.botao){ er.textContent='Escreva o texto do botão (ex: Reservar mesa).'; return; }
   if(!it.id) it.ordem=Date.now();
   var b=el('cd-of-salvar'); b.disabled=true; b.textContent='Salvando…'; er.textContent='';
-  cdOfSalvarApi(it).then(function(){ b.disabled=false; b.textContent='Salvar'; CD.sel={}; return cdOfRecarregar(); }).then(function(){ aviso('Oferta salva'); cdAbrirOfertas(); })
+  var ligou=0;
+  cdOfSalvarApi(it).then(function(){ return it.ativo&&it.txt.acao==='reserva'?cdRsvGarante():0; }).then(function(l){ ligou=l; b.disabled=false; b.textContent='Salvar'; CD.sel={}; return cdOfRecarregar(); }).then(function(){ aviso(ligou?'Oferta salva e reservas de mesa ligadas':'Oferta salva'); cdAbrirOfertas(); })
     .catch(function(e){ b.disabled=false; b.textContent='Salvar'; er.textContent='Não salvou: '+e.message; });
 }
+/* (142) oferta ativa com botão "Reservar mesa" liga as reservas da loja; devolve 1 se ligou agora (se falhar, a oferta continua salva) */
+function cdRsvGarante(){ return mzApi('/painel/reserva-config').then(function(d){ if(!d||!d.ok||!d.reserva||d.reserva.on) return 0; var c=JSON.parse(JSON.stringify(d.reserva)); c.on=1; return mzApi('/painel/reserva-config',c).then(function(x){ return x&&x.ok?1:0; }); }).catch(function(){ return 0; }); }
 function cdOfDuplicarAberto(){ if(CD.of&&CD.of.id){ var id=CD.of.id; cdOfDuplicar(id); } }
 function cdOfApagarAberto(){
   var o=CD.of; if(!o||!o.id) return; if(!confirm('Apagar a oferta "'+o.nome+'"?')) return;
