@@ -7877,18 +7877,19 @@ function cdApSalvar(){
   }).catch(function(e){ aviso(e.message||'Não salvou'); });
 }
 /* ── horário de atendimento (062) ── */
-var CDHR=null, CDDIAS=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+var CDHR=null, CDHR_SALVO=false, CDDIAS=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
 function cdHorario(){
   el('cd-imp-corpo').innerHTML='<div style="font-size:13px;color:var(--muted)">Carregando…</div>';
   el('sh-import').querySelector('h3').textContent='Horário de atendimento'; abrir('sh-import');
   fetch(DELTADIS_API+'/painel/cardapio-config',{headers:cdHdr()}).then(function(r){return r.json();}).then(function(d){
     if(!d||!d.ok) throw new Error((d&&d.mensagem)||'erro');
-    CDHR=(d.horarios&&d.horarios.length===7)?d.horarios:CDDIAS.map(function(){ return {on:true,ab:'18:00',fe:'23:00'}; });
+    CDHR_SALVO=!!(d.horarios&&d.horarios.length===7);
+    CDHR=CDHR_SALVO?d.horarios:CDDIAS.map(function(){ return {on:true,ab:'18:00',fe:'23:00'}; });
     cdHrPintar();
   }).catch(function(e){ el('cd-imp-corpo').innerHTML='<div style="color:#f87171;font-size:13px">'+esc(e.message||'Não consegui abrir.')+'</div>'; });
 }
 function cdHrPintar(){
-  var h='<div style="font-size:13px;color:var(--muted2);line-height:1.5;margin-bottom:12px">Defina quando o restaurante está <b>aberto</b>. Fora desse horário, o app do cliente mostra <b>FECHADO</b>. Se fechar depois da meia-noite (ex.: 18:00 às 02:00), é só colocar 02:00.</div>';
+  var h=(CDHR_SALVO?'':'<div style="background:#FFF4E5;color:#9A5B00;border-radius:10px;padding:10px 12px;font-size:13px;font-weight:700;line-height:1.45;margin-bottom:12px">⚠️ Este horário ainda não está valendo: é só uma sugestão. A loja fica sempre aberta para pedidos até você clicar em <b>Salvar horário</b>.</div>')+'<div style="font-size:13px;color:var(--muted2);line-height:1.5;margin-bottom:12px">Defina quando o restaurante está <b>aberto</b>. Fora desse horário, o app do cliente mostra <b>FECHADO</b>. Se fechar depois da meia-noite (ex.: 18:00 às 02:00), é só colocar 02:00.</div>';
   CDDIAS.forEach(function(n,i){ var x=CDHR[i];
     h+='<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--border);'+(x.on?'':'opacity:.55')+'"><label style="display:flex;align-items:center;gap:8px;width:116px;font-weight:700;font-size:13.5px"><input type="checkbox" '+(x.on?'checked ':'')+'onchange="CDHR['+i+'].on=this.checked;cdHrPintar()" style="width:18px;height:18px">'+n+'</label>'
       +(x.on?'<input type="time" class="inp" value="'+x.ab+'" onchange="CDHR['+i+'].ab=this.value" style="width:110px"><span style="color:var(--muted)">às</span><input type="time" class="inp" value="'+x.fe+'" onchange="CDHR['+i+'].fe=this.value" style="width:110px">':'<span style="color:var(--muted);font-size:13px">Fechado o dia todo</span>')+'</div>'; });
@@ -7898,7 +7899,7 @@ function cdHrPintar(){
 function cdHrTodos(){ var i, b=null; for(i=0;i<7;i++) if(CDHR[i].on){ b=CDHR[i]; break; } if(!b) return; for(i=0;i<7;i++) CDHR[i]={on:true,ab:b.ab,fe:b.fe}; cdHrPintar(); }
 function cdHrSalvar(){
   fetch(DELTADIS_API+'/painel/cardapio-config',{method:'POST',headers:cdHdr(),body:JSON.stringify({horarios:CDHR})}).then(function(r){return r.json();}).then(function(d){
-    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'não salvou'); aviso('Horário salvo'); fecharTudo();
+    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'não salvou'); CDHR_SALVO=true; aviso('Horário salvo'); fecharTudo();
   }).catch(function(e){ aviso(e.message||'Não salvou'); });
 }
 /* ── MESAS (075): chamados de garçom + pedidos feitos na mesa ── */

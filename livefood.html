@@ -575,7 +575,7 @@ function carregar(primeira){
   return fetch(API+'/food/cardapio/'+encodeURIComponent(CLI)).then(function(r){return r.json();}).then(function(d){
     if(!d||!d.ok){ if(primeira) vazio('Cardápio não encontrado',(d&&d.mensagem)||'Confira o link.'); return; }
     if(primeira){ D=d; CLI=d.cli||CLI; sacLer(); aplicaTema(); navOn('inicio'); temaAplica(); wizPill(); mesaInit(); document.title=(d.empresa||'Cardápio'); $('emp').innerHTML=((d.cfg&&d.cfg.logo)?'<img class="lg" src="'+API+'/food/foto/'+encodeURIComponent(d.cli||CLI)+'/_logo?v='+(d.cfg.v||0)+'" alt="'+esc(d.empresa)+'" onerror="this.outerHTML=\''+esc(d.empresa).replace(/'/g,'')+'\'">':esc(d.empresa))+'<small id="stt"></small>'; pintaStatus(); try{ if(!estaAberto()&&!sessionStorage.getItem('lf_fcm_'+(d.cli||CLI))){ sessionStorage.setItem('lf_fcm_'+(d.cli||CLI),'1'); setTimeout(abreFechado,600); } }catch(e){} manifesto(); iniciar(); clbInit(); catAplica(); }
-    else novoD=d;
+    else { novoD=d; if(D&&d.cfg){ D.cfg=d.cfg; pintaStatus(); } }   /* horário salvo no painel vale sem o cliente recarregar a página */
   }).catch(function(){ if(primeira) vazio('Sem conexão','Não consegui abrir o cardápio. Tente de novo.'); });
 }
 function vazio(t,p){ $('vzB').style.display='none'; $('vzT').textContent=t; $('vzP').textContent=p; $('vazio').style.display='flex'; }
@@ -1753,7 +1753,8 @@ function pintaAgenda(){
   var np=document.querySelector('.pgd'); if(np){ np.style.scrollBehavior='auto'; np.scrollLeft=sx; var on=np.querySelector('.pgc.on'); if(on){ var l0=on.offsetLeft-np.offsetLeft, r0=l0+on.offsetWidth; if(l0<np.scrollLeft+8||r0>np.scrollLeft+np.clientWidth-30){ np.style.scrollBehavior='smooth'; np.scrollLeft=Math.max(0,l0-np.clientWidth/2+on.offsetWidth/2); } } setTimeout(function(){ np.style.scrollBehavior=''; },400); }
 }
 function progSim(){ if(!PGD||!PGD.hora) return; try{ localStorage.setItem('lf_prog_'+(D.cli||CLI),JSON.stringify({dia:PGD.dia,hora:PGD.hora})); }catch(e){} toast('Pedido agendado para '+progFmt(PGD)); fechaSheet(); setTimeout(abreMenu,350); }
-function pintaStatus(){ var e=$('stt'); if(!e) return; var a=noHorario(); e.textContent=a?'ABERTO':'FECHADO'; e.className=a?'ab':'fc'; }
+/* loja sem horário salvo: não afirma que está aberta */
+function pintaStatus(){ var e=$('stt'); if(!e) return; var h=D&&D.cfg&&D.cfg.horarios; if(!h||h.length!==7){ e.style.display='none'; return; } e.style.display=''; var a=noHorario(); e.textContent=a?'ABERTO':'FECHADO'; e.className=a?'ab':'fc'; }
 setInterval(function(){ try{ pintaStatus(); }catch(e){} },60000);
 /* etiquetas da listagem: desconto (de/por, laranja) e, ao lado, o Clube (azul, com o ícone do Clube) para quem ainda não assina */
 /* o de/por já aparece no preço: a etiqueta mostra só o percentual (ex.: -5% OFF), curta, para caber ao lado da do Clube */
