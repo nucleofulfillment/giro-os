@@ -539,6 +539,14 @@ a{color:inherit}
 .ovl.on{display:block}
 .sheet{position:fixed;z-index:90;background:var(--s1);display:none;flex-direction:column;box-shadow:var(--sh3)}
 .sheet.on{display:flex}
+/* Live "salvando": ocupa o modal inteiro (ou a tela, se não houver modal) até terminar */
+#lvs{position:absolute;inset:0;z-index:60;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:20px;background:var(--s1);border-radius:inherit;text-align:center}
+#lvs.pagina{position:fixed;z-index:99990;background:rgba(255,255,255,.94);backdrop-filter:blur(4px);border-radius:0}
+#lvs .lvs-live{flex:none;width:min(120px,34vw)}
+#lvs b{font-size:15px;font-weight:800;color:var(--text)}
+#lvs .lvs-bar{width:min(240px,70%);height:8px;border-radius:99px;background:var(--s4);overflow:hidden}
+#lvs .lvs-bar i{display:block;height:100%;width:0;border-radius:99px;background:var(--roxo);transition:width .15s linear}
+#lvs small{font-size:13px;font-weight:800;color:var(--muted2);font-variant-numeric:tabular-nums}
 @media (min-width:860px){
   .sheet{top:50%;left:50%;transform:translate(-50%,-50%);width:520px;max-height:82vh;border-radius:18px;border:1px solid var(--border)}
   .sheet.wide{width:640px}
@@ -2737,6 +2745,50 @@ function ddMostrarLogin(){ document.documentElement.classList.remove('dd-ret'); 
     }catch(e){}
     return f0(u,o);
   };
+})();
+/* (144) Live "salvando": toda gravação que nasce de um toque do usuário mostra o personagem até terminar.
+   O percentual é estimado enquanto o servidor responde (vídeo enviado usa o progresso real) e só chega a 100% quando a resposta volta certa.
+   Sincronizações automáticas e botões de operação rápida (cozinha, status) ficam de fora. */
+(function(){
+  var f1=window.fetch.bind(window), gesto=0, alvo=null, FORA=/^\/(auth\/|diag\/|status|pedidos\/sincronizar|rota\/localizar|mesa\/[a-z-]*absorver|painel\/(salvar|live-treino|comanda-ok|fechamento-ok|food-chamado-ok|food-pedidos-ok|food-status|food-mesa-fase))/;
+  var L={n:0,el:null,pct:0,real:null,t:null,fim:null,ini:0,feitos:0,live:null};
+  function marca(e){ if(e.type==='keydown'&&e.key!=='Enter') return; gesto=Date.now(); alvo=e.target; }
+  ['click','change','keydown'].forEach(function(ev){ document.addEventListener(ev,marca,true); });
+  function conta(u,m){ m=String(m||'GET').toUpperCase(); if(m==='GET'||m==='HEAD'||typeof u!=='string'||u.indexOf(DELTADIS_API)!==0||FORA.test(u.slice(DELTADIS_API.length))) return false; return L.n>0||Date.now()-gesto<3000; }
+  function pinta(tx){ if(!L.el) return; L.el.querySelector('b').textContent=tx||(L.real!=null?'Enviando…':'Salvando…'); L.el.querySelector('i').style.width=L.pct+'%'; L.el.querySelector('small').textContent=Math.round(L.pct)+'%'; }
+  function poeLive(){ if(!L.el||!window.LiveMascote) return; try{ if(!L.live) L.live=LiveMascote.criar(L.el.querySelector('.lvs-live'),{sombra:true,rotulo:'Live salvando'}); else L.el.querySelector('.lvs-live').appendChild(L.live.raiz); L.live.expressao('feliz'); L.live.pensando(true); }catch(e){} }
+  function mostra(){
+    var abertos=document.querySelectorAll('.sheet.on'), host=(alvo&&alvo.closest&&alvo.closest('.sheet.on'))||abertos[abertos.length-1]||null;
+    if(!L.el){ L.el=document.createElement('div'); L.el.id='lvs'; L.el.setAttribute('role','status'); L.el.innerHTML='<div class="lvs-live"></div><b></b><div class="lvs-bar"><i></i></div><small></small>'; }
+    L.el.className=host?'':'pagina'; (host||document.body).appendChild(L.el);
+    L.el.querySelector('.lvs-live').style.width=Math.max(44,Math.min(120,(L.el.clientHeight-110)*.85))+'px';   /* modal baixo: o Live encolhe para caber com o texto e a barra */
+    if(window.LiveMascote) poeLive(); else { try{ mpLiveCarregar(poeLive); }catch(e){} }
+  }
+  function some(){ clearInterval(L.t); clearTimeout(L.fim); L.t=null; L.n=0; L.feitos=0; L.real=null; if(L.live){ try{ L.live.pensando(false); }catch(e){} } if(L.el) L.el.remove(); }
+  function tique(){ if(L.real!=null) L.pct=L.real*.99; else { L.pct+=(92-L.pct)*.07; if(Date.now()-L.ini>90000){ some(); return; } } pinta(); }
+  function comeca(){ L.n++; clearTimeout(L.fim); if(L.t){ if(L.t===1) L.t=setInterval(tique,100); if(L.pct>90) L.pct=90; pinta(); return; } L.pct=0; L.real=null; L.ini=Date.now(); mostra(); pinta(); L.t=setInterval(tique,100); }
+  function pronto(){ clearInterval(L.t); L.pct=100; pinta('Salvo!'); if(L.live){ try{ L.live.pensando(false); L.live.expressao('animado'); L.live.icone('check',900); }catch(e){} } L.t=1; }
+  function acaba(ok){ L.n=Math.max(0,L.n-1); if(L.n) return; if(!ok){ some(); return; } if(L.pct<100) pronto(); clearTimeout(L.fim); L.fim=setTimeout(some,450); }
+  window.fetch=function(u,o){
+    if(!conta(u,o&&o.method)) return f1(u,o);
+    comeca();
+    return f1(u,o).then(function(r){
+      return r.clone().json().then(function(d){ return !(d&&d.ok===false); },function(){ return r.ok; }).then(function(ok){
+        if(!ok||!r.ok){ acaba(false); return r; }
+        var primeira=!L.feitos&&L.n===1; L.feitos++;
+        if(!primeira){ acaba(true); return r; }
+        pronto();   /* mostra o 100% antes de o modal fechar */
+        return new Promise(function(res){ setTimeout(function(){ acaba(true); res(r); },Math.max(350,700-(Date.now()-L.ini))); });
+      });
+    },function(e){ acaba(false); throw e; });
+  };
+  var xo=XMLHttpRequest.prototype.open, xs=XMLHttpRequest.prototype.send;
+  XMLHttpRequest.prototype.open=function(m,u){ this._lvs=[u,m]; return xo.apply(this,arguments); };
+  XMLHttpRequest.prototype.send=function(){
+    var x=this; if(x._lvs&&conta(x._lvs[0],x._lvs[1])){ comeca(); L.real=0; x.upload.addEventListener('progress',function(e){ if(e.lengthComputable) L.real=Math.round(e.loaded*100/e.total); }); x.addEventListener('loadend',function(){ acaba(x.status>=200&&x.status<300&&!/"ok"\s*:\s*false/.test(x.responseText||'')); }); }
+    return xs.apply(this,arguments);
+  };
+  setTimeout(function(){ try{ if(DD_TOKEN) mpLiveCarregar(function(){}); }catch(e){} },4000);   /* deixa o personagem pronto antes do primeiro salvamento */
 })();
 function ddGuardar(tk,us){ DD_TOKEN=tk||''; DD_USER=us||null; try{ if(tk){ localStorage.setItem('dd_jwt',tk); localStorage.setItem('dd_user',JSON.stringify(us||null)); } else { localStorage.removeItem('dd_jwt'); localStorage.removeItem('dd_user'); } }catch(e){} }
 function ddSessaoExpirou(){ if(!DD_TOKEN) return; ddGuardar('',null); sair(); var m=el('lg-msg'); if(m) m.textContent='Sua sessão acabou. Entre de novo.'; }
