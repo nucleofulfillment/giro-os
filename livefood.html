@@ -1473,7 +1473,9 @@ function abreBusca(){
 }
 function buscaLista(){
   var q=(($('bq')||{}).value||'').trim().toLowerCase(), h='', ps=Object.keys(D.produtos).map(function(k){ return D.produtos[k]; }).sort(function(a,b){ return String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR',{sensitivity:'base',numeric:true}); });
-  if(q) ps=ps.filter(function(p){ return (p.nome+' '+(p.desc||'')+' '+(p.sabores||[]).map(function(s){return s.nome;}).join(' ')).toLowerCase().indexOf(q)>=0; });
+  if(q){ var noNome=function(p){ return buscaBate(p.nome,q); };   /* (140) busca tolerante; quem bate no nome vem primeiro, depois quem bate só na descrição */
+    ps=ps.filter(function(p){ return buscaBate(p.nome+' '+(p.desc||'')+' '+(p.sabores||[]).map(function(s){return s.nome;}).join(' '),q); });
+    ps=ps.filter(noNome).concat(ps.filter(function(p){ return !noNome(p); })); }
   ps.slice(0,40).forEach(function(p){ var pr=minPreco(p), ft=p.foto?'<div style="width:56px;height:56px;border-radius:10px;background:#2a2a30 center/cover url('+fotoUrl(p)+');flex:none"></div>':'<div style="width:56px;height:56px;border-radius:10px;background:#ffffff0f;display:flex;align-items:center;justify-content:center;flex:none">'+icone(tipoDesenho(p),26)+'</div>';
     h+='<div class="mp" onclick="abreSheet(\''+esc(p.id)+'\')">'+(p.destaque?'<div class="fgw">'+ft+'<span class="fogo" title="Destaque">🔥</span></div>':ft)+'<div style="flex:1;min-width:0"><b style="font-size:14.5px">'+esc(p.nome)+'</b>'+promoTag(p)+'</div><span class="vl" style="color:var(--pri2);font-weight:800;font-size:13.5px;text-align:right">'+(pr.min>0?(pr.de?'a partir de ':'')+(pr.orig>pr.min?'<s class="de">'+brl(pr.orig)+'</s> ':'')+brl(pr.min):'')+'</span></div>'; });
   $('bl').innerHTML=h||'<div class="nt">Nada encontrado.</div>';
@@ -1754,9 +1756,23 @@ function abreMenu(){
   h+='</div></div>'; abreFolha(h,true,'fx');
 }
 function semAc(t){ return String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(); }
+/* (140) BUSCA TOLERANTE: sem acento, sem letra dobrada (gilete = gillette), som parecido (ph=f, y=i, k=c, w=v),
+   palavra por palavra em qualquer ordem, e aceita 1 erro de digita\u00e7\u00e3o em palavra de 4+ letras (2 em 8+) */
+function buscaChave(t){ return semAc(t).replace(/ph/g,'f').replace(/y/g,'i').replace(/k/g,'c').replace(/w/g,'v').replace(/[^a-z0-9]+/g,' ').replace(/([a-z])\1+/g,'$1').trim(); }
+function buscaDist(a,b,lim){ if(Math.abs(a.length-b.length)>lim) return lim+1; var p=[],i,j; for(j=0;j<=b.length;j++) p[j]=j; for(i=1;i<=a.length;i++){ var c=[i],mn=i; for(j=1;j<=b.length;j++){ c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1)); if(c[j]<mn) mn=c[j]; } if(mn>lim) return lim+1; p=c; } return p[b.length]; }
+function buscaBate(texto,q){
+  var qs=buscaChave(q).split(' ').filter(Boolean); if(!qs.length) return true;
+  var t=buscaChave(texto), ws=t.split(' ');
+  return qs.every(function(w){
+    if(w.length<=2) return ws.some(function(x){ return x.indexOf(w)===0; });   /* "c", "xg": só no começo de uma palavra */
+    if(t.indexOf(w)>=0) return true;
+    var lim=w.length>=8?2:(w.length>=4?1:0); if(!lim) return false;
+    return ws.some(function(x){ return buscaDist(w,x,lim)<=lim||(x.length>w.length&&buscaDist(w,x.slice(0,w.length),lim)<=lim); });   /* palavra inteira ou come\u00e7o dela (busca enquanto digita) */
+  });
+}
 function catFiltra(){
   var q=semAc(($('cq')||{}).value||'').trim(), ls=document.querySelectorAll('.mp[data-n]'), n=0, i;
-  for(i=0;i<ls.length;i++){ var ok=!q||ls[i].getAttribute('data-n').indexOf(q)>=0; ls[i].style.display=ok?'':'none'; if(ok) n++; }
+  for(i=0;i<ls.length;i++){ var ok=!q||buscaBate(ls[i].getAttribute('data-n'),q); ls[i].style.display=ok?'':'none'; if(ok) n++; }
   var m=$('cnada'); if(m) m.style.display=n?'none':'block';
   var dq=$('dsq'); if(dq) dq.style.display=q?'none':'';
 }
