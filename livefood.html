@@ -102,7 +102,7 @@ html,body{margin:0;height:100%;background:#000;color:var(--tx);font-family:Inter
 .tgc{display:inline-flex;align-items:center;gap:4px;background:linear-gradient(90deg,#1e3a8a,#2563eb);text-transform:none;letter-spacing:0}
 .tgc .clb-mini{width:14px;height:12px}.tgc .clb-mie{font-size:11px}
 html.claro #sheet .tgp{color:#000}   /* tema claro inverte a folha: o texto da etiqueta laranja fica branco */
-html.claro #sheet .tgc{filter:invert(1) hue-rotate(180deg)}html.claro #sheet .tgc .clb-mini{filter:drop-shadow(0 1px 2px rgba(20,90,130,.55))}
+html.claro #sheet .tgc{filter:invert(1)}html.claro #sheet .tgc .clb-mini{filter:drop-shadow(0 1px 2px rgba(20,90,130,.55))}
 .sed{margin-top:8px;background:transparent;border:1px solid var(--pri);color:var(--pri);border-radius:8px;padding:5px 14px;font-size:12.5px;font-weight:700;cursor:pointer}
 .wz .cl{display:block;margin:14px 0 6px;font-size:12px;font-weight:700;color:var(--mut)}
 .wz .cin{width:100%;border-radius:12px;border:1px solid var(--line);background:#ffffff0f;color:#fff;padding:12px;font:inherit;font-size:15px}
@@ -125,12 +125,16 @@ html.claro #sheet .tgc{filter:invert(1) hue-rotate(180deg)}html.claro #sheet .tg
 #obsm textarea{width:100%;min-height:92px;border-radius:12px;border:1px solid var(--line);background:#ffffff0f;color:#fff;padding:12px 14px;font-size:15px;font-family:inherit;resize:none;box-sizing:border-box}
 
 /* tema claro: inverte só as telas (modais, barra, observação); o vídeo/vitrine continua escuro. Fotos e vídeos são re-invertidos para manter a cor real */
-html.claro #sheet,html.claro #nav,html.claro #obsm .obc{filter:invert(1) hue-rotate(180deg)}
-html.claro #sheet img,html.claro #sheet video,html.claro #sheet [style*="url("],html.claro #sheet svg image,html.claro #sheet .pv,html.claro #obsm .obc img{filter:invert(1) hue-rotate(180deg)}
+html.claro #sheet,html.claro #nav,html.claro #obsm .obc{filter:invert(1)}
+/* (139) a inversão do tema claro é só invert(1): ela se desfaz sem perda, então fotos e a cor da loja voltam exatas (com o hue-rotate o vermelho do Nescau desbotava).
+   As cores de destaque (verde de sucesso, vermelho de erro, amarelo) giram o tom de volta para não virarem roxo/ciano; o botão do WhatsApp fica com o verde exato */
+html.claro #sheet :is(.wz .ce,.ah.fim,.wz .lmp.cf,.dsc .pc,.rsok .ck,#r3d .r3p .nm,[style*="#4ade80" i],[style*="#22c55e" i],[style*="#f87171" i],[style*="#ef4444" i],[style*="#fbbf24" i],[style*="#16a34a" i],[style*="#dc2626" i],[style*="#60a5fa" i]){filter:hue-rotate(180deg)}
+html.claro #sheet .wa-env{filter:invert(1)!important}html.claro #sheet .clb-sac{color:#a3370d}   /* azul do Clube (#5CC8F2) já invertido */
+html.claro #sheet img,html.claro #sheet video,html.claro #sheet [style*="url("],html.claro #sheet svg image,html.claro #sheet .pv,html.claro #obsm .obc img{filter:invert(1)}
 html.claro #ovl{background:#0006}
 html.claro #sheet .bt:not(:disabled):not([style*="transparent"]),html.claro #sheet .acp,html.claro #sheet .tl .st.ok .dt,html.claro #nav .bg,html.claro #obsm .bt{color:#000!important}
 /* quadro da montagem (desenho/vídeo + lista de itens) continua escuro no tema claro */
-html.claro #sheet .art{filter:invert(1) hue-rotate(180deg)}
+html.claro #sheet .art{filter:invert(1)}
 html.claro #sheet .art img,html.claro #sheet .art video,html.claro #sheet .art svg image,html.claro #sheet .art [style*="url("]{filter:none}
 /* (131) tema claro: as janelas (lista, produto, sacola, busca) ficam BRANCAS. A folha é invertida, então o fundo escuro #16161a virava cinza:
    aqui ele vira preto puro, que invertido dá branco. As fotos são desinvertidas junto com o quadro de trás: esse quadro passa a ser branco */
@@ -151,7 +155,7 @@ html.claro #sheet :is(.cd .ph,.op .th,.voa,.cc:not(.ccp):not(.ccc),.dsc .im):not
 #wzp{display:none;position:fixed;left:12px;right:12px;bottom:calc(72px + env(safe-area-inset-bottom));margin:0 auto;max-width:496px;z-index:26;background:#16161af2;border:1.5px solid var(--pri);border-radius:16px;align-items:center;box-shadow:0 8px 24px #0009;overflow:hidden}
 #wzp .go{flex:1;background:none;border:0;color:#fff;text-align:left;padding:11px 14px;cursor:pointer;min-width:0}#wzp .go b{display:block;font-size:14px;color:var(--pri)}#wzp .go small{display:block;font-size:12.5px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #wzp .x{flex:none;background:none;border:0;border-left:1px solid var(--line);color:var(--mut);width:46px;align-self:stretch;font-size:16px;cursor:pointer}
-html.claro #wzp{filter:invert(1) hue-rotate(180deg)}
+html.claro #wzp{filter:invert(1)}
 #nav{position:fixed;left:0;right:0;bottom:0;margin:0 auto;max-width:520px;height:calc(60px + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);z-index:30;display:flex;background:#111114f2;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line)}
 #nav button{flex:1;background:none;border:0;color:#9ca3af;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:10.5px;font-weight:700;position:relative;cursor:pointer}
 #nav button.on{color:var(--pri)}
@@ -175,6 +179,12 @@ html.clbbar #mside{bottom:calc(233px + env(safe-area-inset-bottom))}
 /* a barrinha some quando uma tela (cardápio, sacola, produto) está aberta por cima da inicial */
 #sheet.on~#clbHome,html:has(#sheet.on) #clbHome{opacity:0;pointer-events:none;transform:translateY(20px);transition:opacity .2s,transform .2s}
 #mnb{bottom:calc(76px + env(safe-area-inset-bottom))!important}
+/* (139) coluna da direita sempre ACIMA dos cartões da oferta (--ov-min = altura dos cartões, medida no carregamento):
+   embaixo o botão do catálogo; em cima o Compartilhar e, na /mesa, Garçom e Conta. Nada tapa os cartões. */
+#mnb{bottom:max(calc(76px + env(safe-area-inset-bottom)),var(--ov-min,0px))!important}
+html.clbbar #mnb{bottom:max(calc(128px + env(safe-area-inset-bottom)),var(--ov-min,0px))!important}
+#mside{bottom:calc(max(calc(76px + env(safe-area-inset-bottom)),var(--ov-min,0px)) + 98px)!important}
+html.clbbar #mside{bottom:calc(max(calc(128px + env(safe-area-inset-bottom)),var(--ov-min,0px)) + 98px)!important}
 #sheet{bottom:calc(60px + env(safe-area-inset-bottom))!important;max-height:calc(82% - 60px)!important}
 #sheet.fz{height:calc(100% - 60px - env(safe-area-inset-bottom))!important;max-height:none!important}
 #sheet.fx{height:calc(82% - 60px)!important;max-height:none!important}
@@ -275,16 +285,16 @@ html.clbbar #mside{bottom:calc(233px + env(safe-area-inset-bottom))}
 .fogo2{font-size:44px;line-height:1;display:inline-block;animation:fogo 1.6s ease-in-out infinite;transform-origin:50% 90%;filter:drop-shadow(0 0 10px #ff6a00aa)}
 .cc.ccc .clb-d3{width:50px;height:45px;filter:drop-shadow(0 4px 14px rgba(147,197,253,.8))}
 html.loja .art .al{display:none}html.loja .art .infb::after{content:'Detalhes'}
-html.claro #sheet .cc.ccp,html.claro #sheet .cc.ccc{filter:invert(1) hue-rotate(180deg)}   /* tema claro inverte a folha: os dois cartões ficam iguais nos 2 temas */
+html.claro #sheet .cc.ccp,html.claro #sheet .cc.ccc{filter:invert(1)}   /* tema claro inverte a folha: os dois cartões ficam iguais nos 2 temas */
 /* (133) inverter duas vezes não volta a cor saturada (amarelo vira laranja, o azul muda): na grade de categorias a folha não inverte;
    só o cabeçalho e os cartões sem foto invertem, e os cartões coloridos e com foto aparecem com a cor exata, igual ao tema escuro */
 html.claro #sheet:has(>.wb>.mgrid){filter:none!important;background:#fff!important}
-html.claro #sheet:has(>.wb>.mgrid)>.wh{filter:invert(1) hue-rotate(180deg)}
+html.claro #sheet:has(>.wb>.mgrid)>.wh{filter:invert(1)}
 html.claro #sheet:has(>.wb>.mgrid) .mgrid .cc,html.claro #sheet:has(>.wb>.mgrid) .mgrid :is(img,video,[style*="url("]){filter:none}
-html.claro #sheet:has(>.wb>.mgrid) .mgrid .cc:not(.ccp):not(.ccc):not([style*="url("]){filter:invert(1) hue-rotate(180deg)}
+html.claro #sheet:has(>.wb>.mgrid) .mgrid .cc:not(.ccp):not(.ccc):not([style*="url("]){filter:invert(1)}
 .clbcta{display:flex;align-items:center;gap:8px;margin:10px 0 2px;padding:10px 12px;border-radius:12px;background:linear-gradient(90deg,#1e3a8a,#2563eb);color:#fff;font-size:13px;cursor:pointer}
 .clbcta span{flex:1}.clbcta i{font-style:normal;font-weight:900;background:#ffffff2e;padding:4px 10px;border-radius:999px}
-html.claro #sheet .clbcta,html.claro #sheet .prmcta{filter:invert(1) hue-rotate(180deg)}
+html.claro #sheet .clbcta,html.claro #sheet .prmcta{filter:invert(1)}
 html.claro #sheet .clbcta .clb-mini{filter:drop-shadow(0 1px 3px rgba(20,90,130,.55))}   /* a barrinha já é desinvertida: o diamante não inverte de novo (fica claro nos 2 temas) */
 /* (115) barrinha de Promoções nas categorias que têm produto em promoção: mesmo estilo da do Clube, em laranja */
 .prmcta{display:flex;align-items:center;gap:8px;margin:10px 0 2px;padding:10px 12px;border-radius:12px;background:linear-gradient(90deg,#c2410c,#f97316);color:#fff;font-size:13px;cursor:pointer}
@@ -293,7 +303,7 @@ html.claro #sheet .clbcta .clb-mini{filter:drop-shadow(0 1px 3px rgba(20,90,130,
 .mp{display:flex;gap:12px;align-items:center;padding:12px 0;border-top:1px solid var(--line);cursor:pointer}
 /* (114) destaques da categoria: grade de 3 por linha no topo da lista */
 .dsqt{font-size:18px;font-weight:900;margin:16px 0 12px}
-.fgw{position:relative;flex:none}.fogo{position:absolute;top:-8px;right:-8px;font-size:18px;line-height:1;display:inline-block;animation:fogo 1.6s ease-in-out infinite;transform-origin:50% 90%;filter:drop-shadow(0 2px 3px #000a);pointer-events:none}html.claro #sheet .fogo{filter:invert(1) hue-rotate(180deg) drop-shadow(0 2px 3px #0006)}@keyframes fogo{0%,100%{transform:scale(1) rotate(-4deg)}50%{transform:scale(1.15) rotate(4deg)}}
+.fgw{position:relative;flex:none}.fogo{position:absolute;top:-8px;right:-8px;font-size:18px;line-height:1;display:inline-block;animation:fogo 1.6s ease-in-out infinite;transform-origin:50% 90%;filter:drop-shadow(0 2px 3px #000a);pointer-events:none}html.claro #sheet .fogo{filter:invert(1) drop-shadow(0 2px 3px #0006)}@keyframes fogo{0%,100%{transform:scale(1) rotate(-4deg)}50%{transform:scale(1.15) rotate(4deg)}}
 .dsq{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 10px;margin-bottom:14px}
 .dsc{cursor:pointer;min-width:0;animation:dsqEntra .4s cubic-bezier(.2,1.2,.4,1) both}
 @keyframes dsqEntra{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
@@ -302,7 +312,7 @@ html.claro #sheet .clbcta .clb-mini{filter:drop-shadow(0 1px 3px rgba(20,90,130,
 .dsc .pr{font-size:15.5px;font-weight:800;color:var(--pri2);margin-top:8px;line-height:1.2}
 .dsc .dr{display:flex;align-items:center;gap:5px;margin-top:3px;flex-wrap:wrap}.dsc .dr s{font-size:12px;opacity:.55}
 .dsc .pc{background:#16a34a;color:#fff;font-size:11px;font-weight:800;padding:1px 6px;border-radius:999px}
-html.claro #sheet .dsc .pc{filter:invert(1) hue-rotate(180deg)}   /* tema claro inverte a folha: desinverte a pílula (verde com texto branco nos 2 temas) */
+html.claro #sheet .dsc .pc{filter:invert(1)}   /* tema claro inverte a folha: desinverte a pílula (verde com texto branco nos 2 temas) */
 .dsc .nm{font-size:13.5px;line-height:1.3;margin-top:5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 
 #sheet .fh{height:220px;background:#222 center/cover no-repeat;border-radius:24px 24px 0 0;position:relative}
@@ -347,7 +357,7 @@ html.lfab .ov *,html.lfab .ov *::after{animation-play-state:paused!important}   
 /* (111) Clube de assinatura: linha do Clube na sacola, diamante 3D e o modal dos planos */
 .clb-mini{width:20px;height:18px;flex:none;filter:drop-shadow(0 1px 3px rgba(20,90,130,.55))}
 /* tema claro inverte a folha: desinverte o diamante (fica azul) */
-html.claro #sheet .clb-mini{filter:drop-shadow(0 1px 3px rgba(20,90,130,.55)) invert(1) hue-rotate(180deg)}
+html.claro #sheet .clb-mini{filter:drop-shadow(0 1px 3px rgba(20,90,130,.55)) invert(1)}
 /* (114) preço de assinante na lista (quem é do Clube ou modo visualização): pílula laranja com o diamante na ponta */
 .clb-ln{display:flex;justify-content:flex-end;margin-top:4px}.dsc .clb-ln{justify-content:flex-start;margin-top:5px}
 .clb-pill{position:relative;display:inline-flex;align-items:center;background:var(--pri);color:#fff;border-radius:8px;padding:1px 8px 1px 13px;margin-left:9px;font-weight:800;font-size:12.5px;line-height:1.55;white-space:nowrap}
@@ -665,11 +675,10 @@ function aplicaTema(){ var c=(D.cfg&&D.cfg.cor)||''; if(!/^#[0-9a-fA-F]{6}$/.tes
    Nas partes que já são desinvertidas (cartões, barrinhas, etiquetas) e na grade de categorias sem filtro, fica a cor original. */
 function temaClaroCor(c){
   var v=[parseInt(c.slice(1,3),16),parseInt(c.slice(3,5),16),parseInt(c.slice(5,7),16)];
-  var H=[[-0.574,1.430,0.144],[0.426,0.430,0.144],[0.426,1.430,-0.856]];   /* hue-rotate(180deg) do CSS; ele é a própria inversa */
-  var inv='#'+H.map(function(l){ var x=255-(l[0]*v[0]+l[1]*v[1]+l[2]*v[2]); x=Math.max(0,Math.min(255,Math.round(x))); return ('0'+x.toString(16)).slice(-2); }).join('');
+  var inv='#'+v.map(function(x){ return ('0'+(255-x).toString(16)).slice(-2); }).join('');   /* (139) a janela usa só invert(1): a cor oposta volta exata */
   var st=document.getElementById('tema-claro-cor'); if(!st){ st=document.createElement('style'); st.id='tema-claro-cor'; document.head.appendChild(st); }
   st.textContent='html.claro #sheet,html.claro #nav,html.claro #obsm .obc{--pri:'+inv+';--pri2:'+inv+'}'
-    +'html.claro #sheet :is(.clbcta,.prmcta,.tgc,.cc),html.claro #sheet:has(>.wb>.mgrid){--pri:'+c+';--pri2:'+c+'}'
+    +'html.claro #sheet :is(.clbcta,.prmcta,.tgc,.cc,.art),html.claro #sheet:has(>.wb>.mgrid){--pri:'+c+';--pri2:'+c+'}'
     +'html.claro #sheet:has(>.wb>.mgrid)>.wh{--pri:'+inv+';--pri2:'+inv+'}';
 }
 var NEON=['#fb923c','#22d3ee','#a78bfa','#f472b6','#4ade80','#facc15'];
