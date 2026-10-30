@@ -4670,9 +4670,10 @@ function comandaImportar(c,fim){
     if(d.dia===hoje && /^\d{2}:\d{2}$/.test(d.hora||'')){ var t=new Date(hoje+'T'+d.hora+':00').getTime(); if(!isNaN(t) && t<=ms) ms=t; }
     var dh=new Date(ms), hora=('0'+dh.getHours()).slice(-2)+':'+('0'+dh.getMinutes()).slice(-2);
     var forma=d.forma||'online', apg=(d.apagar==null?null:d.apagar), pago=(apg!=null?(apg<=0):(forma==='online'))?1:0;
-    var ped={cod:cod, tr:'gir', mt:null, cliente:d.nome||'', bairro:d.bairro||'', rua:d.rua||'', num:d.numero||'', comp:d.comp||'', bai:d.bairro||'', cid:d.cid||(function(){ try{ return localStorage.getItem('giro_cidade')||''; }catch(e){ return ''; } })(), endOrig:d.endBruto||'', vl:(d.total==null?0:d.total), cep:'', area:'', st:'coletado', t1:'', t2:'', tel:d.fone||'', canal:(d.origem||'Pedidos10'), vend:'', scan:cod, dia:hoje, hora:hora, obs:'em aberto', ent:'', fechId:null,
+    var ret=!!d.retirada;   /* (146) retirada no balcão: sem endereço, fora do mapa e do motoboy (pdEhEntrega) */
+    var ped={cod:cod, tr:'gir', mt:null, cliente:d.nome||'', bairro:ret?'Retirada':(d.bairro||''), rua:ret?'':(d.rua||''), num:ret?'':(d.numero||''), comp:ret?'':(d.comp||''), bai:ret?'Retirada':(d.bairro||''), cid:ret?'':(d.cid||(function(){ try{ return localStorage.getItem('giro_cidade')||''; }catch(e){ return ''; } })()), endOrig:ret?'':(d.endBruto||''), vl:(d.total==null?0:d.total), cep:'', area:'', st:'coletado', t1:'', t2:'', tel:d.fone||'', canal:(d.origem||'Pedidos10'), vend:'', scan:cod, dia:hoje, hora:hora, obs:'em aberto', ent:'', fechId:null,
       tam:'', hp:ms, pg:forma, pgp:pago, pgr:'', tx:(d.taxa==null?null:d.taxa), itens:d.itens||'', atend:'',
-      com:d.com||'', atn:d.atn||'', tpe:d.tipo||'', prz:d.prazo||'', prt:d.prazoTxt||'', ref:d.ref||'', tpg:(d.pago==null?null:d.pago), apg:apg, op:d.obs||'', cmid:c.id, urg:d.urg?1:0};
+      com:d.com||'', atn:d.atn||'', tpe:ret?'Retirada':(d.tipo||''), prz:d.prazo||'', prt:d.prazoTxt||'', ref:d.ref||'', tpg:(d.pago==null?null:d.pago), apg:apg, op:d.obs||'', cmid:c.id, urg:d.urg?1:0};
     PEDIDOS.push(ped); fim(true);
   }
   var tmo=setTimeout(function(){ if(!feito){ feito=true; criar(ult+1); } },4000);

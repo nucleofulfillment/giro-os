@@ -1670,6 +1670,7 @@ document.addEventListener('DOMContentLoaded',function(){
   <div id="cm-form">
     <div id="cm-fcorpo">
       <label class="cm-urg" id="cm-urg-l"><input type="checkbox" id="cm-urg" onchange="this.parentNode.classList.toggle('on',this.checked)"><span><b>🔥 Pedido urgente</b><small>Vai pro topo da fila do Mapeamento, com etiqueta vermelha, pra o operador despachar primeiro.</small></span></label>
+      <label class="cm-urg" id="cm-ret-l"><input type="checkbox" id="cm-ret" onchange="cmRetirada()"><span><b>🏪 Retirada no balcão</b><small>Sem endereço: vai para a cozinha e para Pedidos, sem motoboy.</small></span></label>
       <h4>Confira os dados da comanda</h4><p class="sub" id="cm-sub">A IA leu a foto. Corrija o que estiver errado antes de lançar.</p>
       <div class="cm-g">
         <div class="cm-f"><label>Nº da comanda</label><input class="inp" id="cm-com"></div>
@@ -1761,19 +1762,26 @@ function cmPreencher(d){
   try{ var ult=localStorage.getItem('giro_cid_mesa')||'', c=el('cm-cid'), ln=function(t){ return String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z]/g,''); }, nc=ln(c.value), nu=ln(ult);
     if(ult && (!nc || nc===nu || (nc.length>=3 && nu.length>nc.length && nu.slice(-nc.length)===nc))) c.value=ult; }catch(e){}
   ['rua','cid'].forEach(function(k){ var f=el('cm-'+k).closest('.cm-f'), t=String(el('cm-'+k).value||'').trim(); if(f) f.classList.toggle('err',t.length<3); });
+  el('cm-ret').checked=!!d.retirada; cmRetirada();
+}
+/* retirada no balcão: esconde o que só existe em entrega e tira as marcas de campo faltando */
+function cmRetirada(){
+  var r=el('cm-ret').checked; ['rua','comp','ref','bairro','cid','prazo','taxa'].forEach(function(k){ var f=el('cm-'+k).closest('.cm-f'); if(k==='rua') f=f.parentNode.closest('.cm-f'); f.style.display=r?'none':''; f.querySelectorAll('.cm-f').forEach(function(x){ x.classList.remove('err'); }); f.classList.remove('err'); });
+  var t=el('cm-tipo'); if(r&&!/retir|balc/i.test(t.value)) t.value='Retirada no balcão'; else if(!r&&/retir|balc/i.test(t.value)) t.value='';
 }
 function cmRefazer(){ cmMostrar('cam'); el('cm-foto').disabled=false; el('cm-foto').style.opacity=1; cmCamera(); }
 function cmLancar(){
   var v=function(k){ return String(el('cm-'+k).value||'').trim(); }, falta=[];
   function marca(k,ruim){ var f=el('cm-'+k).closest('.cm-f'); if(f) f.classList.toggle('err',!!ruim); if(ruim) falta.push(k); }
-  marca('nome',!v('nome')); marca('fone',v('fone').replace(/\D/g,'').length<10); marca('rua',v('rua').length<3); marca('cid',v('cid').length<3); marca('bairro',!v('bairro')); marca('total',cmNum(v('total'))==null);
+  var ret=el('cm-ret').checked;   /* retirada no balcão: só precisa do total; nome e telefone, se tiver */
+  if(!ret){ marca('nome',!v('nome')); marca('fone',v('fone').replace(/\D/g,'').length<10); marca('rua',v('rua').length<3); marca('cid',v('cid').length<3); marca('bairro',!v('bairro')); } marca('total',cmNum(v('total'))==null);
   if(falta.length){ aviso('Falta ou está errado: '+falta.map(function(k){ return {nome:'nome',fone:'telefone (com DDD)',rua:'rua',cid:'cidade',bairro:'bairro',total:'total'}[k]; }).join(', ')); return; }
   var b=el('cm-lancar'); if(b.dataset.busy==='1') return; b.dataset.busy='1'; b.textContent='Lançando…';
   var dia=CM.dia||'', hr=v('hora');
-  var dados={com:v('com'),atn:v('atn'),dia:dia,hora:hr,nome:v('nome'),fone:v('fone').replace(/\D/g,''),tipo:v('tipo'),prazo:v('prazo'),prazoTxt:CM.prazoTxt||'',rua:v('rua'),numero:v('numero'),comp:v('comp'),bairro:v('bairro'),cid:v('cid'),ref:v('ref'),endBruto:CM.endBruto||'',itens:v('itens'),obs:v('obs'),taxa:cmNum(v('taxa')),total:cmNum(v('total')),pago:cmNum(v('pago')),apagar:cmNum(v('apagar')),forma:v('forma'),origem:v('origem'),urg:el('cm-urg').checked?1:0};
+  var dados={com:v('com'),atn:v('atn'),dia:dia,hora:hr,nome:v('nome'),fone:v('fone').replace(/\D/g,''),tipo:v('tipo'),prazo:v('prazo'),prazoTxt:CM.prazoTxt||'',rua:ret?'':v('rua'),numero:ret?'':v('numero'),comp:ret?'':v('comp'),bairro:ret?'':v('bairro'),cid:ret?'':v('cid'),ref:ret?'':v('ref'),endBruto:ret?'':(CM.endBruto||''),retirada:ret?1:0,itens:v('itens'),obs:v('obs'),taxa:ret?null:cmNum(v('taxa')),total:cmNum(v('total')),pago:cmNum(v('pago')),apagar:cmNum(v('apagar')),forma:v('forma'),origem:v('origem'),urg:el('cm-urg').checked?1:0};
   api('/painel/comanda-lancar',{method:'POST',body:JSON.stringify({dados:dados})}).then(function(d){
     b.dataset.busy=''; b.textContent='Lançar pedido';
-    if(d&&d.ok){ try{ localStorage.setItem('giro_cid_mesa',dados.cid); }catch(e){} cmAviso('ok','Comanda '+(dados.com?'#'+String(dados.com).replace(/^#/,'')+' ':'')+'lançada',d.cozinha===0?'Já vai pro painel, mas NÃO entrou na fila da cozinha: avise a cozinha.'+(d.cozinha_erro?' ['+d.cozinha_erro+']':''):(d.cozinha?'Já foi para a cozinha e para o painel.':'Já vai pro painel.'),null); cmRefazer(); }
+    if(d&&d.ok){ try{ if(dados.cid) localStorage.setItem('giro_cid_mesa',dados.cid); }catch(e){} cmAviso('ok','Comanda '+(dados.com?'#'+String(dados.com).replace(/^#/,'')+' ':'')+'lançada',d.cozinha===0?'Já vai pro painel, mas NÃO entrou na fila da cozinha: avise a cozinha.'+(d.cozinha_erro?' ['+d.cozinha_erro+']':''):(d.cozinha?'Já foi para a cozinha e para o painel.':'Já vai pro painel.'),null); cmRefazer(); }
     else if(d&&d.erro==='duplicada'){ cmAviso('erro','Comanda já lançada','Esta comanda já foi lançada antes.',function(){ cmRefazer(); }); }
     else { cmSom('erro'); aviso((d&&d.mensagem)||'Não consegui lançar'); }
   }).catch(function(){ b.dataset.busy=''; b.textContent='Lançar pedido'; aviso('Sem resposta do servidor. Tente de novo (ela não foi lançada).'); });
