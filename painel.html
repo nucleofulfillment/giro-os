@@ -915,6 +915,7 @@ html.loja-p .cd-dest{display:none!important}
           <div class="cfgcard" style="cursor:pointer" onclick="cdAparencia()"><div class="ic">🎨</div><h4>Marca e cores</h4><p>Cadastre a logo e escolha a cor do restaurante. Vale para todo o sistema: login, painel, atendimento, cozinha e cardápio.</p></div>
           <div class="cfgcard" style="cursor:pointer" onclick="cdPagamento()"><div class="ic">💳</div><h4>Configurar checkout</h4><p>Conecte a conta Asaas do restaurante para receber pedidos do cardápio digital por Pix e cartão. Cole a chave de API e teste a conexão.</p><span class="badge b-in">configurar</span></div>
           <div class="cfgcard" style="cursor:pointer" onclick="cdCfgClientes()"><div class="ic">👥</div><h4>Configurações clientes</h4><p>Regras do atendimento por garçom/balcão: bloqueio de cliente inadimplente, fechamento automático da conta pendurada e mensagem da cobrança.</p><span class="badge b-in">configurar</span></div>
+          <div class="cfgcard" style="cursor:pointer" onclick="pgAbrir()"><div class="ic">💳</div><h4>Formas de pagamento</h4><p>Ligue Pix, dinheiro, cartão pelo app e maquininha. Defina desconto no Pix e no débito, parcelamento e a política da loja. O Live usa essas regras.</p><span class="badge b-in">configurar</span></div>
           <div class="cfgcard" style="cursor:pointer" onclick="lvAbrir()"><div class="ic">📺</div><h4>Assistente Live</h4><p>O atendente virtual por voz do totem de autoatendimento. Ligue, escolha o cérebro, escreva o treinamento da sua loja e copie o link do totem.</p><span class="badge b-in" id="lv-badge">configurar</span></div>
           <div class="cfgcard" style="cursor:pointer" onclick="slAbrir()"><div class="ic">🪑</div><h4>Salão</h4><p>Desenhe o mapa do seu salão: mesas, balcão de saída, cozinha, banheiros, entrada e saída. O garçom usa esse mapa no celular para entregar os pedidos e atender os chamados.</p><span class="badge b-in">desenhar</span></div>
         </div>
@@ -8362,6 +8363,36 @@ function lvGerar(){
 }
 /* mesma limpeza do servidor: só títulos (## ) e orientações (- ), uma linha em branco antes de cada título */
 function lvLimpaTreino(s){ return String(s||'').split('\n').map(function(l){ return l.trim(); }).filter(function(l){ return /^(- |## )/.test(l); }).join('\n').replace(/\n## /g,'\n\n## ').replace(/\*\*/g,'').slice(0,16000); }
+/* ── (136) FORMAS DE PAGAMENTO: o que a loja aceita, descontos, parcelamento e política (o app, o WhatsApp e o Live seguem) ── */
+var PG={};
+function pgAbrir(){
+  el('cd-imp-corpo').innerHTML='<div style="font-size:13px;color:var(--muted)">Carregando…</div>';
+  el('sh-import').querySelector('h3').textContent='Formas de pagamento'; abrir('sh-import');
+  fetch(DELTADIS_API+'/painel/cardapio-config',{headers:cdHdr()}).then(function(r){return r.json();}).then(function(d){
+    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'erro'); PG=d.pagto||{pix:{on:1,desc:0},dinheiro:{on:1},cartao:{on:1,parcelas:1,semJuros:1,acresc:0},maquina:{on:1,descDebito:0},politica:''}; pgPintar();
+  }).catch(function(e){ el('cd-imp-corpo').innerHTML='<div style="color:#f87171;font-size:13px">'+esc(e.message||'Não consegui abrir.')+'</div>'; });
+}
+function pgPintar(){
+  var ck=function(id,on,tit,sub){ return '<label style="display:flex;gap:10px;align-items:flex-start;margin:14px 0 6px;cursor:pointer"><input type="checkbox" id="'+id+'" '+(on?'checked':'')+' style="width:19px;height:19px;margin-top:2px"><span><b style="font-size:14px">'+tit+'</b><br><span style="font-size:12px;color:var(--muted)">'+sub+'</span></span></label>'; };
+  var num=function(id,v,tit,suf,max){ return '<label style="display:flex;align-items:center;gap:8px;margin:6px 0 0 29px;font-size:13px;color:var(--muted2)">'+tit+'<input class="inp" id="'+id+'" type="number" min="0" max="'+max+'" step="'+(suf==='%'?'0.5':'1')+'" value="'+esc(String(v||0))+'" style="width:84px;margin:0">'+suf+'</label>'; };
+  var c=PG.cartao||{}, h='<div style="font-size:13px;color:var(--muted2);line-height:1.5">Escolha como o cliente pode pagar. Os descontos e o acréscimo do parcelado são calculados pelo sistema nos pedidos do app e do site. O Live conta essas regras no WhatsApp e no totem.</div>';
+  h+=ck('pg-pix',PG.pix&&PG.pix.on,'Pix','Pago pelo app, aprovação na hora.')+num('pg-pix-d',PG.pix&&PG.pix.desc,'Desconto no Pix','%',30);
+  h+=ck('pg-din',PG.dinheiro&&PG.dinheiro.on,'Dinheiro','Pago na entrega ou na retirada, com troco.');
+  h+=ck('pg-car',c.on,'Cartão de crédito pelo app','O cliente paga no app com o cartão.')+num('pg-par',c.parcelas||1,'Parcelar em até','x',12)+num('pg-sj',c.semJuros||1,'Sem juros até','x',12)+num('pg-acr',c.acresc,'Acima disso, acréscimo de','% no total',30);
+  h+=ck('pg-maq',PG.maquina&&PG.maquina.on,'Cartão na maquininha','Débito ou crédito na entrega ou na retirada.')+num('pg-deb',PG.maquina&&PG.maquina.descDebito,'Desconto no débito','%',30);
+  h+='<label style="display:block;font-size:12px;font-weight:700;color:var(--muted2);margin-top:16px">Política da loja (opcional)</label><textarea class="inp" id="pg-pol" rows="3" maxlength="600" placeholder="Ex.: Pedido mínimo de R$ 20 para cartão. Troca em até 7 dias com nota." style="margin:6px 0 12px">'+esc(PG.politica||'')+'</textarea>';
+  h+='<div id="pg-m" style="font-size:12.5px;min-height:18px;margin-bottom:8px"></div><button class="btn pri" type="button" onclick="pgSalvar()">Salvar</button>';
+  el('cd-imp-corpo').innerHTML=h;
+}
+function pgSalvar(){
+  var v=function(id){ return Number(String(el(id).value).replace(',','.'))||0; }, on=function(id){ return el(id).checked?1:0; };
+  var par=Math.max(1,Math.min(12,Math.round(v('pg-par')))), sj=Math.max(1,Math.min(par,Math.round(v('pg-sj'))));
+  var body={pagto:{pix:{on:on('pg-pix'),desc:v('pg-pix-d')},dinheiro:{on:on('pg-din')},cartao:{on:on('pg-car'),parcelas:par,semJuros:sj,acresc:v('pg-acr')},maquina:{on:on('pg-maq'),descDebito:v('pg-deb')},politica:el('pg-pol').value.trim()}};
+  var m=el('pg-m');
+  fetch(DELTADIS_API+'/painel/cardapio-config',{method:'POST',headers:cdHdr(),body:JSON.stringify(body)}).then(function(r){return r.json();}).then(function(d){
+    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'não salvou'); aviso('Formas de pagamento salvas'); fecharTudo();
+  }).catch(function(e){ if(m){ m.style.color='#f87171'; m.textContent=e.message||'Não salvou'; } });
+}
 function lvCopiar(){
   var i=el('lv-link'); i.select();
   (navigator.clipboard?navigator.clipboard.writeText(i.value):Promise.reject()).then(function(){ aviso('Link copiado'); },function(){ document.execCommand('copy'); aviso('Link copiado'); });
