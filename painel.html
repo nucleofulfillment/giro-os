@@ -1410,7 +1410,8 @@ html.loja-p .cd-dest{display:none!important}
       <div style="flex:1;min-width:230px">
         <input class="inp" id="cd-ov-apoio" maxlength="80" placeholder="Texto pequeno (ex: só hoje)" oninput="cdOvPrev()" style="margin-bottom:6px">
         <input class="inp" id="cd-ov-titulo" maxlength="120" placeholder="Título grande (ex: Pizza Gigante por R$ 99)" oninput="cdOvPrev()" style="margin-bottom:6px">
-        <div style="display:grid;grid-template-columns:1fr auto;gap:6px;margin-bottom:6px"><input class="inp" id="cd-ov-botao" maxlength="30" placeholder="Texto do botão (ex: Pedir agora)" oninput="cdOvPrev()"><select class="inp" id="cd-ov-acao" onchange="cdOvAcao()" title="O que acontece quando o cliente toca no botão"><option value="produto">Abre o produto</option><option value="reserva">Reservar mesa</option></select></div>
+        <div style="display:grid;grid-template-columns:1fr auto;gap:6px;margin-bottom:6px"><input class="inp" id="cd-ov-botao" maxlength="30" placeholder="Texto do botão (ex: Pedir agora)" oninput="cdOvPrev()"><select class="inp" id="cd-ov-acao" onchange="cdOvAcao()" title="O que acontece quando o cliente toca no botão"><option value="produto">Abre o produto</option><option value="categoria">Abre uma categoria</option><option value="reserva">Reservar mesa</option></select></div>
+        <div id="cd-ov-cat-bx" style="display:none;margin-bottom:6px"><select class="inp" id="cd-ov-cat" title="Categoria que abre quando o cliente toca no botão"></select><div style="font-size:11.5px;color:var(--muted);margin-top:4px">O botão abre essa categoria com todos os produtos dela. Os produtos da oferta ficam opcionais.</div></div>
         <div id="cd-ov-acao-av" style="display:none;font-size:11.5px;color:var(--muted);margin:-2px 0 8px">🪑 O botão abre o salão em 3D para o cliente escolher a mesa e reservar. Os produtos ficam opcionais. Ao salvar, as reservas da loja são ligadas; se você desligá-las depois, a oferta continua no ar sem esse botão. <a href="#" onclick="rvAbrir();return false">Configurar reservas</a></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px"><select class="inp" id="cd-ov-pos" onchange="cdOvPrev()"><option value="base">Posição: embaixo</option><option value="centro">Posição: centro</option><option value="topo">Posição: topo</option></select><select class="inp" id="cd-ov-alin" onchange="cdOvPrev()"><option value="esq">Alinhado à esquerda</option><option value="centro">Centralizado</option><option value="dir">Alinhado à direita</option></select></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px"><label style="font-size:11.5px;color:var(--muted)">Tamanho do título<input type="range" id="cd-ov-et" min="50" max="250" value="100" oninput="cdOvPrev()" style="width:100%"></label><label style="font-size:11.5px;color:var(--muted)">Tamanho do texto pequeno<input type="range" id="cd-ov-ea" min="50" max="250" value="100" oninput="cdOvPrev()" style="width:100%"></label></div>
@@ -7741,10 +7742,12 @@ function ofOverlay(t){
 function ofMascara(t){ if(!t||t.mascara===false) return ''; var f=t.mascaraForca||45; return 'linear-gradient(180deg,rgba(0,0,0,'+(f*0.0022).toFixed(3)+'),rgba(0,0,0,'+(f/100).toFixed(2)+'))'; }
 function cdOvColher(){
   var g=function(i){ return el(i).value; };
-  return {apoio:g('cd-ov-apoio').trim(),titulo:g('cd-ov-titulo').trim(),botao:g('cd-ov-botao').trim(),link:'',pos:g('cd-ov-pos'),alin:g('cd-ov-alin'),mascara:el('cd-ov-masc').checked,mascaraForca:+g('cd-ov-mf'),cor:g('cd-ov-cor'),efeito:g('cd-ov-ef'),pulso:el('cd-ov-pu').checked,escTitulo:+g('cd-ov-et'),escApoio:+g('cd-ov-ea'),btnEstilo:g('cd-ov-be'),btnEsc:+g('cd-ov-bes'),btnFundo:g('cd-ov-bf'),btnTexto:g('cd-ov-bt'),btnRaio:+g('cd-ov-br'),acao:g('cd-ov-acao')};
+  return {apoio:g('cd-ov-apoio').trim(),titulo:g('cd-ov-titulo').trim(),botao:g('cd-ov-botao').trim(),link:'',pos:g('cd-ov-pos'),alin:g('cd-ov-alin'),mascara:el('cd-ov-masc').checked,mascaraForca:+g('cd-ov-mf'),cor:g('cd-ov-cor'),efeito:g('cd-ov-ef'),pulso:el('cd-ov-pu').checked,escTitulo:+g('cd-ov-et'),escApoio:+g('cd-ov-ea'),btnEstilo:g('cd-ov-be'),btnEsc:+g('cd-ov-bes'),btnFundo:g('cd-ov-bf'),btnTexto:g('cd-ov-bt'),btnRaio:+g('cd-ov-br'),acao:g('cd-ov-acao'),cat:g('cd-ov-acao')==='categoria'?g('cd-ov-cat'):''};
 }
 /* (113) botão "Reservar mesa": mostra o aviso e deixa os produtos opcionais */
-function cdOvAcao(){ var r=el('cd-ov-acao').value==='reserva'; el('cd-ov-acao-av').style.display=r?'block':'none'; if(r&&!el('cd-ov-botao').value.trim()) el('cd-ov-botao').value='Reservar mesa'; cdOvPrev(); }
+function cdOvAcao(){ var a=el('cd-ov-acao').value, r=a==='reserva', c=a==='categoria'; el('cd-ov-acao-av').style.display=r?'block':'none'; el('cd-ov-cat-bx').style.display=c?'block':'none'; if(c) cdOvCats(el('cd-ov-cat').value); if(!el('cd-ov-botao').value.trim()){ if(r) el('cd-ov-botao').value='Reservar mesa'; else if(c) el('cd-ov-botao').value='Ver produtos'; } cdOvPrev(); }
+/* botão que abre uma categoria: a lista vem das categorias cadastradas na loja */
+function cdOvCats(sel){ el('cd-ov-cat').innerHTML='<option value="">Escolha a categoria</option>'+(CD.cats||[]).map(function(c){ return '<option value="'+esc(c.id)+'"'+(c.id===sel?' selected':'')+'>'+esc(c.nome)+'</option>'; }).join(''); }
 var CD_OV_RG=['cd-ov-et','cd-ov-ea','cd-ov-bes','cd-ov-mf','cd-ov-br'];
 function cdOvNums(){
   CD_OV_RG.forEach(function(id){
@@ -7761,7 +7764,8 @@ function cdOvPreencher(t){
   s('cd-ov-apoio',t.apoio||''); s('cd-ov-titulo',t.titulo||''); s('cd-ov-botao',t.botao||''); s('cd-ov-pos',t.pos||'base'); s('cd-ov-alin',t.alin||'esq');
   el('cd-ov-masc').checked=t.mascara!==false; s('cd-ov-mf',t.mascaraForca||45); s('cd-ov-cor',t.cor||'#ffffff'); s('cd-ov-ef',t.efeito||(t.titulo||t.apoio||t.botao?'nenhum':'cair')); el('cd-ov-pu').checked=!!t.pulso; s('cd-ov-et',t.escTitulo||100); s('cd-ov-ea',t.escApoio||100);
   s('cd-ov-be',t.btnEstilo||'cheio'); s('cd-ov-bes',t.btnEsc||100); s('cd-ov-bf',t.btnFundo||'#f97316'); s('cd-ov-bt',t.btnTexto||'#ffffff'); s('cd-ov-br',t.btnRaio==null?14:t.btnRaio);
-  s('cd-ov-acao',t.acao==='reserva'?'reserva':'produto'); el('cd-ov-acao-av').style.display=t.acao==='reserva'?'block':'none';
+  s('cd-ov-acao',t.acao==='reserva'||t.acao==='categoria'?t.acao:'produto'); el('cd-ov-acao-av').style.display=t.acao==='reserva'?'block':'none';
+  cdOvCats(t.cat||''); el('cd-ov-cat-bx').style.display=t.acao==='categoria'?'block':'none';
   cdOvPrev();
 }
 function cdOvPrev(nn){
@@ -9162,8 +9166,10 @@ function cdOfColher(){ var o=CD.of; return {id:o.id||undefined,ordem:o.ordem,nom
 function cdOfSalvar(){
   var it=cdOfColher(), er=el('cd-of-erro'); if(!it.nome){ er.textContent='Falta o nome da oferta.'; return; }
   if(!it.vid){ er.textContent='Escolha o vídeo da oferta.'; return; }
-  if(!it.produtos.length&&it.txt.acao!=='reserva'){ er.textContent='Marque pelo menos um produto.'; return; }
+  if(!it.produtos.length&&it.txt.acao==='produto'){ er.textContent='Marque pelo menos um produto.'; return; }
   if(it.txt.acao==='reserva'&&!it.txt.botao){ er.textContent='Escreva o texto do botão (ex: Reservar mesa).'; return; }
+  if(it.txt.acao==='categoria'&&!it.txt.cat){ er.textContent='Escolha a categoria que o botão vai abrir.'; return; }
+  if(it.txt.acao==='categoria'&&!it.txt.botao){ er.textContent='Escreva o texto do botão (ex: Ver produtos).'; return; }
   if(!it.id) it.ordem=Date.now();
   var b=el('cd-of-salvar'); b.disabled=true; b.textContent='Salvando…'; er.textContent='';
   var ligou=0;

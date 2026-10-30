@@ -658,7 +658,7 @@ function ofOverlay(t,oid){
   var v='--ov-cor:'+(t.cor||'#ffffff')+';--ov-tit:'+((t.escTitulo||100)/100)+';--ov-apoio:'+((t.escApoio||100)/100)+';--ov-btn:'+((t.btnEsc||100)/100)+';--ov-raio:'+(t.btnRaio==null?14:t.btnRaio)+';--ov-bf:'+(t.btnFundo||'#f97316')+';--ov-bt:'+(t.btnTexto||'#ffffff');
   return '<div class="ov p-'+(t.pos||'base')+' a-'+(t.alin||'esq')+' e-'+(t.efeito||'nenhum')+(t.pulso?' pulso':'')+'" style="'+v+'">'
     +(t.apoio?'<div class="ov-apoio">'+esc(t.apoio)+'</div>':'')+(t.titulo?'<div class="ov-tit">'+esc(t.titulo)+'</div>':'')
-    +(t.botao?'<a class="ov-btn '+(t.btnEstilo||'cheio')+'" onclick="'+(ofEhReserva(t)?'rsvAbre()':'ofPedir(\''+esc(oid||'')+'\')')+'">'+esc(t.botao)+'</a>':'')+'</div>';
+    +(t.botao?'<a class="ov-btn '+(t.btnEstilo||'cheio')+'" onclick="'+(t.acao==='categoria'?'abreCat(\''+esc(t.cat||'')+'\')':ofEhReserva(t)?'rsvAbre()':'ofPedir(\''+esc(oid||'')+'\')')+'">'+esc(t.botao)+'</a>':'')+'</div>';
 }
 /* (116) botão de oferta que abre a reserva: escolhido no painel, ou oferta antiga cujo botão fala em reserva (com as reservas ligadas) */
 function ofEhReserva(t){ return t.acao==='reserva'||(!!(D&&D.cfg&&D.cfg.reserva)&&/reserv/i.test(String(t.botao||''))); }
