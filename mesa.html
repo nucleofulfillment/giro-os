@@ -1684,7 +1684,7 @@ document.addEventListener('DOMContentLoaded',function(){
         <div class="cm-f"><label>Ponto de referência</label><input class="inp" id="cm-ref"></div>
         <div class="cm-f"><label>Bairro</label><input class="inp" id="cm-bairro"></div>
         <div class="cm-f"><label>Cidade</label><input class="inp" id="cm-cid"></div>
-        <div class="cm-f"><label>Tipo de entrega</label><input class="inp" id="cm-tipo"></div>
+        <div class="cm-f"><label>Tipo de entrega</label><input class="inp" id="cm-tipo" oninput="cmTipoMudou()"></div>
         <div class="cm-f"><label>Prometido até (hora)</label><input class="inp" id="cm-prazo" type="time"></div>
         <div class="cm-f full"><label>Itens do pedido</label><textarea id="cm-itens"></textarea></div>
         <div class="cm-f full"><label>Observação do pedido</label><input class="inp" id="cm-obs"></div>
@@ -1762,8 +1762,11 @@ function cmPreencher(d){
   try{ var ult=localStorage.getItem('giro_cid_mesa')||'', c=el('cm-cid'), ln=function(t){ return String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z]/g,''); }, nc=ln(c.value), nu=ln(ult);
     if(ult && (!nc || nc===nu || (nc.length>=3 && nu.length>nc.length && nu.slice(-nc.length)===nc))) c.value=ult; }catch(e){}
   ['rua','cid'].forEach(function(k){ var f=el('cm-'+k).closest('.cm-f'), t=String(el('cm-'+k).value||'').trim(); if(f) f.classList.toggle('err',t.length<3); });
-  el('cm-ret').checked=!!d.retirada; cmRetirada();
+  el('cm-ret').checked=!!d.retirada||CM_RET.test(el('cm-tipo').value); cmRetirada();
 }
+/* o campo Tipo de entrega manda: dizendo retirada ou balcão, o endereço deixa de ser obrigatório */
+var CM_RET=/retir|balc/i;
+function cmTipoMudou(){ var r=CM_RET.test(el('cm-tipo').value); if(r!==el('cm-ret').checked){ el('cm-ret').checked=r; cmRetirada(); } }
 /* retirada no balcão: esconde o que só existe em entrega e tira as marcas de campo faltando */
 function cmRetirada(){
   var r=el('cm-ret').checked; ['rua','comp','ref','bairro','cid','prazo','taxa'].forEach(function(k){ var f=el('cm-'+k).closest('.cm-f'); if(k==='rua') f=f.parentNode.closest('.cm-f'); f.style.display=r?'none':''; f.querySelectorAll('.cm-f').forEach(function(x){ x.classList.remove('err'); }); f.classList.remove('err'); });
