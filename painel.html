@@ -9074,7 +9074,8 @@ function cdPintarOfertas(){
       +'<button class="btn sec sm" title="Descer na ordem" '+(i==l.length-1?'disabled ':'')+'onclick="cdOfMover(\''+o.id+'\',1)">↓</button>'
       +'<button class="btn sec sm" onclick="cdOfAlternar(\''+o.id+'\')">'+(o.ativo===false?'Pausada':'Ativa')+'</button>'
       +'<button class="btn sec sm" onclick="cdOfEditar(\''+o.id+'\')">Editar</button>'
-      +'<button class="btn sec sm" title="Duplicar" onclick="cdOfDuplicar(\''+o.id+'\')">⧉</button></div>';
+      +'<button class="btn sec sm" title="Duplicar" onclick="cdOfDuplicar(\''+o.id+'\')">⧉</button>'
+      +'<button class="btn sec sm" title="Excluir oferta" aria-label="Excluir oferta" style="color:var(--red)" onclick="cdOfApagar(\''+o.id+'\')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></button></div>';
   });
   if(!l.length) h='<div style="padding:24px;text-align:center;color:var(--muted)">Nenhuma oferta ainda. Clique em <b>+ Nova oferta</b>.</div>';
   el('cd-of-lista').innerHTML=h;
@@ -9174,8 +9175,14 @@ function cdRsvGarante(){ return mzApi('/painel/reserva-config').then(function(d)
 function cdOfDuplicarAberto(){ if(CD.of&&CD.of.id){ var id=CD.of.id; cdOfDuplicar(id); } }
 function cdOfApagarAberto(){
   var o=CD.of; if(!o||!o.id) return; if(!confirm('Apagar a oferta "'+o.nome+'"?')) return;
-  fetch(DELTADIS_API+'/painel/cardapio-apagar',{method:'POST',headers:cdHdr(),body:JSON.stringify({tipo:'oferta',id:o.id})}).then(function(r){ return r.json(); }).then(function(d){ if(!d||!d.ok) throw new Error((d&&d.mensagem)||'não apagou'); return cdOfRecarregar(); }).then(function(){ aviso('Oferta apagada'); cdAbrirOfertas(); }).catch(function(e){ el('cd-of-erro').textContent='Não apagou: '+e.message; });
+  cdOfApagarApi(o.id).catch(function(e){ el('cd-of-erro').textContent='Não apagou: '+e.message; });
 }
+/* botão de excluir na própria lista de ofertas */
+function cdOfApagar(id){
+  var o=(CD.ofs||[]).filter(function(x){ return x.id===id; })[0]; if(!o) return; if(!confirm('Excluir a oferta "'+o.nome+'"? Isso não pode ser desfeito.')) return;
+  cdOfApagarApi(id).catch(function(e){ aviso('Não apagou: '+e.message); });
+}
+function cdOfApagarApi(id){ return fetch(DELTADIS_API+'/painel/cardapio-apagar',{method:'POST',headers:cdHdr(),body:JSON.stringify({tipo:'oferta',id:id})}).then(function(r){ return r.json(); }).then(function(d){ if(!d||!d.ok) throw new Error((d&&d.mensagem)||'não apagou'); return cdOfRecarregar(); }).then(function(){ aviso('Oferta apagada'); cdAbrirOfertas(); }); }
 /* ── importar cardápio por planilha (Excel) ── */
 function cdNorm(s){ return String(s==null?'':s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim(); }
 function cdSim(v){ return /^(s|sim|x|1|true|verdadeiro)\b/.test(cdNorm(v)); }
