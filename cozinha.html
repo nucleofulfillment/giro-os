@@ -161,6 +161,9 @@ body.lgon #top,body.lgon #cols{display:none}
 .tm.w{color:#B45309}.tm.d{color:#DC2626}
 .acao{flex:none;width:46px;height:46px;border-radius:12px;border:0;font-size:19px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .15s}
 .acao:active{transform:scale(.93)}
+.imp{flex:none;width:34px;height:34px;border-radius:10px;border:1px solid var(--border2);background:var(--s1);color:var(--muted2);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+.imp:hover{color:var(--text);border-color:#C9C9CF}.imp:active{transform:scale(.93)}.imp[disabled]{opacity:.45;cursor:default}
+#tst{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1C1C1E;color:#fff;font-size:14px;font-weight:700;padding:10px 16px;border-radius:12px;z-index:400;display:none;max-width:90vw;text-align:center}
 .acao.n{background:#FF5A00;color:#fff}.acao.p{background:#16A34A;color:#fff}.acao.r{background:var(--s3);color:var(--muted2);border:1px solid var(--border2)}
 .nm{margin:-2px 0 4px}
 .it{padding:7px 0;gap:10px;align-items:center;border-top:1px solid var(--border)}
@@ -306,6 +309,7 @@ function cardHtml(p,col){
   return '<div class="card'+(col==='n'?' novo':'')+(cl==='d'?' atr':'')+(PRIO[p.id]?' prio':'')+'" onclick="abreDet(\''+id+'\')">'
     +'<div class="hd">'+tagHtml(p)+'<span class="num">#'+p.num+(p.sub?'-'+p.sub:'')+'</span>'+(PRIO[p.id]?'<span class="pri" title="Prioridade">⬆</span>':'')
     +'<span class="tm '+cl+'">'+(cl?m+' min':hhmm(p.criado))+'</span>'
+    +'<button class="imp" title="Reimprimir pedido" aria-label="Reimprimir pedido" onclick="event.stopPropagation();reimprime(\''+id+'\',this)">'+IC_IMP+'</button>'
     +'<button class="acao '+col+'" title="'+a.t+'" aria-label="'+a.t+'" onclick="event.stopPropagation();muda(\''+id+'\',\''+a.e+'\')">'+a.ic+'</button></div>'
     +(p.modo!=='mesa'&&p.nome?'<div class="nm">'+esc(p.nome)+'</div>':'')+p.itens.map(itemHtml).join('')+(p.obs?'<div class="po">'+esc(p.obs)+'</div>':'')+'</div>';
 }
@@ -322,6 +326,31 @@ function pinta(){
     $('l'+id).innerHTML=L.length?L.map(function(p){ return cardHtml(p,k); }).join(''):'<div class="vz">'+(q?'Nada com "'+esc(q)+'"':(k==='n'?'Nenhum pedido novo':k==='p'?(LOJA?'Nada em separação':'Nada em preparo'):'Nada pronto'))+'</div>'; $('c'+id).textContent=L.length; });
   if(DET) detPinta();
 }
+/* reimpressão: vai para a impressora de cada setor (programa do restaurante); com o programa desligado, abre a impressão do navegador */
+var IC_IMP='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v7H6z"/></svg>';
+function tst(t){ var e=$('tst'); if(!e){ e=document.createElement('div'); e.id='tst'; e.setAttribute('role','status'); document.body.appendChild(e); } e.textContent=t; e.style.display='block'; clearTimeout(tst.t); tst.t=setTimeout(function(){ e.style.display='none'; },2600); }
+function impFila(p){ var g={cozinha:[],bar:[]}; (p.itens||[]).forEach(function(l){ g[l.dest==='bar'?'bar':'cozinha'].push(l); }); return ['cozinha','bar'].filter(function(s){ return g[s].length; }).map(function(s){ return {setor:s,l:g[s]}; }); }
+function reimprime(id,bt){
+  var p=null; PED.forEach(function(x){ if(x.id===id) p=x; }); if(!p) return;
+  var ag=Date.now(); if(reimprime.t[id]&&ag-reimprime.t[id]<4000) return; reimprime.t[id]=ag;   /* evita sair duas vezes com toque repetido (a tela se redesenha sozinha, então vale por pedido) */
+  if(bt){ bt.disabled=true; setTimeout(function(){ bt.disabled=false; },3000); }
+  var fila=impFila(p), lab=p.num+(p.sub?'-'+p.sub:''), ehMesa=p.modo==='mesa';
+  /* entrega e retirada saem identificadas na etiqueta: o campo "joia" é o que o programa instalado já imprime junto do nome */
+  var corpo={lab:lab,mesa:ehMesa?p.mesa:'',modo:ehMesa?'mesa':p.modo,joia:ehMesa?'':(p.modo==='retirada'?'RETIRADA':'ENTREGA'),nome:p.nome||'',atend:'',criado:p.criado,obs:p.obs||'',reimp:1,empresa:EMP||'',fila:fila.map(function(x){ return {setor:x.setor,l:x.l.map(function(l){ return {nome:l.nome,qty:l.qty,tam:l.tam,sab:l.sab,borda:l.borda,adds:l.adds,obs:l.obs}; })}; })};
+  fetch(API+'/painel/atend-imprimir',{method:'POST',headers:hdr(),body:JSON.stringify(corpo)}).then(function(r){ return r.json(); }).then(function(d){
+    if(d&&d.ok&&d.agente) tst('Pedido #'+lab+' enviado para a impressora'); else impNavegador(p,fila,lab);
+  }).catch(function(){ impNavegador(p,fila,lab); });
+}
+reimprime.t={};
+function impNavegador(p,fila,lab){
+  var local=p.modo==='mesa'?'MESA '+esc(p.mesa):(p.modo==='retirada'?'RETIRADA':'ENTREGA'), d=new Date(p.criado);
+  var pag=fila.map(function(x){ return '<div class="slip"><div class="c emp">'+esc(EMP||'')+'</div><div class="c sub">'+(x.setor==='bar'?'BAR':'COZINHA')+' · 2ª VIA</div><div class="sp"></div><div class="local">'+local+'</div><div class="row"><b>Pedido #'+esc(lab)+'</b><span>'+d.toLocaleDateString('pt-BR')+' '+hhmm(p.criado)+'</span></div>'+(p.nome?'<div class="cli">'+esc(p.nome)+'</div>':'')+'<div class="sp"></div>'
+    +x.l.map(function(l){ var n=(l.sab||[]).length, s=[]; if(l.tam) s.push(esc(l.tam)); (l.sab||[]).forEach(function(z){ s.push((n>1?'1/'+n+' ':'')+esc(z)); }); if(l.borda) s.push('Borda: '+esc(l.borda)); (l.adds||[]).forEach(function(z){ s.push('+ '+esc(z)); }); return '<div class="it"><div class="q">'+esc(l.qty)+'x</div><div class="d"><b>'+esc(l.nome)+'</b>'+s.map(function(z){ return '<div>'+z+'</div>'; }).join('')+(l.obs?'<div class="ob">! '+esc(l.obs)+'</div>':'')+'</div></div>'; }).join('')
+    +(p.obs?'<div class="sp"></div><div class="po">OBS: '+esc(p.obs)+'</div>':'')+'</div>'; }).join('');
+  var f=document.createElement('iframe'); f.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0'; document.body.appendChild(f);
+  var w=f.contentWindow.document; w.open(); w.write('<!doctype html><html><head><meta charset="utf-8"><title>Pedido '+esc(lab)+'</title><style>@page{size:80mm auto;margin:4mm}*{box-sizing:border-box}body{margin:0;width:70mm;font-family:Arial,Helvetica,sans-serif;color:#000}.slip{break-after:page}.slip:last-child{break-after:auto}.c{text-align:center}.emp{font-size:17px;font-weight:900}.sub{font-size:12px;letter-spacing:2px;font-weight:700;margin-top:2px}.sp{border-top:2px dashed #000;margin:7px 0}.local{background:#000;color:#fff;text-align:center;font-size:26px;font-weight:900;padding:6px 4px;border-radius:6px;-webkit-print-color-adjust:exact;print-color-adjust:exact}.row{display:flex;justify-content:space-between;font-size:12.5px;margin:4px 0}.cli{font-size:16px;font-weight:900;margin-top:4px}.it{display:flex;gap:8px;margin:7px 0;font-size:14px}.q{font-weight:900;font-size:17px;min-width:30px}.d b{font-size:15px;text-transform:uppercase}.d div{font-size:13px;margin-top:1px}.d .ob{font-weight:900;border:1.5px solid #000;border-radius:4px;padding:1px 4px;margin-top:3px}.po{font-size:13px;font-weight:700;border:2px solid #000;border-radius:5px;padding:4px 6px}</style></head><body>'+pag+'</body></html>'); w.close();
+  setTimeout(function(){ try{ f.contentWindow.focus(); f.contentWindow.print(); }catch(e){ tst('Não consegui abrir a impressão.'); } setTimeout(function(){ try{ f.remove(); }catch(e){} },60000); },350);
+}
 /* janela de detalhes do pedido: itens completos, mudar etapa e prioridade */
 var DET='';
 function abreDet(id){ DET=id; detPinta(); $('det').classList.add('on'); }
@@ -332,7 +361,7 @@ function detPinta(){
   $('det-c').innerHTML='<div class="hd">'+tagHtml(p)+'<span class="num">#'+p.num+(p.sub?'-'+p.sub:'')+'</span><span class="tm">'+hhmm(p.criado)+' · '+m+' min</span></div>'
     +(p.nome?'<div class="nm">'+esc(p.nome)+'</div>':'')+p.itens.map(itemHtml).join('')+(p.obs?'<div class="po">'+esc(p.obs)+'</div>':'')
     +'<div class="det-pos">Posição na fila: <b>'+(pos+1)+'º de '+lista.length+'</b>'+(PRIO[p.id]?' · com prioridade':'')+'</div>'
-    +'<div class="det-bts"><button class="db" onclick="prioSobe(\''+id+'\')"'+(pos<=0?' disabled':'')+'>⬆ Subir uma posição</button><button class="db" onclick="prioTopo(\''+id+'\')"'+(pos<=0?' disabled':'')+'>⏫ Colocar no topo</button>'+(PRIO[p.id]?'<button class="db" onclick="prioTira(\''+id+'\')">Tirar prioridade</button>':'')+'</div>'
+    +'<div class="det-bts"><button class="db" onclick="prioSobe(\''+id+'\')"'+(pos<=0?' disabled':'')+'>⬆ Subir uma posição</button><button class="db" onclick="prioTopo(\''+id+'\')"'+(pos<=0?' disabled':'')+'>⏫ Colocar no topo</button>'+(PRIO[p.id]?'<button class="db" onclick="prioTira(\''+id+'\')">Tirar prioridade</button>':'')+'<button class="db" onclick="reimprime(\''+id+'\',this)">🖨️ Reimprimir</button></div>'
     +'<button class="db pri '+col+'" onclick="muda(\''+id+'\',\''+a.e+'\');fechaDet()">'+a.ic+' '+a.t+'</button>'
     +(v?'<button class="db lk" onclick="muda(\''+id+'\',\''+v.e+'\');fechaDet()">'+v.t+'</button>':'');
 }
