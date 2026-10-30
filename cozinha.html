@@ -300,7 +300,7 @@ function itemHtml(l){
 var ACAO={n:{e:'preparo',ic:'▶',t:'Iniciar preparo'},p:{e:'pronto',ic:'✔',t:'Pronto'},r:{e:'ok',ic:'✕',t:'Retirar da tela'}};
 var VOLTA={p:{e:'',t:'Voltar para Novos'},r:{e:'preparo',t:'Voltar para Em preparo'}};
 function colDe(p){ return p.estado==='preparo'?'p':(p.estado==='pronto'?'r':'n'); }
-function tagHtml(p){ var t=p.modo==='mesa'?'<span class="tag mesa">Mesa '+esc(p.mesa)+'</span>':(p.modo==='retirada'?'<span class="tag ret">Retirada</span>':'<span class="tag ent">Entrega</span>'); if(p.prog_dia) t+='<span class="tag ag">Agendado '+esc(p.prog_hora||'')+'</span>'; if(p.origem==='whats') t+='<span class="tag wa">WhatsApp</span>'; return t; }
+function tagHtml(p){ var t=p.modo==='mesa'?'<span class="tag mesa">Mesa '+esc(p.mesa)+'</span>':(p.modo==='retirada'?'<span class="tag ret">Retirada</span>':'<span class="tag ent">Entrega</span>'); if(p.prog_dia) t+='<span class="tag ag">Agendado '+esc(p.prog_hora||'')+'</span>'; if(p.origem==='whats') t+='<span class="tag wa">WhatsApp</span>'; if(p.origem==='comanda') t+='<span class="tag ag">Comanda</span>'; return t; }
 function cardHtml(p,col){
   var m=minutos(p), cl=(col==='r')?'':(m>=25?'d':(m>=15?'w':'')), a=ACAO[col], id=esc(p.id);
   return '<div class="card'+(col==='n'?' novo':'')+(cl==='d'?' atr':'')+(PRIO[p.id]?' prio':'')+'" onclick="abreDet(\''+id+'\')">'
