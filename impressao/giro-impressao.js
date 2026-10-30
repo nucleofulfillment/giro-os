@@ -85,7 +85,7 @@ async function configurar() {
   if (!ch.ok) { console.log('Não consegui a chave: ' + (ch.mensagem || 'erro ' + ch._h)); return; }
   const old = lerCfg() || {};
   const impressoras = await escolherImpressoras(old.impressoras || {});
-  const cfg = { api, cli: ch.cli, chave: ch.chave, intervaloSeg: 3, codepage: 3, semAcento: false, impressoras };
+  const cfg = { api, cli: ch.cli, chave: ch.chave, intervaloSeg: 3, codepage: 3, semAcento: true, impressoras };
   fs.writeFileSync(CFG_FILE, JSON.stringify(cfg, null, 2)); console.log('\nPronto! Gravei o config.json. IPs das impressoras:', JSON.stringify(cfg.impressoras));
 }
 
@@ -94,7 +94,7 @@ async function instalar(cli, chave) {
   if (!cli || !chave) { console.log('Instalador incompleto. Baixe de novo no painel.'); process.exit(1); }
   const old = lerCfg() || {};
   const impressoras = await escolherImpressoras(old.impressoras || {});
-  fs.writeFileSync(CFG_FILE, JSON.stringify({ api: API_PADRAO, cli, chave, intervaloSeg: 3, codepage: 3, semAcento: false, impressoras }, null, 2));
+  fs.writeFileSync(CFG_FILE, JSON.stringify({ api: API_PADRAO, cli, chave, intervaloSeg: 3, codepage: 3, semAcento: true, impressoras }, null, 2));
   console.log('\nImpressoras gravadas: ' + JSON.stringify(impressoras));
 }
 
@@ -136,7 +136,7 @@ async function escolherImpressoras(old) {
 async function teste(setor) {
   const cfg = lerCfg() || { impressoras: {} }, ip = cfg.impressoras[setor];
   if (!ip) { console.log('Sem impressora para "' + setor + '". Rode a configuração ou use: cozinha, bar ou caixa'); return; }
-  const p = { setor, lab: 'TESTE', empresa: 'Teste de impressão', mesa: '8', modo: 'mesa', nome: 'Cliente Teste', joia: '10', atend: 'Teste', criado: Date.now(), obs: 'Acentos: ação, coração, água, é, ó, ú, ç', l: [{ nome: 'Água de coco', qty: 1, adds: [], sab: [] }, { nome: 'Chicken crispy burguer', qty: 2, tam: 'Grande', obs: 'sem cebola', adds: ['Bacon'], sab: [] }] };
+  const p = { setor, lab: 'TESTE', empresa: 'Teste de impressao', mesa: '8', modo: 'mesa', nome: 'Cliente Teste', joia: '10', atend: 'Teste', criado: Date.now(), obs: 'Etiqueta de teste', l: [{ nome: 'Agua de coco', qty: 1, adds: [], sab: [] }, { nome: 'Chicken crispy burguer', qty: 2, tam: 'Grande', obs: 'sem cebola', adds: ['Bacon'], sab: [] }] };
   try { await enviar(ip, etiqueta(p, cfg)); console.log('Enviado para ' + setor + ' (' + ip + '). Deve ter saído uma etiqueta de teste.'); } catch (e) { console.log('FALHOU em ' + ip + ': ' + e.message); }
 }
 
