@@ -96,6 +96,20 @@ html,body{margin:0;height:100%;background:#000;color:var(--tx);font-family:Inter
 .qt{display:flex;align-items:center;gap:2px;border:1px solid var(--line);border-radius:12px}.qt button{width:36px;height:42px;background:none;border:0;color:var(--pri2);font-size:20px;font-weight:800;cursor:pointer}.qt span{min-width:22px;text-align:center;font-weight:800}
 .bt{flex:1;height:48px;border:0;border-radius:12px;background:var(--pri);color:#fff;font-weight:800;font-size:15px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:0 16px}.bt:disabled{background:#3a3a42;color:#888}
 .bt.c{justify-content:center}
+/* (140) adicionar direto pela lista: + embaixo do preço (perto do dedo); depois vira − quantidade + */
+.qa{display:flex;justify-content:flex-end;margin-top:8px}
+.qa-mais{width:36px;height:36px;border-radius:50%;border:0;background:var(--pri);color:#fff;font-size:24px;font-weight:700;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px #0005}
+.qa-st{display:flex;align-items:center;gap:2px;border-radius:99px;background:var(--pri);color:#fff;padding:2px;box-shadow:0 3px 10px #0005}
+.qa-st button{width:32px;height:32px;border:0;border-radius:50%;background:transparent;color:#fff;font-size:20px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.qa-st b{min-width:22px;text-align:center;font-size:15px}
+/* (140) zoom da foto do produto */
+#fzoom{position:fixed;inset:0;z-index:2147483000;background:#000e;display:flex;align-items:center;justify-content:center;overflow:hidden;touch-action:none}
+#fzoom img{max-width:94vw;max-height:84vh;border-radius:14px;background:#fff;transition:transform .25s ease;cursor:zoom-in}
+#fzoom.on img{cursor:zoom-out}
+#fzoom .x{position:absolute;top:calc(14px + env(safe-area-inset-top));right:14px;width:44px;height:44px;border-radius:50%;border:0;background:#fff2;color:#fff;font-size:22px;cursor:pointer}
+#fzoom small{position:absolute;bottom:calc(18px + env(safe-area-inset-bottom));left:0;right:0;text-align:center;color:#fffa;font-size:12.5px}
+.art .sv.zm{cursor:zoom-in}
+.art{background:var(--art-bg,radial-gradient(circle at 70% 50%,#2a1608 0,#16161a 66%),#16161a)!important}
 .tg{display:inline-block;margin-top:5px;background:var(--pri);color:#fff;font-size:10.5px;font-weight:800;letter-spacing:.4px;border-radius:6px;padding:3px 8px;text-transform:uppercase}
 /* (115) etiquetas da listagem lado a lado: de/por (laranja) + Clube (azul com o ícone do Clube) */
 .tgs{display:flex;flex-wrap:nowrap;gap:5px;margin-top:5px;min-width:0}.tgs .tg{margin-top:0;flex:none;white-space:nowrap}
@@ -669,17 +683,24 @@ function fechaSheet(){ LF_VOLTA=''; CK.on=0; CK.open=0; $('sheet').classList.rem
 var W=null;
 /* ── desenho em contorno neon (monta junto com as escolhas) ── */
 var TC1='#f97316', TC2='#f97316';
-function aplicaTema(){ var c=(D.cfg&&D.cfg.cor)||''; if(!/^#[0-9a-fA-F]{6}$/.test(c)) return; TC1=c; TC2=c; var s=document.documentElement.style; s.setProperty('--pri',c); s.setProperty('--pri2',c); temaClaroCor(c); }
+function aplicaTema(){ var c=(D.cfg&&D.cfg.cor)||''; if(!/^#[0-9a-fA-F]{6}$/.test(c)) return; TC1=c; TC2=c; var s=document.documentElement.style; s.setProperty('--pri',c); s.setProperty('--pri2',c); temaClaroCor(c); var c2=(D.cfg&&D.cfg.cor2)||''; if(/^#[0-9a-fA-F]{6}$/.test(c2)) s.setProperty('--art-bg','radial-gradient(circle at 70% 50%,'+c2+'cc 0,'+c2+' 66%),'+c2); }   /* (140) cor secundária: só o fundo atrás do círculo da foto */
 /* (138) tema claro: a janela é invertida (invert + hue-rotate 180°), e a cor da loja aparecia desbotada (vermelho vira rosa).
    Dentro das partes invertidas usamos a cor "pré-invertida": depois do filtro ela volta (quase) igual à escolhida no painel.
    Nas partes que já são desinvertidas (cartões, barrinhas, etiquetas) e na grade de categorias sem filtro, fica a cor original. */
 function temaClaroCor(c){
   var v=[parseInt(c.slice(1,3),16),parseInt(c.slice(3,5),16),parseInt(c.slice(5,7),16)];
-  var inv='#'+v.map(function(x){ return ('0'+(255-x).toString(16)).slice(-2); }).join('');   /* (139) a janela usa só invert(1): a cor oposta volta exata */
+  var inv='#'+v.map(function(x){ return ('0'+(255-x).toString(16)).slice(-2); }).join('');   /* (139) a janela usa só invert(1): a cor oposta (255 - x) volta exata */
   var st=document.getElementById('tema-claro-cor'); if(!st){ st=document.createElement('style'); st.id='tema-claro-cor'; document.head.appendChild(st); }
+  /* (140) cada aparelho calcula a inversão de um jeito (num a cor saía escura, noutro rosa); inverter DUAS vezes é exato em todos,
+     como nas fotos. Então botões, preços, etiquetas, o + da lista e a aba ativa são desinvertidos com a cor original;
+     a cor pré-invertida fica só para bordas e detalhes pequenos. */
+  var FORTES='.bt:not([style*="transparent"]),.qa-mais,.qa-st,.tg,.tk,.clb-pill,.bg,.nv,.selo,.pgc.on,.wz .pg i.on,.as .al2 i,.as .an.ok .nd,.ah .ai,.op .vl,.mp .vl,.cd .pr,.dsc .pr,.hbig,.ln b,.wz .hp,.qt button,.pd .acp,.op.on .ck,.tl .st.ok .dt,.wz .wtl2 .wst.done .wc,.wz .ad.on .rd,span[style*="var(--pri"],b[style*="var(--pri"]';
+  var DENTRO=':not(:is(.art,.cc,.clbcta,.prmcta,.tgc,.vl,.bt,.qa-st) *)';
   st.textContent='html.claro #sheet,html.claro #nav,html.claro #obsm .obc{--pri:'+inv+';--pri2:'+inv+'}'
     +'html.claro #sheet :is(.clbcta,.prmcta,.tgc,.cc,.art),html.claro #sheet:has(>.wb>.mgrid){--pri:'+c+';--pri2:'+c+'}'
-    +'html.claro #sheet:has(>.wb>.mgrid)>.wh{--pri:'+inv+';--pri2:'+inv+'}';
+    +'html.claro #sheet:has(>.wb>.mgrid)>.wh{--pri:'+inv+';--pri2:'+inv+'}'
+    +'html.claro #sheet :is('+FORTES+')'+DENTRO+',html.claro #obsm .obc .bt,html.claro #nav :is(button.on,.bg){filter:invert(1);--pri:'+c+';--pri2:'+c+'}'
+    +'html.claro #sheet :is(.op,.mp) .vl .de{color:#0008}';   /* o preço "de" riscado, dentro do preço desinvertido */
 }
 var NEON=['#fb923c','#22d3ee','#a78bfa','#f472b6','#4ade80','#facc15'];
 function corGrupo(g){ var h=0,i; g=g||''; for(i=0;i<g.length;i++) h=(h*31+g.charCodeAt(i))>>>0; return NEON[h%NEON.length]; }
@@ -936,7 +957,7 @@ function wPinta(novo){
   var p=W.p, k=W.passos[W.passo], last=W.passo===W.passos.length-1, h='', i;
   h+='<div class="wh"><button class="bk" onclick="'+(W.passo?'wVolta()':'fechaSheet()')+'">'+(W.passo?'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 5l-7 7 7 7"/></svg>':'<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg>')+'</button><b>'+esc(p.nome)+'</b><span class="hp" id="artPr"></span></div>';
   h+='<div class="pg">'; for(i=0;i<W.passos.length;i++) h+='<i class="'+(i<=W.passo?'on':'')+'"></i>'; h+='</div>';
-  h+='<div class="art'+(k==='fim'?' big':'')+(p.vid&&!(p.sabores||[]).length?' hv':'')+'">'+(p.vid&&!(p.sabores||[]).length?'<video class="pv" src="'+API+'/food/video/'+encodeURIComponent(D.cli||CLI)+'/'+encodeURIComponent(p.vid)+'" autoplay muted loop playsinline preload="auto"></video>':'')+'<div class="al">'+artLista()+'</div><div class="sv">'+(p.vid&&!(p.sabores||[]).length?'':artSvg())+'</div>'+(p.desc?'<button class="infb" onclick="var q=document.getElementById(\'infp\');q.style.display=q.style.display===\'block\'?\'none\':\'block\'">+</button><div class="infp" id="infp" onclick="this.style.display=\'none\'">'+esc(p.desc)+'</div>':'')+'</div>';
+  h+='<div class="art'+(k==='fim'?' big':'')+(p.vid&&!(p.sabores||[]).length?' hv':'')+'">'+(p.vid&&!(p.sabores||[]).length?'<video class="pv" src="'+API+'/food/video/'+encodeURIComponent(D.cli||CLI)+'/'+encodeURIComponent(p.vid)+'" autoplay muted loop playsinline preload="auto"></video>':'')+'<div class="al">'+artLista()+'</div><div class="sv'+(p.foto&&!(p.sabores||[]).length?' zm" onclick="fotoZoom(\''+esc(p.id)+'\')':'')+'">'+(p.vid&&!(p.sabores||[]).length?'':artSvg())+'</div>'+(p.desc?'<button class="infb" onclick="var q=document.getElementById(\'infp\');q.style.display=q.style.display===\'block\'?\'none\':\'block\'">+</button><div class="infp" id="infp" onclick="this.style.display=\'none\'">'+esc(p.desc)+'</div>':'')+'</div>';
   h+='<div class="wb'+(k==='fim'?' fm':'')+'" id="wb">';
   h+=wCorpo(k);
   h+='</div><div id="wtl"></div><div class="rod"><button class="vlt" type="button" onclick="'+(W.passo?'wVolta()':'voltaOrig()')+'">‹ Voltar</button><div class="qt"><button onclick="wQtd(-1)">−</button><span id="wq">'+W.qty+'</span><button onclick="wQtd(1)">+</button></div><button class="bt'+(last?'':' c')+'" id="wbt" onclick="wAvanca()"></button></div>';
@@ -1028,6 +1049,34 @@ function wAdd2(){
   }
   var ex=SAC.filter(function(x){return x.k===it.k;})[0]; if(ex) ex.qty=Math.min(50,ex.qty+it.qty); else SAC.push(it);
   sacGrava(); sacPos();
+}
+/* (140) ADICIONAR PELA LISTA: produto sem opções obrigatórias (sem tamanhos e sem sabores) entra direto na sacola; com opções, abre o produto */
+function rapPode(p){ return p&&!(p.tamanhos||[]).length&&!(p.sabores||[]).length&&(p.preco||0)>0; }
+function rapK(p){ return JSON.stringify([p.id,'',[],'',[],'']); }
+function rapQtd(p){ var k=rapK(p), it=SAC.filter(function(x){ return x.k===k; })[0]; return it?it.qty:0; }
+function rapHtml(p){
+  var q=rapPode(p)?rapQtd(p):0, id=esc(p.id);
+  if(!q) return '<button class="qa-mais" type="button" aria-label="Adicionar" onclick="event.stopPropagation();rapAdd(\''+id+'\',1)">+</button>';
+  return '<div class="qa-st" onclick="event.stopPropagation()"><button type="button" aria-label="Tirar um" onclick="rapAdd(\''+id+'\',-1)">'+(q===1?'<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>':'−')+'</button><b>'+q+'</b><button type="button" aria-label="Mais um" onclick="rapAdd(\''+id+'\',1)">+</button></div>';
+}
+function rapAdd(id,d){
+  var p=D.produtos[id]; if(!p) return; if(!rapPode(p)){ abreSheet(id); return; }
+  var k=rapK(p), it=SAC.filter(function(x){ return x.k===k; })[0];
+  if(!it){ if(d<0) return; var u=Math.round(desc(p,p.preco||0)*100)/100;
+    it={p:p.id,nome:p.nome,tam:'',sab:[],borda:'',adds:[],obs:'',qty:0,unit:u,orig:p.preco||0,promo:p.promo?{tipo:p.promo.tipo,valor:p.promo.valor}:null,kind:'item',tipo:tipoDesenho(p),balcao:false,k:k}; SAC.push(it); }
+  var antes=it.qty; it.qty=Math.max(0,Math.min(50,it.qty+d)); if(!it.qty) SAC.splice(SAC.indexOf(it),1);
+  sacGrava(); try{ var b=$('nSac')||$('nv-sac'); if(b){ b.classList.remove('bump'); void b.offsetWidth; b.classList.add('bump'); } }catch(e){}
+  if(!antes&&d>0) toast('Adicionado à sacola',true);
+  document.querySelectorAll('[data-qa="'+id+'"]').forEach(function(e){ e.innerHTML=rapHtml(p); });
+}
+/* (140) ZOOM DA FOTO: toque no círculo abre a foto grande; toque na foto amplia onde tocou; X ou fundo fecha */
+function fotoZoom(id){
+  var p=D.produtos[id]; if(!p||!p.foto) return; var z=document.createElement('div'); z.id='fzoom';
+  z.innerHTML='<button class="x" type="button" aria-label="Fechar">✕</button><img alt="'+esc(p.nome)+'" src="'+fotoUrl(p)+'"><small>Toque na foto para ampliar</small>';
+  var im=z.querySelector('img');
+  z.onclick=function(e){ if(e.target===im) return; z.remove(); };
+  im.onclick=function(e){ var on=z.classList.toggle('on'); if(on){ var r=im.getBoundingClientRect(); im.style.transformOrigin=((e.clientX-r.left)/r.width*100)+'% '+((e.clientY-r.top)/r.height*100)+'%'; im.style.transform='scale(2.3)'; } else im.style.transform=''; };
+  document.body.appendChild(z);
 }
 function voaSacola(foto){
   try{
@@ -1477,7 +1526,7 @@ function buscaLista(){
     ps=ps.filter(function(p){ return buscaBate(p.nome+' '+(p.desc||'')+' '+(p.sabores||[]).map(function(s){return s.nome;}).join(' '),q); });
     ps=ps.filter(noNome).concat(ps.filter(function(p){ return !noNome(p); })); }
   ps.slice(0,40).forEach(function(p){ var pr=minPreco(p), ft=p.foto?'<div style="width:56px;height:56px;border-radius:10px;background:#2a2a30 center/cover url('+fotoUrl(p)+');flex:none"></div>':'<div style="width:56px;height:56px;border-radius:10px;background:#ffffff0f;display:flex;align-items:center;justify-content:center;flex:none">'+icone(tipoDesenho(p),26)+'</div>';
-    h+='<div class="mp" onclick="abreSheet(\''+esc(p.id)+'\')">'+(p.destaque?'<div class="fgw">'+ft+'<span class="fogo" title="Destaque">🔥</span></div>':ft)+'<div style="flex:1;min-width:0"><b style="font-size:14.5px">'+esc(p.nome)+'</b>'+promoTag(p)+'</div><span class="vl" style="color:var(--pri2);font-weight:800;font-size:13.5px;text-align:right">'+(pr.min>0?(pr.de?'a partir de ':'')+(pr.orig>pr.min?'<s class="de">'+brl(pr.orig)+'</s> ':'')+brl(pr.min):'')+'</span></div>'; });
+    h+='<div class="mp" onclick="abreSheet(\''+esc(p.id)+'\')">'+(p.destaque?'<div class="fgw">'+ft+'<span class="fogo" title="Destaque">🔥</span></div>':ft)+'<div style="flex:1;min-width:0"><b style="font-size:14.5px">'+esc(p.nome)+'</b>'+promoTag(p)+'</div><span class="vl" style="color:var(--pri2);font-weight:800;font-size:13.5px;text-align:right">'+(pr.min>0?(pr.de?'a partir de ':'')+(pr.orig>pr.min?'<s class="de">'+brl(pr.orig)+'</s> ':'')+brl(pr.min):'')+'<div class="qa" data-qa="'+esc(p.id)+'">'+rapHtml(p)+'</div></span></div>'; });
   $('bl').innerHTML=h||'<div class="nt">Nada encontrado.</div>';
 }
 function pedAjuda(num){ var w=String((D.cfg&&(D.cfg.whats||D.cfg.whatsapp||D.cfg.fone))||'').replace(/\D/g,''); if(w.length<10){ toast('Contato '+lojaDo()+' ainda não cadastrado'); return; } window.open('https://wa.me/'+(w.length<=11?'55':'')+w+'?text='+encodeURIComponent('Olá! Preciso de ajuda com o pedido #'+num),'_blank'); }
@@ -1796,7 +1845,7 @@ function abreCat(id){
         +(pc>0?'<div class="dr"><s>'+brl(pr.orig)+'</s><span class="pc">-'+pc+'%</span></div>':'')+clbLinhaMembro(p,fz)+'<div class="nm">'+esc(p.nome)+'</div></div>'; });
     h+='</div></div>'; }
   g.ps.forEach(function(p){ var pr=minPreco(p), ft=p.foto?'<div class="th" style="width:68px;height:68px;border-radius:10px;background:#2a2a30 center/cover url('+fotoUrl(p)+');flex:none"></div>':'<div style="width:68px;height:68px;border-radius:10px;background:#2a2a30;flex:none;display:flex;align-items:center;justify-content:center;">'+icone(tipoDesenho(p),28)+'</div>';
-    h+='<div class="mp" data-n="'+esc(semAc(p.nome))+'" onclick="abreSheet(\''+esc(p.id)+'\')">'+(p.destaque?'<div class="fgw">'+ft+'<span class="fogo" title="Destaque">🔥</span></div>':ft)+'<div style="flex:1;min-width:0"><b style="font-size:14.5px">'+esc(p.nome)+'</b>'+promoTag(p)+'</div><span class="vl" style="color:var(--pri2);font-weight:800;font-size:13.5px;text-align:right">'+(pr.de?'a partir de ':'')+(pr.orig>pr.min?'<s class="de">'+brl(pr.orig)+'</s> ':'')+brl(pr.min)+clbLinhaMembro(p)+'</span></div>'; });   /* (132) na lista o Clube aparece uma vez só: etiqueta azul p/ quem não assina, pílula p/ quem assina */
+    h+='<div class="mp" data-n="'+esc(semAc(p.nome))+'" onclick="abreSheet(\''+esc(p.id)+'\')">'+(p.destaque?'<div class="fgw">'+ft+'<span class="fogo" title="Destaque">🔥</span></div>':ft)+'<div style="flex:1;min-width:0"><b style="font-size:14.5px">'+esc(p.nome)+'</b>'+promoTag(p)+'</div><span class="vl" style="color:var(--pri2);font-weight:800;font-size:13.5px;text-align:right">'+(pr.de?'a partir de ':'')+(pr.orig>pr.min?'<s class="de">'+brl(pr.orig)+'</s> ':'')+brl(pr.min)+clbLinhaMembro(p)+'<div class="qa" data-qa="'+esc(p.id)+'">'+rapHtml(p)+'</div></span></div>'; });   /* (140) + na lista · (132) na lista o Clube aparece uma vez só: etiqueta azul p/ quem não assina, pílula p/ quem assina */
   h+='</div>'; abreFolha(h,true,'fx');
 }
 
