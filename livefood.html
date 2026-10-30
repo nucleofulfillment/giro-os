@@ -98,8 +98,8 @@ html,body{margin:0;height:100%;background:#000;color:var(--tx);font-family:Inter
 .bt.c{justify-content:center}
 /* (140) adicionar direto pela lista: + embaixo do preço (perto do dedo); depois vira − quantidade + */
 .qa{display:flex;justify-content:flex-end;margin-top:8px}
-.qa-mais{width:36px;height:36px;border-radius:50%;border:0;background:var(--pri);color:#fff;font-size:24px;font-weight:700;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px #0005}
-.qa-st{display:flex;align-items:center;gap:2px;border-radius:99px;background:var(--pri);color:#fff;padding:2px;box-shadow:0 3px 10px #0005}
+.qa-mais{width:36px;height:36px;border-radius:50%;border:0;background:var(--pri);color:#fff;font-size:24px;font-weight:700;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.qa-st{display:flex;align-items:center;gap:2px;border-radius:99px;background:var(--pri);color:#fff;padding:2px}
 .qa-st button{width:32px;height:32px;border:0;border-radius:50%;background:transparent;color:#fff;font-size:20px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .qa-st b{min-width:22px;text-align:center;font-size:15px}
 /* (140) zoom da foto do produto */
@@ -669,7 +669,7 @@ function ofPedir(oid){
   if(!ids.length){ abreMenu(); return; }
   var h='<div class="wh"><button class="bk" onclick="fechaSheet()">'+XI+'</button><b>'+esc((o&&o.nome)||'Oferta')+'</b></div><div class="wb">';
   ids.forEach(function(id){ var p=D.produtos[id], pr=minPreco(p), ft=p.foto?'<div class="th" style="width:68px;height:68px;border-radius:10px;background:#2a2a30 center/cover url('+fotoUrl(p)+');flex:none"></div>':'<div style="width:68px;height:68px;border-radius:10px;background:#2a2a30;flex:none;display:flex;align-items:center;justify-content:center">'+icone(tipoDesenho(p),28)+'</div>';
-    h+='<div class="mp" onclick="abreSheet(\''+esc(p.id)+'\')">'+(p.destaque?'<div class="fgw">'+ft+'<span class="fogo" title="Destaque">🔥</span></div>':ft)+'<div style="flex:1;min-width:0"><b style="font-size:14.5px">'+esc(p.nome)+'</b>'+promoTag(p)+'</div><span class="vl" style="color:var(--pri2);font-weight:800;font-size:13.5px;text-align:right">'+(pr.de?'a partir de ':'')+brl(pr.min)+clbLinhaMembro(p)+'</span></div>'; });
+    h+='<div class="mp" onclick="abreSheet(\''+esc(p.id)+'\')">'+(p.destaque?'<div class="fgw">'+ft+'<span class="fogo" title="Destaque">🔥</span></div>':ft)+'<div style="flex:1;min-width:0"><b style="font-size:14.5px">'+esc(p.nome)+'</b>'+promoTag(p)+'</div><span class="vl" style="color:var(--pri2);font-weight:800;font-size:15.5px;text-align:right">'+(pr.de?'a partir de ':'')+brl(pr.min)+clbLinhaMembro(p)+'</span></div>'; });
   h+='</div>'; abreFolha(h,true);
 }
 function ofMascara(t){ if(!t||t.mascara===false) return ''; var f=t.mascaraForca||45; return 'linear-gradient(180deg,rgba(0,0,0,'+(f*0.0022).toFixed(3)+'),rgba(0,0,0,'+(f/100).toFixed(2)+'))'; }
@@ -1541,7 +1541,7 @@ function buscaLista(){
     ps=ps.filter(function(p){ return buscaBate(p.nome+' '+(p.desc||'')+' '+(p.sabores||[]).map(function(s){return s.nome;}).join(' '),q); });
     ps=ps.filter(noNome).concat(ps.filter(function(p){ return !noNome(p); })); }
   ps.slice(0,40).forEach(function(p){ var pr=minPreco(p), ft=p.foto?'<div style="width:56px;height:56px;border-radius:10px;background:#2a2a30 center/cover url('+fotoUrl(p)+');flex:none"></div>':'<div style="width:56px;height:56px;border-radius:10px;background:#ffffff0f;display:flex;align-items:center;justify-content:center;flex:none">'+icone(tipoDesenho(p),26)+'</div>';
-    h+='<div class="mp" onclick="abreSheet(\''+esc(p.id)+'\')">'+(p.destaque?'<div class="fgw">'+ft+'<span class="fogo" title="Destaque">🔥</span></div>':ft)+'<div style="flex:1;min-width:0"><b style="font-size:14.5px">'+esc(p.nome)+'</b>'+promoTag(p)+'</div><span class="vl" style="color:var(--pri2);font-weight:800;font-size:13.5px;text-align:right">'+(pr.min>0?(pr.de?'a partir de ':'')+(pr.orig>pr.min?'<s class="de">'+brl(pr.orig)+'</s> ':'')+brl(pr.min):'')+'<div class="qa" data-qa="'+esc(p.id)+'">'+rapHtml(p)+'</div></span></div>'; });
+    h+='<div class="mp" onclick="abreSheet(\''+esc(p.id)+'\')">'+(p.destaque?'<div class="fgw">'+ft+'<span class="fogo" title="Destaque">🔥</span></div>':ft)+'<div style="flex:1;min-width:0"><b style="font-size:14.5px">'+esc(p.nome)+'</b>'+promoTag(p)+'</div><span class="vl" style="color:var(--pri2);font-weight:800;font-size:15.5px;text-align:right">'+(pr.min>0?(pr.de?'a partir de ':'')+(pr.orig>pr.min?'<s class="de">'+brl(pr.orig)+'</s> ':'')+brl(pr.min):'')+'<div class="qa" data-qa="'+esc(p.id)+'">'+rapHtml(p)+'</div></span></div>'; });
   $('bl').innerHTML=h||'<div class="nt">Nada encontrado.</div>';
 }
 function pedAjuda(num){ var w=String((D.cfg&&(D.cfg.whats||D.cfg.whatsapp||D.cfg.fone))||'').replace(/\D/g,''); if(w.length<10){ toast('Contato '+lojaDo()+' ainda não cadastrado'); return; } window.open('https://wa.me/'+(w.length<=11?'55':'')+w+'?text='+encodeURIComponent('Olá! Preciso de ajuda com o pedido #'+num),'_blank'); }
@@ -1860,7 +1860,7 @@ function abreCat(id){
         +(pc>0?'<div class="dr"><s>'+brl(pr.orig)+'</s><span class="pc">-'+pc+'%</span></div>':'')+clbLinhaMembro(p,fz)+'<div class="nm">'+esc(p.nome)+'</div></div>'; });
     h+='</div></div>'; }
   g.ps.forEach(function(p){ var pr=minPreco(p), ft=p.foto?'<div class="th" style="width:68px;height:68px;border-radius:10px;background:#2a2a30 center/cover url('+fotoUrl(p)+');flex:none"></div>':'<div style="width:68px;height:68px;border-radius:10px;background:#2a2a30;flex:none;display:flex;align-items:center;justify-content:center;">'+icone(tipoDesenho(p),28)+'</div>';
-    h+='<div class="mp" data-n="'+esc(semAc(p.nome))+'" onclick="abreSheet(\''+esc(p.id)+'\')">'+(p.destaque?'<div class="fgw">'+ft+'<span class="fogo" title="Destaque">🔥</span></div>':ft)+'<div style="flex:1;min-width:0"><b style="font-size:14.5px">'+esc(p.nome)+'</b>'+promoTag(p)+'</div><span class="vl" style="color:var(--pri2);font-weight:800;font-size:13.5px;text-align:right">'+(pr.de?'a partir de ':'')+(pr.orig>pr.min?'<s class="de">'+brl(pr.orig)+'</s> ':'')+brl(pr.min)+clbLinhaMembro(p)+'<div class="qa" data-qa="'+esc(p.id)+'">'+rapHtml(p)+'</div></span></div>'; });   /* (140) + na lista · (132) na lista o Clube aparece uma vez só: etiqueta azul p/ quem não assina, pílula p/ quem assina */
+    h+='<div class="mp" data-n="'+esc(semAc(p.nome))+'" onclick="abreSheet(\''+esc(p.id)+'\')">'+(p.destaque?'<div class="fgw">'+ft+'<span class="fogo" title="Destaque">🔥</span></div>':ft)+'<div style="flex:1;min-width:0"><b style="font-size:14.5px">'+esc(p.nome)+'</b>'+promoTag(p)+'</div><span class="vl" style="color:var(--pri2);font-weight:800;font-size:15.5px;text-align:right">'+(pr.de?'a partir de ':'')+(pr.orig>pr.min?'<s class="de">'+brl(pr.orig)+'</s> ':'')+brl(pr.min)+clbLinhaMembro(p)+'<div class="qa" data-qa="'+esc(p.id)+'">'+rapHtml(p)+'</div></span></div>'; });   /* (140) + na lista · (132) na lista o Clube aparece uma vez só: etiqueta azul p/ quem não assina, pílula p/ quem assina */
   h+='</div>'; abreFolha(h,true,'fx');
 }
 
