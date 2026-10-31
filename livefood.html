@@ -2029,7 +2029,7 @@ function r3Areas(){ var a=RSV.d&&RSV.d.areas; return (a&&a.length)?a:[{id:'princ
 function r3AreaAtual(){ var as=r3Areas(); return as.filter(function(a){ return a.id===RSV.area; })[0]||as[0]; }
 /* área que abre primeiro: a primeira que tem mesa livre para o grupo */
 function r3AreaInicial(){ var as=r3Areas(), a0=as[0].id; for(var i=0;i<as.length;i++){ if((RSV.d.salao||[]).some(function(p){ return p.t==='mesa'&&(p.area||a0)===as[i].id&&p.lug>=RSV.pes&&RSV.oc.indexOf(String(p.n))<0; })) return as[i].id; } return a0; }
-function r3AreaIco(a){ return (a.tipo==='externo'?'🌳':'🏠')+(a.andar==='superior'?' ⬆':''); }
+function r3AreaIco(a){ if(a.tema==='praia') return '🏖️'; return (a.tipo==='externo'?'🌳':'🏠')+(a.andar==='superior'?' ⬆':''); }
 function r3AreasBarra(){ var b=$('r3as'), as=r3Areas(); if(!b) return; if(as.length<2){ b.style.display='none'; return; } b.style.display='';
   b.innerHTML=as.map(function(a){ var a0=as[0].id, liv=(RSV.d.salao||[]).filter(function(p){ return p.t==='mesa'&&(p.area||a0)===a.id&&p.lug>=RSV.pes&&RSV.oc.indexOf(String(p.n))<0; }).length;
     return '<button type="button" class="'+(a.id===RSV.area?'on':'')+'" onclick="r3AreaVai(\''+a.id+'\')">'+r3AreaIco(a)+' '+esc(a.nome)+'<small>'+liv+(liv===1?' livre':' livres')+'</small></button>'; }).join(''); }
@@ -2046,6 +2046,43 @@ function r3Grama(){
   var c=r3Canvas(256,256), g=c.getContext('2d'); g.fillStyle='#3f6b2c'; g.fillRect(0,0,256,256);
   for(var k=0;k<2600;k++){ g.fillStyle='hsl('+(85+Math.random()*25)+','+(35+Math.random()*25)+'%,'+(18+Math.random()*22)+'%)'; g.fillRect(Math.random()*256,Math.random()*256,1.5,3+Math.random()*4); }
   return c;
+}
+/* tema Praia: areia, mar com ondas que se mexem (o movimento é calculado no próprio desenho, leve para o celular) e guarda-sol laranja com a escrita livefood */
+function r3Areia(){
+  var c=r3Canvas(512,512), g=c.getContext('2d'), k; g.fillStyle='#c9a974'; g.fillRect(0,0,512,512);
+  for(k=0;k<14000;k++){ g.fillStyle='hsla('+(32+Math.random()*10)+','+(30+Math.random()*25)+'%,'+(45+Math.random()*30)+'%,'+(0.25+Math.random()*0.5)+')'; g.fillRect(Math.random()*512,Math.random()*512,1+Math.random()*1.6,1+Math.random()*1.6); }
+  for(k=0;k<26;k++){ var x=Math.random()*512, y=Math.random()*512, r=20+Math.random()*50; g.fillStyle='rgba(150,115,70,.05)'; g.beginPath(); g.ellipse(x,y,r,r*0.35,Math.random()*3,0,6.3); g.fill(); }
+  return c;
+}
+function r3Mar(T,beira){
+  var u={uT:{value:0},uBeira:{value:beira}};
+  var mat=new T.ShaderMaterial({uniforms:u,transparent:true,depthWrite:false,toneMapped:false,
+    vertexShader:'varying vec3 vW; void main(){ vec4 w=modelMatrix*vec4(position,1.0); vW=w.xyz; gl_Position=projectionMatrix*viewMatrix*w; }',
+    fragmentShader:'precision highp float; varying vec3 vW; uniform float uT; uniform float uBeira;'
+      +'float alt(vec2 p){ return .5*sin(p.y*.9+uT*1.1+sin(p.x*.13)*1.4)+.28*sin(p.y*1.9-p.x*.31+uT*1.6)+.16*sin(p.x*1.1+p.y*2.7+uT*2.1)+.09*sin(p.x*3.1-p.y*3.7+uT*2.9)+.05*sin(p.x*6.3+p.y*5.1-uT*3.7); }'
+      +'void main(){'
+      +' float d=uBeira-vW.z, vai=.8*sin(uT*.55+vW.x*.09)+.4*sin(uT*.9-vW.x*.21+1.3), e=d-vai;'
+      +' if(e<0.){ gl_FragColor=vec4(.46,.36,.24,smoothstep(-2.4,0.,e)*.42); return; }'
+      +' vec2 p=vW.xz; float h0=alt(p), k=.17*smoothstep(0.,6.,d)+.04; vec3 n=normalize(vec3(-(alt(p+vec2(.12,0.))-h0)/.12*k,1.,-(alt(p+vec2(0.,.12))-h0)/.12*k));'
+      +' vec3 v=normalize(cameraPosition-vW), sol=normalize(vec3(.35,.8,-.5));'
+      +' float fr=pow(1.-max(dot(n,v),0.),3.), br=pow(max(dot(reflect(-sol,n),v),0.),90.)*.85;'
+      +' vec3 cor=mix(vec3(.13,.70,.72),vec3(.02,.27,.47),smoothstep(1.,24.,d)); cor=mix(cor,vec3(.78,.90,.97),fr*.6)+br;'
+      +' float fa=fract(d*.5+uT*.5+.6*sin(vW.x*.12+uT*.2)), onda=smoothstep(.9,1.,fa)*smoothstep(15.,2.,d)*(.45+.55*sin(vW.x*1.7+d*2.+uT));'
+      +' float borda=smoothstep(.75,0.,e)*(.72+.28*sin(vW.x*3.+uT*1.5)); cor=mix(cor,vec3(.98,.99,.99),clamp(max(onda,0.)+borda,0.,1.));'
+      +' gl_FragColor=vec4(cor,smoothstep(0.,.16,e)); }'});
+  var m=new T.Mesh(new T.PlaneGeometry(900,520),mat); m.rotation.x=-Math.PI/2; m.position.set(0,0.02,beira-254); m.renderOrder=1; m.userData.u=u; return m;
+}
+function r3GuardaSol(T,logo,dim){
+  var g=new T.Group(), R=1.35, A=R*Math.cos(Math.PI/8), H=0.62, Y=2.2, tr=dim?{transparent:true,opacity:0.5}:{};
+  var pano=new T.MeshStandardMaterial(Object.assign({color:0xe24a00,roughness:0.75,side:T.DoubleSide,flatShading:true},tr)), barra=new T.MeshStandardMaterial(Object.assign({color:0xb83c00,roughness:0.75,side:T.DoubleSide},tr)), haste=new T.MeshStandardMaterial({color:0xf4f1ea,roughness:0.45});
+  var po=new T.Mesh(new T.CylinderGeometry(0.024,0.03,Y+H,10),haste); po.position.y=(Y+H)/2; g.add(po);
+  var co=new T.Mesh(new T.ConeGeometry(R,H,8,1,true),pano); co.position.y=Y+H/2; g.add(co);
+  var fa=new T.Mesh(new T.CylinderGeometry(R,R,0.13,8,1,true),barra); fa.position.y=Y-0.065; g.add(fa);
+  var bo=new T.Mesh(new T.SphereGeometry(0.05,12,10),haste); bo.position.y=Y+H+0.02; g.add(bo);
+  /* a escrita vai numa peça plana sobre cada gomo, para não entortar */
+  var ml=new T.MeshStandardMaterial(Object.assign({map:logo,transparent:true,depthWrite:false,roughness:0.8,polygonOffset:true,polygonOffsetFactor:-2},dim?{opacity:0.5}:{})), gl=new T.PlaneGeometry(0.62,0.215), inc=-Math.atan2(A,H);
+  for(var i=0;i<8;i++){ var gi=new T.Group(), pl=new T.Mesh(gl,ml), t=0.3, fo=0.014; pl.position.set(0,Y+H*t+fo*Math.sin(-inc),A*(1-t)+fo*Math.cos(-inc)); pl.rotation.x=inc; gi.add(pl); gi.rotation.y=Math.PI/8+i*Math.PI/4; g.add(gi); }
+  return g;
 }
 /* plaquinha da mesa: número + LIVRE (verde) / RESERVADA (vermelha) / N LUGARES (cinza, quando é pequena para o grupo) */
 function r3Placa(n,st,lug){
@@ -2106,19 +2143,19 @@ function r3Monta(){
   r3Solta();
   /* (119) escala real (25 pontos do editor = 1 metro) e só a área escolhida (interna/externa, térreo/superior) */
   var AR=r3AreaAtual(), a0=r3Areas()[0].id, box=$('r3c'), W=box.clientWidth||innerWidth, H=box.clientHeight||innerHeight, P=RSV.d.salao.filter(function(p){ return (p.area||a0)===AR.id; }), K=1/25, T=THREE;
-  var EXT=AR.tipo==='externo', SUP=AR.andar==='superior';
+  var PRAIA=AR.tema==='praia', EXT=PRAIA||AR.tipo==='externo', SUP=!PRAIA&&AR.andar==='superior';
   if(T.ColorManagement) T.ColorManagement.legacyMode=false;   /* cores em sRGB de verdade: a madeira fica escura como deve */
   var ren=new T.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
   ren.setPixelRatio(Math.min(window.devicePixelRatio||1,2)); ren.setSize(W,H); ren.outputEncoding=T.sRGBEncoding; ren.toneMapping=T.ACESFilmicToneMapping; ren.toneMappingExposure=1.1;
   ren.shadowMap.enabled=true; ren.shadowMap.type=T.PCFSoftShadowMap; box.appendChild(ren.domElement);
-  var sc=new T.Scene(); sc.background=new T.Color(0x110d0a);   /* (125) sem névoa: ela escurecia o salão ao afastar o zoom */
+  var sc=new T.Scene(); sc.background=new T.Color(PRAIA?0xcfe9f7:0x110d0a);   /* (125) sem névoa: ela escurecia o salão ao afastar o zoom */
   if(T.RoomEnvironment){ try{ var pm=new T.PMREMGenerator(ren); sc.environment=pm.fromScene(new T.RoomEnvironment(),0.04).texture; }catch(e){} }
   /* limites: as medidas da área (largura × comprimento) ou o que as peças ocuparem */
   var x0=0,y0=0,x1=Math.round(AR.larg*25),y1=Math.round(AR.comp*25); P.forEach(function(p){ x0=Math.min(x0,p.x-p.w/2-12); y0=Math.min(y0,p.y-p.h/2-12); x1=Math.max(x1,p.x+p.w/2+12); y1=Math.max(y1,p.y+p.h/2+12); });
   var cx=(x0+x1)/2, cy=(y0+y1)/2, RW=(x1-x0)*K, RD=(y1-y0)*K, ps=function(p){ return {x:(p.x-cx)*K,z:(p.y-cy)*K}; };
   /* luz quente de restaurante */
-  sc.add(new T.HemisphereLight(0xfff1dc,0x2a1a10,0.55));
-  var sol=new T.DirectionalLight(0xffe2b8,1.25); sol.position.set(RW*0.35,14,RD*0.5); sol.castShadow=true; sol.shadow.mapSize.set(1024,1024); sol.shadow.bias=-0.0004; sol.shadow.normalBias=0.02;
+  sc.add(PRAIA?new T.HemisphereLight(0xe8f5ff,0xc9ad7c,0.5):new T.HemisphereLight(0xfff1dc,0x2a1a10,0.55));
+  var sol=new T.DirectionalLight(PRAIA?0xfff4e0:0xffe2b8,PRAIA?1.0:1.25); sol.position.set(RW*0.35,14,RD*0.5); sol.castShadow=true; sol.shadow.mapSize.set(1024,1024); sol.shadow.bias=-0.0004; sol.shadow.normalBias=0.02;
   var sh=sol.shadow.camera; sh.left=-RW/2-2; sh.right=RW/2+2; sh.top=RD/2+2; sh.bottom=-RD/2-2; sh.near=1; sh.far=40; sc.add(sol);
   /* piso: madeira na área interna, pedra na externa (com gramado em volta no térreo); andar superior = laje mais grossa */
   /* (120) contorno da área (formato livre, desenhado no painel); sem pontos = retângulo */
@@ -2127,9 +2164,15 @@ function r3Monta(){
   var shp=new T.Shape(); CP.forEach(function(q,i){ if(i) shp.lineTo(q.x,-q.z); else shp.moveTo(q.x,-q.z); }); shp.closePath();
   var piso=new T.Mesh(new T.ShapeGeometry(shp),new T.MeshStandardMaterial(EXT?{map:r3Tex(r3Pedra(),[0.25,0.25]),roughness:0.88,metalness:0}:{map:r3Tex(r3Madeira(),[1/3.2,1/3.2]),roughness:0.62,metalness:0.05}));
   piso.rotation.x=-Math.PI/2; piso.receiveShadow=true; sc.add(piso);
-  var esp=SUP?0.55:0.3, base=new T.Mesh(new T.ExtrudeGeometry(shp,{depth:esp,bevelEnabled:false}),new T.MeshStandardMaterial({color:EXT?0x8a8378:0x1d1510,roughness:0.9})); base.rotation.x=-Math.PI/2; base.position.y=-esp-0.01; sc.add(base);
+  var ondas=null;
+  if(PRAIA){   /* a areia passa dos limites da área e o mar fica na parte de cima do mapa do painel, 2 m depois da área */
+    piso.visible=false; var zBeira=Infinity; CP.forEach(function(q){ zBeira=Math.min(zBeira,q.z); }); zBeira-=2;
+    var ar3=new T.Mesh(new T.PlaneGeometry(900,420),new T.MeshStandardMaterial({map:r3Tex(r3Areia(),[225,105]),roughness:1,metalness:0})); ar3.rotation.x=-Math.PI/2; ar3.position.set(0,0,zBeira+205); ar3.receiveShadow=true; sc.add(ar3);
+    var mar=r3Mar(T,zBeira); sc.add(mar); ondas=mar.userData.u;
+  }
+  var esp=SUP?0.55:0.3, base=new T.Mesh(new T.ExtrudeGeometry(shp,{depth:esp,bevelEnabled:false}),new T.MeshStandardMaterial({color:EXT?0x8a8378:0x1d1510,roughness:0.9})); base.rotation.x=-Math.PI/2; base.position.y=-esp-0.01; if(!PRAIA) sc.add(base);
   var raio=0; CP.forEach(function(q){ raio=Math.max(raio,Math.hypot(q.x-CT.x,q.z-CT.z)); });
-  if(EXT&&!SUP){ var gr=new T.Mesh(new T.CircleGeometry(raio+3.5,64),new T.MeshStandardMaterial({map:r3Tex(r3Grama(),[(raio*2+7)/3,(raio*2+7)/3]),roughness:1})); gr.rotation.x=-Math.PI/2; gr.position.set(CT.x,-0.04,CT.z); gr.receiveShadow=true; sc.add(gr); }
+  if(EXT&&!SUP&&!PRAIA){ var gr=new T.Mesh(new T.CircleGeometry(raio+3.5,64),new T.MeshStandardMaterial({map:r3Tex(r3Grama(),[(raio*2+7)/3,(raio*2+7)/3]),roughness:1})); gr.rotation.x=-Math.PI/2; gr.position.set(CT.x,-0.04,CT.z); gr.receiveShadow=true; sc.add(gr); }
   /* lados do contorno: comprimento, meio, ângulo e o lado de fora (para as paredes sumirem quando ficam na frente da câmera) */
   var LADOS=CP.map(function(A,i){ var B=CP[(i+1)%CP.length], dx=B.x-A.x, dz=B.z-A.z, L=Math.hypot(dx,dz)||0.001, m={x:(A.x+B.x)/2,z:(A.z+B.z)/2}, n={x:dz/L,z:-dx/L};
     if(n.x*(m.x-CT.x)+n.z*(m.z-CT.z)<0){ n.x=-n.x; n.z=-n.z; } return {L:L,m:m,n:n,ang:Math.atan2(dz,dx)}; });
@@ -2145,10 +2188,11 @@ function r3Monta(){
     g.position.set(l.m.x+l.n.x*0.06,0,l.m.z+l.n.z*0.06); g.rotation.y=-l.ang; g.userData={m:l.m,n:l.n,ms:[m,rod.material]}; sc.add(g); paredes.push(g);
   });
   /* materiais */
-  var mMesa=new T.MeshStandardMaterial({color:0x5a3a24,roughness:0.38,metalness:0.08}), mPe=new T.MeshStandardMaterial({color:0x1a1a1c,roughness:0.35,metalness:0.7});
-  var mCad=new T.MeshStandardMaterial({color:0x8a5a3a,roughness:0.55}), mEst=new T.MeshStandardMaterial({color:0x2b2b2e,roughness:0.6});
+  var mMesa=new T.MeshStandardMaterial(PRAIA?{color:0xf6f1e7,roughness:0.5}:{color:0x5a3a24,roughness:0.38,metalness:0.08}), mPe=new T.MeshStandardMaterial(PRAIA?{color:0xe8e3d8,roughness:0.5}:{color:0x1a1a1c,roughness:0.35,metalness:0.7});
+  var mCad=new T.MeshStandardMaterial(PRAIA?{color:0xfaf6ee,roughness:0.6}:{color:0x8a5a3a,roughness:0.55}), logoPraia=null, mEst=new T.MeshStandardMaterial({color:0x2b2b2e,roughness:0.6});
   var mVela=new T.MeshStandardMaterial({color:0xffd27a,emissive:0xffb347,emissiveIntensity:2.2}), mVidro=new T.MeshPhysicalMaterial({color:0xffffff,roughness:0.05,transmission:0.9,thickness:0.05,transparent:true,opacity:0.5});
-  var clic=[], mesas={}, luzes=0, PS=Math.max(0.7,Math.min(1.5,Math.max(RW,RD)/14)), PY=1.1+0.75*PS;   /* (119) plaquinha proporcional ao tamanho da área */
+  var clic=[], mesas={}, luzes=0, PS=Math.max(0.7,Math.min(1.5,Math.max(RW,RD)/14)), PY=PRAIA?3.1+0.6*PS:1.1+0.75*PS;   /* (119) plaquinha proporcional ao tamanho da área; na praia, acima do guarda-sol */
+  if(PRAIA){ logoPraia=new T.TextureLoader().load('livefood-logo-branca.png'); logoPraia.encoding=T.sRGBEncoding; logoPraia.anisotropy=8; }
   function cadeira(mat){
     var g=new T.Group(), as=new T.Mesh(new T.BoxGeometry(0.44,0.06,0.44),mat); as.position.y=0.46; g.add(as);
     var co=new T.Mesh(new T.BoxGeometry(0.44,0.5,0.06),mat); co.position.set(0,0.74,-0.2); g.add(co);
@@ -2164,15 +2208,16 @@ function r3Monta(){
       else { var tampo=new T.Mesh(new T.CylinderGeometry(r,r,0.05,48),mm); tampo.position.y=0.76; g.add(tampo); var borda=new T.Mesh(new T.TorusGeometry(r,0.022,8,48),mm); borda.rotation.x=Math.PI/2; borda.position.y=0.76; g.add(borda); }
       var col=new T.Mesh(new T.CylinderGeometry(0.05,0.07,0.72,14),mPe); col.position.y=0.38; g.add(col);
       var pb=qd?new T.Mesh(new T.BoxGeometry(hw*0.9,0.04,hd*0.9),mPe):new T.Mesh(new T.CylinderGeometry(r*0.42,r*0.48,0.04,28),mPe); pb.position.y=0.02; g.add(pb);
-      if(st!=='peq'){ var vaso=new T.Mesh(new T.CylinderGeometry(0.06,0.06,0.12,16),mVidro); vaso.position.y=0.85; g.add(vaso); var ch=new T.Mesh(new T.SphereGeometry(0.03,10,8),mVela); ch.position.y=0.86; g.add(ch); }
+      if(PRAIA) g.add(r3GuardaSol(T,logoPraia,dim));
+      if(st!=='peq'&&!PRAIA){ var vaso=new T.Mesh(new T.CylinderGeometry(0.06,0.06,0.12,16),mVidro); vaso.position.y=0.85; g.add(vaso); var ch=new T.Mesh(new T.SphereGeometry(0.03,10,8),mVela); ch.position.y=0.86; g.add(ch); }
       var nc=Math.min(14,p.lug), mc=dim?mCad.clone():mCad, af=st==='res'?0.2:0.3; if(dim){ mc.transparent=true; mc.opacity=0.4; }
       (qd?r3CadeirasRet(nc,hw,hd,af):r3CadeirasRedonda(nc,r,af)).forEach(function(c){ var ca=cadeira(mc); ca.position.set(c[0],0,c[1]); ca.rotation.y=Math.atan2(-c[0],-c[1]); g.add(ca); });
       g.traverse(function(o){ if(o.isMesh){ o.castShadow=!dim; o.receiveShadow=true; o.userData.n=p.n; clic.push(o); } });
       var pl=new T.Sprite(new T.SpriteMaterial({map:r3Placa(p.n,st,p.lug),transparent:true,depthWrite:false})); pl.scale.set(1.6*PS,PS,1); pl.position.y=PY; pl.userData.n=p.n; pl.renderOrder=5; g.add(pl); clic.push(pl);
       var hL=Math.max(0.2,PY-PS/2-0.8), hast=new T.Mesh(new T.CylinderGeometry(0.008,0.008,1,6),new T.MeshStandardMaterial({color:0xd4d4d8,metalness:0.8,roughness:0.3})); hast.scale.y=hL; hast.position.y=0.8+hL/2; g.add(hast);
-      var anel=new T.Mesh(new T.RingGeometry(r+0.62,r+0.76,64),new T.MeshBasicMaterial({color:0xf97316,transparent:true,opacity:0,side:T.DoubleSide,depthWrite:false})); anel.rotation.x=-Math.PI/2; anel.position.y=0.015; g.add(anel);
+      var rAn=PRAIA?Math.max(r,1.0):r, anel=new T.Mesh(new T.RingGeometry(rAn+0.62,rAn+0.76,64),new T.MeshBasicMaterial({color:0xf97316,transparent:true,opacity:0,side:T.DoubleSide,depthWrite:false})); anel.rotation.x=-Math.PI/2; anel.position.y=0.015; g.add(anel);
       /* luz quente sobre as mesas livres (até 6 luzes de verdade) */
-      if(st==='livre'&&luzes<6){ var pt=new T.PointLight(0xffb867,0.9,4.2,2); pt.position.y=2.1; g.add(pt); luzes++; }
+      if(st==='livre'&&luzes<6&&!PRAIA){ var pt=new T.PointLight(0xffb867,0.9,4.2,2); pt.position.y=2.1; g.add(pt); luzes++; }
       g.position.set(q.x,0,q.z); g.rotation.y=-(p.rot||0)*Math.PI/180; g.scale.set(1,0.001,1); g.userData={atraso:ix*0.05}; sc.add(g);
       mesas[p.n]={g:g,pl:pl,anel:anel,st:st,lug:p.lug};
     } else if(p.t==='balcao'){
@@ -2196,19 +2241,22 @@ function r3Monta(){
   /* plantas: nos cantos do contorno (e no meio dos lados, na área externa), um pouco para dentro */
   var PLT=CP.map(function(q){ var dx=CT.x-q.x, dz=CT.z-q.z, d=Math.hypot(dx,dz)||1; return {x:q.x+dx/d*0.45,z:q.z+dz/d*0.45}; });
   if(EXT) LADOS.forEach(function(l){ if(l.L>3) PLT.push({x:l.m.x-l.n.x*0.45,z:l.m.z-l.n.z*0.45}); });
+  if(PRAIA) PLT=[];
   PLT.forEach(function(c){ var gp=new T.Group(), vs=new T.Mesh(new T.CylinderGeometry(0.22,0.17,0.45,18),new T.MeshStandardMaterial({color:0x2a2a2a,roughness:0.5})); vs.position.y=0.225; gp.add(vs);
     for(var f=0;f<5;f++){ var fo=new T.Mesh(new T.SphereGeometry(0.28-f*0.03,12,10),new T.MeshStandardMaterial({color:new T.Color().setHSL(0.3+Math.random()*0.04,0.45,0.22+Math.random()*0.08),roughness:0.85})); fo.position.set(Math.random()*0.2-0.1,0.6+f*0.17,Math.random()*0.2-0.1); gp.add(fo); }
     gp.traverse(function(o){ if(o.isMesh) o.castShadow=true; }); gp.position.set(c.x,0,c.z); sc.add(gp); });
   /* câmera: entra do alto e pousa na diagonal; gira com o dedo, pinça para aproximar */
   sc.traverse(function(o){ if(o.material&&o.material.isMeshStandardMaterial&&o.material!==piso.material) o.material.envMapIntensity=0.35; });   /* reflexo suave: a madeira continua escura */
   /* celular em pé: a câmera olha pelo lado, então o lado comprido do salão fica na vertical da tela; enquadra pela largura */
-  var ret=W<H&&RW>RD, vf=W<H?50:42, hf=2*Math.atan(Math.tan(vf*Math.PI/360)*W/H), larg=(ret?RD:RW)+0.6, prof=(ret?RW:RD)+0.6, el=0.62;
-  var dist=Math.max(larg/2/Math.tan(hf/2)*0.82, prof*0.5/Math.tan(vf*Math.PI/360)), cam=new T.PerspectiveCamera(vf,W/H,0.1,140);
+  var ret=!PRAIA&&W<H&&RW>RD, vf=W<H?50:42,   /* na praia a câmera fica sempre de frente para o mar */ hf=2*Math.atan(Math.tan(vf*Math.PI/360)*W/H), larg=(ret?RD:RW)+0.6, prof=(ret?RW:RD)+0.6, el=0.62;
+  var dist=Math.max(larg/2/Math.tan(hf/2)*0.82, prof*0.5/Math.tan(vf*Math.PI/360)), cam=new T.PerspectiveCamera(vf,W/H,PRAIA?0.3:0.1,PRAIA?700:140);
+  if(PRAIA) sc.fog=new T.Fog(0xcfe9f7,dist*3,dist*3+260);
   /* (120) a borda mais perto da câmera também precisa caber na largura da tela (com a câmera inclinada ela fica bem mais perto que o centro); folga para o balanço */
   for(var it=0;it<40;it++){ var dh=dist*Math.cos(el)-prof/2, dv=dist*Math.sin(el), perto=Math.sqrt(Math.max(0.5,dh)*Math.max(0.5,dh)+dv*dv); if(larg*1.08/2<=perto*Math.tan(hf/2)) break; dist*=1.06; }
+  if(PRAIA&&W<H) dist*=0.74;   /* celular em pé: mais perto para os guarda-sóis ficarem fáceis de tocar; dois dedos arrastam o mapa */
   var alvo=new T.Vector3(0,0.4,0), cy0=dist*Math.sin(el), ch0=dist*Math.cos(el), fimC=ret?new T.Vector3(-ch0,cy0,0):new T.Vector3(0,cy0,ch0), iniC=ret?new T.Vector3(-0.4,dist*1.7,0.01):new T.Vector3(0.01,dist*1.7,0.4);
   cam.position.copy(iniC); cam.lookAt(alvo);
-  var ctl=new T.OrbitControls(cam,ren.domElement); ctl.target.copy(alvo); ctl.enableDamping=true; ctl.dampingFactor=0.08; ctl.enablePan=false; ctl.minDistance=4; ctl.maxDistance=dist*1.6; ctl.minPolarAngle=0.18; ctl.maxPolarAngle=1.32; ctl.rotateSpeed=0.7; ctl.autoRotate=false; ctl.enabled=false;
+  var ctl=new T.OrbitControls(cam,ren.domElement); ctl.target.copy(alvo); ctl.enableDamping=true; ctl.dampingFactor=0.08; ctl.enablePan=PRAIA; ctl.minDistance=4; ctl.maxDistance=dist*1.6; ctl.minPolarAngle=0.18; ctl.maxPolarAngle=1.32; ctl.rotateSpeed=0.7; ctl.autoRotate=false; ctl.enabled=false;
   /* (120) balanço suave (±18°) enquanto o cliente não mexe: dá a sensação de 3D sem tirar o salão do enquadramento (o giro de 360° cortava áreas compridas no celular) */
   var sph0=new T.Spherical().setFromVector3(fimC.clone().sub(alvo)), sphT=new T.Spherical(), balanco=true;
   var t0=performance.now(), ray=new T.Raycaster(), pm2=new T.Vector2(), down=null, mexeu=false;
@@ -2220,6 +2268,7 @@ function r3Monta(){
   function quadro(){
     R3.raf=requestAnimationFrame(quadro);
     var t=(performance.now()-t0)/1000, k=Math.min(1,t/1.6), e=1-Math.pow(1-k,3);
+    if(ondas) ondas.uT.value=t;
     if(k<1){ cam.position.lerpVectors(iniC,fimC,e); cam.lookAt(alvo); } else if(!ctl.enabled){ ctl.enabled=true; }
     if(k>=1&&balanco&&!R3.sel){ sphT.set(sph0.radius,sph0.phi,sph0.theta+Math.sin((t-1.6)*0.35)*0.32); cam.position.setFromSpherical(sphT).add(alvo); cam.lookAt(alvo); }
     Object.keys(mesas).forEach(function(n){ var m=mesas[n], kk=Math.max(0,Math.min(1,(t-0.35-m.g.userData.atraso)/0.5)), ee=kk<1?1-Math.pow(1-kk,3)*Math.cos(kk*4.2):1; m.g.scale.y=Math.max(0.001,ee);

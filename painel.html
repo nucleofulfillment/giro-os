@@ -8573,9 +8573,16 @@ function slModelo(){
   return L;
 }
 function slPeca(id){ return SL.L.filter(function(p){return p.id===id;})[0]; }
+function slPraia(){ return slAr().tema==='praia'; }
+/* guarda-sol visto de cima: 2,2 m de diâmetro (25 pontos = 1 m), mesmo com a mesa menor embaixo */
+function slRaioSol(p){ return Math.max((p.w||22)/2,27.5); }
 function slFormas(p){
   var h='';
-  if(p.t==='mesa'){ var dm=p.w||44, qd=p.forma==='quadrada', mh=qd?(p.h||dm):dm, fz=Math.max(8,Math.min(30,Math.round(Math.min(dm,mh)*0.5)));
+  if(p.t==='mesa'&&slPraia()){ var rs=slRaioSol(p), gm='', i8;
+    for(i8=0;i8<8;i8++){ var an8=(22.5+45*i8)*Math.PI/180; gm+='<line x1="'+p.x+'" y1="'+p.y+'" x2="'+(p.x+Math.cos(an8)*rs)+'" y2="'+(p.y+Math.sin(an8)*rs)+'" stroke="#C9500F" stroke-width="1"/>'; }
+    h+='<circle cx="'+p.x+'" cy="'+(p.y+2)+'" r="'+rs+'" fill="rgba(120,85,40,.28)"/><circle cx="'+p.x+'" cy="'+p.y+'" r="'+rs+'" fill="#F0641E" stroke="#C9500F" stroke-width="1.5"/>'+gm;
+    h+='<g transform="rotate('+(-(p.rot||0))+' '+p.x+' '+p.y+')" style="pointer-events:none"><text x="'+p.x+'" y="'+(p.y+3)+'" text-anchor="middle" font-size="'+Math.round(rs*0.62)+'" font-weight="800" fill="#fff">'+p.n+'</text><image href="livefood-logo-branca.png" x="'+(p.x-rs*0.62)+'" y="'+(p.y+rs*0.2)+'" width="'+(rs*1.24)+'" height="'+(rs*0.43)+'"/></g>'; }
+  else if(p.t==='mesa'){ var dm=p.w||44, qd=p.forma==='quadrada', mh=qd?(p.h||dm):dm, fz=Math.max(8,Math.min(30,Math.round(Math.min(dm,mh)*0.5)));
     h+=(qd?'<rect x="'+(p.x-dm/2)+'" y="'+(p.y-mh/2)+'" width="'+dm+'" height="'+mh+'" rx="2" fill="#E8E8EB" stroke="#E3C9B8" stroke-width="1.5"/>':'<circle cx="'+p.x+'" cy="'+p.y+'" r="'+(dm/2)+'" fill="#E8E8EB" stroke="#E3C9B8" stroke-width="1.5"/>')+'<text x="'+p.x+'" y="'+(p.y+fz*0.37)+'" text-anchor="middle" font-size="'+fz+'" font-weight="800" fill="#1C1C1E" transform="rotate('+(-(p.rot||0))+' '+p.x+' '+p.y+')">'+p.n+'</text>'; }
   else if(SL_T[p.t]&&SL_T[p.t].deco){ var dt=SL_T[p.t], fi=Math.max(6,Math.min(22,Math.round(Math.min(p.w,p.h)*0.7)));   /* (120) decoração e equipamentos */
     h+='<rect x="'+(p.x-p.w/2)+'" y="'+(p.y-p.h/2)+'" width="'+p.w+'" height="'+p.h+'" rx="'+(p.t==='vaso'?p.w/2:2)+'" fill="'+dt.cor+'" stroke="#B9B9C2" stroke-width="1"/><text x="'+p.x+'" y="'+(p.y+fi*0.36)+'" text-anchor="middle" font-size="'+fi+'" transform="rotate('+(-(p.rot||0))+' '+p.x+' '+p.y+')">'+dt.ic+'</text>'; }
@@ -8591,10 +8598,15 @@ function slFormas(p){
 /* (120) contorno da área: pontos em metros (sem pontos = retângulo de largura × comprimento) */
 function slPts(a){ a=a||slAr(); return (a.pontos&&a.pontos.length>=3)?a.pontos:[[0,0],[a.larg,0],[a.larg,a.comp],[0,a.comp]]; }
 function slPlanta(){
-  var z=slWH(), W=z.W, H=z.H, ex=slAr().tipo==='externo', pts=slPts(), pp=pts.map(function(q){ return (q[0]*25)+','+(q[1]*25); }).join(' '), rv=Math.max(4,Math.max(W,H)/90), gx, gy;
-  var s='<polygon points="'+pp+'" fill="'+(ex?'#F1F5EC':'#FFFFFF')+'" stroke="'+(ex?'#A7C495':'#C9BBAE')+'" stroke-width="3" stroke-linejoin="round" vector-effect="non-scaling-stroke"'+(ex?' stroke-dasharray="10 6"':'')+'/>';
-  for(gx=25;gx<W;gx+=25) s+='<line x1="'+gx+'" y1="4" x2="'+gx+'" y2="'+(H-4)+'" stroke="'+(gx%125?'#E6E6EA':'#CFCFD6')+'" stroke-width="'+(gx%125?.6:1)+'" vector-effect="non-scaling-stroke"/>';
-  for(gy=25;gy<H;gy+=25) s+='<line x1="4" y1="'+gy+'" x2="'+(W-4)+'" y2="'+gy+'" stroke="'+(gy%125?'#E6E6EA':'#CFCFD6')+'" stroke-width="'+(gy%125?.6:1)+'" vector-effect="non-scaling-stroke"/>';
+  var z=slWH(), W=z.W, H=z.H, ex=slAr().tipo==='externo', pr=slPraia(), pts=slPts(), pp=pts.map(function(q){ return (q[0]*25)+','+(q[1]*25); }).join(' '), rv=Math.max(4,Math.max(W,H)/90), gx, gy, s='';
+  /* praia: areia em tudo e o mar em cima, com a espuma indo e voltando (igual ao 3D: a água começa 2 m depois da área) */
+  if(pr){ var dO='M-3000 -50', xO; for(xO=-3000;xO<3000+W;xO+=60) dO+=' q15 -9 30 0 t30 0';
+    s+='<rect x="-3000" y="-3000" width="'+(6000+W)+'" height="'+(6000+H)+'" fill="#EFDDB6"/><rect x="-3000" y="-3000" width="'+(6000+W)+'" height="2950" fill="#2AA9B8"/><rect x="-3000" y="-3000" width="'+(6000+W)+'" height="2920" fill="#1B8CAD"/>'
+      +'<g><animateTransform attributeName="transform" type="translate" values="0 0;-14 7;0 0" dur="5s" repeatCount="indefinite"/><path d="'+dO+'" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".9"/></g>'
+      +'<g><animateTransform attributeName="transform" type="translate" values="10 -26;-6 -18;10 -26" dur="6.5s" repeatCount="indefinite"/><path d="'+dO+'" fill="none" stroke="#fff" stroke-width="2.5" opacity=".55"/></g>'; }
+  s+='<polygon points="'+pp+'" fill="'+(pr?'none':(ex?'#F1F5EC':'#FFFFFF'))+'" stroke="'+(pr?'#B8955C':(ex?'#A7C495':'#C9BBAE'))+'" stroke-width="3" stroke-linejoin="round" vector-effect="non-scaling-stroke"'+(ex?' stroke-dasharray="10 6"':'')+'/>';
+  for(gx=25;gx<W;gx+=25) s+='<line x1="'+gx+'" y1="4" x2="'+gx+'" y2="'+(H-4)+'" stroke="'+(pr?'rgba(150,115,70,.16)':(gx%125?'#E6E6EA':'#CFCFD6'))+'" stroke-width="'+(gx%125?.6:1)+'" vector-effect="non-scaling-stroke"/>';
+  for(gy=25;gy<H;gy+=25) s+='<line x1="4" y1="'+gy+'" x2="'+(W-4)+'" y2="'+gy+'" stroke="'+(pr?'rgba(150,115,70,.16)':(gy%125?'#E6E6EA':'#CFCFD6'))+'" stroke-width="'+(gy%125?.6:1)+'" vector-effect="non-scaling-stroke"/>';
   /* bordas (dois cliques criam um ponto) e pontos (arrastar muda o formato; dois cliques apagam) */
   pts.forEach(function(q,i){ var r=pts[(i+1)%pts.length]; s+='<line data-e="'+i+'" x1="'+q[0]*25+'" y1="'+q[1]*25+'" x2="'+r[0]*25+'" y2="'+r[1]*25+'" stroke="transparent" stroke-width="14" vector-effect="non-scaling-stroke" style="cursor:copy"><title>Dois cliques para criar um ponto</title></line>'; });
   pts.forEach(function(q,i){ s+='<circle data-v="'+i+'" cx="'+q[0]*25+'" cy="'+q[1]*25+'" r="'+rv+'" fill="#fff" stroke="#8B7B6E" stroke-width="2" vector-effect="non-scaling-stroke" style="cursor:move"><title>Arraste para mudar o formato · dois cliques apagam</title></circle>'; });
@@ -8602,7 +8614,7 @@ function slPlanta(){
   slDaArea().forEach(function(p){
     /* (120) cada peça gira em volta do próprio centro; selecionadas ficam com o contorno laranja (a alça de tamanho só com uma selecionada) */
     s+='<g data-id="'+p.id+'" style="cursor:grab"'+(p.rot?' transform="rotate('+p.rot+' '+p.x+' '+p.y+')"':'')+'>'+slFormas(p);
-    if(slEhSel(p.id)){ var pw=p.w||44, ph=(p.t==='mesa'&&p.forma!=='quadrada')?pw:(p.h||pw), r={x:p.x-pw/2-3,y:p.y-ph/2-3,w:pw+6,h:ph+6}, hs=Math.max(6,Math.min(16,Math.round(Math.max(pw,ph)*0.35)));
+    if(slEhSel(p.id)){ var pw=p.w||44, ph=(p.t==='mesa'&&p.forma!=='quadrada')?pw:(p.h||pw), rsl=p.t==='mesa'&&pr?slRaioSol(p):0, r=rsl?{x:p.x-rsl-3,y:p.y-rsl-3,w:rsl*2+6,h:rsl*2+6}:{x:p.x-pw/2-3,y:p.y-ph/2-3,w:pw+6,h:ph+6}, hs=Math.max(6,Math.min(16,Math.round(Math.max(pw,ph)*0.35)));
       s+='<rect x="'+r.x+'" y="'+r.y+'" width="'+r.w+'" height="'+r.h+'" rx="4" fill="none" stroke="#FF5A00" stroke-width="2" vector-effect="non-scaling-stroke" stroke-dasharray="5 4" style="pointer-events:none"/>';
       if(um) s+='<rect data-h="1" x="'+(p.x+pw/2-hs/2)+'" y="'+(p.y+ph/2-hs/2)+'" width="'+hs+'" height="'+hs+'" rx="2" fill="#FF5A00" stroke="#fff" stroke-width="1.5" vector-effect="non-scaling-stroke" style="cursor:nwse-resize"/>'; }
     s+='</g>';
@@ -8646,7 +8658,7 @@ function slMonta(){
     +'<div style="flex:1;min-height:0;display:flex;gap:10px;padding:10px 12px">'
     +'<div id="sl-tools" style="width:190px;flex:none;display:flex;flex-direction:column;gap:6px;overflow:auto">'
     +'<div id="sl-areas"></div>'
-    +['mesa','balcao','cozinha','banheiro','entrada','saida'].map(function(t){ return '<button class="btn sec" type="button" style="'+tb+'" onclick="slAdd(\''+t+'\')">+ '+SL_T[t].nome+'</button>'; }).join('')
+    +['mesa','balcao','cozinha','banheiro','entrada','saida'].map(function(t){ return '<button class="btn sec" type="button"'+(t==='mesa'?' id="sl-add-mesa"':'')+' style="'+tb+'" onclick="slAdd(\''+t+'\')">+ '+SL_T[t].nome+'</button>'; }).join('')
     +'<select class="inp" style="padding:8px 9px;font-size:12.5px;width:100%" onchange="if(this.value){ slAdd(this.value); this.value=\'\'; }" title="Decoração e equipamentos"><option value="">+ Decoração…</option>'+Object.keys(SL_T).filter(function(t){ return SL_T[t].deco; }).map(function(t){ return '<option value="'+t+'">'+SL_T[t].ic+' '+SL_T[t].nome+'</option>'; }).join('')+'</select>'+'</div>'
     +'<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:8px">'
     +'<div id="sl-mapa" style="flex:1;min-height:0;position:relative"><svg id="sl-svg" viewBox="0 0 600 360" style="width:100%;height:100%;display:block;border-radius:12px;background:#FAFAFA;border:1px solid var(--border2);touch-action:none" role="img" aria-label="Planta do salão"></svg><svg id="sl-svg3" viewBox="0 0 900 520" style="display:none"></svg>'
@@ -8821,7 +8833,7 @@ function slForma(f){ slHist(); var ms=slSels().filter(function(p){ return p.t===
 function slPad(){ var z=slWH(); return Math.max(20,Math.round(Math.max(z.W,z.H)*0.05)); }
 /* (121) zoom do mapa: SL.z (1 a 8×) e o canto da vista (SL.vx, SL.vy), sempre dentro da área */
 function slVB(){ var z=slWH(), k=SL.z||1, vw=z.W/k, vh=z.H/k; SL.vx=Math.max(0,Math.min(z.W-vw,SL.vx||0)); SL.vy=Math.max(0,Math.min(z.H-vh,SL.vy||0));
-  var p=slPad()/k, s=el('sl-svg'); if(s) s.setAttribute('viewBox',[SL.vx-p,SL.vy-p,vw+2*p,vh+2*p].join(' ')); var zv=el('sl-zv'); if(zv) zv.textContent=Math.round(k*100)+'%'; }
+  var p=slPad()/k, mar=slPraia()?110/k:0, s=el('sl-svg'); if(s) s.setAttribute('viewBox',[SL.vx-p,SL.vy-p-mar,vw+2*p,vh+2*p+mar].join(' ')); var zv=el('sl-zv'); if(zv) zv.textContent=Math.round(k*100)+'%'; }
 function slZoom(f){ var z=slWH(), k0=SL.z||1; if(!f){ SL.z=1; SL.vx=0; SL.vy=0; slVB(); return; } var k1=Math.max(1,Math.min(8,k0*f)), cx=(SL.vx||0)+z.W/k0/2, cy=(SL.vy||0)+z.H/k0/2; SL.z=k1; SL.vx=cx-z.W/k1/2; SL.vy=cy-z.H/k1/2; slVB(); }
 function slDesenha(manterProp){
   slVB();
@@ -8864,13 +8876,15 @@ function slAreasPinta(){
   var b=el('sl-areas'); if(!b) return; var a=slAr(), bs='padding:6px 11px;font-size:12.5px';
   /* (121) abas das áreas na barra de cima (sem ícone); o formulário da área fica numa linha em cima do mapa */
   var at=el('sl-atabs'); if(at) at.innerHTML=SL.areas.map(function(x){ return '<button class="btn '+(x.id===SL.area?'pri':'sec')+'" type="button" style="'+bs+'" onclick="slAreaVai(\''+x.id+'\')">'+esc(x.nome)+' <span style="opacity:.7;font-weight:500">'+String(x.larg).replace('.',',')+'×'+String(x.comp).replace('.',',')+'m</span></button>'; }).join('')
+    +(SL.areas.length<8&&!SL.areas.some(function(x){ return x.tema==='praia'; })?'<button class="btn sec" type="button" style="'+bs+'" onclick="slAreaPraia()">🏖️ Praia</button>':'')
     +(SL.areas.length<8?'<button class="btn sec" type="button" style="'+bs+'" onclick="slAreaNova()">+ Nova área</button>':'');
+  var bm=el('sl-add-mesa'); if(bm) bm.textContent=a.tema==='praia'?'+ Guarda-sol':'+ Mesa';
   /* (122) dados da área no topo da coluna da esquerda: um campo por linha; largura × comprimento lado a lado */
   var lb='font-size:11px;color:var(--muted);display:flex;flex-direction:column;gap:2px', ip='width:100%;padding:6px 8px;font-size:13px';
   var h='<div style="display:flex;flex-direction:column;gap:6px;padding:8px;border:1px solid var(--border);border-radius:10px;margin-bottom:4px">'
     +'<label style="'+lb+'">Nome<input class="inp" id="sl-an" maxlength="30" value="'+esc(a.nome)+'" style="'+ip+'" oninput="slAreaMuda()"></label>'
-    +'<label style="'+lb+'">Tipo<select class="inp" id="sl-at" style="'+ip+'" onchange="slAreaMuda()"><option value="interno"'+(a.tipo==='interno'?' selected':'')+'>Área interna</option><option value="externo"'+(a.tipo==='externo'?' selected':'')+'>Área externa</option></select></label>'
-    +'<label style="'+lb+'">Andar<select class="inp" id="sl-aa" style="'+ip+'" onchange="slAreaMuda()"><option value="terreo"'+(a.andar==='terreo'?' selected':'')+'>Térreo (piso)</option><option value="superior"'+(a.andar==='superior'?' selected':'')+'>Superior</option></select></label>'
+    +'<label style="'+lb+'">Tipo<select class="inp" id="sl-at" style="'+ip+'" onchange="slAreaMuda()"><option value="interno"'+(a.tipo==='interno'&&a.tema!=='praia'?' selected':'')+'>Área interna</option><option value="externo"'+(a.tipo==='externo'&&a.tema!=='praia'?' selected':'')+'>Área externa</option><option value="praia"'+(a.tema==='praia'?' selected':'')+'>Praia</option></select></label>'
+    +'<label style="'+lb+(a.tema==='praia'?';display:none':'')+'">Andar<select class="inp" id="sl-aa" style="'+ip+'" onchange="slAreaMuda()"><option value="terreo"'+(a.andar==='terreo'?' selected':'')+'>Térreo (piso)</option><option value="superior"'+(a.andar==='superior'?' selected':'')+'>Superior</option></select></label>'
     +'<div style="display:flex;gap:6px"><label style="'+lb+';flex:1">Larg. (m)<input class="inp" id="sl-al" type="number" min="3" max="80" step="0.5" value="'+a.larg+'" style="'+ip+'" onchange="slAreaMuda()"></label><label style="'+lb+';flex:1">Compr. (m)<input class="inp" id="sl-ac" type="number" min="3" max="80" step="0.5" value="'+a.comp+'" style="'+ip+'" onchange="slAreaMuda()"></label></div>'
     +'<div style="font-size:10.5px;color:var(--muted);line-height:1.35">Formato: dois cliques na borda criam um ponto.'+(a.pontos?' <a href="#" onclick="slAreaRet();return false">Voltar ao retângulo</a>':'')+'</div>'
     +(SL.areas.length>1?'<a href="#" onclick="slAreaApaga();return false" style="font-size:11.5px;color:var(--red)">Apagar área</a>':'')+'</div>';
@@ -8878,7 +8892,7 @@ function slAreasPinta(){
 }
 function slAreaVai(id){ SL.area=id; SL.sel=0; SL.multi=[]; SL.z=1; SL.vx=0; SL.vy=0; slAreasPinta(); if(SL.v3) slEnvia3d(); else slDesenha(); }
 function slAreaMuda(){ slHist('area'+SL.area); var a=slAr(), n=function(v,d){ var x=parseFloat(String(v).replace(',','.')); return x>=3&&x<=80?Math.round(x*10)/10:d; };
-  a.nome=el('sl-an').value.trim()||a.nome; a.tipo=el('sl-at').value; a.andar=el('sl-aa').value; a.larg=n(el('sl-al').value,a.larg); a.comp=n(el('sl-ac').value,a.comp); SL.sujo=true;
+  var ti=el('sl-at').value; a.nome=el('sl-an').value.trim()||a.nome; a.andar=el('sl-aa').value; if(ti==='praia'){ a.tipo='externo'; a.tema='praia'; a.andar='terreo'; } else { a.tipo=ti; delete a.tema; } a.larg=n(el('sl-al').value,a.larg); a.comp=n(el('sl-ac').value,a.comp); SL.sujo=true;
   var z=slWH(); slDaArea().forEach(function(p){ p.x=Math.min(p.x,z.W-5); p.y=Math.min(p.y,z.H-5); });   /* área menor: peças ficam dentro */
   if(a.pontos) a.pontos.forEach(function(q){ q[0]=Math.min(q[0],a.larg); q[1]=Math.min(q[1],a.comp); });
   var foco=document.activeElement&&document.activeElement.id; slAreasPinta(); if(foco&&el(foco)){ el(foco).focus(); if(el(foco).setSelectionRange&&el(foco).type==='text'){ var v=el(foco).value.length; el(foco).setSelectionRange(v,v); } }
@@ -8928,6 +8942,9 @@ function slDuplica(){ if(slCopia()) slCola(); }
 function slAreaRet(){ slHist(); var a=slAr(); delete a.pontos; SL.sujo=true; slAreasPinta(); slDesenha(); }
 function slAreaNova(){ slHist(); var i=1; while(SL.areas.some(function(a){ return a.id==='a'+i; })) i++; var ext=SL.areas.some(function(a){ return a.tipo==='interno'; });
   SL.areas.push({id:'a'+i,nome:ext?'Área externa':'Área interna',tipo:ext?'externo':'interno',andar:'terreo',larg:12,comp:8}); SL.area='a'+i; SL.sel=0; SL.sujo=true; slAreasPinta(); slDesenha(); }
+/* tema Praia: área própria com areia, mar e guarda-sóis; o salão continua como está */
+function slAreaPraia(){ slHist(); var i=1; while(SL.areas.some(function(a){ return a.id==='a'+i; })) i++;
+  SL.areas.push({id:'a'+i,nome:'Praia',tipo:'externo',tema:'praia',andar:'terreo',larg:16,comp:12}); SL.area='a'+i; SL.sel=0; SL.multi=[]; SL.z=1; SL.vx=0; SL.vy=0; SL.sujo=true; slAreasPinta(); slDesenha(); }
 function slAreaApaga(){ var a=slAr(), n=slDaArea().length; if(SL.areas.length<2) return; if(!window.confirm('Apagar a área "'+a.nome+'"'+(n?' e as '+n+' peças dela':'')+'?')) return;
   slHist(); SL.L=SL.L.filter(function(p){ return p.area!==a.id; }); SL.areas=SL.areas.filter(function(x){ return x.id!==a.id; }); SL.area=SL.areas[0].id; SL.sel=0; SL.sujo=true; slAreasPinta(); slDesenha(); }
 function slMedida(){ var p=slPeca(SL.sel); if(!p) return; slHist('med'+p.id); SL.sujo=true;
