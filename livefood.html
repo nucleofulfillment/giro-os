@@ -1678,8 +1678,16 @@ function rpAbre(id){
   abreFolha(ctCab('Conta da mesa','fechaSheet()')+'<div class="wb"><div class="nt" style="margin-top:14px">Carregando…</div></div>',true);
   fetch(API+'/food/pedidos-parte/'+encodeURIComponent(id)).then(function(r){ return r.json(); }).then(function(r){
     if(!r||!r.ok){ abreFolha(ctCab('Conta da mesa','fechaSheet()')+'<div class="wb"><div class="nt" style="margin-top:14px;font-size:14.5px;color:#fff">'+esc((r&&r.mensagem)||'Este link não existe.')+'</div></div>',true); return; }
-    MP.rp=r; MP.parte={id:r.parte.id,valor:r.parte.valor}; rpTela();
+    MP.rp=r; MP.parte={id:r.parte.id,valor:r.parte.valor}; rpMesaLiga(r); rpTela();
   }).catch(function(){ abreFolha(ctCab('Conta da mesa','fechaSheet()')+'<div class="wb"><div class="nt" style="margin-top:14px">Sem conexão. Tente de novo.</div></div>',true); });
+}
+/* (164) o link do racha não traz a mesa no endereço: quem abre continua na mesa da conta, com Garçom e Conta (sem pedir localização só por abrir o link) */
+function rpMesaLiga(r){
+  if(MESA||r.parte.status==='cancelada'||!r.estado.pedidos.length) return;
+  MESA=String(r.parte.mesa||'').replace(/\D/g,'').slice(0,3); if(!MESA) return;
+  try{ sessionStorage.setItem('lf_splash_'+(D.cli||CLI)+'_'+MESA,'1'); }catch(e){}
+  var s=$('mside'); if(s){ s.style.display='flex'; if(s.children[1]) s.children[1].style.display=''; if(s.children[2]) s.children[2].style.display=''; }
+  var nc=$('nv-conta'); if(nc) nc.style.display='none';
 }
 function rpTela(){
   var r=MP.rp, p=r.parte, e=r.estado, h=ctCab('Mesa '+esc(p.mesa)+' · '+esc(r.loja),'fechaSheet()')+'<div class="wb">';
