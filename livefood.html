@@ -550,7 +550,7 @@ var Q=new URLSearchParams(location.search), ROTA=window.LF_ROTA||{}, CLI=(ROTA.c
 var WA=!MESA&&!!(ROTA.wa||Q.get('wa')==='1');
 function lfLink(mesa){ var s=(D&&D.slug)||CLI; return location.origin+'/'+encodeURIComponent(s)+(mesa?'/mesa/'+mesa:(WA?'/cardapio':'')); }
 function waOn(){ return WA&&!!(D&&D.cfg&&D.cfg.wa); }
-var SAC=[], LT=0, D={ofertas:[],produtos:{},empresa:''}, ordem=[], idx=-1, cur=0, vs=[document.getElementById('v0'),document.getElementById('v1')], somOn=false, tick=null, novoD=null;
+var SAC=[], LT=0, D={ofertas:[],produtos:{},empresa:''}, ordem=[], idx=-1, cur=0, vs=[document.getElementById('v0'),document.getElementById('v1')], somOn=true, somTrava=false, tick=null, novoD=null;
 function $(i){return document.getElementById(i);}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function brl(n){return 'R$ '+Number(n||0).toFixed(2).replace('.',',');}
@@ -590,7 +590,7 @@ function semOfertas(abre){
 function iniciar(){
   ordem=D.ofertas.slice();
   if(!ordem.length){ semOfertas(true); return; }
-  $('vazio').style.display='none'; mostraSom();
+  $('vazio').style.display='none'; atualizaSom(); mostraSom();
   segs(); idx=-1; cur=0; tocar(0,true);
 }
 function segs(){ var h='',i; for(i=0;i<ordem.length;i++) h+='<i><b id="sg'+i+'"></b></i>'; $('segs').innerHTML=h; }
@@ -601,8 +601,8 @@ function tocar(i,primeira){
   if(!ordem.length) return;
   idx=((i%ordem.length)+ordem.length)%ordem.length;
   var o=ordem[idx], v=vs[cur], outro=vs[1-cur];
-  prepara(v,o); v.loop=(ordem.length===1); v.currentTime=0; v.muted=!somOn;
-  var go=v.play(); if(go&&go.catch) go.catch(function(){ v.muted=true; somOn=false; atualizaSom(); v.play().catch(function(){}); });
+  prepara(v,o); v.loop=(ordem.length===1); v.currentTime=0; v.muted=!somOn||somTrava;
+  var go=v.play(); if(go&&go.catch) go.catch(function(e){ if(e&&e.name!=='NotAllowedError') return; v.muted=true; if(somOn) somTrava=true; atualizaSom(); if(somTrava) mostraSom(); v.play().catch(function(){}); });
   vs.forEach(function(x){ x.classList.toggle('on',x===v); });
   outro.pause();
   if(ordem.length>1){ var prox=ordem[(idx+1)%ordem.length]; prepara(outro,prox); }
@@ -678,9 +678,13 @@ function ofMascara(t){ if(!t||t.mascara===false) return ''; var f=t.mascaraForca
 /* ── som ── */
 var IC_ON='<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5Z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></svg>', IC_OFF='<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5Z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></svg>';
 var ST=null;
-function atualizaSom(){ $('somc').innerHTML=(somOn?IC_ON:IC_OFF).replace(/width="19" height="19"/,'width="38" height="38"'); }
-function mostraSom(){ $('somc').classList.add('on'); clearTimeout(ST); ST=setTimeout(function(){ $('somc').classList.remove('on'); },3000); }
-function alternaSom(){ somOn=!somOn; vs.forEach(function(x){ x.muted=!somOn; }); var v=vs[cur]; if(v.paused) v.play().catch(function(){}); atualizaSom(); mostraSom(); }
+function atualizaSom(){ $('somc').innerHTML=(somOn&&!somTrava?IC_ON:IC_OFF).replace(/width="19" height="19"/,'width="38" height="38"'); }
+/* abre com som; o navegador pode exigir um toque antes de liberar: aí o vídeo começa mudo, o ícone fica na tela e o primeiro toque em qualquer lugar liga o som */
+function mostraSom(){ $('somc').classList.add('on'); clearTimeout(ST); if(somTrava) return; ST=setTimeout(function(){ $('somc').classList.remove('on'); },3000); }
+function somAplica(){ var v=vs[cur]; vs.forEach(function(x){ x.muted=!somOn; if(somOn&&x!==v&&x.getAttribute('src')){ var p=x.play(); if(p&&p.then) p.then(function(){ if(x!==vs[cur]) x.pause(); },function(){}); } }); if(v.paused&&ordem.length) v.play().catch(function(){}); atualizaSom(); }
+function somDestrava(e){ if(!somTrava||(e&&e.target&&e.target.closest&&e.target.closest('#somc'))) return; somTrava=false; somAplica(); mostraSom(); }
+['click','touchend','keydown'].forEach(function(t){ document.addEventListener(t,somDestrava,true); });
+function alternaSom(){ if(somTrava){ somTrava=false; somOn=true; } else somOn=!somOn; somAplica(); mostraSom(); }
 
 /* ── fotos, sacola (guardada no aparelho) ── */
 function fotoUrl(p,sb){ return API+'/food/foto/'+encodeURIComponent(D.cli||CLI)+'/'+encodeURIComponent(p.id)+(sb?'/'+encodeURIComponent(sb.id):'')+'?v='+(p.v||0); }
@@ -1878,7 +1882,7 @@ function abreCat(id){
 
 /* toque no vídeo: pula pra próxima oferta */
 $('stage').addEventListener('click',function(e){ if(e.target.closest('#cards')||e.target.closest('.rb')||e.target.closest('#somc')||e.target.closest('#mnb')||e.target.closest('.ov-btn')) return; var x=e.clientX-$('stage').getBoundingClientRect().left, w=$('stage').clientWidth; if(ordem.length>1&&x>w*0.7){ cur=1-cur; tocar(idx+1); } else if(ordem.length>1&&x<w*0.3){ cur=1-cur; tocar(idx-1); } else mostraSom(); });
-document.addEventListener('visibilitychange',function(){ var v=vs[cur]; if(!document.hidden&&v&&v.paused&&ordem.length) v.play().catch(function(){}); });
+document.addEventListener('visibilitychange',function(){ var v=vs[cur]; if(document.hidden){ if(v) v.pause(); return; } if(v&&v.paused&&ordem.length) v.play().catch(function(){}); });   /* saiu do app: o vídeo para, para o som não continuar em segundo plano */
 /* ── (113) RESERVA DE MESA: pessoas → dia e horário → salão em 3D (gira com o dedo, plaquinha Livre/Reservada em cada mesa) → nome e WhatsApp ── */
 var RSV={d:null,pes:2,dia:'',hora:'',mesa:null,oc:[]};
 var RS_PES='<svg viewBox="0 0 24 24" width="26" height="26" fill="var(--pri)"><circle cx="12" cy="7" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8z"/></svg>';
