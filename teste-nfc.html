@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Teste de NFC</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;padding:24px 16px;background:#fff;color:#1b1b1f;font:16px/1.5 system-ui,-apple-system,Roboto,sans-serif;text-align:center}
+main{max-width:420px;margin:0 auto}
+h1{font-size:22px;margin:0 0 6px}
+p{margin:0 0 16px;color:#55555c}
+button{display:block;width:100%;min-height:56px;margin:0 0 10px;border:0;border-radius:14px;background:#E07B39;color:#fff;font:700 17px system-ui,sans-serif}
+button.sec{background:#efeff2;color:#1b1b1f}
+button[hidden]{display:none}
+#res{padding:18px 14px;border-radius:14px;background:#f4f4f6;font-size:17px;font-weight:700;margin:6px 0 14px;min-height:64px}
+#res.ok{background:#dcfce7;color:#166534}
+#res.erro{background:#fee2e2;color:#991b1b}
+#res.espera{background:#fef3c7;color:#854d0e}
+#det{font:12px/1.5 ui-monospace,Consolas,monospace;color:#55555c;text-align:left;word-break:break-word;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<main>
+<h1>Teste de NFC</h1>
+<p>Toque no botão, encoste a etiqueta atrás do celular e tire um print do resultado.</p>
+<div id="res">Pronto para testar</div>
+<button id="gravar" onclick="gravar()">Testar gravação</button>
+<button id="ler" class="sec" onclick="ler()">Testar só a leitura</button>
+<button id="parar" class="sec" onclick="parar()" hidden>Cancelar</button>
+<div id="det"></div>
+</main>
+<script>
+var URL_TESTE='https://livefood.tec.br/', ctl=null, relogio=null, permissao='?';
+var $=function(id){ return document.getElementById(id); };
+function res(t,c){ var r=$('res'); r.textContent=t; r.className=c||''; }
+var ultimoDetalhe='';
+function detalhes(extra){
+  if(extra!==undefined) ultimoDetalhe=extra; extra=ultimoDetalhe;
+  $('det').textContent=['NDEFReader: '+('NDEFReader' in window?'sim':'NAO'),'https: '+(window.isSecureContext?'sim':'NAO'),'permissao: '+permissao,'pagina visivel: '+document.visibilityState,'navegador: '+navigator.userAgent].concat(extra?[extra]:[]).join('\n');
+}
+function olhaPermissao(){
+  try{ navigator.permissions.query({name:'nfc'}).then(function(p){ permissao=p.state; detalhes(); },function(e){ permissao='erro '+e.name; detalhes(); }); }catch(e){ permissao='nao informou'; detalhes(); }
+}
+function comeca(texto){
+  parar(); detalhes(''); ctl=new AbortController(); var seg=0;
+  $('gravar').hidden=true; $('ler').hidden=true; $('parar').hidden=false;
+  res(texto+' (0s)','espera');
+  relogio=setInterval(function(){ seg++; res(texto+' ('+seg+'s)','espera');
+    if(seg>=30){ var c=ctl; fim(); if(c) c.abort(); res('O Chrome não recebeu nenhuma etiqueta em 30 segundos.','erro'); }
+  },1000);
+  return ctl;
+}
+function fim(){ clearInterval(relogio); relogio=null; ctl=null; $('gravar').hidden=false; $('ler').hidden=false; $('parar').hidden=true; olhaPermissao(); }
+function parar(){ var c=ctl; fim(); if(c) c.abort(); res('Pronto para testar'); }
+function falha(e){ if(e&&e.name==='AbortError') return; fim(); res('Falhou: '+((e&&e.name)||'erro'),'erro'); detalhes((e&&e.message)||''); }
+function semNfc(){ res('Este navegador não tem NFC.','erro'); detalhes(); }
+function gravar(){
+  if(!('NDEFReader' in window)){ semNfc(); return; }
+  var c=comeca('Encoste a etiqueta…');
+  try{
+    new NDEFReader().write({records:[{recordType:'url',data:URL_TESTE}]},{signal:c.signal}).then(function(){ if(ctl!==c) return; fim(); res('GRAVOU. O Chrome e o celular estão funcionando.','ok'); },function(e){ if(ctl===c) falha(e); });
+  }catch(e){ falha(e); }
+}
+function ler(){
+  if(!('NDEFReader' in window)){ semNfc(); return; }
+  var c=comeca('Encoste a etiqueta para ler…'), rd;
+  try{
+    rd=new NDEFReader();
+    rd.onreading=function(ev){ if(ctl!==c) return; var c2=c; fim(); c2.abort(); res('LEU a etiqueta. O Chrome está recebendo o NFC.','ok'); detalhes('serie: '+(ev.serialNumber||'?')+' / registros: '+ev.message.records.length); };
+    rd.onreadingerror=function(){ if(ctl!==c) return; var c2=c; fim(); c2.abort(); res('O Chrome viu a etiqueta, mas não conseguiu ler.','erro'); };
+    rd.scan({signal:c.signal}).catch(function(e){ if(ctl===c) falha(e); });
+  }catch(e){ falha(e); }
+}
+detalhes(); olhaPermissao();
+</script>
+</body>
+</html>
