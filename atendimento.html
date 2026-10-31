@@ -391,6 +391,7 @@ function nfcMesaLeu(msg){
   nfcMesaEscolhe(mesa);
 }
 function nfcMesaEscolhe(mesa){
+  if(TROCA){ bpSom(true); trocaFaz(mesa); return; }   /* trocando de mesa: encostar na etiqueta escolhe a nova */
   if(($('chm')&&$('chm').classList.contains('on'))||$('sh').style.display==='flex') return;   /* aviso ou janela aberta: não mexe no que o garçom está fazendo */
   if(D&&D.mesas&&D.mesas.length&&D.mesas.indexOf(mesa)<0){ bpSom(false); toast('A mesa '+mesa+' não está cadastrada.'); return; }
   if(CART.length){ bpSom(false); toast('Mesa '+mesa+': envie ou troque o pedido atual antes.'); return; }
@@ -564,7 +565,7 @@ function verCat(id){
 }
 /* ── folha ── */
 function folha(t,corpo,rod){ $('shT').textContent=t; $('shB').innerHTML=corpo; $('shF').innerHTML=rod||''; $('ov').style.display='block'; $('sh').style.display='flex'; }
-function fecha(){ $('ov').style.display='none'; $('sh').style.display='none'; bpPara(); BP.camOn=false; BP.it=null; }
+function fecha(){ $('ov').style.display='none'; $('sh').style.display='none'; bpPara(); BP.camOn=false; BP.it=null; TROCA=null; }
 /* ── montar item ── */
 var IT=null;
 function promoAtiva(p){ var d=p.desconto; if(!d||!(d.valor>0)) return null; var n=new Date(Date.now()-3*3600000).toISOString().slice(0,16); if(d.de&&n<d.de) return null; if(d.ate&&n>d.ate) return null; return d; }
@@ -759,7 +760,7 @@ function carregaCom(){
     COMS.forEach(function(c,i){
       var t=comTit(c)+(c.joia?(c.mesa?' · ':'')+pill(c.joia):'');
       h+='<div class="cm" id="cm'+i+'"><div class="h"><div><b>'+t+'</b><div style="font-size:12.5px;color:var(--mu2)">'+esc(c.nome||'')+'</div></div><span class="v">'+brl(c.total)+'</span></div>'+(c.pedidos.length&&c.pedidos[0].sub?'<div style="font-size:12px;font-weight:800;color:var(--mu2);margin-top:6px">PEDIDO #'+c.pedidos[0].num+'</div>':'')+'<div class="pd">'+c.pedidos.map(function(p,k){ return '<div class="pr"><div class="ph"><span><b>#'+plab(p)+'</b> · '+new Date(p.criado).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+(p.atend?' · '+esc(p.atend):'')+'</span><button onclick="reimp('+i+','+k+')" title="Imprimir">🖨</button></div>'+String(p.itens||'').split('; ').map(function(t){ return '<div class="pi">'+esc(t)+'</div>'; }).join('')+'</div>'; }).join('')+'</div>'
-        +'<div class="ac"><button class="bt s" onclick="ativaComanda(COMS['+i+'])">+ Pedido</button><button class="bt g" onclick="fechaForm('+i+')">Fechar conta</button></div></div>';
+        +'<div class="ac"><button class="bt s" onclick="ativaComanda(COMS['+i+'])">+ Pedido</button><button class="bt s" onclick="trocaForm('+i+')">Trocar mesa</button><button class="bt g" onclick="fechaForm('+i+')">Fechar conta</button></div></div>';
     });
     $('lCom').innerHTML=h||'<p style="color:var(--mu2)">Nenhuma comanda aberta agora.</p>'; achaPed();
   });
@@ -769,6 +770,29 @@ function achaPed(){
   COMS.forEach(function(c,i){ var e=$('cm'+i); if(!e) return;
     var ok=!q||String(c.joia).indexOf(q)===0&&num||(c.nome||'').toLowerCase().indexOf(q)>=0||(num&&String(c.mesa)===q)||(c.pedidos.some(function(p){ return plab(p)===q||String(p.num)===q; }));
     e.style.display=ok?'':'none'; });
+}
+/* (154) cliente mudou de mesa: escolhe a nova no mapa (ou encosta na etiqueta) e os pedidos em aberto vão junto */
+var TROCA=null;
+function trocaForm(i){
+  var c=COMS[i]; if(!c) return; TROCA={i:i};
+  var tit=comTit(c)||(c.joia?'Cliente '+esc(c.joia):''), topo='<div style="font-size:14.5px;margin:4px 0 10px"><b>'+tit+'</b>'+(c.nome&&!ehBalM(c.mesa)&&c.joia?' · '+esc(c.nome):'')+' · '+brl(c.total)+'</div>';
+  folha('Trocar de mesa',topo+'<div style="padding:14px;color:var(--mu2)">Carregando…</div>','');
+  api('/painel/atend-mesas').then(function(d){
+    if(!TROCA||TROCA.i!==i) return; if(!d.ok){ $('shB').innerHTML=topo+'<p class="er">'+esc(d.mensagem||'Não consegui abrir as mesas.')+'</p>'; return; }
+    var ms=d.mesas||[], h=topo+'<div id="trErr" class="er"></div>';
+    if(ms.length) h+='<div class="mlg"><span><i style="background:var(--pri)"></i>Livre</span><span><i style="background:#16A34A"></i>Comanda aberta</span></div><div class="mz">'+ms.map(function(m){ var at=String(m.num)===String(c.mesa); return '<button class="mb'+(m.oc?' oc':'')+'"'+(at?' disabled style="opacity:.35"':'')+' onclick="trocaFaz(\''+esc(m.num)+'\')">'+esc(m.num)+'</button>'; }).join('')+'</div>';
+    else h+='<label class="l">Número da mesa nova</label><input class="inp big" id="trIn" inputmode="numeric" maxlength="8" autocomplete="off"><button class="bt" onclick="trocaFaz($(\'trIn\').value)">Trocar</button>';
+    $('shB').innerHTML=h;
+  });
+}
+function trocaFaz(para,juntar){
+  if(!TROCA) return; var c=COMS[TROCA.i]; if(!c) return; var n=String(para||'').trim().toUpperCase(), e=$('trErr'); if(!n){ if(e) e.textContent='Escolha a mesa nova.'; return; } if(e) e.textContent='';
+  api('/painel/atend-transferir',{mesa:c.mesa,joia:c.joia,para:n,juntar:!!juntar}).then(function(r){
+    if(r._h===401){ mostraLogin('Entre de novo.'); return; }
+    if(r.erro==='ocupada'){ if(confirm('A mesa '+n+' já tem comanda aberta. Juntar as duas na mesma conta?')) trocaFaz(n,true); return; }
+    if(!r.ok){ var m=r.erro==='rota_nao_encontrada'?'Publique o Worker 154 para trocar de mesa.':(r.mensagem||'Não consegui trocar.'), x=$('trErr'); if(x) x.textContent=m; else toast(m); return; }
+    fecha(); _ab=0; toast('Comanda agora na mesa '+r.para); carregaCom();
+  });
 }
 function fechaForm(i){
   var c=COMS[i], h='<div style="font-size:15px;margin:6px 0 10px"><b>'+comTit(c)+(c.joia?' '+pill(c.joia):'')+'</b>'+(ehBalM(c.mesa)?'':' · '+esc(c.nome||''))+'<br><span style="font-size:22px;font-weight:800;color:var(--pri)">'+brl(c.total)+'</span></div><div class="sec">Forma de pagamento</div>';
