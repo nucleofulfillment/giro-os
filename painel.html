@@ -334,6 +334,7 @@ a{color:inherit}
 .tb-ms th:nth-child(5),.tb-ms td:nth-child(5){display:none}
 .tb-ms td{white-space:normal;vertical-align:top}.tb-ms td:nth-child(7){white-space:nowrap}.tb-ms th,.tb-ms td{padding-left:8px;padding-right:8px}.tb-ms td:last-child{white-space:normal!important;width:128px}.tb-ms td:last-child .btn{white-space:normal;line-height:1.25;width:100%}
 .ms-selos{display:flex;flex-direction:column;align-items:flex-start;gap:4px}
+.ms-pd{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);cursor:pointer}.ms-pd-t{min-width:0;flex:1}.ms-pd .btn{flex:none;white-space:nowrap}
 @media (min-width:641px) and (max-width:1180px){.tb-ms th:nth-child(3),.tb-ms td:nth-child(3),.tb-ms th:nth-child(4),.tb-ms td:nth-child(4){display:none}.tb-ms .ms-cut{max-width:170px}.tb-ms td:last-child{width:104px}}
 .ms-cut{display:block;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tb-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -2px}
@@ -711,6 +712,7 @@ html.loja-p .cd-dest{display:none!important}
   .ms-cut{max-width:none;white-space:normal}
   .tb-ms td:nth-child(5){display:none!important}
   #pd-corpo td.mb-tit{padding-right:96px!important}
+  #pd-corpo .ms-pd{margin-right:-96px}#pd-corpo td.mb-tit>span[style*="display:block"]{margin-right:-96px}
   #pd-corpo td:nth-child(6){position:absolute;top:12px;right:12px;text-align:right;max-width:150px}
   #pd-corpo td:nth-child(6) span{display:inline-block}
   #pd-corpo td:nth-child(6)::before,#pd-corpo td:nth-child(2)::before,#pd-corpo td:nth-child(7)::before{display:none}
@@ -4722,7 +4724,7 @@ function pintarPedidos(){
   for(i=0;i<stAll.length;i++){ var qtdP=cont[stAll[i]];
     pills+='<span class="pill'+(FILTRO_PD===stAll[i]?' on':'')+'" style="position:relative;overflow:visible" onclick="filtrarPedidos(\''+stAll[i]+'\')">'+(stAll[i]==='todos'?'Todos':stAll[i]==='coletado'?'Na fila':stAll[i]==='cancelado'?'Cancelados':stAll[i][0].toUpperCase()+stAll[i].slice(1))+'<span style="position:absolute;top:-7px;right:-7px;min-width:17px;height:17px;padding:0 4px;border-radius:99px;background:'+(qtdP>0?'var(--roxo)':'var(--border2)')+';color:'+(qtdP>0?'#fff':'var(--muted2)')+';font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;line-height:1;box-shadow:0 0 0 2px var(--s1)">'+qtdP+'</span></span>';
   }
-  var qMs=(typeof MS!=='undefined'&&MS.ped)?(MS.ped.length+(MS.con||[]).length):0;
+  var qMs=0; if(typeof MS!=='undefined'&&MS.ped){ var ccMs={}; (MS.con||[]).forEach(function(k){ ccMs[k.mesa]=1; }); qMs=(MS.con||[]).length+MS.ped.filter(function(x){ return !msDentroConta(x,ccMs); }).length; }
   pills+='<span class="pill'+(FILTRO_PD==='mesas'?' on':'')+'" style="position:relative;overflow:visible" onclick="filtrarPedidos(\'mesas\')">MESAS<span style="position:absolute;top:-7px;right:-7px;min-width:17px;height:17px;padding:0 4px;border-radius:99px;background:'+(qMs>0?'var(--roxo)':'var(--border2)')+';color:'+(qMs>0?'#fff':'var(--muted2)')+';font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;line-height:1">'+qMs+'</span></span>';
   el('pd-pills').innerHTML=pills;
   mbFiltroPd();
@@ -4765,14 +4767,21 @@ function pintarPedidos(){
 function msBal(m){ return /^BAL\d+$/.test(String(m||'')); }
 function msLocal(m){ return msBal(m)?'Cliente Balcão':'Mesa '+esc(m); }
 function msOrigem(m){ return msBal(m)?'Balcão':'LOCAL'; }
+/* (166) o pedido de uma mesa com conta aberta aparece dentro da linha da mesa, para não parecer que são dois pedidos */
+function msDentroConta(x,comConta){ return x.status==='novo'&&x.pagto==='conta'&&!!comConta[x.mesa]; }
+function msPedLinha(x){
+  var st=x.fase==='preparo'?['Em preparo','#f59e0b']:(x.fase==='rota'?['Pronto','#22c55e']:['Novo','#ef4444']), nx=x.fase===''?['preparo','Começar preparo']:(x.fase==='preparo'?['rota','Pronto']:['entregue','Servido ✔']);
+  return '<div class="ms-pd" onclick="msDetalhe(\''+esc(x.id)+'\')"><div class="ms-pd-t"><b>#'+x.num+'</b> <span style="font-size:11px;font-weight:800;color:#fff;background:'+st[1]+';border-radius:10px;padding:1px 8px">'+st[0]+'</span> <span style="font-size:11.5px;color:var(--muted)">'+msHora(x.criado)+'</span><span class="ms-cut" title="'+esc(x.itens)+'" style="color:var(--muted);font-size:11.5px">'+esc(x.itens)+'</span>'+(x.atend?'<span class="ms-cut" style="font-size:11.5px;font-weight:700;color:var(--muted2)">Garçom: '+esc(x.atend)+(x.cli?' · Cliente: '+esc(x.cli)+' ('+esc(x.joia)+')':'')+'</span>':'')+(x.obs?'<span class="ms-cut" title="'+esc(x.obs)+'" style="color:var(--amber);font-size:11px;font-weight:600">Obs: '+esc(x.obs)+'</span>':'')+'</div><button class="btn sec sm" type="button" onclick="event.stopPropagation();msFase(\''+esc(x.id)+'\',\''+nx[0]+'\')">'+nx[1]+'</button></div>';
+}
 /* (159) quem pagou o quê numa conta rachada */
 function msRachaHtml(l){ if(!l||!l.length) return ''; return '<span style="display:block;margin-top:4px;font-size:11.5px;line-height:1.5;white-space:normal"><b>'+(l.length>1?'Conta rachada entre '+l.length+' pessoas':'Pagou parte da conta')+'</b>'+l.map(function(p){ return '<br>'+esc(p.nome)+(p.itens?' ('+esc(p.itens)+')':'')+' · '+moeda(p.valor)+' · '+(p.status==='paga'?'<span style="color:var(--green,#16a34a);font-weight:700">Pago'+(p.forma==='pix'?' no Pix':p.forma==='cartao'?' no cartão':'')+'</span>':'<span style="color:var(--amber,#b7791f);font-weight:700">Aguardando</span>'); }).join('')+'</span>'; }
 /* (077) pedidos das MESAS aparecem em Pedidos, no filtro MESAS (lista própria; não mistura com a fila do motoboy) */
 function msPedidosHtml(busca){
   var h='', ped=(typeof MS!=='undefined'&&MS.ped)||[], con=(typeof MS!=='undefined'&&MS.con)||[];
-  con.forEach(function(k){ if(busca&&((msBal(k.mesa)?'cliente balcão':'mesa '+k.mesa)+' conta').indexOf(busca)<0) return;
-    h+='<tr><td><b>'+msLocal(k.mesa)+'</b><br><span style="color:var(--muted);font-size:11.5px">conta · '+k.n+(k.n>1?' pedidos':' pedido')+'</span>'+msRachaHtml(k.pessoas)+'</td><td>'+msLocal(k.mesa)+'</td><td>'+msOrigem(k.mesa)+'</td><td>—</td><td>—</td><td><div class="ms-selos">'+(k.pessoas&&k.pessoas.length?'<span style="font-size:11.5px;font-weight:800;color:#fff;background:#2563eb;border-radius:10px;padding:2px 9px">'+(k.pessoas.length>1?'Rachada entre '+k.pessoas.length:'Parte paga')+'</span>':'')+(k.pedir?'<span style="font-size:11.5px;font-weight:800;color:#fff;background:#ef4444;border-radius:10px;padding:2px 9px">Quer fechar · '+(k.pedir==='dinheiro'?'dinheiro':'cartão')+'</span>':(k.pix?'<span style="font-size:12px;color:var(--muted)">Pix em andamento</span>':((k.pessoas&&k.pessoas.length)?'':'<span style="font-size:12px;color:var(--muted)">Consumindo</span>')))+'</div></td><td>'+moeda(k.total)+'</td><td>'+(k.pago?'Falta receber '+moeda(Math.max(0,Math.round((k.total-k.pago)*100)/100)):'Conta aberta')+'</td><td style="white-space:nowrap"><button class="btn pri sm" type="button" onclick="msFechaMesa(\''+esc(k.mesa)+'\')">'+(k.pago?'Recebi o restante · fechar':'Recebi · fechar mesa')+'</button></td></tr>'; });
-  ped.forEach(function(x){
+  var comConta={}; con.forEach(function(k){ comConta[k.mesa]=1; });
+  con.forEach(function(k){ var dela=ped.filter(function(x){ return msDentroConta(x,comConta); }).filter(function(x){ return x.mesa===k.mesa; }); if(busca&&((msBal(k.mesa)?'cliente balcão':'mesa '+k.mesa)+' conta '+dela.map(function(x){ return x.num+' '+x.itens; }).join(' ')).toLowerCase().indexOf(busca)<0) return;
+    h+='<tr><td><b>'+msLocal(k.mesa)+'</b><br><span style="color:var(--muted);font-size:11.5px">conta · '+k.n+(k.n>1?' pedidos':' pedido')+'</span>'+msRachaHtml(k.pessoas)+dela.map(msPedLinha).join('')+'</td><td>'+msLocal(k.mesa)+'</td><td>'+msOrigem(k.mesa)+'</td><td>—</td><td>—</td><td><div class="ms-selos">'+(k.pessoas&&k.pessoas.length?'<span style="font-size:11.5px;font-weight:800;color:#fff;background:#2563eb;border-radius:10px;padding:2px 9px">'+(k.pessoas.length>1?'Rachada entre '+k.pessoas.length:'Parte paga')+'</span>':'')+(k.pedir?'<span style="font-size:11.5px;font-weight:800;color:#fff;background:#ef4444;border-radius:10px;padding:2px 9px">Quer fechar · '+(k.pedir==='dinheiro'?'dinheiro':'cartão')+'</span>':(k.pix?'<span style="font-size:12px;color:var(--muted)">Pix em andamento</span>':((k.pessoas&&k.pessoas.length)?'':'<span style="font-size:12px;color:var(--muted)">Consumindo</span>')))+'</div></td><td>'+moeda(k.total)+'</td><td>'+(k.pago?'Falta receber '+moeda(Math.max(0,Math.round((k.total-k.pago)*100)/100)):'Conta aberta')+'</td><td style="white-space:nowrap"><button class="btn pri sm" type="button" onclick="msFechaMesa(\''+esc(k.mesa)+'\')">'+(k.pago?'Recebi o restante · fechar':'Recebi · fechar mesa')+'</button></td></tr>'; });
+  ped.forEach(function(x){ if(msDentroConta(x,comConta)) return;
     if(busca&&(((msBal(x.mesa)?'cliente balcão':'mesa '+x.mesa)+' '+x.num+' '+x.itens).toLowerCase().indexOf(busca)<0)) return;
     var st=x.fase==='preparo'?['Em preparo','#f59e0b']:(x.fase==='rota'?['Pronto','#22c55e']:['Novo','#ef4444']), nx=x.fase===''?['preparo','Começar preparo']:(x.fase==='preparo'?['rota','Pronto']:['entregue','Servido ✔']);
     var rc=x.status==='pago'?(x.pagto==='pix'?'Pago no Pix':x.pagto==='dinheiro'?'Pago em dinheiro':x.pagto==='cartao'?'Pago no cartão':x.pagto==='racha'?'Conta rachada':'Pago'):(x.status==='marcado'?'Pendurado':'Conta aberta');
