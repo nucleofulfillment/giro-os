@@ -988,7 +988,7 @@ html.loja-p .cd-dest{display:none!important}
 
       <!-- CARDÁPIO (1A): produtos, categorias e adicionais do restaurante -->
       <section class="page" id="pg-cardapio">
-        <div class="pghd"><div><h1>Cardápio</h1><div class="sub">produtos do seu restaurante <span style="opacity:.6">· GIRO-OS-081</span></div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn sec" onclick="cdAbrirCats()">Categorias</button><button class="btn sec" onclick="cdLinkCardapio()">🔗 Link do cardápio</button><button class="btn sec" onclick="cdEtiquetas()">Etiquetas</button><button class="btn sec" onclick="window.open('configurar.html','_blank')">📷 Cardápio por foto</button><button class="btn sec" onclick="cdAparencia()">🎨 Marca e cores</button><button class="btn sec" onclick="cdHorario()">🕒 Horário</button><button class="btn sec" onclick="cdFrete()">🛵 Entrega</button><button class="btn sec" onclick="cdGeo()">📍 Mesa</button><button class="btn sec" onclick="cdMesas()" style="display:none" title="(116) oculto: as mesas agora ficam no Hub">🍽️ Mesas <span id="ms-bd" style="display:none;background:#ef4444;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px"></span></button><button class="btn sec" onclick="window.open('atendimento.html','_blank')">🧾 Atendimento (garçom/balcão)</button><button class="btn sec" onclick="cdAbrirOfertas()">▶ Ofertas</button><button class="btn sec" onclick="clbAbrir()">💎 Clube de assinatura</button><button class="btn sec" onclick="cdAbrirImport()">Importar planilha</button><button class="btn sec" onclick="cdFotosLote()">📷 Fotos em lote</button><button class="btn pri" onclick="cdNovo()">+ Novo produto</button></div></div>
+        <div class="pghd"><div><h1>Cardápio</h1><div class="sub">produtos do seu restaurante <span style="opacity:.6">· GIRO-OS-081</span></div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn sec" onclick="cdFotoCardapio()" title="Só no celular">📷 Cardápio por foto</button><button class="btn sec" onclick="cdAbrirCats()">Categorias</button><button class="btn sec" onclick="cdLinkCardapio()">🔗 Link do cardápio</button><button class="btn sec" onclick="cdEtiquetas()">Etiquetas</button><button class="btn sec" onclick="cdAparencia()">🎨 Marca e cores</button><button class="btn sec" onclick="cdHorario()">🕒 Horário</button><button class="btn sec" onclick="cdFrete()">🛵 Entrega</button><button class="btn sec" onclick="cdGeo()">📍 Mesa</button><button class="btn sec" onclick="cdMesas()" style="display:none" title="(116) oculto: as mesas agora ficam no Hub">🍽️ Mesas <span id="ms-bd" style="display:none;background:#ef4444;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px"></span></button><button class="btn sec" onclick="window.open('atendimento.html','_blank')">🧾 Atendimento (garçom/balcão)</button><button class="btn sec" onclick="cdAbrirOfertas()">▶ Ofertas</button><button class="btn sec" onclick="clbAbrir()">💎 Clube de assinatura</button><button class="btn sec" onclick="cdAbrirImport()">Importar planilha</button><button class="btn sec" onclick="cdFotosLote()">📷 Fotos em lote</button><button class="btn pri" onclick="cdNovo()">+ Novo produto</button></div></div>
         <div class="card">
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px"><input class="inp" id="cd-busca" placeholder="Buscar produto" oninput="cdPintar()" style="flex:1;min-width:200px"><select class="inp" id="cd-fcat" onchange="cdPintar()" style="width:210px;max-width:100%"></select></div>
           <div id="cd-selbar" style="display:none;align-items:center;gap:10px;flex-wrap:wrap;background:var(--s2);border-radius:12px;padding:8px 12px;margin-bottom:10px;font-size:13px"><span id="cd-seltxt" style="font-weight:700"></span><button class="btn pri sm" onclick="cdExibirOferta()">▶ Exibir oferta</button><button class="btn sec sm" onclick="cdLimparSel()">Limpar</button></div>
@@ -7800,7 +7800,7 @@ function cdPintar(){
       +'<button class="btn sec sm" onclick="cdDuplicar(\''+p.id+'\')" title="Duplicar">⧉</button></div>'
       +'</div>';
   }
-  if(!n) out='<div style="padding:28px;text-align:center;color:var(--muted)">'+(CD.prods.length?'Nenhum produto encontrado.':'Nenhum produto ainda. Clique em <b>+ Novo produto</b> para começar.')+'</div>';
+  if(!n) out='<div style="padding:28px;text-align:center;color:var(--muted)">'+(CD.prods.length?'Nenhum produto encontrado.':'Nenhum produto ainda. O jeito mais fácil é o <b>Cardápio por foto</b>, pelo celular. Ou clique em <b>+ Novo produto</b>.')+'</div>';
   el('cd-lista').innerHTML=out;
 }
 /* (114) clicar no cartão do produto abre a edição (menos nos botões e na caixinha de seleção) */
@@ -9656,44 +9656,59 @@ function cdFlSubir(){
 }
 function cdAbrirImport(){
   CD.imp=null; el('sh-import').querySelector('h3').textContent='Importar cardápio por planilha';
-  el('cd-imp-corpo').innerHTML='<p style="margin:0 0 12px;font-size:13px;line-height:1.55;color:var(--muted2)">Envie a planilha do cardápio e o sistema cria todos os produtos, tamanhos, sabores e adicionais de uma vez. Antes de gravar, você confere um resumo. Se já existir um produto com o mesmo nome, ele é <b>atualizado</b> (as fotos dos sabores com o mesmo nome continuam).</p>'
+  el('cd-imp-corpo').innerHTML='<div style="background:var(--s2);border-radius:12px;padding:12px;margin-bottom:14px"><div style="font-size:13.5px;font-weight:800;margin-bottom:4px">📷 O jeito mais fácil é por foto</div><div style="font-size:12.5px;line-height:1.5;color:var(--muted2);margin-bottom:8px">Fotografe as páginas do cardápio e o sistema cadastra tudo. Funciona só no celular.</div><button class="btn sec sm" type="button" onclick="cdFotoCardapio()">Ver como fazer</button></div>'
+    +'<p style="margin:0 0 8px;font-size:13px;line-height:1.55;color:var(--muted2)">Prefere planilha? Baixe o modelo, apague os 3 exemplos e preencha um produto por linha. Antes de gravar, você confere um resumo. Produto com o mesmo nome é <b>atualizado</b>.</p>'
+    +'<ul style="margin:0 0 12px;padding-left:18px;font-size:12.5px;line-height:1.6;color:var(--muted2)"><li>Tem tamanhos? Deixe o Preço vazio e escreva <b>Lata 6; 600 ml 9</b>.</li><li>Adicionais: <b>Bacon 5; Ovo 3</b>.</li><li>Sabores: <b>Calabresa; Camarão +10</b>. O +10 é somado por quarto da pizza.</li></ul>'
     +'<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px"><button class="btn sec" type="button" onclick="cdBaixarModelo()">Baixar planilha modelo</button><button class="btn pri" type="button" onclick="el(\'cd-imp-file\').click()">Escolher planilha (.xlsx)</button></div>'
     +'<input type="file" id="cd-imp-file" accept=".xlsx,.xls" style="display:none" onchange="cdLerPlanilha(this)"><div id="cd-imp-res"></div>';
   abrir('sh-import');
 }
 function cdDes(v){ var k=cdNorm(String(v||'')); var m={'pizza':'pizza','hamburguer':'hamburguer','bebida':'bebida','porcao':'porcao','sobremesa':'sobremesa','acai':'acai','outro':'outro'}; return m[k]||''; }
 function cdBaixarModelo(){
-  var wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(cdLeiaMe()),'Leia-me');
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['Produto','Categoria','Preço','Descrição','Desenho','Ativo','Código de barras'],['Pizza','Pizzas','','Todas acompanham borda de catupiry','Pizza','Sim'],['X-Salada','Lanches',24.9,'Pão, hambúrguer, queijo, alface e tomate','Hambúrguer','Sim']]),'Produtos');
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['Produto','Tamanho','Preço','Máx. sabores'],['Pizza','Broto',73,2],['Pizza','Média',95,3],['Pizza','Grande',105,4],['Pizza','Gigante',129,4]]),'Tamanhos');
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['Produto','Grupo','Sabor','Descrição','Adicional por 1/4','Novidade','Só balcão'],['Pizza','Tradicionais','Calabresa','Molho de tomate / mussarela / calabresa / orégano',0,'Não','Não'],['Pizza','Especiais','Camarão','Molho de tomate / mussarela / camarão / catupiry',10,'Sim','Não']]),'Sabores');
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['Produto','Adicional','Preço'],['Pizza','Borda de cheddar premium',10],['X-Salada','Bacon extra',5]]),'Adicionais');
+  /* (159) uma aba só: cada produto numa linha; tamanhos, sabores e adicionais ficam na própria linha */
+  var wb=XLSX.utils.book_new(), ws=XLSX.utils.aoa_to_sheet([
+    ['Produto','Categoria','Preço','Descrição','Tamanhos','Sabores','Adicionais','Código de barras'],
+    ['X-Salada','Lanches',24.9,'Pão, hambúrguer, queijo, alface e tomate','','','Bacon 5; Ovo 3',''],
+    ['Coca-Cola','Bebidas','','','Lata 6; 600 ml 9; 2 litros 14','','','7894900011517'],
+    ['Pizza','Pizzas','','Todas com borda de catupiry','Broto 73 (2 sabores); Grande 105 (4 sabores)','Tradicionais: Calabresa, Portuguesa; Especiais: Camarão +10','Borda de cheddar 10','']
+  ]);
+  ws['!cols']=[{wch:24},{wch:16},{wch:9},{wch:38},{wch:42},{wch:56},{wch:26},{wch:18}];
+  ws['C2'].z='0.00'; ws['H3'].t='s';
+  XLSX.utils.book_append_sheet(wb,ws,'Produtos');
   XLSX.writeFile(wb,'modelo-cardapio.xlsx');
 }
-function cdLeiaMe(){ return [
-  ['COMO PREENCHER A PLANILHA DO CARDÁPIO'],[''],
-  ['Apague as linhas de exemplo e preencha com os seus produtos. Não mude o nome das abas nem dos títulos das colunas.'],[''],
-  ['Aba Produtos','Uma linha por produto: Produto, Categoria, Preço (só se não tiver tamanhos), Descrição, Desenho (opcional: Pizza, Hambúrguer, Bebida, Porção, Sobremesa, Açaí ou Outro; vazio = automático), Ativo (Sim/Não) e Código de barras (opcional, para bipar no Atendimento).'],
-  ['Aba Tamanhos','Opcional. Uma linha por tamanho: Produto (igual ao da aba Produtos), Tamanho, Preço e Máx. sabores (quantos sabores cabem).'],
-  ['Aba Sabores','Opcional. Uma linha por sabor: Produto, Grupo (ex: Tradicionais), Sabor, Descrição, Adicional por 1/4 (R$ somado por cada quarto da pizza com esse sabor; 0 se não tem), Novidade (Sim/Não) e Só balcão (Sim/Não).'],
-  ['Aba Adicionais','Opcional. Uma linha por adicional: Produto, Adicional (ex: Borda de cheddar), Preço.'],[''],
-  ['Fotos','As fotos não vão na planilha: depois de importar, abra o produto e coloque a foto de cada sabor.'],
-  ['Preço final da pizza','Preço do tamanho + (Adicional por 1/4 de cada sabor × quartos que ele ocupa).']
-]; }
+/* (159) lê as colunas Tamanhos, Sabores e Adicionais da planilha de uma aba só. Separa por ; ou por vírgula seguida de espaço (2,50 continua sendo preço) */
+function cdCelItens(v){ return String(v==null?'':v).split(/;|\n|,\s+/).map(function(x){ return x.trim(); }).filter(Boolean); }
+function cdCelPreco(s){ var m=/^(.*?)\s*(?:R\$\s*)?(\d+(?:[.,]\d{1,2})?)$/.exec(s); return m&&m[1]?{nome:m[1].trim(),preco:cdPreco(m[2])}:{nome:s,preco:0}; }
+function cdCelTamanhos(v,temSabor){ return cdCelItens(v).map(function(s){ var mx=/\((\d+)[^)]*\)/.exec(s), c=cdCelPreco(s.replace(/\([^)]*\)/,'').trim()); return {nome:c.nome.slice(0,40),preco:c.preco,max:Math.max(1,Math.min(6,mx?parseInt(mx[1],10):(temSabor?2:1)))}; }); }
+function cdCelSabores(v){ var grupo=''; return cdCelItens(v).map(function(s){ var g=/^([^:]+):\s*(.+)$/.exec(s); if(g){ grupo=g[1].trim(); s=g[2]; } var ex=/^(.*?)\s*\+\s*(?:R\$\s*)?(\d+(?:[.,]\d{1,2})?)$/.exec(s); return {nome:(ex?ex[1]:s).trim().slice(0,60),desc:'',grupo:grupo.slice(0,40),extra4:ex?cdPreco(ex[2]):0,novidade:false,balcao:false}; }); }
+function cdCelAdicionais(v){ return cdCelItens(v).map(function(s){ var c=cdCelPreco(s); return {nome:c.nome.slice(0,60),preco:c.preco}; }); }
+/* (159) Cardápio por foto usa a câmera: só no celular. No computador explica como fazer */
+function cdEhCelular(){ return window.matchMedia('(max-width:859px)').matches||/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent); }
+function cdFotoCardapio(){
+  if(cdEhCelular()){ window.open('configurar.html','_blank'); return; }
+  var link=location.origin+'/configurar.html';
+  el('sh-import').querySelector('h3').textContent='Cardápio por foto';
+  el('cd-imp-corpo').innerHTML='<p style="margin:0 0 10px;font-size:14px;font-weight:800">Esse recurso funciona só no celular.</p><p style="margin:0 0 12px;font-size:13px;line-height:1.55;color:var(--muted2)">É o jeito mais fácil de montar o cardápio: você fotografa as páginas e o sistema cadastra produtos, categorias e preços.</p>'
+    +'<ol style="margin:0 0 14px;padding-left:20px;font-size:13px;line-height:1.7"><li>Abra o painel no celular e entre com a sua conta.</li><li>Toque em Cardápio e depois em <b>Cardápio por foto</b>.</li><li>Fotografe cada página do cardápio, até 4 fotos de uma vez.</li><li>Confira os itens, corrija o que precisar e toque em <b>Cadastrar</b>.</li></ol>'
+    +'<div style="font-size:12.5px;color:var(--muted)">Ou abra direto no celular:</div><div style="font-size:13px;font-weight:700;word-break:break-all">'+esc(link)+cpBtn(link)+'</div>';
+  abrir('sh-import');
+}
 function cdLerPlanilha(inp){
   var f=inp.files&&inp.files[0]; if(!f) return; var res=el('cd-imp-res'); res.innerHTML='<div style="padding:12px;color:var(--muted)">Lendo a planilha…</div>';
   var rd=new FileReader();
   rd.onload=function(ev){
     var wb; try{ wb=XLSX.read(ev.target.result,{type:'array'}); }catch(err){ res.innerHTML='<div style="color:var(--red);padding:12px">Não consegui abrir esse arquivo. Envie a planilha no modelo (.xlsx).</div>'; return; }
-    var pr=cdAbaLinhas(wb,['produtos','produto']), tm=cdAbaLinhas(wb,['tamanhos']), sb=cdAbaLinhas(wb,['sabores']), ad=cdAbaLinhas(wb,['adicionais']), av=[], mp={}, lista=[], i;
+    var pr=cdAbaLinhas(wb,['produtos','produto']); if(!pr.length) pr=cdAbaLinhas(wb,[cdNorm(wb.SheetNames[0])]);
+    var tm=cdAbaLinhas(wb,['tamanhos']), sb=cdAbaLinhas(wb,['sabores']), ad=cdAbaLinhas(wb,['adicionais']), av=[], mp={}, lista=[], i;
     for(i=0;i<pr.length;i++){
       var nm=String(cdCol(pr[i],['produto','nome'])).trim(); if(!nm) continue; var kk=cdNorm(nm);
       if(mp[kk]){ av.push('Produto repetido na aba Produtos: '+nm+' (usei a primeira linha).'); continue; }
       var at=cdCol(pr[i],['ativo']); var o={nome:nm.slice(0,80),cat:String(cdCol(pr[i],['categoria'])).trim().slice(0,60),preco:cdPreco(cdCol(pr[i],['preco'])),desc:String(cdCol(pr[i],['descricao'])).trim().slice(0,300),barras:String(cdCol(pr[i],['codigo de barras','barras','ean'])).replace(/[^0-9A-Za-z-]/g,'').slice(0,32),des:cdDes(cdCol(pr[i],['desenho'])),ativo:at===''?true:cdSim(at),tams:[],sabs:[],ads:[]};
+      o.sabs=cdCelSabores(cdCol(pr[i],['sabores'])); o.tams=cdCelTamanhos(cdCol(pr[i],['tamanhos']),o.sabs.length>0); o.ads=cdCelAdicionais(cdCol(pr[i],['adicionais']));
       mp[kk]=o; lista.push(o);
     }
-    if(!lista.length){ res.innerHTML='<div style="color:var(--red);padding:12px">Não achei produtos. Confira se a aba se chama <b>Produtos</b> e se tem a coluna <b>Produto</b>.</div>'; return; }
+    if(!lista.length){ res.innerHTML='<div style="color:var(--red);padding:12px">Não achei produtos. Confira se a primeira linha tem a coluna <b>Produto</b>.</div>'; return; }
     function dono(r,aba){ var k=cdNorm(cdCol(r,['produto'])); if(!k) return null; if(!mp[k]){ var m='Aba '+aba+': produto "'+String(cdCol(r,['produto'])).trim()+'" não existe na aba Produtos (linha ignorada).'; if(av.indexOf(m)<0) av.push(m); return null; } return mp[k]; }
     for(i=0;i<tm.length;i++){ var o1=dono(tm[i],'Tamanhos'); if(!o1) continue; var tn=String(cdCol(tm[i],['tamanho','nome'])).trim(); if(!tn) continue; o1.tams.push({nome:tn.slice(0,40),preco:cdPreco(cdCol(tm[i],['preco'])),max:Math.max(1,Math.min(6,parseInt(cdCol(tm[i],['max sabores','maximo de sabores','sabores']),10)||1))}); }
     for(i=0;i<sb.length;i++){ var o2=dono(sb[i],'Sabores'); if(!o2) continue; var sn=String(cdCol(sb[i],['sabor','nome'])).trim(); if(!sn) continue; o2.sabs.push({nome:sn.slice(0,60),desc:String(cdCol(sb[i],['descricao'])).trim().slice(0,200),grupo:String(cdCol(sb[i],['grupo'])).trim().slice(0,40),extra4:cdPreco(cdCol(sb[i],['adicional por 1 4','adicional 1 4','adicional por quarto'])),novidade:cdSim(cdCol(sb[i],['novidade'])),balcao:cdSim(cdCol(sb[i],['so balcao','somente balcao','balcao']))}); }
