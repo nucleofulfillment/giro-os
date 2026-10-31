@@ -1014,11 +1014,25 @@ function whatsDiag(preencher){
     h+='<div>Última mensagem que chegou no WhatsApp (qualquer pessoa): '+(u?('<b>'+esc(u.quando)+'</b> de '+esc(u.fone)):'<b>nenhuma</b>')+'</div>';
     h+=(d.log&&d.log.length)?('<ul style="margin:6px 0 0;padding-left:18px">'+d.log.map(function(x){ return '<li>'+esc(x)+'</li>'; }).join('')+'</ul>'):'<div style="margin-top:4px">Nenhum acontecimento registrado ainda. Mande uma mensagem e clique em atualizar.</div>';
     if(!u) h+='<div style="margin-top:8px;padding:10px;border-radius:10px;background:#FFF4E5;color:#7A4A00">Nenhuma mensagem de WhatsApp chegou a este sistema. Provavelmente a Meta está mandando as mensagens desse número para outro endereço.<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn peq" onclick="whatsMetaInfo()">Ver para onde a Meta manda</button><button class="btn pri peq" onclick="whatsMetaApontar()">Mandar para este sistema</button></div><div id="wp-meta" style="margin-top:8px;white-space:pre-wrap;word-break:break-all"></div></div>';
-    else h+='<div style="margin-top:6px"><span class="lk" style="cursor:pointer;font-weight:700;color:#FF5A00" onclick="whatsMetaInfo()">Ver configuração do número na Meta</span><div id="wp-meta" style="margin-top:6px;white-space:pre-wrap;word-break:break-all"></div></div>';
+    else h+='<div style="margin-top:6px"><span class="lk" style="cursor:pointer;font-weight:700;color:#FF5A00" onclick="whatsMetaInfo()">Ver configuração do número na Meta</span> · <span class="lk" style="cursor:pointer;font-weight:700;color:#FF5A00" onclick="whatsModelos()">Conferir modelos do WhatsApp</span><div id="wp-meta" style="margin-top:6px;white-space:pre-wrap;word-break:break-all"></div></div>';
     if(el('wp-diag')) el('wp-diag').innerHTML=h;
   }).catch(function(){});
 }
 /* (095) para onde a Meta entrega as mensagens do número (webhook) e botão para apontar para este sistema */
+/* (162) em qual conta da Meta o número está e se os modelos do LiveFood existem nela */
+function whatsModelos(){
+  var o=el('wp-meta'); if(o) o.textContent='Consultando a Meta…';
+  chamar('GET','/diag/whats-modelos').then(function(d){
+    if(!d.ok){ o.textContent='Não consegui consultar: '+(d.erro||d.mensagem||'erro'); return; }
+    var h='Número que envia: <b>'+esc(d.numero||'?')+'</b> ('+esc(d.nome||'')+')'; if(d.aviso) h+='<br>⚠️ '+esc(d.aviso);
+    (d.contas||[]).forEach(function(c){
+      h+='<br><br>Conta <b>'+esc(c.id)+'</b>: '+(c.tem_numero?'✅ o número está nesta conta':'⚠️ o número NÃO está nesta conta')+(c.erro?'<br>⚠️ '+esc(c.erro):'');
+      ['livefood_racha_conta','livefood_cadastro_ok','giro_codigo'].forEach(function(n){ var f=(c.modelos||[]).filter(function(m){ return m.nome===n; }); h+='<br>'+(f.length?'✅ ':'❌ ')+esc(n)+': '+(f.length?f.map(function(m){ return esc(m.idioma)+' · '+esc(m.status); }).join(', '):'não existe nesta conta'); });
+      var par=(c.modelos||[]).filter(function(m){ return /racha|cadastro/.test(m.nome)&&m.nome!=='livefood_racha_conta'&&m.nome!=='livefood_cadastro_ok'; }); if(par.length) h+='<br>Parecidos: '+par.map(function(m){ return esc(m.nome); }).join(', ');
+    });
+    o.innerHTML=h;
+  }).catch(function(){ if(o) o.textContent='Não consegui consultar agora.'; });
+}
 function whatsMetaInfo(){
   var o=el('wp-meta'); if(o) o.textContent='Consultando a Meta…';
   chamar('GET','/diag/whats-info').then(function(d){
