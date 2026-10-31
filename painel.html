@@ -8756,6 +8756,7 @@ function pgAbrir(){
   el('sh-import').querySelector('h3').textContent='Formas de pagamento'; abrir('sh-import');
   fetch(DELTADIS_API+'/painel/cardapio-config',{headers:cdHdr()}).then(function(r){return r.json();}).then(function(d){
     if(!d||!d.ok) throw new Error((d&&d.mensagem)||'erro'); PG=d.pagto||{pix:{on:1,desc:0},dinheiro:{on:1},cartao:{on:1,parcelas:1,semJuros:1,acresc:0},maquina:{on:1,descDebito:0},politica:''}; pgPintar();
+    PG_ASAAS=null; fetch(DELTADIS_API+'/painel/pagamento',{headers:cdHdr()}).then(function(r){return r.json();}).then(function(p){ if(p&&p.ok){ PG_ASAAS=!!p.configurado; pgAviso(); } }).catch(function(){});
   }).catch(function(e){ el('cd-imp-corpo').innerHTML='<div style="color:#f87171;font-size:13px">'+esc(e.message||'Não consegui abrir.')+'</div>'; });
 }
 function pgPintar(){
@@ -8766,10 +8767,17 @@ function pgPintar(){
   h+=ck('pg-din',PG.dinheiro&&PG.dinheiro.on,'Dinheiro','Pago na entrega ou na retirada, com troco.');
   h+=ck('pg-car',c.on,'Cartão de crédito pelo app','O cliente paga no app com o cartão.')+num('pg-par',c.parcelas||1,'Parcelar em até','x',12)+num('pg-sj',c.semJuros||1,'Sem juros até','x',12)+num('pg-acr',c.acresc,'Acima disso, acréscimo de','% no total',30);
   h+=ck('pg-maq',PG.maquina&&PG.maquina.on,'Cartão na maquininha','Débito ou crédito na entrega ou na retirada.')+num('pg-deb',PG.maquina&&PG.maquina.descDebito,'Desconto no débito','%',30);
-  h+='<div style="margin-top:18px;padding-top:6px;border-top:1px solid var(--border)"><b style="font-size:14px">Pagamento na mesa</b></div>'+ck('pgt-mesa',PG.mesa,'Pagar pelo celular na mesa','No botão Conta, o cliente paga com Pix ou cartão. Precisa do Asaas conectado em Configurar checkout. Desligado, a conta continua como hoje.')+ck('pgt-racha',PG.racha,'Rachar a conta','O cliente divide por igual ou por valor e cada pessoa recebe o link para pagar. Cada parte é uma cobrança separada no Asaas, com a taxa de cada uma.');
+  h+='<div style="margin-top:18px;padding-top:6px;border-top:1px solid var(--border)"><b style="font-size:14px">Pagamento na mesa</b></div>'+ck('pgt-mesa',PG.mesa,'Pagar pelo celular na mesa','No botão Conta, o cliente paga com Pix ou cartão. Precisa do Asaas conectado em Configurar checkout. Desligado, a conta continua como hoje.')+ck('pgt-racha',PG.racha,'Rachar a conta','O cliente divide por igual ou por valor e cada pessoa recebe o link para pagar. Cada parte é uma cobrança separada no Asaas, com a taxa de cada uma.')+'<div id="pg-asaas"></div>';
   h+='<label style="display:block;font-size:12px;font-weight:700;color:var(--muted2);margin-top:16px">Política da loja (opcional)</label><textarea class="inp" id="pg-pol" rows="3" maxlength="600" placeholder="Ex.: Pedido mínimo de R$ 20 para cartão. Troca em até 7 dias com nota." style="margin:6px 0 12px">'+esc(PG.politica||'')+'</textarea>';
   h+='<div id="pg-m" style="font-size:12.5px;min-height:18px;margin-bottom:8px"></div><button class="btn pri" type="button" onclick="pgSalvar()">Salvar</button>';
   el('cd-imp-corpo').innerHTML=h;
+  el('pgt-mesa').onchange=function(){ if(!this.checked) el('pgt-racha').checked=false; pgAviso(); }; el('pgt-racha').onchange=function(){ if(this.checked) el('pgt-mesa').checked=true; pgAviso(); }; pgAviso();
+}
+/* (159) sem o Asaas o cliente não vê o pagamento na mesa: avisa aqui em vez de a opção ficar ligada sem efeito */
+var PG_ASAAS=null;
+function pgAviso(){
+  var b=el('pg-asaas'), m=el('pgt-mesa'); if(!b||!m) return;
+  b.innerHTML=(m.checked&&PG_ASAAS===false)?'<div style="margin:10px 0 2px;padding:10px 12px;border:1px solid #f59e0b;background:#fffbeb;color:#92400e;border-radius:10px;font-size:12.5px;line-height:1.45"><b>Conecte o Asaas para isso aparecer.</b> Sem ele, o cliente continua vendo a conta antiga, mesmo com a opção ligada.<br><button class="btn sec sm" type="button" style="margin-top:8px" onclick="cdPagamento()">Conectar o Asaas</button></div>':'';
 }
 function pgSalvar(){
   var v=function(id){ return Number(String(el(id).value).replace(',','.'))||0; }, on=function(id){ return el(id).checked?1:0; };
@@ -8777,7 +8785,7 @@ function pgSalvar(){
   var body={pagto:{mesa:on('pgt-mesa'),racha:on('pgt-mesa')&&on('pgt-racha'),pix:{on:on('pg-pix'),desc:v('pg-pix-d')},dinheiro:{on:on('pg-din')},cartao:{on:on('pg-car'),parcelas:par,semJuros:sj,acresc:v('pg-acr')},maquina:{on:on('pg-maq'),descDebito:v('pg-deb')},politica:el('pg-pol').value.trim()}};
   var m=el('pg-m');
   fetch(DELTADIS_API+'/painel/cardapio-config',{method:'POST',headers:cdHdr(),body:JSON.stringify(body)}).then(function(r){return r.json();}).then(function(d){
-    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'não salvou'); aviso('Formas de pagamento salvas'); fecharTudo();
+    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'não salvou'); aviso((body.pagto.mesa&&PG_ASAAS===false)?'Salvo. Conecte o Asaas para o pagamento na mesa aparecer':'Formas de pagamento salvas'); fecharTudo();
   }).catch(function(e){ if(m){ m.style.color='#f87171'; m.textContent=e.message||'Não salvou'; } });
 }
 function lvCopiar(){
