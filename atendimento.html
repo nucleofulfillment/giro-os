@@ -96,6 +96,9 @@ h2{margin:6px 0 10px;font-size:19px;font-weight:800}
 .opt{display:flex;align-items:center;gap:10px;padding:11px 4px;border-bottom:1px solid var(--s4);cursor:pointer}
 .opt .d{width:22px;height:22px;border-radius:50%;border:2px solid #D4D4D8;flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px}
 .opt.sq .d{border-radius:7px}.opt.on .d{background:var(--pri);border-color:var(--pri)}
+.pgop{display:flex;align-items:center;gap:12px;width:100%;min-height:64px;margin-top:8px;padding:10px 12px;background:var(--s1);border:1.5px solid var(--b2);border-radius:14px;cursor:pointer;font:inherit;color:inherit;text-align:left;transition:border-color .12s,background .12s,transform .08s}
+.pgop:hover{border-color:var(--pri)}.pgop:active{transform:scale(.985);background:var(--s3)}
+.pgop .ic{flex:none;width:30px;text-align:center;font-size:23px;line-height:1}.pgop .n{flex:1;min-width:0}.pgop .n b{display:block;font-size:15px}.pgop .n small{display:block;margin-top:1px;color:var(--mu);font-size:12.5px;line-height:1.3}.pgop .ch{flex:none;color:var(--mu);font-size:20px;line-height:1}
 .opt .n{flex:1;min-width:0}.opt .n b{font-size:15px;display:block}.opt .n small{color:var(--mu);font-size:12px}.opt .p{font-weight:800;color:var(--pri);font-size:13.5px}
 .mrow{display:flex;gap:10px;align-items:stretch}.mrow .inp{flex:1;min-width:0}.mpick{flex:none;width:62px;border-radius:14px;border:2px solid var(--b2);background:#fff;display:flex;align-items:center;justify-content:center;color:var(--pri)}.mpick svg{width:28px;height:28px;stroke:currentColor;fill:none;stroke-width:1.8}
 .mz{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;padding:6px 0 4px}.mb{aspect-ratio:1;border-radius:50%;border:0;background:var(--pri);color:#fff;font-weight:800;font-size:17px;padding:0}.mb.oc{background:#16A34A}.mlg{display:flex;gap:16px;font-size:12.5px;color:var(--mu2);margin:4px 0 8px}.mlg i{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:5px;vertical-align:-1px}
@@ -794,10 +797,12 @@ function trocaFaz(para,juntar){
     fecha(); _ab=0; toast('Comanda agora na mesa '+r.para); carregaCom();
   });
 }
+/* (159) mesmo desenho das opções de pagamento do cliente na mesa: cartão com ícone, claro que dá para tocar */
+function fechaOpc(i,forma,ic,tit,sub){ return '<button type="button" class="pgop" onclick="fechaFazer('+i+',\''+forma+'\')"><span class="ic">'+ic+'</span><span class="n"><b>'+tit+'</b><small>'+sub+'</small></span><span class="ch">›</span></button>'; }
 function fechaForm(i){
   var c=COMS[i], h='<div style="font-size:15px;margin:6px 0 10px"><b>'+comTit(c)+(c.joia?' '+pill(c.joia):'')+'</b>'+(ehBalM(c.mesa)?'':' · '+esc(c.nome||''))+'<br><span style="font-size:22px;font-weight:800;color:var(--pri)">'+brl(c.total)+'</span></div><div class="sec">Forma de pagamento</div>';
-  [['pix','Pix'],['cartao','Cartão'],['dinheiro','Dinheiro']].forEach(function(f){ h+='<div class="opt" onclick="fechaFazer('+i+',\''+f[0]+'\')"><span class="n"><b>'+f[1]+'</b><small>Pagou agora</small></span></div>'; });
-  if(c.joia) h+='<div class="opt" onclick="fechaFazer('+i+',\'marcar\')"><span class="n"><b>📒 Marcar (pendurar)</b><small>Fica na conta do cliente para cobrar no fechamento</small></span></div>';
+  [['pix','Pix','▦'],['cartao','Cartão','💳'],['dinheiro','Dinheiro','💵']].forEach(function(f){ h+=fechaOpc(i,f[0],f[2],f[1],'Pagou agora'); });
+  if(c.joia) h+=fechaOpc(i,'marcar','📒','Marcar (pendurar)','Fica na conta do cliente para cobrar no fechamento');
   h+='<div class="er" id="fcErr"></div>'; folha('Fechar conta',h,c.avulso?'<button class="bt s" style="margin:0" onclick="fecha()">Cobrar depois (fica em Comandas)</button>':'');
 }
 function fechaFazer(i,forma){
