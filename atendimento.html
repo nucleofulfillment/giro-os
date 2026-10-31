@@ -55,6 +55,11 @@ h2{margin:6px 0 10px;font-size:19px;font-weight:800}
 .prod b{display:block;font-size:15px}.prod small{color:var(--mu2);font-size:12.5px}.prod .v{margin-left:auto;font-weight:800;color:var(--pri);font-size:14px;text-align:right;flex:none}
 .voltar{border:0;background:none;color:var(--pri);font-weight:800;padding:6px 0;font-size:15px}
 /* folhas */
+/* (154) NFC da mesa */
+#nfcBx{display:flex;align-items:center;gap:10px;margin:0 0 12px;padding:10px 12px;border-radius:12px;background:var(--s1);border:1px solid var(--b2);font-size:13.5px;font-weight:700;color:var(--mu2)}
+#nfcBx.hide{display:none}#nfcBx .pt{width:10px;height:10px;border-radius:50%;background:var(--ok);flex:none;animation:nfcPt 1.8s ease-in-out infinite}#nfcBx button{margin-left:auto;border:0;border-radius:10px;padding:8px 12px;font-weight:800;font-size:13px;color:#fff;background:var(--grad);cursor:pointer;flex:none}
+@keyframes nfcPt{0%,100%{opacity:1}50%{opacity:.3}}
+.inp.nfcOk{border-color:var(--ok);box-shadow:0 0 0 3px rgba(22,163,74,.2)}
 /* (152) aviso de chamado do garçom */
 #chm{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;background:rgba(14,14,18,.74);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 #chm.on{display:flex}
@@ -267,6 +272,7 @@ label.l.big{font-size:14px;margin-top:16px}
   <div id="v-ped" class="main">
     <div id="p-ident">
       <h2>Nova comanda</h2>
+      <div id="nfcBx" class="hide"></div>
       <div class="card">
         <div class="idL"><button id="sgM" class="sw on" onclick="modo('mesa')"><svg viewBox="0 0 24 24"><path d="M3 9h18M5 9l1 10M19 9l-1 10M12 9v10M7 5h10l1 4H6z"/></svg>Mesa</button>
         <button id="sgB" class="sw" onclick="modo('balcao')"><svg viewBox="0 0 24 24"><path d="M4 17h16M6 17a6 6 0 0112 0M12 7V5M10 5h4M3 20h18"/></svg>Balcão</button></div>
@@ -344,7 +350,7 @@ function inicio(){
     $('login').classList.add('hide'); $('app').classList.remove('hide');
     $('emp').innerHTML=d.logo?'<img src="'+API+'/food/foto/'+encodeURIComponent(d.cli)+'/_logop" alt="'+esc(d.empresa||'')+'" style="height:30px;border-radius:6px;vertical-align:middle">':esc(d.empresa||'Atendimento'); $('usu').textContent=d.usuario||''; try{ var li=$('emp').querySelector('img'); if(li&&window.GiroMarca&&GiroMarca.ajusta) GiroMarca.ajusta(li,'claro'); }catch(e){}
     [].forEach.call(document.querySelectorAll('.gest'),function(b){ b.classList.toggle('hide',!GEST); });
-    aba('ped'); pintaCats(); mostraMapaBtn(); chamInicia(); bpBotoes(); modo(COM.modo);
+    aba('ped'); pintaCats(); mostraMapaBtn(); chamInicia(); bpBotoes(); modo(COM.modo); nfcMesaInicia();
     try{ var qm=new URLSearchParams(location.search).get('mesa'); if(qm&&!COM.mesa&&!$('iMesa').value){ modo('mesa'); $('iMesa').value=String(qm).replace(/[^A-Za-z0-9]/g,'').slice(0,8).toUpperCase(); } }catch(e){}
   });
 }
@@ -354,6 +360,45 @@ function aba(a){
   clearInterval(POLL); POLL=null; window.scrollTo(0,0); cartBar();
   if(a==='com'){ carregaCom(); POLL=setInterval(carregaCom,15000); }
   if(a==='soc') carregaSocios();
+}
+/* ── (154) NFC DA MESA: com o Atendimento aberto no Chrome do Android, encostar na etiqueta já seleciona a mesa (e o celular não abre o cardápio do cliente) ── */
+var NFM={on:false,ctl:null,ult:'',ultT:0};
+function nfcMesaBx(tipo,tx){ var b=$('nfcBx'); if(!b) return; b.classList.remove('hide'); b.innerHTML=tipo==='on'?'<span class="pt"></span><span>NFC ligado: encoste na etiqueta da mesa</span>':tipo==='ligar'?'<span>Selecionar a mesa pela etiqueta NFC</span><button type="button" onclick="nfcMesaLiga(true)">Ligar NFC</button>':'<span>'+esc(tx||'')+'</span>'+(tipo==='erro'?'<button type="button" onclick="nfcMesaLiga(true)">Tentar de novo</button>':''); }
+function nfcMesaInicia(){
+  if(!('NDEFReader' in window)||NFM.on) return;   /* iPhone e computador não leem NFC pelo navegador */
+  /* já permitido: liga sozinho ao abrir. Primeira vez: o navegador só pergunta depois de um toque */
+  try{ navigator.permissions.query({name:'nfc'}).then(function(p){ if(p.state==='granted') nfcMesaLiga(false); else if(p.state==='denied') nfcMesaBx('txt','NFC bloqueado neste site. Libere no cadeado ao lado do endereço para selecionar a mesa pela etiqueta.'); else nfcMesaBx('ligar'); },function(){ nfcMesaBx('ligar'); }); }catch(e){ nfcMesaBx('ligar'); }
+}
+function nfcMesaLiga(manual){
+  if(NFM.on||!('NDEFReader' in window)) return; var rd, ctl;
+  try{ rd=new NDEFReader(); ctl=new AbortController(); }catch(e){ return; }
+  rd.onreading=function(ev){ nfcMesaLeu(ev.message); };
+  rd.onreadingerror=function(){ toast('Não consegui ler a etiqueta. Encoste de novo e segure parado.'); };
+  rd.scan({signal:ctl.signal}).then(function(){ NFM.on=true; NFM.ctl=ctl; nfcMesaBx('on'); }).catch(function(e){
+    NFM.on=false; var n=e&&e.name;
+    if(n==='NotAllowedError') nfcMesaBx(manual?'txt':'ligar','NFC bloqueado neste site. Libere no cadeado ao lado do endereço para selecionar a mesa pela etiqueta.');
+    else if(n==='NotReadableError') nfcMesaBx('erro','O NFC do celular está desligado. Ligue nas configurações.');
+    else if(n==='NotSupportedError') nfcMesaBx('txt','Este celular não tem leitor NFC.');
+    else if(n!=='AbortError') nfcMesaBx('erro','Não consegui ligar o NFC.');
+  });
+}
+/* etiqueta gravada pelo painel: .../<loja>/mesa/7 ou ...?c=loja&mesa=7 */
+function nfcMesaDaUrl(u){ var s=String(u||''), m=s.match(/\/mesa\/([A-Za-z0-9]+)/)||s.match(/[?&]mesa=([A-Za-z0-9]+)/), c=s.match(/[?&]c=([A-Za-z0-9_-]+)/); if(!m) return ''; if(c&&CLI&&c[1]!==CLI) return ''; return m[1].toUpperCase().slice(0,8); }
+function nfcMesaLeu(msg){
+  var mesa='', rs=(msg&&msg.records)||[], i; for(i=0;i<rs.length&&!mesa;i++){ var r=rs[i]; if(r.recordType==='url'||r.recordType==='absolute-url'||r.recordType==='text'){ try{ mesa=nfcMesaDaUrl(new TextDecoder(r.encoding||'utf-8').decode(r.data)); }catch(e){} } }
+  if(!mesa){ toast('Esta etiqueta não é de uma mesa.'); return; }
+  var ag=Date.now(); if(NFM.ult===mesa&&ag-NFM.ultT<2500) return; NFM.ult=mesa; NFM.ultT=ag;
+  nfcMesaEscolhe(mesa);
+}
+function nfcMesaEscolhe(mesa){
+  if(($('chm')&&$('chm').classList.contains('on'))||$('sh').style.display==='flex') return;   /* aviso ou janela aberta: não mexe no que o garçom está fazendo */
+  if(D&&D.mesas&&D.mesas.length&&D.mesas.indexOf(mesa)<0){ bpSom(false); toast('A mesa '+mesa+' não está cadastrada.'); return; }
+  if(CART.length){ bpSom(false); toast('Mesa '+mesa+': envie ou troque o pedido atual antes.'); return; }
+  aba('ped'); if(COM.avulso||COM.mesa||COM.joia) zeraComanda();
+  modo('mesa'); $('idErr').textContent=''; var i=$('iMesa'); i.value=mesa; linkMesa();
+  i.classList.add('nfcOk'); clearTimeout(NFM.tOk); NFM.tOk=setTimeout(function(){ i.classList.remove('nfcOk'); },2500);
+  _ab=0; var car=carregaAbertas(); if(car&&car.then) car.then(function(){ if($('iMesa').value===mesa) linkMesa(); });
+  bpSom(true); toast('Mesa '+mesa+' selecionada');
 }
 /* ── (152) chamado do garçom: abre o aviso com o número da mesa e som; quem tocar em "Eu atendo" tira o aviso de todos ── */
 var CHM={lista:[],atual:null,meus:{},ctx:null,tSom:0,tRel:0,tPoll:0,busy:0,dif:0,tit:''};
