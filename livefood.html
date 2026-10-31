@@ -1692,15 +1692,16 @@ function mpDonoConfere(){
       if(p&&p.status==='paga'){ delete m[id]; mpDonoGrava(m); mpDonoAvisa(reg.nome,p.valor,e); return; }
       if(p) return;
       /* sumiu da lista: pagou e fechou a mesa, ou saiu da conta */
-      fetch(API+'/food/pedidos-parte/'+encodeURIComponent(id)).then(function(x){ return x.json(); }).then(function(x){ var n=mpDonoLer(); delete n[id]; mpDonoGrava(n); if(x&&x.ok&&x.parte.status==='paga') mpDonoAvisa(reg.nome,x.parte.valor,e); }).catch(function(){});
+      fetch(API+'/food/pedidos-parte/'+encodeURIComponent(id)).then(function(x){ return x.json(); }).then(function(x){ var n=mpDonoLer(); delete n[id]; mpDonoGrava(n); if(x&&x.ok&&x.parte.status==='paga') mpDonoAvisa(reg.nome,x.parte.valor,e); else if(x&&x.ok&&x.parte.motivo) mpDonoRecusa(reg.nome,x.parte.valor,x.parte.motivo); }).catch(function(){});
     });
   });
 }
 function mpDonoAvisa(nome,valor,e){ MPD.fila.push({nome:nome,valor:valor,falta:e?e.falta:0,fechou:!!(e&&!e.total)}); if(!MPD.aberto) mpDonoProx(); }
+function mpDonoRecusa(nome,valor,motivo){ MPD.fila.push({nome:nome,valor:valor,motivo:motivo}); if(!MPD.aberto) mpDonoProx(); }
 function mpDonoProx(){
   var a=MPD.fila.shift(); if(!a) return; MPD.aberto=true;
   var b=$('mpav'); if(!b){ b=document.createElement('div'); b.id='mpav'; b.setAttribute('role','alertdialog'); b.setAttribute('aria-modal','true'); document.body.appendChild(b); }
-  b.innerHTML='<div class="cx"><div class="lv" id="mpav-lv"></div><div class="tt1">'+esc(String(a.nome).split(' ')[0])+' já pagou a parte da conta 🙂</div><div class="vl1">'+brl(a.valor)+'</div><div class="st1">'+(a.fechou?'A conta da mesa foi paga. Obrigado!':(a.falta>0.009?'Ainda faltam '+brl(a.falta)+' nesta mesa.':'A conta da mesa foi paga. Obrigado!'))+'</div><button class="bt c" style="width:100%;flex:none;margin:6px 0 0" onclick="mpDonoFecha()">Ok</button></div>';
+  b.innerHTML='<div class="cx"><div class="lv" id="mpav-lv"></div><div class="tt1">'+esc(String(a.nome).split(' ')[0])+(a.motivo?' cancelou o pagamento':' já pagou a parte da conta 🙂')+'</div><div class="vl1">'+brl(a.valor)+'</div><div class="st1">'+(a.motivo?'Esse valor voltou para a sua parte.<br>Motivo: '+esc(a.motivo):a.fechou?'A conta da mesa foi paga. Obrigado!':(a.falta>0.009?'Ainda faltam '+brl(a.falta)+' nesta mesa.':'A conta da mesa foi paga. Obrigado!'))+'</div><button class="bt c" style="width:100%;flex:none;margin:6px 0 0" onclick="mpDonoFecha()">Ok</button></div>';
   b.classList.add('on'); try{ navigator.vibrate&&navigator.vibrate([120,80,120]); }catch(e){}
   try{ if(window.LiveMascote){ var lv=LiveMascote.criar($('mpav-lv'),{sombra:true,expressao:'animado'}); MPD.live=lv; var mov=function(){ try{ lv.gesto('piscadinha'); }catch(e){} }; mov(); MPD.pisca=setInterval(mov,1800); } }catch(e){}
   if(MP.d&&$('mp-ac')) mpCarrega(mpAcompTela);
@@ -1722,7 +1723,7 @@ function rpAbre(id){
   abreFolha(ctCab('Conta da mesa','fechaSheet()')+'<div class="wb"><div class="nt" style="margin-top:14px">Carregando…</div></div>',true);
   fetch(API+'/food/pedidos-parte/'+encodeURIComponent(id)).then(function(r){ return r.json(); }).then(function(r){
     if(!r||!r.ok){ abreFolha(ctCab('Conta da mesa','fechaSheet()')+'<div class="wb"><div class="nt" style="margin-top:14px;font-size:14.5px;color:#fff">'+esc((r&&r.mensagem)||'Este link não existe.')+'</div></div>',true); return; }
-    MP.rp=r; MP.parte={id:r.parte.id,valor:r.parte.valor}; rpMesaLiga(r); rpTela();
+    MP.rp=r; MP.parte={id:r.parte.id,valor:r.parte.valor}; rpMesaLiga(r); if(Q.get('cancelar')&&!MP.rpC&&r.parte.status!=='paga'&&r.parte.status!=='cancelada'&&!r.parte.dono){ MP.rpC=1; return rpCancela(); } rpTela();
   }).catch(function(){ abreFolha(ctCab('Conta da mesa','fechaSheet()')+'<div class="wb"><div class="nt" style="margin-top:14px">Sem conexão. Tente de novo.</div></div>',true); });
 }
 /* (164) o link do racha não traz a mesa no endereço: quem abre continua na mesa da conta, com Garçom e Conta (sem pedir localização só por abrir o link) */
@@ -1742,6 +1743,19 @@ function rpTela(){
   h+='<div class="tt" style="padding:16px 0 0;font-size:18px"><span>Você está pagando</span><span>'+brl(p.valor)+'</span></div>'+(p.itens?'<div class="nt" style="margin-top:4px">Seus itens: '+esc(p.itens)+'</div>':'')+(e.aberto>0.009?'<div class="nt" style="margin-top:4px">Ficará em aberto na mesa: '+brl(e.aberto)+'</div>':'');
   h+='<div style="margin-top:14px">'+mpOpc('▦','Pagar com Pix','QR Code e copia e cola',"rpForma('pix')")+mpOpc('💳','Pagar com cartão','Na primeira vez você cadastra',"rpForma('cartao')")+'</div></div>';
   abreFolha(h,true);
+}
+/* (164) cancelar o pagamento pelo link, dizendo o motivo */
+function rpCancela(){
+  var r=MP.rp, p=r.parte;
+  abreFolha(ctCab('Cancelar o pagamento','rpTela()')+'<div class="wb"><div class="nt" style="margin-top:14px;font-size:14.5px;color:var(--tx,#fff)">Sua parte da mesa '+esc(p.mesa)+' no '+esc(r.loja)+' é <b>'+brl(p.valor)+'</b>. Se cancelar, esse valor volta para quem enviou o link.</div><label class="cl">Qual é o motivo?</label><textarea class="cin" id="rp-mot" rows="3" maxlength="200" placeholder="Ex.: já paguei em dinheiro" style="height:auto;resize:none"></textarea><div class="ce" id="ct-erro"></div></div><div class="rod col"><button class="bt c" id="ct-bt" onclick="rpCancelaOk()">Cancelar o pagamento</button><div class="mp-bar" style="margin:0;justify-content:center"><button class="mp-ch" onclick="rpTela()">Prefiro pagar</button></div></div>',true);
+}
+function rpCancelaOk(){
+  var m=$('rp-mot').value.trim(); if(m.length<3){ ctErro('Conte o motivo.'); return; }
+  var b=$('ct-bt'); b.disabled=true; b.textContent='Cancelando…'; ctErro('');
+  fetch(API+'/food/pedidos-parte-recusar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:MP.rp.parte.id,motivo:m})}).then(function(x){ return x.json(); }).then(function(r){
+    if(!r||!r.ok){ b.disabled=false; b.textContent='Cancelar o pagamento'; ctErro((r&&r.mensagem)||'Não consegui cancelar.'); return; }
+    abreFolha('<div class="wb" style="text-align:center;padding:34px 20px 24px"><div style="font-size:21px;font-weight:800">Pagamento cancelado</div><div style="margin-top:8px;color:var(--mut);font-size:14.5px;line-height:1.5">Avisamos quem enviou o link.</div></div><div class="rod"><button class="bt c" onclick="fechaSheet()">Ver '+esc(catRef())+'</button></div>',true);
+  }).catch(function(){ b.disabled=false; b.textContent='Cancelar o pagamento'; ctErro('Sem conexão. Tente de novo.'); });
 }
 function rpForma(f){
   CT.ctx='mp'; ctLer(); CT.fonePre=MP.rp.parte.fone;
