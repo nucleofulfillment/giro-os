@@ -85,6 +85,31 @@ a{color:inherit}
 #app{display:none;min-height:100vh}
 .topbar{height:var(--navh);display:flex;align-items:center;justify-content:space-between;padding:0 22px;border-bottom:1px solid var(--border);background:rgba(255,255,255,.78);backdrop-filter:blur(10px);position:sticky;top:0;z-index:20}
 .tb-logo{display:flex;align-items:center;gap:10px}
+/* menu suspenso do celular: todas as telas do painel, por grupo */
+.tb-menu{display:none;flex:none;width:40px;height:40px;border:1px solid var(--border);border-radius:10px;background:var(--s1);color:var(--text,inherit);align-items:center;justify-content:center;cursor:pointer;padding:0}
+.tb-menu svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+@media (max-width:859px){.tb-menu{display:flex}.tb-logo{min-width:0;flex:1 1 auto}.tb-right{flex:none}.tb-logo .mk{max-width:42vw;object-fit:contain;object-position:left}.tb-srv{min-width:0;overflow:hidden;text-overflow:ellipsis;margin-left:0}}
+/* telefone: o topo não pode alargar a página. Meu plano continua no menu do avatar */
+@media (max-width:520px){.tb-clock{display:none}.tb-plano{display:none!important}}
+#mm{position:fixed;inset:0;z-index:200;visibility:hidden;transition:visibility .25s}
+#mm.on{visibility:visible}
+#mm .fd{position:absolute;inset:0;background:rgba(14,14,18,.5);opacity:0;transition:opacity .25s}
+#mm.on .fd{opacity:1}
+#mm .pn{position:absolute;left:0;top:0;bottom:0;width:86%;max-width:340px;background:var(--s1);display:flex;flex-direction:column;box-shadow:12px 0 40px rgba(0,0,0,.25);transform:translateX(-102%);transition:transform .25s cubic-bezier(.2,.8,.2,1)}
+#mm.on .pn{transform:none}
+#mm .tp{display:flex;align-items:center;justify-content:space-between;padding:14px 14px 12px 18px;border-bottom:1px solid var(--border)}
+#mm .tp b{font-size:18px}
+#mm .tp button{width:38px;height:38px;border:0;border-radius:50%;background:var(--s3);color:inherit;font-size:16px;cursor:pointer}
+#mm .ls{flex:1;overflow:auto;padding:6px 10px calc(16px + env(safe-area-inset-bottom));-webkit-overflow-scrolling:touch}
+#mm .gr{font-size:11px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);padding:14px 10px 6px}
+#mm .it{position:relative;width:100%;display:flex;align-items:center;gap:13px;min-height:50px;padding:6px 10px;border:0;border-radius:12px;background:transparent;color:inherit;font:inherit;font-size:15px;font-weight:700;text-align:left;cursor:pointer}
+#mm .it .ic{width:36px;height:36px;flex:none;border-radius:10px;background:var(--s3);display:flex;align-items:center;justify-content:center}
+#mm .it .ic svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:2}
+#mm .it .nm{flex:1;min-width:0}
+#mm .it .sg{flex:none;color:var(--muted);font-size:20px;line-height:1}
+#mm .it.on{background:var(--s3);color:var(--roxo,#D96D28)}
+#mm .it.on .ic{background:var(--roxo,#D96D28);color:#fff}
+#mm .it .nbadge{position:static;flex:none;margin:0}
 .tb-logo .mk{width:auto;height:26px;flex:none}
 .tb-logo .wm{height:12.5px;width:auto;color:var(--roxo);flex:none}
 .tb-srv{font-size:11px;font-weight:600;color:var(--muted);margin-left:8px;white-space:nowrap}
@@ -671,6 +696,7 @@ html.loja-p .cd-dest{display:none!important}
 <div id="app">
   <header class="topbar">
     <div class="tb-logo">
+      <button class="tb-menu" id="tb-menu" type="button" onclick="mmAbrir()" aria-label="Abrir o menu" aria-haspopup="dialog"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
       <img data-marca-logo data-fundo="claro" class="mk gos" alt="" style="display:none;height:50px;width:auto"><span class="tb-tenant" id="tb-tenant"></span><span class="tb-srv" id="tb-srv"></span>
     </div>
     <div class="tb-right">
@@ -3583,6 +3609,24 @@ var NAV_MOBILE=[
   {id:'config',     lb:'Configurações', ic:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/>'}
 ];
 var PAG='dashboard';
+/* menu suspenso do celular: mostra todas as telas que o perfil pode abrir, por grupo. O botão voltar do celular fecha o menu. */
+var MM_GRUPOS=[['Vendas',['pedidos','cardapio','mesas','clientes','mensagens']],['Operação',['dashboard','mesa','mapeamento','motoristas','veiculos']],['Gestão',['financeiro','config']]], MM_HIST=false;
+function mmPinta(){
+  var usados={}, h='', it=function(n){ usados[n.id]=1; return '<button class="it'+(n.id===PAG?' on':'')+'" type="button" data-p="'+n.id+'" onclick="mmVai(\''+n.id+'\')"'+(n.id===PAG?' aria-current="page"':'')+'><span class="ic">'+svgIco(n.ic)+'</span><span class="nm">'+esc(n.lb)+'</span><span class="sg" aria-hidden="true">›</span></button>'; }, ok=function(n){ return n&&pagOk(n.id)&&!navOculto(n.id); };
+  MM_GRUPOS.forEach(function(g){ var l=g[1].map(function(id){ return NAV_DESKTOP.filter(function(n){ return n.id===id; })[0]; }).filter(ok); if(l.length) h+='<div class="gr">'+g[0]+'</div>'+l.map(it).join(''); });
+  var res=NAV_DESKTOP.filter(function(n){ return ok(n)&&!usados[n.id]; }); if(res.length) h+='<div class="gr">Outros</div>'+res.map(it).join('');
+  el('mm-ls').innerHTML=h; try{ msgPintarBadge(); }catch(e){}
+}
+function mmAbrir(){
+  var m=el('mm'); if(!m){ m=document.createElement('div'); m.id='mm'; m.setAttribute('role','dialog'); m.setAttribute('aria-modal','true'); m.setAttribute('aria-label','Menu do painel'); m.innerHTML='<div class="fd" onclick="mmFecha()"></div><div class="pn"><div class="tp"><b>Menu</b><button type="button" aria-label="Fechar o menu" onclick="mmFecha()">✕</button></div><nav class="ls" id="mm-ls"></nav></div>'; document.body.appendChild(m); void m.offsetWidth; }
+  mmPinta(); m.classList.add('on'); document.body.style.overflow='hidden';
+  try{ history.pushState({mm:1},''); MM_HIST=true; }catch(e){}
+}
+function mmFecha(){ var m=el('mm'); if(!m||!m.classList.contains('on')) return; m.classList.remove('on'); document.body.style.overflow=''; if(MM_HIST){ MM_HIST=false; try{ history.back(); }catch(e){} } }
+function mmVai(id){ mmFecha(); ir(id); }
+window.addEventListener('popstate',function(){ if(MM_HIST){ MM_HIST=false; mmFecha(); } });
+document.addEventListener('keydown',function(e){ if(e.key==='Escape') mmFecha(); });
+window.addEventListener('resize',function(){ if(innerWidth>=860) mmFecha(); });
 function svgIco(d){return '<svg viewBox="0 0 24 24">'+d+'</svg>';}
 /* (66) ACESSOS por perfil: dono = tudo · gerente (Operacional) = tudo menos Financeiro e Configurações · mesa = só a Mesa */
 function acessoPaginas(){ var p=DD_USER&&DD_USER.perfil; if(p==='mesa') return ['mesa']; if(p==='gerente') return ['dashboard','pedidos','mesa','mapeamento','motoristas','veiculos','mensagens','clientes','mesas']; return null; }
