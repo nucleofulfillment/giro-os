@@ -8249,9 +8249,47 @@ function mzQrTodos(){
 function mzCopia(n){ if(!mzCliOk()) return; var u=mzLink(n); try{ navigator.clipboard.writeText(u).then(function(){ aviso('Link copiado'); },function(){ window.prompt('Copie o link:',u); }); }catch(e){ window.prompt('Copie o link:',u); } }
 function mzNfc(n){
   if(!mzCliOk()) return;
-  if(!('NDEFReader' in window)){ aviso('Gravar NFC só funciona no Chrome do celular Android. Use "Copiar link" e grave com outro app.'); return; }
-  aviso('Encoste a etiqueta no celular…');
-  var rd=new NDEFReader(); rd.write({records:[{recordType:'url',data:mzLink(n)}]}).then(function(){ aviso('Etiqueta da mesa '+n+' gravada ✔'); mzApi('/painel/atend-mesas-nfc',{num:n}).then(mzCarregar); }).catch(function(e){ aviso('Não gravou: '+((e&&e.message)||'tente de novo')); });
+  nfcGravar(mzLink(n),'mesa '+n,function(){ mzApi('/painel/atend-mesas-nfc',{num:n}).then(mzCarregar); });
+}
+/* (146) gravar NFC: janela que fica aberta enquanto espera a etiqueta, com o motivo certo de cada falha */
+var NFC={ctl:null,url:'',rot:'',ok:null};
+function nfcPorQue(){
+  var ua=navigator.userAgent||'';
+  if(/iPhone|iPad|iPod/i.test(ua)||(/Macintosh/i.test(ua)&&navigator.maxTouchPoints>1)) return 'O iPhone não permite gravar NFC pelo navegador. Use um celular Android com o Chrome.';
+  if(!/Android/i.test(ua)) return 'Computador não grava NFC. Abra este painel no Chrome de um celular Android.';
+  if(!/Chrome\//i.test(ua)||/SamsungBrowser|Firefox|OPR\//i.test(ua)) return 'Este navegador não grava NFC. Abra este painel no Google Chrome do celular.';
+  if(!window.isSecureContext) return 'A gravação só funciona em endereço https. Abra pelo livefood.tec.br.';
+  return 'Este celular não tem NFC ou o Chrome está desatualizado. Atualize o Chrome e tente de novo.';
+}
+function nfcErro(e){
+  var n=e&&e.name;
+  if(n==='NotAllowedError') return 'O NFC está bloqueado para este site. No Chrome, toque no cadeado ao lado do endereço, abra Permissões e libere o NFC.';
+  if(n==='NotReadableError') return 'O NFC do celular está desligado. Ligue em Configurações → Conexões → NFC e tente de novo.';
+  if(n==='NotSupportedError') return 'Este celular não consegue gravar NFC, ou a etiqueta não é compatível.';
+  if(n==='NetworkError') return 'A etiqueta afastou antes de terminar, ou está travada contra gravação. Encoste de novo e segure parada. Se repetir, use outra etiqueta.';
+  return 'Não gravou: '+((e&&(n?n+' - ':'')+e.message)||'tente de novo');
+}
+function nfcTela(ic,tit,tx,bts){
+  var o=el('nfc-ov'); if(!o){ o=document.createElement('div'); o.id='nfc-ov'; o.style.cssText='position:fixed;inset:0;z-index:99980;background:rgba(22,22,26,.55);display:flex;align-items:center;justify-content:center;padding:20px'; document.body.appendChild(o); }
+  o.innerHTML='<div role="dialog" aria-modal="true" style="background:var(--s1);border-radius:18px;padding:24px 20px;max-width:360px;width:100%;text-align:center"><div style="font-size:42px;line-height:1">'+ic+'</div><h3 style="margin:10px 0 6px;font-size:17px">'+esc(tit)+'</h3><p style="margin:0 0 16px;font-size:14px;line-height:1.5;color:var(--muted2)">'+esc(tx)+'</p><div style="display:flex;flex-direction:column;gap:8px">'+bts+'</div></div>';
+}
+function nfcFecha(){ if(NFC.ctl){ try{ NFC.ctl.abort(); }catch(e){} NFC.ctl=null; } var o=el('nfc-ov'); if(o) o.remove(); }
+function nfcGravar(url,rot,ok){ nfcFecha(); NFC.url=url; NFC.rot=rot; NFC.ok=ok; nfcTenta(); }
+function nfcTenta(){
+  var fecha='<button class="btn sec wide" onclick="nfcFecha()">Fechar</button>';
+  if(!('NDEFReader' in window)){ nfcTela('📵','Este aparelho não grava NFC',nfcPorQue(),fecha); return; }
+  if(NFC.ctl){ try{ NFC.ctl.abort(); }catch(e){} }
+  var ctl=NFC.ctl=new AbortController();
+  nfcTela('📲','Encoste a etiqueta','Mantenha a etiqueta da '+NFC.rot+' parada na parte de trás do celular, até confirmar.','<button class="btn sec wide" onclick="nfcFecha()">Cancelar</button>');
+  var rd; try{ rd=new NDEFReader(); }catch(e){ nfcTela('⚠️','Não gravou',nfcErro(e),'<button class="btn pri wide" onclick="nfcTenta()">Tentar de novo</button>'+fecha); return; }
+  rd.write({records:[{recordType:'url',data:NFC.url}]},{overwrite:true,signal:ctl.signal}).then(function(){
+    if(NFC.ctl!==ctl) return; NFC.ctl=null;
+    nfcTela('✅','Etiqueta gravada','A '+NFC.rot+' está pronta. Teste encostando um celular na etiqueta.',fecha);
+    if(NFC.ok) NFC.ok();
+  }).catch(function(e){
+    if(NFC.ctl!==ctl) return; NFC.ctl=null; if(e&&e.name==='AbortError'){ nfcFecha(); return; }
+    nfcTela('⚠️','Não gravou',nfcErro(e),'<button class="btn pri wide" onclick="nfcTenta()">Tentar de novo</button>'+fecha);
+  });
 }
 function msDetalhe(id){
   var x=((typeof MS!=='undefined'&&MS.ped)||[]).filter(function(o){ return o.id===id; })[0]; if(!x) return;
@@ -9047,12 +9085,7 @@ function etLista(){
 }
 function etCopia(m){ var t=document.createElement('input'); t.value=etUrl(m); document.body.appendChild(t); t.select(); try{ document.execCommand('copy'); etMsg('Link da mesa '+m+' copiado.',true); }catch(e){ etMsg(t.value,null); } t.remove(); }
 function etGravar(m){
-  if(ET.gravando) return; if(!('NDEFReader' in window)){ etMsg('Este aparelho não grava NFC.',false); return; }
-  ET.gravando=1; etMsg('Encoste a etiqueta da mesa '+m+' na parte de trás do celular…',null);
-  var rd=new NDEFReader();
-  rd.write({records:[{recordType:'url',data:etUrl(m)}]},{overwrite:true}).then(function(){
-    ET.gravando=0; ET.ok[m]=1; etGrava(); etMsg('✓ Mesa '+m+' gravada! Agora cole a etiqueta na mesa.',true); etLista();
-  }).catch(function(e){ ET.gravando=0; var n=e&&e.name; etMsg(n==='NotAllowedError'?'O celular não deixou usar o NFC. Ligue o NFC nas configurações e tente de novo.':(n==='NotSupportedError'?'Esta etiqueta não aceita gravação. Tente outra.':'Não consegui gravar. Encoste a etiqueta e tente de novo.'),false); });
+  nfcGravar(etUrl(m),'mesa '+m,function(){ ET.ok[m]=1; etGrava(); etMsg('✓ Mesa '+m+' gravada! Agora cole a etiqueta na mesa.',true); etLista(); });
 }
 function etImprimir(){
   if(window.QRCode){ etPagina(); return; }
