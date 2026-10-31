@@ -533,6 +533,7 @@ html.claro #sheet .rsq1 .av{color:#000}   /* tema claro inverte a folha: a inici
 <div id="stage">
   <video class="vd" id="v0" muted playsinline preload="auto"></video>
   <video class="vd" id="v1" muted playsinline preload="auto"></video>
+  <img class="vd" id="vimg" alt="" style="object-fit:cover">
   <div id="omask"></div><div class="shade-t"></div><div class="shade-b"></div>
   <div id="top"><div id="segs"></div><div id="bar"><div id="emp"></div><button class="rb" id="bGar" style="display:none" title="Chamar garçom" onclick="garcomChama()">🛎</button><div style="position:relative;flex:none"><button class="rb" id="bTema" title="Tema claro/escuro" onclick="alternaTema()"></button></div><button class="rb" id="bMenu" style="display:none" title="Cardápio" onclick="abreMenu()"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M8.5 10h7M8.5 14h7M8.5 18h4"/></svg></button></div></div>
   <div id="ovbox"></div><div id="oft"></div>
@@ -602,30 +603,38 @@ function iniciar(){
 }
 function segs(){ var h='',i; for(i=0;i<ordem.length;i++) h+='<i><b id="sg'+i+'"></b></i>'; $('segs').innerHTML=h; }
 
-function prepara(el,o){ if(el.getAttribute('data-o')===o.id&&el.getAttribute('src')) return; el.setAttribute('data-o',o.id); el.src=o.video; el.load(); }
+/* (167) oferta com imagem: fica o tempo escolhido no painel e passa para a próxima */
+var IMG={t:0,ini:0,dur:0,on:false};
+function ehImg(o){ return /^image\//.test((o&&o.tipo)||''); }
+function prepara(el,o){ if(ehImg(o)) return; if(el.getAttribute('data-o')===o.id&&el.getAttribute('src')) return; el.setAttribute('data-o',o.id); el.src=o.video; el.load(); }
 
 function tocar(i,primeira){
   if(!ordem.length) return;
   idx=((i%ordem.length)+ordem.length)%ordem.length;
-  var o=ordem[idx], v=vs[cur], outro=vs[1-cur];
+  var o=ordem[idx], v=vs[cur], outro=vs[1-cur], im=$('vimg'), comImg=ehImg(o);
+  clearTimeout(IMG.t); IMG.on=comImg; im.classList.toggle('on',comImg);
+  if(comImg){ vs.forEach(function(x){ x.pause(); x.classList.remove('on'); x.onended=null; x.onerror=null; }); im.src=o.video; IMG.ini=Date.now(); IMG.dur=(Number(o.dur)||8)*1000; if(ordem.length>1) IMG.t=setTimeout(proximo,IMG.dur); if(ordem.length>1) prepara(v,ordem[(idx+1)%ordem.length]); }
+  else {
   prepara(v,o); v.loop=(ordem.length===1); v.currentTime=0; v.muted=!somOn||somTrava;
   var go=v.play(); if(go&&go.catch) go.catch(function(e){ if(e&&e.name!=='NotAllowedError') return; v.muted=true; if(somOn) somTrava=true; atualizaSom(); if(somTrava) mostraSom(); v.play().catch(function(){}); });
   vs.forEach(function(x){ x.classList.toggle('on',x===v); });
   outro.pause();
   if(ordem.length>1){ var prox=ordem[(idx+1)%ordem.length]; prepara(outro,prox); }
+  }
   var ovh=ofOverlay(o.txt,o.id); $('ovbox').innerHTML=ovh||''; $('omask').style.background=ovh?ofMascara(o.txt):'';
   $('oft').textContent=ovh?'':(o.nome||'');
   cartoes(o);
   for(var k=0;k<ordem.length;k++){ var b=$('sg'+k); if(b) b.style.width=(k<idx?'100%':'0'); }
-  v.onended=function(){ proximo(); };
-  v.onerror=function(){ setTimeout(proximo,600); };
+  if(!comImg){ v.onended=function(){ proximo(); };
+  v.onerror=function(){ setTimeout(proximo,600); }; }
   atualizaSom();
 }
 function proximo(){
-  if(novoD&&(idx+1)%ordem.length===0){ D=novoD; novoD=null; ordem=D.ofertas.slice(); segs(); if(!ordem.length){ vs.forEach(function(x){x.pause();}); semOfertas(false); return; } cur=1-cur; tocar(0); return; }
+  if(novoD&&(idx+1)%ordem.length===0){ D=novoD; novoD=null; ordem=D.ofertas.slice(); segs(); if(!ordem.length){ vs.forEach(function(x){x.pause();}); clearTimeout(IMG.t); semOfertas(false); return; } cur=1-cur; tocar(0); return; }
   cur=1-cur; tocar(idx+1);
 }
 setInterval(function(){
+  if(IMG.on){ var bi=$('sg'+idx); if(bi) bi.style.width=(ordem.length>1?Math.min(100,(Date.now()-IMG.ini)*100/IMG.dur):100)+'%'; return; }
   var v=vs[cur], b=$('sg'+idx); if(v&&ordem.length===1&&v.currentTime<LT-0.5){ var oo=ordem[0], hh=ofOverlay(oo.txt,oo.id); if(hh) $('ovbox').innerHTML=hh; } LT=v?v.currentTime:0; if(b&&v&&v.duration>0) b.style.width=Math.min(100,(v.currentTime/v.duration)*100)+'%';
 },200);
 
@@ -688,7 +697,7 @@ var ST=null;
 function atualizaSom(){ $('somc').innerHTML=(somOn&&!somTrava?IC_ON:IC_OFF).replace(/width="19" height="19"/,'width="38" height="38"'); }
 /* abre com som; o navegador pode exigir um toque antes de liberar: aí o vídeo começa mudo, o ícone fica na tela e o primeiro toque em qualquer lugar liga o som */
 function mostraSom(){ $('somc').classList.add('on'); clearTimeout(ST); if(somTrava) return; ST=setTimeout(function(){ $('somc').classList.remove('on'); },3000); }
-function somAplica(){ var v=vs[cur]; vs.forEach(function(x){ x.muted=!somOn; if(somOn&&x!==v&&x.getAttribute('src')){ var p=x.play(); if(p&&p.then) p.then(function(){ if(x!==vs[cur]) x.pause(); },function(){}); } }); if(v.paused&&ordem.length) v.play().catch(function(){}); atualizaSom(); }
+function somAplica(){ var v=vs[cur]; vs.forEach(function(x){ x.muted=!somOn; if(somOn&&x!==v&&x.getAttribute('src')){ var p=x.play(); if(p&&p.then) p.then(function(){ if(x!==vs[cur]) x.pause(); },function(){}); } }); if(v.paused&&ordem.length&&!IMG.on) v.play().catch(function(){}); atualizaSom(); }
 function somDestrava(e){ if(!somTrava||(e&&e.target&&e.target.closest&&e.target.closest('#somc'))) return; somTrava=false; somAplica(); mostraSom(); }
 ['click','touchend','keydown'].forEach(function(t){ document.addEventListener(t,somDestrava,true); });
 function alternaSom(){ if(somTrava){ somTrava=false; somOn=true; } else somOn=!somOn; somAplica(); mostraSom(); }
@@ -2220,7 +2229,7 @@ function abreCat(id){
 
 /* toque no vídeo: pula pra próxima oferta */
 $('stage').addEventListener('click',function(e){ if(e.target.closest('#cards')||e.target.closest('.rb')||e.target.closest('#somc')||e.target.closest('#mnb')||e.target.closest('.ov-btn')) return; var x=e.clientX-$('stage').getBoundingClientRect().left, w=$('stage').clientWidth; if(ordem.length>1&&x>w*0.7){ cur=1-cur; tocar(idx+1); } else if(ordem.length>1&&x<w*0.3){ cur=1-cur; tocar(idx-1); } else mostraSom(); });
-document.addEventListener('visibilitychange',function(){ var v=vs[cur]; if(document.hidden){ if(v) v.pause(); return; } if(v&&v.paused&&ordem.length) v.play().catch(function(){}); });   /* saiu do app: o vídeo para, para o som não continuar em segundo plano */
+document.addEventListener('visibilitychange',function(){ var v=vs[cur]; if(document.hidden){ if(v) v.pause(); return; } if(v&&v.paused&&ordem.length&&!IMG.on) v.play().catch(function(){}); });   /* saiu do app: o vídeo para, para o som não continuar em segundo plano */
 /* ── (113) RESERVA DE MESA: pessoas → dia e horário → salão em 3D (gira com o dedo, plaquinha Livre/Reservada em cada mesa) → nome e WhatsApp ── */
 var RSV={d:null,pes:2,dia:'',hora:'',mesa:null,oc:[]};
 var RS_PES='<svg viewBox="0 0 24 24" width="26" height="26" fill="var(--pri)"><circle cx="12" cy="7" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8z"/></svg>';

@@ -21,7 +21,7 @@
   function aplicaCor(c){
     if(!/^#[0-9a-fA-F]{6}$/.test(c||'')) return;
     var b=rgb(c), claro=hex(mistura(b,[255,255,255],.28)), escuro=hex(mistura(b,[0,0,0],.38)), medio=hex(mistura(b,[0,0,0],.10)), s=document.documentElement.style;
-    s.setProperty('--pri',medio); s.setProperty('--roxo',medio); s.setProperty('--rosa',claro); s.setProperty('--roxo-esc',escuro);
+    s.setProperty('--pri',c); s.setProperty('--roxo',c); s.setProperty('--rosa',claro); s.setProperty('--roxo-esc',escuro);
     s.setProperty('--grad',c);
     s.setProperty('--grad-arte',c);
     var mt=document.querySelector('meta[name="theme-color"]'); if(mt) mt.setAttribute('content',c);

@@ -378,7 +378,7 @@ a{color:inherit}
 .mp-wrap{position:relative;border-radius:12px;overflow:hidden;border:1px solid var(--border2);background:var(--s3)}
 .mp-mapa{height:420px;width:100%}
 .mp-3d-btn{position:absolute;top:54px;left:10px;z-index:5;width:36px;height:36px;border-radius:9px;border:1px solid var(--border2);background:#fff;font-size:12px;font-weight:800;color:var(--roxo,#D96D28);cursor:pointer;box-shadow:0 2px 6px rgba(22,22,26,.25)}
-.mp-3d-btn.on{background:#D96D28;color:#fff}
+.mp-3d-btn.on{background:var(--grad,#FF5A00);color:#fff}
 .mp-full-btn{position:absolute;top:10px;left:10px;z-index:5;width:36px;height:36px;border-radius:9px;border:1px solid var(--border2);background:#fff;font-size:18px;cursor:pointer;box-shadow:0 2px 6px rgba(22,22,26,.25)}
 .mp-wrap.cheio{position:fixed;inset:0;z-index:95;border-radius:0;border:0}
 .mp-ltop{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
@@ -653,6 +653,18 @@ a{color:inherit}
 .cc-g{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.cc-g .kpi{margin:0;height:100%;box-sizing:border-box}@media(max-width:760px){.cc-g{grid-template-columns:1fr 1fr}.cc-g .cc-w{grid-column:1/-1!important;grid-row:auto!important}.cc-g .cc-s{grid-column:auto!important;grid-row:auto!important}}
 .cd-li{transition:background .15s}.cd-li:hover{background:var(--s2,#f4f4f5)}
 html.loja-p .cd-dest{display:none!important}
+#sh-oferta{width:860px;max-width:96vw}
+.of-grid{display:grid;grid-template-columns:172px minmax(0,1fr);gap:18px;align-items:start}
+.of-esq{align-self:stretch}.of-fixa{position:sticky;top:0}
+.of-dir{display:flex;flex-direction:column;gap:12px;min-width:0}
+.of-fx{background:var(--grad,#FF5A00);color:#fff;font-size:15px;font-weight:800;border-radius:10px;padding:9px 12px;margin-top:10px}
+.of-fx:first-child{margin-top:0}
+.of-l{display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:700;color:var(--muted2)}
+.of-d2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.of-sl{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px 10px;align-items:center;background:var(--s2);border-radius:10px;padding:12px;font-size:13px;font-weight:700;color:var(--text)}
+.of-sl input[type=range]{grid-column:1/-1;grid-row:2;width:100%;margin:0}.of-sl input[type=number]{grid-column:2;grid-row:1;width:72px!important;margin:0!important;padding:4px 8px!important}.of-sl .of-v{grid-column:2;grid-row:1;font-size:13px}
+.of-seg{display:flex;border:1.5px solid var(--border2);border-radius:10px;overflow:hidden}.of-seg button{flex:1;border:0;background:transparent;padding:10px 4px;font:inherit;font-size:13px;font-weight:700;color:var(--muted2);cursor:pointer}.of-seg button+button{border-left:1.5px solid var(--border2)}.of-seg button.on{background:var(--grad,#FF5A00);color:#fff}
+@media (max-width:760px){.of-grid{grid-template-columns:minmax(0,1fr)}.of-fixa{position:static}#sh-oferta{width:auto;max-width:none}}
 /* (158) painel no celular */
 .mb-so{display:none}
 @media (max-width:640px){
@@ -1554,47 +1566,58 @@ html.loja-p .cd-dest{display:none!important}
 </div>
 
 <div class="sheet wide" id="sh-oferta">
-  <div class="sh-hd"><h3 id="cd-of-tit">Nova oferta</h3><button onclick="fecharTudo()">✕</button></div>
+  <div class="sh-hd"><h3 id="cd-of-tit">Nova oferta</h3><span style="display:flex;align-items:center;gap:12px"><label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;cursor:pointer" title="A oferta toca na tela do cliente"><input type="checkbox" id="cd-of-ativo" checked> No ar</label><button onclick="fecharTudo()">✕</button></span></div>
   <div class="sh-bd">
-    <label style="font-size:12px;font-weight:700;color:var(--muted2)">Nome da oferta</label>
-    <input class="inp" id="cd-of-nome" maxlength="80" placeholder="Ex: Pizza Gigante + refri" style="margin:4px 0 12px">
-    <label style="font-size:12px;font-weight:700;color:var(--muted2)">Vídeo <span style="font-weight:500">(MP4, até 90 MB · de preferência curto e na vertical)</span></label>
-    <video id="cd-of-vid" controls playsinline muted style="display:none;width:100%;max-height:300px;background:#000;border-radius:12px;margin:6px 0"></video>
-    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0 12px"><button class="btn sec sm" id="cd-of-vbtn" type="button" onclick="el('cd-of-file').click()">Escolher vídeo</button><span id="cd-of-vinfo" style="font-size:12px;color:var(--muted)"></span></div>
-    <input type="file" id="cd-of-file" accept="video/mp4,video/webm,video/quicktime" style="display:none" onchange="cdOfVideo(this)">
-    <label style="font-size:12px;font-weight:700;color:var(--muted2)">Texto e botão sobre o vídeo <span style="font-weight:500">(opcional)</span></label>
-    <div style="display:flex;gap:14px;flex-wrap:wrap;margin:6px 0 14px">
-      <div id="cd-ov-prev" style="width:150px;height:267px;flex:none;border-radius:14px;background:#111;position:relative;overflow:hidden;font-size:6.2px">
+   <div class="of-grid">
+    <div class="of-esq"><div class="of-fixa">
+      <div id="cd-ov-prev" style="width:150px;height:267px;flex:none;border-radius:14px;background:#111;position:relative;overflow:hidden;font-size:6.2px;margin:0 auto">
         <video id="cd-ov-pv" muted playsinline preload="metadata" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"></video>
+        <img id="cd-ov-img" alt="" style="display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
         <div id="cd-ov-mask" style="position:absolute;inset:0"></div><img id="cd-ov-logo" alt="" style="display:none;position:absolute;left:6px;top:8px;z-index:6;width:auto;object-fit:contain;object-position:left;filter:drop-shadow(0 1px 3px #0009)"><div id="cd-ov-box"></div>
       </div>
-      <div style="flex:1;min-width:230px">
-        <input class="inp" id="cd-ov-apoio" maxlength="80" placeholder="Texto pequeno (ex: só hoje)" oninput="cdOvPrev()" style="margin-bottom:6px">
-        <input class="inp" id="cd-ov-titulo" maxlength="120" placeholder="Título grande (ex: Pizza Gigante por R$ 99)" oninput="cdOvPrev()" style="margin-bottom:6px">
-        <div style="display:grid;grid-template-columns:1fr auto;gap:6px;margin-bottom:6px"><input class="inp" id="cd-ov-botao" maxlength="30" placeholder="Texto do botão (ex: Pedir agora)" oninput="cdOvPrev()"><select class="inp" id="cd-ov-acao" onchange="cdOvAcao()" title="O que acontece quando o cliente toca no botão"><option value="produto">Abre o produto</option><option value="categoria">Abre uma categoria</option><option value="reserva">Reservar mesa</option></select></div>
-        <div id="cd-ov-cat-bx" style="display:none;margin-bottom:6px"><select class="inp" id="cd-ov-cat" title="Categoria que abre quando o cliente toca no botão"></select><div style="font-size:11.5px;color:var(--muted);margin-top:4px">O botão abre essa categoria com todos os produtos dela. Os produtos da oferta ficam opcionais.</div></div>
-        <div id="cd-ov-acao-av" style="display:none;font-size:11.5px;color:var(--muted);margin:-2px 0 8px">🪑 O botão abre o salão em 3D para o cliente escolher a mesa e reservar. Os produtos ficam opcionais. Ao salvar, as reservas da loja são ligadas; se você desligá-las depois, a oferta continua no ar sem esse botão. <a href="#" onclick="rvAbrir();return false">Configurar reservas</a></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px"><select class="inp" id="cd-ov-pos" onchange="cdOvPrev()"><option value="base">Posição: embaixo</option><option value="centro">Posição: centro</option><option value="topo">Posição: topo</option></select><select class="inp" id="cd-ov-alin" onchange="cdOvPrev()"><option value="esq">Alinhado à esquerda</option><option value="centro">Centralizado</option><option value="dir">Alinhado à direita</option></select></div>
-        <label style="display:block;font-size:11.5px;color:var(--muted);margin-bottom:8px">Tamanho da logo no cardápio (vale para todas as ofertas da loja)<input type="range" id="cd-ov-lg" min="28" max="110" value="56" oninput="cdOvLogo()" onchange="cdOvLogoSalva()" style="width:100%"></label><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px"><label style="font-size:11.5px;color:var(--muted)">Tamanho do título<input type="range" id="cd-ov-et" min="50" max="250" value="100" oninput="cdOvPrev()" style="width:100%"></label><label style="font-size:11.5px;color:var(--muted)">Tamanho do texto pequeno<input type="range" id="cd-ov-ea" min="50" max="250" value="100" oninput="cdOvPrev()" style="width:100%"></label></div>
-        <div style="display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center;margin-bottom:8px"><select class="inp" id="cd-ov-ef" onchange="cdOvPrev()"><option value="nenhum">Efeito: sem efeito</option><option value="cair">Efeito: cai de cima</option><option value="lateral">Efeito: entra pela lateral</option><option value="zoom">Efeito: surge com zoom</option></select><button class="btn sec sm" type="button" onclick="cdOvPrev()" title="Ver o efeito de novo">↻ rever</button></div>
-        <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;cursor:pointer;margin-bottom:6px"><input type="checkbox" id="cd-ov-pu" onchange="cdOvPrev()"> Botão pulsando (chama atenção)</label>
-        <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;cursor:pointer"><input type="checkbox" id="cd-ov-masc" checked onchange="cdOvPrev()"> Escurecer o vídeo para o texto ficar legível</label>
-        <details style="margin-top:8px"><summary style="font-size:12.5px;font-weight:700;cursor:pointer">Cores e tamanhos</summary>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;font-size:11.5px;color:var(--muted)">
-            <label>Cor do texto<input type="color" id="cd-ov-cor" value="#ffffff" oninput="cdOvPrev()" style="width:100%;height:34px"></label>
-            <label>Escurecer (%)<input type="range" id="cd-ov-mf" min="5" max="90" value="45" oninput="cdOvPrev()" style="width:100%"></label>
-            <label>Botão: estilo<select class="inp" id="cd-ov-be" onchange="cdOvPrev()" style="margin-top:2px"><option value="cheio">Cheio</option><option value="contorno">Contorno</option><option value="link">Só texto</option></select></label>
-            <label>Botão: tamanho<input type="range" id="cd-ov-bes" min="60" max="200" value="100" oninput="cdOvPrev()" style="width:100%"></label>
-            <label>Botão: cor de fundo<input type="color" id="cd-ov-bf" value="#f97316" oninput="cdOvPrev()" style="width:100%;height:34px"></label>
-            <label>Botão: cor do texto<input type="color" id="cd-ov-bt" value="#ffffff" oninput="cdOvPrev()" style="width:100%;height:34px"></label>
-            <label>Botão: arredondado<input type="range" id="cd-ov-br" min="0" max="40" value="14" oninput="cdOvPrev()" style="width:100%"></label>
-          </div></details>
-      </div>
+      <div style="text-align:center;font-size:11.5px;color:var(--muted);margin-top:6px">Prévia do celular</div>
+    </div></div>
+    <div class="of-dir">
+      <div class="of-fx">Vídeo ou imagem</div>
+      <label class="of-l">Nome da oferta<input class="inp" id="cd-of-nome" maxlength="80" placeholder="Ex: Pizza Gigante + refri"></label>
+      <div class="of-seg" id="cd-of-mid"><button type="button" data-v="video" onclick="cdOfMidia('video')">Vídeo</button><button type="button" data-v="imagem" onclick="cdOfMidia('imagem')">Imagem</button></div>
+      <video id="cd-of-vid" controls playsinline muted style="display:none"></video>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><button class="btn sec sm" id="cd-of-vbtn" type="button" onclick="el('cd-of-file').click()">Escolher vídeo</button><span id="cd-of-vinfo" style="font-size:12px;color:var(--muted)"></span></div>
+      <div id="cd-of-segbx" style="display:none"><label class="of-sl"><span>Tempo na tela (segundos)</span><input type="range" id="cd-of-seg" min="3" max="30" value="8" oninput="CD.of.vdur=+this.value;el('cd-of-segv').textContent=this.value+' s'"><b id="cd-of-segv" class="of-v">8 s</b></label></div>
+      <input type="file" id="cd-of-file" accept="video/mp4,video/webm,video/quicktime,image/jpeg,image/png,image/webp" style="display:none" onchange="cdOfVideo(this)">
+
+      <div class="of-fx">Texto</div>
+      <label class="of-l">Texto pequeno<input class="inp" id="cd-ov-apoio" maxlength="80" placeholder="Ex: só hoje" oninput="cdOvPrev()"></label>
+      <label class="of-l">Título grande<input class="inp" id="cd-ov-titulo" maxlength="120" placeholder="Ex: Pizza Gigante por R$ 99" oninput="cdOvPrev()"></label>
+      <label class="of-sl"><span>Tamanho do título</span><input type="range" id="cd-ov-et" min="50" max="250" value="100" oninput="cdOvPrev()"></label>
+      <label class="of-sl"><span>Tamanho do texto pequeno</span><input type="range" id="cd-ov-ea" min="50" max="250" value="100" oninput="cdOvPrev()"></label>
+      <label class="of-l" style="max-width:130px">Cor do texto<input type="color" id="cd-ov-cor" value="#ffffff" oninput="cdOvPrev()" style="width:100%;height:36px"></label>
+
+      <div class="of-fx">Botão</div>
+      <div class="of-d2"><label class="of-l">Texto do botão<input class="inp" id="cd-ov-botao" maxlength="30" placeholder="Ex: Pedir agora" oninput="cdOvPrev()"></label><label class="of-l">Ao tocar<select class="inp" id="cd-ov-acao" onchange="cdOvAcao()" title="O que acontece quando o cliente toca no botão"><option value="produto">Abre o produto</option><option value="categoria">Abre uma categoria</option><option value="reserva">Reservar mesa</option></select></label></div>
+      <div id="cd-ov-cat-bx" style="display:none"><select class="inp" id="cd-ov-cat" title="Categoria que abre quando o cliente toca no botão"></select><div style="font-size:11.5px;color:var(--muted);margin-top:4px">O botão abre essa categoria com todos os produtos dela. Os produtos da oferta ficam opcionais.</div></div>
+      <div id="cd-ov-acao-av" style="display:none;font-size:12px;line-height:1.45;color:var(--muted)">🪑 O botão abre o salão em 3D para o cliente escolher a mesa e reservar. Os produtos ficam opcionais. Ao salvar, as reservas da loja são ligadas; se você desligá-las depois, a oferta continua no ar sem esse botão. <a href="#" onclick="rvAbrir();return false">Configurar reservas</a></div>
+      <div class="of-seg" data-sel="cd-ov-be"></div><select id="cd-ov-be" style="display:none" onchange="cdOvPrev()"><option value="cheio">Cheio</option><option value="contorno">Contorno</option><option value="link">Só texto</option></select>
+      <label class="of-sl"><span>Tamanho do botão</span><input type="range" id="cd-ov-bes" min="60" max="200" value="100" oninput="cdOvPrev()"></label>
+      <label class="of-sl"><span>Arredondado</span><input type="range" id="cd-ov-br" min="0" max="40" value="14" oninput="cdOvPrev()"></label>
+      <div class="of-d2"><label class="of-l">Cor de fundo<input type="color" id="cd-ov-bf" value="#f97316" oninput="cdOvPrev()" style="width:100%;height:36px"></label><label class="of-l">Cor do texto<input type="color" id="cd-ov-bt" value="#ffffff" oninput="cdOvPrev()" style="width:100%;height:36px"></label></div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="cd-ov-pu" onchange="cdOvPrev()"> Botão pulsando para chamar atenção</label>
+
+      <div class="of-fx">Posição e efeito</div>
+      <div class="of-seg" data-sel="cd-ov-pos"></div><select id="cd-ov-pos" style="display:none" onchange="cdOvPrev()"><option value="topo">Topo</option><option value="centro">Centro</option><option value="base">Embaixo</option></select>
+      <div class="of-seg" data-sel="cd-ov-alin"></div><select id="cd-ov-alin" style="display:none" onchange="cdOvPrev()"><option value="esq">Esquerda</option><option value="centro">Centro</option><option value="dir">Direita</option></select>
+      <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center"><select class="inp" id="cd-ov-ef" onchange="cdOvPrev()"><option value="nenhum">Efeito: sem efeito</option><option value="cair">Efeito: cai de cima</option><option value="lateral">Efeito: entra pela lateral</option><option value="zoom">Efeito: surge com zoom</option></select><button class="btn sec sm" type="button" onclick="cdOvPrev()" title="Ver o efeito de novo">↻ Rever</button></div>
+
+      <div class="of-fx">Fundo e logo</div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="cd-ov-masc" checked onchange="cdOvPrev()"> Escurecer o fundo para o texto ficar legível</label>
+      <label class="of-sl"><span>Quanto escurecer</span><input type="range" id="cd-ov-mf" min="5" max="90" value="45" oninput="cdOvPrev()"></label>
+      <label class="of-sl"><span>Tamanho da logo <small style="font-weight:500;color:var(--muted)">(vale para todas as ofertas da loja)</small></span><input type="range" id="cd-ov-lg" min="28" max="110" value="56" oninput="cdOvLogo()" onchange="cdOvLogoSalva()"></label>
+
+      <div class="of-fx">Produtos <span id="cd-of-nprod" style="font-weight:600;font-size:12.5px;opacity:.9"></span></div>
+      <input class="inp" id="cd-of-busca" placeholder="🔎 buscar produto" oninput="cdOfPintarProds()">
+      <div id="cd-of-prods" style="max-height:240px;overflow:auto;border:1px solid var(--border);border-radius:10px;padding:2px 8px"></div>
     </div>
-    <label style="font-size:12px;font-weight:700;color:var(--muted2)">Produtos que aparecem com esse vídeo <span id="cd-of-nprod" style="font-weight:500"></span></label>
-    <input class="inp" id="cd-of-busca" placeholder="🔎 buscar produto" oninput="cdOfPintarProds()" style="margin:4px 0 6px">
-    <div id="cd-of-prods" style="max-height:240px;overflow:auto;border:1px solid var(--border);border-radius:10px;padding:2px 8px"></div>
-    <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:13px;font-weight:700;cursor:pointer"><input type="checkbox" id="cd-of-ativo" checked> Oferta ativa (toca na tela do cliente)</label>
+   </div>
     <div id="cd-of-erro" style="color:var(--red);font-size:12.5px;margin-top:10px"></div>
   </div>
   <div style="flex-shrink:0;border-top:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--s1);border-radius:0 0 18px 18px"><button class="btn pri" id="cd-of-salvar" onclick="cdOfSalvar()">Salvar</button><button class="btn sec" onclick="cdAbrirOfertas()">Voltar à lista</button><button class="btn sec" id="cd-of-dup" onclick="cdOfDuplicarAberto()">Duplicar</button><button class="btn sec" id="cd-of-apagar" onclick="cdOfApagarAberto()" style="color:var(--red);margin-left:auto">Apagar</button></div>
@@ -8016,13 +8039,13 @@ function cdOvColher(){
 function cdOvAcao(){ var a=el('cd-ov-acao').value, r=a==='reserva', c=a==='categoria'; el('cd-ov-acao-av').style.display=r?'block':'none'; el('cd-ov-cat-bx').style.display=c?'block':'none'; if(c) cdOvCats(el('cd-ov-cat').value); if(!el('cd-ov-botao').value.trim()){ if(r) el('cd-ov-botao').value='Reservar mesa'; else if(c) el('cd-ov-botao').value='Ver produtos'; } cdOvPrev(); }
 /* botão que abre uma categoria: a lista vem das categorias cadastradas na loja */
 function cdOvCats(sel){ el('cd-ov-cat').innerHTML='<option value="">Escolha a categoria</option>'+(CD.cats||[]).map(function(c){ return '<option value="'+esc(c.id)+'"'+(c.id===sel?' selected':'')+'>'+esc(c.nome)+'</option>'; }).join(''); }
-var CD_OV_RG=['cd-ov-et','cd-ov-ea','cd-ov-bes','cd-ov-mf','cd-ov-br'];
+var CD_OV_RG=['cd-ov-et','cd-ov-ea','cd-ov-bes','cd-ov-mf','cd-ov-br','cd-ov-lg'];
 function cdOvNums(){
   CD_OV_RG.forEach(function(id){
     var r=el(id); if(!r) return; var n=el(id+'-n');
-    if(!n){ n=document.createElement('input'); n.type='number'; n.id=id+'-n'; n.className='inp'; n.min=r.min; n.max=r.max; n.step='1'; n.title='Digite o valor ('+r.min+' a '+r.max+')'; n.style.cssText='width:100%;margin-top:3px;padding:5px 8px;font-size:13px';
-      n.oninput=function(){ var v=parseInt(n.value,10); if(isNaN(v)) return; r.value=Math.max(+r.min,Math.min(+r.max,v)); cdOvPrev(true); };
-      n.onblur=function(){ n.value=r.value; };
+    if(!n){ n=document.createElement('input'); n.type='number'; n.id=id+'-n'; n.className='inp'; n.min=r.min; n.max=r.max; n.step='1'; n.title='Digite o valor ('+r.min+' a '+r.max+')'; n.style.cssText='font-size:13px';
+      n.oninput=function(){ var v=parseInt(n.value,10); if(isNaN(v)) return; r.value=Math.max(+r.min,Math.min(+r.max,v)); if(id==='cd-ov-lg') cdOvLogo(); else cdOvPrev(true); };
+      n.onblur=function(){ n.value=r.value; if(id==='cd-ov-lg') cdOvLogoSalva(); };
       r.parentNode.appendChild(n); }
     if(document.activeElement!==n) n.value=r.value;
   });
@@ -8037,7 +8060,7 @@ function cdOvPreencher(t){
   cdOvPrev();
 }
 /* (166) tamanho da logo: aparece na prévia e fica salvo na loja. A prévia tem 150px de largura para 375px do celular */
-function cdOvLogo(){ var i=el('cd-ov-logo'), r=el('cd-ov-lg'); if(!i||!r) return; var h=Number(r.value)||56; i.style.height=Math.round(h*.4)+'px'; i.style.maxWidth=Math.round(Math.min(h*4.4,279)*.4)+'px'; }
+function cdOvLogo(){ var i=el('cd-ov-logo'), r=el('cd-ov-lg'); if(!i||!r) return; var h=Number(r.value)||56, nl=el('cd-ov-lg-n'); if(nl&&document.activeElement!==nl) nl.value=r.value; i.style.height=Math.round(h*.4)+'px'; i.style.maxWidth=Math.round(Math.min(h*4.4,279)*.4)+'px'; }
 function cdOvLogoCarrega(){
   fetch(DELTADIS_API+'/painel/cardapio-config',{headers:cdHdr()}).then(function(r){ return r.json(); }).then(function(d){
     var r=el('cd-ov-lg'), i=el('cd-ov-logo'); if(!d||!d.ok||!r||!i) return; r.value=d.logoTam||56; CD.logoTam=d.logoTam||56;
@@ -8045,10 +8068,14 @@ function cdOvLogoCarrega(){
   }).catch(function(){});
 }
 function cdOvLogoSalva(){ var v=Number(el('cd-ov-lg').value)||56; if(v===CD.logoTam) return; CD.logoTam=v; fetch(DELTADIS_API+'/painel/cardapio-config',{method:'POST',headers:cdHdr(),body:JSON.stringify({logoTam:v})}).then(function(r){ return r.json(); }).then(function(d){ aviso(d&&d.ok?'Tamanho da logo salvo':((d&&d.mensagem)||'Não salvou o tamanho da logo')); }).catch(function(){ aviso('Não salvou o tamanho da logo'); }); }
+/* (167) posição, alinhamento e estilo do botão: botões lado a lado que mandam no menu escondido */
+function cdOvSegs(){ document.querySelectorAll('#sh-oferta .of-seg[data-sel]').forEach(function(b){ var s=el(b.getAttribute('data-sel')); if(!s) return; if(!b.firstChild) b.innerHTML=[].map.call(s.options,function(o){ return '<button type="button" data-v="'+o.value+'">'+o.textContent+'</button>'; }).join(''); [].forEach.call(b.children,function(x){ x.classList.toggle('on',x.getAttribute('data-v')===s.value); x.onclick=function(){ s.value=x.getAttribute('data-v'); cdOvPrev(); }; }); }); }
 function cdOvPrev(nn){
+  cdOvSegs();
   if(!nn) cdOvNums(); else CD_OV_RG.forEach(function(id){ var n=el(id+'-n'); if(n&&document.activeElement!==n) n.value=el(id).value; });
   var t=cdOvColher(), pv=el('cd-ov-pv'), src=CD.of&&CD.of.prev?CD.of.prev:'';
-  if(src){ if(pv.getAttribute('data-s')!==src){ pv.setAttribute('data-s',src); pv.src=src+'#t=0.6'; } } else { pv.removeAttribute('src'); pv.removeAttribute('data-s'); }
+  var ehI=cdOfEhImg(), im=el('cd-ov-img'); im.style.display=(ehI&&src)?'block':'none'; if(ehI&&src&&im.getAttribute('src')!==src) im.src=src; pv.style.display=ehI?'none':'';
+  if(src&&!ehI){ if(pv.getAttribute('data-s')!==src){ pv.setAttribute('data-s',src); pv.src=src+'#t=0.6'; } } else { pv.removeAttribute('src'); pv.removeAttribute('data-s'); }
   el('cd-ov-mask').style.background=ofMascara(t);
   var h=ofOverlay(t); var b=el('cd-ov-box'); b.innerHTML=h||'';
   var o=b.firstChild; if(o){ o.style.setProperty('--ov-t','26px'); o.style.setProperty('--ov-b','70px'); }
@@ -8280,7 +8307,7 @@ function gcPinta(){
   if(GC.g.length&&!GC.mesas.length) h+='<div class="empty">Nenhuma mesa cadastrada ainda.</div>';
   if(GC.mesas.length) GC.g.forEach(function(g,i){
     h+='<div style="border:1px solid var(--border);border-radius:14px;padding:12px;margin-bottom:10px"><div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:9px"><b style="font-size:14.5px">'+esc(g.nome)+'</b><span style="font-size:12px;font-weight:700;color:var(--muted)">'+(g.mesas.length?g.mesas.length+(g.mesas.length===1?' mesa':' mesas'):'Todas as mesas')+'</span></div><div style="display:flex;flex-wrap:wrap;gap:6px">';
-    GC.mesas.forEach(function(m){ var on=g.mesas.indexOf(m)>=0; h+='<button type="button" aria-pressed="'+on+'" onclick="gcTroca('+i+',\''+esc(m)+'\')" style="min-width:42px;height:38px;padding:0 8px;border-radius:10px;font-weight:800;font-size:13.5px;cursor:pointer;border:1.5px solid '+(on?'var(--pri,#E07B39)':'var(--border2)')+';background:'+(on?'var(--pri,#E07B39)':'transparent')+';color:'+(on?'#fff':'inherit')+'">'+esc(m)+'</button>'; });
+    GC.mesas.forEach(function(m){ var on=g.mesas.indexOf(m)>=0; h+='<button type="button" aria-pressed="'+on+'" onclick="gcTroca('+i+',\''+esc(m)+'\')" style="min-width:42px;height:38px;padding:0 8px;border-radius:10px;font-weight:800;font-size:13.5px;cursor:pointer;border:1.5px solid '+(on?'var(--grad,#FF5A00)':'var(--border2)')+';background:'+(on?'var(--grad,#FF5A00)':'transparent')+';color:'+(on?'#fff':'inherit')+'">'+esc(m)+'</button>'; });
     h+='</div></div>';
   });
   var sem=GC.mesas.filter(function(m){ return !GC.g.some(function(g){ return g.mesas.indexOf(m)>=0; }); });
@@ -8308,9 +8335,9 @@ function mzPintar(){
   var q=(el('mz-busca').value||'').toLowerCase().trim(), h='', n=0;
   MZ.lista.sort(function(a,b){ var x=String(a.num), y=String(b.num), nx=/^\d+$/.test(x), ny=/^\d+$/.test(y); if(nx&&ny) return parseInt(x,10)-parseInt(y,10); if(nx!==ny) return nx?-1:1; return x<y?-1:x>y?1:0; });
   MZ.lista.forEach(function(m){ if(q&&String(m.num).toLowerCase().indexOf(q)<0) return; n++;
-    h+='<div style="border:1px solid var(--border);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px"><div style="display:flex;align-items:center;gap:10px"><div style="width:46px;height:46px;border-radius:50%;background:'+(m.oc?'#16a34a':'var(--pri,#E07B39)')+';color:#fff;font-weight:800;font-size:17px;display:flex;align-items:center;justify-content:center;flex:none">'+esc(m.num)+'</div><div style="min-width:0"><b>Mesa '+esc(m.num)+'</b><div style="font-size:12px;color:var(--muted)">'+(m.oc?'<span style="color:#16a34a;font-weight:700">Comanda aberta</span>':'Livre')+'</div></div>'+mzTagRsv(m)+'</div>'
+    h+='<div style="border:1px solid var(--border);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px"><div style="display:flex;align-items:center;gap:10px"><div style="width:46px;height:46px;border-radius:50%;background:'+(m.oc?'#16a34a':'var(--grad,#FF5A00)')+';color:#fff;font-weight:800;font-size:17px;display:flex;align-items:center;justify-content:center;flex:none">'+esc(m.num)+'</div><div style="min-width:0"><b>Mesa '+esc(m.num)+'</b><div style="font-size:12px;color:var(--muted)">'+(m.oc?'<span style="color:#16a34a;font-weight:700">Comanda aberta</span>':'Livre')+'</div></div>'+mzTagRsv(m)+'</div>'
      +'<div style="font-size:12px;color:var(--muted)">'+(m.lug?'👥 '+m.lug+(m.lug===1?' lugar':' lugares'):'👥 lugares não informados')+' · '+(m.nfc?'🏷️ NFC gravada em '+new Date(m.nfc).toLocaleDateString('pt-BR'):'sem etiqueta NFC')+'</div>'
-     +'<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn sec sm"'+(m.lug>0?' style="background:#16a34a;border-color:#16a34a;color:#fff"':'')+' onclick="mzEdita(\''+esc(m.num)+'\',\'lug\')">Lugares</button><button class="btn sec sm" onclick="mzEdita(\''+esc(m.num)+'\',\'ed\')">Editar</button><button class="btn sec sm" onclick="mzNfc(\''+esc(m.num)+'\')">Gravar NFC</button><button class="btn sec sm" style="background:var(--pri,#E07B39);border-color:var(--pri,#E07B39);color:#fff" onclick="mzQr(\''+esc(m.num)+'\')">QR code</button><button class="btn sec sm" onclick="mzCopia(\''+esc(m.num)+'\')">Copiar link</button><button class="btn sec sm" style="color:var(--red)" onclick="mzApaga(\''+esc(m.num)+'\')">Apagar</button></div></div>'; });
+     +'<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn sec sm"'+(m.lug>0?' style="background:#16a34a;border-color:#16a34a;color:#fff"':'')+' onclick="mzEdita(\''+esc(m.num)+'\',\'lug\')">Lugares</button><button class="btn sec sm" onclick="mzEdita(\''+esc(m.num)+'\',\'ed\')">Editar</button><button class="btn sec sm" onclick="mzNfc(\''+esc(m.num)+'\')">Gravar NFC</button><button class="btn sec sm" style="background:var(--grad,#FF5A00);border-color:var(--grad,#FF5A00);color:#fff" onclick="mzQr(\''+esc(m.num)+'\')">QR code</button><button class="btn sec sm" onclick="mzCopia(\''+esc(m.num)+'\')">Copiar link</button><button class="btn sec sm" style="color:var(--red)" onclick="mzApaga(\''+esc(m.num)+'\')">Apagar</button></div></div>'; });
   el('mz-total').textContent=MZ.lista.length+(MZ.lista.length===1?' mesa cadastrada':' mesas cadastradas');
   el('mz-lista').innerHTML=n?'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px">'+h+'</div>':'<div class="empty">'+(MZ.lista.length?'Nenhuma mesa encontrada':'Nenhuma mesa cadastrada ainda. Enquanto não houver mesas cadastradas, o atendimento aceita qualquer número.')+'</div>';
 }
@@ -9427,8 +9454,8 @@ function mcPinta(t){
     +'<div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap"><div style="flex:none;text-align:center"><div id="mc-pv-'+t+'" style="width:110px;height:110px;border-radius:14px;background:'+bg+';position:relative;overflow:hidden;color:#fff;box-shadow:0 6px 18px #0003"><div style="position:absolute;inset:0 0 24% 0;display:flex;align-items:center;justify-content:center;font-size:44px;filter:drop-shadow(0 4px 10px #0006)">'+ic[1]+'</div><div style="position:absolute;left:0;right:0;bottom:0;height:55%;background:linear-gradient(transparent,#000c)"></div><b style="position:absolute;left:9px;right:9px;bottom:8px;font-size:12.5px;line-height:1.15;z-index:1">'+esc(c.nome)+'</b></div><div style="font-size:11px;color:var(--muted);margin-top:5px">Prévia no cardápio</div></div>'
     +'<div style="flex:1;min-width:220px;display:flex;flex-direction:column;gap:8px">'
     +'<div style="display:grid;grid-template-columns:1fr 92px;gap:8px"><label style="font-size:11.5px;color:var(--muted)">Nome no cartão<input class="inp" id="mc-nm-'+t+'" maxlength="24" value="'+esc(c.nome)+'" oninput="mcPrev(\''+t+'\')"></label><label style="font-size:11.5px;color:var(--muted)">Posição<input class="inp" id="mc-pos-'+t+'" type="number" min="1" max="99" value="'+c.pos+'" title="1 = primeiro cartão do cardápio"></label></div>'
-    +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span style="font-size:11.5px;color:var(--muted);margin-right:2px">Cor de fundo</span>'+(promo?['#121214','#7f1d1d','#c2410c','#9d174d','#14532d']:['#1e3a8a','#0369a1','#4c1d95','#0f766e','#121214']).map(function(x){ return '<button type="button" onclick="mcCor(\''+t+'\',\''+x+'\')" title="'+x+'" style="width:26px;height:26px;border-radius:50%;cursor:pointer;background:'+x+';border:'+(x===c.cor?'3px solid var(--pri,#E07B39)':'2px solid var(--border)')+'"></button>'; }).join('')+'<input type="color" id="mc-cor-'+t+'" value="'+(c.cor||'#121214')+'" oninput="mcCor(\''+t+'\',this.value,1)" title="Outra cor" style="width:34px;height:28px;border:0;padding:0;background:none;cursor:pointer"></div>'
-    +'<div style="display:flex;gap:6px">'+MC_IC[t].map(function(x){ return '<button type="button" class="btn sec sm" data-ic="'+x[0]+'" onclick="mcIc(\''+t+'\',\''+x[0]+'\')" style="flex:1;padding:8px 4px;'+(x[0]===c.icone?'border-color:var(--pri,#E07B39);background:var(--s2);font-weight:800':'')+'"><span style="font-size:20px;display:block">'+x[1]+'</span>'+x[2]+'</button>'; }).join('')+'</div>'
+    +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span style="font-size:11.5px;color:var(--muted);margin-right:2px">Cor de fundo</span>'+(promo?['#121214','#7f1d1d','#c2410c','#9d174d','#14532d']:['#1e3a8a','#0369a1','#4c1d95','#0f766e','#121214']).map(function(x){ return '<button type="button" onclick="mcCor(\''+t+'\',\''+x+'\')" title="'+x+'" style="width:26px;height:26px;border-radius:50%;cursor:pointer;background:'+x+';border:'+(x===c.cor?'3px solid var(--grad,#FF5A00)':'2px solid var(--border)')+'"></button>'; }).join('')+'<input type="color" id="mc-cor-'+t+'" value="'+(c.cor||'#121214')+'" oninput="mcCor(\''+t+'\',this.value,1)" title="Outra cor" style="width:34px;height:28px;border:0;padding:0;background:none;cursor:pointer"></div>'
+    +'<div style="display:flex;gap:6px">'+MC_IC[t].map(function(x){ return '<button type="button" class="btn sec sm" data-ic="'+x[0]+'" onclick="mcIc(\''+t+'\',\''+x[0]+'\')" style="flex:1;padding:8px 4px;'+(x[0]===c.icone?'border-color:var(--grad,#FF5A00);background:var(--s2);font-weight:800':'')+'"><span style="font-size:20px;display:block">'+x[1]+'</span>'+x[2]+'</button>'; }).join('')+'</div>'
     +'<label style="display:flex;align-items:center;gap:8px;font-size:12.5px;cursor:pointer"><input type="checkbox" id="mc-on-'+t+'"'+(c.on?' checked':'')+'> Mostrar o cartão no cardápio</label>'
     +'<div style="display:flex;justify-content:flex-end"><button class="btn pri sm" type="button" id="mc-bt-'+t+'" onclick="mcSalvar(\''+t+'\')">Salvar cartão</button></div></div></div></div>';
   el('mc-'+t).innerHTML=h;
@@ -9451,7 +9478,7 @@ function mcCatPinta(){
   el('mc-cat').innerHTML='<div style="border:1px solid var(--border);border-radius:12px;padding:12px"><div style="font-weight:800;font-size:13.5px;margin-bottom:2px;display:flex;align-items:center;gap:6px">'+mcCatSvg(ic[0],17)+' Botão do catálogo</div>'
     +'<div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:10px">O botão que abre a lista de produtos. Restaurante usa "Cardápio"; farmácia, "Medicamentos"; mercado, "Produtos". O nome aparece em todo o cardápio do cliente e no botão do WhatsApp.</div>'
     +'<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><div style="flex:none;text-align:center"><div style="width:58px;height:58px;border-radius:50%;background:#1b1512;color:#fff;display:flex;align-items:center;justify-content:center;margin:0 auto;box-shadow:0 4px 12px #0003" id="mc-cat-pv">'+mcCatSvg(ic[0],26)+'</div><div style="font-size:11px;color:var(--muted);margin-top:5px" id="mc-cat-pvn">'+esc(c.nome)+'</div></div>'
-    +'<div style="flex:1;min-width:220px;display:flex;flex-direction:column;gap:8px"><div style="display:flex;gap:6px;flex-wrap:wrap">'+MC_CAT.map(function(x){ return '<button type="button" class="btn sec sm" onclick="mcCatEsc(\''+x[0]+'\',1)" style="padding:7px 10px;display:inline-flex;align-items:center;gap:6px;'+(x[0]===c.icone?'border-color:var(--pri,#E07B39);background:var(--s2);font-weight:800':'')+'">'+mcCatSvg(x[0],17)+x[2]+'</button>'; }).join('')+'</div>'
+    +'<div style="flex:1;min-width:220px;display:flex;flex-direction:column;gap:8px"><div style="display:flex;gap:6px;flex-wrap:wrap">'+MC_CAT.map(function(x){ return '<button type="button" class="btn sec sm" onclick="mcCatEsc(\''+x[0]+'\',1)" style="padding:7px 10px;display:inline-flex;align-items:center;gap:6px;'+(x[0]===c.icone?'border-color:var(--grad,#FF5A00);background:var(--s2);font-weight:800':'')+'">'+mcCatSvg(x[0],17)+x[2]+'</button>'; }).join('')+'</div>'
     +'<label style="font-size:11.5px;color:var(--muted)">Nome do botão (como o cliente vê)<input class="inp" id="mc-cat-nm" maxlength="20" value="'+esc(c.nome)+'" oninput="el(\'mc-cat-pvn\').textContent=this.value.trim()||\'Cardápio\'"></label>'
     +'<div style="display:flex;justify-content:flex-end"><button class="btn pri sm" type="button" id="mc-cat-bt" onclick="mcCatSalvar()">Salvar botão</button></div></div></div></div>';
 }
@@ -9497,7 +9524,7 @@ function cdPintarOfertas(){
     h+='<div style="display:flex;align-items:center;gap:8px;padding:10px 0;border-top:1px solid var(--border);'+(o.ativo===false?'opacity:.55;':'')+(CD.destaque&&CD.destaque[o.id]?'background:var(--s2);border-radius:10px;padding-left:8px;padding-right:8px;':'')+'">'
       +'<div style="width:26px;font-weight:800;color:var(--muted);text-align:center">'+(i+1)+'</div>'
       +'<div style="flex:1;min-width:0"><div style="font-weight:800;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(o.nome)+'</div>'
-      +'<div style="font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(o.vid?'🎬 '+cdFmtDur(o.vdur):'sem vídeo')+' · '+esc(nomes||'sem produtos')+'</div></div>'
+      +'<div style="font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(o.vid?(/^image\//.test(o.vtipo||'')?'🖼 imagem · '+Math.round(o.vdur||8)+' s':'🎬 '+cdFmtDur(o.vdur)):'sem vídeo')+' · '+esc(nomes||'sem produtos')+'</div></div>'
       +'<button class="btn sec sm" title="Subir na ordem" '+(i==0?'disabled ':'')+'onclick="cdOfMover(\''+o.id+'\',-1)">↑</button>'
       +'<button class="btn sec sm" title="Descer na ordem" '+(i==l.length-1?'disabled ':'')+'onclick="cdOfMover(\''+o.id+'\',1)">↓</button>'
       +'<button class="btn sec sm" onclick="cdOfAlternar(\''+o.id+'\')">'+(o.ativo===false?'Pausada':'Ativa')+'</button>'
@@ -9536,17 +9563,23 @@ function cdOfEditar(id){
   cdOfAbrirForm();
 }
 function cdOfAbrirForm(){
-  var o=CD.of; fecharTudo(); cdOvLogoCarrega();
+  var o=CD.of; CD.ofMid=''; fecharTudo(); cdOvLogoCarrega();
   el('cd-of-tit').textContent=o.id?'Editar oferta':'Nova oferta';
   el('cd-of-nome').value=o.nome; el('cd-of-ativo').checked=o.ativo!==false; el('cd-of-erro').textContent=''; el('cd-of-busca').value='';
   el('cd-of-dup').style.display=o.id?'':'none'; el('cd-of-apagar').style.display=o.id?'':'none';
   cdOfPintarVideo(); cdOfPintarProds(); cdOvPreencher(o.txt); abrir('sh-oferta');
 }
+function cdOfEhImg(){ return !!(CD.of&&/^image\//.test(CD.of.vtipo||'')); }
+/* (167) a oferta pode ser vídeo ou imagem. Imagem usa o "tempo na tela" no lugar da duração */
+function cdOfMidia(m){ CD.ofMid=m; el('cd-of-file').accept=m==='imagem'?'image/jpeg,image/png,image/webp':'video/mp4,video/webm,video/quicktime'; cdOfPintarVideo(); }
 function cdOfPintarVideo(){
-  var o=CD.of, v=el('cd-of-vid');
-  if(o.prev){ v.style.display='block'; if(v.getAttribute('src')!==o.prev) v.src=o.prev; } else { v.style.display='none'; v.removeAttribute('src'); }
-  el('cd-of-vinfo').textContent=o.vid?('Vídeo enviado · duração '+cdFmtDur(o.vdur)+(o.vtam?' · '+(o.vtam/1048576).toFixed(1).replace('.',',')+' MB':'')):'Nenhum vídeo ainda.';
-  el('cd-of-vbtn').textContent=o.vid?'Trocar vídeo':'Escolher vídeo';
+  var o=CD.of, ehI=cdOfEhImg(), mid=CD.ofMid||(ehI?'imagem':'video'), tem=!!o.vid&&ehI===(mid==='imagem');
+  [].forEach.call(el('cd-of-mid').children,function(x){ x.classList.toggle('on',x.getAttribute('data-v')===mid); });
+  el('cd-of-file').accept=mid==='imagem'?'image/jpeg,image/png,image/webp':'video/mp4,video/webm,video/quicktime';
+  el('cd-of-segbx').style.display=(mid==='imagem')?'block':'none';
+  if(mid==='imagem'){ var sg=Math.max(3,Math.min(30,Math.round(Number(o.vdur)||8))); if(ehI) o.vdur=sg; el('cd-of-seg').value=sg; el('cd-of-segv').textContent=sg+' s'; }
+  el('cd-of-vinfo').textContent=tem?(ehI?('Imagem enviada'+(o.vtam?' · '+(o.vtam/1048576).toFixed(1).replace('.',',')+' MB':'')):('Vídeo enviado · duração '+cdFmtDur(o.vdur)+(o.vtam?' · '+(o.vtam/1048576).toFixed(1).replace('.',',')+' MB':''))):(mid==='imagem'?'JPG ou PNG, até 15 MB, de preferência na vertical.':'MP4, até 90 MB, de preferência curto e na vertical.');
+  el('cd-of-vbtn').textContent=tem?(mid==='imagem'?'Trocar imagem':'Trocar vídeo'):(mid==='imagem'?'Escolher imagem':'Escolher vídeo');
 }
 function cdOfPintarProds(){
   var o=CD.of, q=cdNorm(el('cd-of-busca').value||''), h='';
@@ -9562,7 +9595,9 @@ function cdOfProd(id,on){ var a=CD.of.produtos, i=a.indexOf(id); if(on&&i<0) a.p
 function cdOfVideo(inp){
   var f=inp.files&&inp.files[0]; if(!f) return; inp.value='';
   var er=el('cd-of-erro'); er.textContent='';
-  if(!/^video\/(mp4|webm|quicktime)$/.test(f.type)){ er.textContent='Envie um vídeo MP4 (ou WebM).'; return; }
+  if(/^image\/(jpeg|png|webp)$/.test(f.type)){ if(f.size>15*1024*1024){ er.textContent='Imagem com '+(f.size/1048576).toFixed(0)+' MB. O máximo é 15 MB.'; return; } CD.ofMid='imagem'; cdOfEnviar(f,Number(el('cd-of-seg').value)||8); return; }
+  if(!/^video\/(mp4|webm|quicktime)$/.test(f.type)){ er.textContent='Envie um vídeo MP4 (ou WebM) ou uma imagem JPG ou PNG.'; return; }
+  CD.ofMid='video';
   if(f.size>90*1024*1024){ er.textContent='Vídeo com '+(f.size/1048576).toFixed(0)+' MB. O máximo é 90 MB: use um vídeo mais curto ou comprimido.'; return; }
   var url=URL.createObjectURL(f), tv=document.createElement('video'); tv.preload='metadata';
   tv.onloadedmetadata=function(){
@@ -9576,7 +9611,7 @@ function cdOfVideo(inp){
 function cdOfEnviar(f,dur){
   var b=el('cd-of-vbtn'), pg=el('cd-of-vinfo'), er=el('cd-of-erro'), s=el('cd-of-salvar'); s.disabled=true; b.disabled=true;
   var x=new XMLHttpRequest(); x.open('POST',DELTADIS_API+'/painel/video-upload'); x.setRequestHeader('Authorization','Bearer '+DD_TOKEN); x.setRequestHeader('Content-Type',f.type);
-  x.upload.onprogress=function(e){ if(e.lengthComputable) pg.textContent='Enviando vídeo… '+Math.round(e.loaded*100/e.total)+'%'; };
+  x.upload.onprogress=function(e){ if(e.lengthComputable) pg.textContent='Enviando… '+Math.round(e.loaded*100/e.total)+'%'; };
   x.onload=function(){
     s.disabled=false; b.disabled=false; var d={}; try{ d=JSON.parse(x.responseText); }catch(e){}
     if(x.status!==200||!d.ok){ er.textContent='Não enviou: '+(d.mensagem||('erro '+x.status)); cdOfPintarVideo(); return; }
@@ -9584,12 +9619,12 @@ function cdOfEnviar(f,dur){
     CD.of.prev=URL.createObjectURL(f); cdOfPintarVideo(); cdOvPrev();
   };
   x.onerror=function(){ s.disabled=false; b.disabled=false; er.textContent='A internet caiu durante o envio. Tente de novo.'; cdOfPintarVideo(); };
-  pg.textContent='Enviando vídeo… 0%'; x.send(f);
+  pg.textContent='Enviando… 0%'; x.send(f);
 }
 function cdOfColher(){ var o=CD.of; return {id:o.id||undefined,ordem:o.ordem,nome:el('cd-of-nome').value.trim(),vid:o.vid,vdur:o.vdur,vtam:o.vtam,vtipo:o.vtipo,produtos:o.produtos,txt:cdOvColher(),ativo:el('cd-of-ativo').checked}; }
 function cdOfSalvar(){
   var it=cdOfColher(), er=el('cd-of-erro'); if(!it.nome){ er.textContent='Falta o nome da oferta.'; return; }
-  if(!it.vid){ er.textContent='Escolha o vídeo da oferta.'; return; }
+  if(!it.vid){ er.textContent='Escolha o vídeo ou a imagem da oferta.'; return; }
   if(!it.produtos.length&&it.txt.acao==='produto'){ er.textContent='Marque pelo menos um produto.'; return; }
   if(it.txt.acao==='reserva'&&!it.txt.botao){ er.textContent='Escreva o texto do botão (ex: Reservar mesa).'; return; }
   if(it.txt.acao==='categoria'&&!it.txt.cat){ er.textContent='Escolha a categoria que o botão vai abrir.'; return; }
