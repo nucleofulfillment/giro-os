@@ -1615,7 +1615,7 @@ function mpAcompTela(){
     else if(p.minha) ac='<button class="bt c" style="flex:none;width:auto;padding:8px 13px;font-size:13px;margin:0" onclick="mpMinha(\''+esc(p.id)+'\','+Number(p.valor)+')">Pagar</button>';
     else if(p.id){ var x=MP.envio[p.id]; ac=(x&&!p.enviado)?'<a class="lk" style="font-size:12.5px;text-align:right" target="_blank" rel="noopener" href="'+esc(mpWaHref(x))+'">Enviar pelo meu WhatsApp</a>':'<button class="lk" style="font-size:12.5px" onclick="mpReenvia(\''+esc(p.id)+'\')">Reenviar</button>'; ac+='<button class="lk" style="font-size:12.5px;margin-left:8px" onclick="mpCopia(\''+esc(p.id)+'\')">Copiar link</button>'; }
     else ac='<span style="color:var(--mut);font-size:12.5px">Aguardando</span>';
-    h+='<div class="rsm" style="align-items:center;gap:8px"><div class="tx"><b>'+esc(p.nome)+'</b><small>'+brl(p.valor)+(pago&&p.forma?' · '+(p.forma==='pix'?'Pix':'Cartão'):'')+'</small></div><div style="flex:none;display:flex;align-items:center;flex-wrap:wrap;justify-content:flex-end;max-width:62%">'+ac+'</div></div>';
+    h+='<div class="rsm" style="align-items:center;gap:8px"><div class="tx"><b>'+esc(p.nome)+'</b><small>'+brl(p.valor)+(pago&&p.forma?' · '+(p.forma==='pix'?'Pix':'Cartão'):'')+'</small>'+((!pago&&MP.envio[p.id]&&MP.envio[p.id].erro)?'<small style="color:#f87171">Não enviou: '+esc(MP.envio[p.id].erro)+'</small>':'')+'</div><div style="flex:none;display:flex;align-items:center;flex-wrap:wrap;justify-content:flex-end;max-width:62%">'+ac+'</div></div>';
   });
   if(e.aberto>0.009) h+='<div class="rsm"><div class="tx"><b>Continua aberto na mesa</b></div><div class="vl">'+brl(e.aberto)+'</div></div>';
   h+='</div><div class="rod col">'+(e.falta>=5?'<button class="bt c" onclick="mpPay()">Pagar o que falta</button>':'')+((mpRachaOn()&&e.aberto>=5)?'<button class="bt c g" style="background:transparent;border:2px solid var(--pri);color:var(--tx,#fff)" onclick="MP.val=[];mpReal(mpValor)">Adicionar pessoa</button>':'')+'<button class="bt c g" style="background:transparent;border:2px solid var(--line);color:var(--tx,#fff)" onclick="mpGarcom()">Chamar o garçom</button></div>';
@@ -1625,7 +1625,7 @@ function mpMinha(id,v){ MP.parte={id:id,valor:v}; var f=MP.d.estado.partes.filte
 function mpMinhaCartao(){ if(mpAnon()){ var pt=MP.parte; return mpReal(function(){ MP.parte=pt; mpForma('cartao'); }); } mpForma('cartao'); }
 function mpReenvia(id){
   ctApi('/food/pedidos-parte-reenviar',{id:id}).then(function(r){
-    if(r.texto) MP.envio[id]={id:id,fone:r.fone,texto:r.texto,enviado:r.enviado};
+    if(r.texto) MP.envio[id]={id:id,fone:r.fone,texto:r.texto,enviado:r.enviado,erro:r.erro||''};
     if(r.ok&&r.enviado){ toast('Mensagem enviada'); return mpCarrega(mpAcompTela); }
     if(r.ok||r.texto){ MP.d.estado.partes.forEach(function(p){ if(p.id===id&&!r.enviado) p.enviado=0; }); mpAcompTela(); toast(r.erro==='aguarde'?(r.mensagem||'Aguarde alguns segundos.'):'Não enviei pelo sistema. Toque em Enviar pelo meu WhatsApp.'); return; }
     toast(r.mensagem||'Não consegui reenviar.');
