@@ -354,6 +354,7 @@ html.clbbar #stage .ov{--ov-b:max(calc(232px + env(safe-area-inset-bottom)),var(
 #stage.sem-cards .ov{--ov-b:calc(76px + env(safe-area-inset-bottom))}
 html.clbbar #stage.sem-cards .ov{--ov-b:calc(128px + env(safe-area-inset-bottom))}
 #stage .ov.p-base.a-esq{padding-right:96px}
+.rod.col{flex-direction:column;gap:8px}.rod.col .bt{flex:none;width:100%;margin:0!important}
 #omask{position:absolute;inset:0;pointer-events:none;z-index:3}
 .ov.e-cair .ov-apoio,.ov.e-cair .ov-tit,.ov.e-cair .ov-btn{animation:ovCair .85s cubic-bezier(.2,1.3,.4,1) both}
 .ov.e-lateral{--ox:-130%}.ov.e-lateral.a-dir{--ox:130%}
@@ -577,7 +578,7 @@ function carregar(primeira){
   if(!CLI){ vazio('Bem-vindo ao LiveFood','Escaneie o QR Code da sua mesa ou abra o link do restaurante para ver o cardápio.'); try{ var vz=$('vazio'); if(vz&&!$('vz-lg')){ var g=document.createElement('img'); g.id='vz-lg'; g.src='livefood-logo.png'; g.alt='LiveFood'; g.style.cssText='height:46px;margin-bottom:18px'; vz.insertBefore(g,vz.firstChild); } }catch(e){} return Promise.resolve(); }
   return fetch(API+'/food/cardapio/'+encodeURIComponent(CLI)).then(function(r){return r.json();}).then(function(d){
     if(!d||!d.ok){ if(primeira) vazio('Cardápio não encontrado',(d&&d.mensagem)||'Confira o link.'); return; }
-    if(primeira){ D=d; CLI=d.cli||CLI; sacLer(); aplicaTema(); navOn('inicio'); temaAplica(); wizPill(); mesaInit(); document.title=(d.empresa||'Cardápio'); $('emp').innerHTML=((d.cfg&&d.cfg.logo)?'<img class="lg" src="'+API+'/food/foto/'+encodeURIComponent(d.cli||CLI)+'/_logo?v='+(d.cfg.v||0)+'" alt="'+esc(d.empresa)+'" onerror="this.outerHTML=\''+esc(d.empresa).replace(/'/g,'')+'\'">':esc(d.empresa))+'<small id="stt"></small>'; pintaStatus(); try{ if(!estaAberto()&&!sessionStorage.getItem('lf_fcm_'+(d.cli||CLI))){ sessionStorage.setItem('lf_fcm_'+(d.cli||CLI),'1'); setTimeout(abreFechado,600); } }catch(e){} manifesto(); iniciar(); clbInit(); catAplica(); }
+    if(primeira){ D=d; CLI=d.cli||CLI; sacLer(); aplicaTema(); navOn('inicio'); temaAplica(); wizPill(); mesaInit(); document.title=(d.empresa||'Cardápio'); $('emp').innerHTML=((d.cfg&&d.cfg.logo)?'<img class="lg" src="'+API+'/food/foto/'+encodeURIComponent(d.cli||CLI)+'/_logo?v='+(d.cfg.v||0)+'" alt="'+esc(d.empresa)+'" onerror="this.outerHTML=\''+esc(d.empresa).replace(/'/g,'')+'\'">':esc(d.empresa))+'<small id="stt"></small>'; pintaStatus(); try{ if(!estaAberto()&&!sessionStorage.getItem('lf_fcm_'+(d.cli||CLI))){ sessionStorage.setItem('lf_fcm_'+(d.cli||CLI),'1'); setTimeout(abreFechado,600); } }catch(e){} manifesto(); iniciar(); clbInit(); catAplica(); var rtP=(ROTA.r||Q.get('r')||'').replace(/[^a-f0-9]/g,''); if(rtP) setTimeout(function(){ rpAbre(rtP); },300); }
     else { novoD=d; if(D&&d.cfg){ D.cfg=d.cfg; pintaStatus(); } }   /* horário salvo no painel vale sem o cliente recarregar a página */
   }).catch(function(){ if(primeira) vazio('Sem conexão','Não consegui abrir o cardápio. Tente de novo.'); });
 }
@@ -1170,7 +1171,7 @@ function ctFoneFmt(d){ d=String(d||'').replace(/\D/g,'').replace(/^55(?=\d{10,11
 function ctMask(e){ var d=e.value.replace(/\D/g,'').slice(0,11); e.value=d.length>7?'('+d.slice(0,2)+') '+d.slice(2,d.length>10?7:6)+'-'+d.slice(d.length>10?7:6):d.length>2?'('+d.slice(0,2)+') '+d.slice(2):d; }
 function ctErro(m){ var e=$('ct-erro'); if(e) e.textContent=m||''; }
 function sacContinuar(){
-  if(!SAC.length) return; CT.ctx='ck'; ctLer(); if(!CT.tok) return ctLogin();
+  if(!SAC.length) return; CT.real=0; CT.ctx='ck'; ctLer(); if(!CT.tok) return ctLogin();
   if(CT.conta){ CK.anim=1; CK.open=0; ctEntrega(); ctApi('/food/conta',null,true).then(function(d){ if(d.ok){ CT.conta=d.conta; ctGrava(); } else if(d._http===401){ CT.tok=''; CT.conta=null; ctLogin(); } }); return; }
   ctApi('/food/conta',null,true).then(function(d){
     if(d.ok){ CT.conta=d.conta; ctGrava(); CK.anim=1; CK.open=0; ctEntrega(); } else if(d._http===401){ CT.tok=''; CT.conta=null; ctLogin(); } else ctLogin();
@@ -1187,8 +1188,8 @@ function mesaGuest(){
   });
 }
 function ctLogin(){
-  if(MESA&&!LOGM()) return mesaGuest();
-  abreFolha(ctCab('Entrar',(CT.ctx==='conta'||CT.ctx==='mesa'||CT.ctx==='ini')?'fechaSheet()':'abreSacola()')+'<div class="wb"><div class="nt" style="margin-top:12px;font-size:14px;color:#fff">Informe seu WhatsApp. Vamos enviar um código de 6 números para confirmar que é você.</div><label class="cl">Seu WhatsApp</label><input class="cin" id="ct-fone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(47) 99999-9999" maxlength="16" oninput="ctMask(this)"><div class="ce" id="ct-erro"></div></div><div class="rod"><button class="bt c" id="ct-bt" onclick="ctPedeCodigo()">Receber código</button></div>',true);
+  if(MESA&&!LOGM()&&!CT.real) return mesaGuest();
+  abreFolha(ctCab('Entrar',(CT.ctx==='conta'||CT.ctx==='mesa'||CT.ctx==='ini'||CT.ctx==='mp')?'fechaSheet()':'abreSacola()')+'<div class="wb"><div class="nt" style="margin-top:12px;font-size:14px;color:#fff">Informe seu WhatsApp. Vamos enviar um código de 6 números para confirmar que é você.</div><label class="cl">Seu WhatsApp</label><input class="cin" id="ct-fone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(47) 99999-9999" maxlength="16" value="'+esc(CT.fonePre?ctFoneFmt(CT.fonePre):'')+'" oninput="ctMask(this)"><div class="ce" id="ct-erro"></div></div><div class="rod"><button class="bt c" id="ct-bt" onclick="ctPedeCodigo()">Receber código</button></div>',true);
 }
 function ctPedeCodigo(){
   var d=($('ct-fone')||{value:CT.fone}).value.replace(/\D/g,''); if(d.length<10||d.length>11){ ctErro('Confira o número: DDD + número.'); return; }
@@ -1211,7 +1212,7 @@ function ctEntrar(){
 }
 function ctEndTxt(e){ return esc(e.rua)+', '+esc(e.numero)+(e.compl?' · '+esc(e.compl):'')+'<br>'+esc(e.bairro)+' · '+esc(e.cidade)+(e.uf?'/'+esc(e.uf):''); }
 function ckKeep(){ var v={}; ['ck-cpf','ck-obs','ck-tr','ck-cn','ck-cnome','ck-cval','ck-ccv','ck-cmail','ck-ccep','ck-cnum'].forEach(function(i){ var e=$(i); if(e) v[i]=e.value; }); ckResumo(); Object.keys(v).forEach(function(i){ var e=$(i); if(e) e.value=v[i]; }); }
-function ctEntrega(){ if(CT.ctx==='ini'){ fechaSheet(); mesaSplashFecha(); } else if(CT.ctx==='conta') contaTela(); else if(CT.ctx==='mesa') mesaContaTela(); else ckKeep(); }
+function ctEntrega(){ if(CT.ctx==='ini'){ fechaSheet(); mesaSplashFecha(); } else if(CT.ctx==='conta') contaTela(); else if(CT.ctx==='mesa') mesaContaTela(); else if(CT.ctx==='mp') mpDepoisLogin(); else ckKeep(); }
 function ctModo(m){ EN.modo=m; ctGrava(); ctEntrega(); }
 function ctSelEnd(id){ EN.end=id; ctGrava(); ctEntrega(); }
 function ctSegue(){
@@ -1316,7 +1317,7 @@ function garcomChama(){
     if(d&&d.ok) toast('🛎 Garçom chamado! Já vamos até a mesa '+MESA+'.'); else { GAR.ult=0; toast((d&&d.mensagem)||'Não consegui chamar agora. Chame o garçom pessoalmente.'); }
   }).catch(function(){ GAR.ult=0; toast('Sem conexão. Tente de novo.'); });
 }
-function ckCid(id){ CK.cid=id; ckKeep(); }
+function ckCid(id){ CK.cid=id; if(MP.formaTela) mpFormaTela(); else ckKeep(); }
 function ckCardNum(e){ var d=e.value.replace(/\D/g,'').slice(0,19); e.value=d.replace(/(\d{4})(?=\d)/g,'$1 '); }
 function ckCardVal(e){ var d=e.value.replace(/\D/g,'').slice(0,4); e.value=d.length>2?d.slice(0,2)+'/'+d.slice(2):d; }
 function ckLuhn(n){ var s=0,alt=false,i,d; for(i=n.length-1;i>=0;i--){ d=+n[i]; if(alt){ d*=2; if(d>9) d-=9; } s+=d; alt=!alt; } return s%10===0; }
@@ -1432,7 +1433,213 @@ function ckOk(p){
 }
 /* ── (052) FECHAR CONTA da mesa: soma tudo que a mesa pediu; Pix paga na hora, cartão/dinheiro no caixa ── */
 var MC={forma:'pix',d:null,tmr:null};
-function mesaFechar(){ if(!MESA) return; CT.ctx='mesa'; ctLer(); if(!CT.tok) return ctLogin(); MC.forma='pix'; mesaContaTela(); }
+/* (159) PAGAMENTO PELO CELULAR NA MESA E RACHA. Cada pagamento é uma parte da conta; a mesa fecha sozinha quando as partes cobrem o total. Só aparece com a opção ligada no painel. */
+var MP={d:null,parte:null,forma:'',formaTela:false,envio:{},prox:null,consente:0,tmr:null,n:2,pes:[],val:[],rp:null,cpfN:false};
+function mpOn(){ return !!(D.cfg&&D.cfg.pagMesa); }
+function mpRachaOn(){ return !!(D.cfg&&D.cfg.racha); }
+function mpAnon(){ return !CT.tok||!CT.conta||/^mesa/i.test(String(CT.conta.fone||'')); }
+function mpMesa(){ return MP.rp?MP.rp.parte.mesa:MESA; }
+function mpLink(id){ return location.origin+'/'+encodeURIComponent((D&&D.slug)||CLI)+'/r/'+id; }
+function mpAbre(){ MP.rp=null; CT.real=0; CT.ctx='mp'; MP.prox=null; ctLer(); if(!CT.tok) return ctLogin(); mpDepoisLogin(); }
+function mpDepoisLogin(){ var f=MP.prox; MP.prox=null; CT.real=0; if(f) return f(); mpCarrega(mpDecide); }
+function mpReal(prox){ MP.prox=prox; CT.ctx='mp'; if(!mpAnon()) return mpDepoisLogin(); CT.real=1; CT.tok=''; CT.conta=null; ctLogin(); }
+function mpCarrega(cb){
+  ctApi('/food/pedidos-mesa-pag?mesa='+encodeURIComponent(mpMesa()),null,true).then(function(r){
+    if(r._http===401){ CT.tok=''; CT.conta=null; ctLogin(); return; }
+    if(!r.ok){ abreFolha(ctCab('Conta','fechaSheet()')+'<div class="wb"><div class="nt" style="margin-top:14px">'+esc(r.mensagem||'Não consegui abrir a conta. Tente de novo.')+'</div></div>',true); return; }
+    MP.d=r; MP.consente=r.consente; cb();
+  });
+}
+function mpDecide(){
+  var e=MP.d.estado;
+  if(!e.pedidos.length){ abreFolha(ctCab('Conta','fechaSheet()')+'<div class="wb"><div class="nt" style="margin-top:14px;font-size:14.5px;color:#fff">Sua mesa não tem pedidos em aberto no momento.</div></div><div class="rod"><button class="bt c" onclick="fechaSheet()">Voltar</button></div>',true); return; }
+  if(e.partes.length) return mpAcomp();
+  abreFolha(ctCab('Conta da mesa '+esc(MESA),'fechaSheet()')+'<div class="wb"><div style="font-size:21px;font-weight:800;margin-top:16px">Deseja pagar por aqui?</div>'+mpResumo(e)+'</div><div class="rod col"><button class="bt c" onclick="mpPay()">Sim, pagar por aqui</button><button class="bt c g" style="background:transparent;border:2px solid var(--pri);color:var(--tx,#fff)" onclick="mpGarcom()">Não, chamar o garçom</button></div>',true);
+}
+function mpGarcom(){ fechaSheet(); garcomChama(); }
+function mpResumo(e){
+  var h='<div style="margin-top:12px">';
+  e.pedidos.forEach(function(x){ (x.linhas&&x.linhas.length?x.linhas:[{txt:x.itens,v:x.total}]).forEach(function(k){ h+='<div class="rsm"><div class="tx"><small style="font-size:13.5px;color:#fff">'+esc(k.txt)+'</small></div><div class="vl">'+brl(k.v)+'</div></div>'; }); });
+  return h+'</div><div class="tt" style="padding:12px 0 0;font-size:17px"><span>Total da mesa</span><span>'+brl(e.total)+'</span></div>'+(e.pago>0?'<div class="tt" style="padding:6px 0 0;font-size:15px;color:#4ade80"><span>Já pago</span><span>'+brl(e.pago)+'</span></div><div class="tt" style="padding:6px 0 0;font-size:17px"><span>Falta pagar</span><span>'+brl(e.falta)+'</span></div>':'');
+}
+function mpOpc(ic,t,s,fn){ return '<div class="ad" onclick="'+fn+'" style="align-items:center"><div style="font-size:22px;width:26px;text-align:center;flex:none">'+ic+'</div><div class="tx"><b>'+t+'</b><small>'+s+'</small></div></div>'; }
+function mpPay(){
+  var e=MP.d.estado, tem=e.partes.length>0;
+  var h=ctCab('Como você quer pagar?',tem?'mpAcomp()':'mpDecide()')+'<div class="wb"><div class="tt" style="padding:14px 0 2px;font-size:17px"><span>'+(tem?'Falta pagar':'Total da mesa')+'</span><span>'+brl(e.falta)+'</span></div>';
+  h+='<div style="margin-top:14px;font-weight:800;font-size:15px">'+(tem?'Pagar o que falta':'Pagar conta total')+'</div><div class="nt" style="margin:2px 0 8px">Selecione a opção abaixo</div>';
+  h+=mpOpc('▦','Pix','QR Code e copia e cola',"mpTotal('pix')")+mpOpc('💳','Cartão','Na primeira vez você cadastra',"mpTotal('cartao')");
+  if(tem) h+='<div class="nt" style="margin-top:8px">Os links que ainda não foram pagos deixam de valer.</div>';
+  if(mpRachaOn()&&!tem){ h+='<div style="margin-top:18px;font-weight:800;font-size:15px">Rachar a conta</div><div class="nt" style="margin:2px 0 8px">Escolha como dividir</div>';
+    h+=mpOpc('👥','Rachar por igual','Todos pagam o mesmo valor',"mpReal(mpIgual)")+mpOpc('🪙','Valor específico','Cada um paga quanto quiser, ou alguém sai e paga só a parte dele',"mpReal(mpValor)"); }
+  abreFolha(h+'<div class="ce" id="ct-erro"></div></div>',true);
+}
+function mpTotal(forma){
+  if(forma==='cartao'&&mpAnon()) return mpReal(function(){ mpCarrega(function(){ mpTotal('cartao'); }); });
+  ctErro(''); ctApi('/food/pedidos-mesa-racha',{mesa:MESA,modo:'total'}).then(function(r){
+    if(r._http===401){ CT.tok=''; CT.conta=null; return ctLogin(); }
+    if(!r.ok){ ctErro(r.mensagem||'Não consegui abrir o pagamento.'); return; }
+    MP.d.estado=r.estado; MP.parte={id:r.minha,valor:r.estado.falta}; mpForma(forma);
+  });
+}
+/* ── tela de pagamento (Pix ou cartão), da mesa ou de quem recebeu o link ── */
+function mpForma(forma){ MP.forma=forma; MP.cpfN=false; CK.cid=undefined; MP.formaTela=true; mpFormaTela(); }
+function mpVolta(){ MP.formaTela=false; if(MP.rp) rpTela(); else mpCarrega(MP.d&&MP.d.estado.partes.length>1?mpAcomp:mpPay); }
+function mpFormaTela(){
+  var c=CT.conta||{}, f=MP.forma, h=ctCab(f==='pix'?'Pagar com Pix':'Pagar com cartão','mpVolta()')+'<div class="wb"><div class="tt" style="padding:14px 0 4px;font-size:17px"><span>Você está pagando</span><span>'+brl(MP.parte.valor)+'</span></div>';
+  if(f==='cartao'){ h+='<label class="cl">Cartão</label>'+ckCartaoHtml(c); if(!c.cpf) h+='<label class="cl">CPF do dono do cartão</label><input class="cin" id="ck-cpf" type="tel" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" oninput="ckCpfFmt(this)">'; }
+  else if(MP.cpfN&&!c.cpf) h+='<label class="cl">Seu CPF (necessário para gerar o Pix)</label><input class="cin" id="ck-cpf" type="tel" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" oninput="ckCpfFmt(this)">';
+  else if(c.cpf) h+='<div class="nt" style="margin-top:8px">CPF do pagamento: '+esc(c.cpf)+'</div>';
+  if(!mpAnon()&&!MP.consente) h+='<label style="display:flex;gap:9px;align-items:flex-start;margin-top:14px;font-size:13px;line-height:1.4"><input type="checkbox" id="mp-cons" style="width:18px;height:18px;flex:none;margin-top:1px"><span>Autorizo guardar meus dados para os próximos pedidos, conforme a <a href="privacidade.html" target="_blank" style="color:var(--pri2);text-decoration:underline">política de privacidade</a>.</span></label>';
+  abreFolha(h+'<div class="ce" id="ct-erro"></div></div><div class="rod"><button class="bt c" id="ct-bt" onclick="mpPagar()">'+(f==='pix'?'Gerar o Pix':'Pagar '+brl(MP.parte.valor))+'</button></div>',true);
+}
+function mpPagar(){
+  var f=MP.forma, ce=$('ck-cpf'), cpf=ce?ce.value.replace(/\D/g,''):''; if(ce&&cpf.length!==11){ ctErro('Digite os 11 números do CPF.'); return; }
+  var corpo={id:MP.parte.id,forma:f,cpf:cpf||undefined,consente:!!(MP.consente||($('mp-cons')&&$('mp-cons').checked))};
+  if(f==='cartao'){
+    if(CK.cid) corpo.cartao_id=CK.cid;
+    else {
+      var gv=function(i){ var x=$(i); return x?x.value.trim():''; }, nm=gv('ck-cn').replace(/\D/g,''), vl=gv('ck-cval').split('/'), mail=gv('ck-cmail');
+      if(nm.length<13||!ckLuhn(nm)){ ctErro('Confira o número do cartão.'); return; }
+      if(gv('ck-cnome').length<3){ ctErro('Digite o nome como está no cartão.'); return; }
+      if(vl.length!==2||vl[0].length!==2||vl[1].length!==2){ ctErro('Digite a validade no formato MM/AA.'); return; }
+      if(gv('ck-ccv').length<3){ ctErro('Digite o CVV do cartão (3 ou 4 números).'); return; }
+      if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(mail)){ ctErro('Digite um e-mail válido.'); return; }
+      if(gv('ck-ccep').replace(/\D/g,'').length!==8||!gv('ck-cnum')){ ctErro('Informe o CEP e o número da fatura do cartão.'); return; }
+      try{ localStorage.setItem('lf_mail',mail); }catch(x){}
+      corpo.cartao={numero:nm,nome:gv('ck-cnome'),mes:vl[0],ano:vl[1],ccv:gv('ck-ccv')}; corpo.email=mail; corpo.cep=gv('ck-ccep'); corpo.numero_end=gv('ck-cnum'); corpo.salvar=!!($('ck-csv')&&$('ck-csv').checked); if(corpo.salvar) corpo.consente=true;
+    }
+  }
+  var b=$('ct-bt'); b.disabled=true; b.textContent=f==='pix'?'Gerando o Pix…':'Pagando…'; ctErro('');
+  ctApi('/food/pedidos-parte-pagar',corpo).then(function(r){
+    if(r.ok){
+      if(r.conta){ CT.conta=r.conta; ctGrava(); } if(corpo.consente){ if(!MP.consente) MP.novoCad=1; MP.consente=1; }
+      if(r.parte.status==='paga') return mpPago();
+      MP.formaTela=false; if(f==='pix') return mpPix(r.parte); return mpEspera();
+    }
+    b.disabled=false; b.textContent=f==='pix'?'Gerar o Pix':'Pagar '+brl(MP.parte.valor);
+    if(r.erro==='cpf_necessario'&&!ce){ MP.cpfN=true; CT.conta=CT.conta||{}; mpFormaTela(); ctErro(r.mensagem||'Informe o seu CPF.'); return; }
+    if(r.erro==='login'||r._http===401){ MP.formaTela=false; var pt=MP.parte; return mpReal(function(){ MP.parte=pt; mpForma(f); }); }
+    ctErro(r.mensagem||'Não consegui concluir o pagamento.');
+  });
+}
+function mpPix(p){
+  abreFolha(ctCab('Pagar com Pix','mpVolta()')+'<div class="wb" style="text-align:center"><div style="margin:14px 0 4px;font-size:15px"><b>'+brl(MP.parte.valor)+'</b></div>'+(p.pix_qr?'<img alt="QR Code Pix" src="data:image/png;base64,'+esc(p.pix_qr)+'" style="width:220px;height:220px;background:#fff;padding:8px;border-radius:14px;margin:10px auto;display:block">':'')+'<div class="nt" style="font-size:13.5px;color:#fff">Abra o app do seu banco, escolha <b>Pix</b> e leia o QR Code, ou use o código abaixo.</div><textarea id="ck-cod" readonly rows="3" style="margin-top:12px;font-size:12px">'+esc(p.pix_copia)+'</textarea><button class="bt c" style="flex:none;width:100%;margin-top:10px" onclick="ckCopia()">Copiar código Pix</button><div id="mp-st" style="margin-top:16px;font-size:14px;color:var(--pri2)">⏳ Aguardando o pagamento… confirmamos aqui sozinho.</div></div>',true);
+  mpVigia();
+}
+function mpEspera(){ abreFolha(ctCab('Pagamento','mpVolta()')+'<div class="wb" style="text-align:center"><div id="mp-st" style="margin-top:30px;font-size:15px;color:var(--pri2)">⏳ O banco está analisando o pagamento. Confirmamos aqui sozinho.</div></div>',true); mpVigia(); }
+function mpVigia(){
+  clearInterval(MP.tmr); MP.tmr=setInterval(function(){
+    if(!$('mp-st')){ clearInterval(MP.tmr); return; }
+    fetch(API+'/food/pedidos-parte/'+encodeURIComponent(MP.parte.id)).then(function(r){ return r.json(); }).then(function(r){
+      if(!r||!r.ok||!$('mp-st')) return;
+      if(r.parte.status==='paga'){ clearInterval(MP.tmr); mpPago(); }
+      else if(r.parte.status==='cancelada'){ clearInterval(MP.tmr); $('mp-st').textContent='A conta mudou e este pagamento não vale mais.'; }
+      else if(r.parte.status==='aberta'){ clearInterval(MP.tmr); $('mp-st').innerHTML='O tempo do Pix acabou. <button class="lk" onclick="mpVolta()">Gerar um novo</button>'; }
+    }).catch(function(){});
+  },4000);
+}
+function mpOkSvg(){ return '<svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg>'; }
+function mpPago(){
+  MP.formaTela=false; clearInterval(MP.tmr);
+  var cad=MP.novoCad?'<div style="margin-top:16px;background:#ffffff14;border-radius:12px;padding:12px;font-size:13.5px;line-height:1.45">Cadastro feito. Na próxima vez, seus dados já estarão salvos e o pagamento é mais rápido.</div>':''; MP.novoCad=0;
+  if(MP.rp){ if(window.LiveApp) LiveApp.comemorar({titulo:'Pagamento confirmado!',sub:'Obrigado pela visita!'});
+    abreFolha('<div class="wb" style="text-align:center;padding:36px 20px 24px">'+mpOkSvg()+'<div style="font-size:22px;font-weight:800;margin-top:14px">Pagamento confirmado</div><div style="margin-top:8px;color:var(--mut);font-size:14.5px;line-height:1.5">Sua parte da mesa '+esc(MP.rp.parte.mesa)+' foi paga: <b style="color:#fff">'+brl(MP.parte.valor)+'</b>.<br>Quem abriu a conta já está vendo.</div>'+cad+'</div><div class="rod"><button class="bt c" onclick="fechaSheet()">Ver '+esc(catRef())+'</button></div>',true); return; }
+  mpCarrega(function(){
+    var e=MP.d.estado;
+    if(e.total>0&&e.falta>0.009&&e.partes.length) { abreFolha('<div class="wb" style="text-align:center;padding:30px 20px 18px">'+mpOkSvg()+'<div style="font-size:22px;font-weight:800;margin-top:14px">Pagamento confirmado</div><div style="margin-top:8px;color:var(--mut);font-size:14.5px;line-height:1.5">Ainda faltam <b style="color:#fff">'+brl(e.falta)+'</b> nesta mesa.</div>'+cad+'</div><div class="rod"><button class="bt c" onclick="mpAcomp()">Ver quem já pagou</button></div>',true); return; }
+    if(window.LiveApp) LiveApp.comemorar({titulo:'Conta paga!',sub:'Obrigado pela visita! Volte sempre 🧡'});
+    abreFolha('<div class="wb" style="text-align:center;padding:36px 20px 24px">'+mpOkSvg()+'<div style="font-size:22px;font-weight:800;margin-top:14px">Conta paga!</div><div style="margin-top:8px;color:var(--mut);font-size:14.5px;line-height:1.5">A mesa '+esc(MESA)+' está fechada.<br>Obrigado pela visita! Volte sempre.</div>'+cad+'</div><div class="rod"><button class="bt c" onclick="fechaSheet();mesaInit(true)">Voltar ao início</button></div>',true);
+  });
+}
+/* ── rachar por igual ── */
+function mpIgual(){ if(!MP.d||!MP.d.estado) return mpCarrega(mpIgual); if(!MP.pes.length) MP.pes=[{nome:'',fone:''}]; MP.n=MP.pes.length+1; mpIgualTela(); }
+function mpPesN(d){ var n=Math.max(2,Math.min(12,MP.n+d)); while(MP.pes.length<n-1) MP.pes.push({nome:'',fone:''}); MP.pes=MP.pes.slice(0,n-1); MP.n=n; mpIgualTela(); }
+function mpIgualTela(){
+  var f=MP.d.estado.falta, c=Math.floor(f*100/MP.n)/100, eu=Math.round((f-c*(MP.n-1))*100)/100;
+  var h=ctCab('Rachar por igual','mpPay()')+'<div class="wb"><div class="tt" style="padding:14px 0 6px;font-size:16px;align-items:center"><span>Quantas pessoas?</span><span style="display:flex;align-items:center;gap:12px"><button class="lk" style="width:36px;height:36px;border:1px solid var(--line);border-radius:10px;font-size:20px;color:#fff;text-decoration:none" onclick="mpPesN(-1)">−</button><b id="mp-n">'+MP.n+'</b><button class="lk" style="width:36px;height:36px;border:1px solid var(--line);border-radius:10px;font-size:20px;color:#fff;text-decoration:none" onclick="mpPesN(1)">+</button></span></div>';
+  h+='<div class="nt" style="font-size:14px;color:#fff">Cada pessoa paga <b>'+brl(c)+'</b>.'+(eu!==c?' Os centavos que sobram ficam com você.':'')+'</div>';
+  h+='<div class="rsm" style="margin-top:10px"><div class="tx"><b>'+esc((CT.conta||{}).nome||'Você')+' (você)</b></div><div class="vl">'+brl(eu)+'</div></div>';
+  MP.pes.forEach(function(p,i){ h+='<div style="border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-top:10px"><div style="display:flex;justify-content:space-between;font-size:13px;color:var(--mut)"><span>Pessoa '+(i+2)+'</span><span>'+brl(c)+'</span></div><input class="cin" placeholder="Nome" maxlength="60" autocomplete="off" value="'+esc(p.nome)+'" oninput="MP.pes['+i+'].nome=this.value" style="margin-top:6px"><input class="cin" type="tel" inputmode="tel" placeholder="WhatsApp (47) 99999-9999" maxlength="16" value="'+esc(p.fone)+'" oninput="ctMask(this);MP.pes['+i+'].fone=this.value" style="margin-top:6px"></div>'; });
+  abreFolha(h+'<div class="ce" id="ct-erro"></div></div><div class="rod"><button class="bt c" id="ct-bt" onclick="mpEnviaIgual()">Enviar os links</button></div>',true);
+}
+function mpChecaPes(l,ini){ for(var i=0;i<l.length;i++){ if(String(l[i].nome||'').trim().length<2){ ctErro('Preencha o nome da pessoa '+(i+ini)+'.'); return false; } var d=String(l[i].fone||'').replace(/\D/g,''); if(d.length<10||d.length>11){ ctErro('Confira o WhatsApp da pessoa '+(i+ini)+'.'); return false; } } return true; }
+function mpEnviaIgual(){ if(!mpChecaPes(MP.pes,2)) return; mpCria('igual',MP.pes); }
+function mpCria(modo,pessoas){
+  var b=$('ct-bt'); b.disabled=true; b.textContent='Enviando…'; ctErro('');
+  ctApi('/food/pedidos-mesa-racha',{mesa:MESA,modo:modo,pessoas:pessoas}).then(function(r){
+    if(!r.ok){ b.disabled=false; b.textContent='Enviar os links'; if(r.erro==='login'){ return mpReal(modo==='igual'?mpIgual:mpValor); } ctErro(r.mensagem||'Não consegui enviar.'); return; }
+    MP.d.estado=r.estado; (r.envio||[]).forEach(function(x){ MP.envio[x.id]=x; }); MP.pes=[]; MP.val=[]; mpAcomp();
+  });
+}
+/* ── valor específico: um valor para cada um, ou só quem está indo embora ── */
+function mpValor(){ if(!MP.d||!MP.d.estado) return mpCarrega(mpValor); if(!MP.val.length) MP.val=[{nome:'',fone:'',valor:''}]; mpValorTela(); }
+function mpNum(v){ var n=parseFloat(String(v||'').replace(/\./g,'').replace(',','.')); return isFinite(n)&&n>0?n:0; }
+function mpValorSobra(){ var s=0; MP.val.forEach(function(x){ s+=mpNum(x.valor); }); return Math.round((MP.d.estado.aberto-s)*100)/100; }
+function mpValorPinta(){ var e=$('mp-sobra'); if(!e) return; var s=mpValorSobra(); e.innerHTML=s>=0?'<span>Fica aberto na mesa</span><span>'+brl(s)+'</span>':'<span style="color:#f87171">Passou do que falta</span><span style="color:#f87171">'+brl(-s)+'</span>'; }
+function mpValorTela(){
+  var tem=MP.d.estado.partes.length>0, h=ctCab('Valor específico',tem?'mpAcomp()':'mpPay()')+'<div class="wb"><div class="nt" style="margin-top:12px;font-size:13.5px">Preencha quem vai pagar agora e quanto. Se só uma pessoa está indo embora, preencha só ela: o resto continua aberto na mesa.</div>';
+  MP.val.forEach(function(p,i){ h+='<div style="border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-top:10px"><div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--mut)"><span>Pessoa '+(i+1)+'</span>'+(MP.val.length>1?'<button class="lk" onclick="MP.val.splice('+i+',1);mpValorTela()">Tirar</button>':'')+'</div><input class="cin" placeholder="Nome" maxlength="60" autocomplete="off" value="'+esc(p.nome)+'" oninput="MP.val['+i+'].nome=this.value" style="margin-top:6px"><input class="cin" type="tel" inputmode="tel" placeholder="WhatsApp (47) 99999-9999" maxlength="16" value="'+esc(p.fone)+'" oninput="ctMask(this);MP.val['+i+'].fone=this.value" style="margin-top:6px"><input class="cin" inputmode="decimal" placeholder="Valor R$ 0,00" maxlength="10" value="'+esc(p.valor)+'" oninput="MP.val['+i+'].valor=this.value;mpValorPinta()" style="margin-top:6px"></div>'; });
+  h+='<button class="lk" style="margin-top:12px;font-size:14px" onclick="MP.val.push({nome:\'\',fone:\'\',valor:\'\'});mpValorTela()">+ Adicionar pessoa</button><div class="tt" id="mp-sobra" style="padding:12px 0 0;font-size:16px"></div>';
+  abreFolha(h+'<div class="ce" id="ct-erro"></div></div><div class="rod"><button class="bt c" id="ct-bt" onclick="mpEnviaValor()">Enviar os links</button></div>',true); mpValorPinta();
+}
+function mpEnviaValor(){
+  if(!mpChecaPes(MP.val,1)) return; var i; for(i=0;i<MP.val.length;i++){ if(mpNum(MP.val[i].valor)<5){ ctErro('Pessoa '+(i+1)+': o valor mínimo é R$ 5,00.'); return; } }
+  if(mpValorSobra()<0){ ctErro('A soma passou do que falta pagar. Ajuste os valores.'); return; }
+  mpCria('valor',MP.val.map(function(x){ return {nome:x.nome,fone:x.fone,valor:String(mpNum(x.valor))}; }));
+}
+/* ── quem já pagou ── */
+function mpAcomp(){ clearInterval(MP.tmr); mpAcompTela(); MP.tmr=setInterval(function(){ if(!$('mp-ac')){ clearInterval(MP.tmr); return; } ctApi('/food/pedidos-mesa-pag?mesa='+encodeURIComponent(MESA),null,true).then(function(r){ if(!r.ok||!$('mp-ac')) return; var a=JSON.stringify(MP.d.estado), b=JSON.stringify(r.estado); MP.d=r; if(a!==b){ if(!r.estado.partes.length&&!r.estado.total){ clearInterval(MP.tmr); mpPago(); return; } mpAcompTela(); } }); },5000); }
+function mpWaHref(x){ return 'https://wa.me/'+String(x.fone||'').replace(/\D/g,'')+'?text='+encodeURIComponent(x.texto||''); }
+function mpAcompTela(){
+  var e=MP.d.estado, np=e.partes.length, pct=e.total>0?Math.min(100,Math.round(e.pago/e.total*100)):0;
+  var h=ctCab(np>1?'Conta rachada entre '+np:'Pagamento de uma parte','fechaSheet()')+'<div class="wb" id="mp-ac"><div class="tt" style="padding:14px 0 6px;font-size:17px"><span>Já pago</span><span>'+brl(e.pago)+'</span></div><div style="height:8px;border-radius:9px;background:#ffffff22;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:var(--pri)"></div></div><div class="nt" style="margin-top:6px">Faltam <b style="color:#fff">'+brl(e.falta)+'</b> de '+brl(e.total)+'. A mesa fecha sozinha quando chegar a 100%.</div>';
+  e.partes.forEach(function(p){
+    var pago=p.status==='paga', ac='';
+    if(pago) ac='<span style="color:#4ade80;font-size:13px;font-weight:800">Pago</span>';
+    else if(p.minha) ac='<button class="bt c" style="flex:none;width:auto;padding:8px 13px;font-size:13px;margin:0" onclick="mpMinha(\''+esc(p.id)+'\','+Number(p.valor)+')">Pagar</button>';
+    else if(p.id){ var x=MP.envio[p.id]; ac=(x&&!p.enviado)?'<a class="lk" style="font-size:12.5px;text-align:right" target="_blank" rel="noopener" href="'+esc(mpWaHref(x))+'">Enviar pelo meu WhatsApp</a>':'<button class="lk" style="font-size:12.5px" onclick="mpReenvia(\''+esc(p.id)+'\')">Reenviar</button>'; ac+='<button class="lk" style="font-size:12.5px;margin-left:8px" onclick="mpCopia(\''+esc(p.id)+'\')">Copiar link</button>'; }
+    else ac='<span style="color:var(--mut);font-size:12.5px">Aguardando</span>';
+    h+='<div class="rsm" style="align-items:center;gap:8px"><div class="tx"><b>'+esc(p.nome)+'</b><small>'+brl(p.valor)+(pago&&p.forma?' · '+(p.forma==='pix'?'Pix':'Cartão'):'')+'</small></div><div style="flex:none;display:flex;align-items:center;flex-wrap:wrap;justify-content:flex-end;max-width:62%">'+ac+'</div></div>';
+  });
+  if(e.aberto>0.009) h+='<div class="rsm"><div class="tx"><b>Continua aberto na mesa</b></div><div class="vl">'+brl(e.aberto)+'</div></div>';
+  h+='</div><div class="rod col">'+(e.falta>=5?'<button class="bt c" onclick="mpPay()">Pagar o que falta</button>':'')+((mpRachaOn()&&e.aberto>=5)?'<button class="bt c g" style="background:transparent;border:2px solid var(--pri);color:var(--tx,#fff)" onclick="MP.val=[];mpReal(mpValor)">Adicionar pessoa</button>':'')+'<button class="bt c g" style="background:transparent;border:2px solid var(--line);color:var(--tx,#fff)" onclick="mpGarcom()">Chamar o garçom</button></div>';
+  abreFolha(h,true);
+}
+function mpMinha(id,v){ MP.parte={id:id,valor:v}; var f=MP.d.estado.partes.filter(function(p){ return p.id===id; })[0]; if(f&&f.status==='aguardando_pagto'&&f.pix_copia) return mpPix(f); abreFolha(ctCab('Pagar minha parte','mpAcomp()')+'<div class="wb"><div class="tt" style="padding:14px 0 10px;font-size:17px"><span>Você está pagando</span><span>'+brl(v)+'</span></div>'+mpOpc('▦','Pix','QR Code e copia e cola',"mpForma('pix')")+mpOpc('💳','Cartão','Na primeira vez você cadastra',"mpMinhaCartao()")+'</div>',true); }
+function mpMinhaCartao(){ if(mpAnon()){ var pt=MP.parte; return mpReal(function(){ MP.parte=pt; mpForma('cartao'); }); } mpForma('cartao'); }
+function mpReenvia(id){
+  ctApi('/food/pedidos-parte-reenviar',{id:id}).then(function(r){
+    if(r.texto) MP.envio[id]={id:id,fone:r.fone,texto:r.texto,enviado:r.enviado};
+    if(r.ok&&r.enviado){ toast('Mensagem enviada'); return mpCarrega(mpAcompTela); }
+    if(r.ok||r.texto){ MP.d.estado.partes.forEach(function(p){ if(p.id===id&&!r.enviado) p.enviado=0; }); mpAcompTela(); toast(r.erro==='aguarde'?(r.mensagem||'Aguarde alguns segundos.'):'Não enviei pelo sistema. Toque em Enviar pelo meu WhatsApp.'); return; }
+    toast(r.mensagem||'Não consegui reenviar.');
+  });
+}
+function mpCopia(id){ var u=mpLink(id), ok=function(){ toast('Link copiado'); }; try{ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(u).then(ok,function(){ prompt('Copie o link:',u); }); return; } }catch(e){} prompt('Copie o link:',u); }
+/* ── link de quem recebeu o racha: livefood.tec.br/<loja>/r/<código> ── */
+function rpAbre(id){
+  abreFolha(ctCab('Conta da mesa','fechaSheet()')+'<div class="wb"><div class="nt" style="margin-top:14px">Carregando…</div></div>',true);
+  fetch(API+'/food/pedidos-parte/'+encodeURIComponent(id)).then(function(r){ return r.json(); }).then(function(r){
+    if(!r||!r.ok){ abreFolha(ctCab('Conta da mesa','fechaSheet()')+'<div class="wb"><div class="nt" style="margin-top:14px;font-size:14.5px;color:#fff">'+esc((r&&r.mensagem)||'Este link não existe.')+'</div></div>',true); return; }
+    MP.rp=r; MP.parte={id:r.parte.id,valor:r.parte.valor}; rpTela();
+  }).catch(function(){ abreFolha(ctCab('Conta da mesa','fechaSheet()')+'<div class="wb"><div class="nt" style="margin-top:14px">Sem conexão. Tente de novo.</div></div>',true); });
+}
+function rpTela(){
+  var r=MP.rp, p=r.parte, e=r.estado, h=ctCab('Mesa '+esc(p.mesa)+' · '+esc(r.loja),'fechaSheet()')+'<div class="wb">';
+  if(p.status==='paga'){ abreFolha(h+'<div style="text-align:center;padding:26px 0 10px">'+mpOkSvg()+'<div style="font-size:20px;font-weight:800;margin-top:12px">Esta parte já foi paga</div></div></div><div class="rod"><button class="bt c" onclick="fechaSheet()">Ver '+esc(catRef())+'</button></div>',true); return; }
+  if(p.status==='cancelada'||!e.pedidos.length){ abreFolha(h+'<div class="nt" style="margin-top:16px;font-size:14.5px;color:#fff">A conta mudou e este link não vale mais. Fale com quem está na mesa.</div></div>',true); return; }
+  h+='<div style="margin-top:14px;font-weight:800;font-size:15px">O que foi consumido</div>'+mpResumo(e);
+  if(e.partes.length>1){ h+='<div style="margin-top:16px;font-weight:800;font-size:15px">Quem paga quanto</div>'; e.partes.forEach(function(q){ h+='<div class="rsm"><div class="tx"><b>'+esc(q.nome)+(q.eu?' (você)':'')+'</b>'+(q.status==='paga'?'<small style="color:#4ade80">Pago</small>':'')+'</div><div class="vl">'+brl(q.valor)+'</div></div>'; }); }
+  h+='<div class="tt" style="padding:16px 0 0;font-size:18px"><span>Você está pagando</span><span>'+brl(p.valor)+'</span></div>'+(e.aberto>0.009?'<div class="nt" style="margin-top:4px">Ficará em aberto na mesa: '+brl(e.aberto)+'</div>':'');
+  h+='<div style="margin-top:14px">'+mpOpc('▦','Pagar com Pix','QR Code e copia e cola',"rpForma('pix')")+mpOpc('💳','Pagar com cartão','Na primeira vez você cadastra',"rpForma('cartao')")+'</div></div>';
+  abreFolha(h,true);
+}
+function rpForma(f){
+  CT.ctx='mp'; ctLer(); CT.fonePre=MP.rp.parte.fone;
+  var seg=function(){ ctApi('/food/pedidos-mesa-pag?mesa='+encodeURIComponent(MP.rp.parte.mesa),null,true).then(function(r){ MP.consente=r&&r.ok?r.consente:0; if(r&&r._http===401){ CT.tok=''; CT.conta=null; return mpReal(seg); } MP.parte={id:MP.rp.parte.id,valor:MP.rp.parte.valor}; mpForma(f); }); };
+  mpReal(seg);
+}
+function mesaFechar(){ if(!MESA) return; if(mpOn()) return mpAbre(); CT.ctx='mesa'; ctLer(); if(!CT.tok) return ctLogin(); MC.forma='pix'; mesaContaTela(); }
 function mesaForma(f){ MC.forma=f; mesaContaMonta(); }
 function mesaContaTela(sem){
   clearInterval(MC.tmr); abreFolha(ctCab('Fechar conta','fechaSheet()')+'<div class="wb"><div class="nt" style="margin-top:14px">Carregando a conta…</div></div>',true);
