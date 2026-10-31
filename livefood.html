@@ -1967,8 +1967,9 @@ function rsvToque(n){
   if(R3&&R3.sel===n){ r3Seleciona(null); RSV.mesa=null; var pc=$('r3p'); if(pc) pc.classList.remove('on'); return; }
   /* (125) pré-visualização do painel: tocar destaca a mesa e mostra os lugares, sem botão de reservar */
   if(PREV3D){ r3Seleciona(n); r3Painel('<div class="l1"><div class="nm">'+n+'</div><div class="tx"><b>Mesa '+n+' · '+m.lug+' lugares</b><small>pré-visualização do salão</small></div></div>'); return; }
-  if(RSV.oc.indexOf(String(n))>=0){ toast('A mesa '+n+' já está reservada nesse horário'); return; }
-  if(m.lug<RSV.pes){ toast('A mesa '+n+' tem '+m.lug+' lugares. Escolha uma para '+RSV.pes); return; }
+  /* mesa que não pode ser escolhida: o motivo vai no cartão de baixo (o toast fica atrás do 3D) */
+  if(RSV.oc.indexOf(String(n))>=0||m.lug<RSV.pes){ var res=RSV.oc.indexOf(String(n))>=0; RSV.mesa=null; r3Seleciona(null);
+    r3Painel('<div class="l1"><div class="nm" style="background:'+(res?'#ef4444':'#71717a')+'">'+n+'</div><div class="tx"><b>'+(res?'Mesa '+n+' já reservada':'Mesa '+n+' tem '+m.lug+(m.lug===1?' lugar':' lugares'))+'</b><small>'+(res?'Escolha uma mesa verde.':'Escolha uma mesa verde para '+RSV.pes+(RSV.pes>1?' pessoas.':' pessoa.'))+'</small></div></div>'); return; }
   RSV.mesa=n; r3Seleciona(n);
   r3Painel('<div class="l1"><div class="nm">'+n+'</div><div class="tx"><b>Mesa '+n+' · '+m.lug+' lugares</b><small>'+RSV.pes+(RSV.pes>1?' pessoas':' pessoa')+' · '+esc(rsvQuando())+'</small></div></div><button class="bt c" onclick="rsvDados()">Reservar esta mesa</button>');
 }
