@@ -1,0 +1,131 @@
+/* (155) LIVE DE AJUDA DO PAINEL: o personagem fica no canto, responde dúvidas e guia na própria tela.
+   O guia só aponta o caminho: abre telas e janelas, mas nunca toca em Salvar. As respostas vêm de ajuda/manual-live.md (dentro do Worker).
+   Cada guia aqui tem o mesmo id citado no manual. */
+(function(){
+  var C=function(f){ return '#pg-cardapio button[onclick="'+f+'()"]'; }, CFG=function(f){ return '#pg-config .cfgcard[onclick="'+f+'()"]'; }, MZ=function(f){ return '#pg-mesas button[onclick="'+f+'()"]'; };
+  var GUIAS={
+    produto_novo:{t:'Criar um produto',k:'produto novo cadastrar item prato criar adicionar',p:[{pg:'cardapio',a:C('cdNovo'),tx:'Toque aqui para criar um produto.',c:1},{a:'#cd-foto-box',tx:'Toque aqui para colocar a foto.'},{a:'#cd-nome',tx:'Escreva o nome do produto. É o único campo obrigatório.'},{a:'#cd-preco',tx:'Coloque o preço. Se tiver tamanhos, o preço vem de cada tamanho.'},{a:'#cd-cat',tx:'Escolha a categoria em que ele aparece.'},{a:'#cd-salvar',tx:'Quando terminar, toque em Salvar.',s:1}]},
+    produto_opcoes:{t:'Tamanhos, sabores e adicionais',k:'tamanho sabor adicional borda opcoes complemento',p:[{pg:'cardapio',a:C('cdNovo'),tx:'Abra um produto novo, ou toque em um produto da lista.',c:1},{a:'#sh-produto button[onclick="cdAddTam()"]',tx:'Aqui você adiciona os tamanhos, cada um com seu preço.'},{a:'#sh-produto button[onclick="cdAddSab()"]',tx:'Aqui você adiciona os sabores. O cliente precisa escolher.'},{a:'#sh-produto button[onclick="cdAddAd()"]',tx:'Aqui você adiciona os adicionais, com o preço de cada um.'},{a:'#cd-salvar',tx:'Toque em Salvar quando terminar.',s:1}]},
+    categorias:{t:'Criar categorias',k:'categoria grupo secao cozinha bar destino',p:[{pg:'cardapio',a:C('cdAbrirCats'),tx:'Toque em Categorias.',c:1},{a:'#cd-cat-nova',tx:'Escreva o nome da categoria e toque em Adicionar.'},{a:'#cd-cats-lista',tx:'Em cada categoria você coloca a foto e escolhe se os pedidos vão para a Cozinha ou para o Bar.'}]},
+    importar_planilha:{t:'Importar por planilha',k:'planilha importar excel xlsx lista produtos',p:[{pg:'cardapio',a:C('cdAbrirImport'),tx:'Toque em Importar planilha.',c:1},{a:'#cd-imp-corpo',tx:'Baixe a planilha modelo, preencha e envie. O painel mostra um resumo antes de salvar.'}]},
+    fotos_lote:{t:'Colocar fotos em lote',k:'fotos lote varias imagens',p:[{pg:'cardapio',a:C('cdFotosLote'),tx:'Toque em Fotos em lote.',c:1},{a:'#cd-imp-corpo',tx:'Escolha as fotos. Cada uma vai para o produto de nome parecido, e você confere um resumo antes.'}]},
+    link_cardapio:{t:'Pegar o link do cardápio',k:'link endereco url compartilhar divulgar cardapio',p:[{pg:'cardapio',a:C('cdLinkCardapio'),tx:'Toque em Link do cardápio.',c:1},{a:'#cd-link-in',tx:'Este é o seu link. Copie e envie para os clientes.'}]},
+    codigo_barras:{t:'Cadastrar código de barras',k:'codigo barras ean bipar leitor',p:[{pg:'cardapio',a:C('cdNovo'),tx:'Abra um produto novo, ou toque em um produto da lista.',c:1},{a:'#cd-barras',tx:'Bipe o produto ou digite o código aqui. Cada código só pode estar em um produto.'},{a:'#cd-salvar',tx:'Toque em Salvar quando terminar.',s:1}]},
+    oferta_nova:{t:'Criar uma oferta',k:'oferta promocao video banner destaque',p:[{pg:'cardapio',a:C('cdAbrirOfertas'),tx:'Toque em Ofertas.',c:1},{a:'#sh-ofertas button[onclick="cdOfNova([])"]',tx:'Toque em + Nova oferta.',c:1},{a:'#cd-of-nome',tx:'Dê um nome para a oferta.'},{a:'#cd-of-vbtn',tx:'Escolha o vídeo. Ele é obrigatório.'},{a:'#cd-ov-botao',tx:'Escreva o texto do botão.'},{a:'#cd-ov-acao',tx:'Escolha o que o botão faz: abre o produto, abre uma categoria ou reserva mesa.'},{a:'#cd-of-salvar',tx:'Toque em Salvar quando terminar.',s:1}]},
+    horario:{t:'Definir o horário',k:'horario funcionamento abre fecha fechado aberto dias',p:[{pg:'cardapio',a:C('cdHorario'),tx:'Toque em Horário.',c:1},{a:'#cd-imp-corpo',tx:'Marque os dias e preencha quando abre e quando fecha.'},{a:'button[onclick="cdHrSalvar()"]',tx:'Toque em Salvar horário. Sem salvar, o horário não vale.',s:1}]},
+    entrega:{t:'Configurar entrega e frete',k:'entrega frete bairro cep regiao taxa delivery',p:[{pg:'cardapio',a:C('cdFrete'),tx:'Toque em Entrega.',c:1},{a:'#cd-imp-corpo',tx:'Crie as regiões por bairro, CEP ou rua, com o valor do frete.'},{a:'button[onclick="cdFrSalvar()"]',tx:'Toque em Salvar entrega quando terminar.',s:1}]},
+    marca:{t:'Trocar logo e cores',k:'logo marca cor cores tema aparencia',p:[{pg:'cardapio',a:C('cdAparencia'),tx:'Toque em Marca e cores.',c:1},{a:'#cd-imp-corpo',tx:'Escolha as cores e envie a logo do app e a do painel.'},{a:'button[onclick="cdApSalvar()"]',tx:'Toque em Salvar quando terminar.',s:1}]},
+    clube:{t:'Configurar o Clube',k:'clube assinatura plano assinante mensalidade',p:[{pg:'cardapio',a:C('clbAbrir'),tx:'Toque em Clube de assinatura.',c:1},{a:'#clb-on',tx:'Ligue o Clube aqui.'},{a:'#clb-salvar',tx:'Depois de escolher desconto e planos, toque em Salvar Clube.',s:1}]},
+    mesa_nova:{t:'Criar mesas',k:'mesa nova criar cadastrar mesas lugares',p:[{pg:'mesas',a:MZ('mzNova'),tx:'Toque em + Nova mesa.',c:1},{a:'#mz-de',tx:'Número da primeira mesa.'},{a:'#mz-ate',tx:'Número da última mesa. Para criar uma só, repita o número.'},{a:'#mz-lug',tx:'Quantas pessoas cabem em cada uma.'},{a:'#mz-bt',tx:'Toque em Criar quando terminar.',s:1}]},
+    mesa_qr:{t:'Imprimir QR das mesas',k:'qr code imprimir etiqueta mesa',p:[{pg:'mesas',a:MZ('mzQrTodos'),tx:'Toque em Imprimir QR de todas.',c:1},{a:'#mza4-bt',tx:'Escolha o tamanho acima e toque em Gerar e imprimir.',s:1}]},
+    mesa_nfc:{t:'Gravar etiqueta NFC',k:'nfc etiqueta gravar tag aproximacao encostar',p:[{pg:'mesas',a:'#mz-lista button[onclick^="mzNfc("]',tx:'Toque em Gravar NFC na mesa e encoste a etiqueta atrás do celular. Só funciona no Chrome de Android.',o:1}]},
+    reservas:{t:'Ligar as reservas',k:'reserva reservar agendar mesa',p:[{pg:'mesas',a:MZ('rvAbrir'),tx:'Toque em Reservas.',c:1},{a:'#rv-on',tx:'Ligue as reservas aqui.'},{a:'#rv-salvar',tx:'Depois de ajustar duração e antecedência, toque em Salvar.',s:1}]},
+    garcons:{t:'Mesas de cada garçom',k:'garcom garcons area mesas vincular chamado setor',p:[{pg:'mesas',a:MZ('gcAbrir'),tx:'Toque em Garçons.',c:1},{a:'#cd-imp-corpo',tx:'Marque as mesas de cada garçom. Quem ficar sem mesa marcada recebe todas.'},{a:'#gc-s',tx:'Toque em Salvar quando terminar.',s:1,o:1}]},
+    salao:{t:'Desenhar o salão',k:'salao mapa planta desenhar 3d layout',p:[{pg:'config',a:CFG('slAbrir'),tx:'Toque em Salão.',c:1},{a:'#sl-add-mesa',tx:'Toque aqui para colocar uma mesa, e depois arraste no mapa.'},{a:'#sl-svg',tx:'Este é o mapa. Arraste as peças para o lugar certo.'},{a:'button[onclick="slSalvar()"]',tx:'Toque em Salvar salão quando terminar.',s:1}]},
+    praia:{t:'Usar o tema praia',k:'praia guarda sol areia mar tema quiosque',p:[{pg:'config',a:CFG('slAbrir'),tx:'Toque em Salão.',c:1},{a:'button[onclick="slAreaPraia()"]',tx:'Toque em Praia para criar a área com areia e mar.',c:1,o:1},{a:'#sl-at',tx:'Se você só atende na praia, escolha Praia aqui, na própria área, para as mesas já ficarem nela.'},{a:'button[onclick="slSalvar()"]',tx:'Toque em Salvar salão quando terminar.',s:1}]},
+    atendimento:{t:'Abrir o Atendimento',k:'atendimento garcom comanda tela balcao abrir',p:[{pg:'cardapio',a:'#pg-cardapio button[onclick*="atendimento.html"]',tx:'Este botão abre o Atendimento em outra aba.'}]},
+    usuario_garcom:{t:'Criar acesso de garçom',k:'usuario acesso login senha garcom funcionario equipe criar',p:[{a:'.tb-av',tx:'Toque no seu avatar.',c:1},{a:'#mav-usu',tx:'Toque em Usuários do painel. Só o dono vê esta opção.',c:1},{a:'#us-perfil',tx:'Em Acesso, escolha Garçom.'},{a:'#us-nome',tx:'Preencha nome, e-mail, celular e uma senha com pelo menos 8 caracteres.'},{a:'#us-btn',tx:'Toque em Cadastrar usuário quando terminar.',s:1}]},
+    balcao:{t:'Vender no balcão sem cliente',k:'balcao sem cliente joia avulso venda direta',p:[{pg:'config',a:CFG('cdCfgClientes'),tx:'Toque em Configurações clientes.',c:1},{a:'#cc-bal',tx:'Marque esta opção.'},{a:'button[onclick="cdCfgClientesSalvar()"]',tx:'Toque em Salvar. Depois, recarregue a tela de Atendimento.',s:1}]},
+    pedidos_mesas:{t:'Ver pedidos de mesa e balcão',k:'pedidos mesa balcao filtro preparo servido comanda',p:[{pg:'pedidos',a:'#pd-pills .pill[onclick="filtrarPedidos(\'mesas\')"]',tx:'Toque em MESAS para ver os pedidos de mesa e do balcão.',c:1}]},
+    cliente_novo:{t:'Cadastrar cliente',k:'cliente cadastrar novo joia numero',p:[{pg:'clientes',a:'#pg-clientes button[onclick="clNovo()"]',tx:'Toque em + Novo cliente.',c:1},{a:'#cl-j',tx:'Número do cliente.'},{a:'#cl-n',tx:'Nome do cliente.'},{a:'#sh-cli button[onclick="clSalvar(1)"]',tx:'Toque em Cadastrar cliente quando terminar.',s:1}]},
+    pagamentos:{t:'Formas de pagamento',k:'pagamento pix dinheiro cartao maquininha parcelamento forma',p:[{pg:'config',a:CFG('pgAbrir'),tx:'Toque em Formas de pagamento.',c:1},{a:'#pg-pix',tx:'Ligue o que a loja aceita: Pix, dinheiro, cartão e maquininha.'},{a:'button[onclick="pgSalvar()"]',tx:'Toque em Salvar quando terminar.',s:1}]},
+    checkout:{t:'Receber online pelo Asaas',k:'checkout asaas chave api receber online',p:[{pg:'config',a:CFG('cdPagamento'),tx:'Toque em Configurar checkout.',c:1},{a:'#cd-pgt-chave',tx:'Cole aqui a chave de API da conta Asaas do restaurante.',o:1},{a:'button[onclick="cdPgtSalvar()"]',tx:'Toque em Salvar e testar.',s:1,o:1}]},
+    impressoras:{t:'Instalar a impressora',k:'impressora imprimir impressao cozinha instalador etiqueta',p:[{pg:'config',a:CFG('impAbrir'),tx:'Toque em Impressoras.',c:1},{a:'#cd-imp-corpo',tx:'No computador do restaurante, baixe o instalador. Ele já vem configurado para a sua loja.'}]}
+  };
+  var API=function(){ return DELTADIS_API+'/painel/live-ajuda'; };
+  var CSS='#aj-fab{position:fixed;right:18px;bottom:18px;z-index:70;width:86px;height:86px;border:0;background:none;padding:0;cursor:pointer;filter:drop-shadow(0 8px 16px rgba(0,0,0,.28));transition:transform .2s}#aj-fab:hover{transform:scale(1.07)}#aj-fab .aj-lv{width:86px}#aj-fab svg.aj-fone{position:absolute;left:4px;top:15px;width:78px;pointer-events:none}'
+    +'#aj-dica{position:fixed;right:106px;bottom:48px;z-index:70;background:var(--s1,#fff);color:inherit;font-size:13px;font-weight:700;padding:9px 12px;border-radius:14px 14px 3px 14px;box-shadow:0 8px 24px rgba(0,0,0,.2);cursor:pointer;animation:ajEntra .4s ease-out}'
+    +'#aj-chat{position:fixed;right:18px;bottom:18px;z-index:99970;width:380px;max-width:calc(100vw - 24px);height:560px;max-height:calc(100vh - 36px);background:var(--s1,#fff);border-radius:20px;box-shadow:0 18px 60px rgba(0,0,0,.35);display:none;flex-direction:column;overflow:hidden;animation:ajEntra .25s ease-out}#aj-chat.on{display:flex}'
+    +'#aj-chat .h{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--pri,#E07B39);color:#fff}#aj-chat .h .m{position:relative;width:48px;height:48px;flex:none}#aj-chat .h .m .aj-lv{width:48px}#aj-chat .h .m svg.aj-fone{position:absolute;left:2px;top:8px;width:44px}#aj-chat .h b{display:block;font-size:15px}#aj-chat .h small{font-size:12px;opacity:.9}#aj-chat .h button{margin-left:auto;background:rgba(255,255,255,.22);border:0;color:#fff;width:34px;height:34px;border-radius:50%;font-size:16px;cursor:pointer;flex:none}'
+    +'#aj-ms{flex:1;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:8px;background:var(--bg,#f6f6f7)}.aj-b{max-width:88%;padding:9px 12px;border-radius:14px;font-size:14px;line-height:1.45;word-break:break-word}.aj-b.u{align-self:flex-end;background:var(--pri,#E07B39);color:#fff;border-bottom-right-radius:4px}.aj-b.a{align-self:flex-start;background:var(--s1,#fff);border:1px solid var(--border,#e3e3e7);border-bottom-left-radius:4px}'
+    +'.aj-mostra{display:block;width:100%;margin-top:9px;padding:9px 10px;border:0;border-radius:10px;background:var(--pri,#E07B39);color:#fff;font-weight:800;font-size:13.5px;cursor:pointer}.aj-ch{display:flex;flex-wrap:wrap;gap:6px}.aj-ch button{border:1px solid var(--border,#e3e3e7);background:var(--s1,#fff);color:inherit;border-radius:999px;padding:7px 11px;font-size:12.5px;font-weight:700;cursor:pointer}'
+    +'.aj-dig{display:flex;gap:4px;padding:3px 0}.aj-dig i{width:7px;height:7px;border-radius:50%;background:#9a9aa3;animation:ajDig 1.1s infinite}.aj-dig i:nth-child(2){animation-delay:.15s}.aj-dig i:nth-child(3){animation-delay:.3s}'
+    +'#aj-f{display:flex;gap:8px;padding:10px;border-top:1px solid var(--border,#e3e3e7);background:var(--s1,#fff)}#aj-t{flex:1;min-width:0;resize:none;border:1px solid var(--border2,#d9d9de);border-radius:12px;padding:10px;font:inherit;font-size:16px;height:44px;background:transparent;color:inherit}#aj-f button{width:44px;height:44px;border:0;border-radius:12px;background:var(--pri,#E07B39);color:#fff;font-size:18px;cursor:pointer;flex:none}'
+    +'#aj-ring{position:fixed;z-index:99985;border-radius:12px;pointer-events:none;box-shadow:0 0 0 3px var(--pri,#E07B39),0 0 0 9999px rgba(10,10,14,.58);animation:ajPulsa 1.5s ease-in-out infinite;transition:left .18s,top .18s,width .18s,height .18s}'
+    +'#aj-bal{position:fixed;z-index:99995;width:310px;max-width:calc(100vw - 24px);background:var(--s1,#fff);color:inherit;border-radius:16px;padding:14px;box-shadow:0 14px 44px rgba(0,0,0,.4);font-size:14.5px;line-height:1.45}#aj-bal .n{font-size:11.5px;font-weight:800;color:var(--muted,#8e8e93);margin-bottom:4px}#aj-bal .ac{display:flex;gap:8px;justify-content:flex-end;margin-top:11px}#aj-bal button{border:0;border-radius:10px;padding:9px 13px;font-weight:800;font-size:13px;cursor:pointer}#aj-bal .s{background:var(--s2,#efeff2);color:inherit}#aj-bal .p{background:var(--pri,#E07B39);color:#fff}'
+    +'@keyframes ajEntra{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}@keyframes ajDig{0%,60%,100%{transform:none;opacity:.5}30%{transform:translateY(-4px);opacity:1}}@keyframes ajPulsa{50%{box-shadow:0 0 0 7px var(--pri,#E07B39),0 0 0 9999px rgba(10,10,14,.58)}}'
+    +'@media (max-width:859px){#aj-fab{bottom:74px;right:10px;width:70px;height:70px}#aj-fab .aj-lv{width:70px}#aj-fab svg.aj-fone{left:3px;top:12px;width:64px}#aj-dica{right:84px;bottom:96px}#aj-chat{right:0;left:0;bottom:0;width:100%;max-width:none;height:82vh;border-radius:20px 20px 0 0}}';
+  /* fone de atendente sobre o personagem */
+  var FONE='<svg class="aj-fone" viewBox="0 0 100 80" fill="none" aria-hidden="true"><path d="M12 42C12 18 29 6 50 6s38 12 38 36" stroke="#22222a" stroke-width="6" stroke-linecap="round"/><rect x="4" y="36" width="15" height="24" rx="7" fill="#22222a"/><rect x="81" y="36" width="15" height="24" rx="7" fill="#22222a"/><path d="M88 60c0 10-10 15-22 15" stroke="#22222a" stroke-width="4" stroke-linecap="round"/><circle cx="63" cy="75" r="5" fill="#ef4444"/></svg>';
+  var A={live:null,liveTopo:null,hist:[],aberto:false,busy:false,g:null,i:0,el:null,t:0,tk:0};
+  function $(i){ return document.getElementById(i); }
+  function e(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function norm(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''); }
+  function grava(){ try{ sessionStorage.setItem('aj_hist',JSON.stringify(A.hist.slice(-30))); }catch(x){} }
+  /* sem a IA, ainda acha o guia mais parecido */
+  function busca(q){ var ws=norm(q).split(/[^a-z0-9]+/).filter(function(w){ return w.length>2; }), m=null, ms=0; Object.keys(GUIAS).forEach(function(id){ var g=GUIAS[id], tx=norm(g.t+' '+g.k), s=0; ws.forEach(function(w){ if(tx.indexOf(w)>=0) s++; }); if(s>ms){ ms=s; m=id; } }); return m; }
+  function bola(m){ var d=document.createElement('div'); d.className='aj-b '+(m.r==='user'?'u':'a'); d.innerHTML=e(m.t).replace(/\n/g,'<br>'); if(m.g&&GUIAS[m.g]){ var b=document.createElement('button'); b.type='button'; b.className='aj-mostra'; b.textContent='👉 Me mostra na tela'; b.onclick=function(){ iniciar(m.g); }; d.appendChild(b); } return d; }
+  function pinta(){
+    var b=$('aj-ms'); if(!b) return; b.innerHTML=''; bola0(b); A.hist.forEach(function(m){ b.appendChild(bola(m)); }); b.scrollTop=b.scrollHeight;
+  }
+  function bola0(b){
+    b.appendChild(bola({r:'assistant',t:'Oi! Eu sou o Live 😊 Me pergunte qualquer coisa do sistema. Eu explico o passo a passo e mostro onde tocar.'}));
+    if(A.hist.length) return; var c=document.createElement('div'); c.className='aj-ch';
+    ['Como crio um produto?','Como faço uma oferta?','Como gravo a etiqueta NFC?','Como instalo a impressora?','Como defino o horário?'].forEach(function(t){ var x=document.createElement('button'); x.type='button'; x.textContent=t; x.onclick=function(){ pergunta(t); }; c.appendChild(x); }); b.appendChild(c);
+  }
+  function pergunta(q){
+    q=String(q||'').trim().slice(0,500); if(!q||A.busy) return; var ant=A.hist.slice(-6).map(function(m){ return {r:m.r,t:m.t}; });
+    A.hist.push({r:'user',t:q}); grava(); pinta(); A.busy=true;
+    var dg=document.createElement('div'); dg.className='aj-b a'; dg.innerHTML='<div class="aj-dig"><i></i><i></i><i></i></div>'; $('aj-ms').appendChild(dg); $('aj-ms').scrollTop=1e6;
+    try{ if(A.liveTopo) A.liveTopo.pensando(true); }catch(x){}
+    var fim=function(m){ A.busy=false; A.hist.push(m); grava(); pinta(); try{ if(A.liveTopo){ A.liveTopo.pensando(false); A.liveTopo.expressao('feliz'); } }catch(x){} };
+    fetch(API(),{method:'POST',headers:cdHdr(),body:JSON.stringify({pergunta:q,historico:ant,tela:(typeof PAG!=='undefined'?PAG:''),celular:innerWidth<860,perfil:(typeof DD_USER!=='undefined'&&DD_USER&&DD_USER.perfil)||''})}).then(function(r){ return r.json(); }).then(function(d){
+      if(d&&d.ok&&d.resposta){ fim({r:'assistant',t:d.resposta,g:d.guia&&d.guia!=='nenhum'?d.guia:''}); return; }
+      throw new Error((d&&d.mensagem)||'');
+    }).catch(function(er){ var g=busca(q); fim({r:'assistant',t:(er&&er.message?er.message+' ':'Não consegui responder agora. ')+(g?'Mas acho que este guia ajuda: '+GUIAS[g].t+'.':'Tente de novo em instantes.'),g:g||''}); });
+  }
+  function abreChat(on){ A.aberto=on; var c=$('aj-chat'); if(!c) return; c.classList.toggle('on',on); var d=$('aj-dica'); if(d) d.remove(); if(on){ pinta(); liveTopo(); if(innerWidth>=860) setTimeout(function(){ var t=$('aj-t'); if(t) t.focus(); },60); } }
+  function liveTopo(){ if(A.liveTopo||!window.LiveMascote) return; try{ var m=$('aj-ml'); m.innerHTML=''; A.liveTopo=LiveMascote.criar(m,{sombra:false,rotulo:'Live'}); A.liveTopo.raiz.classList.add('aj-lv'); }catch(x){} }
+  function monta(){
+    if($('aj-fab')) return; var st=document.createElement('style'); st.textContent=CSS; document.head.appendChild(st);
+    try{ A.hist=JSON.parse(sessionStorage.getItem('aj_hist')||'[]')||[]; }catch(x){ A.hist=[]; }
+    var f=document.createElement('button'); f.id='aj-fab'; f.type='button'; f.setAttribute('aria-label','Tirar dúvida com o Live'); f.innerHTML=FONE; f.onclick=function(){ abreChat(true); }; document.body.appendChild(f);
+    var c=document.createElement('div'); c.id='aj-chat'; c.setAttribute('role','dialog'); c.setAttribute('aria-label','Ajuda do Live');
+    c.innerHTML='<div class="h"><div class="m"><div id="aj-ml"></div>'+FONE+'</div><div><b>Live</b><small>Seu atendente do sistema</small></div><button type="button" aria-label="Fechar" id="aj-x">✕</button></div><div id="aj-ms" aria-live="polite"></div><form id="aj-f"><textarea id="aj-t" rows="1" maxlength="500" placeholder="Digite sua dúvida…" aria-label="Sua dúvida"></textarea><button type="submit" aria-label="Enviar">➤</button></form>';
+    document.body.appendChild(c); $('aj-x').onclick=function(){ abreChat(false); };
+    var env=function(ev){ if(ev) ev.preventDefault(); var t=$('aj-t'), q=t.value; t.value=''; pergunta(q); };
+    $('aj-f').onsubmit=env; $('aj-t').onkeydown=function(ev){ if(ev.key==='Enter'&&!ev.shiftKey) env(ev); };
+    try{ if(!sessionStorage.getItem('aj_dica')){ sessionStorage.setItem('aj_dica','1'); var d=document.createElement('div'); d.id='aj-dica'; d.textContent='Dúvida? Fale comigo 👋'; d.onclick=function(){ abreChat(true); }; document.body.appendChild(d); setTimeout(function(){ if(d.parentNode) d.remove(); },7000); } }catch(x){}
+    mpLiveCarregar(function(){ try{ if(A.live) return; A.live=LiveMascote.criar(f,{sombra:true,rotulo:'Live, seu atendente'}); A.live.raiz.classList.add('aj-lv'); f.appendChild(f.querySelector('svg.aj-fone')); A.live.gesto('boas_vindas').then(function(){ if(A.live) A.live.seguirMouse(true); }); setInterval(function(){ if(A.live&&!A.aberto&&!A.g&&!document.hidden) A.live.gesto(Math.random()<.5?'acenar':'piscadinha'); },45000); }catch(x){} });
+  }
+  /* ── guia na tela ── */
+  function visivel(x){ if(!x) return false; var r=x.getBoundingClientRect(), s=getComputedStyle(x); return r.width>0&&r.height>0&&s.visibility!=='hidden'&&s.display!=='none'; }
+  function sai(){ clearInterval(A.t); A.tk++; A.g=null; A.el=null; ['aj-ring','aj-bal'].forEach(function(i){ var x=$(i); if(x) x.remove(); }); document.removeEventListener('click',aoClique,true); document.removeEventListener('keydown',aoTecla,true); }
+  function aoTecla(ev){ if(ev.key==='Escape'&&A.g){ ev.stopPropagation(); sai(); } }
+  function aoClique(ev){ var p=A.g&&A.g.p[A.i]; if(!p||!A.el||!(p.c||p.s)||!A.el.contains(ev.target)) return; var tk=A.tk; setTimeout(function(){ if(tk!==A.tk) return; if(p.s) conclui(); else passo(A.i+1); },300); }
+  function balao(html,bts){ var b=$('aj-bal'); if(!b){ b=document.createElement('div'); b.id='aj-bal'; b.setAttribute('role','status'); document.body.appendChild(b); } b.innerHTML=html+'<div class="ac"></div>'; var ac=b.querySelector('.ac'); bts.forEach(function(x){ var k=document.createElement('button'); k.type='button'; k.className=x[2]||'s'; k.textContent=x[0]; k.onclick=function(ev){ ev.stopPropagation(); x[1](); }; ac.appendChild(k); });   /* sem isso, o toque aqui fecha o menu do avatar */ return b; }
+  function posiciona(){
+    var x=A.el, ring=$('aj-ring'), b=$('aj-bal'); if(!x||!ring||!b) return; if(!visivel(x)){ ring.style.opacity=0; return; } ring.style.opacity=1;
+    var r=x.getBoundingClientRect(), P=6; ring.style.left=(r.left-P)+'px'; ring.style.top=(r.top-P)+'px'; ring.style.width=(r.width+P*2)+'px'; ring.style.height=(r.height+P*2)+'px';
+    var bh=b.offsetHeight, bw=b.offsetWidth, top; if(r.bottom+bh+18<innerHeight) top=r.bottom+14; else if(r.top-bh-18>0) top=r.top-bh-14; else top=innerHeight-bh-12;
+    b.style.top=Math.max(8,top)+'px'; b.style.left=Math.max(12,Math.min(innerWidth-bw-12,r.left+r.width/2-bw/2))+'px';
+  }
+  function conclui(){ sai(); try{ if(A.live){ A.live.expressao('animado'); A.live.icone('check',1400); setTimeout(function(){ if(A.live) A.live.expressao('feliz'); },1500); } }catch(x){} }
+  function semAlvo(p){
+    var r=$('aj-ring'); if(r) r.remove(); A.el=null; clearInterval(A.t);
+    var b=balao('<div>Não encontrei esta parte na sua tela agora.</div><div style="margin-top:6px;font-size:13px;color:var(--muted,#8e8e93)">'+e(p.tx)+'</div>',[['Sair',sai],['Pular',function(){ passo(A.i+1); },'p']]); b.style.left='50%'; b.style.top='50%'; b.style.transform='translate(-50%,-50%)';
+  }
+  function passo(i){
+    var g=A.g; if(!g) return; if(i>=g.p.length){ conclui(); return; } A.i=i; var tk=++A.tk, p=g.p[i], ini=Date.now(); clearInterval(A.t); A.el=null; var b0=$('aj-bal'); if(b0) b0.style.transform='';
+    if(p.pg&&typeof PAG!=='undefined'&&PAG!==p.pg) ir(p.pg);
+    (function espera(){
+      if(tk!==A.tk) return; var x=document.querySelector(p.a);
+      if(!visivel(x)){ if(Date.now()-ini<(p.o?2200:6000)){ setTimeout(espera,120); return; } if(p.o){ passo(i+1); return; } semAlvo(p); return; }
+      A.el=x; try{ x.scrollIntoView({block:'center',inline:'nearest'}); }catch(er){}
+      var ring=$('aj-ring'); if(!ring){ ring=document.createElement('div'); ring.id='aj-ring'; document.body.appendChild(ring); }
+      var ult=i>=g.p.length-1, bts=[['Sair',sai]];
+      if(p.s) bts.push(['Entendi',conclui,'p']); else if(p.c) bts.push(['Abrir para mim',function(){ x.click(); },'p']); else bts.push([ult?'Concluir':'Próximo',function(){ passo(i+1); },'p']);
+      balao('<div class="n">'+e(g.t)+' · '+(i+1)+' de '+g.p.length+'</div><div>'+e(p.tx)+'</div>',bts); posiciona(); clearInterval(A.t); A.t=setInterval(posiciona,150);
+    })();
+  }
+  function iniciar(id){
+    var g=GUIAS[id]; if(!g) return; sai(); abreChat(false); var pg=g.p[0].pg;
+    if(pg&&typeof pagOk==='function'&&!pagOk(pg)){ A.hist.push({r:'assistant',t:'Essa tela só o dono da conta acessa. Peça para o dono fazer este passo, ou entre com o acesso dele.'}); grava(); abreChat(true); return; }
+    try{ fecharTudo(); }catch(x){} var s=$('sl-tela'); if(s&&s.style.display!=='none'&&s.innerHTML) try{ slFecha(); }catch(x){}
+    A.g=g; document.addEventListener('click',aoClique,true); document.addEventListener('keydown',aoTecla,true); passo(0);
+  }
+  /* aparece depois do login */
+  function espera(){ var ap=$('app'); if(ap&&getComputedStyle(ap).display!=='none'&&typeof DD_TOKEN!=='undefined'&&DD_TOKEN){ monta(); return; } setTimeout(espera,800); }
+  window.LiveAjuda={guias:GUIAS,iniciar:iniciar,sair:sai,abrir:function(){ abreChat(true); },perguntar:pergunta,busca:busca};
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',espera); else espera();
+})();
