@@ -1001,7 +1001,7 @@ function abrirWhatsPedidos(){
    '<label>WhatsApp da equipe para atendimento humano (opcional)</label><input id="wp-equipe" inputmode="tel" placeholder="47 99999-0000">'+
    '<p class="sub" style="margin-top:4px">Se preencher, quando o cliente pedir para falar com uma pessoa o Live manda um botão que abre conversa nesse número. Se deixar vazio, a conversa passa para a equipe no Painel (menu Mensagens), com aviso.</p>'+
    '<p class="sub" style="margin-top:8px">No teste, só os números da lista falam com o Live. Os demais (motoristas e outros) continuam no fluxo de hoje.</p>'+
-   '<div style="margin-top:14px;border-top:1px solid #eee;padding-top:12px"><div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:14px">Diagnóstico</b><span class="lk" style="cursor:pointer;font-size:13px;font-weight:700;color:var(--roxo,#FF5A00)" onclick="whatsDiag()">↻ atualizar</span></div><div id="wp-diag" class="sub" style="margin-top:6px;max-height:220px;overflow:auto;font-size:12.5px;line-height:1.5">Carregando…</div></div>'+
+   '<div style="margin-top:14px;border-top:1px solid #eee;padding-top:12px"><div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:14px">Diagnóstico</b><span class="lk" style="cursor:pointer;font-size:13px;font-weight:700;color:var(--roxo,#FF5A00)" onclick="whatsDiag()">↻ atualizar</span></div><button class="btn pri peq" type="button" style="margin-top:8px" onclick="whatsModelos()">Conferir modelos do WhatsApp</button><div id="wp-modelos" class="sub" style="margin-top:8px;font-size:13px;line-height:1.5;word-break:break-word"></div><div id="wp-diag" class="sub" style="margin-top:6px;max-height:220px;overflow:auto;font-size:12.5px;line-height:1.5">Carregando…</div></div>'+
    '<div class="erro" id="wp-erro"></div><div class="acoes"><button class="btn" onclick="fechar()">Cancelar</button><button class="btn pri" id="wp-btn" onclick="salvarWhatsPedidos()">Salvar</button></div>');
   whatsDiag(true);
 }
@@ -1014,14 +1014,14 @@ function whatsDiag(preencher){
     h+='<div>Última mensagem que chegou no WhatsApp (qualquer pessoa): '+(u?('<b>'+esc(u.quando)+'</b> de '+esc(u.fone)):'<b>nenhuma</b>')+'</div>';
     h+=(d.log&&d.log.length)?('<ul style="margin:6px 0 0;padding-left:18px">'+d.log.map(function(x){ return '<li>'+esc(x)+'</li>'; }).join('')+'</ul>'):'<div style="margin-top:4px">Nenhum acontecimento registrado ainda. Mande uma mensagem e clique em atualizar.</div>';
     if(!u) h+='<div style="margin-top:8px;padding:10px;border-radius:10px;background:#FFF4E5;color:#7A4A00">Nenhuma mensagem de WhatsApp chegou a este sistema. Provavelmente a Meta está mandando as mensagens desse número para outro endereço.<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn peq" onclick="whatsMetaInfo()">Ver para onde a Meta manda</button><button class="btn pri peq" onclick="whatsMetaApontar()">Mandar para este sistema</button></div><div id="wp-meta" style="margin-top:8px;white-space:pre-wrap;word-break:break-all"></div></div>';
-    else h+='<div style="margin-top:6px"><span class="lk" style="cursor:pointer;font-weight:700;color:#FF5A00" onclick="whatsMetaInfo()">Ver configuração do número na Meta</span> · <span class="lk" style="cursor:pointer;font-weight:700;color:#FF5A00" onclick="whatsModelos()">Conferir modelos do WhatsApp</span><div id="wp-meta" style="margin-top:6px;white-space:pre-wrap;word-break:break-all"></div></div>';
+    else h+='<div style="margin-top:6px"><span class="lk" style="cursor:pointer;font-weight:700;color:#FF5A00" onclick="whatsMetaInfo()">Ver configuração do número na Meta</span><div id="wp-meta" style="margin-top:6px;white-space:pre-wrap;word-break:break-all"></div></div>';
     if(el('wp-diag')) el('wp-diag').innerHTML=h;
   }).catch(function(){});
 }
 /* (095) para onde a Meta entrega as mensagens do número (webhook) e botão para apontar para este sistema */
 /* (162) em qual conta da Meta o número está e se os modelos do LiveFood existem nela */
 function whatsModelos(){
-  var o=el('wp-meta'); if(o) o.textContent='Consultando a Meta…';
+  var o=el('wp-modelos'); if(o) o.textContent='Consultando a Meta…';
   chamar('GET','/diag/whats-modelos').then(function(d){
     if(!d.ok){ o.textContent='Não consegui consultar: '+(d.erro||d.mensagem||'erro'); return; }
     var h='Número que envia: <b>'+esc(d.numero||'?')+'</b> ('+esc(d.nome||'')+')'; if(d.aviso) h+='<br>⚠️ '+esc(d.aviso);

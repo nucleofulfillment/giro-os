@@ -355,6 +355,7 @@ html.clbbar #stage.sem-cards .ov{--ov-b:calc(128px + env(safe-area-inset-bottom)
 html.kb #nav,html.kb #clbHome,html.kb #mside,html.kb #mnb{display:none!important}
 html.kb #sheet,html.kb #sheet.wz,html.kb #sheet.fz,html.kb #sheet.fx{bottom:var(--kb,0px)!important;top:0!important;height:auto!important;max-height:none!important;border-radius:0;transform:none;transition:none}
 html.kb #sheet .wh{padding:2px 10px}html.kb #sheet .rod{padding:6px 12px}html.kb #sheet .rod .bt{padding-top:9px;padding-bottom:9px}html.kb #sheet .rod.col .bt.g{display:none}
+.mp-bar{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.mp-ch{display:inline-flex;align-items:center;min-height:38px;padding:0 13px;border:1.5px solid var(--line);border-radius:11px;background:transparent;color:inherit;font:inherit;font-size:13.5px;font-weight:700;text-decoration:none;cursor:pointer}.mp-ch.pri{border-color:var(--pri);color:var(--pri2,var(--pri))}
 .rod.col{flex-direction:column;gap:8px}.rod.col .bt{flex:none;width:100%;margin:0!important}
 #omask{position:absolute;inset:0;pointer-events:none;z-index:3}
 .ov.e-cair .ov-apoio,.ov.e-cair .ov-tit,.ov.e-cair .ov-btn{animation:ovCair .85s cubic-bezier(.2,1.3,.4,1) both}
@@ -1632,12 +1633,14 @@ function mpAcompTela(){
   var e=MP.d.estado, np=e.partes.length, pct=e.total>0?Math.min(100,Math.round(e.pago/e.total*100)):0;
   var h=ctCab(np>1?'Conta rachada entre '+np:'Pagamento de uma parte','fechaSheet()')+'<div class="wb" id="mp-ac"><div class="tt" style="padding:14px 0 6px;font-size:17px"><span>Já pago</span><span>'+brl(e.pago)+'</span></div><div style="height:8px;border-radius:9px;background:#ffffff22;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:var(--pri)"></div></div><div class="nt" style="margin-top:6px">Faltam <b style="color:#fff">'+brl(e.falta)+'</b> de '+brl(e.total)+'. A mesa fecha sozinha quando chegar a 100%.</div>';
   e.partes.forEach(function(p){
-    var pago=p.status==='paga', ac='';
-    if(pago) ac='<span style="color:#4ade80;font-size:13px;font-weight:800">Pago</span>';
-    else if(p.minha) ac='<button class="bt c" style="flex:none;width:auto;padding:8px 13px;font-size:13px;margin:0" onclick="mpMinha(\''+esc(p.id)+'\','+Number(p.valor)+')">Pagar</button>';
-    else if(p.id){ var x=MP.envio[p.id]; ac=(x&&!p.enviado)?'<a class="lk" style="font-size:12.5px;text-align:right" target="_blank" rel="noopener" href="'+esc(mpWaHref(x))+'">Enviar pelo meu WhatsApp</a>':'<button class="lk" style="font-size:12.5px" onclick="mpReenvia(\''+esc(p.id)+'\')">Reenviar</button>'; ac+='<button class="lk" style="font-size:12.5px;margin-left:8px" onclick="mpCopia(\''+esc(p.id)+'\')">Copiar link</button><button class="lk" style="font-size:12.5px;margin-left:8px" onclick="mpEdita(\''+esc(p.id)+'\')">Editar</button><button class="lk" style="font-size:12.5px;margin-left:8px" onclick="mpRemove(\''+esc(p.id)+'\')">Remover</button>'; }
-    else ac='<span style="color:var(--mut);font-size:12.5px">Aguardando</span>';
-    h+='<div class="rsm" style="align-items:center;gap:8px"><div class="tx"><b>'+esc(p.nome)+'</b><small>'+brl(p.valor)+(pago&&p.forma?' · '+(p.forma==='pix'?'Pix':'Cartão'):'')+'</small>'+(p.itens?'<small>'+esc(p.itens)+'</small>':'')+((!pago&&MP.envio[p.id]&&MP.envio[p.id].erro)?'<small style="color:#f87171">Não enviou: '+esc(MP.envio[p.id].erro)+'</small>':'')+'</div><div style="flex:none;display:flex;align-items:center;flex-wrap:wrap;justify-content:flex-end;max-width:62%">'+ac+'</div></div>';
+    var pago=p.status==='paga', lado='', bar='';
+    if(pago) lado='<span style="color:#16a34a;font-size:13px;font-weight:800">Pago</span>';
+    else if(p.minha) lado='<button class="bt c" style="flex:none;width:auto;padding:9px 16px;font-size:14px;margin:0" onclick="mpMinha(\''+esc(p.id)+'\','+Number(p.valor)+')">Pagar</button>';
+    else if(p.id){ var x=MP.envio[p.id];
+      bar=((x&&!p.enviado)?'<a class="mp-ch pri" target="_blank" rel="noopener" href="'+esc(mpWaHref(x))+'">Enviar pelo WhatsApp</a>':'<button class="mp-ch pri" onclick="mpReenvia(\''+esc(p.id)+'\')">Reenviar</button>')
+        +'<button class="mp-ch" onclick="mpCopia(\''+esc(p.id)+'\')">Copiar link</button><button class="mp-ch" onclick="mpEdita(\''+esc(p.id)+'\')">Editar</button><button class="mp-ch" onclick="mpRemove(\''+esc(p.id)+'\')">Remover</button>'; }
+    else lado='<span style="color:var(--mut);font-size:12.5px">Aguardando</span>';
+    h+='<div class="rsm" style="display:block"><div style="display:flex;align-items:center;gap:10px"><div class="tx" style="flex:1;min-width:0"><b>'+esc(p.nome)+'</b><small>'+brl(p.valor)+(pago&&p.forma?' · '+(p.forma==='pix'?'Pix':'Cartão'):'')+'</small>'+(p.itens?'<small>'+esc(p.itens)+'</small>':'')+'</div>'+lado+'</div>'+((!pago&&MP.envio[p.id]&&MP.envio[p.id].erro)?'<div style="color:#dc2626;font-size:12.5px;margin-top:6px;line-height:1.35">Mensagem não enviada: '+esc(MP.envio[p.id].erro)+'</div>':'')+(bar?'<div class="mp-bar">'+bar+'</div>':'')+'</div>';
   });
   if(e.aberto>0.009) h+='<div class="rsm"><div class="tx"><b>Continua aberto na mesa</b></div><div class="vl">'+brl(e.aberto)+'</div></div>';
   h+='</div><div class="rod col">'+(e.falta>=5?'<button class="bt c" onclick="mpPay()">Pagar o que falta</button>':'')+((mpRachaOn()&&e.aberto>=5)?'<button class="bt c g" style="background:transparent;border:2px solid var(--pri);color:var(--tx,#fff)" onclick="MP.val=[];mpReal(mpValor)">Adicionar pessoa</button>':'')+'<button class="bt c g" style="background:transparent;border:2px solid var(--line);color:var(--tx,#fff)" onclick="mpGarcom()">Chamar o garçom</button></div>';
