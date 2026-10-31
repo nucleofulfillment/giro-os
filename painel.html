@@ -8248,8 +8248,14 @@ function mzQrTodos(){
 }
 function mzCopia(n){ if(!mzCliOk()) return; var u=mzLink(n); try{ navigator.clipboard.writeText(u).then(function(){ aviso('Link copiado'); },function(){ window.prompt('Copie o link:',u); }); }catch(e){ window.prompt('Copie o link:',u); } }
 function mzNfc(n){
-  if(!mzCliOk()) return;
-  nfcGravar(mzLink(n),'mesa '+n,function(){ mzApi('/painel/atend-mesas-nfc',{num:n}).then(mzCarregar); });
+  /* abriu a tela de Mesas agora: espera o código da loja em vez de só mostrar um aviso, e a janela já abre sozinha */
+  var vai=function(){
+    if(!CD.cli){ nfcTela('⚠️','Não gravou','Não consegui carregar o endereço da loja. Confira a internet e tente de novo.','<button class="btn sec wide" onclick="nfcFecha()">Fechar</button>'); return; }
+    nfcGravar(mzLink(n),'mesa '+n,function(){ mzApi('/painel/atend-mesas-nfc',{num:n}).then(mzCarregar); });
+  };
+  if(CD.cli){ vai(); return; }
+  nfcTela('⏳','Preparando a gravação','Buscando o endereço da loja…','');
+  mzSlug(vai);
 }
 /* (146) gravar NFC: janela que fica aberta enquanto espera a etiqueta, com o motivo certo de cada falha */
 var NFC={ctl:null,url:'',rot:'',ok:null};
