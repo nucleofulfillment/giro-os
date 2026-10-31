@@ -1451,6 +1451,14 @@ window.addEventListener('resize',kbAjusta);
 if(window.visualViewport){ visualViewport.addEventListener('resize',kbAjusta); visualViewport.addEventListener('scroll',kbAjusta); }
 document.addEventListener('focusin',function(e){ if(e.target&&e.target.closest&&e.target.closest('#sheet')){ kbAjusta(); if(KB.on) kbMostra(); setTimeout(kbAjusta,350); } });
 document.addEventListener('focusout',function(){ setTimeout(kbAjusta,120); });
+/* com o teclado aberto, o toque no botão fechava o teclado, a tela mudava de altura e o clique se perdia: agora o botão responde no próprio toque */
+var KB_T=null;
+document.addEventListener('touchstart',function(e){ var b=e.target&&e.target.closest&&e.target.closest('#sheet .rod button'), t0=e.touches[0]; KB_T=b?{b:b,x:t0.clientX,y:t0.clientY}:null; },{passive:true});
+document.addEventListener('touchend',function(e){
+  var k=KB_T; KB_T=null; if(!k||k.b.disabled) return; var a=document.activeElement; if(!(a&&/^(INPUT|TEXTAREA)$/.test(a.tagName)&&a.closest('#sheet'))) return;
+  var c=e.changedTouches[0]; if(Math.abs(c.clientX-k.x)>12||Math.abs(c.clientY-k.y)>12) return;
+  e.preventDefault(); k.b.click();
+},{passive:false});
 function mpOn(){ return !!(D.cfg&&D.cfg.pagMesa); }
 function mpRachaOn(){ return !!(D.cfg&&D.cfg.racha); }
 function mpAnon(){ return !CT.tok||!CT.conta||/^mesa/i.test(String(CT.conta.fone||'')); }
@@ -1627,13 +1635,32 @@ function mpAcompTela(){
     var pago=p.status==='paga', ac='';
     if(pago) ac='<span style="color:#4ade80;font-size:13px;font-weight:800">Pago</span>';
     else if(p.minha) ac='<button class="bt c" style="flex:none;width:auto;padding:8px 13px;font-size:13px;margin:0" onclick="mpMinha(\''+esc(p.id)+'\','+Number(p.valor)+')">Pagar</button>';
-    else if(p.id){ var x=MP.envio[p.id]; ac=(x&&!p.enviado)?'<a class="lk" style="font-size:12.5px;text-align:right" target="_blank" rel="noopener" href="'+esc(mpWaHref(x))+'">Enviar pelo meu WhatsApp</a>':'<button class="lk" style="font-size:12.5px" onclick="mpReenvia(\''+esc(p.id)+'\')">Reenviar</button>'; ac+='<button class="lk" style="font-size:12.5px;margin-left:8px" onclick="mpCopia(\''+esc(p.id)+'\')">Copiar link</button>'; }
+    else if(p.id){ var x=MP.envio[p.id]; ac=(x&&!p.enviado)?'<a class="lk" style="font-size:12.5px;text-align:right" target="_blank" rel="noopener" href="'+esc(mpWaHref(x))+'">Enviar pelo meu WhatsApp</a>':'<button class="lk" style="font-size:12.5px" onclick="mpReenvia(\''+esc(p.id)+'\')">Reenviar</button>'; ac+='<button class="lk" style="font-size:12.5px;margin-left:8px" onclick="mpCopia(\''+esc(p.id)+'\')">Copiar link</button><button class="lk" style="font-size:12.5px;margin-left:8px" onclick="mpEdita(\''+esc(p.id)+'\')">Editar</button><button class="lk" style="font-size:12.5px;margin-left:8px" onclick="mpRemove(\''+esc(p.id)+'\')">Remover</button>'; }
     else ac='<span style="color:var(--mut);font-size:12.5px">Aguardando</span>';
     h+='<div class="rsm" style="align-items:center;gap:8px"><div class="tx"><b>'+esc(p.nome)+'</b><small>'+brl(p.valor)+(pago&&p.forma?' · '+(p.forma==='pix'?'Pix':'Cartão'):'')+'</small>'+(p.itens?'<small>'+esc(p.itens)+'</small>':'')+((!pago&&MP.envio[p.id]&&MP.envio[p.id].erro)?'<small style="color:#f87171">Não enviou: '+esc(MP.envio[p.id].erro)+'</small>':'')+'</div><div style="flex:none;display:flex;align-items:center;flex-wrap:wrap;justify-content:flex-end;max-width:62%">'+ac+'</div></div>';
   });
   if(e.aberto>0.009) h+='<div class="rsm"><div class="tx"><b>Continua aberto na mesa</b></div><div class="vl">'+brl(e.aberto)+'</div></div>';
   h+='</div><div class="rod col">'+(e.falta>=5?'<button class="bt c" onclick="mpPay()">Pagar o que falta</button>':'')+((mpRachaOn()&&e.aberto>=5)?'<button class="bt c g" style="background:transparent;border:2px solid var(--pri);color:var(--tx,#fff)" onclick="MP.val=[];mpReal(mpValor)">Adicionar pessoa</button>':'')+'<button class="bt c g" style="background:transparent;border:2px solid var(--line);color:var(--tx,#fff)" onclick="mpGarcom()">Chamar o garçom</button></div>';
   abreFolha(h,true);
+}
+/* (163) quem criou o racha muda ou tira uma pessoa: a diferença volta para a parte dele */
+function mpParte(id){ return MP.d.estado.partes.filter(function(p){ return p.id===id; })[0]; }
+function mpRemove(id){
+  var p=mpParte(id); if(!p||!window.confirm('Remover '+p.nome+' da conta? '+brl(p.valor)+' volta para a sua parte.')) return;
+  ctApi('/food/pedidos-parte-editar',{id:id,remover:true}).then(function(r){ if(!r.ok){ toast(r.mensagem||'Não consegui remover.'); return mpCarrega(mpAcompTela); } MP.d.estado=r.estado; toast(p.nome+' saiu da conta'); mpAcompTela(); });
+}
+function mpEdita(id){
+  var p=mpParte(id); if(!p) return; clearInterval(MP.tmr);
+  abreFolha(ctCab('Editar '+esc(p.nome),'mpAcomp()')+'<div class="wb"><label class="cl">Nome</label><input class="cin" id="mp-ed-n" maxlength="60" autocomplete="off" value="'+esc(p.nome)+'"><label class="cl">WhatsApp</label><input class="cin" id="mp-ed-f" type="tel" inputmode="numeric" maxlength="16" value="'+esc(ctFoneFmt(p.fone))+'" oninput="ctMask(this)"><label class="cl">Valor</label><input class="cin" id="mp-ed-v" inputmode="decimal" maxlength="10" value="'+esc(Number(p.valor).toFixed(2).replace('.',','))+'"><div class="nt" style="margin-top:10px">Se o valor diminuir, a diferença volta para a sua parte. Mudando o valor ou o WhatsApp, a pessoa recebe a mensagem de novo.</div><div class="ce" id="ct-erro"></div></div><div class="rod"><button class="bt c" id="ct-bt" onclick="mpEditaOk(\''+esc(id)+'\')">Salvar</button></div>',true);
+}
+function mpEditaOk(id){
+  var nm=$('mp-ed-n').value.trim(), fo=$('mp-ed-f').value.replace(/\D/g,''), vl=mpNum($('mp-ed-v').value);
+  if(nm.length<2){ ctErro('Preencha o nome.'); return; } if(fo.length<10||fo.length>13){ ctErro('Confira o WhatsApp.'); return; } if(vl<5){ ctErro('O valor mínimo é R$ 5,00.'); return; }
+  var b=$('ct-bt'); b.disabled=true; b.textContent='Salvando…'; ctErro('');
+  ctApi('/food/pedidos-parte-editar',{id:id,nome:nm,fone:fo,valor:String(vl)}).then(function(r){
+    if(!r.ok){ b.disabled=false; b.textContent='Salvar'; ctErro(r.mensagem||'Não consegui salvar.'); return; }
+    MP.d.estado=r.estado; (r.envio||[]).forEach(function(x){ MP.envio[x.id]=x; }); mpAcomp();
+  });
 }
 function mpMinha(id,v){ MP.parte={id:id,valor:v}; var f=MP.d.estado.partes.filter(function(p){ return p.id===id; })[0]; if(f&&f.status==='aguardando_pagto'&&f.pix_copia) return mpPix(f); abreFolha(ctCab('Pagar minha parte','mpAcomp()')+'<div class="wb"><div class="tt" style="padding:14px 0 10px;font-size:17px"><span>Você está pagando</span><span>'+brl(v)+'</span></div>'+mpOpc('▦','Pix','QR Code e copia e cola',"mpForma('pix')")+mpOpc('💳','Cartão','Na primeira vez você cadastra',"mpMinhaCartao()")+'</div>',true); }
 function mpMinhaCartao(){ if(mpAnon()){ var pt=MP.parte; return mpReal(function(){ MP.parte=pt; mpForma('cartao'); }); } mpForma('cartao'); }
