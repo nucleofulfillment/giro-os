@@ -1566,7 +1566,7 @@ html.loja-p .cd-dest{display:none!important}
     <div style="display:flex;gap:14px;flex-wrap:wrap;margin:6px 0 14px">
       <div id="cd-ov-prev" style="width:150px;height:267px;flex:none;border-radius:14px;background:#111;position:relative;overflow:hidden;font-size:6.2px">
         <video id="cd-ov-pv" muted playsinline preload="metadata" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"></video>
-        <div id="cd-ov-mask" style="position:absolute;inset:0"></div><div id="cd-ov-box"></div>
+        <div id="cd-ov-mask" style="position:absolute;inset:0"></div><img id="cd-ov-logo" alt="" style="display:none;position:absolute;left:6px;top:8px;z-index:6;width:auto;object-fit:contain;object-position:left;filter:drop-shadow(0 1px 3px #0009)"><div id="cd-ov-box"></div>
       </div>
       <div style="flex:1;min-width:230px">
         <input class="inp" id="cd-ov-apoio" maxlength="80" placeholder="Texto pequeno (ex: só hoje)" oninput="cdOvPrev()" style="margin-bottom:6px">
@@ -1575,7 +1575,7 @@ html.loja-p .cd-dest{display:none!important}
         <div id="cd-ov-cat-bx" style="display:none;margin-bottom:6px"><select class="inp" id="cd-ov-cat" title="Categoria que abre quando o cliente toca no botão"></select><div style="font-size:11.5px;color:var(--muted);margin-top:4px">O botão abre essa categoria com todos os produtos dela. Os produtos da oferta ficam opcionais.</div></div>
         <div id="cd-ov-acao-av" style="display:none;font-size:11.5px;color:var(--muted);margin:-2px 0 8px">🪑 O botão abre o salão em 3D para o cliente escolher a mesa e reservar. Os produtos ficam opcionais. Ao salvar, as reservas da loja são ligadas; se você desligá-las depois, a oferta continua no ar sem esse botão. <a href="#" onclick="rvAbrir();return false">Configurar reservas</a></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px"><select class="inp" id="cd-ov-pos" onchange="cdOvPrev()"><option value="base">Posição: embaixo</option><option value="centro">Posição: centro</option><option value="topo">Posição: topo</option></select><select class="inp" id="cd-ov-alin" onchange="cdOvPrev()"><option value="esq">Alinhado à esquerda</option><option value="centro">Centralizado</option><option value="dir">Alinhado à direita</option></select></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px"><label style="font-size:11.5px;color:var(--muted)">Tamanho do título<input type="range" id="cd-ov-et" min="50" max="250" value="100" oninput="cdOvPrev()" style="width:100%"></label><label style="font-size:11.5px;color:var(--muted)">Tamanho do texto pequeno<input type="range" id="cd-ov-ea" min="50" max="250" value="100" oninput="cdOvPrev()" style="width:100%"></label></div>
+        <label style="display:block;font-size:11.5px;color:var(--muted);margin-bottom:8px">Tamanho da logo no cardápio (vale para todas as ofertas da loja)<input type="range" id="cd-ov-lg" min="28" max="110" value="56" oninput="cdOvLogo()" onchange="cdOvLogoSalva()" style="width:100%"></label><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px"><label style="font-size:11.5px;color:var(--muted)">Tamanho do título<input type="range" id="cd-ov-et" min="50" max="250" value="100" oninput="cdOvPrev()" style="width:100%"></label><label style="font-size:11.5px;color:var(--muted)">Tamanho do texto pequeno<input type="range" id="cd-ov-ea" min="50" max="250" value="100" oninput="cdOvPrev()" style="width:100%"></label></div>
         <div style="display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center;margin-bottom:8px"><select class="inp" id="cd-ov-ef" onchange="cdOvPrev()"><option value="nenhum">Efeito: sem efeito</option><option value="cair">Efeito: cai de cima</option><option value="lateral">Efeito: entra pela lateral</option><option value="zoom">Efeito: surge com zoom</option></select><button class="btn sec sm" type="button" onclick="cdOvPrev()" title="Ver o efeito de novo">↻ rever</button></div>
         <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;cursor:pointer;margin-bottom:6px"><input type="checkbox" id="cd-ov-pu" onchange="cdOvPrev()"> Botão pulsando (chama atenção)</label>
         <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;cursor:pointer"><input type="checkbox" id="cd-ov-masc" checked onchange="cdOvPrev()"> Escurecer o vídeo para o texto ficar legível</label>
@@ -8036,6 +8036,15 @@ function cdOvPreencher(t){
   cdOvCats(t.cat||''); el('cd-ov-cat-bx').style.display=t.acao==='categoria'?'block':'none';
   cdOvPrev();
 }
+/* (166) tamanho da logo: aparece na prévia e fica salvo na loja. A prévia tem 150px de largura para 375px do celular */
+function cdOvLogo(){ var i=el('cd-ov-logo'), r=el('cd-ov-lg'); if(!i||!r) return; var h=Number(r.value)||56; i.style.height=Math.round(h*.4)+'px'; i.style.maxWidth=Math.round(Math.min(h*4.4,279)*.4)+'px'; }
+function cdOvLogoCarrega(){
+  fetch(DELTADIS_API+'/painel/cardapio-config',{headers:cdHdr()}).then(function(r){ return r.json(); }).then(function(d){
+    var r=el('cd-ov-lg'), i=el('cd-ov-logo'); if(!d||!d.ok||!r||!i) return; r.value=d.logoTam||56; CD.logoTam=d.logoTam||56;
+    if(d.logo){ i.src=DELTADIS_API+'/food/foto/'+encodeURIComponent(CD.cli||d.cli)+'/_logo?v='+Date.now(); i.style.display='block'; } else i.style.display='none'; cdOvLogo();
+  }).catch(function(){});
+}
+function cdOvLogoSalva(){ var v=Number(el('cd-ov-lg').value)||56; if(v===CD.logoTam) return; CD.logoTam=v; fetch(DELTADIS_API+'/painel/cardapio-config',{method:'POST',headers:cdHdr(),body:JSON.stringify({logoTam:v})}).then(function(r){ return r.json(); }).then(function(d){ aviso(d&&d.ok?'Tamanho da logo salvo':((d&&d.mensagem)||'Não salvou o tamanho da logo')); }).catch(function(){ aviso('Não salvou o tamanho da logo'); }); }
 function cdOvPrev(nn){
   if(!nn) cdOvNums(); else CD_OV_RG.forEach(function(id){ var n=el(id+'-n'); if(n&&document.activeElement!==n) n.value=el(id).value; });
   var t=cdOvColher(), pv=el('cd-ov-pv'), src=CD.of&&CD.of.prev?CD.of.prev:'';
@@ -9527,7 +9536,7 @@ function cdOfEditar(id){
   cdOfAbrirForm();
 }
 function cdOfAbrirForm(){
-  var o=CD.of; fecharTudo();
+  var o=CD.of; fecharTudo(); cdOvLogoCarrega();
   el('cd-of-tit').textContent=o.id?'Editar oferta':'Nova oferta';
   el('cd-of-nome').value=o.nome; el('cd-of-ativo').checked=o.ativo!==false; el('cd-of-erro').textContent=''; el('cd-of-busca').value='';
   el('cd-of-dup').style.display=o.id?'':'none'; el('cd-of-apagar').style.display=o.id?'':'none';

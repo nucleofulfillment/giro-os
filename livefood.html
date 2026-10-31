@@ -25,7 +25,7 @@ html,body{margin:0;height:100%;background:#000;color:var(--tx);font-family:Inter
 #segs{display:flex;gap:4px;margin-bottom:10px}
 #segs i{flex:1;height:3px;border-radius:3px;background:rgba(255,255,255,.28);overflow:hidden;position:relative}
 #segs i b{position:absolute;left:0;top:0;bottom:0;width:0;background:#fff;border-radius:3px}
-#emp .lg{height:36px;max-width:150px;object-fit:contain;object-position:left;vertical-align:middle;filter:drop-shadow(0 1px 6px #0009)}
+#emp .lg{height:var(--logo-h,56px);width:auto;max-width:min(calc(var(--logo-h,56px)*4.4),calc(100vw - 96px));object-fit:contain;object-position:left;vertical-align:middle;filter:drop-shadow(0 1px 6px #0009)}
 #cards{right:96px;padding-right:0}
 #mnb{position:absolute;right:12px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:5;width:76px;height:88px;border-radius:18px;background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--line);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;font:inherit}
 #mnb span{font-size:10px;font-weight:800;letter-spacing:.8px}
@@ -345,7 +345,7 @@ html.claro #sheet .dsc .pc{filter:invert(1)}   /* tema claro inverte a folha: de
 .ov-btn.cheio{background:var(--ov-bf,#f97316);color:var(--ov-bt,#fff)}
 .ov-btn.contorno{border:.09em solid var(--ov-bt,#fff);color:var(--ov-bt,#fff);background:transparent}
 .ov-btn.link{color:var(--ov-bt,#fff);padding:.2em 0;text-decoration:underline}
-#stage .ov{--ov-t:calc(84px + env(safe-area-inset-top));--ov-b:max(calc(172px + env(safe-area-inset-bottom)),var(--ov-min,0px));font-size:16px}
+#stage .ov{--ov-t:calc(max(84px,calc(var(--logo-h,56px) + 44px)) + env(safe-area-inset-top));--ov-b:max(calc(172px + env(safe-area-inset-bottom)),var(--ov-min,0px));font-size:16px}
 /* (115) com a barrinha do Clube na inicial, o texto e o botão da oferta sobem junto com os cartões; à esquerda, não passam por baixo do Compartilhar */
 html.clbbar #stage .ov{--ov-b:max(calc(232px + env(safe-area-inset-bottom)),var(--ov-min,0px))}
 /* (160) oferta sem produto: o texto e o botão descem até a linha do botão do catálogo */
@@ -580,6 +580,7 @@ function carregar(primeira){
   if(!CLI){ vazio('Bem-vindo ao LiveFood','Escaneie o QR Code da sua mesa ou abra o link do restaurante para ver o cardápio.'); try{ var vz=$('vazio'); if(vz&&!$('vz-lg')){ var g=document.createElement('img'); g.id='vz-lg'; g.src='livefood-logo.png'; g.alt='LiveFood'; g.style.cssText='height:46px;margin-bottom:18px'; vz.insertBefore(g,vz.firstChild); } }catch(e){} return Promise.resolve(); }
   return fetch(API+'/food/cardapio/'+encodeURIComponent(CLI)).then(function(r){return r.json();}).then(function(d){
     if(!d||!d.ok){ if(primeira) vazio('Cardápio não encontrado',(d&&d.mensagem)||'Confira o link.'); return; }
+    if(d.cfg&&d.cfg.logoTam) document.documentElement.style.setProperty('--logo-h',d.cfg.logoTam+'px');
     if(primeira){ D=d; CLI=d.cli||CLI; sacLer(); aplicaTema(); navOn('inicio'); temaAplica(); wizPill(); mesaInit(); document.title=(d.empresa||'Cardápio'); $('emp').innerHTML=((d.cfg&&d.cfg.logo)?'<img class="lg" src="'+API+'/food/foto/'+encodeURIComponent(d.cli||CLI)+'/_logo?v='+(d.cfg.v||0)+'" alt="'+esc(d.empresa)+'" onerror="this.outerHTML=\''+esc(d.empresa).replace(/'/g,'')+'\'">':esc(d.empresa))+'<small id="stt"></small>'; pintaStatus(); try{ if(!estaAberto()&&!sessionStorage.getItem('lf_fcm_'+(d.cli||CLI))){ sessionStorage.setItem('lf_fcm_'+(d.cli||CLI),'1'); setTimeout(abreFechado,600); } }catch(e){} manifesto(); iniciar(); clbInit(); catAplica(); var rtP=(ROTA.r||Q.get('r')||'').replace(/[^a-f0-9]/g,''); if(rtP) setTimeout(function(){ rpAbre(rtP); },300); }
     else { novoD=d; if(D&&d.cfg){ D.cfg=d.cfg; pintaStatus(); } }   /* horário salvo no painel vale sem o cliente recarregar a página */
   }).catch(function(){ if(primeira) vazio('Sem conexão','Não consegui abrir o cardápio. Tente de novo.'); });
