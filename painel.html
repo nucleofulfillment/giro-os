@@ -8446,7 +8446,10 @@ function cdCfgClientes(){
 }
 function cdCfgClientesSalvar(){
   fetch(DELTADIS_API+'/painel/atend-cfg',{method:'POST',headers:cdHdr(),body:JSON.stringify({balcao_livre:el('cc-bal').checked,bloq_dias:el('cc-bloq').value,fecha_auto:el('cc-auto').checked,fecha_dias:el('cc-dias').value,msg:el('cc-msg').value})}).then(function(r){return r.json();}).then(function(d){
-    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'não salvou'); aviso('Configurações salvas'); fecharTudo();
+    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'não salvou');
+    /* servidor antigo descarta a opção sem avisar: mostra em vez de dizer que salvou */
+    if(el('cc-bal').checked&&!(d.cfg&&d.cfg.balcao_livre)) throw new Error('O servidor ainda não aceita esta opção. Publique o Worker 153 e salve de novo.');
+    aviso('Configurações salvas'); fecharTudo();
   }).catch(function(e){ var m=el('cc-m'); if(m){ m.style.color='#f87171'; m.textContent=e.message||'Não salvou'; } });
 }
 /* ── (145) IMPRESSORAS: instalador já com a chave da loja + situação do programa no computador do restaurante ── */

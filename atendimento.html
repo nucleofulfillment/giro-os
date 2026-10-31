@@ -500,7 +500,7 @@ function abreComanda(){
   if(COM.modo!=='balcao'&&!mesa){ er.textContent='⚠️ Você não preencheu o número da mesa.'; try{ $('iMesa').focus(); }catch(e){} return; }
   if(COM.modo!=='balcao'&&mesa&&D.mesas&&D.mesas.length&&D.mesas.indexOf(mesa)<0){ er.textContent='⚠️ A mesa '+mesa+' não está cadastrada. Escolha no mapa de mesas.'; return; }
   var avulso=!mesa&&!joia&&COM.modo==='balcao'&&balLivre();
-  if(!mesa&&!joia&&!avulso){ er.textContent='Informe a mesa ou a joia do cliente.'; return Promise.resolve(); }
+  if(!mesa&&!joia&&!avulso){ er.textContent=COM.modo==='balcao'?'Informe o cliente. Para vender sem cliente, ligue "Vender no balcão sem cliente" no painel, em Configurações clientes, e recarregue esta página.':'Informe a mesa ou a joia do cliente.'; return Promise.resolve(); }
   return buscaJoia().then(function(s){
     if(joia&&!s){ er.textContent='Confira a joia: não encontrei esse cliente.'; return; }
     if(joia&&COM.bloq&&!COM.liberar){ er.textContent='Cliente bloqueado. Só o gestor libera.'; return; }
