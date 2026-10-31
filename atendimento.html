@@ -55,6 +55,26 @@ h2{margin:6px 0 10px;font-size:19px;font-weight:800}
 .prod b{display:block;font-size:15px}.prod small{color:var(--mu2);font-size:12.5px}.prod .v{margin-left:auto;font-weight:800;color:var(--pri);font-size:14px;text-align:right;flex:none}
 .voltar{border:0;background:none;color:var(--pri);font-weight:800;padding:6px 0;font-size:15px}
 /* folhas */
+/* (152) aviso de chamado do garçom */
+#chm{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;background:rgba(14,14,18,.74);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+#chm.on{display:flex}
+#chm .cx{width:100%;max-width:380px;background:#fff;border-radius:28px;overflow:hidden;text-align:center;box-shadow:0 24px 70px rgba(0,0,0,.45);animation:chmEntra .5s cubic-bezier(.2,1.4,.4,1)}
+#chm .tp{position:relative;overflow:hidden;padding:30px 18px 26px;background:var(--grad);color:#fff}
+#chm .an{position:relative;width:92px;height:92px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center}
+#chm .an i{position:absolute;inset:0;border-radius:50%;border:3px solid #fff;opacity:0;animation:chmOnda 2s ease-out infinite}#chm .an i:nth-child(2){animation-delay:.65s}#chm .an i:nth-child(3){animation-delay:1.3s}
+#chm .sn{position:relative;width:70px;height:70px;border-radius:50%;background:#fff;color:var(--pri);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 22px rgba(0,0,0,.2)}
+#chm .sn svg{animation:chmSino 1.1s ease-in-out infinite;transform-origin:50% 12%}
+#chm .lb{font-size:13px;font-weight:800;letter-spacing:1.8px;text-transform:uppercase}
+#chm .ms{font-size:21px;font-weight:800;margin-top:12px;line-height:1}
+#chm .nm{font-size:92px;font-weight:800;line-height:1;margin-top:2px;letter-spacing:-2px;animation:chmNum 1.4s ease-in-out infinite}
+#chm .bx{padding:18px 18px 20px}
+#chm .tm{font-size:14px;font-weight:700;color:var(--mu2)}#chm .fl{font-size:13px;font-weight:800;color:var(--er);margin-top:4px}#chm .fl:empty{display:none}
+#chm .bt{margin-top:14px;padding:18px;font-size:18px;border-radius:16px;animation:chmBt 1.6s ease-in-out infinite}
+@keyframes chmEntra{0%{transform:scale(.7) translateY(30px);opacity:0}100%{transform:none;opacity:1}}
+@keyframes chmOnda{0%{transform:scale(.72);opacity:.8}100%{transform:scale(1.65);opacity:0}}
+@keyframes chmSino{0%,100%{transform:rotate(0)}15%{transform:rotate(16deg)}35%{transform:rotate(-14deg)}55%{transform:rotate(9deg)}75%{transform:rotate(-5deg)}}
+@keyframes chmNum{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+@keyframes chmBt{0%,100%{transform:scale(1)}50%{transform:scale(1.025)}}
 #ov{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:40;display:none}
 #sh{position:fixed;left:0;right:0;bottom:0;z-index:41;background:#fff;border-radius:22px 22px 0 0;max-height:92vh;display:none;flex-direction:column;max-width:560px;margin:0 auto}
 #sh .hd{padding:14px 16px;border-bottom:1px solid var(--b2);display:flex;align-items:center;gap:10px}#sh .hd b{flex:1;font-size:17px}
@@ -317,7 +337,7 @@ function inicio(){
     $('login').classList.add('hide'); $('app').classList.remove('hide');
     $('emp').innerHTML=d.logo?'<img src="'+API+'/food/foto/'+encodeURIComponent(d.cli)+'/_logop" alt="'+esc(d.empresa||'')+'" style="height:30px;border-radius:6px;vertical-align:middle">':esc(d.empresa||'Atendimento'); $('usu').textContent=d.usuario||''; try{ var li=$('emp').querySelector('img'); if(li&&window.GiroMarca&&GiroMarca.ajusta) GiroMarca.ajusta(li,'claro'); }catch(e){}
     [].forEach.call(document.querySelectorAll('.gest'),function(b){ b.classList.toggle('hide',!GEST); });
-    aba('ped'); pintaCats(); mostraMapaBtn();
+    aba('ped'); pintaCats(); mostraMapaBtn(); chamInicia();
     try{ var qm=new URLSearchParams(location.search).get('mesa'); if(qm&&!COM.mesa&&!$('iMesa').value){ modo('mesa'); $('iMesa').value=String(qm).replace(/[^A-Za-z0-9]/g,'').slice(0,8).toUpperCase(); } }catch(e){}
   });
 }
@@ -328,6 +348,38 @@ function aba(a){
   if(a==='com'){ carregaCom(); POLL=setInterval(carregaCom,15000); }
   if(a==='soc') carregaSocios();
 }
+/* ── (152) chamado do garçom: abre o aviso com o número da mesa e som; quem tocar em "Eu atendo" tira o aviso de todos ── */
+var CHM={lista:[],atual:null,meus:{},ctx:null,tSom:0,tRel:0,tPoll:0,busy:0,dif:0,tit:''};
+function chamAudio(){ try{ if(!CHM.ctx) CHM.ctx=new (window.AudioContext||window.webkitAudioContext)(); if(CHM.ctx.state==='suspended') CHM.ctx.resume(); }catch(e){} }
+['pointerdown','touchend','click','keydown'].forEach(function(t){ document.addEventListener(t,chamAudio,true); });
+function chamBip(){
+  try{ navigator.vibrate&&navigator.vibrate([250,120,250]); }catch(e){}
+  try{ chamAudio(); var a=CHM.ctx; if(!a||a.state!=='running') return; [[880,0],[1175,.17],[1568,.34],[1175,.62],[1568,.79]].forEach(function(n){ var o=a.createOscillator(), g=a.createGain(), t=a.currentTime+n[1]; o.type='triangle'; o.frequency.value=n[0]; g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(.32,t+.02); g.gain.exponentialRampToValueAtTime(.0001,t+.2); o.connect(g); g.connect(a.destination); o.start(t); o.stop(t+.22); }); }catch(e){}
+}
+function chamTempo(){ var c=CHM.atual, e=$('chm-tm'); if(!c||!e) return; var s=Math.max(0,Math.floor((Date.now()+CHM.dif-c.criado)/1000)); e.textContent=s<60?'Chamou há '+s+' segundos':'Chamou há '+Math.floor(s/60)+(s<120?' minuto':' minutos'); }
+function chamFecha(){ clearInterval(CHM.tSom); clearInterval(CHM.tRel); CHM.tSom=CHM.tRel=0; CHM.atual=null; var m=$('chm'); if(m) m.classList.remove('on'); if(CHM.tit){ document.title=CHM.tit; CHM.tit=''; } }
+function chamPinta(){
+  var at=CHM.atual, l=CHM.lista;
+  if(at&&!l.some(function(c){ return c.id===at.id; })){ if(!CHM.meus[at.id]) toast('Mesa '+at.mesa+' já foi atendida'); chamFecha(); at=null; }
+  if(!l.length){ chamFecha(); return; }
+  var m=$('chm'); if(!m){ m=document.createElement('div'); m.id='chm'; m.setAttribute('role','alertdialog'); m.setAttribute('aria-modal','true'); document.body.appendChild(m); }
+  if(!at){
+    at=CHM.atual=l[0];
+    m.innerHTML='<div class="cx"><div class="tp"><div class="an"><i></i><i></i><i></i><div class="sn"><svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9"/><path d="M10.3 20a2 2 0 0 0 3.4 0"/></svg></div></div><div class="lb">Chamando o garçom</div><div class="ms">MESA</div><div class="nm">'+esc(at.mesa)+'</div></div><div class="bx"><div class="tm" id="chm-tm"></div><div class="fl" id="chm-fl"></div><button class="bt" type="button" onclick="chamAtendo()">Eu atendo</button></div></div>';
+    m.classList.add('on'); if(!CHM.tit) CHM.tit=document.title; document.title='🛎 Mesa '+at.mesa+' chamando';
+    chamBip(); clearInterval(CHM.tSom); CHM.tSom=setInterval(chamBip,5000); clearInterval(CHM.tRel); CHM.tRel=setInterval(chamTempo,1000);
+  }
+  chamTempo(); var n=l.length-1, f=$('chm-fl'); if(f) f.textContent=n>0?'Mais '+n+(n===1?' mesa chamando':' mesas chamando'):'';
+}
+function chamAtendo(){
+  var c=CHM.atual; if(!c) return; CHM.meus[c.id]=1; CHM.lista=CHM.lista.filter(function(x){ return x.id!==c.id; }); chamFecha(); chamPinta();
+  api('/painel/atend-chamado-ok',{id:c.id}).then(function(d){ if(!d.ok){ delete CHM.meus[c.id]; toast(d.mensagem||'Não consegui avisar. Tente de novo.'); chamPoll(); return; } toast(d.ja?'Outro garçom já estava atendendo a mesa '+c.mesa:'Mesa '+c.mesa+': você está atendendo'); });
+}
+function chamPoll(){
+  if(!TK||CHM.busy||$('app').classList.contains('hide')) return; CHM.busy=1;
+  api('/painel/atend-chamados').then(function(d){ CHM.busy=0; if(!d.ok) return; if(d.agora) CHM.dif=d.agora-Date.now(); CHM.lista=(d.chamados||[]).filter(function(c){ return !CHM.meus[c.id]; }); chamPinta(); });
+}
+function chamInicia(){ chamPoll(); if(!CHM.tPoll) CHM.tPoll=setInterval(chamPoll,4000); }
 /* ── comanda atual ── */
 (function(){ ['iMesa','iJoia'].forEach(function(id){ var e=document.getElementById(id); if(!e) return; e.addEventListener('focus',function(){ document.body.classList.add('kb'); }); e.addEventListener('blur',function(){ setTimeout(function(){ var a=document.activeElement; if(!a||(a.id!=='iMesa'&&a.id!=='iJoia')) document.body.classList.remove('kb'); },200); }); }); })();
 function mostraMapaBtn(){ var b=$('bMapa'); if(b) b.classList.toggle('hide',!(D&&D.mesas&&D.mesas.length&&COM.modo!=='balcao')); }

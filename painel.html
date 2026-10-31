@@ -859,7 +859,7 @@ html.loja-p .cd-dest{display:none!important}
       </section>
 
       <section class="page" id="pg-mesas">
-        <div class="pghd"><div><h1>Mesas</h1><div class="sub">mesas do salão e etiquetas NFC · <span id="mz-total">—</span></div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sec" onclick="rvAbrir()">🪑 Reservas</button><button class="btn sec" onclick="mzQrTodos()">🖨 Imprimir QR de todas</button><button class="btn pri" onclick="mzNova()">+ Nova mesa</button></div></div>
+        <div class="pghd"><div><h1>Mesas</h1><div class="sub">mesas do salão e etiquetas NFC · <span id="mz-total">—</span></div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sec" onclick="rvAbrir()">🪑 Reservas</button><button class="btn sec" onclick="gcAbrir()">🧑‍🍳 Garçons</button><button class="btn sec" onclick="mzQrTodos()">🖨 Imprimir QR de todas</button><button class="btn pri" onclick="mzNova()">+ Nova mesa</button></div></div>
         <div class="card">
           <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px"><div class="search" style="margin:0;max-width:360px;flex:1;min-width:180px"><span>🔎</span><input id="mz-busca" placeholder="buscar mesa" oninput="mzPintar()"></div>
             <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--muted)">📅 Reservas do dia <input type="date" class="inp" id="mz-dia" style="width:auto;padding:7px 9px" onchange="mzDia()"></label>
@@ -8042,6 +8042,36 @@ function clImportar(){
 /* ── (094) menu MESAS: cadastro das mesas e etiqueta NFC ── */
 var MZ={lista:[]};
 function mzApi(path,body){ var o=body?{method:'POST',headers:cdHdr(),body:JSON.stringify(body)}:{headers:cdHdr()}; return fetch(DELTADIS_API+path,o).then(function(r){ return r.json(); }); }
+/* (152) Mesas > Garçons: quais mesas cada garçom cuida. Garçom sem mesa marcada e mesa sem garçom recebem/vão para todos */
+var GC={g:[],mesas:[]};
+function gcAbrir(){
+  el('sh-import').querySelector('h3').textContent='Garçons das mesas'; el('cd-imp-corpo').innerHTML='<div style="padding:18px;color:var(--muted)">Carregando…</div>'; abrir('sh-import');
+  Promise.all([mzApi('/painel/atend-garcons'),mzApi('/painel/atend-mesas')]).then(function(a){
+    if(!a[0]||!a[0].ok) throw new Error((a[0]&&a[0].mensagem)||'Não consegui abrir. Publique o Worker 152.'); if(!a[1]||!a[1].ok) throw new Error((a[1]&&a[1].mensagem)||'Não consegui ler as mesas.');
+    GC.g=(a[0].garcons||[]).map(function(g){ g.mesas=(g.mesas||[]).map(String); g.orig=g.mesas.slice().sort().join(); return g; }); GC.mesas=(a[1].mesas||[]).map(function(m){ return String(m.num); }).sort(function(x,y){ return (parseInt(x,10)||0)-(parseInt(y,10)||0)||(x<y?-1:1); }); gcPinta();
+  }).catch(function(e){ el('cd-imp-corpo').innerHTML='<div style="padding:18px;color:var(--red)">'+esc(e.message||'Não consegui abrir.')+'</div>'; });
+}
+function gcPinta(){
+  var h='<p style="margin:0 0 12px;font-size:13px;line-height:1.55;color:var(--muted2)">Marque as mesas de cada garçom. O chamado da mesa vai para quem cuida dela. <b>Garçom sem mesa marcada recebe todas</b> e mesa sem garçom avisa todos. Se ninguém atender em 2 minutos, o aviso vai para todos.</p>';
+  if(!GC.g.length) h+='<div class="empty">Nenhum garçom cadastrado. Crie um acesso com o perfil <b>Garçom</b> na área de usuários.</div>';
+  if(GC.g.length&&!GC.mesas.length) h+='<div class="empty">Nenhuma mesa cadastrada ainda.</div>';
+  if(GC.mesas.length) GC.g.forEach(function(g,i){
+    h+='<div style="border:1px solid var(--border);border-radius:14px;padding:12px;margin-bottom:10px"><div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:9px"><b style="font-size:14.5px">'+esc(g.nome)+'</b><span style="font-size:12px;font-weight:700;color:var(--muted)">'+(g.mesas.length?g.mesas.length+(g.mesas.length===1?' mesa':' mesas'):'Todas as mesas')+'</span></div><div style="display:flex;flex-wrap:wrap;gap:6px">';
+    GC.mesas.forEach(function(m){ var on=g.mesas.indexOf(m)>=0; h+='<button type="button" aria-pressed="'+on+'" onclick="gcTroca('+i+',\''+esc(m)+'\')" style="min-width:42px;height:38px;padding:0 8px;border-radius:10px;font-weight:800;font-size:13.5px;cursor:pointer;border:1.5px solid '+(on?'var(--pri,#E07B39)':'var(--border2)')+';background:'+(on?'var(--pri,#E07B39)':'transparent')+';color:'+(on?'#fff':'inherit')+'">'+esc(m)+'</button>'; });
+    h+='</div></div>';
+  });
+  var sem=GC.mesas.filter(function(m){ return !GC.g.some(function(g){ return g.mesas.indexOf(m)>=0; }); });
+  if(GC.g.length&&GC.mesas.length&&sem.length&&sem.length<GC.mesas.length) h+='<div style="font-size:12.5px;color:var(--muted);margin:2px 0 12px">Sem garçom, avisam todos: '+esc(sem.join(', '))+'</div>';
+  if(GC.g.length&&GC.mesas.length) h+='<div id="gc-m" style="font-size:13px;font-weight:700;color:var(--red);min-height:18px;margin-bottom:6px"></div><button class="btn pri wide" id="gc-s" type="button" onclick="gcSalvar()">Salvar</button>';
+  el('cd-imp-corpo').innerHTML=h;
+}
+function gcTroca(i,m){ var g=GC.g[i], k=g.mesas.indexOf(m); if(k>=0) g.mesas.splice(k,1); else g.mesas.push(m); var bd=el('cd-imp-corpo'), t=bd.scrollTop; gcPinta(); bd.scrollTop=t; }
+function gcSalvar(){
+  var mud=GC.g.filter(function(g){ return g.mesas.slice().sort().join()!==g.orig; }), b=el('gc-s'), m=el('gc-m'); if(!mud.length){ fecharTudo(); return; }
+  b.disabled=true; m.textContent='';
+  mud.reduce(function(p,g){ return p.then(function(){ return mzApi('/painel/atend-garcom-mesas',{uid:g.id,mesas:g.mesas}).then(function(d){ if(!d||!d.ok) throw new Error((d&&d.mensagem)||'Não salvou.'); g.orig=g.mesas.slice().sort().join(); }); }); },Promise.resolve())
+  .then(function(){ fecharTudo(); aviso('Mesas dos garçons salvas'); }).catch(function(e){ b.disabled=false; m.textContent=e.message||'Não salvou.'; });
+}
 function mzCarregar(){
   mzCliBusca();
   el('mz-lista').innerHTML='<div style="padding:14px;color:var(--muted)">Carregando…</div>';
