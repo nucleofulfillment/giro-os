@@ -350,6 +350,9 @@ html.claro #sheet .dsc .pc{filter:invert(1)}   /* tema claro inverte a folha: de
 #stage .ov{--ov-t:calc(84px + env(safe-area-inset-top));--ov-b:max(calc(172px + env(safe-area-inset-bottom)),var(--ov-min,0px));font-size:16px}
 /* (115) com a barrinha do Clube na inicial, o texto e o botão da oferta sobem junto com os cartões; à esquerda, não passam por baixo do Compartilhar */
 html.clbbar #stage .ov{--ov-b:max(calc(232px + env(safe-area-inset-bottom)),var(--ov-min,0px))}
+/* (160) oferta sem produto: o texto e o botão descem até a linha do botão do catálogo */
+#stage.sem-cards .ov{--ov-b:calc(76px + env(safe-area-inset-bottom))}
+html.clbbar #stage.sem-cards .ov{--ov-b:calc(128px + env(safe-area-inset-bottom))}
 #stage .ov.p-base.a-esq{padding-right:96px}
 #omask{position:absolute;inset:0;pointer-events:none;z-index:3}
 .ov.e-cair .ov-apoio,.ov.e-cair .ov-tit,.ov.e-cair .ov-btn{animation:ovCair .85s cubic-bezier(.2,1.3,.4,1) both}
@@ -650,7 +653,7 @@ function cardsRolaInicia(){
   },3500);
 }
 /* (132) o texto e o botão da oferta ficam sempre acima dos cartões, qualquer que seja a altura deles */
-function ovAcimaCards(){ try{ var s=$('stage'), c=$('cards'); if(!s||!c) return; var h=c.children.length?Math.ceil(s.getBoundingClientRect().bottom-c.getBoundingClientRect().top+14):0; s.style.setProperty('--ov-min',h+'px'); }catch(e){} }
+function ovAcimaCards(){ try{ var s=$('stage'), c=$('cards'); if(!s||!c) return; var h=c.children.length?Math.ceil(s.getBoundingClientRect().bottom-c.getBoundingClientRect().top+14):0; s.style.setProperty('--ov-min',h+'px'); s.classList.toggle('sem-cards',!c.children.length); }catch(e){} }
 addEventListener('resize',function(){ ovAcimaCards(); });
 
 /* texto e botão sobre o vídeo (mesmo desenho do painel) */
