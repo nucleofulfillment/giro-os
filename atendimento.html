@@ -353,7 +353,7 @@ function inicio(){
     $('login').classList.add('hide'); $('app').classList.remove('hide');
     $('emp').innerHTML=d.logo?'<img src="'+API+'/food/foto/'+encodeURIComponent(d.cli)+'/_logop" alt="'+esc(d.empresa||'')+'" style="height:30px;border-radius:6px;vertical-align:middle">':esc(d.empresa||'Atendimento'); $('usu').textContent=d.usuario||''; try{ var li=$('emp').querySelector('img'); if(li&&window.GiroMarca&&GiroMarca.ajusta) GiroMarca.ajusta(li,'claro'); }catch(e){}
     [].forEach.call(document.querySelectorAll('.gest'),function(b){ b.classList.toggle('hide',!GEST); });
-    aba('ped'); pintaCats(); mostraMapaBtn(); chamInicia(); bpBotoes(); modo(COM.modo); nfcMesaInicia();
+    aba('ped'); pintaCats(); mostraMapaBtn(); mzBusca(); chamInicia(); bpBotoes(); modo(COM.modo); nfcMesaInicia();
     try{ var qm=new URLSearchParams(location.search).get('mesa'); if(qm&&!COM.mesa&&!$('iMesa').value){ modo('mesa'); $('iMesa').value=String(qm).replace(/[^A-Za-z0-9]/g,'').slice(0,8).toUpperCase(); } }catch(e){}
   });
 }
@@ -439,15 +439,22 @@ function chamInicia(){ chamPoll(); if(!CHM.tPoll) CHM.tPoll=setInterval(chamPoll
 /* ── comanda atual ── */
 (function(){ ['iMesa','iJoia'].forEach(function(id){ var e=document.getElementById(id); if(!e) return; e.addEventListener('focus',function(){ document.body.classList.add('kb'); }); e.addEventListener('blur',function(){ setTimeout(function(){ var a=document.activeElement; if(!a||(a.id!=='iMesa'&&a.id!=='iJoia')) document.body.classList.remove('kb'); },200); }); }); })();
 function mostraMapaBtn(){ var b=$('bMapa'); if(b) b.classList.toggle('hide',!(D&&D.mesas&&D.mesas.length&&COM.modo!=='balcao')); }
-function abreMapa(){
-  folha('Escolha a mesa','<div style="padding:20px;color:var(--mu2)">Carregando…</div>','');
-  api('/painel/atend-mesas').then(function(d){
-    if(!d.ok){ folha('Escolha a mesa','<p class="er">'+esc(d.mensagem||'Não consegui abrir o mapa.')+'</p>',''); return; }
-    var h='<div class="mlg"><span><i style="background:var(--pri)"></i>Livre</span><span><i style="background:#16A34A"></i>Comanda aberta</span></div><div class="mz">'+d.mesas.map(function(m){ return '<button class="mb'+(m.oc?' oc':'')+'" onclick="pegaMesa(\''+esc(m.num)+'\')">'+esc(m.num)+'</button>'; }).join('')+'</div>';
-    folha('Escolha a mesa',h,'');
+/* (159) as mesas ficam guardadas: a lista abre na hora e a cor de cada uma se atualiza logo depois */
+var MZC=null, MZ_SEGUE=false;
+function mzBusca(){ return api('/painel/atend-mesas').then(function(d){ if(d&&d.ok) MZC=d.mesas||[]; return d; }); }
+function mzLista(){ return MZC||((D&&D.mesas)||[]).map(function(n){ return {num:n,oc:0}; }); }
+function mzGrade(l){ return '<div class="mlg"><span><i style="background:var(--pri)"></i>Livre</span><span><i style="background:#16A34A"></i>Comanda aberta</span></div><div class="mz">'+l.map(function(m){ return '<button class="mb'+(m.oc?' oc':'')+'" onclick="pegaMesa(\''+esc(m.num)+'\')">'+esc(m.num)+'</button>'; }).join('')+'</div>'; }
+function abreMapa(segue){
+  MZ_SEGUE=segue===true; var l=mzLista(), tok=MZ_ABRE=(MZ_ABRE||0)+1; carregaAbertas();
+  folha('Escolha a mesa',l.length?'<div id="mzG">'+mzGrade(l)+'</div>':'<div id="mzG" style="padding:20px;color:var(--mu2)">Carregando…</div>','');
+  mzBusca().then(function(d){
+    var g=$('mzG'); if(!g||tok!==MZ_ABRE) return;
+    if(!d.ok){ if(!l.length) g.innerHTML='<p class="er">'+esc(d.mensagem||'Não consegui abrir o mapa.')+'</p>'; return; }
+    var h=mzGrade(d.mesas||[]); if(g.innerHTML!==h) g.innerHTML=h;
   });
 }
-function pegaMesa(n){ $('iMesa').value=n; fecha(); $('idErr').textContent=''; linkMesa(); }
+var MZ_ABRE=0;
+function pegaMesa(n){ var seg=MZ_SEGUE; MZ_SEGUE=false; $('iMesa').value=n; fecha(); $('idErr').textContent=''; linkMesa(); if(seg) carregaAbertas().then(function(){ linkMesa(); abreComanda(); }); }
 /* vínculo mesa <-> cliente: só vale enquanto a comanda está aberta (fechou a conta, some) */
 var OPENL=[], _ab=0, AUTOJ='', AUTOM='';
 function carregaAbertas(){
@@ -501,7 +508,7 @@ function liberaBloq(){ COM.liberar=true; $('joiaInfo').innerHTML='<div class="av
 function abreComanda(){
   var mesa=$('iMesa').value.trim().toUpperCase().replace(/[^A-Z0-9]/g,''), joia=$('iJoia').value.replace(/\W/g,''), er=$('idErr'); er.textContent='';
   COM.modo=$('sgB').classList.contains('on')?'balcao':'mesa';   /* vale o botão que está marcado na tela */
-  if(COM.modo!=='balcao'&&!mesa){ er.textContent='⚠️ Você não preencheu o número da mesa.'; try{ $('iMesa').focus(); }catch(e){} return; }
+  if(COM.modo!=='balcao'&&!mesa){ if(mzLista().length) return abreMapa(true); er.textContent='⚠️ Você não preencheu o número da mesa.'; try{ $('iMesa').focus(); }catch(e){} return; }
   if(COM.modo!=='balcao'&&mesa&&D.mesas&&D.mesas.length&&D.mesas.indexOf(mesa)<0){ er.textContent='⚠️ A mesa '+mesa+' não está cadastrada. Escolha no mapa de mesas.'; return; }
   var avulso=!mesa&&!joia&&COM.modo==='balcao'&&balLivre();
   if(!mesa&&!joia&&!avulso){ er.textContent=COM.modo==='balcao'?'Informe o cliente. Para vender sem cliente, ligue "Vender no balcão sem cliente" no painel, em Configurações clientes, e recarregue esta página.':'Informe a mesa ou a joia do cliente.'; return Promise.resolve(); }
@@ -779,13 +786,14 @@ var TROCA=null;
 function trocaForm(i){
   var c=COMS[i]; if(!c) return; TROCA={i:i};
   var tit=comTit(c)||(c.joia?'Cliente '+esc(c.joia):''), topo='<div style="font-size:14.5px;margin:4px 0 10px"><b>'+tit+'</b>'+(c.nome&&!ehBalM(c.mesa)&&c.joia?' · '+esc(c.nome):'')+' · '+brl(c.total)+'</div>';
-  folha('Trocar de mesa',topo+'<div style="padding:14px;color:var(--mu2)">Carregando…</div>','');
-  api('/painel/atend-mesas').then(function(d){
-    if(!TROCA||TROCA.i!==i) return; if(!d.ok){ $('shB').innerHTML=topo+'<p class="er">'+esc(d.mensagem||'Não consegui abrir as mesas.')+'</p>'; return; }
-    var ms=d.mesas||[], h=topo+'<div id="trErr" class="er"></div>';
+  var trPinta=function(ms){ var h=topo+'<div id="trErr" class="er"></div>';
     if(ms.length) h+='<div class="mlg"><span><i style="background:var(--pri)"></i>Livre</span><span><i style="background:#16A34A"></i>Comanda aberta</span></div><div class="mz">'+ms.map(function(m){ var at=String(m.num)===String(c.mesa); return '<button class="mb'+(m.oc?' oc':'')+'"'+(at?' disabled style="opacity:.35"':'')+' onclick="trocaFaz(\''+esc(m.num)+'\')">'+esc(m.num)+'</button>'; }).join('')+'</div>';
     else h+='<label class="l">Número da mesa nova</label><input class="inp big" id="trIn" inputmode="numeric" maxlength="8" autocomplete="off"><button class="bt" onclick="trocaFaz($(\'trIn\').value)">Trocar</button>';
-    $('shB').innerHTML=h;
+    $('shB').innerHTML=h; };
+  var trL=mzLista(); folha('Trocar de mesa',topo+'<div style="padding:14px;color:var(--mu2)">Carregando…</div>',''); if(trL.length) trPinta(trL);
+  mzBusca().then(function(d){
+    if(!TROCA||TROCA.i!==i) return; if(!d.ok){ if(!trL.length) $('shB').innerHTML=topo+'<p class="er">'+esc(d.mensagem||'Não consegui abrir as mesas.')+'</p>'; return; }
+    if(JSON.stringify(d.mesas||[])!==JSON.stringify(trL)&&!($('trIn')&&$('trIn').value)) trPinta(d.mesas||[]);
   });
 }
 function trocaFaz(para,juntar){
