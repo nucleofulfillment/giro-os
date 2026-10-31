@@ -355,6 +355,7 @@ html.clbbar #stage.sem-cards .ov{--ov-b:calc(128px + env(safe-area-inset-bottom)
 html.kb #nav,html.kb #clbHome,html.kb #mside,html.kb #mnb{display:none!important}
 html.kb #sheet,html.kb #sheet.wz,html.kb #sheet.fz,html.kb #sheet.fx{bottom:var(--kb,0px)!important;top:0!important;height:auto!important;max-height:none!important;border-radius:0;transform:none;transition:none}
 html.kb #sheet .wh{padding:2px 10px}html.kb #sheet .rod{padding:6px 12px}html.kb #sheet .rod .bt{padding-top:9px;padding-bottom:9px}html.kb #sheet .rod.col .bt.g{display:none}
+#mpav{position:fixed;inset:0;z-index:90;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.55)}#mpav.on{display:flex}#mpav .cx{width:100%;max-width:340px;background:#fff;color:#1c1c1e;border-radius:22px;padding:22px 20px 18px;text-align:center;box-shadow:0 18px 50px rgba(0,0,0,.35);animation:mpavE .3s cubic-bezier(.2,1.3,.4,1)}#mpav .lv{width:118px;margin:0 auto 12px}#mpav .tt1{font-size:19px;font-weight:800;line-height:1.25}#mpav .vl1{font-size:26px;font-weight:900;color:#FF5A00;margin-top:6px}#mpav .st1{font-size:14px;color:#6b6b73;margin:4px 0 12px}@keyframes mpavE{from{transform:scale(.86);opacity:0}to{transform:none;opacity:1}}
 .mp-bar{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.mp-ch{display:inline-flex;align-items:center;min-height:38px;padding:0 13px;border:1.5px solid var(--line);border-radius:11px;background:transparent;color:inherit;font:inherit;font-size:13.5px;font-weight:700;text-decoration:none;cursor:pointer}.mp-ch.pri{border-color:var(--pri);color:var(--pri2,var(--pri))}
 .rod.col{flex-direction:column;gap:8px}.rod.col .bt{flex:none;width:100%;margin:0!important}
 #omask{position:absolute;inset:0;pointer-events:none;z-index:3}
@@ -1469,7 +1470,7 @@ function mpLink(id){ return location.origin+'/'+encodeURIComponent((D&&D.slug)||
 function mpAbre(){ MP.rp=null; CT.real=0; CT.ctx='mp'; MP.prox=null; MP.quer=0; ctLer(); if(MP.d&&String(MP.d.mesa)===String(MESA)) mpDecide(); else mpEspera0(); if(!CT.tok) return ctLogin(); mpDepoisLogin(); }
 function mpEspera0(){ abreFolha(ctCab('Conta da mesa '+esc(MESA),'fechaSheet()')+'<div class="wb" id="mp-ask"><div style="font-size:21px;font-weight:800;margin-top:16px">Deseja pagar por aqui?</div><div class="nt" style="margin-top:14px">Carregando a conta…</div></div><div class="rod col"><button class="bt c" id="mp-sim" onclick="mpSimEspera()">Sim, pagar por aqui</button><button class="bt c g" style="background:transparent;border:2px solid var(--pri);color:var(--tx,#fff)" onclick="mpGarcom()">Não, chamar o garçom</button></div>',true); }
 function mpSimEspera(){ MP.quer=1; var b=$('mp-sim'); if(b){ b.disabled=true; b.textContent='Carregando…'; } }
-function mpPre(){ try{ ctLer(); if(!CT.tok||!MESA) return; ctApi('/food/pedidos-mesa-pag?mesa='+encodeURIComponent(MESA),null,true).then(function(r){ if(r&&r.ok&&!MP.d){ MP.d=r; MP.consente=r.consente; } }); }catch(e){} }
+function mpPre(){ try{ ctLer(); if(!CT.tok||!MESA) return; ctApi('/food/pedidos-mesa-pag?mesa='+encodeURIComponent(MESA),null,true).then(function(r){ if(r&&r.ok){ mpDonoAnota(r.estado); if(!MP.d){ MP.d=r; MP.consente=r.consente; } } if(Object.keys(mpDonoLer()).length) mpDonoLiga(); }); }catch(e){} }
 function mpAposCarga(){ if(!$('mp-ask')) return; if(MP.quer&&MP.d.estado.pedidos.length&&!MP.d.estado.partes.length){ MP.quer=0; return mpPay(); } MP.quer=0; mpDecide(); }
 function mpDepoisLogin(){ var f=MP.prox; MP.prox=null; CT.real=0; if(f) return f(); mpCarrega(mpAposCarga); }
 function mpReal(prox){ MP.prox=prox; CT.ctx='mp'; if(!mpAnon()) return mpDepoisLogin(); CT.real=1; CT.tok=''; CT.conta=null; ctLogin(); }
@@ -1477,7 +1478,7 @@ function mpCarrega(cb){
   ctApi('/food/pedidos-mesa-pag?mesa='+encodeURIComponent(mpMesa()),null,true).then(function(r){
     if(r._http===401){ CT.tok=''; CT.conta=null; ctLogin(); return; }
     if(!r.ok){ abreFolha(ctCab('Conta','fechaSheet()')+'<div class="wb"><div class="nt" style="margin-top:14px">'+esc(r.mensagem||'Não consegui abrir a conta. Tente de novo.')+'</div></div>',true); return; }
-    MP.d=r; MP.consente=r.consente; cb();
+    MP.d=r; MP.consente=r.consente; if(!MP.rp) mpDonoAnota(r.estado); cb();
   });
 }
 function mpDecide(){
@@ -1598,7 +1599,7 @@ function mpCria(modo,pessoas){
   var b=$('ct-bt'); b.disabled=true; b.textContent='Enviando…'; ctErro('');
   ctApi('/food/pedidos-mesa-racha',{mesa:MESA,modo:modo,pessoas:pessoas}).then(function(r){
     if(!r.ok){ b.disabled=false; b.textContent='Enviar os links'; if(r.erro==='login'){ return mpReal(modo==='igual'?mpIgual:mpValor); } ctErro(r.mensagem||'Não consegui enviar.'); return; }
-    MP.d.estado=r.estado; (r.envio||[]).forEach(function(x){ MP.envio[x.id]=x; }); MP.pes=[]; MP.val=[]; mpAcomp();
+    MP.d.estado=r.estado; mpDonoAnota(r.estado); (r.envio||[]).forEach(function(x){ MP.envio[x.id]=x; }); MP.pes=[]; MP.val=[]; mpAcomp();
   });
 }
 /* ── valor específico: um valor para cada um, ou só quem está indo embora ── */
@@ -1640,7 +1641,7 @@ function mpAcompTela(){
   e.partes.forEach(function(p){
     var pago=p.status==='paga', lado='', bar='';
     if(pago) lado='<span style="color:#16a34a;font-size:13px;font-weight:800">Pago</span>';
-    else if(p.minha) lado='<button class="bt c" style="flex:none;width:auto;padding:9px 16px;font-size:14px;margin:0" onclick="mpMinha(\''+esc(p.id)+'\','+Number(p.valor)+')">Pagar</button>';
+    else if(p.minha) lado='<span style="flex:none;color:var(--pri2,var(--pri));font-size:13px;font-weight:800">Sua parte</span>';
     else if(p.id){ var x=MP.envio[p.id];
       bar=((x&&!p.enviado)?'<a class="mp-ch pri" target="_blank" rel="noopener" href="'+esc(mpWaHref(x))+'">Enviar pelo WhatsApp</a>':'<button class="mp-ch pri" onclick="mpReenvia(\''+esc(p.id)+'\')">Reenviar</button>')
         +'<button class="mp-ch" onclick="mpCopia(\''+esc(p.id)+'\')">Copiar link</button><button class="mp-ch" onclick="mpEdita(\''+esc(p.id)+'\')">Editar</button><button class="mp-ch" onclick="mpRemove(\''+esc(p.id)+'\')">Remover</button>'; }
@@ -1648,14 +1649,15 @@ function mpAcompTela(){
     h+='<div class="rsm" style="display:block"><div style="display:flex;align-items:center;gap:10px"><div class="tx" style="flex:1;min-width:0"><b>'+esc(p.nome)+'</b><small>'+brl(p.valor)+(pago&&p.forma?' · '+(p.forma==='pix'?'Pix':'Cartão'):'')+'</small>'+(p.itens?'<small>'+esc(p.itens)+'</small>':'')+'</div>'+lado+'</div>'+((!pago&&MP.envio[p.id]&&MP.envio[p.id].erro)?'<div style="color:#dc2626;font-size:12.5px;margin-top:6px;line-height:1.35">Mensagem não enviada: '+esc(MP.envio[p.id].erro)+'</div>':'')+(bar?'<div class="mp-bar">'+bar+'</div>':'')+'</div>';
   });
   if(e.aberto>0.009) h+='<div class="rsm"><div class="tx"><b>Continua aberto na mesa</b></div><div class="vl">'+brl(e.aberto)+'</div></div>';
-  h+='</div><div class="rod col">'+(e.falta>=5?'<button class="bt c" onclick="mpPay()">Pagar o que falta</button>':'')+((mpRachaOn()&&e.aberto>=5)?'<button class="bt c g" style="background:transparent;border:2px solid var(--pri);color:var(--tx,#fff)" onclick="MP.val=[];mpReal(mpValor)">Adicionar pessoa</button>':'')+'<button class="bt c g" style="background:transparent;border:2px solid var(--line);color:var(--tx,#fff)" onclick="mpGarcom()">Chamar o garçom</button></div>';
+  var eu=e.partes.filter(function(p){ return p.minha&&p.status!=='paga'; })[0], outros=e.partes.some(function(p){ return !p.minha&&p.status!=='paga'; });
+  h+='</div><div class="rod col">'+(eu?'<button class="bt c" onclick="mpMinha(\''+esc(eu.id)+'\','+Number(eu.valor)+')">Pagar minha parte · '+brl(eu.valor)+'</button>':'')+'<div class="mp-bar" style="margin:0;justify-content:center">'+(e.falta>=5&&(!eu||outros||e.aberto>0.009)?'<button class="mp-ch" onclick="mpPay()">Pagar tudo que falta · '+brl(e.falta)+'</button>':'')+((mpRachaOn()&&e.aberto>=5)?'<button class="mp-ch" onclick="MP.val=[];mpReal(mpValor)">Adicionar pessoa</button>':'')+'<button class="mp-ch" onclick="mpGarcom()">Chamar o garçom</button></div></div>';
   abreFolha(h,true);
 }
 /* (163) quem criou o racha muda ou tira uma pessoa: a diferença volta para a parte dele */
 function mpParte(id){ return MP.d.estado.partes.filter(function(p){ return p.id===id; })[0]; }
 function mpRemove(id){
   var p=mpParte(id); if(!p||!window.confirm('Remover '+p.nome+' da conta? '+brl(p.valor)+' volta para a sua parte.')) return;
-  ctApi('/food/pedidos-parte-editar',{id:id,remover:true}).then(function(r){ if(!r.ok){ toast(r.mensagem||'Não consegui remover.'); return mpCarrega(mpAcompTela); } MP.d.estado=r.estado; toast(p.nome+' saiu da conta'); mpAcompTela(); });
+  ctApi('/food/pedidos-parte-editar',{id:id,remover:true}).then(function(r){ if(!r.ok){ toast(r.mensagem||'Não consegui remover.'); return mpCarrega(mpAcompTela); } MP.d.estado=r.estado; var dm=mpDonoLer(); delete dm[id]; mpDonoGrava(dm); toast(p.nome+' saiu da conta'); mpAcompTela(); });
 }
 function mpEdita(id){
   var p=mpParte(id); if(!p) return; clearInterval(MP.tmr);
@@ -1667,9 +1669,43 @@ function mpEditaOk(id){
   var b=$('ct-bt'); b.disabled=true; b.textContent='Salvando…'; ctErro('');
   ctApi('/food/pedidos-parte-editar',{id:id,nome:nm,fone:fo,valor:String(vl)}).then(function(r){
     if(!r.ok){ b.disabled=false; b.textContent='Salvar'; ctErro(r.mensagem||'Não consegui salvar.'); return; }
-    MP.d.estado=r.estado; (r.envio||[]).forEach(function(x){ MP.envio[x.id]=x; }); mpAcomp();
+    var de=mpDonoLer(); delete de[id]; mpDonoGrava(de); MP.d.estado=r.estado; mpDonoAnota(r.estado); (r.envio||[]).forEach(function(x){ MP.envio[x.id]=x; }); mpAcomp();
   });
 }
+/* (167) quem criou o racha é avisado quando um amigo paga, mesmo com a tela fechada: guarda quem falta e confere a cada 5 segundos */
+var MPD={tmr:0,fila:[],aberto:false,live:null,pisca:0};
+function mpDonoChave(){ return 'lf_mp_dono_'+(D.cli||CLI)+'_'+MESA+'_'+String((CT.conta||{}).fone||''); }
+function mpDonoLer(){ try{ return JSON.parse(localStorage.getItem(mpDonoChave())||'{}')||{}; }catch(e){ return {}; } }
+function mpDonoGrava(m){ try{ if(Object.keys(m).length) localStorage.setItem(mpDonoChave(),JSON.stringify(m)); else localStorage.removeItem(mpDonoChave()); }catch(e){} }
+function mpDonoAnota(e){
+  if(!MESA||!e) return; var m=mpDonoLer(), mudou=false;
+  (e.partes||[]).forEach(function(p){ if(p.id&&!p.minha&&p.status!=='paga'&&(!m[p.id]||m[p.id].valor!==p.valor||m[p.id].nome!==p.nome)){ m[p.id]={nome:p.nome,valor:p.valor}; mudou=true; } });
+  if(mudou) mpDonoGrava(m); if(Object.keys(m).length) mpDonoLiga();
+}
+function mpDonoLiga(){ if(!MPD.tmr) MPD.tmr=setInterval(mpDonoConfere,5000); }
+function mpDonoConfere(){
+  if(document.hidden||!MESA||!CT.tok) return; var m=mpDonoLer(), ids=Object.keys(m); if(!ids.length){ clearInterval(MPD.tmr); MPD.tmr=0; return; }
+  ctApi('/food/pedidos-mesa-pag?mesa='+encodeURIComponent(MESA),null,true).then(function(r){
+    if(!r||!r.ok) return; var e=r.estado, por={}; e.partes.forEach(function(p){ if(p.id) por[p.id]=p; });
+    ids.forEach(function(id){
+      var p=por[id], reg=m[id];
+      if(p&&p.status==='paga'){ delete m[id]; mpDonoGrava(m); mpDonoAvisa(reg.nome,p.valor,e); return; }
+      if(p) return;
+      /* sumiu da lista: pagou e fechou a mesa, ou saiu da conta */
+      fetch(API+'/food/pedidos-parte/'+encodeURIComponent(id)).then(function(x){ return x.json(); }).then(function(x){ var n=mpDonoLer(); delete n[id]; mpDonoGrava(n); if(x&&x.ok&&x.parte.status==='paga') mpDonoAvisa(reg.nome,x.parte.valor,e); }).catch(function(){});
+    });
+  });
+}
+function mpDonoAvisa(nome,valor,e){ MPD.fila.push({nome:nome,valor:valor,falta:e?e.falta:0,fechou:!!(e&&!e.total)}); if(!MPD.aberto) mpDonoProx(); }
+function mpDonoProx(){
+  var a=MPD.fila.shift(); if(!a) return; MPD.aberto=true;
+  var b=$('mpav'); if(!b){ b=document.createElement('div'); b.id='mpav'; b.setAttribute('role','alertdialog'); b.setAttribute('aria-modal','true'); document.body.appendChild(b); }
+  b.innerHTML='<div class="cx"><div class="lv" id="mpav-lv"></div><div class="tt1">'+esc(String(a.nome).split(' ')[0])+' já pagou a parte da conta 🙂</div><div class="vl1">'+brl(a.valor)+'</div><div class="st1">'+(a.fechou?'A conta da mesa foi paga. Obrigado!':(a.falta>0.009?'Ainda faltam '+brl(a.falta)+' nesta mesa.':'A conta da mesa foi paga. Obrigado!'))+'</div><button class="bt c" style="width:100%;flex:none;margin:6px 0 0" onclick="mpDonoFecha()">Ok</button></div>';
+  b.classList.add('on'); try{ navigator.vibrate&&navigator.vibrate([120,80,120]); }catch(e){}
+  try{ if(window.LiveMascote){ var lv=LiveMascote.criar($('mpav-lv'),{sombra:true,expressao:'animado'}); MPD.live=lv; var mov=function(){ try{ lv.gesto('piscadinha'); }catch(e){} }; mov(); MPD.pisca=setInterval(mov,1800); } }catch(e){}
+  if(MP.d&&$('mp-ac')) mpCarrega(mpAcompTela);
+}
+function mpDonoFecha(){ clearInterval(MPD.pisca); try{ if(MPD.live) MPD.live.destruir(); }catch(e){} MPD.live=null; MPD.aberto=false; var b=$('mpav'); if(b) b.classList.remove('on'); setTimeout(mpDonoProx,200); }
 function mpMinha(id,v){ MP.parte={id:id,valor:v}; var f=MP.d.estado.partes.filter(function(p){ return p.id===id; })[0]; if(f&&f.status==='aguardando_pagto'&&f.pix_copia) return mpPix(f); abreFolha(ctCab('Pagar minha parte','mpAcomp()')+'<div class="wb"><div class="tt" style="padding:14px 0 10px;font-size:17px"><span>Você está pagando</span><span>'+brl(v)+'</span></div>'+mpOpc('▦','Pix','QR Code e copia e cola',"mpForma('pix')")+mpOpc('💳','Cartão','Na primeira vez você cadastra',"mpMinhaCartao()")+'</div>',true); }
 function mpMinhaCartao(){ if(mpAnon()){ var pt=MP.parte; return mpReal(function(){ MP.parte=pt; mpForma('cartao'); }); } mpForma('cartao'); }
 function mpReenvia(id){
