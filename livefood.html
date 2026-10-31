@@ -1181,7 +1181,7 @@ function sacContinuar(){
 var MG={n:0};
 function mesaGuest(){
   if(MG.n>=3){ MG.n=0; abreFolha(ctCab('Mesa','fechaSheet()')+'<div class="wb"><div class="nt" style="margin-top:14px">Não consegui abrir sua mesa. Chame o garçom.</div></div>',true); return; }
-  MG.n++; abreFolha(ctCab('Mesa','fechaSheet()')+'<div class="wb"><div class="nt" style="margin-top:14px">Abrindo sua mesa…</div></div>',true);
+  MG.n++; if(!(CT.ctx==='mp'&&$('mp-ask'))) abreFolha(ctCab('Mesa','fechaSheet()')+'<div class="wb"><div class="nt" style="margin-top:14px">Abrindo sua mesa…</div></div>',true);
   ctApi('/food/conta/mesa-entrar',{mesa:MESA}).then(function(d){
     if(!d.ok){ MG.n=3; mesaGuest(); return; }
     CT.tok=d.token; CT.conta=d.conta; ctGrava();
@@ -1302,7 +1302,7 @@ var GAR={ult:0};
 function mesaInit(force){
   if(!MESA){ var s0=$('mside'); if(s0){ s0.style.display='flex'; s0.children[1].style.display='none'; s0.children[2].style.display='none'; } return; }
   if(geoCfg()) geoPega(function(ok){ var cf=geoCfg(); if(!ok){ toast('Ative a localização para fazer pedidos pela mesa'); return; } if(geoDist(GEO.lat,GEO.lng,cf.lat,cf.lng)-Math.min(GEO.acc,100)>cf.raio) toast('Você está longe '+lojaDo()+': dá para ver '+catRef()+', mas não para pedir'); });
-  var sd=$('mside'); if(sd) sd.style.display='flex'; var nc=$('nv-conta'); if(nc) nc.style.display='none';
+  if(mpOn()) setTimeout(mpPre,300); var sd=$('mside'); if(sd) sd.style.display='flex'; var nc=$('nv-conta'); if(nc) nc.style.display='none';
   var k='lf_splash_'+(D.cli||CLI)+'_'+MESA, vis=false; try{ vis=!!sessionStorage.getItem(k); }catch(e){}
   if(vis&&force!==true) return;
   var lg=(D.cfg&&D.cfg.logo)?'<img class="lg2" alt="" src="'+API+'/food/foto/'+encodeURIComponent(D.cli||CLI)+'/_logo?v='+(D.cfg.v||0)+'">':'<div style="font-size:22px;font-weight:800">'+esc(D.empresa||'')+'</div>';
@@ -1465,8 +1465,13 @@ function mpRachaOn(){ return !!(D.cfg&&D.cfg.racha); }
 function mpAnon(){ return !CT.tok||!CT.conta||/^mesa/i.test(String(CT.conta.fone||'')); }
 function mpMesa(){ return MP.rp?MP.rp.parte.mesa:MESA; }
 function mpLink(id){ return location.origin+'/'+encodeURIComponent((D&&D.slug)||CLI)+'/r/'+id; }
-function mpAbre(){ MP.rp=null; CT.real=0; CT.ctx='mp'; MP.prox=null; ctLer(); if(!CT.tok) return ctLogin(); mpDepoisLogin(); }
-function mpDepoisLogin(){ var f=MP.prox; MP.prox=null; CT.real=0; if(f) return f(); mpCarrega(mpDecide); }
+/* (165) o botão Conta abre na hora: mostra o que já está guardado e confere no servidor por trás */
+function mpAbre(){ MP.rp=null; CT.real=0; CT.ctx='mp'; MP.prox=null; MP.quer=0; ctLer(); if(MP.d&&String(MP.d.mesa)===String(MESA)) mpDecide(); else mpEspera0(); if(!CT.tok) return ctLogin(); mpDepoisLogin(); }
+function mpEspera0(){ abreFolha(ctCab('Conta da mesa '+esc(MESA),'fechaSheet()')+'<div class="wb" id="mp-ask"><div style="font-size:21px;font-weight:800;margin-top:16px">Deseja pagar por aqui?</div><div class="nt" style="margin-top:14px">Carregando a conta…</div></div><div class="rod col"><button class="bt c" id="mp-sim" onclick="mpSimEspera()">Sim, pagar por aqui</button><button class="bt c g" style="background:transparent;border:2px solid var(--pri);color:var(--tx,#fff)" onclick="mpGarcom()">Não, chamar o garçom</button></div>',true); }
+function mpSimEspera(){ MP.quer=1; var b=$('mp-sim'); if(b){ b.disabled=true; b.textContent='Carregando…'; } }
+function mpPre(){ try{ ctLer(); if(!CT.tok||!MESA) return; ctApi('/food/pedidos-mesa-pag?mesa='+encodeURIComponent(MESA),null,true).then(function(r){ if(r&&r.ok&&!MP.d){ MP.d=r; MP.consente=r.consente; } }); }catch(e){} }
+function mpAposCarga(){ if(!$('mp-ask')) return; if(MP.quer&&MP.d.estado.pedidos.length&&!MP.d.estado.partes.length){ MP.quer=0; return mpPay(); } MP.quer=0; mpDecide(); }
+function mpDepoisLogin(){ var f=MP.prox; MP.prox=null; CT.real=0; if(f) return f(); mpCarrega(mpAposCarga); }
 function mpReal(prox){ MP.prox=prox; CT.ctx='mp'; if(!mpAnon()) return mpDepoisLogin(); CT.real=1; CT.tok=''; CT.conta=null; ctLogin(); }
 function mpCarrega(cb){
   ctApi('/food/pedidos-mesa-pag?mesa='+encodeURIComponent(mpMesa()),null,true).then(function(r){
@@ -1477,9 +1482,9 @@ function mpCarrega(cb){
 }
 function mpDecide(){
   var e=MP.d.estado;
-  if(!e.pedidos.length){ abreFolha(ctCab('Conta','fechaSheet()')+'<div class="wb"><div class="nt" style="margin-top:14px;font-size:14.5px;color:#fff">Sua mesa não tem pedidos em aberto no momento.</div></div><div class="rod"><button class="bt c" onclick="fechaSheet()">Voltar</button></div>',true); return; }
+  if(!e.pedidos.length){ abreFolha(ctCab('Conta','fechaSheet()')+'<div class="wb" id="mp-ask"><div class="nt" style="margin-top:14px;font-size:14.5px;color:var(--tx,#fff)">Sua mesa não tem pedidos em aberto no momento.</div></div><div class="rod"><button class="bt c" onclick="fechaSheet()">Voltar</button></div>',true); return; }
   if(e.partes.length) return mpAcomp();
-  abreFolha(ctCab('Conta da mesa '+esc(MESA),'fechaSheet()')+'<div class="wb"><div style="font-size:21px;font-weight:800;margin-top:16px">Deseja pagar por aqui?</div>'+mpResumo(e)+'</div><div class="rod col"><button class="bt c" onclick="mpPay()">Sim, pagar por aqui</button><button class="bt c g" style="background:transparent;border:2px solid var(--pri);color:var(--tx,#fff)" onclick="mpGarcom()">Não, chamar o garçom</button></div>',true);
+  abreFolha(ctCab('Conta da mesa '+esc(MESA),'fechaSheet()')+'<div class="wb" id="mp-ask"><div style="font-size:21px;font-weight:800;margin-top:16px">Deseja pagar por aqui?</div>'+mpResumo(e)+'</div><div class="rod col"><button class="bt c" onclick="mpPay()">Sim, pagar por aqui</button><button class="bt c g" style="background:transparent;border:2px solid var(--pri);color:var(--tx,#fff)" onclick="mpGarcom()">Não, chamar o garçom</button></div>',true);
 }
 function mpGarcom(){ fechaSheet(); garcomChama(); }
 function mpResumo(e){
