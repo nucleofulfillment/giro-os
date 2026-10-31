@@ -716,6 +716,7 @@ function temaClaroCor(c){
     +'html.claro #sheet :is(.clbcta,.prmcta,.tgc,.cc,.art),html.claro #sheet:has(>.wb>.mgrid){--pri:'+c+';--pri2:'+c+'}'
     +'html.claro #sheet:has(>.wb>.mgrid)>.wh{--pri:'+inv+';--pri2:'+inv+'}'
     +'html.claro #sheet :is('+FORTES+')'+DENTRO+',html.claro #obsm .obc .bt,html.claro #nav :is(button.on,.bg){filter:invert(1);--pri:'+c+';--pri2:'+c+'}'
+    +'html.claro #nav button.on .bg{filter:none}'   /* a bolinha da aba ativa já está dentro do botão desinvertido: outro filtro trocava a cor */
     +'html.claro #sheet :is(.op,.mp) .vl .de{color:#0008}';   /* o preço "de" riscado, dentro do preço desinvertido */
 }
 var NEON=['#fb923c','#22d3ee','#a78bfa','#f472b6','#4ade80','#facc15'];
@@ -1077,11 +1078,15 @@ function rapHtml(p){
 }
 function rapAdd(id,d){
   var p=D.produtos[id]; if(!p) return; if(!rapPode(p)){ abreSheet(id); return; }
+  /* a foto sai do botão tocado: guarda a posição antes de o botão ser redesenhado */
+  var ori=null; try{ var ev=window.event, bo=ev&&ev.target&&ev.target.closest&&ev.target.closest('button'); if(!bo) bo=document.querySelector('[data-qa="'+id+'"]'); if(bo){ var ro=bo.getBoundingClientRect(); if(ro.width) ori={x:ro.left+ro.width/2,y:ro.top+ro.height/2}; } }catch(e){}
   var k=rapK(p), it=SAC.filter(function(x){ return x.k===k; })[0];
   if(!it){ if(d<0) return; var u=Math.round(desc(p,p.preco||0)*100)/100;
     it={p:p.id,nome:p.nome,tam:'',sab:[],borda:'',adds:[],obs:'',qty:0,unit:u,orig:p.preco||0,promo:p.promo?{tipo:p.promo.tipo,valor:p.promo.valor}:null,kind:'item',tipo:tipoDesenho(p),balcao:false,k:k}; SAC.push(it); }
   var antes=it.qty; it.qty=Math.max(0,Math.min(50,it.qty+d)); if(!it.qty) SAC.splice(SAC.indexOf(it),1);
-  sacGrava(); try{ var b=$('nSac')||$('nv-sac'); if(b){ b.classList.remove('bump'); void b.offsetWidth; b.classList.add('bump'); } }catch(e){}
+  sacGrava();
+  if(it.qty>antes) voaSacola(p.foto?fotoUrl(p):'',ori);
+  else try{ var b=$('nSac')||$('nv-sac'); if(b){ b.classList.remove('bump'); void b.offsetWidth; b.classList.add('bump'); } }catch(e){}
   if(!antes&&d>0) toast('Adicionado à sacola',true);
   document.querySelectorAll('[data-qa="'+id+'"]').forEach(function(e){ e.innerHTML=rapHtml(p); });
 }
@@ -1094,13 +1099,18 @@ function fotoZoom(id){
   im.onclick=function(e){ var on=z.classList.toggle('on'); if(on){ var r=im.getBoundingClientRect(); im.style.transformOrigin=((e.clientX-r.left)/r.width*100)+'% '+((e.clientY-r.top)/r.height*100)+'%'; im.style.transform='scale(2.3)'; } else im.style.transform=''; };
   document.body.appendChild(z);
 }
-function voaSacola(foto){
+/* a foto sobe um pouco e cai em arco até o ícone da sacola, inteira até chegar lá (antes ela ia sumindo no caminho e parecia cair no meio da tela) */
+function voaSacola(foto,ori){
   try{
-    var al=$('nv-sac'); if(!al) return; var r=al.getBoundingClientRect(), x1=r.left+r.width/2, y1=r.top+r.height/2, x0=innerWidth/2, y0=innerHeight*.38;
+    var al=$('nv-sac'); if(!al) return; var r=al.getBoundingClientRect(); if(!r.width) return; var x1=r.left+r.width/2, y1=r.top+r.height*.36, x0=ori?ori.x:innerWidth/2, y0=ori?ori.y:innerHeight*.38;
     var d=document.createElement('div'); d.className='voa'; if(foto) d.style.backgroundImage='url("'+foto+'")'; else { d.style.background='var(--pri,#f97316)'; d.style.display='flex'; d.style.alignItems='center'; d.style.justifyContent='center'; d.style.fontSize='30px'; d.textContent=ehRest()?'🍽':'🛍'; }
-    d.style.left=x0+'px'; d.style.top=y0+'px'; document.body.appendChild(d);
-    requestAnimationFrame(function(){ requestAnimationFrame(function(){ d.style.transform='translate('+(x1-x0)+'px,'+(y1-y0)+'px) scale(.28)'; d.style.opacity='.35'; }); });
-    setTimeout(function(){ if(d.parentNode) d.parentNode.removeChild(d); var b=$('nSac')||al; b.classList.remove('bump'); void b.offsetWidth; b.classList.add('bump'); },780);
+    d.style.left=x0+'px'; d.style.top=y0+'px'; d.style.transition='none'; document.body.appendChild(d);
+    var dx=x1-x0, dy=y1-y0, s0=ori?.7:1, topo=Math.max(50,Math.min(y0,y1)-(ori?70:50)), T=ori?620:760;
+    var fim=function(){ if(d.parentNode) d.parentNode.removeChild(d); var b=$('nSac')||al; b.classList.remove('bump'); void b.offsetWidth; b.classList.add('bump'); };
+    if(d.animate){
+      var an=d.animate([{transform:'translate(0,0) scale('+s0+')',easing:'ease-out'},{transform:'translate('+dx*.35+'px,'+(topo-y0)+'px) scale('+s0+')',offset:.34,easing:'ease-in'},{transform:'translate('+dx+'px,'+dy+'px) scale(.3)',opacity:1,offset:.93},{transform:'translate('+dx+'px,'+dy+'px) scale(.12)',opacity:0}],{duration:T,fill:'forwards'});
+      an.onfinish=fim; setTimeout(fim,T+250);
+    } else { d.style.transform='translate('+dx+'px,'+dy+'px) scale(.3)'; setTimeout(fim,T); }
   }catch(e){}
 }
 function sacPos(){ var f=''; try{ f=(W&&W.p&&W.p.foto)?fotoUrl(W.p):''; }catch(e){} abreSacola(); toast('Adicionado à sacola',true); voaSacola(f); }
