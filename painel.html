@@ -4766,7 +4766,7 @@ function msBal(m){ return /^BAL\d+$/.test(String(m||'')); }
 function msLocal(m){ return msBal(m)?'Cliente Balcão':'Mesa '+esc(m); }
 function msOrigem(m){ return msBal(m)?'Balcão':'LOCAL'; }
 /* (159) quem pagou o quê numa conta rachada */
-function msRachaHtml(l){ if(!l||!l.length) return ''; return '<span style="display:block;margin-top:4px;font-size:11.5px;line-height:1.5;white-space:normal"><b>'+(l.length>1?'Conta rachada entre '+l.length+' pessoas':'Pagou parte da conta')+'</b>'+l.map(function(p){ return '<br>'+esc(p.nome)+' · '+moeda(p.valor)+' · '+(p.status==='paga'?'<span style="color:var(--green,#16a34a);font-weight:700">Pago'+(p.forma==='pix'?' no Pix':p.forma==='cartao'?' no cartão':'')+'</span>':'<span style="color:var(--amber,#b7791f);font-weight:700">Aguardando</span>'); }).join('')+'</span>'; }
+function msRachaHtml(l){ if(!l||!l.length) return ''; return '<span style="display:block;margin-top:4px;font-size:11.5px;line-height:1.5;white-space:normal"><b>'+(l.length>1?'Conta rachada entre '+l.length+' pessoas':'Pagou parte da conta')+'</b>'+l.map(function(p){ return '<br>'+esc(p.nome)+(p.itens?' ('+esc(p.itens)+')':'')+' · '+moeda(p.valor)+' · '+(p.status==='paga'?'<span style="color:var(--green,#16a34a);font-weight:700">Pago'+(p.forma==='pix'?' no Pix':p.forma==='cartao'?' no cartão':'')+'</span>':'<span style="color:var(--amber,#b7791f);font-weight:700">Aguardando</span>'); }).join('')+'</span>'; }
 /* (077) pedidos das MESAS aparecem em Pedidos, no filtro MESAS (lista própria; não mistura com a fila do motoboy) */
 function msPedidosHtml(busca){
   var h='', ped=(typeof MS!=='undefined'&&MS.ped)||[], con=(typeof MS!=='undefined'&&MS.con)||[];
