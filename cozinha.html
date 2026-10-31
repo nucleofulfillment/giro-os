@@ -305,7 +305,8 @@ function itemHtml(l){
 var ACAO={n:{e:'preparo',ic:'▶',t:'Iniciar preparo'},p:{e:'pronto',ic:'✔',t:'Pronto'},r:{e:'ok',ic:'✕',t:'Retirar da tela'}};
 var VOLTA={p:{e:'',t:'Voltar para Novos'},r:{e:'preparo',t:'Voltar para Em preparo'}};
 function colDe(p){ return p.estado==='preparo'?'p':(p.estado==='pronto'?'r':'n'); }
-function tagHtml(p){ var t=p.modo==='mesa'?'<span class="tag mesa">Mesa '+esc(p.mesa)+'</span>':(p.modo==='retirada'?'<span class="tag ret">Retirada</span>':'<span class="tag ent">Entrega</span>'); if(p.prog_dia) t+='<span class="tag ag">Agendado '+esc(p.prog_hora||'')+'</span>'; if(p.origem==='whats') t+='<span class="tag wa">WhatsApp</span>'; if(p.origem==='comanda') t+='<span class="tag ag">Comanda</span>'; return t; }
+function ehBal(p){ return /^BAL\d+$/.test(String(p.mesa||'')); }
+function tagHtml(p){ var t=ehBal(p)?'<span class="tag mesa">Balcão</span>':p.modo==='mesa'?'<span class="tag mesa">Mesa '+esc(p.mesa)+'</span>':(p.modo==='retirada'?'<span class="tag ret">Retirada</span>':'<span class="tag ent">Entrega</span>'); if(p.prog_dia) t+='<span class="tag ag">Agendado '+esc(p.prog_hora||'')+'</span>'; if(p.origem==='whats') t+='<span class="tag wa">WhatsApp</span>'; if(p.origem==='comanda') t+='<span class="tag ag">Comanda</span>'; return t; }
 function cardHtml(p,col){
   var m=minutos(p), cl=(col==='r')?'':(m>=25?'d':(m>=15?'w':'')), a=ACAO[col], id=esc(p.id);
   return '<div class="card'+(col==='n'?' novo':'')+(cl==='d'?' atr':'')+(PRIO[p.id]?' prio':'')+'" onclick="abreDet(\''+id+'\')">'
@@ -339,14 +340,14 @@ function reimprime(id,bt){
   var fila=impFila(p), lab=p.num+(p.sub?'-'+p.sub:''), ehMesa=p.modo==='mesa';
   /* entrega e retirada saem identificadas na etiqueta: o campo "joia" é o que o programa instalado já imprime junto do nome */
   var nomeMesa=/^mesa\b/i.test(p.nome||''), obsImp=[p.prog_dia?'AGENDADO PARA '+(p.prog_hora||''):'',p.cli_end?'ENTREGAR EM: '+p.cli_end:'',p.obs].filter(Boolean).join(' | ');
-  var corpo={lab:lab,mesa:ehMesa?p.mesa:'',modo:ehMesa?'mesa':p.modo,joia:ehMesa?(p.nome&&!nomeMesa?'MESA':''):(p.modo==='retirada'?'RETIRADA':'ENTREGA'),nome:[p.nome,p.cli_fone].filter(Boolean).join(' - '),atend:'',criado:p.criado,obs:obsImp,reimp:1,empresa:EMP||'',fila:fila.map(function(x){ return {setor:x.setor,l:x.l.map(function(l){ return {nome:l.nome,qty:l.qty,tam:l.tam,sab:l.sab,borda:l.borda,adds:l.adds,obs:l.obs}; })}; })};
+  var bal=ehBal(p), corpo={lab:lab,mesa:ehMesa&&!bal?p.mesa:'',modo:bal?'balcao':ehMesa?'mesa':p.modo,joia:bal?'':ehMesa?(p.nome&&!nomeMesa?'MESA':''):(p.modo==='retirada'?'RETIRADA':'ENTREGA'),nome:[p.nome,p.cli_fone].filter(Boolean).join(' - '),atend:'',criado:p.criado,obs:obsImp,reimp:1,empresa:EMP||'',fila:fila.map(function(x){ return {setor:x.setor,l:x.l.map(function(l){ return {nome:l.nome,qty:l.qty,tam:l.tam,sab:l.sab,borda:l.borda,adds:l.adds,obs:l.obs}; })}; })};
   fetch(API+'/painel/atend-imprimir',{method:'POST',headers:hdr(),body:JSON.stringify(corpo)}).then(function(r){ return r.json(); }).then(function(d){
     if(d&&d.ok&&d.agente) tst('Pedido #'+lab+' enviado para a impressora'); else impNavegador(p,fila,lab);
   }).catch(function(){ impNavegador(p,fila,lab); });
 }
 reimprime.t={};
 function impNavegador(p,fila,lab){
-  var local=p.modo==='mesa'?'MESA '+esc(p.mesa):(p.modo==='retirada'?'RETIRADA':'ENTREGA'), d=new Date(p.criado);
+  var local=ehBal(p)?'BALCÃO':p.modo==='mesa'?'MESA '+esc(p.mesa):(p.modo==='retirada'?'RETIRADA':'ENTREGA'), d=new Date(p.criado);
   var pag=fila.map(function(x){ return '<div class="slip"><div class="c emp">'+esc(EMP||'')+'</div><div class="c sub">'+(x.setor==='bar'?'BAR':'COZINHA')+' · 2ª VIA</div><div class="sp"></div><div class="local">'+local+'</div><div class="row"><b>Pedido #'+esc(lab)+'</b><span>'+d.toLocaleDateString('pt-BR')+' '+hhmm(p.criado)+'</span></div>'+'<div class="sp"></div>'
     +x.l.map(function(l){ var n=(l.sab||[]).length, s=[]; if(l.tam) s.push(esc(l.tam)); (l.sab||[]).forEach(function(z){ s.push((n>1?'1/'+n+' ':'')+esc(z)); }); if(l.borda) s.push('Borda: '+esc(l.borda)); (l.adds||[]).forEach(function(z){ s.push('+ '+esc(z)); }); return '<div class="it"><div class="q">'+esc(l.qty)+'x</div><div class="d"><b>'+esc(l.nome)+'</b>'+s.map(function(z){ return '<div>'+z+'</div>'; }).join('')+(l.obs?'<div class="ob">! '+esc(l.obs)+'</div>':'')+'</div></div>'; }).join('')
     +((p.nome&&!/^mesa\b/i.test(p.nome))||p.cli_fone||p.cli_end?'<div class="sp"></div>'+(p.nome&&!/^mesa\b/i.test(p.nome)?'<div class="cli">'+esc(p.nome)+'</div>':'')+(p.cli_fone?'<div class="row"><span>Fone: '+esc(p.cli_fone)+'</span></div>':'')+(p.cli_end?'<div class="row"><span><b>Entregar em:</b> '+esc(p.cli_end)+'</span></div>':''):'')
