@@ -3862,8 +3862,16 @@ function temRec(k){ return !PLANO.recursos||PLANO.recursos.indexOf(k)>=0; }
 function planoCad(pag){ return PLANO_PAG[pag]&&!temRec(PLANO_PAG[pag])?' 🔒':''; }
 function planoAviso(k){
   var nm=REC_NOME[k]||'Este recurso', lb=PLANO.libera&&PLANO.libera[k], dono=DD_USER&&DD_USER.perfil==='dono';
-  el('pa-corpo').innerHTML='<div style="text-align:center;padding:10px 4px"><div style="font-size:34px;margin-bottom:8px">🔒</div><b style="font-size:16px">'+esc(nm)+'</b><p style="color:var(--muted);font-size:13.5px;line-height:1.5;margin:8px 0 16px">'+(lb?'Disponível no plano <b>'+esc(lb)+'</b>.':'Não faz parte do seu plano.')+(PLANO.plano?' Seu plano atual é o '+esc(PLANO.plano)+'.':'')+(dono?'':' Fale com o responsável pela conta para liberar.')+'</p>'+(dono?'<button class="btn pri wide" onclick="fecharTudo();contaAbrir()">Ver meu plano</button>':'<button class="btn sec wide" onclick="fecharTudo()">Entendi</button>')+'</div>';
+  el('pa-corpo').innerHTML='<div style="text-align:center;padding:10px 4px"><div style="font-size:34px;margin-bottom:8px">🔒</div><b style="font-size:16px">'+esc(nm)+'</b><p style="color:var(--muted);font-size:13.5px;line-height:1.5;margin:8px 0 16px">'+(lb?'Disponível no plano <b>'+esc(lb)+'</b>.':'Não faz parte do seu plano.')+(PLANO.plano?' Seu plano atual é o '+esc(PLANO.plano)+'.':'')+(dono?'':' Fale com o responsável pela conta para liberar.')+'</p>'+(dono?'<button class="btn pri wide" id="pa-up" onclick="planoPedirUpgrade(\''+k+'\',this)">Quero '+(lb?'o plano '+esc(lb):'fazer upgrade')+'</button><button class="btn sec wide" style="margin-top:8px" onclick="fecharTudo();contaAbrir()">Ver meu plano</button>':'<button class="btn sec wide" onclick="fecharTudo()">Entendi</button>')+'</div>';
   fecharTudo(); abrir('sh-planoav');
+}
+function planoPedirUpgrade(k,b){
+  if(b){ b.disabled=true; b.textContent='Enviando...'; }
+  fetch(DELTADIS_API+'/conta/upgrade',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({recurso:k})}).then(function(r){ return r.json(); }).then(function(d){
+    if(!d||!d.ok) throw new Error('');
+    if(b) b.textContent='✅ Pedido enviado';
+    aviso('Recebemos seu pedido de upgrade. Nossa equipe vai falar com você.');
+  }).catch(function(){ if(b){ b.disabled=false; b.textContent='Tentar de novo'; } aviso('Não consegui enviar o pedido. Tente de novo.'); });
 }
 function planoAtendimentoAbre(){ window.open('atendimento.html','_blank'); }
 function planoAtendimento(){ planoAtendimentoAbre(); }

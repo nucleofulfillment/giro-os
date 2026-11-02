@@ -25,7 +25,7 @@
     pagto_mesa:{t:'Pagamento na mesa e racha',k:'rachar racha dividir conta mesa pagar celular pix cartao',p:[{pg:'config',a:CFG('pgAbrir'),tx:'Toque em Formas de pagamento.',c:1},{a:'#pgt-mesa',tx:'Ligue Pagar pelo celular na mesa.'},{a:'#pgt-racha',tx:'Ligue Rachar a conta para o cliente poder dividir. Depois toque em Salvar.'}]},
     salao:{t:'Desenhar o salão',k:'salao mapa planta desenhar 3d layout',p:[{pg:'config',a:CFG('slAbrir'),tx:'Toque em Salão.',c:1},{a:'#sl-add-mesa',tx:'Toque aqui para colocar uma mesa, e depois arraste no mapa.'},{a:'#sl-svg',tx:'Este é o mapa. Arraste as peças para o lugar certo.'},{a:'button[onclick="slSalvar()"]',tx:'Toque em Salvar salão quando terminar.',s:1}]},
     praia:{t:'Usar o tema praia',k:'praia guarda sol areia mar tema quiosque',p:[{pg:'config',a:CFG('slAbrir'),tx:'Toque em Salão.',c:1},{a:'button[onclick="slAreaPraia()"]',tx:'Toque em Praia para criar a área com areia e mar.',c:1,o:1},{a:'#sl-barea',tx:'Toque em Área e medidas.',c:1,o:1},{a:'#sl-at',tx:'Se você só atende na praia, escolha Praia aqui, na própria área, para as mesas já ficarem nela.'},{a:'button[onclick="slSalvar()"]',tx:'Toque em Salvar salão quando terminar.',s:1}]},
-    atendimento:{t:'Abrir o Atendimento',k:'atendimento garcom comanda tela balcao abrir',p:[{pg:'cardapio',a:'#pg-cardapio button[onclick*="atendimento.html"]',tx:'Este botão abre o Atendimento em outra aba.'}]},
+    atendimento:{t:'Abrir o Atendimento',k:'atendimento garcom comanda tela balcao abrir',p:[{pg:'cardapio',a:'#pg-cardapio button[onclick="planoAtendimento()"]',tx:'Este botão abre o Atendimento em outra aba.'}]},
     usuario_garcom:{t:'Criar acesso de garçom',k:'usuario acesso login senha garcom funcionario equipe criar',p:[{a:'.tb-av',tx:'Toque no seu avatar.',c:1},{a:'#mav-usu',tx:'Toque em Usuários do painel. Só o dono vê esta opção.',c:1},{a:'#us-perfil',tx:'Em Acesso, escolha Garçom.'},{a:'#us-nome',tx:'Preencha nome, e-mail, celular e uma senha com pelo menos 8 caracteres.'},{a:'#us-btn',tx:'Toque em Cadastrar usuário quando terminar.',s:1}]},
     balcao:{t:'Vender no balcão sem cliente',k:'balcao sem cliente joia avulso venda direta',p:[{pg:'config',a:CFG('cdCfgClientes'),tx:'Toque em Configurações clientes.',c:1},{a:'#cc-bal',tx:'Marque esta opção.'},{a:'button[onclick="cdCfgClientesSalvar()"]',tx:'Toque em Salvar. Depois, recarregue a tela de Atendimento.',s:1}]},
     pedidos_mesas:{t:'Ver pedidos de mesa e balcão',k:'pedidos mesa balcao filtro preparo servido comanda',p:[{pg:'pedidos',a:'#pd-pills .pill[onclick="filtrarPedidos(\'mesas\')"]',tx:'Toque em MESAS para ver os pedidos de mesa e do balcão.',c:1}]},
@@ -54,6 +54,9 @@
     impressoras:{t:'Instalar a impressora',k:'impressora imprimir impressao cozinha instalador etiqueta',p:[{pg:'config',a:CFG('impAbrir'),tx:'Toque em Impressoras.',c:1},{a:'#cd-imp-corpo',tx:'No computador do restaurante, baixe o instalador. Ele já vem configurado para a sua loja.'}]}
   };
   var API=function(){ return DELTADIS_API+'/painel/live-ajuda'; };
+  /* (171) guia de recurso fora do plano não abre: vira sugestão de upgrade */
+  var GUIA_REC={"oferta_nova":"ofertas","produto_video":"ofertas","clube":"clube","mesa_nova":"mesas","mesa_qr":"mesas","mesa_nfc":"mesas","reservas":"reservas","garcons":"mesas","pagto_mesa":"mesa_pagto","salao":"mesas","praia":"mesas","atendimento":"atendimento","usuario_garcom":"atendimento","balcao":"atendimento","cliente_novo":"clientes","cliente_importar":"clientes","pagamentos":"pagamento","checkout":"pagamento","entrega":"delivery","entregador_novo":"entregadores","entregador_app":"entregadores","entregador_valor":"entregadores","fechamento":"entregadores","veiculo_novo":"veiculos","despachar":"mapa","mapa_aovivo":"mapa","recebido":"financeiro","lancar_custo":"financeiro","impressoras":"impressoras"};
+  function btUpgrade(u){ var b=document.createElement('button'); b.type='button'; b.className='aj-mostra'; b.textContent='⬆ Quero '+(u.plano?'o plano '+u.plano:'fazer upgrade'); b.onclick=function(){ planoPedirUpgrade(u.recurso,b); }; return b; }
   var CSS='#aj-fab{position:fixed;right:18px;bottom:18px;z-index:70;width:86px;height:86px;border:0;background:none;padding:0;cursor:pointer;filter:drop-shadow(0 8px 16px rgba(0,0,0,.28));transition:transform .2s}#aj-fab:hover{transform:scale(1.07)}#aj-fab .aj-lv{width:86px}'
     +'#aj-dica{position:fixed;right:106px;bottom:48px;z-index:70;background:var(--s1,#fff);color:inherit;font-size:13px;font-weight:700;padding:9px 12px;border-radius:14px 14px 3px 14px;box-shadow:0 8px 24px rgba(0,0,0,.2);cursor:pointer;animation:ajEntra .4s ease-out}'
     +'#aj-chat{position:fixed;right:18px;bottom:18px;z-index:99970;width:380px;max-width:calc(100vw - 24px);height:560px;max-height:calc(100vh - 36px);background:var(--s1,#fff);border-radius:20px;box-shadow:0 18px 60px rgba(0,0,0,.35);display:none;flex-direction:column;overflow:hidden;animation:ajEntra .25s ease-out}#aj-chat.on{display:flex}'
@@ -81,7 +84,7 @@
   function grava(){ try{ sessionStorage.setItem('aj_hist',JSON.stringify(A.hist.slice(-30))); }catch(x){} }
   /* sem a IA, ainda acha o guia mais parecido */
   function busca(q){ var ws=norm(q).split(/[^a-z0-9]+/).filter(function(w){ return w.length>2; }), m=null, ms=0; Object.keys(GUIAS).forEach(function(id){ var g=GUIAS[id], tx=norm(g.t+' '+g.k), s=0; ws.forEach(function(w){ if(tx.indexOf(w)>=0) s++; }); if(s>ms){ ms=s; m=id; } }); return m; }
-  function bola(m){ var d=document.createElement('div'); d.className='aj-b '+(m.r==='user'?'u':'a'); d.innerHTML=e(m.t).replace(/\s+(\d{1,2})\.\s/g,'\n$1. ').replace(/\n/g,'<br>');   /* cada passo numerado em uma linha */ if(m.g&&GUIAS[m.g]){ var b=document.createElement('button'); b.type='button'; b.className='aj-mostra'; b.textContent='👉 Me mostra na tela'; b.onclick=function(){ iniciar(m.g); }; d.appendChild(b); var mod=MODELOS[m.g]; if(mod){ var bx=document.createElement('button'); bx.type='button'; bx.className='aj-mostra'; bx.textContent='⬇ Baixar planilha modelo'; bx.onclick=mod; d.insertBefore(bx,b); } } return d; }
+  function bola(m){ var d=document.createElement('div'); d.className='aj-b '+(m.r==='user'?'u':'a'); d.innerHTML=e(m.t).replace(/\s+(\d{1,2})\.\s/g,'\n$1. ').replace(/\n/g,'<br>');   /* cada passo numerado em uma linha */ if(m.g&&GUIAS[m.g]){ var b=document.createElement('button'); b.type='button'; b.className='aj-mostra'; b.textContent='👉 Me mostra na tela'; b.onclick=function(){ iniciar(m.g); }; d.appendChild(b); var mod=MODELOS[m.g]; if(mod){ var bx=document.createElement('button'); bx.type='button'; bx.className='aj-mostra'; bx.textContent='⬇ Baixar planilha modelo'; bx.onclick=mod; d.insertBefore(bx,b); } } if(m.up&&typeof DD_USER!=='undefined'&&DD_USER&&DD_USER.perfil==='dono') d.appendChild(btUpgrade(m.up)); return d; }
   /* planilhas modelo: baixa direto pelo chat, com as mesmas funções do painel */
   var MODELOS={importar_planilha:function(){ cdBaixarModelo(); },cliente_importar:function(){ clModelo(); }};
   function pinta(){
@@ -99,7 +102,7 @@
     try{ if(A.liveTopo) A.liveTopo.pensando(true); }catch(x){}
     var fim=function(m){ A.busy=false; A.hist.push(m); grava(); pinta(); try{ if(A.liveTopo){ A.liveTopo.pensando(false); A.liveTopo.expressao('feliz'); } }catch(x){} };
     fetch(API(),{method:'POST',headers:cdHdr(),body:JSON.stringify({pergunta:q,historico:ant,tela:(typeof PAG!=='undefined'?PAG:''),celular:innerWidth<860,perfil:(typeof DD_USER!=='undefined'&&DD_USER&&DD_USER.perfil)||''})}).then(function(r){ return r.json(); }).then(function(d){
-      if(d&&d.ok&&d.resposta){ fim({r:'assistant',t:d.resposta,g:d.guia&&d.guia!=='nenhum'?d.guia:''}); return; }
+      if(d&&d.ok&&d.resposta){ fim({r:'assistant',t:d.resposta,g:d.guia&&d.guia!=='nenhum'?d.guia:'',up:d.up||null}); return; }
       throw new Error((d&&d.mensagem)||'');
     }).catch(function(er){ var g=busca(q); fim({r:'assistant',t:(er&&er.message?er.message+' ':'Não consegui responder agora. ')+(g?'Mas acho que este guia ajuda: '+GUIAS[g].t+'.':'Tente de novo em instantes.'),g:g||''}); });
   }
@@ -148,7 +151,9 @@
     })();
   }
   function iniciar(id){
-    var g=GUIAS[id]; if(!g) return; sai(); abreChat(false); var pg=g.p[0].pg;
+    var g=GUIAS[id]; if(!g) return;
+    var rc=GUIA_REC[id]; if(rc&&typeof temRec==='function'&&!temRec(rc)){ A.hist.push({r:'assistant',t:(REC_NOME[rc]||'Este recurso')+' não faz parte do seu plano.'+(PLANO.libera&&PLANO.libera[rc]?' Está disponível no plano '+PLANO.libera[rc]+'.':''),up:{recurso:rc,plano:(PLANO.libera&&PLANO.libera[rc])||''}}); grava(); abreChat(true); return; }
+    sai(); abreChat(false); var pg=g.p[0].pg;
     if(pg&&typeof pagOk==='function'&&!pagOk(pg)){ A.hist.push({r:'assistant',t:'Essa tela só o dono da conta acessa. Peça para o dono fazer este passo, ou entre com o acesso dele.'}); grava(); abreChat(true); return; }
     try{ fecharTudo(); }catch(x){} var s=$('sl-tela'); if(s&&s.style.display!=='none'&&s.innerHTML) try{ slFecha(); }catch(x){}
     A.g=g; document.addEventListener('click',aoClique,true); document.addEventListener('keydown',aoTecla,true); passo(0);

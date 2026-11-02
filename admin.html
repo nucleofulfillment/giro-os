@@ -382,6 +382,14 @@ function plRecHtml(p){
   '<label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-weight:700"><input type="checkbox" id="pl-padrao" '+(p&&p.padrao?'checked':'')+' style="width:auto;margin:0"> Clientes sem plano usam estes recursos</label><p class="sub" style="margin:4px 0 0">Vale só para o acesso: não muda o que eles pagam hoje.</p>';
 }
 function plRecTudo(){ el('pl-recs').style.display=el('pl-rec-tudo').checked?'none':'grid'; }
+/* (171) pedidos de upgrade feitos pelo painel do cliente */
+function carregarUpgrades(){
+  chamar('GET','/admin/upgrades').then(function(d){
+    var b=el('pl-upg'); if(!b||!d.ok) return; var l=d.itens||[];
+    b.innerHTML=l.length?'<div style="margin-top:18px"><b>Pedidos de upgrade ('+l.length+')</b><p class="sub" style="margin:2px 0 8px">Para ativar, troque o plano no cadastro do cliente e marque como feito.</p>'+l.map(function(x){ return '<div class="sub" style="margin:0;padding:8px 0;border-top:1px solid #eee;display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap"><span><b>'+esc(x.nome||x.cli)+'</b>'+(x.plano?' quer o plano <b>'+esc(x.plano)+'</b>':'')+' · por causa de '+esc(x.recurso_nome||'')+'</span><button class="btn peq" onclick="upgradeFeito(\''+esc(x.cli)+'\')">Feito</button></div>'; }).join('')+'</div>':'';
+  }).catch(function(){});
+}
+function upgradeFeito(c){ chamar('POST','/admin/upgrade-feito',{cli:c}).then(function(){ carregarUpgrades(); }).catch(function(){}); }
 /* (170) trava por falta de pagamento */
 function carregarTrava(){
   chamar('GET','/admin/trava').then(function(d){
@@ -409,12 +417,12 @@ function desenharPlanos(){
   var at=PLANOS.filter(function(p){return p.ativo;}).length;
   el('pl-resumo').textContent=at+' ativo'+(at===1?'':'s');
   if(!PLANOS.length){el('lista-planos').innerHTML='<div class="vazio">Nenhum plano ainda. Clique em "+ Novo plano".</div>';return;}
-  setTimeout(function(){ carregarPlanoLog(); carregarTrava(); },0);
+  setTimeout(function(){ carregarPlanoLog(); carregarTrava(); carregarUpgrades(); },0);
   el('lista-planos').innerHTML=PLANOS.map(function(p){
     return '<div class="cli"><div class="av">'+esc((p.nome||'?').charAt(0).toUpperCase())+'</div><div style="min-width:160px"><div class="nome">'+esc(p.nome)+'</div><div class="id">'+esc(p.descricao||'sem descrição')+' · <span class="tag '+(p.ativo?'on':'off')+'">'+(p.ativo?'Ativo':'Desativado')+'</span>'+(p.padrao?' <span class="tag on">Padrão</span>':'')+' · '+(p.recursos?p.recursos.length+' recursos':'tudo liberado')+'</div></div>'+
       '<div class="dados"><div><b>'+reais(p.fixo_centavos)+'</b>fixo mensal</div><div><b>'+reaisPac(p.pacote_centavos)+'</b>por pacote</div><div><b>'+(p.variavel_total?'desde o 1º':(p.franquia||0))+'</b>'+(p.variavel_total?'pacote':'pacotes inclusos')+'</div></div>'+
       '<button class="btn pri peq" onclick="abrirPlano(\''+esc(p.id)+'\')">Abrir</button></div>';
-  }).join('')+'<div id="pl-trava"></div><div id="pl-log"></div>';
+  }).join('')+'<div id="pl-upg"></div><div id="pl-trava"></div><div id="pl-log"></div>';
 }
 function abrirPlano(id){
   var p=id?PLANOS.filter(function(x){return x.id===id;})[0]:null; if(id&&!p) return;
