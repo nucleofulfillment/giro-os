@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>LiveFace · Cadastro do rosto</title>
+<link rel="icon" type="image/svg+xml" href="/site/img/favicon.svg">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@500;600;700;800&display=swap">
+<style>
+/* (172) LiveFace 1A: cadastro do rosto pelo celular. As fotos não saem do aparelho: só os números do rosto vão para o servidor. */
+:root{--laranja:#FF5A00;--laranja-claro:#FF8A33;--laranja-escuro:#E04A00;--preto:#0B0908;--grafite:#141010;--grafite-2:#1D1715;--grafite-3:#2A221F;--linha:rgba(255,255,255,.1);--linha-forte:rgba(255,255,255,.2);--texto:#F7F2EE;--suave:#B3A79E;--ok:#2BC46A;--alerta:#FFB020;--titulo:'Baloo 2',system-ui,sans-serif;--corpo:'Nunito',system-ui,sans-serif;color-scheme:dark}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--preto);color:var(--texto);font:600 15px/1.45 var(--corpo)}
+[hidden]{display:none!important}
+h1,p{margin:0}
+h1{font:800 28px/1.05 var(--titulo);letter-spacing:-.015em;text-wrap:balance}
+button{font:inherit;color:inherit;cursor:pointer}
+a{color:var(--laranja-claro)}
+:focus-visible{outline:3px solid var(--laranja-claro);outline-offset:3px;border-radius:8px}
+.app{max-width:460px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;gap:14px;padding:max(16px,env(safe-area-inset-top)) max(18px,env(safe-area-inset-right)) max(18px,env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left))}
+.marca{font:800 24px/1 var(--titulo);letter-spacing:-.03em}.marca b{color:var(--laranja);font-weight:800}
+.ev{font-size:13px;font-weight:800;color:var(--suave)}
+.topo{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.passos{display:flex;gap:6px}.passos i{flex:1;height:5px;border-radius:9px;background:var(--grafite-3);transition:background .3s}.passos i.on{background:var(--laranja)}
+.lv{display:flex;align-items:center;gap:12px}.lv-p{flex:none;width:80px}
+.balao{position:relative;background:#fff;color:#1B1412;font-weight:800;font-size:14.5px;line-height:1.35;border-radius:16px;padding:10px 13px;min-height:46px;display:flex;align-items:center;flex:1;min-width:0}
+.balao::before{content:'';position:absolute;left:-7px;top:50%;margin-top:-7px;border:7px solid transparent;border-left:0;border-right-color:#fff}
+.live-mascote{position:relative;width:100%;aspect-ratio:220/230}.live-corpo{position:absolute;inset:0;transform-origin:50% 46%;will-change:transform}.live-corpo svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 10px 18px rgba(255,90,0,.25))}.live-rosto{position:absolute;border-radius:14% / 18%}.live-sombra{position:absolute;left:22%;right:22%;bottom:-6%;height:9%;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.7),transparent)}
+.mut{color:var(--suave)}
+.bt{border:0;border-radius:99px;min-height:54px;padding:0 22px;font-weight:800;font-size:16px;display:flex;align-items:center;justify-content:center;width:100%;transition:transform .2s}
+.bt:active{transform:scale(.97)}
+.bt-pri{background:linear-gradient(135deg,var(--laranja-claro),var(--laranja) 55%,var(--laranja-escuro));color:#fff;box-shadow:0 10px 26px -10px rgba(255,90,0,.8)}
+.bt-sec{background:transparent;border:1.5px solid var(--linha-forte)}
+.bt-link{background:none;border:0;color:var(--suave);font-weight:800;font-size:14px;min-height:44px;text-decoration:underline}
+.bt[disabled]{opacity:.55;cursor:default}
+.termo{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;line-height:1.4;background:var(--grafite-2);border:1px solid var(--linha);border-radius:14px;padding:12px;cursor:pointer}
+.termo input{width:24px;height:24px;margin:0;flex:none;accent-color:var(--laranja)}
+.termo.erro{border-color:var(--alerta)}
+.termo b{font-weight:800}
+.lista{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;list-style:none;font-size:14px;color:var(--suave)}
+.lista li{display:flex;gap:9px;align-items:flex-start}.lista li::before{content:'';flex:none;width:8px;height:8px;border-radius:50%;background:var(--laranja);margin-top:7px}
+.erro-txt{color:var(--alerta);font-size:13.5px;font-weight:800}
+.visor{position:relative;flex:1;min-height:320px;border-radius:24px;overflow:hidden;background:#000;display:flex;align-items:center;justify-content:center;--cor:var(--laranja)}
+.visor.ok{--cor:var(--ok)}
+.visor video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+.oval{position:relative;width:62%;aspect-ratio:1/1.26;border-radius:50%;border:4px solid var(--cor);box-shadow:0 0 0 2000px rgba(11,9,8,.55);transition:border-color .25s}
+.dica{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:var(--preto);border:1px solid var(--cor);color:var(--cor);border-radius:99px;padding:6px 14px;font-weight:800;font-size:13.5px;white-space:nowrap;max-width:92%;overflow:hidden;text-overflow:ellipsis}
+.pos{display:flex;gap:6px;justify-content:center}.pos span{font-size:12.5px;font-weight:800;color:var(--suave);border:1px solid var(--linha);border-radius:99px;padding:4px 10px}.pos span.on{color:#0B0908;background:var(--ok);border-color:var(--ok)}.pos span.at{color:var(--laranja-claro);border-color:var(--laranja)}
+.barra{height:8px;border-radius:9px;background:var(--grafite-3);overflow:hidden}.barra i{display:block;height:100%;width:0;background:var(--laranja);transition:width .3s}
+.qr{background:#fff;border-radius:18px;padding:14px;width:max-content;align-self:center}.qr img,.qr canvas{display:block}
+.est{display:flex;align-items:center;gap:10px;color:var(--ok);font:800 26px/1.1 var(--titulo)}
+.cent{text-align:center;align-self:center}
+.fim{margin-top:auto;display:flex;flex-direction:column;gap:8px}
+.leg{font-size:12.5px;color:var(--suave);text-align:center}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<main class="app" id="app">
+  <div class="topo"><div class="marca">live<b>face</b></div><span class="ev" id="evento"></span></div>
+  <div class="passos" id="passos" aria-hidden="true"><i class="on"></i><i></i><i></i></div>
+  <div class="lv"><div class="lv-p" id="lv"></div><p class="balao" id="balao" aria-live="polite">Carregando seu ingresso...</p></div>
+  <div id="tela" style="display:flex;flex-direction:column;gap:14px;flex:1;min-height:0"></div>
+</main>
+<script src="site/js/live-mascote.js"></script>
+<script>
+(function(){
+  'use strict';
+  var API='https://giro-os-api.nucleofull.workers.dev', VER='3.3.6', BASE='https://cdn.jsdelivr.net/npm/@vladmandic/human@'+VER+'/';
+  var token=new URLSearchParams(location.search).get('t')||'', ING=null, live=null, H=null, stream=null, rodando=false;
+  var $=function(i){ return document.getElementById(i); };
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function chama(path,corpo){ return fetch(API+path,corpo?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(corpo)}:{}).then(function(r){ return r.json().catch(function(){ return {ok:false,mensagem:'Resposta inválida.'}; }); }); }
+  try{ if(window.LiveMascote) live=LiveMascote.criar($('lv'),{rotulo:'Live'}); }catch(e){}
+  function diz(t,o){ o=o||{}; $('balao').textContent=t; if(!live) return; try{ if(o.expr) live.expressao(o.expr); if(o.olhar) live.olhar(o.olhar[0],o.olhar[1]); if(o.gesto) live.gesto(o.gesto); }catch(e){} }
+  function passo(n){ var l=$('passos').children; for(var i=0;i<3;i++) l[i].classList.toggle('on',i<n); }
+  function tela(h){ paraCamera(); $('tela').innerHTML=h; }
+
+  function erro(t){ tela('<p class="erro-txt">'+esc(t)+'</p>'); diz('Algo não deu certo aqui.',{gesto:'confuso'}); }
+
+  /* ---------- 1. autorização ---------- */
+  function telaInicio(){
+    passo(1);
+    tela('<div><h1>Oi, '+esc(ING.nome)+'!</h1><p class="mut">Cadastre seu rosto. Na entrada, é só olhar para a câmera.</p></div>'+
+      '<ul class="lista"><li>Fique em um lugar claro, sem boné e sem óculos escuros.</li><li>Leva menos de um minuto.</li><li>A foto não sai do seu celular. Só guardamos os números que identificam o rosto, com criptografia.</li></ul>'+
+      '<label class="termo" id="t1"><input type="checkbox" id="ac"><span>Autorizo o uso do meu rosto <b>só para entrar, usar a comanda e sair deste evento</b>. Os dados são apagados depois do evento, e posso apagar antes por este link.</span></label>'+
+      '<label class="termo" id="t2"><input type="checkbox" id="ma"><span>Tenho <b>18 anos ou mais</b>. Menores de idade entram pelo QR code.</span></label>'+
+      '<p class="erro-txt" id="er" hidden></p>'+
+      '<div class="fim"><button class="bt bt-pri" id="ir">Cadastrar meu rosto</button><button class="bt bt-link" id="qr">Prefiro entrar com QR code</button><p class="leg"><a href="privacidade.html" target="_blank" rel="noopener">Política de privacidade</a></p></div>');
+    diz('Vou te ajudar! A autorização é sua, e você pode usar o QR code se preferir.',{expr:'feliz'});
+    if(live) setTimeout(function(){ try{ live.gesto('acenar'); }catch(e){} },300);
+    $('ir').onclick=function(){
+      var a=$('ac').checked, m=$('ma').checked; $('t1').classList.toggle('erro',!a); $('t2').classList.toggle('erro',!m);
+      if(!a||!m){ $('er').hidden=false; $('er').textContent='Marque as duas opções para continuar, ou use o QR code.'; diz('Preciso da sua autorização antes de abrir a câmera.',{gesto:'confuso'}); return; }
+      telaCamera();
+    };
+    $('qr').onclick=usarQr;
+  }
+  function usarQr(){ var b=$('qr'); if(b) b.disabled=true; chama('/lf/qr',{token:token}).then(function(d){ if(!d.ok){ erro(d.mensagem||'Não consegui salvar.'); return; } ING.metodo='qr'; ING.tem_rosto=false; telaQr(); }).catch(function(){ erro('Sem conexão. Tente de novo.'); }); }
+
+  /* ---------- 2. câmera e movimentos ---------- */
+  var POSES=[['frente','De frente'],['lado1','Um lado'],['lado2','Outro lado'],['cima','Queixo']];
+  /* regra de cada movimento, separada da câmera. Não depende de qual lado é o positivo */
+  var LIM={yawFrente:.2,pitchFrente:.3,yawLado:.3,pitchCima:.12,firme:3,minBox:.24,minScore:.5};
+  function novoEstado(){ return {i:0,firme:0,sinal:0,base:0,vetores:[]}; }
+  function analisa(E,faces){
+    if(!faces||!faces.length) return {dica:'Coloque o rosto no círculo'};
+    if(faces.length>1) return {dica:'Só uma pessoa na frente da câmera'};
+    var f=faces[0], rot=f.rotation&&f.rotation.angle;
+    if(!rot||!f.embedding||!f.embedding.length) return {dica:'Fique parado um instante'};
+    if((f.boxRaw&&f.boxRaw[2]<LIM.minBox)||(f.size&&false)) return {dica:'Chegue mais perto'};
+    if((f.faceScore||f.score||0)<LIM.minScore) return {dica:'Procure um lugar mais claro'};
+    var P=POSES[E.i][0], ok=false;
+    if(P==='frente') ok=Math.abs(rot.yaw)<LIM.yawFrente&&Math.abs(rot.pitch)<LIM.pitchFrente;
+    if(P==='lado1') ok=Math.abs(rot.yaw)>LIM.yawLado;
+    if(P==='lado2') ok=Math.abs(rot.yaw)>LIM.yawLado&&(rot.yaw>0?1:-1)===-E.sinal;
+    if(P==='cima') ok=Math.abs(rot.yaw)<LIM.yawLado&&Math.abs(rot.pitch-E.base)>LIM.pitchCima;
+    if(!ok){ E.firme=0; return {dica:'Siga o Live'}; }
+    if(++E.firme<(P==='frente'?LIM.firme:2)) return {dica:'Isso, segure assim'};
+    E.vetores.push(Array.prototype.slice.call(f.embedding));
+    if(P==='frente') E.base=rot.pitch;
+    if(P==='lado1') E.sinal=rot.yaw>0?1:-1;
+    E.i++; E.firme=0;
+    return {avancou:true,fim:E.i>=POSES.length};
+  }
+  var FALAS=[['Olhe para a câmera.',[0,0]],['Agora vire um pouco o rosto para um lado.',[-1,0]],['Agora para o outro lado.',[1,0]],['Volte para a frente e levante um pouco o queixo.',[0,-1]]];
+  function pintaPoses(E){ $('pos').innerHTML=POSES.map(function(p,k){ return '<span class="'+(k<E.i?'on':(k===E.i?'at':''))+'">'+p[1]+'</span>'; }).join(''); var f=FALAS[Math.min(E.i,3)]; diz(f[0],{olhar:f[1]}); }
+  function carregaLeitor(){
+    if(H) return Promise.resolve(H);
+    return new Promise(function(ok,no){ var s=document.createElement('script'); s.src=BASE+'dist/human.js'; s.onload=ok; s.onerror=function(){ no(new Error('leitor')); }; document.head.appendChild(s); }).then(function(){
+      var C=window.Human&&(Human.Human||Human.default||Human);
+      H=new C({modelBasePath:BASE+'models/',backend:'webgl',debug:false,async:true,cacheSensitivity:0,filter:{enabled:false},gesture:{enabled:false},body:{enabled:false},hand:{enabled:false},object:{enabled:false},segmentation:{enabled:false},face:{enabled:true,detector:{maxDetected:2,rotation:false,return:false},mesh:{enabled:true},iris:{enabled:false},description:{enabled:true},emotion:{enabled:false},antispoof:{enabled:false},liveness:{enabled:false}}});
+      return H.load().then(function(){ return H.warmup?H.warmup():null; }).then(function(){ return H; });
+    });
+  }
+  function paraCamera(){ rodando=false; if(stream){ stream.getTracks().forEach(function(t){ t.stop(); }); stream=null; } }
+  function telaCamera(){
+    passo(2);
+    tela('<div class="barra" id="bar"><i id="bari" style="width:15%"></i></div><p class="mut cent" id="car">Preparando o leitor de rosto. Da primeira vez, pode levar alguns segundos.</p>');
+    diz('Já vou abrir a câmera.',{expr:'pensativo'});
+    var pede=navigator.mediaDevices&&navigator.mediaDevices.getUserMedia?navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:720},height:{ideal:960}},audio:false}):Promise.reject(new Error('sem_camera'));
+    pede.then(function(st){ stream=st; var b=$('bari'); if(b) b.style.width='45%'; return carregaLeitor(); }).then(function(){ if(!stream) return; montaCamera(); }).catch(function(e){
+      paraCamera();
+      var negou=e&&(e.name==='NotAllowedError'||e.name==='SecurityError');
+      semCamera(negou?'A câmera foi bloqueada. Libere nas configurações do navegador, ou use o QR code.':(e&&e.message==='leitor'?'Não consegui carregar o leitor de rosto. Verifique a internet ou use o QR code.':'Não encontrei a câmera deste aparelho. Você pode usar o QR code.'));
+    });
+  }
+  function semCamera(t){ tela('<p class="erro-txt">'+esc(t)+'</p><div class="fim"><button class="bt bt-pri" id="de">Tentar de novo</button><button class="bt bt-sec" id="qr">Entrar com QR code</button></div>'); $('de').onclick=telaCamera; $('qr').onclick=usarQr; diz('Sem problema, seu ingresso continua valendo.',{gesto:'confuso'}); }
+  function montaCamera(){
+    var st=stream; stream=null; tela(''); stream=st;
+    $('tela').innerHTML='<div class="pos" id="pos"></div><div class="visor" id="vis"><video id="vid" playsinline autoplay muted></video><div class="oval"></div><span class="dica" id="dica">Coloque o rosto no círculo</span></div><div class="fim"><button class="bt bt-link" id="qr">Prefiro entrar com QR code</button></div>';
+    $('qr').onclick=usarQr;
+    var v=$('vid'), E=novoEstado(), t0=Date.now(); v.srcObject=stream; rodando=true; pintaPoses(E);
+    var loop=function(){
+      if(!rodando) return;
+      if(v.readyState<2){ requestAnimationFrame(loop); return; }
+      H.detect(v).then(function(res){
+        if(!rodando) return;
+        var a=analisa(E,res.face);
+        if(a.dica) $('dica').textContent=a.dica;
+        if(a.avancou){ t0=Date.now(); if(a.fim){ enviar(E.vetores); return; } pintaPoses(E); try{ if(live) live.gesto('piscadinha'); }catch(e){} $('dica').textContent='Boa!'; }
+        if(Date.now()-t0>25000){ t0=Date.now(); diz('Está difícil? Tente um lugar mais claro, ou use o QR code.',{expr:'curioso'}); }
+        setTimeout(loop,120);
+      }).catch(function(){ if(rodando) setTimeout(loop,400); });
+    };
+    v.onloadeddata=function(){ loop(); }; if(v.readyState>=2) loop();
+  }
+  function enviar(vetores){
+    paraCamera(); passo(3);
+    tela('<p class="mut cent">Guardando com segurança...</p>'); diz('Quase lá!',{expr:'pensativo',olhar:[0,0]});
+    chama('/lf/rosto',{token:token,aceite:1,maior:1,modelo:'human-'+VER,vetores:vetores}).then(function(d){
+      vetores.length=0;
+      if(!d||!d.ok){ tela('<p class="erro-txt">'+esc((d&&d.mensagem)||'Não consegui guardar. Tente de novo.')+'</p><div class="fim"><button class="bt bt-pri" id="de">Tentar de novo</button><button class="bt bt-sec" id="qr">Entrar com QR code</button></div>'); $('de').onclick=telaCamera; $('qr').onclick=usarQr; diz('Não deu certo desta vez.',{gesto:'confuso'}); return; }
+      ING.tem_rosto=true; ING.metodo='rosto'; telaPronto(true);
+    }).catch(function(){ erro('Sem conexão. Abra este link de novo para tentar.'); });
+  }
+  /* ---------- 3. pronto ---------- */
+  function telaPronto(novo){
+    passo(3);
+    tela('<div class="est">✓ Rosto cadastrado</div><p class="mut">Na entrada de <b>'+esc(ING.evento)+'</b>, olhe para a câmera. A catraca libera e sua comanda abre sozinha.</p><div class="fim"><button class="bt bt-sec" id="vq">Ver o QR code do ingresso</button><button class="bt bt-link" id="ref">Refazer o cadastro</button><button class="bt bt-link" id="ap">Apagar meu rosto</button></div>');
+    diz(novo?'Pronto! Seu rosto já é o seu ingresso.':'Tudo certo por aqui. Te vejo na entrada!',novo?{gesto:'comemorar'}:{expr:'feliz'});
+    $('vq').onclick=telaQr; $('ref').onclick=telaInicio; $('ap').onclick=confirmaApagar;
+  }
+  function confirmaApagar(){
+    tela('<h1>Apagar seu rosto?</h1><p class="mut">Seu ingresso continua valendo, e você entra pelo QR code.</p><div class="fim"><button class="bt bt-pri" id="sim">Apagar agora</button><button class="bt bt-sec" id="nao">Manter</button></div>');
+    diz('A escolha é sua.',{expr:'curioso'});
+    $('nao').onclick=function(){ telaPronto(false); };
+    $('sim').onclick=function(){ this.disabled=true; chama('/lf/rosto-apagar',{token:token}).then(function(d){ if(!d.ok){ erro(d.mensagem||'Não consegui apagar. Tente de novo.'); return; } ING.tem_rosto=false; ING.metodo='qr'; telaQr('Rosto apagado.'); }).catch(function(){ erro('Sem conexão. Tente de novo.'); }); };
+  }
+  function telaQr(msg){
+    passo(3);
+    tela((msg?'<div class="est">✓ '+esc(msg)+'</div>':'<h1>Seu QR code</h1>')+'<p class="mut">Mostre este código na entrada de <b>'+esc(ING.evento)+'</b>.</p><div class="qr" id="qrb"></div><div class="fim"><button class="bt bt-sec" id="cad">'+(ING.tem_rosto?'Voltar':'Cadastrar meu rosto')+'</button></div>');
+    diz('Com este código a equipe libera sua entrada.',{expr:'feliz'});
+    $('cad').onclick=function(){ if(ING.tem_rosto) telaPronto(false); else telaInicio(); };
+    var pinta=function(){ try{ new QRCode($('qrb'),{text:ING.qr,width:210,height:210,colorDark:'#0B0908',colorLight:'#ffffff'}); }catch(e){ $('qrb').textContent=ING.qr; } };
+    if(window.QRCode) pinta(); else { var s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'; s.onload=pinta; s.onerror=function(){ $('qrb').textContent=ING.qr; }; document.head.appendChild(s); }
+  }
+  addEventListener('pagehide',paraCamera);
+  if(/^(localhost|127\.)/.test(location.hostname)) window.__lfTeste={analisa:analisa,novoEstado:novoEstado,POSES:POSES,carregaLeitor:carregaLeitor};
+
+  if(!token){ erro('Este link está incompleto. Peça um novo ao organizador do evento.'); return; }
+  chama('/lf/ingresso/'+encodeURIComponent(token)).then(function(d){
+    if(!d||!d.ok){ erro((d&&d.mensagem)||'Não encontrei este ingresso.'); return; }
+    ING=d; $('evento').textContent=d.evento;
+    if(d.encerrado){ tela('<h1>Evento encerrado</h1><p class="mut">Os dados do rosto deste evento foram ou serão apagados.</p>'); diz('Até a próxima!',{expr:'feliz'}); return; }
+    if(d.tem_rosto) telaPronto(false); else if(d.metodo==='qr') telaQr(); else telaInicio();
+  }).catch(function(){ erro('Sem conexão. Verifique a internet e abra o link de novo.'); });
+})();
+</script>
+</body>
+</html>

@@ -1093,6 +1093,7 @@ html.loja-p .cd-dest{display:none!important}
           <div class="cfgcard" style="cursor:pointer" onclick="lvAbrir()"><div class="ic">📺</div><h4>Assistente Live</h4><p>O atendente virtual por voz do totem de autoatendimento. Ligue, escolha o cérebro, escreva o treinamento da sua loja e copie o link do totem.</p><span class="badge b-in" id="lv-badge">configurar</span></div>
           <div class="cfgcard" style="cursor:pointer" onclick="impAbrir()"><div class="ic">🖨️</div><h4>Impressoras</h4><p>Imprima os pedidos direto na cozinha, no bar e no caixa. Baixe o instalador no computador do restaurante: ele já vem configurado para a sua loja e encontra as impressoras sozinho.</p><span class="badge b-in">configurar</span></div>
           <div class="cfgcard" style="cursor:pointer" onclick="slAbrir()"><div class="ic">🪑</div><h4>Salão</h4><p>Desenhe o mapa do seu salão: mesas, balcão de saída, cozinha, banheiros, entrada e saída. O garçom usa esse mapa no celular para entregar os pedidos e atender os chamados.</p><span class="badge b-in">desenhar</span></div>
+          <div class="cfgcard" style="cursor:pointer" onclick="lfAbrir()"><div class="ic">🙂</div><h4>LiveFace</h4><p>Ingresso e comanda pelo rosto. Crie o evento e os ingressos, e envie o link para cada pessoa cadastrar o rosto no celular.</p><span class="badge b-in">configurar</span></div>
         </div>
       </section>
 
@@ -1255,6 +1256,10 @@ html.loja-p .cd-dest{display:none!important}
     <p id="md-msg" style="color:#c0392b;font-weight:700;font-size:13px;min-height:18px;margin:4px 0 10px"></p>
     <button class="btn pri wide" id="md-btn" onclick="salvarMeusDados()">Salvar</button>
   </div>
+</div>
+<div class="sheet wide" id="sh-liveface">
+  <div class="sh-hd"><h3>LiveFace</h3><button onclick="fecharTudo()">✕</button></div>
+  <div class="sh-bd"><div id="lf-corpo"></div></div>
 </div>
 <div class="sheet" id="sh-planoav">
   <div class="sh-hd"><h3>Recurso de outro plano</h3><button onclick="fecharTudo()">✕</button></div>
@@ -3859,9 +3864,9 @@ function cteBaixarCsv(){
 }
 /* (169) PERMISSÕES POR PLANO: sem lista de recursos (ou se a consulta falhar) tudo continua liberado. O que o plano não inclui aparece com cadeado e explica como liberar */
 var PLANO={plano:'',recursos:null,teste_ate:'',libera:{}};
-var REC_NOME={cardapio:'Cardápio digital',delivery:'Delivery',entregadores:'Entregadores',cozinha:'Tela da cozinha',pagamento:'Pagamento online',clientes:'Clientes',live_ajuda:'Live de ajuda',atendimento:'Atendimento de garçom e balcão',mesas:'Mesas e salão',reservas:'Reserva de mesas',mesa_pagto:'Pagamento na mesa e conta dividida',mapa:'Mapeamento',financeiro:'Financeiro',clube:'Clube de assinatura',ofertas:'Ofertas com vídeo',impressoras:'Impressoras',totem:'Totem de voz',veiculos:'Veículos',whats:'Atendimento no WhatsApp'};
+var REC_NOME={cardapio:'Cardápio digital',delivery:'Delivery',entregadores:'Entregadores',cozinha:'Tela da cozinha',pagamento:'Pagamento online',clientes:'Clientes',live_ajuda:'Live de ajuda',atendimento:'Atendimento de garçom e balcão',mesas:'Mesas e salão',reservas:'Reserva de mesas',mesa_pagto:'Pagamento na mesa e conta dividida',mapa:'Mapeamento',financeiro:'Financeiro',clube:'Clube de assinatura',ofertas:'Ofertas com vídeo',impressoras:'Impressoras',totem:'Totem de voz',veiculos:'Veículos',whats:'Atendimento no WhatsApp',liveface:'LiveFace, ingresso e comanda pelo rosto'};
 var PLANO_PAG={financeiro:'financeiro',mapeamento:'mapa',mesas:'mesas',veiculos:'veiculos',motoristas:'entregadores',clientes:'clientes'};
-var PLANO_FN={cdAbrirOfertas:'ofertas',clbAbrir:'clube',rvAbrir:'reservas',impAbrir:'impressoras',lvAbrir:'totem',slAbrir:'mesas',gcAbrir:'mesas',cdPagamento:'pagamento',pgAbrir:'pagamento',cdFrete:'delivery',cdGeo:'mesas',planoAtendimentoAbre:'atendimento'};
+var PLANO_FN={cdAbrirOfertas:'ofertas',clbAbrir:'clube',rvAbrir:'reservas',impAbrir:'impressoras',lvAbrir:'totem',slAbrir:'mesas',gcAbrir:'mesas',cdPagamento:'pagamento',pgAbrir:'pagamento',cdFrete:'delivery',cdGeo:'mesas',planoAtendimentoAbre:'atendimento',lfAbrir:'liveface'};
 function temRec(k){ return !PLANO.recursos||PLANO.recursos.indexOf(k)>=0; }
 function planoCad(pag){ return PLANO_PAG[pag]&&!temRec(PLANO_PAG[pag])?' 🔒':''; }
 function planoAviso(k){
@@ -3877,6 +3882,36 @@ function planoPedirUpgrade(k,b){
     aviso('Recebemos seu pedido de upgrade. Nossa equipe vai falar com você.');
   }).catch(function(){ if(b){ b.disabled=false; b.textContent='Tentar de novo'; } aviso('Não consegui enviar o pedido. Tente de novo.'); });
 }
+/* (172) LiveFace: eventos e ingressos */
+var LF={ev:null,evs:[],chave:true};
+function lfApi(cam,corpo){ return fetch(DELTADIS_API+cam,corpo?{method:'POST',headers:cdHdr(),body:JSON.stringify(corpo)}:{headers:cdHdr()}).then(function(r){ return r.json(); }); }
+function lfDataBr(i){ i=String(i||''); return i.slice(8,10)+'/'+i.slice(5,7)+'/'+i.slice(0,4); }
+function lfAbrir(){ fecharTudo(); abrir('sh-liveface'); lfEventos(); }
+function lfEventos(){
+  LF.ev=null; el('lf-corpo').innerHTML='<div style="color:var(--muted);font-size:13px">Carregando...</div>';
+  lfApi('/painel/lf-eventos').then(function(d){
+    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'');
+    LF.evs=d.eventos||[]; LF.chave=d.chave;
+    el('lf-corpo').innerHTML=(LF.chave?'':'<div style="padding:10px 12px;border-radius:10px;background:var(--s2);font-size:13px;font-weight:700;margin-bottom:12px">⚠️ O cadastro do rosto ainda não está ligado. Falta configurar a chave de segurança do LiveFace. Até lá, os ingressos funcionam só pelo QR code.</div>')+
+      '<div style="display:grid;grid-template-columns:1fr 150px;gap:8px;align-items:end;margin-bottom:6px"><label style="font-size:12px;color:var(--muted)">Nome do evento<input class="inp" id="lf-nm" maxlength="80" placeholder="Festa de Verão"></label><label style="font-size:12px;color:var(--muted)">Último dia<input class="inp" type="date" id="lf-fim"></label></div><button class="btn pri wide" onclick="lfCriaEvento()">Criar evento</button><div id="lf-m1" style="color:#c0392b;font-size:13px;font-weight:700;margin-top:6px"></div>'+
+      '<div style="margin-top:14px">'+(LF.evs.length?LF.evs.map(function(e){ return '<div style="display:flex;gap:10px;align-items:center;padding:11px 0;border-top:1px solid var(--border);flex-wrap:wrap"><div style="flex:1;min-width:170px"><b>'+esc(e.nome)+'</b><div style="font-size:12.5px;color:var(--muted)">até '+lfDataBr(e.fim)+' · '+e.ingressos+' ingresso'+(e.ingressos==1?'':'s')+' · '+e.rostos+' rosto'+(e.rostos==1?'':'s')+'</div></div><button class="btn sec sm" onclick="lfAbreEvento(\''+esc(e.id)+'\')">Abrir</button></div>'; }).join(''):'<div style="padding:20px;text-align:center;color:var(--muted)">Crie o primeiro evento acima.</div>')+'</div>';
+  }).catch(function(e){ el('lf-corpo').innerHTML='<div style="color:#c0392b;font-size:13px;font-weight:700">'+esc(e.message||'Não consegui abrir o LiveFace.')+'</div>'; });
+}
+function lfCriaEvento(){ var m=el('lf-m1'); m.textContent=''; lfApi('/painel/lf-evento',{nome:el('lf-nm').value,fim:el('lf-fim').value}).then(function(d){ if(!d||!d.ok){ m.textContent=(d&&d.mensagem)||'Não consegui criar.'; return; } LF.evs.unshift({id:d.id,nome:el('lf-nm').value.trim(),fim:el('lf-fim').value}); lfAbreEvento(d.id); }).catch(function(){ m.textContent='Sem conexão.'; }); }
+function lfAbreEvento(id){
+  lfApi('/painel/lf-ingressos?ev='+encodeURIComponent(id)).then(function(d){
+    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'');
+    var ev=LF.evs.filter(function(x){ return x.id===id; })[0]||{nome:'Evento',fim:''}; LF.ev=id; LF.igs=d.ingressos||[];
+    el('lf-corpo').innerHTML='<button class="btn sec sm" onclick="lfEventos()">← Eventos</button><div style="font-weight:800;font-size:16px;margin:10px 0 2px">'+esc(ev.nome)+'</div><div style="font-size:12.5px;color:var(--muted);margin-bottom:12px">'+(ev.fim?'Os dados do rosto são apagados depois de '+lfDataBr(ev.fim)+'.':'')+'</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><input class="inp" id="lf-in" maxlength="80" placeholder="Nome da pessoa"><input class="inp" id="lf-if" inputmode="numeric" placeholder="WhatsApp com DDD"></div><button class="btn pri wide" style="margin-top:8px" onclick="lfCriaIngresso()">Criar ingresso</button><div id="lf-m2" style="color:#c0392b;font-size:13px;font-weight:700;margin-top:6px"></div>'+
+      '<div style="margin-top:14px">'+(LF.igs.length?LF.igs.map(function(g,i){ var st=g.rosto_t?'✅ Rosto cadastrado':(g.metodo==='qr'?'🔳 Entra com QR code':'⏳ Aguardando cadastro'); return '<div style="display:flex;gap:8px;align-items:center;padding:10px 0;border-top:1px solid var(--border);flex-wrap:wrap"><div style="flex:1;min-width:170px"><b>'+esc(g.nome)+'</b><div style="font-size:12.5px;color:var(--muted)">'+st+'</div></div><button class="btn sec sm" onclick="lfCopia('+i+',this)">Copiar link</button>'+(g.fone?'<a class="btn sec sm" target="_blank" rel="noopener" href="'+esc(lfZap(g))+'">WhatsApp</a>':'')+'<button class="btn sec sm" onclick="lfApaga('+i+')">Excluir</button></div>'; }).join(''):'<div style="padding:18px;text-align:center;color:var(--muted)">Nenhum ingresso ainda.</div>')+'</div>';
+  }).catch(function(e){ aviso(e.message||'Não consegui abrir o evento.'); });
+}
+function lfLink(g){ return 'https://livefood.tec.br/rosto.html?t='+encodeURIComponent(g.token); }
+function lfZap(g){ return 'https://wa.me/'+g.fone+'?text='+encodeURIComponent('Olá, '+String(g.nome).split(' ')[0]+'! Este é o seu ingresso. Cadastre o rosto ou pegue o QR code por este link: '+lfLink(g)); }
+function lfCopia(i,b){ var t=lfLink(LF.igs[i]); try{ navigator.clipboard.writeText(t); }catch(e){} b.textContent='Copiado'; }
+function lfCriaIngresso(){ var m=el('lf-m2'); m.textContent=''; lfApi('/painel/lf-ingresso',{ev:LF.ev,nome:el('lf-in').value,fone:el('lf-if').value}).then(function(d){ if(!d||!d.ok){ m.textContent=(d&&d.mensagem)||'Não consegui criar.'; return; } lfAbreEvento(LF.ev); }).catch(function(){ m.textContent='Sem conexão.'; }); }
+function lfApaga(i){ var g=LF.igs[i]; if(!window.confirm('Excluir o ingresso de '+g.nome+'? Os dados do rosto também são apagados.')) return; lfApi('/painel/lf-ingresso-apagar',{id:g.id}).then(function(){ lfAbreEvento(LF.ev); }).catch(function(){ aviso('Sem conexão.'); }); }
 function planoAtendimentoAbre(){ window.open('atendimento.html','_blank'); }
 function planoAtendimento(){ planoAtendimentoAbre(); }
 var PLANO_EMB=false;
