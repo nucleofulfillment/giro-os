@@ -242,10 +242,11 @@
   function cartao(p, i) {
     let variavel = '';
     if (p.pacote_centavos > 0) {
-      variavel = `<p class="variavel">+ <b>R$ ${reais(p.pacote_centavos, (p.pacote_centavos % 1) ? 3 : 2)}</b> por pacote${!p.variavel_total && p.franquia > 0 ? ` acima de ${Number(p.franquia).toLocaleString('pt-BR')} inclusos` : ''}</p>`;
+      variavel = `<p class="variavel">+ <b>R$ ${reais(p.pacote_centavos, (p.pacote_centavos % 1) ? 3 : 2)}</b> por pedido${!p.variavel_total && p.franquia > 0 ? ` acima de ${Number(p.franquia).toLocaleString('pt-BR')} inclusos` : ''}</p>`;
     } else if (p.franquia > 0) {
-      variavel = `<p class="variavel">${Number(p.franquia).toLocaleString('pt-BR')} pacotes inclusos</p>`;
+      variavel = `<p class="variavel">${Number(p.franquia).toLocaleString('pt-BR')} pedidos inclusos</p>`;
     }
+    const itens = Array.isArray(p.itens) && p.itens.length ? `<ul class="plano-itens">${p.itens.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : '';
     const preco = p.fixo_centavos > 0
       ? `<p class="preco"><span class="moeda">R$</span><span class="valor">${reais(p.fixo_centavos)}</span><span class="periodo">/mês</span></p>`
       : '<p class="preco"><span class="valor" style="font-size:34px">Fale com a gente</span></p>';
@@ -256,6 +257,7 @@
         <p class="descricao">${esc(p.descricao)}</p>
         ${preco}
         ${variavel}
+        ${itens}
         <div class="espaco"></div>
         <button class="btn btn-pri mag" type="button" data-assinar="${esc(p.id)}">${p.fixo_centavos > 0 ? 'Começar agora' : 'Quero este plano'} <span class="seta">→</span></button>
       </article>`;

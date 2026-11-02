@@ -394,6 +394,7 @@ function abrirPlano(id){
   abrirModal('<h3>'+(p?esc(p.nome):'Novo plano')+'</h3><p class="sub">Cobrança: valor fixo por mês + valor por pacote. Se houver pacotes inclusos, o valor por pacote só vale depois deles.</p>'+
   '<label>Nome do plano</label><input id="pl-nome" value="'+esc(p?p.nome:'')+'" placeholder="ex: Essencial">'+
   '<label>Descrição curta (aparece no site)</label><input id="pl-desc" value="'+esc(p?p.descricao:'')+'" placeholder="ex: Para pontos de até 500 pacotes por mês">'+
+  '<label>O que o plano inclui (um por linha, aparece no site)</label><textarea id="pl-itens" rows="7" placeholder="Cardápio digital com link e QR Code">'+esc(p&&p.itens?p.itens.join('\n'):'')+'</textarea>'+
   '<div class="linha2"><div><label>Fixo mensal (R$)</label><input id="pl-fixo" inputmode="decimal" value="'+esc(p?deCentavos(p.fixo_centavos):'')+'" placeholder="0,00"></div><div><label>Valor por pacote (R$)</label><input id="pl-pac" inputmode="decimal" value="'+esc(p?deCentavosPac(p.pacote_centavos):'')+'" placeholder="0,00"></div></div>'+
   '<div class="linha2"><div><label>Pacotes inclusos no fixo</label><input id="pl-fr" inputmode="numeric" value="'+esc(p?(p.franquia||0):0)+'"></div><div><label>Ordem no site (menor aparece primeiro)</label><input id="pl-ord" inputmode="numeric" value="'+esc(p?(p.ordem||0):0)+'"></div></div>'+
   '<label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-weight:700"><input type="checkbox" id="pl-vt" '+(p&&p.variavel_total?'checked':'')+' style="width:auto;margin:0"> Cobrar o valor por pacote desde o 1º pacote</label><p class="sub" style="margin:4px 0 0">Desligado: o valor por pacote só vale acima dos pacotes inclusos no fixo.</p>'+
@@ -403,7 +404,7 @@ function abrirPlano(id){
 }
 function salvarPlano(id){
   var nome=el('pl-nome').value.trim(); if(!nome){el('pl-erro').textContent='Informe o nome do plano.';return;}
-  var corpo={nome:nome,descricao:el('pl-desc').value.trim(),fixo_centavos:paraCentavos(el('pl-fixo').value),pacote_centavos:paraCentavosPac(el('pl-pac').value),franquia:parseInt(el('pl-fr').value,10)||0,ordem:parseInt(el('pl-ord').value,10)||0,variavel_total:el('pl-vt').checked?1:0};
+  var corpo={nome:nome,descricao:el('pl-desc').value.trim(),itens:el('pl-itens').value,fixo_centavos:paraCentavos(el('pl-fixo').value),pacote_centavos:paraCentavosPac(el('pl-pac').value),franquia:parseInt(el('pl-fr').value,10)||0,ordem:parseInt(el('pl-ord').value,10)||0,variavel_total:el('pl-vt').checked?1:0};
   el('pl-btn').disabled=true; el('pl-erro').textContent='';
   chamar(id?'PATCH':'POST',id?'/admin/planos/'+encodeURIComponent(id):'/admin/planos',corpo).then(function(d){
     if(!d.ok){el('pl-erro').textContent=d.mensagem||'Erro ao salvar.';el('pl-btn').disabled=false;return;}
