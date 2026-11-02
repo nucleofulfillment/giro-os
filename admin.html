@@ -373,6 +373,21 @@ function iniciar(){
 function recarregar(){carregarClientes();carregarPlanos();carregarApp();carregarSrv();carregarFluxo();carregarSaldo();}
 /* ── Planos de assinatura (fixo mensal + valor por pacote) — o site mostra os ativos no botão "Assinar" ── */
 var PLANOS=[];
+/* (169) recursos que cada plano libera */
+var REC_PLANO=[['cardapio','Cardápio digital'],['delivery','Delivery'],['entregadores','Entregadores e saídas'],['cozinha','Tela da cozinha'],['pagamento','Pagamento online'],['clientes','Clientes'],['live_ajuda','Live de ajuda'],['atendimento','Garçom e balcão'],['mesas','Mesas e salão'],['reservas','Reserva de mesas'],['mesa_pagto','Pagamento na mesa e racha'],['mapa','Mapeamento'],['financeiro','Financeiro'],['clube','Clube de assinatura'],['ofertas','Ofertas com vídeo'],['impressoras','Impressoras'],['totem','Totem de voz'],['veiculos','Veículos'],['whats','WhatsApp de clientes']];
+function plRecHtml(p){
+  var tudo=!p||!p.recursos;
+  return '<label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-weight:700"><input type="checkbox" id="pl-rec-tudo" '+(tudo?'checked':'')+' onchange="plRecTudo()" style="width:auto;margin:0"> Liberar todos os recursos</label><p class="sub" style="margin:4px 0 6px">Desmarque para escolher o que este plano inclui. O que ficar de fora aparece com cadeado no painel do cliente.</p>'+
+  '<div id="pl-recs" style="display:'+(tudo?'none':'grid')+';grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:6px">'+REC_PLANO.map(function(r){return '<label style="display:flex;align-items:center;gap:8px;margin:0;font-weight:500"><input type="checkbox" class="pl-rec" value="'+r[0]+'" '+(p&&p.recursos&&p.recursos.indexOf(r[0])>=0?'checked':'')+' style="width:auto;margin:0"> '+r[1]+'</label>';}).join('')+'</div>'+
+  '<label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-weight:700"><input type="checkbox" id="pl-padrao" '+(p&&p.padrao?'checked':'')+' style="width:auto;margin:0"> Clientes sem plano usam estes recursos</label><p class="sub" style="margin:4px 0 0">Vale só para o acesso: não muda o que eles pagam hoje.</p>';
+}
+function plRecTudo(){ el('pl-recs').style.display=el('pl-rec-tudo').checked?'none':'grid'; }
+function carregarPlanoLog(){
+  chamar('GET','/admin/plano-log').then(function(d){
+    var b=el('pl-log'); if(!b||!d.ok) return;
+    b.innerHTML='<div style="margin-top:18px"><b>Uso fora do plano</b><p class="sub" style="margin:2px 0 8px">Por enquanto o servidor só anota, sem bloquear. Aqui aparece quem usaria um recurso que o plano não inclui.</p>'+((d.itens||[]).length?d.itens.map(function(x){return '<div class="sub" style="margin:0;padding:6px 0;border-top:1px solid #eee"><b>'+esc(x.nome||x.cli)+'</b> · '+esc(x.recurso)+' · '+x.n+' vez'+(x.n===1?'':'es')+'</div>';}).join(''):'<div class="sub" style="margin:0">Nada anotado até agora.</div>')+'</div>';
+  }).catch(function(){});
+}
 function carregarPlanos(){
   chamar('GET','/admin/planos').then(function(d){
     if(!d.ok){el('lista-planos').innerHTML='<div class="vazio">'+esc(d.mensagem||'Erro ao carregar.')+'</div>';return;}
@@ -383,28 +398,30 @@ function desenharPlanos(){
   var at=PLANOS.filter(function(p){return p.ativo;}).length;
   el('pl-resumo').textContent=at+' ativo'+(at===1?'':'s');
   if(!PLANOS.length){el('lista-planos').innerHTML='<div class="vazio">Nenhum plano ainda. Clique em "+ Novo plano".</div>';return;}
+  setTimeout(carregarPlanoLog,0);
   el('lista-planos').innerHTML=PLANOS.map(function(p){
-    return '<div class="cli"><div class="av">'+esc((p.nome||'?').charAt(0).toUpperCase())+'</div><div style="min-width:160px"><div class="nome">'+esc(p.nome)+'</div><div class="id">'+esc(p.descricao||'sem descrição')+' · <span class="tag '+(p.ativo?'on':'off')+'">'+(p.ativo?'Ativo':'Desativado')+'</span></div></div>'+
+    return '<div class="cli"><div class="av">'+esc((p.nome||'?').charAt(0).toUpperCase())+'</div><div style="min-width:160px"><div class="nome">'+esc(p.nome)+'</div><div class="id">'+esc(p.descricao||'sem descrição')+' · <span class="tag '+(p.ativo?'on':'off')+'">'+(p.ativo?'Ativo':'Desativado')+'</span>'+(p.padrao?' <span class="tag on">Padrão</span>':'')+' · '+(p.recursos?p.recursos.length+' recursos':'tudo liberado')+'</div></div>'+
       '<div class="dados"><div><b>'+reais(p.fixo_centavos)+'</b>fixo mensal</div><div><b>'+reaisPac(p.pacote_centavos)+'</b>por pacote</div><div><b>'+(p.variavel_total?'desde o 1º':(p.franquia||0))+'</b>'+(p.variavel_total?'pacote':'pacotes inclusos')+'</div></div>'+
       '<button class="btn pri peq" onclick="abrirPlano(\''+esc(p.id)+'\')">Abrir</button></div>';
-  }).join('');
+  }).join('')+'<div id="pl-log"></div>';
 }
 function abrirPlano(id){
   var p=id?PLANOS.filter(function(x){return x.id===id;})[0]:null; if(id&&!p) return;
   abrirModal('<h3>'+(p?esc(p.nome):'Novo plano')+'</h3><p class="sub">Cobrança: valor fixo por mês + valor por pacote. Se houver pacotes inclusos, o valor por pacote só vale depois deles.</p>'+
   '<label>Nome do plano</label><input id="pl-nome" value="'+esc(p?p.nome:'')+'" placeholder="ex: Essencial">'+
   '<label>Descrição curta (aparece no site)</label><input id="pl-desc" value="'+esc(p?p.descricao:'')+'" placeholder="ex: Para pontos de até 500 pacotes por mês">'+
-  '<label>O que o plano inclui (um por linha, aparece no site)</label><textarea id="pl-itens" rows="7" placeholder="Cardápio digital com link e QR Code">'+esc(p&&p.itens?p.itens.join('\n'):'')+'</textarea>'+
+  '<label>O que o plano inclui (um por linha, aparece no site)</label><textarea id="pl-itens" rows="7" style="width:100%;box-sizing:border-box;padding:10px 12px;font:inherit;font-size:14px;border-radius:10px;border:1px solid #f1d5d0;background:#fff8f4" placeholder="Cardápio digital com link e QR Code">'+esc(p&&p.itens?p.itens.join('\n'):'')+'</textarea>'+
   '<div class="linha2"><div><label>Fixo mensal (R$)</label><input id="pl-fixo" inputmode="decimal" value="'+esc(p?deCentavos(p.fixo_centavos):'')+'" placeholder="0,00"></div><div><label>Valor por pacote (R$)</label><input id="pl-pac" inputmode="decimal" value="'+esc(p?deCentavosPac(p.pacote_centavos):'')+'" placeholder="0,00"></div></div>'+
   '<div class="linha2"><div><label>Pacotes inclusos no fixo</label><input id="pl-fr" inputmode="numeric" value="'+esc(p?(p.franquia||0):0)+'"></div><div><label>Ordem no site (menor aparece primeiro)</label><input id="pl-ord" inputmode="numeric" value="'+esc(p?(p.ordem||0):0)+'"></div></div>'+
   '<label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-weight:700"><input type="checkbox" id="pl-vt" '+(p&&p.variavel_total?'checked':'')+' style="width:auto;margin:0"> Cobrar o valor por pacote desde o 1º pacote</label><p class="sub" style="margin:4px 0 0">Desligado: o valor por pacote só vale acima dos pacotes inclusos no fixo.</p>'+
+  plRecHtml(p)+
   '<div class="erro" id="pl-erro"></div>'+
   '<div class="acoes" style="margin-top:10px;justify-content:space-between">'+(p?'<button class="btn peq '+(p.ativo?'perigo':'')+'" onclick="planoAtivo(\''+esc(p.id)+'\','+(p.ativo?0:1)+')">'+(p.ativo?'Desativar plano':'Reativar plano')+'</button>':'<span></span>')+
   '<span><button class="btn" onclick="fechar()">Cancelar</button> <button class="btn pri" id="pl-btn" onclick="salvarPlano('+(p?'\''+esc(p.id)+'\'':'null')+')">Salvar</button></span></div>');
 }
 function salvarPlano(id){
   var nome=el('pl-nome').value.trim(); if(!nome){el('pl-erro').textContent='Informe o nome do plano.';return;}
-  var corpo={nome:nome,descricao:el('pl-desc').value.trim(),itens:el('pl-itens').value,fixo_centavos:paraCentavos(el('pl-fixo').value),pacote_centavos:paraCentavosPac(el('pl-pac').value),franquia:parseInt(el('pl-fr').value,10)||0,ordem:parseInt(el('pl-ord').value,10)||0,variavel_total:el('pl-vt').checked?1:0};
+  var corpo={nome:nome,descricao:el('pl-desc').value.trim(),itens:el('pl-itens').value,recursos:el('pl-rec-tudo').checked?null:[].map.call(document.querySelectorAll('.pl-rec:checked'),function(x){return x.value;}),padrao:el('pl-padrao').checked?1:0,fixo_centavos:paraCentavos(el('pl-fixo').value),pacote_centavos:paraCentavosPac(el('pl-pac').value),franquia:parseInt(el('pl-fr').value,10)||0,ordem:parseInt(el('pl-ord').value,10)||0,variavel_total:el('pl-vt').checked?1:0};
   el('pl-btn').disabled=true; el('pl-erro').textContent='';
   chamar(id?'PATCH':'POST',id?'/admin/planos/'+encodeURIComponent(id):'/admin/planos',corpo).then(function(d){
     if(!d.ok){el('pl-erro').textContent=d.mensagem||'Erro ao salvar.';el('pl-btn').disabled=false;return;}
@@ -676,6 +693,7 @@ function abrirCliente(id){
   '<label>Nome da empresa</label><input id="ec-nome" value="'+esc(c.nome)+'">'+
   '<label>Endereço do cardápio</label><div style="display:flex;align-items:center;gap:6px"><span class="sub" style="margin:0;white-space:nowrap">livefood.tec.br/</span><input id="ec-slug" value="'+esc(c.slug||'')+'" placeholder="nome-da-loja" autocapitalize="off" spellcheck="false"></div><p class="sub" style="margin:4px 0 0">Só letras, números e hífen. Cuidado: se mudar, as etiquetas e QR codes já impressos com o endereço antigo param de abrir.</p>'+
   '<label>Plano</label><select id="ec-plano" onchange="planoDoCliente()"><option value="">Sem plano (valores manuais)</option>'+(PLANOS||[]).map(function(p){return '<option value="'+esc(p.id)+'"'+(c.plano_id===p.id?' selected':'')+'>'+esc(p.nome)+'</option>';}).join('')+'</select><p class="sub" id="ec-plano-info" style="margin:4px 0 0"></p>'+
+  '<label>Teste grátis até</label><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><input type="date" id="ec-teste" value="'+esc(c.teste_ate||'')+'" style="width:auto;flex:1;min-width:150px"><button type="button" class="btn peq" onclick="ecTeste(7)">7 dias</button><button type="button" class="btn peq" onclick="ecTeste(15)">15 dias</button><button type="button" class="btn peq" onclick="ecTeste(30)">30 dias</button><button type="button" class="btn peq" onclick="ecTeste(0)">Sem teste</button></div><p class="sub" style="margin:4px 0 0">Acesso aos recursos do plano escolhido, sem fatura até essa data. A cobrança começa depois dela.</p>'+
   '<div class="linha2"><div><label>Mensalidade (R$)</label><input id="ec-men" inputmode="decimal" value="'+esc(deCentavos(c.mensalidade_centavos))+'"></div><div><label>Taxa por motorista (R$)</label><input id="ec-taxa" inputmode="decimal" value="'+esc(deCentavos(c.taxa_app_centavos))+'"></div></div>'+
   '<div class="linha2"><div><label>Dia do vencimento (1 a 31)</label><input id="ec-dia" inputmode="numeric" maxlength="2" value="'+esc(c.dia_venc||10)+'"></div><div></div></div>'+
   '<div class="erro" id="ec-erro"></div>'+
@@ -687,6 +705,7 @@ function abrirCliente(id){
   '<div class="acoes"><button class="btn" onclick="fechar()">Fechar</button></div>');
   carregarDono(c.id);planoDoCliente();
 }
+function ecTeste(d){ var i=el('ec-teste'); if(!d){ i.value=''; return; } var t=new Date(hojeIso()+'T12:00:00'); t.setDate(t.getDate()+d); i.value=t.toISOString().slice(0,10); }
 function planoDoCliente(){
   var sel=el('ec-plano'),inf=el('ec-plano-info'),men=el('ec-men'); if(!sel) return;
   var p=(PLANOS||[]).filter(function(x){return x.id===sel.value;})[0];
@@ -695,7 +714,7 @@ function planoDoCliente(){
   inf.textContent='Vale o plano: fixo '+reais(p.fixo_centavos)+' + '+reaisPac(p.pacote_centavos)+' por pacote'+(p.franquia?(p.variavel_total?'':' acima de '+p.franquia+' pacotes'):'')+(p.variavel_total?' desde o 1º pacote':'')+'. A mensalidade manual é ignorada.';
 }
 function salvarCliente(id){
-  chamar('PATCH','/admin/clientes/'+encodeURIComponent(id),{plano_id:el('ec-plano').value,slug:el('ec-slug').value.trim(),nome:el('ec-nome').value.trim(),mensalidade_centavos:paraCentavos(el('ec-men').value),taxa_app_centavos:paraCentavos(el('ec-taxa').value),dia_venc:parseInt(el('ec-dia').value,10)||10}).then(function(d){
+  chamar('PATCH','/admin/clientes/'+encodeURIComponent(id),{plano_id:el('ec-plano').value,teste_ate:el('ec-teste').value,slug:el('ec-slug').value.trim(),nome:el('ec-nome').value.trim(),mensalidade_centavos:paraCentavos(el('ec-men').value),taxa_app_centavos:paraCentavos(el('ec-taxa').value),dia_venc:parseInt(el('ec-dia').value,10)||10}).then(function(d){
     if(!d.ok){el('ec-erro').textContent=d.mensagem||d.erro||'Erro ao salvar.';return;}
     toast('Dados salvos.');recarregarMantendo(id);
   }).catch(function(){});

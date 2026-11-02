@@ -1004,7 +1004,7 @@ html.loja-p .cd-dest{display:none!important}
 
       <!-- CARDÁPIO (1A): produtos, categorias e adicionais do restaurante -->
       <section class="page" id="pg-cardapio">
-        <div class="pghd"><div><h1>Cardápio</h1><div class="sub">produtos do seu restaurante <span style="opacity:.6">· GIRO-OS-081</span></div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn sec" onclick="cdFotoCardapio()" title="Só no celular">📷 Cardápio por foto</button><button class="btn sec" onclick="cdAbrirCats()">Categorias</button><button class="btn sec" onclick="cdLinkCardapio()">🔗 Link do cardápio</button><button class="btn sec" onclick="cdEtiquetas()">Etiquetas</button><button class="btn sec" onclick="cdAparencia()">🎨 Marca e cores</button><button class="btn sec" onclick="cdHorario()">🕒 Horário</button><button class="btn sec" onclick="cdFrete()">🛵 Entrega</button><button class="btn sec" onclick="cdGeo()">📍 Mesa</button><button class="btn sec" onclick="cdMesas()" style="display:none" title="(116) oculto: as mesas agora ficam no Hub">🍽️ Mesas <span id="ms-bd" style="display:none;background:#ef4444;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px"></span></button><button class="btn sec" onclick="window.open('atendimento.html','_blank')">🧾 Atendimento (garçom/balcão)</button><button class="btn sec" onclick="cdAbrirOfertas()">▶ Ofertas</button><button class="btn sec" onclick="clbAbrir()">💎 Clube de assinatura</button><button class="btn sec" onclick="cdAbrirImport()">Importar planilha</button><button class="btn sec" onclick="cdFotosLote()">📷 Fotos em lote</button><button class="btn pri" onclick="cdNovo()">+ Novo produto</button></div></div>
+        <div class="pghd"><div><h1>Cardápio</h1><div class="sub">produtos do seu restaurante <span style="opacity:.6">· GIRO-OS-081</span></div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn sec" onclick="cdFotoCardapio()" title="Só no celular">📷 Cardápio por foto</button><button class="btn sec" onclick="cdAbrirCats()">Categorias</button><button class="btn sec" onclick="cdLinkCardapio()">🔗 Link do cardápio</button><button class="btn sec" onclick="cdEtiquetas()">Etiquetas</button><button class="btn sec" onclick="cdAparencia()">🎨 Marca e cores</button><button class="btn sec" onclick="cdHorario()">🕒 Horário</button><button class="btn sec" onclick="cdFrete()">🛵 Entrega</button><button class="btn sec" onclick="cdGeo()">📍 Mesa</button><button class="btn sec" onclick="cdMesas()" style="display:none" title="(116) oculto: as mesas agora ficam no Hub">🍽️ Mesas <span id="ms-bd" style="display:none;background:#ef4444;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px"></span></button><button class="btn sec" onclick="planoAtendimento()">🧾 Atendimento (garçom/balcão)</button><button class="btn sec" onclick="cdAbrirOfertas()">▶ Ofertas</button><button class="btn sec" onclick="clbAbrir()">💎 Clube de assinatura</button><button class="btn sec" onclick="cdAbrirImport()">Importar planilha</button><button class="btn sec" onclick="cdFotosLote()">📷 Fotos em lote</button><button class="btn pri" onclick="cdNovo()">+ Novo produto</button></div></div>
         <div class="card">
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px"><input class="inp" id="cd-busca" placeholder="Buscar produto" oninput="cdPintar()" style="flex:1;min-width:200px"><select class="inp" id="cd-fcat" onchange="cdPintar()" style="width:210px;max-width:100%"></select></div>
           <div id="cd-selbar" style="display:none;align-items:center;gap:10px;flex-wrap:wrap;background:var(--s2);border-radius:12px;padding:8px 12px;margin-bottom:10px;font-size:13px"><span id="cd-seltxt" style="font-weight:700"></span><button class="btn pri sm" onclick="cdExibirOferta()">▶ Exibir oferta</button><button class="btn sec sm" onclick="cdLimparSel()">Limpar</button></div>
@@ -1251,6 +1251,10 @@ html.loja-p .cd-dest{display:none!important}
     <p id="md-msg" style="color:#c0392b;font-weight:700;font-size:13px;min-height:18px;margin:4px 0 10px"></p>
     <button class="btn pri wide" id="md-btn" onclick="salvarMeusDados()">Salvar</button>
   </div>
+</div>
+<div class="sheet" id="sh-planoav">
+  <div class="sh-hd"><h3>Recurso de outro plano</h3><button onclick="fecharTudo()">✕</button></div>
+  <div class="sh-bd"><div id="pa-corpo"></div></div>
 </div>
 <div class="sheet" id="sh-plano">
   <div class="sh-hd"><h3>Meu plano</h3><button onclick="fecharTudo()">✕</button></div>
@@ -3759,7 +3763,7 @@ var PAG='dashboard';
 /* menu suspenso do celular: mostra todas as telas que o perfil pode abrir, por grupo. O botão voltar do celular fecha o menu. */
 var MM_GRUPOS=[['Vendas',['pedidos','cardapio','mesas','clientes','mensagens']],['Operação',['dashboard','mesa','mapeamento','motoristas','veiculos']],['Gestão',['financeiro','config']]], MM_HIST=false;
 function mmPinta(){
-  var usados={}, h='', it=function(n){ usados[n.id]=1; return '<button class="it'+(n.id===PAG?' on':'')+'" type="button" data-p="'+n.id+'" onclick="mmVai(\''+n.id+'\')"'+(n.id===PAG?' aria-current="page"':'')+'><span class="ic">'+svgIco(n.ic)+'</span><span class="nm">'+esc(n.lb)+'</span><span class="sg" aria-hidden="true">›</span></button>'; }, ok=function(n){ return n&&pagOk(n.id)&&!navOculto(n.id); };
+  var usados={}, h='', it=function(n){ usados[n.id]=1; return '<button class="it'+(n.id===PAG?' on':'')+'" type="button" data-p="'+n.id+'" onclick="mmVai(\''+n.id+'\')"'+(n.id===PAG?' aria-current="page"':'')+'><span class="ic">'+svgIco(n.ic)+'</span><span class="nm">'+esc(n.lb)+planoCad(n.id)+'</span><span class="sg" aria-hidden="true">›</span></button>'; }, ok=function(n){ return n&&pagOk(n.id)&&!navOculto(n.id); };
   MM_GRUPOS.forEach(function(g){ var l=g[1].map(function(id){ return NAV_DESKTOP.filter(function(n){ return n.id===id; })[0]; }).filter(ok); if(l.length) h+='<div class="gr">'+g[0]+'</div>'+l.map(it).join(''); });
   var res=NAV_DESKTOP.filter(function(n){ return ok(n)&&!usados[n.id]; }); if(res.length) h+='<div class="gr">Outros</div>'+res.map(it).join('');
   el('mm-ls').innerHTML=h; try{ msgPintarBadge(); }catch(e){}
@@ -3798,11 +3802,11 @@ function montarNav(){
   catPainelCarrega(); catPainelAplica();
   var h='',i;
   for(i=0;i<NAV_DESKTOP.length;i++){var n=NAV_DESKTOP[i]; if(!pagOk(n.id)||navOculto(n.id)) continue;
-    h+='<button class="'+(n.id===PAG?'on':'')+'" data-p="'+n.id+'" onclick="ir(\''+n.id+'\')"><span class="ic">'+svgIco(n.ic)+'</span><span>'+n.lb+'</span></button>';}
+    h+='<button class="'+(n.id===PAG?'on':'')+'" data-p="'+n.id+'" onclick="ir(\''+n.id+'\')"><span class="ic">'+svgIco(n.ic)+'</span><span>'+n.lb+planoCad(n.id)+'</span></button>';}
   el('side').innerHTML=h+'<div class="side-logo"><img src="livefood-logo.png" alt="LiveFood"></div>';
   var tb='';
   for(i=0;i<NAV_MOBILE.length;i++){var m=NAV_MOBILE[i]; if(!pagOk(m.id)||navOculto(m.id)) continue;
-    tb+='<button class="'+(m.id===PAG?'on':'')+'" data-p="'+m.id+'" onclick="ir(\''+m.id+'\')">'+svgIco(m.ic)+'<span>'+m.lb+'</span></button>';}
+    tb+='<button class="'+(m.id===PAG?'on':'')+'" data-p="'+m.id+'" onclick="ir(\''+m.id+'\')">'+svgIco(m.ic)+'<span>'+m.lb+planoCad(m.id)+'</span></button>';}
   el('tabbar').innerHTML=tb;
   try{ msgPintarBadge(); }catch(e){}
 }
@@ -3849,8 +3853,42 @@ function cteBaixarCsv(){
   for(i=0;i<L.length;i++){ var r=L[i]; out.push([r.dia,r.tr,r.nf,r.chave,(r.fx?'':String(r.valor.toFixed(2)).replace('.',',')),(r.fx?'fixo':String(r.pct).replace('.',',')),String(r.ganho.toFixed(2)).replace('.',',')].join(';')); }
   var b=new Blob(['﻿'+out.join('\n')],{type:'text/csv;charset=utf-8'}), a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='relatorio-cte.csv'; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },500);
 }
+/* (169) PERMISSÕES POR PLANO: sem lista de recursos (ou se a consulta falhar) tudo continua liberado. O que o plano não inclui aparece com cadeado e explica como liberar */
+var PLANO={plano:'',recursos:null,teste_ate:'',libera:{}};
+var REC_NOME={cardapio:'Cardápio digital',delivery:'Delivery',entregadores:'Entregadores',cozinha:'Tela da cozinha',pagamento:'Pagamento online',clientes:'Clientes',live_ajuda:'Live de ajuda',atendimento:'Atendimento de garçom e balcão',mesas:'Mesas e salão',reservas:'Reserva de mesas',mesa_pagto:'Pagamento na mesa e conta dividida',mapa:'Mapeamento',financeiro:'Financeiro',clube:'Clube de assinatura',ofertas:'Ofertas com vídeo',impressoras:'Impressoras',totem:'Totem de voz',veiculos:'Veículos',whats:'Atendimento no WhatsApp'};
+var PLANO_PAG={financeiro:'financeiro',mapeamento:'mapa',mesas:'mesas',veiculos:'veiculos',motoristas:'entregadores',clientes:'clientes'};
+var PLANO_FN={cdAbrirOfertas:'ofertas',clbAbrir:'clube',rvAbrir:'reservas',impAbrir:'impressoras',lvAbrir:'totem',slAbrir:'mesas',gcAbrir:'mesas',cdPagamento:'pagamento',pgAbrir:'pagamento',cdFrete:'delivery',cdGeo:'mesas',planoAtendimentoAbre:'atendimento'};
+function temRec(k){ return !PLANO.recursos||PLANO.recursos.indexOf(k)>=0; }
+function planoCad(pag){ return PLANO_PAG[pag]&&!temRec(PLANO_PAG[pag])?' 🔒':''; }
+function planoAviso(k){
+  var nm=REC_NOME[k]||'Este recurso', lb=PLANO.libera&&PLANO.libera[k], dono=DD_USER&&DD_USER.perfil==='dono';
+  el('pa-corpo').innerHTML='<div style="text-align:center;padding:10px 4px"><div style="font-size:34px;margin-bottom:8px">🔒</div><b style="font-size:16px">'+esc(nm)+'</b><p style="color:var(--muted);font-size:13.5px;line-height:1.5;margin:8px 0 16px">'+(lb?'Disponível no plano <b>'+esc(lb)+'</b>.':'Não faz parte do seu plano.')+(PLANO.plano?' Seu plano atual é o '+esc(PLANO.plano)+'.':'')+(dono?'':' Fale com o responsável pela conta para liberar.')+'</p>'+(dono?'<button class="btn pri wide" onclick="fecharTudo();contaAbrir()">Ver meu plano</button>':'<button class="btn sec wide" onclick="fecharTudo()">Entendi</button>')+'</div>';
+  fecharTudo(); abrir('sh-planoav');
+}
+function planoAtendimentoAbre(){ window.open('atendimento.html','_blank'); }
+function planoAtendimento(){ planoAtendimentoAbre(); }
+var PLANO_EMB=false;
+function planoEmbrulha(){
+  if(PLANO_EMB) return; PLANO_EMB=true;
+  Object.keys(PLANO_FN).forEach(function(fn){ var f=window[fn], k=PLANO_FN[fn]; if(typeof f!=='function') return; window[fn]=function(){ if(!temRec(k)){ planoAviso(k); return; } return f.apply(this,arguments); }; });
+  var ab=window.msgAba; if(typeof ab==='function') window.msgAba=function(q){ if(q==='cli'&&!temRec('whats')){ planoAviso('whats'); return; } return ab.apply(this,arguments); };
+  /* pagamento na mesa e racha ficam dentro de Formas de pagamento: o interruptor explica em vez de ligar */
+  document.addEventListener('click',function(e){ var t=e.target; if(t&&(t.id==='pgt-mesa'||t.id==='pgt-racha')&&!temRec('mesa_pagto')){ e.preventDefault(); planoAviso('mesa_pagto'); } },true);
+}
+function planoAplica(){
+  if(!PLANO.recursos) return;
+  Object.keys(PLANO_FN).forEach(function(fn){ if(temRec(PLANO_FN[fn])) return; var nomeFn=fn==='planoAtendimentoAbre'?'planoAtendimento':fn; document.querySelectorAll('[onclick^="'+nomeFn+'("]').forEach(function(b){ if(b.getAttribute('data-cad')) return; b.setAttribute('data-cad','1'); (b.querySelector('h4')||b).insertAdjacentText('afterbegin','🔒 '); }); });
+  var ac=el('msg-aba-cli'); if(ac&&!temRec('whats')&&!ac.getAttribute('data-cad')){ ac.setAttribute('data-cad','1'); ac.insertAdjacentText('afterbegin','🔒 '); }
+  montarNav();
+  if(PLANO_PAG[PAG]&&!temRec(PLANO_PAG[PAG])) ir('pedidos');
+}
+function planoCarrega(){
+  planoEmbrulha();
+  fetch(DELTADIS_API+'/painel/acesso',{headers:cdHdr()}).then(function(r){ return r.json(); }).then(function(d){ if(d&&d.ok){ PLANO=d; PLANO.libera=d.libera||{}; if(!temRec('whats')&&typeof MSG!=='undefined') MSG.aba='mot'; planoAplica(); } }).catch(function(){});
+}
 function ir(p){
   if(!pagOk(p)){ var _ap=acessoPaginas(); if(!_ap||!_ap.length) return; p=_ap[0]; }
+  if(PLANO_PAG[p]&&!temRec(PLANO_PAG[p])){ planoAviso(PLANO_PAG[p]); return; }
   PAG=p;
   try{ pintarIndicadores(); }catch(e){}
   if(p==='financeiro' && typeof carregarSaldoAsaas==='function' && (Date.now()-SALDO_QUANDO>60000)) carregarSaldoAsaas(true);
@@ -3885,7 +3923,7 @@ function abrirApp(){
   el('app').style.display='block'; try{ window.GiroMarca&&GiroMarca.deUsuario(DD_USER); }catch(e){}
   var t=el('tb-tenant'); if(t) t.textContent=(DD_USER&&DD_USER.cliente_nome)||'';
   var av=document.querySelector('.tb-av'); if(av&&DD_USER&&DD_USER.nome) av.textContent=DD_USER.nome.charAt(0).toUpperCase();
-  try{ montarTudo(); carregarPonto(); ptCarregarLista(); waCarregar(); contaRapido(); }finally{ srvCarregar(); }
+  try{ montarTudo(); carregarPonto(); ptCarregarLista(); waCarregar(); contaRapido(); planoCarrega(); }finally{ srvCarregar(); }
 }
 /* ── (120) entrar com CÓDIGO: 6 dígitos no WhatsApp e no e-mail do cadastro (sem senha) ── */
 var LG={modo:'senha',etapa:1};
@@ -3981,6 +4019,7 @@ function contaVencimento(){
 function contaPintar(){
   var d=CT.dados, box=el('ct-corpo'); if(!d||!box) return;
   var pl=d.plano, ci=d.ciclo, fa=d.fatura||{estado:'nenhuma'}, h='';
+  if(d.teste_ate) h+='<div style="padding:10px 12px;border-radius:10px;background:var(--s2);font-weight:700;font-size:13px;margin-bottom:12px">🎁 Teste grátis até '+ctData(d.teste_ate)+'. Não há cobrança até essa data.</div>';
   h+='<div style="font-weight:800;font-size:12px;letter-spacing:.5px;color:var(--muted);margin-bottom:4px">PLANO</div>'+
      '<div style="border:1px solid var(--border2);border-radius:12px;padding:12px;background:var(--s2);margin-bottom:14px"><div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:16px">'+esc(pl?pl.nome:'Sem plano')+'</b><b style="color:var(--roxo,#D96D28);font-size:18px">'+ctMoeda(ci?ci.fixo_centavos:0)+'<span style="font-size:11px;color:var(--muted);font-weight:600">/mês</span></b></div>'+
      (pl&&pl.descricao?'<div style="font-size:12.5px;color:var(--muted);margin-top:4px">'+esc(pl.descricao)+'</div>':'')+
