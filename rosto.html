@@ -103,7 +103,7 @@ a{color:var(--laranja-claro)}
   /* ---------- 2. câmera e movimentos ---------- */
   var POSES=[['frente','De frente'],['lado1','Um lado'],['lado2','Outro lado'],['cima','Queixo']];
   /* regra de cada movimento, separada da câmera. Não depende de qual lado é o positivo */
-  var LIM={yawFrente:.2,pitchFrente:.3,yawLado:.3,pitchCima:.12,firme:3,minBox:.24,minScore:.5};
+  var LIM={yawFrente:.2,pitchFrente:.3,yawLado:.3,pitchCima:.12,msFrente:1800,msLado:500,minBox:.24,minScore:.5};
   function novoEstado(){ return {i:0,firme:0,sinal:0,base:0,vetores:[]}; }
   function analisa(E,faces){
     if(!faces||!faces.length) return {dica:'Coloque o rosto no círculo'};
@@ -118,7 +118,9 @@ a{color:var(--laranja-claro)}
     if(P==='lado2') ok=Math.abs(rot.yaw)>LIM.yawLado&&(rot.yaw>0?1:-1)===-E.sinal;
     if(P==='cima') ok=Math.abs(rot.yaw)<LIM.yawLado&&Math.abs(rot.pitch-E.base)>LIM.pitchCima;
     if(!ok){ E.firme=0; return {dica:'Siga o Live'}; }
-    if(++E.firme<(P==='frente'?LIM.firme:2)) return {dica:'Isso, segure assim'};
+    /* segura a posição por um tempo: de frente mais longo, para a pessoa se ajeitar antes da leitura */
+    var agora=Date.now(); if(!E.firme) E.firme=agora;
+    if(agora-E.firme<(P==='frente'?LIM.msFrente:LIM.msLado)) return {dica:'Isso, segure assim'};
     E.vetores.push(Array.prototype.slice.call(f.embedding));
     if(P==='frente') E.base=rot.pitch;
     if(P==='lado1') E.sinal=rot.yaw>0?1:-1;
