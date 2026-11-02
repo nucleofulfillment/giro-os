@@ -382,6 +382,17 @@ function plRecHtml(p){
   '<label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-weight:700"><input type="checkbox" id="pl-padrao" '+(p&&p.padrao?'checked':'')+' style="width:auto;margin:0"> Clientes sem plano usam estes recursos</label><p class="sub" style="margin:4px 0 0">Vale só para o acesso: não muda o que eles pagam hoje.</p>';
 }
 function plRecTudo(){ el('pl-recs').style.display=el('pl-rec-tudo').checked?'none':'grid'; }
+/* (170) trava por falta de pagamento */
+function carregarTrava(){
+  chamar('GET','/admin/trava').then(function(d){
+    var b=el('pl-trava'); if(!b||!d.ok) return; var c=d.cfg;
+    b.innerHTML='<div style="margin-top:18px"><b>Bloqueio por falta de pagamento</b><p class="sub" style="margin:2px 0 8px">Bloqueia a equipe e os pedidos novos quando a fatura fica em aberto depois do prazo. Ao ligar, só valem as faturas que vencerem a partir de hoje. O Asaas é consultado antes de bloquear e a liberação é automática depois do pagamento.</p><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><label style="display:flex;align-items:center;gap:8px;margin:0;font-weight:700"><input type="checkbox" id="tv-on" '+(c.on?'checked':'')+' style="width:auto;margin:0"> Ligado</label><span class="sub" style="margin:0">Bloquear</span><input id="tv-dias" inputmode="numeric" value="'+c.dias+'" style="width:60px;margin:0"><span class="sub" style="margin:0">dias após o vencimento</span><button class="btn pri peq" onclick="salvarTrava()">Salvar</button></div>'+
+    ((d.itens||[]).length?'<div style="margin-top:10px">'+d.itens.map(function(x){ var est=x.liberada_ate?'liberada até '+dataBr(x.liberada_ate):(x.travada?'<b style="color:#DC2626">BLOQUEADA</b>':(x.antiga?'fatura anterior à regra, não bloqueia':(c.on?'bloqueia em '+dataBr(x.trava_em):'seria bloqueada em '+dataBr(x.trava_em)))); return '<div class="sub" style="margin:0;padding:8px 0;border-top:1px solid #eee;display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:space-between"><span><b>'+esc(x.nome)+'</b> · '+reais(x.valor)+' · venceu em '+dataBr(x.venc)+' · '+est+'</span><span><button class="btn peq" onclick="liberarTrava(\''+esc(x.cli)+'\',3)">Liberar 3 dias</button>'+(x.liberada_ate?' <button class="btn peq" onclick="liberarTrava(\''+esc(x.cli)+'\',0)">Tirar liberação</button>':'')+'</span></div>'; }).join('')+'</div>':'<div class="sub" style="margin:10px 0 0">Nenhuma fatura em aberto.</div>')+'</div>';
+  }).catch(function(){});
+}
+function dataBr(i){ i=String(i||''); return i.slice(8,10)+'/'+i.slice(5,7)+'/'+i.slice(0,4); }
+function salvarTrava(){ chamar('POST','/admin/trava',{on:el('tv-on').checked,dias:parseInt(el('tv-dias').value,10)||5}).then(function(d){ if(d.ok){ toast('Bloqueio salvo.'); carregarTrava(); } }).catch(function(){}); }
+function liberarTrava(cli,dias){ chamar('POST','/admin/trava-liberar',{cli:cli,dias:dias}).then(function(d){ if(d.ok){ toast(dias?'Loja liberada por '+dias+' dias.':'Liberação retirada.'); carregarTrava(); } }).catch(function(){}); }
 function carregarPlanoLog(){
   chamar('GET','/admin/plano-log').then(function(d){
     var b=el('pl-log'); if(!b||!d.ok) return;
@@ -398,12 +409,12 @@ function desenharPlanos(){
   var at=PLANOS.filter(function(p){return p.ativo;}).length;
   el('pl-resumo').textContent=at+' ativo'+(at===1?'':'s');
   if(!PLANOS.length){el('lista-planos').innerHTML='<div class="vazio">Nenhum plano ainda. Clique em "+ Novo plano".</div>';return;}
-  setTimeout(carregarPlanoLog,0);
+  setTimeout(function(){ carregarPlanoLog(); carregarTrava(); },0);
   el('lista-planos').innerHTML=PLANOS.map(function(p){
     return '<div class="cli"><div class="av">'+esc((p.nome||'?').charAt(0).toUpperCase())+'</div><div style="min-width:160px"><div class="nome">'+esc(p.nome)+'</div><div class="id">'+esc(p.descricao||'sem descrição')+' · <span class="tag '+(p.ativo?'on':'off')+'">'+(p.ativo?'Ativo':'Desativado')+'</span>'+(p.padrao?' <span class="tag on">Padrão</span>':'')+' · '+(p.recursos?p.recursos.length+' recursos':'tudo liberado')+'</div></div>'+
       '<div class="dados"><div><b>'+reais(p.fixo_centavos)+'</b>fixo mensal</div><div><b>'+reaisPac(p.pacote_centavos)+'</b>por pacote</div><div><b>'+(p.variavel_total?'desde o 1º':(p.franquia||0))+'</b>'+(p.variavel_total?'pacote':'pacotes inclusos')+'</div></div>'+
       '<button class="btn pri peq" onclick="abrirPlano(\''+esc(p.id)+'\')">Abrir</button></div>';
-  }).join('')+'<div id="pl-log"></div>';
+  }).join('')+'<div id="pl-trava"></div><div id="pl-log"></div>';
 }
 function abrirPlano(id){
   var p=id?PLANOS.filter(function(x){return x.id===id;})[0]:null; if(id&&!p) return;

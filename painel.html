@@ -3884,7 +3884,62 @@ function planoAplica(){
 }
 function planoCarrega(){
   planoEmbrulha();
-  fetch(DELTADIS_API+'/painel/acesso',{headers:cdHdr()}).then(function(r){ return r.json(); }).then(function(d){ if(d&&d.ok){ PLANO=d; PLANO.libera=d.libera||{}; if(!temRec('whats')&&typeof MSG!=='undefined') MSG.aba='mot'; planoAplica(); } }).catch(function(){});
+  fetch(DELTADIS_API+'/painel/acesso',{headers:cdHdr()}).then(function(r){ return r.json(); }).then(function(d){ if(d&&d.ok){ PLANO=d; PLANO.libera=d.libera||{}; if(!temRec('whats')&&typeof MSG!=='undefined') MSG.aba='mot'; planoAplica(); if(d.trava) travaTela(d.trava); else if(d.aviso) travaFaixa(d.aviso); } }).catch(function(){});
+}
+/* (170) fatura vencida: faixa de aviso até a data da trava. Depois disso, tela cheia com o Pix; o acesso volta sozinho quando o pagamento cai */
+function travaFaixa(a){
+  if(el('tv-faixa')) return;
+  var d=document.createElement('button'); d.id='tv-faixa'; d.type='button'; d.onclick=function(){ contaAbrir(); };
+  d.setAttribute('style','position:fixed;left:50%;transform:translateX(-50%);bottom:14px;z-index:60;border:0;border-radius:12px;padding:11px 16px;background:#7f1d1d;color:#fff;font:inherit;font-size:13px;font-weight:700;max-width:calc(100% - 24px);cursor:pointer');
+  d.textContent='⚠️ Fatura de '+ctMoeda(a.valor)+' vencida em '+ctData(a.venc)+'. O sistema será bloqueado em '+ctData(a.trava_em)+'. Toque para pagar';
+  document.body.appendChild(d);
+}
+var TV={timer:null};
+function travaTela(t){
+  if(el('tv-tela')) return;
+  var dono=DD_USER&&DD_USER.perfil==='dono', d=document.createElement('div'); d.id='tv-tela'; d.setAttribute('role','alertdialog'); d.setAttribute('aria-modal','true');
+  d.setAttribute('style','position:fixed;inset:0;z-index:9999;background:rgba(10,10,12,.92);display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto');
+  var txt=t&&t.valor?'A fatura de <b>'+ctMoeda(t.valor)+'</b> venceu em <b>'+ctData(t.venc)+'</b>. ':'Há uma fatura em aberto. ';
+  d.innerHTML='<div style="background:var(--s1,#fff);color:var(--tx,#1c1c1e);border-radius:18px;padding:24px 20px;width:100%;max-width:400px;text-align:center;margin:auto"><div style="font-size:34px;margin-bottom:6px">🔒</div><b style="font-size:18px">Sistema bloqueado</b><p style="font-size:14px;line-height:1.5;color:var(--muted);margin:10px 0 14px">'+txt+(dono?'Pague para liberar. O acesso volta sozinho assim que o pagamento for confirmado.':'Fale com o responsável pela conta para liberar.')+'</p>'+(dono?'<button class="btn pri wide" id="tv-pix" onclick="travaPix()">Pagar com Pix</button><div id="tv-qr"></div><button class="btn sec wide" style="margin-top:8px" id="tv-ja" onclick="travaConfere(1)">Já paguei</button><div id="tv-msg" style="font-size:13px;color:#c0392b;font-weight:700;margin-top:8px"></div>':'')+'<button class="btn sec wide" style="margin-top:8px" onclick="sair()">Sair</button></div>';
+  document.body.appendChild(d);
+  if(dono){ clearInterval(TV.timer); TV.timer=setInterval(function(){ travaConfere(0); },20000); }
+}
+window.travaTela=travaTela;
+function travaPix(){
+  var b=el('tv-pix'), m=el('tv-msg'); b.disabled=true; m.textContent='';
+  fetch(DELTADIS_API+'/conta/cobranca',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}).then(function(r){ return r.json().catch(function(){ return {ok:false}; }); }).then(function(d){
+    b.disabled=false;
+    if(!d||!d.ok){ m.textContent=(d&&d.mensagem)||'Não consegui gerar o Pix. Tente de novo.'; return; }
+    if(d.estado==='pago'){ travaConfere(1); return; }
+    b.style.display='none';
+    el('tv-qr').innerHTML=(d.pix&&d.pix.imagem?'<img alt="QR Code Pix" src="data:image/png;base64,'+esc(d.pix.imagem)+'" style="width:180px;height:180px;display:block;margin:6px auto">':'')+(d.pix&&d.pix.payload?'<textarea id="ct-copia" readonly rows="3" class="inp" style="font-size:11.5px">'+esc(d.pix.payload)+'</textarea><button class="btn sec wide" style="margin-top:6px" onclick="ctCopiar()">Copiar código Pix</button>':(d.link?'<a href="'+esc(d.link)+'" target="_blank" rel="noopener">Abrir a fatura</a>':''));
+  }).catch(function(){ b.disabled=false; m.textContent='Sem conexão. Tente de novo.'; });
+}
+function travaConfere(manual){
+  var b=el('tv-ja'), m=el('tv-msg'); if(manual&&b){ b.disabled=true; b.textContent='Conferindo...'; if(m) m.textContent=''; }
+  fetch(DELTADIS_API+'/conta/verificar',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}).then(function(r){ return r.json(); }).then(function(d){
+    if(d&&d.ok&&!d.trava){ clearInterval(TV.timer); location.reload(); return; }
+    if(manual&&b){ b.disabled=false; b.textContent='Já paguei'; if(m) m.textContent='O pagamento ainda não foi confirmado. Se acabou de pagar, aguarde um instante.'; }
+  }).catch(function(){ if(manual&&b){ b.disabled=false; b.textContent='Já paguei'; } });
+}
+/* (170) cartão recorrente em Meu plano */
+function ctCartaoForm(){
+  el('ct-cartao').innerHTML='<div style="display:grid;gap:8px;margin-top:8px"><input class="inp" id="cc-tit" placeholder="Nome impresso no cartão" autocomplete="cc-name"><input class="inp" id="cc-num" placeholder="Número do cartão" inputmode="numeric" autocomplete="cc-number"><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px"><input class="inp" id="cc-mes" placeholder="Mês" inputmode="numeric" maxlength="2" autocomplete="cc-exp-month"><input class="inp" id="cc-ano" placeholder="Ano" inputmode="numeric" maxlength="4" autocomplete="cc-exp-year"><input class="inp" id="cc-cvv" placeholder="CVV" inputmode="numeric" maxlength="4" autocomplete="cc-csc"></div><input class="inp" id="cc-doc" placeholder="CPF ou CNPJ do titular" inputmode="numeric"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><input class="inp" id="cc-cep" placeholder="CEP" inputmode="numeric" maxlength="9"><input class="inp" id="cc-nend" placeholder="Número do endereço"></div><input class="inp" id="cc-fone" placeholder="Telefone com DDD" inputmode="numeric"><label style="display:flex;gap:8px;font-size:12.5px;line-height:1.4;align-items:flex-start"><input type="checkbox" id="cc-ok" style="margin-top:2px"> Autorizo a cobrança mensal da fatura LiveFood neste cartão até eu remover. O valor varia conforme o plano e os pedidos do mês.</label><button class="btn pri wide" id="cc-btn" onclick="ctCartaoSalvar()">Salvar cartão</button><div id="cc-msg" style="font-size:13px;color:#c0392b;font-weight:700"></div></div>';
+}
+function ctCartaoSalvar(){
+  var m=el('cc-msg'), b=el('cc-btn'); m.textContent='';
+  if(!el('cc-ok').checked){ m.textContent='Confirme a autorização da cobrança.'; return; }
+  b.disabled=true; b.textContent='Salvando...';
+  var ct={aceite:1,titular:el('cc-tit').value,numero:el('cc-num').value,mes:el('cc-mes').value,ano:el('cc-ano').value,cvv:el('cc-cvv').value,documento:el('cc-doc').value,cep:el('cc-cep').value,numero_end:el('cc-nend').value,telefone:el('cc-fone').value};
+  fetch(DELTADIS_API+'/conta/cartao',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(ct)}).then(function(r){ return r.json().catch(function(){ return {ok:false}; }); }).then(function(d){
+    b.disabled=false; b.textContent='Salvar cartão';
+    if(!d||!d.ok){ m.textContent=(d&&d.mensagem)||'Não consegui salvar o cartão.'; return; }
+    aviso('Cartão salvo ✅'); contaCarregar(function(){ contaPintar(); });
+  }).catch(function(){ b.disabled=false; b.textContent='Salvar cartão'; m.textContent='Sem conexão. Tente de novo.'; });
+}
+function ctCartaoRemover(){
+  if(!window.confirm('Remover o cartão? As próximas faturas vão por Pix.')) return;
+  fetch(DELTADIS_API+'/conta/cartao',{method:'POST',headers:{'Content-Type':'application/json'},body:'{"remover":1}'}).then(function(r){ return r.json(); }).then(function(){ aviso('Cartão removido'); contaCarregar(function(){ contaPintar(); }); }).catch(function(){ aviso('Sem conexão.'); });
 }
 function ir(p){
   if(!pagOk(p)){ var _ap=acessoPaginas(); if(!_ap||!_ap.length) return; p=_ap[0]; }
@@ -4036,6 +4091,7 @@ function contaPintar(){
       h+='<div style="margin:8px 0 14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span style="font-size:12.5px">Dia de vencimento das faturas:</span><select id="ct-dia" class="inp" style="width:auto">'+op+'</select><button class="btn sec" onclick="contaVencimento()">Salvar</button></div>';
     } else h+='<div style="font-size:12px;color:var(--muted);margin:0 0 14px">Vencimento todo dia <b>'+ci.dia_venc+'</b>.</div>';
   } else h+='<div style="font-size:12.5px;color:var(--muted);margin-bottom:14px">Sua conta ainda não tem um plano ativo. Fale com a DeltaDis.</div>';
+  if(ci) h+='<div style="font-weight:800;font-size:12px;letter-spacing:.5px;color:var(--muted);margin:4px 0">FORMA DE PAGAMENTO</div><div style="border:1px solid var(--border2);border-radius:12px;padding:12px;margin-bottom:12px;font-size:13px">'+(d.cartao?'💳 Cartão <b>'+esc(d.cartao.bandeira||'')+' final '+esc(d.cartao.final||'')+'</b>. A fatura é cobrada sozinha no vencimento. Se recusar, vai por Pix.<div style="margin-top:8px"><button class="btn sec" onclick="ctCartaoRemover()">Remover cartão</button></div>':'⚡ <b>Pix</b>. No vencimento, a fatura chega no seu WhatsApp e e-mail.<div style="margin-top:8px"><button class="btn sec" onclick="ctCartaoForm()">Pagar com cartão recorrente</button></div>')+'<div id="ct-cartao"></div></div>';
   h+='<div id="ct-cob" style="margin:6px 0 14px">';
   if(fa.estado==='pago'&&!(ci&&ci.devida)) h+='<div style="padding:10px 12px;border-radius:10px;background:#e8f5e9;color:#2e7d32;font-weight:700;font-size:13px">✅ Fatura paga'+(fa.tipo==='adesao'?' (1ª mensalidade, paga no cadastro)':'')+'. Obrigado!</div>';
   else if(!ci||!d.cobranca_disponivel) { if(ci) h+='<div style="font-size:12.5px;color:var(--muted)">A cobrança online não está disponível para esta conta. Fale com a DeltaDis.</div>'; }
