@@ -7777,10 +7777,10 @@ function clbSalvar(){
 function cdPreco(v){ var n=Number(String(v==null?'':v).replace(/\./g,'').replace(',','.')); if(String(v).indexOf(',')<0&&String(v).indexOf('.')>=0) n=Number(String(v)); return isFinite(n)&&n>=0?n:0; }
 function cdCarregar(){
   var l=el('cd-lista'); if(l&&!CD.carregou) l.innerHTML='<div style="padding:24px;text-align:center;color:var(--muted)">Carregando…</div>';
-  fetch(DELTADIS_API+'/painel/cardapio',{headers:cdHdr()}).then(function(r){ return r.json(); }).then(function(d){
+  return CD.pCarga=fetch(DELTADIS_API+'/painel/cardapio',{headers:cdHdr()}).then(function(r){ return r.json(); }).then(function(d){
     if(!d||!d.ok) throw new Error((d&&d.mensagem)||'não deu');
     CD.cats=d.cats||[]; CD.prods=d.prods||[]; CD.ofs=d.ofertas||[]; CD.cli=d.cli||CD.cli; CD.slug=d.slug||CD.slug; CD.carregou=true; cdPintar();
-  }).catch(function(e){ if(l) l.innerHTML='<div style="padding:24px;text-align:center;color:var(--red)">Não consegui abrir o cardápio: '+esc(e.message)+'</div>'; });
+  }).catch(function(e){ CD.pCarga=null; CD.erroCarga=e.message; if(l) l.innerHTML='<div style="padding:24px;text-align:center;color:var(--red)">Não consegui abrir o cardápio: '+esc(e.message)+'</div>'; });
 }
 function cdNomeCat(id){ var i; for(i=0;i<CD.cats.length;i++) if(CD.cats[i].id===id) return CD.cats[i].nome; return ''; }
 function cdDscTag(p){
@@ -9441,7 +9441,17 @@ function cdExibirOferta(){
 }
 function cdOfSorted(){ return CD.ofs.slice().sort(function(a,b){ return (a.ordem||0)-(b.ordem||0); }); }
 function cdNomeProd(id){ var p=cdProd(id); return p?p.nome:'(produto apagado)'; }
-function cdAbrirOfertas(){ fecharTudo(); cdPintarOfertas(); cdPgCarrega(); abrir('sh-ofertas'); mcCarrega('promo'); }
+function cdAbrirOfertas(){
+  fecharTudo(); abrir('sh-ofertas'); mcCarrega('promo');
+  if(CD.carregou){ cdPintarOfertas(); cdPgCarrega(); return; }
+  /* o cardápio ainda está vindo do servidor: sem esperar, a lista abriria vazia */
+  el('cd-of-tot').textContent=''; el('cd-of-lista').innerHTML='<div style="padding:24px;text-align:center;color:var(--muted)">Carregando as ofertas…</div>';
+  (CD.pCarga||cdCarregar()).then(function(){
+    if(!el('sh-ofertas').classList.contains('on')) return;
+    if(CD.carregou){ cdPintarOfertas(); cdPgCarrega(); return; }
+    el('cd-of-lista').innerHTML='<div style="padding:24px;text-align:center;color:var(--red)">Não consegui carregar as ofertas: '+esc(CD.erroCarga||'tente de novo')+'</div>';
+  });
+}
 /* (115) cartões automáticos do cardápio (Promoção / Ofertas Clube): nome, mostrar, posição e ícone — o ícone vale em todo o cardápio */
 var MC={c:null}, MC_IC={promo:[['fogo','🔥','Fogo'],['etiqueta','🏷️','Etiqueta'],['raio','⚡','Raio']],clube:[['diamante','💎','Diamante'],['coroa','👑','Coroa'],['estrela','⭐','Estrela']]};
 function mcCarrega(t){ var b=el('mc-'+t); if(!b) return; b.innerHTML='<div style="font-size:12.5px;color:var(--muted)">Carregando o cartão…</div>';
@@ -9553,6 +9563,7 @@ function cdOfDuplicar(id){
   cdOfSalvarApi(c).then(function(d){ return cdOfRecarregar().then(function(){ cdOfEditar(d.id); }); }).catch(function(e){ aviso('Não duplicou: '+esc(e.message)); });
 }
 function cdOfNova(prodIds){
+  if(!CD.carregou){ aviso('Aguarde, o cardápio ainda está carregando'); return; }
   var nm=''; if(prodIds&&prodIds.length===1) nm=cdNomeProd(prodIds[0]);
   CD.of={id:null,nome:nm,vid:'',vdur:0,vtam:0,vtipo:'video/mp4',produtos:(prodIds||[]).slice(),ativo:true,prev:''};
   cdOfAbrirForm();
