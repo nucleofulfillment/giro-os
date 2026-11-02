@@ -68,6 +68,7 @@ button{font:inherit;color:inherit;cursor:pointer}
   'use strict';
   var API='https://giro-os-api.nucleofull.workers.dev', VER='3.3.6', BASE='https://cdn.jsdelivr.net/npm/@vladmandic/human@'+VER+'/';
   var Q=new URLSearchParams(location.search), LOCAL=/^(localhost|127\.)/.test(location.hostname);
+  var SAI=Q.get('modo')==='saida', saiTimer=null; if(SAI) document.title='LiveFace · Saída';
   var TK=''; try{ TK=localStorage.getItem('dd_jwt')||''; }catch(e){}
   /* Calibragem: a semelhança vai de 0 a 1. ?diag=1 mostra os números na tela para ajustar no local do evento */
   var LIM={sim:.6,margem:.05,quadros:2,minBox:.12,yaw:.6,vivo:.4,msContagem:5000,msPerde:2500,msSemMatch:3000,msPassando:25000,msRes:3500,msErro:4500};
@@ -96,7 +97,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 
   /* ---------- 1. escolher o evento e baixar ---------- */
   function telaEventos(){
-    $('app').innerHTML='<div class="cen"><div class="marca">live<b>face</b></div><h1 style="font-size:32px">Tablet da entrada</h1><p class="mut">Escolha o evento. A lista fica guardada neste aparelho e funciona mesmo se a internet cair.</p><div id="evs" class="mut">Carregando...</div><a class="bt bt-sec" href="hub.html">Voltar ao Hub</a></div>';
+    $('app').innerHTML='<div class="cen"><div class="marca">live<b>face</b></div><h1 style="font-size:32px">'+(SAI?'Tablet da saída':'Tablet da entrada')+'</h1><p class="mut">Escolha o evento. A lista fica guardada neste aparelho e funciona mesmo se a internet cair.</p><div id="evs" class="mut">Carregando...</div><a class="bt bt-sec" href="hub.html">Voltar ao Hub</a></div>';
     if(!TK){ location.href='hub.html'; return; }
     api('/painel/lf-eventos').then(function(d){
       if(!d||!d.ok){ $('evs').textContent=(d&&d.mensagem)||'Não consegui carregar os eventos.'; return; }
@@ -147,7 +148,7 @@ button{font:inherit;color:inherit;cursor:pointer}
   function catraca(a,t){ return '<div class="catraca '+(a?'aberta':'')+'"><i></i>'+esc(t)+'</div>'; }
   function aguardando(){
     contaPara(); setVis('busca','Olhe para a câmera'); pausa=0; cand=null; candN=0; falhas=0;
-    $('res').innerHTML='<h2 style="font-size:30px">Pare em frente à câmera</h2><p class="mut">A catraca abre sozinha quando eu reconhecer você.</p><div class="acoes" style="margin-top:6px"><button class="bt bt-sec" id="beq">Equipe: buscar por nome</button></div>'+catraca(false,'Catraca de entrada aguardando');
+    $('res').innerHTML='<h2 style="font-size:30px">Pare em frente à câmera</h2><p class="mut">'+(SAI?'Eu confiro sua conta e libero a saída.':'A catraca abre sozinha quando eu reconhecer você.')+'</p><div class="acoes" style="margin-top:6px"><button class="bt bt-sec" id="beq">Equipe: buscar por nome</button></div>'+catraca(false,SAI?'Catraca de saída aguardando':'Catraca de entrada aguardando');
     $('beq').onclick=busca; diz('Oi! Olha aqui para mim.',{expr:'feliz'});
   }
   /* (173) catraca: quando o relé for escolhido, a abertura real entra aqui. Sem relé, a equipe libera vendo a tela */
@@ -156,7 +157,7 @@ button{font:inherit;color:inherit;cursor:pointer}
   function libera(p,met,sim){
     pausa=Date.now()+LIM.msRes; registra(p,met,sim); abreCatraca();
     setVis('ok','Liberado');
-    $('res').innerHTML='<div class="est ok">✓ Liberado</div><div class="nome">Boas-vindas, '+esc(String(p.nome).split(' ')[0])+'!</div><p class="mut">'+esc(p.tipo||'Ingresso')+' · '+(met==='rosto'?'pelo rosto':(met==='qr'?'pelo QR code':'liberado pela equipe'))+'</p>'+catraca(true,'Catraca de entrada liberada');
+    $('res').innerHTML='<div class="est ok">✓ Liberado</div><div class="nome">Boas-vindas, '+esc(String(p.nome).split(' ')[0])+'!</div><p class="mut">'+(p.comanda?'Comanda '+esc(p.comanda)+' aberta · ':'')+esc(p.tipo||'Ingresso')+' · '+(met==='rosto'?'pelo rosto':(met==='qr'?'pelo QR code':'liberado pela equipe'))+'</p>'+catraca(true,'Catraca de entrada liberada');
     diz('Boa festa, '+String(p.nome).split(' ')[0]+'!',{gesto:'boas_vindas'});
     agenda(LIM.msRes,aguardando);
   }
@@ -179,7 +180,7 @@ button{font:inherit;color:inherit;cursor:pointer}
     CONT={p:p,t0:Date.now(),visto:Date.now(),sim:sim}; contUlt=0;
     var pn=String(p.nome).split(' ')[0];
     setVis('busca','Fique olhando para a câmera');
-    $('res').innerHTML='<div class="nome">Oi, '+esc(pn)+'!</div><p class="mut">Fique olhando para a câmera. Já vou liberar sua entrada.</p>'+catraca(false,'Catraca de entrada aguardando');
+    $('res').innerHTML='<div class="nome">Oi, '+esc(pn)+'!</div><p class="mut">Fique olhando para a câmera. '+(SAI?'Já vou conferir sua conta.':'Já vou liberar sua entrada.')+'</p>'+catraca(false,SAI?'Catraca de saída aguardando':'Catraca de entrada aguardando');
     diz('Oi, '+pn+'! Fique olhando para mim.',{gesto:'acenar'});
     contaTique();
   }
@@ -193,7 +194,7 @@ button{font:inherit;color:inherit;cursor:pointer}
   }
   setInterval(contaTique,150);
   function agenda(ms,f){ timers.forEach(clearTimeout); timers=[setTimeout(f,ms)]; }
-  function trata(p,met,sim){ var e=ENT[p.id]; if(e&&Date.now()-e.t<LIM.msPassando){ cand=null; candN=0; return; } if(e) jaEntrou(p); else libera(p,met,sim); }
+  function trata(p,met,sim){ if(SAI){ saida(p,met); return; } var e=ENT[p.id]; if(e&&Date.now()-e.t<LIM.msPassando){ cand=null; candN=0; return; } if(e) jaEntrou(p); else libera(p,met,sim); }
   function analisaFaces(faces){
     if(Date.now()<pausa||$('over').innerHTML) return;
     if(!faces||!faces.length){ cand=null; candN=0; falhas=0; return; }
@@ -205,7 +206,7 @@ button{font:inherit;color:inherit;cursor:pointer}
     if(DIAG&&$('diag')) $('diag').textContent='sim '+r.sim.toFixed(2)+' seg '+r.seg.toFixed(2)+' real '+(f.real==null?'-':f.real.toFixed(2))+' vivo '+(f.live==null?'-':f.live.toFixed(2))+' lista '+qtRostos()+' '+(r.p?r.p.nome:'');
     /* durante a contagem: a mesma pessoa renova, outra pessoa cancela. Um quadro ruim não atrapalha */
     if(CONT){ if(r.ok&&viv){ if(r.p.id===CONT.p.id){ CONT.visto=Date.now(); if(r.sim>CONT.sim) CONT.sim=r.sim; } else { contaPara(); aguardando(); } } return; }
-    if(r.ok&&viv){ setVis('busca','Reconhecendo...'); if(cand===r.p.id) candN++; else { cand=r.p.id; candN=1; } if(candN>=LIM.quadros){ if(ENT[r.p.id]) trata(r.p,'rosto',r.sim); else contaInicia(r.p,r.sim); } return; }
+    if(r.ok&&viv){ setVis('busca','Reconhecendo...'); if(cand===r.p.id) candN++; else { cand=r.p.id; candN=1; } if(candN>=LIM.quadros){ if(!SAI&&ENT[r.p.id]) trata(r.p,'rosto',r.sim); else contaInicia(r.p,r.sim); } return; }
     cand=null; candN=0; if(!falhas) falhas=Date.now();
     if(Date.now()-falhas>=LIM.msSemMatch) naoReconheceu();
   }
@@ -232,12 +233,59 @@ button{font:inherit;color:inherit;cursor:pointer}
     if(!window.BarcodeDetector&&!window.jsQR){ var s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js'; document.head.appendChild(s); }
     return camera().then(carregaLeitor).then(function(){ rodando=true; aguardando(); laco(); setInterval(lerQr,500); if(navigator.wakeLock) navigator.wakeLock.request('screen').then(function(w){ wake=w; }).catch(function(){}); }).catch(function(e){ var neg=e&&(e.name==='NotAllowedError'); $('res').innerHTML='<div class="est aten">! '+(neg?'Câmera bloqueada':'Não abriu')+'</div><p class="mut">'+esc(neg?'Libere a câmera nas configurações do navegador.':(e.message||'Verifique a câmera e a internet.'))+'</p><div class="acoes"><button class="bt bt-pri" id="de">Tentar de novo</button><button class="bt bt-sec" id="beq">Equipe: buscar por nome</button></div>'; $('de').onclick=comeca; $('beq').onclick=busca; diz('Preciso da câmera para reconhecer as pessoas.',{gesto:'confuso'}); });
   }
+  /* ---------- 3. saída: confere a conta, mostra o Pix e libera quando o pagamento cair ---------- */
+  function reais(v){ return 'R$ '+Number(v||0).toFixed(2).replace('.',','); }
+  function saiParaLoop(){ if(saiTimer){ clearInterval(saiTimer); saiTimer=null; } }
+  function saiVolta(ms){ agenda(ms,function(){ saiParaLoop(); aguardando(); }); }
+  function saiPost(c,p,extra){ var b={ev:EV.id,id:p.id}; Object.keys(extra||{}).forEach(function(k){ b[k]=extra[k]; }); return api(c,b); }
+  function saiLibera(p,met,txt){
+    saiParaLoop(); pausa=Date.now()+LIM.msRes; abreCatraca(); setVis('ok','Saída liberada');
+    var pn=String(p.nome).split(' ')[0];
+    saiPost('/painel/lf-saida',p,{metodo:met}).catch(function(){});
+    $('res').innerHTML='<div class="est ok">✓ Saída liberada</div><div class="nome">Até a próxima, '+esc(pn)+'!</div><p class="mut">'+esc(txt)+'</p>'+catraca(true,'Catraca de saída liberada');
+    diz('Valeu pela presença, '+pn+'! Volte sempre.',{gesto:'comemorar'}); saiVolta(LIM.msRes);
+  }
+  function saiAviso(tit,txt,p,fala){
+    pausa=Date.now()+60000; setVis('alerta',tit);
+    $('res').innerHTML='<div class="est aten">! '+esc(tit)+'</div><p class="mut">'+esc(txt)+'</p><div class="acoes">'+(p?'<button class="bt bt-sec" id="bsl">Equipe: liberar a saída</button>':'')+'<button class="bt bt-sec" id="bsv">Voltar</button></div>'+catraca(false,'Catraca de saída fechada');
+    if(p) $('bsl').onclick=function(){ saiLibera(p,'equipe','Liberada pela equipe.'); };
+    $('bsv').onclick=function(){ saiParaLoop(); aguardando(); };
+    diz(fala||tit,{gesto:'confuso'}); saiVolta(20000);
+  }
+  function saida(p,met){
+    if(p===undefined) return;
+    pausa=Date.now()+600000; timers.forEach(clearTimeout); saiParaLoop(); setVis('busca','Conferindo sua conta');
+    var pn=String(p.nome).split(' ')[0];
+    $('res').innerHTML='<div class="nome">'+esc(pn)+'</div><p class="mut">Conferindo sua conta...</p>'+catraca(false,'Catraca de saída fechada'); diz('Deixa eu ver sua conta...',{expr:'pensativo'});
+    saiPost('/painel/lf-saida-conta',p).then(function(d){
+      if(!d||!d.ok){ saiAviso('Não consegui conferir',(d&&d.mensagem)||'Chame a equipe.',p); return; }
+      if(d.saiu_t) { saiAviso('Este ingresso já saiu','Saída registrada às '+hora(d.saiu_t)+'.',p,'Esse ingresso já saiu. Chame a equipe.'); return; }
+      if(!d.entrou_t&&met!=='equipe'){ saiAviso('Sem registro de entrada','Este ingresso não passou pela entrada.',p,'Não vi esse ingresso entrar. Chame a equipe.'); return; }
+      if(!(d.total>0)){ saiLibera(p,met==='equipe'?'equipe':met,'Nenhuma conta em aberto.'); return; }
+      saiConta(p,d,met);
+    }).catch(function(e){ if(e.message!=='sessao') saiAviso('Sem internet','Não consegui conferir a conta. A equipe confere e libera.',p,'Estou sem internet. Chame a equipe.'); });
+  }
+  function saiConta(p,d,met){
+    setVis('alerta','Conta em aberto');
+    $('res').innerHTML='<div class="est aten">! Conta em aberto</div><div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap"><div id="sqr" style="background:#fff;border-radius:14px;padding:8px;min-width:150px;min-height:150px;display:flex;align-items:center;justify-content:center;color:#1B1412;font-size:13px;font-weight:800">Gerando o Pix...</div><div style="flex:1;min-width:150px"><div style="font:800 42px/1 var(--titulo)" id="sval">'+reais(d.total)+'</div><p class="mut" style="margin-top:6px" id="stx">Leia o Pix com o celular. Quando cair, a saída abre sozinha.</p></div></div><div class="acoes"><button class="bt bt-sec" id="bsl">Equipe: liberar a saída</button><button class="bt bt-sec" id="bsv">Cancelar</button></div>';
+    $('bsl').onclick=function(){ saiLibera(p,'equipe','Liberada pela equipe. O valor continua na comanda até ser baixado no Atendimento.'); };
+    $('bsv').onclick=function(){ saiParaLoop(); aguardando(); };
+    diz('Falta só fechar a conta para eu abrir a catraca.',{expr:'pensativo'});
+    saiPost('/painel/lf-saida-pix',p).then(function(x){
+      if(!x||!x.ok){ if($('sqr')) $('sqr').textContent='Sem Pix'; if($('stx')) $('stx').textContent=(x&&x.mensagem)||'Pague no caixa.'; return; }
+      if($('sqr')) $('sqr').innerHTML=x.pix.imagem?'<img alt="QR code Pix" width="150" height="150" src="data:image/png;base64,'+esc(x.pix.imagem)+'" style="display:block">':'Pix pronto';
+    }).catch(function(){ if($('stx')) $('stx').textContent='Sem internet. Pague no caixa.'; });
+    var t0=Date.now(); saiTimer=setInterval(function(){
+      if(Date.now()-t0>600000){ saiParaLoop(); aguardando(); return; }
+      saiPost('/painel/lf-saida-status',p).then(function(s){ if(!saiTimer||!s||!s.ok) return; if(!(s.total>0)){ saiLibera(p,met==='equipe'?'equipe':met,'Conta paga no Pix.'); return; } if($('sval')) $('sval').textContent=reais(s.total); }).catch(function(){});
+    },4000);
+  }
   /* ---------- plano B: equipe busca por nome ---------- */
   function fechaOver(){ $('over').innerHTML=''; }
   function busca(){
     $('over').innerHTML='<div class="painel"><h1 style="font-size:28px">Buscar ingresso</h1><input id="bq" placeholder="Nome da pessoa" autocomplete="off"><div id="bl"></div><button class="bt bt-sec" id="bx" style="margin-top:auto">Fechar</button></div>';
     $('bx').onclick=fechaOver;
-    var pinta=function(){ var q=$('bq').value.trim().toLowerCase(), l=q?PES.filter(function(p){ return String(p.nome).toLowerCase().indexOf(q)>=0; }).slice(0,30):[]; $('bl').innerHTML=l.length?l.map(function(p){ var e=ENT[p.id]; return '<div class="pes"><div><b>'+esc(p.nome)+'</b><small>'+(e?'Entrou às '+hora(e.t):esc(p.tipo||'Ingresso'))+'</small></div><button class="bt '+(e?'bt-sec':'bt-pri')+'" data-id="'+esc(p.id)+'">Liberar</button></div>'; }).join(''):(q?'<p class="mut">Ninguém com esse nome neste evento.</p>':'<p class="mut">Digite o nome e confira o documento antes de liberar.</p>'); Array.prototype.forEach.call($('bl').querySelectorAll('[data-id]'),function(b){ b.onclick=function(){ var p=POR[b.dataset.id]; fechaOver(); libera(p,'equipe'); }; }); };
+    var pinta=function(){ var q=$('bq').value.trim().toLowerCase(), l=q?PES.filter(function(p){ return String(p.nome).toLowerCase().indexOf(q)>=0; }).slice(0,30):[]; $('bl').innerHTML=l.length?l.map(function(p){ var e=ENT[p.id]; return '<div class="pes"><div><b>'+esc(p.nome)+'</b><small>'+(e?'Entrou às '+hora(e.t):esc(p.tipo||'Ingresso'))+'</small></div><button class="bt '+(e?'bt-sec':'bt-pri')+'" data-id="'+esc(p.id)+'">Liberar</button></div>'; }).join(''):(q?'<p class="mut">Ninguém com esse nome neste evento.</p>':'<p class="mut">Digite o nome e confira o documento antes de liberar.</p>'); Array.prototype.forEach.call($('bl').querySelectorAll('[data-id]'),function(b){ b.onclick=function(){ var p=POR[b.dataset.id]; fechaOver(); if(SAI) saida(p,'equipe'); else libera(p,'equipe'); }; }); };
     $('bq').oninput=pinta; pinta(); $('bq').focus();
   }
   function menu(){
@@ -263,7 +311,7 @@ button{font:inherit;color:inherit;cursor:pointer}
   setInterval(function(){ if(rodando&&!$('over').innerHTML) atualizaLista(); },120000);
   addEventListener('online',sincroniza); addEventListener('offline',function(){ rede(false); });
   document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible'&&rodando&&navigator.wakeLock) navigator.wakeLock.request('screen').then(function(w){ wake=w; }).catch(function(){}); });
-  if(LOCAL) window.__lf={carregaLeitor:carregaLeitor,usaLista:function(ev,l){ EV=ev; preparaPessoas(l); },comeca:comeca,procura:procura,cont:function(){ return CONT?{n:contUlt,nome:CONT.p.nome}:null; },atualizaLista:atualizaLista,qtRostos:qtRostos,estado:function(){ return {ENT:ENT,FILA:FILA,falhas:falhas}; },LIM:LIM};
+  if(LOCAL) window.__lf={carregaLeitor:carregaLeitor,usaLista:function(ev,l){ EV=ev; preparaPessoas(l); },comeca:comeca,saida:function(id){ saida(POR[id],'rosto'); },procura:procura,cont:function(){ return CONT?{n:contUlt,nome:CONT.p.nome}:null; },atualizaLista:atualizaLista,qtRostos:qtRostos,estado:function(){ return {ENT:ENT,FILA:FILA,falhas:falhas}; },LIM:LIM};
 
   if(LOCAL&&Q.get('teste')==='1') return;
   carregaGuardada().then(function(g){ if(g&&g.ev&&g.ev.fim>=hoje()){ EV=g.ev; preparaPessoas(g.pes); comeca(); atualizaLista(); } else telaEventos(); });
