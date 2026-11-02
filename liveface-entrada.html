@@ -32,6 +32,9 @@ button{font:inherit;color:inherit;cursor:pointer}
 .visor[data-e="ok"]{--cor:var(--ok)}.visor[data-e="alerta"]{--cor:var(--alerta)}
 .visor video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
 .oval{position:relative;height:72%;aspect-ratio:1/1.26;max-width:80%;border-radius:50%;border:5px solid var(--cor);box-shadow:0 0 0 3000px rgba(11,9,8,.5);transition:border-color .25s}
+.conta{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:800 min(34vw,190px)/1 var(--titulo);color:#fff;text-shadow:0 6px 30px rgba(0,0,0,.7);pointer-events:none}
+.conta.bate{animation:bate .5s cubic-bezier(.34,1.56,.64,1)}
+@keyframes bate{from{transform:scale(1.35);opacity:.3}to{transform:none;opacity:1}}
 .topo{position:absolute;top:max(12px,env(safe-area-inset-top));left:14px;right:14px;display:flex;align-items:center;gap:8px;z-index:2}
 .tag{background:rgba(11,9,8,.8);border:1px solid var(--linha-forte);border-radius:99px;padding:6px 12px;font-size:13px;font-weight:800;display:flex;align-items:center;gap:7px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tag i{flex:none;width:8px;height:8px;border-radius:50%;background:var(--ok)}.tag.off i{background:var(--alerta)}
@@ -67,7 +70,7 @@ button{font:inherit;color:inherit;cursor:pointer}
   var Q=new URLSearchParams(location.search), LOCAL=/^(localhost|127\.)/.test(location.hostname);
   var TK=''; try{ TK=localStorage.getItem('dd_jwt')||''; }catch(e){}
   /* Calibragem: a semelhança vai de 0 a 1. ?diag=1 mostra os números na tela para ajustar no local do evento */
-  var LIM={sim:.6,margem:.05,quadros:2,minBox:.12,yaw:.6,vivo:.4,msSemMatch:3000,msPassando:25000,msRes:3500,msErro:4500};
+  var LIM={sim:.6,margem:.05,quadros:2,minBox:.12,yaw:.6,vivo:.4,msContagem:5000,msPerde:2500,msSemMatch:3000,msPassando:25000,msRes:3500,msErro:4500};
   var DIAG=Q.get('diag')==='1', SEM_VIVO=LOCAL&&Q.get('semvivo')==='1';
   var EV=null, PES=[], POR={}, ENT={}, FILA=[], H=null, stream=null, rodando=false, pausa=0, cand=null, candN=0, falhas=0, live=null, wake=null, timers=[];
   var $=function(i){ return document.getElementById(i); };
@@ -132,7 +135,7 @@ button{font:inherit;color:inherit;cursor:pointer}
   }
   /* ---------- 2. tela de reconhecimento ---------- */
   function montaTela(){
-    $('app').innerHTML='<div class="visor" id="vis" data-e="busca"><video id="vid" playsinline autoplay muted></video><div class="oval"></div>'+
+    $('app').innerHTML='<div class="visor" id="vis" data-e="busca"><video id="vid" playsinline autoplay muted></video><div class="oval"><span class="conta" id="conta" hidden></span></div>'+
       '<div class="topo"><span class="tag" id="rede"><i></i><span id="redet">Online</span></span><span class="tag">'+esc(EV.nome)+'</span><span class="tag" id="qt"></span><span class="esp"></span><button class="ib" id="bmenu">Menu</button></div>'+
       '<span class="selo" id="selo">Olhe para a câmera</span>'+(DIAG?'<div class="diag" id="diag"></div>':'')+'</div>'+
       '<div class="lado"><div class="lv"><div class="lv-p" id="lv"></div><p class="balao" id="balao" aria-live="polite"></p></div><div class="res" id="res"></div></div><div id="over"></div>';
@@ -143,7 +146,7 @@ button{font:inherit;color:inherit;cursor:pointer}
   function setVis(e,s){ var v=$('vis'); if(v) v.dataset.e=e; var x=$('selo'); if(x) x.textContent=s; }
   function catraca(a,t){ return '<div class="catraca '+(a?'aberta':'')+'"><i></i>'+esc(t)+'</div>'; }
   function aguardando(){
-    setVis('busca','Olhe para a câmera'); pausa=0; cand=null; candN=0; falhas=0;
+    contaPara(); setVis('busca','Olhe para a câmera'); pausa=0; cand=null; candN=0; falhas=0;
     $('res').innerHTML='<h2 style="font-size:30px">Pare em frente à câmera</h2><p class="mut">A catraca abre sozinha quando eu reconhecer você.</p><div class="acoes" style="margin-top:6px"><button class="bt bt-sec" id="beq">Equipe: buscar por nome</button></div>'+catraca(false,'Catraca de entrada aguardando');
     $('beq').onclick=busca; diz('Oi! Olha aqui para mim.',{expr:'feliz'});
   }
@@ -170,18 +173,39 @@ button{font:inherit;color:inherit;cursor:pointer}
     $('beq').onclick=busca; diz('Ops, não consegui ver direito. Vamos de novo?',{gesto:'confuso'});
     agenda(LIM.msErro,aguardando);
   }
+  var CONT=null, contUlt=0;
+  function contaPara(){ CONT=null; var c=$('conta'); if(c) c.hidden=true; }
+  function contaInicia(p,sim){
+    CONT={p:p,t0:Date.now(),visto:Date.now(),sim:sim}; contUlt=0;
+    var pn=String(p.nome).split(' ')[0];
+    setVis('busca','Fique olhando para a câmera');
+    $('res').innerHTML='<div class="nome">Oi, '+esc(pn)+'!</div><p class="mut">Fique olhando para a câmera. Já vou liberar sua entrada.</p>'+catraca(false,'Catraca de entrada aguardando');
+    diz('Oi, '+pn+'! Fique olhando para mim.',{gesto:'acenar'});
+    contaTique();
+  }
+  function contaTique(){
+    if(!CONT) return;
+    var ag=Date.now(), c=$('conta');
+    if($('over').innerHTML||ag-CONT.visto>LIM.msPerde){ contaPara(); aguardando(); return; }
+    var rest=Math.ceil((LIM.msContagem-(ag-CONT.t0))/1000);
+    if(rest<=0){ var x=CONT; contaPara(); trata(x.p,'rosto',x.sim); return; }
+    if(c&&rest!==contUlt){ contUlt=rest; c.hidden=false; c.textContent=rest; c.classList.remove('bate'); void c.offsetWidth; c.classList.add('bate'); }
+  }
+  setInterval(contaTique,150);
   function agenda(ms,f){ timers.forEach(clearTimeout); timers=[setTimeout(f,ms)]; }
   function trata(p,met,sim){ var e=ENT[p.id]; if(e&&Date.now()-e.t<LIM.msPassando){ cand=null; candN=0; return; } if(e) jaEntrou(p); else libera(p,met,sim); }
   function analisaFaces(faces){
     if(Date.now()<pausa||$('over').innerHTML) return;
     if(!faces||!faces.length){ cand=null; candN=0; falhas=0; return; }
-    if(faces.length>1){ setVis('busca','Uma pessoa por vez'); return; }
+    if(faces.length>1){ if(!CONT) setVis('busca','Uma pessoa por vez'); return; }
     var f=faces[0], rot=f.rotation&&f.rotation.angle;
     if(!f.embedding||!f.embedding.length||(f.boxRaw&&f.boxRaw[2]<LIM.minBox)){ setVis('busca','Chegue mais perto'); return; }
     if(rot&&Math.abs(rot.yaw)>LIM.yaw){ setVis('busca','Olhe para a câmera'); return; }
     var r=procura(f.embedding), viv=SEM_VIVO||((f.real==null||f.real>=LIM.vivo)&&(f.live==null||f.live>=LIM.vivo));
     if(DIAG&&$('diag')) $('diag').textContent='sim '+r.sim.toFixed(2)+' seg '+r.seg.toFixed(2)+' real '+(f.real==null?'-':f.real.toFixed(2))+' vivo '+(f.live==null?'-':f.live.toFixed(2))+' lista '+qtRostos()+' '+(r.p?r.p.nome:'');
-    if(r.ok&&viv){ setVis('busca','Reconhecendo...'); if(cand===r.p.id) candN++; else { cand=r.p.id; candN=1; } if(candN>=LIM.quadros){ trata(r.p,'rosto',r.sim); } return; }
+    /* durante a contagem: a mesma pessoa renova, outra pessoa cancela. Um quadro ruim não atrapalha */
+    if(CONT){ if(r.ok&&viv){ if(r.p.id===CONT.p.id){ CONT.visto=Date.now(); if(r.sim>CONT.sim) CONT.sim=r.sim; } else { contaPara(); aguardando(); } } return; }
+    if(r.ok&&viv){ setVis('busca','Reconhecendo...'); if(cand===r.p.id) candN++; else { cand=r.p.id; candN=1; } if(candN>=LIM.quadros){ if(ENT[r.p.id]) trata(r.p,'rosto',r.sim); else contaInicia(r.p,r.sim); } return; }
     cand=null; candN=0; if(!falhas) falhas=Date.now();
     if(Date.now()-falhas>=LIM.msSemMatch) naoReconheceu();
   }
@@ -239,7 +263,7 @@ button{font:inherit;color:inherit;cursor:pointer}
   setInterval(function(){ if(rodando&&!$('over').innerHTML) atualizaLista(); },120000);
   addEventListener('online',sincroniza); addEventListener('offline',function(){ rede(false); });
   document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible'&&rodando&&navigator.wakeLock) navigator.wakeLock.request('screen').then(function(w){ wake=w; }).catch(function(){}); });
-  if(LOCAL) window.__lf={carregaLeitor:carregaLeitor,usaLista:function(ev,l){ EV=ev; preparaPessoas(l); },comeca:comeca,procura:procura,atualizaLista:atualizaLista,qtRostos:qtRostos,estado:function(){ return {ENT:ENT,FILA:FILA,falhas:falhas}; },LIM:LIM};
+  if(LOCAL) window.__lf={carregaLeitor:carregaLeitor,usaLista:function(ev,l){ EV=ev; preparaPessoas(l); },comeca:comeca,procura:procura,cont:function(){ return CONT?{n:contUlt,nome:CONT.p.nome}:null; },atualizaLista:atualizaLista,qtRostos:qtRostos,estado:function(){ return {ENT:ENT,FILA:FILA,falhas:falhas}; },LIM:LIM};
 
   if(LOCAL&&Q.get('teste')==='1') return;
   carregaGuardada().then(function(g){ if(g&&g.ev&&g.ev.fim>=hoje()){ EV=g.ev; preparaPessoas(g.pes); comeca(); atualizaLista(); } else telaEventos(); });
