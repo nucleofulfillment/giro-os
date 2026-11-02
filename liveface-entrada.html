@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>LiveFace · Entrada</title>
+<link rel="icon" type="image/svg+xml" href="/site/img/favicon.svg">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@500;600;700;800&display=swap">
+<style>
+/* (173) LiveFace 1B: tablet da entrada. A lista do evento fica no aparelho, criptografada, e continua funcionando sem internet depois de baixada. */
+:root{--laranja:#FF5A00;--laranja-claro:#FF8A33;--laranja-escuro:#E04A00;--preto:#0B0908;--grafite:#141010;--grafite-2:#1D1715;--grafite-3:#2A221F;--linha:rgba(255,255,255,.1);--linha-forte:rgba(255,255,255,.2);--texto:#F7F2EE;--suave:#B3A79E;--ok:#2BC46A;--alerta:#FFB020;--titulo:'Baloo 2',system-ui,sans-serif;--corpo:'Nunito',system-ui,sans-serif;color-scheme:dark}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--preto);color:var(--texto);font:600 16px/1.4 var(--corpo);overflow:hidden}
+[hidden]{display:none!important}
+h1,h2,p{margin:0}
+h1,h2{font-family:var(--titulo);font-weight:800;line-height:1.05;letter-spacing:-.015em;text-wrap:balance}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--laranja-claro);outline-offset:3px;border-radius:8px}
+.app{height:100%;max-width:900px;margin:0 auto;display:flex;flex-direction:column}
+.cen{flex:1;overflow:auto;display:flex;flex-direction:column;gap:16px;padding:max(20px,env(safe-area-inset-top)) 22px 22px}
+.marca{font:800 26px/1 var(--titulo);letter-spacing:-.03em}.marca b{color:var(--laranja);font-weight:800}
+.bt{border:0;border-radius:99px;min-height:54px;padding:0 22px;font-weight:800;font-size:16px;display:flex;align-items:center;justify-content:center;text-decoration:none;color:inherit}
+.bt-pri{background:linear-gradient(135deg,var(--laranja-claro),var(--laranja) 55%,var(--laranja-escuro));color:#fff}
+.bt-sec{background:transparent;border:1.5px solid var(--linha-forte)}
+.mut{color:var(--suave)}
+.ev{display:flex;align-items:center;gap:12px;background:var(--grafite-2);border:1px solid var(--linha);border-radius:16px;padding:14px;width:100%;text-align:left}
+.ev div{flex:1;min-width:0}.ev b{font-weight:800;display:block}.ev small{color:var(--suave)}
+.barra{height:10px;border-radius:9px;background:var(--grafite-3);overflow:hidden}.barra i{display:block;height:100%;width:0;background:var(--laranja);transition:width .3s}
+.visor{position:relative;flex:1;min-height:0;background:#000;overflow:hidden;display:flex;align-items:center;justify-content:center;--cor:var(--laranja)}
+.visor[data-e="ok"]{--cor:var(--ok)}.visor[data-e="alerta"]{--cor:var(--alerta)}
+.visor video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+.oval{position:relative;height:72%;aspect-ratio:1/1.26;max-width:80%;border-radius:50%;border:5px solid var(--cor);box-shadow:0 0 0 3000px rgba(11,9,8,.5);transition:border-color .25s}
+.topo{position:absolute;top:max(12px,env(safe-area-inset-top));left:14px;right:14px;display:flex;align-items:center;gap:8px;z-index:2}
+.tag{background:rgba(11,9,8,.8);border:1px solid var(--linha-forte);border-radius:99px;padding:6px 12px;font-size:13px;font-weight:800;display:flex;align-items:center;gap:7px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tag i{flex:none;width:8px;height:8px;border-radius:50%;background:var(--ok)}.tag.off i{background:var(--alerta)}
+.topo .esp{flex:1}
+.ib{background:rgba(11,9,8,.8);border:1px solid var(--linha-forte);border-radius:99px;min-height:40px;padding:0 13px;font-size:13px;font-weight:800;text-decoration:none;color:inherit;display:flex;align-items:center;white-space:nowrap}
+.selo{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);background:var(--preto);border:1px solid var(--cor);color:var(--cor);border-radius:99px;padding:7px 16px;font-weight:800;font-size:14.5px;white-space:nowrap;z-index:2}
+.diag{position:absolute;left:14px;bottom:56px;background:rgba(0,0,0,.8);font:700 12px/1.4 ui-monospace,monospace;padding:6px 8px;border-radius:8px;z-index:2}
+.lado{flex:none;height:42%;min-height:300px;background:var(--grafite-2);padding:18px 24px max(18px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:12px;overflow:auto}
+.lv{display:flex;align-items:center;gap:12px}.lv-p{flex:none;width:112px}
+.balao{position:relative;background:#fff;color:#1B1412;font-weight:800;font-size:15.5px;line-height:1.35;border-radius:16px;padding:10px 14px;min-height:48px;display:flex;align-items:center;flex:1;min-width:0}
+.balao::before{content:'';position:absolute;left:-7px;top:50%;margin-top:-7px;border:7px solid transparent;border-left:0;border-right-color:#fff}
+.live-mascote{position:relative;width:100%;aspect-ratio:220/230}.live-corpo{position:absolute;inset:0;transform-origin:50% 46%;will-change:transform}.live-corpo svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 10px 18px rgba(255,90,0,.25))}.live-rosto{position:absolute;border-radius:14% / 18%}.live-sombra{position:absolute;left:22%;right:22%;bottom:-6%;height:9%;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.7),transparent)}
+.res{display:flex;flex-direction:column;gap:6px;flex:1;min-height:0}
+.est{display:flex;align-items:center;gap:10px;font:800 34px/1.05 var(--titulo)}.est.ok{color:var(--ok)}.est.aten{color:var(--alerta)}
+.nome{font:800 28px/1.1 var(--titulo)}
+.catraca{margin-top:auto;display:flex;align-items:center;gap:9px;font-size:14px;font-weight:800;border:1px solid var(--linha);border-radius:14px;padding:11px 13px}
+.catraca i{width:11px;height:11px;border-radius:50%;background:var(--alerta);flex:none}.catraca.aberta i{background:var(--ok);box-shadow:0 0 12px var(--ok)}
+.acoes{display:flex;gap:8px;flex-wrap:wrap}.acoes .bt{flex:1;min-height:46px;font-size:14.5px;padding:0 14px;white-space:nowrap}
+.painel{position:absolute;inset:0;background:var(--grafite);z-index:5;display:flex;flex-direction:column;gap:12px;padding:max(18px,env(safe-area-inset-top)) 20px 20px;overflow:auto}
+.painel input,.painel select{min-height:54px;border-radius:14px;border:1.5px solid var(--linha-forte);background:var(--grafite-2);color:var(--texto);font:700 17px var(--corpo);padding:0 14px;width:100%}
+.pes{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--linha)}.pes div{flex:1;min-width:0}.pes b{font-weight:800}.pes small{display:block;color:var(--suave)}
+.pes .bt{min-height:42px;font-size:14px;padding:0 14px;flex:none}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<main class="app" id="app"></main>
+<script src="site/js/live-mascote.js"></script>
+<script>
+(function(){
+  'use strict';
+  var API='https://giro-os-api.nucleofull.workers.dev', VER='3.3.6', BASE='https://cdn.jsdelivr.net/npm/@vladmandic/human@'+VER+'/';
+  var Q=new URLSearchParams(location.search), LOCAL=/^(localhost|127\.)/.test(location.hostname);
+  var TK=''; try{ TK=localStorage.getItem('dd_jwt')||''; }catch(e){}
+  /* Calibragem: a semelhança vai de 0 a 1. ?diag=1 mostra os números na tela para ajustar no local do evento */
+  var LIM={sim:.6,margem:.05,quadros:2,minBox:.12,yaw:.6,vivo:.4,msSemMatch:3000,msPassando:25000,msRes:3500,msErro:4500};
+  var DIAG=Q.get('diag')==='1', SEM_VIVO=LOCAL&&Q.get('semvivo')==='1';
+  var EV=null, PES=[], POR={}, ENT={}, FILA=[], H=null, stream=null, rodando=false, pausa=0, cand=null, candN=0, falhas=0, live=null, wake=null, timers=[];
+  var $=function(i){ return document.getElementById(i); };
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function hdr(){ return {'Content-Type':'application/json','Authorization':'Bearer '+TK}; }
+  function api(c,b){ return fetch(API+c,b?{method:'POST',headers:hdr(),body:JSON.stringify(b)}:{headers:hdr(),cache:'no-store'}).then(function(r){ if(r.status===401){ sessaoAcabou(); throw new Error('sessao'); } return r.json(); }); }
+  function sessaoAcabou(){ if(!PES.length) location.href='hub.html'; }
+  function hoje(){ return new Date(Date.now()-3*3600000).toISOString().slice(0,10); }
+  function hora(t){ var d=new Date(t); return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); }
+  function dataBr(i){ i=String(i||''); return i.slice(8,10)+'/'+i.slice(5,7)+'/'+i.slice(0,4); }
+
+  /* ---------- lista guardada no aparelho, criptografada com chave que não sai dele ---------- */
+  function idb(){ return new Promise(function(ok,no){ var r=indexedDB.open('liveface',1); r.onupgradeneeded=function(){ r.result.createObjectStore('k'); }; r.onsuccess=function(){ ok(r.result); }; r.onerror=function(){ no(r.error); }; }); }
+  function iGet(k){ return idb().then(function(d){ return new Promise(function(ok,no){ var q=d.transaction('k').objectStore('k').get(k); q.onsuccess=function(){ ok(q.result); }; q.onerror=function(){ no(q.error); }; }); }); }
+  function iSet(k,v){ return idb().then(function(d){ return new Promise(function(ok,no){ var t=d.transaction('k','readwrite'); t.objectStore('k').put(v,k); t.oncomplete=function(){ ok(); }; t.onerror=function(){ no(t.error); }; }); }); }
+  function iDel(k){ return idb().then(function(d){ return new Promise(function(ok){ var t=d.transaction('k','readwrite'); t.objectStore('k').delete(k); t.oncomplete=function(){ ok(); }; t.onerror=function(){ ok(); }; }); }); }
+  function chave(){ return iGet('chave').then(function(c){ if(c) return c; return crypto.subtle.generateKey({name:'AES-GCM',length:256},false,['encrypt','decrypt']).then(function(n){ return iSet('chave',n).then(function(){ return n; }); }); }); }
+  function guarda(){ return chave().then(function(c){ var iv=crypto.getRandomValues(new Uint8Array(12)); var o=JSON.stringify({ev:EV,pes:PES.map(function(p){ return {id:p.id,nome:p.nome,tipo:p.tipo,dim:p.dim,b:p.b}; })}); return crypto.subtle.encrypt({name:'AES-GCM',iv:iv},c,new TextEncoder().encode(o)).then(function(buf){ return iSet('lista',{iv:iv,buf:buf,fim:EV.fim,id:EV.id}); }); }); }
+  function apagaLista(){ return iDel('lista').then(function(){ try{ localStorage.removeItem('lf_fila'); }catch(e){} }); }
+  function carregaGuardada(){ return iGet('lista').then(function(l){ if(!l) return null; if(l.fim<new Date(Date.now()-3*3600000-86400000).toISOString().slice(0,10)){ return apagaLista().then(function(){ return null; }); } return chave().then(function(c){ return crypto.subtle.decrypt({name:'AES-GCM',iv:l.iv},c,l.buf); }).then(function(b){ return JSON.parse(new TextDecoder().decode(b)); }); }).catch(function(){ return null; }); }
+  function deB64(b,dim){ var s=atob(b), n=s.length/2, a=new Int16Array(n), i; for(i=0;i<n;i++){ var v=s.charCodeAt(i*2)|(s.charCodeAt(i*2+1)<<8); a[i]=v>32767?v-65536:v; } var out=[]; for(i=0;i+dim<=n;i+=dim){ var f=new Array(dim),j; for(j=0;j<dim;j++) f[j]=a[i+j]/10000; out.push(f); } return out; }
+  function preparaPessoas(l){ PES=l; POR={}; PES.forEach(function(p){ POR[p.id]=p; p.vet=p.b?deB64(p.b,p.dim):[]; }); }
+
+  /* ---------- 1. escolher o evento e baixar ---------- */
+  function telaEventos(){
+    $('app').innerHTML='<div class="cen"><div class="marca">live<b>face</b></div><h1 style="font-size:32px">Tablet da entrada</h1><p class="mut">Escolha o evento. A lista fica guardada neste aparelho e funciona mesmo se a internet cair.</p><div id="evs" class="mut">Carregando...</div><a class="bt bt-sec" href="hub.html">Voltar ao Hub</a></div>';
+    if(!TK){ location.href='hub.html'; return; }
+    api('/painel/lf-eventos').then(function(d){
+      if(!d||!d.ok){ $('evs').textContent=(d&&d.mensagem)||'Não consegui carregar os eventos.'; return; }
+      var l=(d.eventos||[]).filter(function(e){ return e.fim>=hoje(); });
+      $('evs').innerHTML=l.length?l.map(function(e){ return '<button class="ev" style="margin-bottom:8px" data-id="'+esc(e.id)+'"><div><b>'+esc(e.nome)+'</b><small>até '+dataBr(e.fim)+' · '+e.rostos+' rosto'+(e.rostos==1?'':'s')+' de '+e.ingressos+' ingresso'+(e.ingressos==1?'':'s')+'</small></div><span aria-hidden="true">→</span></button>'; }).join(''):'Nenhum evento em andamento. Crie em Painel > Configurações > LiveFace.';
+      Array.prototype.forEach.call($('evs').querySelectorAll('[data-id]'),function(b){ b.onclick=function(){ baixa(l.filter(function(e){ return e.id===b.dataset.id; })[0]); }; });
+    }).catch(function(e){ if(e.message!=='sessao') $('evs').textContent='Sem conexão. Verifique a internet.'; });
+  }
+  function baixa(ev){
+    EV={id:ev.id,nome:ev.nome,fim:ev.fim};
+    $('app').innerHTML='<div class="cen"><div class="marca">live<b>face</b></div><h1 style="font-size:30px">'+esc(ev.nome)+'</h1><p class="mut" id="st">Baixando a lista do evento...</p><div class="barra"><i id="bar"></i></div></div>';
+    var acc=[], pag=function(apos){ return api('/painel/lf-lista?ev='+encodeURIComponent(ev.id)+'&apos='+encodeURIComponent(apos||'')).then(function(d){ if(!d||!d.ok) throw new Error((d&&d.mensagem)||'Não consegui baixar a lista.'); acc=acc.concat(d.pessoas||[]); if($('bar')) $('bar').style.width=Math.min(90,Math.round(acc.length/Math.max(1,d.total)*90))+'%'; return d.prox?pag(d.prox):null; }); };
+    pag('').then(function(){ preparaPessoas(acc); return guarda(); }).then(function(){ return comeca(); }).catch(function(e){ if(e.message==='sessao') return; if($('st')) $('st').textContent=e.message||'Não consegui baixar.'; });
+  }
+  /* ---------- leitor ---------- */
+  function carregaLeitor(){
+    if(H) return Promise.resolve(H);
+    return new Promise(function(ok,no){ var s=document.createElement('script'); s.src=BASE+'dist/human.js'; s.onload=ok; s.onerror=function(){ no(new Error('Não consegui carregar o leitor de rosto.')); }; document.head.appendChild(s); }).then(function(){
+      var C=window.Human&&(Human.Human||Human.default||Human);
+      H=new C({modelBasePath:BASE+'models/',backend:'webgl',debug:false,async:true,cacheSensitivity:0,filter:{enabled:false},gesture:{enabled:false},body:{enabled:false},hand:{enabled:false},object:{enabled:false},segmentation:{enabled:false},face:{enabled:true,detector:{maxDetected:2,rotation:false,return:false},mesh:{enabled:true},iris:{enabled:false},description:{enabled:true},emotion:{enabled:false},antispoof:{enabled:!SEM_VIVO},liveness:{enabled:!SEM_VIVO}}});
+      return H.load().then(function(){ return H.warmup?H.warmup():null; }).then(function(){ return H; });
+    });
+  }
+  /* compara com a lista: melhor pessoa e a distância para a segunda, para não confundir parecidos */
+  function procura(v){
+    var m1=0,m2=0,q=null,i,j;
+    for(i=0;i<PES.length;i++){ var p=PES[i],b=0; for(j=0;j<p.vet.length;j++){ var s=H.match.similarity(v,p.vet[j]); if(s>b) b=s; } if(b>m1){ m2=m1; m1=b; q=p; } else if(b>m2) m2=b; }
+    return {p:q,sim:m1,seg:m2,ok:!!q&&m1>=LIM.sim&&(m1-m2)>=LIM.margem};
+  }
+  /* ---------- 2. tela de reconhecimento ---------- */
+  function montaTela(){
+    $('app').innerHTML='<div class="visor" id="vis" data-e="busca"><video id="vid" playsinline autoplay muted></video><div class="oval"></div>'+
+      '<div class="topo"><span class="tag" id="rede"><i></i><span id="redet">Online</span></span><span class="tag">'+esc(EV.nome)+'</span><span class="esp"></span><button class="ib" id="bmenu">Menu</button></div>'+
+      '<span class="selo" id="selo">Olhe para a câmera</span>'+(DIAG?'<div class="diag" id="diag"></div>':'')+'</div>'+
+      '<div class="lado"><div class="lv"><div class="lv-p" id="lv"></div><p class="balao" id="balao" aria-live="polite"></p></div><div class="res" id="res"></div></div><div id="over"></div>';
+    try{ if(window.LiveMascote) live=LiveMascote.criar($('lv'),{rotulo:'Live'}); }catch(e){}
+    $('bmenu').onclick=menu;
+  }
+  function diz(t,o){ o=o||{}; var b=$('balao'); if(b) b.textContent=t; if(!live) return; try{ if(o.expr) live.expressao(o.expr); if(o.gesto) live.gesto(o.gesto); }catch(e){} }
+  function setVis(e,s){ var v=$('vis'); if(v) v.dataset.e=e; var x=$('selo'); if(x) x.textContent=s; }
+  function catraca(a,t){ return '<div class="catraca '+(a?'aberta':'')+'"><i></i>'+esc(t)+'</div>'; }
+  function aguardando(){
+    setVis('busca','Olhe para a câmera'); pausa=0; cand=null; candN=0; falhas=0;
+    $('res').innerHTML='<h2 style="font-size:30px">Pare em frente à câmera</h2><p class="mut">A catraca abre sozinha quando eu reconhecer você.</p><div class="acoes" style="margin-top:6px"><button class="bt bt-sec" id="beq">Equipe: buscar por nome</button></div>'+catraca(false,'Catraca de entrada aguardando');
+    $('beq').onclick=busca; diz('Oi! Olha aqui para mim.',{expr:'feliz'});
+  }
+  /* (173) catraca: quando o relé for escolhido, a abertura real entra aqui. Sem relé, a equipe libera vendo a tela */
+  function abreCatraca(){ try{ if(window.LiveFaceCatraca&&LiveFaceCatraca.abrir) LiveFaceCatraca.abrir(); }catch(e){} }
+  function registra(p,met,sim){ var t=Date.now(); ENT[p.id]={t:t,metodo:met}; FILA.push({id:p.id,t:t,metodo:met,sim:sim?Math.round(sim*100)/100:0}); salvaFila(); sincroniza(); }
+  function libera(p,met,sim){
+    pausa=Date.now()+LIM.msRes; registra(p,met,sim); abreCatraca();
+    setVis('ok','Liberado');
+    $('res').innerHTML='<div class="est ok">✓ Liberado</div><div class="nome">Boas-vindas, '+esc(String(p.nome).split(' ')[0])+'!</div><p class="mut">'+esc(p.tipo||'Ingresso')+' · '+(met==='rosto'?'pelo rosto':(met==='qr'?'pelo QR code':'liberado pela equipe'))+'</p>'+catraca(true,'Catraca de entrada liberada');
+    diz('Boa festa, '+String(p.nome).split(' ')[0]+'!',{gesto:'boas_vindas'});
+    agenda(LIM.msRes,aguardando);
+  }
+  function jaEntrou(p){
+    pausa=Date.now()+LIM.msErro; setVis('alerta','Já entrou');
+    $('res').innerHTML='<div class="est aten">! Este ingresso já entrou</div><div class="nome">'+esc(String(p.nome).split(' ')[0])+'</div><p class="mut">Entrada registrada às '+hora(ENT[p.id].t)+'. Se precisar, a equipe libera.</p><div class="acoes"><button class="bt bt-sec" id="bfor">Equipe: liberar mesmo assim</button></div>'+catraca(false,'Catraca de entrada fechada');
+    $('bfor').onclick=function(){ libera(p,'equipe'); };
+    diz('Esse ingresso já passou por aqui. Chame a equipe.',{gesto:'confuso'});
+    agenda(LIM.msErro,aguardando);
+  }
+  function naoReconheceu(m){
+    pausa=Date.now()+LIM.msErro; setVis('alerta','Não reconhecido');
+    $('res').innerHTML='<div class="est aten">! '+esc(m||'Não reconheci')+'</div><p class="mut">Tire o boné ou os óculos e olhe de novo. Ou mostre o QR code do ingresso aqui na câmera.</p><div class="acoes"><button class="bt bt-sec" id="beq">Equipe: buscar por nome</button></div>'+catraca(false,'Catraca de entrada fechada');
+    $('beq').onclick=busca; diz('Ops, não consegui ver direito. Vamos de novo?',{gesto:'confuso'});
+    agenda(LIM.msErro,aguardando);
+  }
+  function agenda(ms,f){ timers.forEach(clearTimeout); timers=[setTimeout(f,ms)]; }
+  function trata(p,met,sim){ var e=ENT[p.id]; if(e&&Date.now()-e.t<LIM.msPassando){ cand=null; candN=0; return; } if(e) jaEntrou(p); else libera(p,met,sim); }
+  function analisaFaces(faces){
+    if(Date.now()<pausa||$('over').innerHTML) return;
+    if(!faces||!faces.length){ cand=null; candN=0; falhas=0; return; }
+    if(faces.length>1){ setVis('busca','Uma pessoa por vez'); return; }
+    var f=faces[0], rot=f.rotation&&f.rotation.angle;
+    if(!f.embedding||!f.embedding.length||(f.boxRaw&&f.boxRaw[2]<LIM.minBox)){ setVis('busca','Chegue mais perto'); return; }
+    if(rot&&Math.abs(rot.yaw)>LIM.yaw){ setVis('busca','Olhe para a câmera'); return; }
+    var r=procura(f.embedding), viv=SEM_VIVO||((f.real==null||f.real>=LIM.vivo)&&(f.live==null||f.live>=LIM.vivo));
+    if(DIAG&&$('diag')) $('diag').textContent='sim '+r.sim.toFixed(2)+' seg '+r.seg.toFixed(2)+' real '+(f.real==null?'-':f.real.toFixed(2))+' vivo '+(f.live==null?'-':f.live.toFixed(2))+' '+(r.p?r.p.nome:'');
+    if(r.ok&&viv){ setVis('busca','Reconhecendo...'); if(cand===r.p.id) candN++; else { cand=r.p.id; candN=1; } if(candN>=LIM.quadros){ trata(r.p,'rosto',r.sim); } return; }
+    cand=null; candN=0; if(!falhas) falhas=Date.now();
+    if(Date.now()-falhas>=LIM.msSemMatch) naoReconheceu();
+  }
+  function lerQr(){
+    var v=$('vid'); if(!v||v.readyState<2||Date.now()<pausa||$('over').innerHTML) return Promise.resolve();
+    var trata2=function(t){ var m=/^LF1:([a-z0-9]+)$/.exec(String(t||'')); if(!m) return; var p=POR[m[1]]; if(!p){ naoReconheceu('QR de outro evento'); return; } trata(p,'qr'); };
+    if(window.BarcodeDetector){ if(!lerQr.d){ try{ lerQr.d=new BarcodeDetector({formats:['qr_code']}); }catch(e){ lerQr.d=null; } } if(lerQr.d) return lerQr.d.detect(v).then(function(c){ if(c&&c[0]) trata2(c[0].rawValue); }).catch(function(){}); }
+    if(window.jsQR){ var c=lerQr.c||(lerQr.c=document.createElement('canvas')); c.width=480; c.height=Math.round(480*v.videoHeight/Math.max(1,v.videoWidth)); var x=c.getContext('2d',{willReadFrequently:true}); x.drawImage(v,0,0,c.width,c.height); var q=jsQR(x.getImageData(0,0,c.width,c.height).data,c.width,c.height); if(q) trata2(q.data); }
+    return Promise.resolve();
+  }
+  function camera(){
+    var pede=function(){ var id=null; try{ id=localStorage.getItem('lf_cam'); }catch(e){} return navigator.mediaDevices.getUserMedia({video:id?{deviceId:{exact:id},width:{ideal:1280},height:{ideal:1280}}:{facingMode:'user',width:{ideal:1280},height:{ideal:1280}},audio:false}).catch(function(e){ if(id&&e.name==='OverconstrainedError'){ try{ localStorage.removeItem('lf_cam'); }catch(x){} return navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false}); } throw e; }); };
+    return pede().then(function(st){ if(stream) stream.getTracks().forEach(function(t){ t.stop(); }); stream=st; var v=$('vid'); v.srcObject=st; try{ var pl=v.play(); if(pl&&pl.catch) pl.catch(function(){}); }catch(e){} });
+  }
+  function laco(){
+    if(!rodando) return;
+    var v=$('vid'); if(!v||v.readyState<2){ setTimeout(laco,200); return; }
+    if(Date.now()<pausa||$('over').innerHTML){ setTimeout(laco,250); return; }
+    H.detect(v).then(function(r){ if(rodando) analisaFaces(r.face); setTimeout(laco,100); }).catch(function(){ setTimeout(laco,500); });
+  }
+  function comeca(){
+    montaTela(); diz('Estou me preparando...',{expr:'pensativo'}); $('res').innerHTML='<p class="mut" id="st">Abrindo a câmera e o leitor de rosto.</p>';
+    leFila(); sincroniza();
+    if(!window.BarcodeDetector&&!window.jsQR){ var s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js'; document.head.appendChild(s); }
+    return camera().then(carregaLeitor).then(function(){ rodando=true; aguardando(); laco(); setInterval(lerQr,500); if(navigator.wakeLock) navigator.wakeLock.request('screen').then(function(w){ wake=w; }).catch(function(){}); }).catch(function(e){ var neg=e&&(e.name==='NotAllowedError'); $('res').innerHTML='<div class="est aten">! '+(neg?'Câmera bloqueada':'Não abriu')+'</div><p class="mut">'+esc(neg?'Libere a câmera nas configurações do navegador.':(e.message||'Verifique a câmera e a internet.'))+'</p><div class="acoes"><button class="bt bt-pri" id="de">Tentar de novo</button><button class="bt bt-sec" id="beq">Equipe: buscar por nome</button></div>'; $('de').onclick=comeca; $('beq').onclick=busca; diz('Preciso da câmera para reconhecer as pessoas.',{gesto:'confuso'}); });
+  }
+  /* ---------- plano B: equipe busca por nome ---------- */
+  function fechaOver(){ $('over').innerHTML=''; }
+  function busca(){
+    $('over').innerHTML='<div class="painel"><h1 style="font-size:28px">Buscar ingresso</h1><input id="bq" placeholder="Nome da pessoa" autocomplete="off"><div id="bl"></div><button class="bt bt-sec" id="bx" style="margin-top:auto">Fechar</button></div>';
+    $('bx').onclick=fechaOver;
+    var pinta=function(){ var q=$('bq').value.trim().toLowerCase(), l=q?PES.filter(function(p){ return String(p.nome).toLowerCase().indexOf(q)>=0; }).slice(0,30):[]; $('bl').innerHTML=l.length?l.map(function(p){ var e=ENT[p.id]; return '<div class="pes"><div><b>'+esc(p.nome)+'</b><small>'+(e?'Entrou às '+hora(e.t):esc(p.tipo||'Ingresso'))+'</small></div><button class="bt '+(e?'bt-sec':'bt-pri')+'" data-id="'+esc(p.id)+'">Liberar</button></div>'; }).join(''):(q?'<p class="mut">Ninguém com esse nome neste evento.</p>':'<p class="mut">Digite o nome e confira o documento antes de liberar.</p>'); Array.prototype.forEach.call($('bl').querySelectorAll('[data-id]'),function(b){ b.onclick=function(){ var p=POR[b.dataset.id]; fechaOver(); libera(p,'equipe'); }; }); };
+    $('bq').oninput=pinta; pinta(); $('bq').focus();
+  }
+  function menu(){
+    $('over').innerHTML='<div class="painel"><h1 style="font-size:28px">Menu</h1><p class="mut">'+esc(EV.nome)+' · '+PES.filter(function(p){ return p.vet.length; }).length+' rostos e '+PES.length+' ingressos neste aparelho</p><label class="mut" style="font-weight:800">Câmera<select id="mcam"></select></label><div id="mq" class="mut"></div><button class="bt bt-sec" id="matu">Atualizar a lista</button><a class="bt bt-sec" href="hub.html">Voltar ao Hub</a><button class="bt bt-sec" id="mapa">Apagar a lista deste aparelho</button><button class="bt bt-pri" id="mx" style="margin-top:auto">Voltar para a entrada</button></div>';
+    $('mq').textContent=FILA.length?FILA.length+' entrada(s) aguardando internet.':'';
+    $('mx').onclick=fechaOver;
+    $('matu').onclick=function(){ paraTudo(); baixa(EV); };
+    $('mapa').onclick=function(){ if(FILA.length&&!window.confirm('Há entradas ainda não enviadas. Apagar mesmo assim?')) return; paraTudo(); apagaLista().then(function(){ PES=[]; POR={}; ENT={}; FILA=[]; EV=null; telaEventos(); }); };
+    if(navigator.mediaDevices&&navigator.mediaDevices.enumerateDevices) navigator.mediaDevices.enumerateDevices().then(function(l){ var s=$('mcam'); if(!s) return; var cs=l.filter(function(d){ return d.kind==='videoinput'; }), at=null; try{ at=stream&&stream.getVideoTracks()[0].getSettings().deviceId; }catch(e){} s.innerHTML=cs.map(function(c,i){ return '<option value="'+esc(c.deviceId)+'"'+(c.deviceId===at?' selected':'')+'>'+esc(c.label||('Câmera '+(i+1)))+'</option>'; }).join(''); s.onchange=function(){ try{ localStorage.setItem('lf_cam',s.value); }catch(e){} camera(); }; });
+  }
+  function paraTudo(){ rodando=false; if(stream){ stream.getTracks().forEach(function(t){ t.stop(); }); stream=null; } }
+  /* ---------- entradas: anota aqui e envia quando houver internet. Dois tablets não deixam o mesmo ingresso entrar duas vezes ---------- */
+  function salvaFila(){ try{ localStorage.setItem('lf_fila',JSON.stringify(FILA)); }catch(e){} }
+  function leFila(){ try{ FILA=JSON.parse(localStorage.getItem('lf_fila')||'[]')||[]; }catch(e){ FILA=[]; } FILA.forEach(function(x){ if(!ENT[x.id]) ENT[x.id]={t:x.t,metodo:x.metodo}; }); }
+  function rede(on){ var r=$('rede'); if(!r) return; r.classList.toggle('off',!on); $('redet').textContent=on?'Online':'Sem internet'+(FILA.length?' · '+FILA.length+' na fila':''); }
+  var sincronizando=false;
+  function sincroniza(){
+    if(!EV||sincronizando) return; sincronizando=true;
+    var lote=FILA.slice(0,50);
+    (lote.length?api('/painel/lf-entrada',{ev:EV.id,itens:lote}).then(function(d){ if(d&&d.ok){ FILA=FILA.slice(lote.length); salvaFila(); } }):Promise.resolve()).then(function(){ return api('/painel/lf-entradas?ev='+encodeURIComponent(EV.id)); }).then(function(d){ if(d&&d.ok) (d.entradas||[]).forEach(function(x){ ENT[x.id]={t:x.t,metodo:x.metodo}; }); rede(true); }).catch(function(){ rede(false); }).then(function(){ sincronizando=false; });
+  }
+  setInterval(sincroniza,10000);
+  addEventListener('online',sincroniza); addEventListener('offline',function(){ rede(false); });
+  document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible'&&rodando&&navigator.wakeLock) navigator.wakeLock.request('screen').then(function(w){ wake=w; }).catch(function(){}); });
+  if(LOCAL) window.__lf={carregaLeitor:carregaLeitor,usaLista:function(ev,l){ EV=ev; preparaPessoas(l); },comeca:comeca,procura:procura,estado:function(){ return {ENT:ENT,FILA:FILA,falhas:falhas}; },LIM:LIM};
+
+  if(LOCAL&&Q.get('teste')==='1') return;
+  carregaGuardada().then(function(g){ if(g&&g.ev&&g.ev.fim>=hoje()){ EV=g.ev; preparaPessoas(g.pes); comeca(); } else telaEventos(); });
+})();
+</script>
+</body>
+</html>
