@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<link rel="icon" type="image/svg+xml" href="/site/img/favicon.svg">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0E0A12">
+<title>LiveFest · ingressos</title>
+<meta name="description" content="Agenda de festas e shows. Compre o ingresso pelo celular.">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<!-- (181) LiveFest: app único de ingressos dos clientes LiveFood. Abertura com os eventos, Agenda, evento com salões e setores,
+     entrada só com o WhatsApp, compra no Pix (split no servidor) e Meus ingressos com QR e a facial do LiveFace -->
+<style>
+:root{--lf:#FF5A00;--lf2:#FF8A33;--mg:#E0249A;--noite:#0E0A12;--n2:#1A1420;--n3:#271F2E;--mu:#BDB2C6;--f:'Manrope',-apple-system,system-ui,sans-serif;--t:'Baloo 2',var(--f);color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{font-family:var(--f);background:var(--noite);color:#fff;-webkit-font-smoothing:antialiased}
+[hidden]{display:none!important}
+button{font:inherit;color:inherit;cursor:pointer}
+.app{max-width:560px;margin:0 auto;min-height:100vh;position:relative}
+.marca{font:800 1em/1 var(--t);letter-spacing:-.03em}.marca i{font-style:normal;background:linear-gradient(90deg,var(--lf),var(--mg));-webkit-background-clip:text;background-clip:text;color:transparent}
+.bt{border:0;border-radius:16px;padding:14px 18px;font-weight:800;font-size:15px;background:linear-gradient(90deg,var(--lf),var(--mg));color:#fff}
+.bt.cl{background:rgba(255,255,255,.12)}.bt.w{width:100%}.bt:disabled{opacity:.6}
+.bar{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px;padding:max(14px,env(safe-area-inset-top)) 16px 10px;background:var(--noite)}
+.bar b{flex:1;font-size:16px;font-weight:800}
+.ib{width:36px;height:36px;border-radius:50%;border:0;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-weight:800}
+/* abertura */
+.ab{position:fixed;inset:0;max-width:560px;margin:0 auto;overflow:hidden;background:linear-gradient(200deg,#5B1150,#120A1C 55%,#2B0F3F)}
+.ab .img{position:absolute;inset:0;background:center/cover no-repeat;transition:opacity .8s}
+.ab::after{content:'';position:absolute;inset:0;background:linear-gradient(transparent 35%,rgba(0,0,0,.88))}
+.segs{position:absolute;top:max(12px,env(safe-area-inset-top));left:12px;right:12px;display:flex;gap:4px;z-index:2}
+.segs i{flex:1;height:3px;border-radius:9px;background:rgba(255,255,255,.3);overflow:hidden}.segs i b{display:block;height:100%;width:0;background:#fff}
+.segs i.ja b{width:100%}.segs i.on b{animation:enche 5s linear forwards}
+@keyframes enche{to{width:100%}}
+.abt{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:18px 18px max(22px,env(safe-area-inset-bottom))}
+.abt .marca{font-size:38px}
+.abt h1{margin:10px 0 4px;font-size:24px;letter-spacing:-.01em;text-wrap:balance}
+.abt small{font-size:13.5px;opacity:.85;font-weight:600}
+.abt .bts{display:grid;grid-template-columns:1.4fr 1fr;gap:10px;margin-top:16px}
+.lvA{position:absolute;right:14px;bottom:170px;width:86px;z-index:2}
+/* agenda */
+.busca{margin:0 14px 8px;display:flex}.busca input{flex:1;font:inherit;font-size:14px;font-weight:600;color:#fff;background:var(--n3);border:0;border-radius:12px;padding:11px 12px;outline:none}
+.chips{display:flex;gap:6px;padding:0 14px 8px;overflow:auto;scrollbar-width:none}.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;font-size:12.5px;font-weight:800;padding:7px 12px;border-radius:99px;background:var(--n3);color:#DCD3E3;border:0}
+.chip.on{background:#fff;color:#1C1C1E}
+.dia{padding:8px 16px 2px;font-size:11.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--lf2)}
+.ev{display:flex;gap:12px;margin:8px 14px;padding:8px;border-radius:18px;background:var(--n2);border:0;width:calc(100% - 28px);text-align:left}
+.ev .th{flex:none;width:88px;height:108px;border-radius:13px;background:linear-gradient(135deg,#2B0F3F,#B5179E 60%,#FF5A00) center/cover no-repeat}
+.ev div{min-width:0;padding-top:2px}.ev b{display:block;font-size:15px;line-height:1.25}
+.ev small{display:block;font-size:12.3px;color:var(--mu);font-weight:600;margin-top:3px}
+.ev .pr{margin-top:7px;font-size:13px;font-weight:800;color:var(--lf2)}
+.vazio{padding:40px 24px;text-align:center;color:var(--mu);font-weight:700}
+/* evento */
+.hero{height:220px;background:linear-gradient(135deg,#2B0F3F,#B5179E 60%,#FF5A00) center/cover no-repeat;position:relative}
+.hero .ib{position:absolute;top:max(14px,env(safe-area-inset-top));left:14px;background:rgba(0,0,0,.45)}
+.info{padding:14px 16px 6px}.info h1{margin:0;font-size:23px;letter-spacing:-.01em;text-wrap:balance}
+.ln{display:flex;gap:8px;margin-top:7px;font-size:13px;font-weight:700;color:#CFC5D6}
+.desc{margin:10px 16px 4px;font-size:13.5px;line-height:1.5;color:#DCD3E3;font-weight:600;white-space:pre-line}
+.tabs{display:flex;gap:16px;padding:6px 16px 0;border-bottom:1px solid rgba(255,255,255,.1);overflow:auto;scrollbar-width:none}
+.tabs button{flex:none;font-size:14px;font-weight:800;border:0;background:none;padding:10px 0;border-bottom:3px solid transparent;color:#9C91A6}
+.tabs button.on{color:#fff;border-color:var(--lf)}
+.set{margin:10px 14px;border-radius:18px;padding:13px;background:var(--n2)}
+.set .h{display:flex;justify-content:space-between;gap:10px}
+.set b{font-size:15px}.set small{display:block;color:var(--mu);font-weight:600;font-size:12.3px;margin-top:3px;line-height:1.4}
+.set .vl{text-align:right;font-weight:800;font-size:15px;white-space:nowrap}.set .vl s{display:block;font-size:11.5px;color:#9C91A6}.set .vl em{display:block;font-style:normal;font-size:11px;color:var(--mu);font-weight:700}
+.lote{display:inline-block;margin-top:8px;font-size:11px;font-weight:800;padding:3px 9px;border-radius:99px;background:rgba(255,90,0,.18);color:var(--lf2)}
+.lote.esg{background:rgba(198,40,40,.2);color:#FF8A80}
+.qt{display:flex;align-items:center;gap:12px;margin-top:8px;justify-content:flex-end}
+.qt button{width:34px;height:34px;border-radius:50%;border:1.5px solid rgba(255,255,255,.22);background:transparent;font-weight:800;font-size:18px}
+.qt b{min-width:18px;text-align:center}
+.rod{position:sticky;bottom:0;z-index:5;background:var(--noite);border-top:1px solid rgba(255,255,255,.08);padding:10px 16px max(14px,env(safe-area-inset-bottom));display:flex;align-items:center;gap:12px}
+.rod div{flex:1}.rod small{display:block;font-size:12px;opacity:.7;font-weight:700}.rod b{font-size:19px}
+/* telas claras: entrar, compra, Pix */
+.pg{min-height:100vh;background:#fff;color:#1C1C1E}
+.pg .bar{background:#fff}.pg .ib{background:#F1F1F3}
+.cx{margin:10px 16px;border:1px solid #E6E6EA;border-radius:18px;padding:14px}
+.cx h3{margin:0 0 8px;font-size:14px}
+.lin{display:flex;justify-content:space-between;font-size:13.5px;font-weight:700;padding:4px 0}.lin.t{border-top:1px solid #E6E6EA;margin-top:6px;padding-top:9px;font-size:16px;font-weight:800}
+.inp{width:100%;font:inherit;font-size:15px;font-weight:600;color:#1C1C1E;padding:12px;border:1.5px solid #E2E2E6;border-radius:12px;background:#F7F7F8;margin-top:6px;outline:none}
+.inp:focus{border-color:#1C1C1E;background:#fff}
+.nota{font-size:12.3px;color:#6B6B73;font-weight:600;line-height:1.45;margin-top:8px}
+.erro{color:#C62828;font-weight:800;font-size:13.5px;min-height:18px;margin:8px 16px 0}
+.lg{display:flex;flex-direction:column;align-items:center;text-align:center;padding:14px 22px 4px}
+.lg .lvL{width:120px}.lg h2{margin:6px 0 2px;font-size:22px}.lg p{margin:0;color:#6B6B73;font-weight:600;font-size:13.5px}
+.bal{background:#F1F1F3;border-radius:14px;padding:9px 13px;font-size:13.5px;font-weight:800;margin-top:6px}
+.qr{display:flex;justify-content:center;margin:8px 0}.qr img{width:220px;height:220px}
+.copia{display:flex;gap:8px;margin-top:8px}.copia input{flex:1;font:inherit;font-size:12px;padding:10px;border-radius:10px;border:1.5px solid #E2E2E6;background:#F7F7F8;min-width:0}
+/* ingressos */
+.ing{margin:12px 16px;border-radius:22px;background:linear-gradient(160deg,#2A1030,#120A1C);overflow:hidden;border:1px solid rgba(255,255,255,.08)}
+.ing .t1{padding:14px 16px}.ing .t1 small{font-size:11px;font-weight:800;letter-spacing:.1em;color:var(--lf2);text-transform:uppercase}.ing .t1 b{display:block;font-size:18px;margin-top:4px}.ing .t1 span{font-size:12.5px;font-weight:600;opacity:.8}
+.ing .q{background:#fff;margin:0 16px;border-radius:14px;padding:12px;display:flex;justify-content:center}
+.ing .t2{padding:12px 16px;display:flex;justify-content:space-between;font-size:12.5px;font-weight:700}
+.fac{margin:0 16px 14px;border-radius:16px;background:linear-gradient(90deg,rgba(255,90,0,.2),rgba(224,36,154,.2));padding:12px 12px 12px 14px;display:flex;gap:10px;align-items:center}
+.fac b{font-size:13.5px;flex:1;line-height:1.3}.fac .bt{padding:10px 13px;font-size:13px;text-decoration:none}
+.fac.ok{background:rgba(22,163,74,.18)}
+.live-mascote{position:relative;width:100%;aspect-ratio:220/230}.live-corpo{position:absolute;inset:0;transform-origin:50% 46%}.live-corpo svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}.live-rosto{position:absolute;border-radius:14% / 18%}.live-sombra{position:absolute;left:22%;right:22%;bottom:-6%;height:9%;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.35),transparent)}
+@media (prefers-reduced-motion:reduce){.segs i.on b{animation:none;width:100%}}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<script src="site/js/live-mascote.js"></script>
+<script>
+var API='https://giro-os-api.nucleofull.workers.dev', Q=new URLSearchParams(location.search);
+var S={ag:[],ev:null,sal:0,car:{},filtro:'',busca:'',tk:'',conta:null,ped:null,poll:null,ab:0,abT:null,volta:null};
+try{ S.tk=localStorage.getItem('fest_tk')||''; }catch(e){}
+function el(i){ return document.getElementById(i); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function brl(v){ return 'R$ '+Number(v||0).toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.'); }
+var MES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'], SEM=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+function diaTxt(i){ var d=new Date(i+'T12:00:00'); return SEM[d.getDay()]+' · '+i.slice(8,10)+' '+MES[+i.slice(5,7)-1]; }
+function curto(i){ var d=new Date(i+'T12:00:00'); return SEM[d.getDay()].slice(0,3)+' '+i.slice(8,10)+'/'+i.slice(5,7); }
+function api(c,b){ var h={}; if(S.tk) h.Authorization='Bearer '+S.tk; if(b) h['Content-Type']='application/json'; return fetch(API+c,b?{method:'POST',headers:h,body:JSON.stringify(b)}:{headers:h,cache:'no-store'}).then(function(r){ return r.json().catch(function(){ return {}; }).then(function(d){ d._st=r.status; if(r.status===401&&S.tk&&c.indexOf('/fest/conta/')!==0){ S.tk=''; try{ localStorage.removeItem('fest_tk'); }catch(e){} } return d; }); }).catch(function(){ return {ok:false,_st:0,mensagem:'Sem conexão. Tente de novo.'}; }); }
+function ban(e){ return e.banner?'background-image:url('+API+'/fest/banner/'+encodeURIComponent(e.id)+')':''; }
+function live(id,expr){ try{ if(window.LiveMascote&&el(id)){ var l=LiveMascote.criar(el(id),{rotulo:'Live'}); l.expressao(expr||'feliz'); return l; } }catch(e){} return null; }
+function tela(h){ clearTimeout(S.abT); el('app').innerHTML=h; scrollTo(0,0); }
+
+/* ---------- abertura: os eventos em destaque passam sozinhos, como as ofertas do cardápio ---------- */
+function abertura(){
+  var l=S.ag.slice(0,6);
+  tela('<div class="ab"><div class="img" id="abImg"></div><div class="segs">'+l.map(function(){ return '<i><b></b></i>'; }).join('')+'</div><div class="lvA" id="lvA"></div><div class="abt"><div class="marca">live<i>fest</i></div><h1 id="abN">'+(l.length?'':'Festas e shows perto de você')+'</h1><small id="abI">'+(l.length?'':'Em breve, os eventos da sua cidade.')+'</small><div class="bts"><button class="bt" onclick="agenda()">📅 Agenda</button><button class="bt cl" onclick="meus()">🎟️ Meus ingressos</button></div></div></div>');
+  live('lvA','animado'); if(l.length){ S.ab=0; passa(); el('abImg').onclick=function(){ evento(l[S.ab].id); }; }
+}
+function passa(){
+  var l=S.ag.slice(0,6), e=l[S.ab]; if(!e||!el('abImg')) return;
+  el('abImg').style.cssText=ban(e)+';cursor:pointer'; el('abN').textContent=e.nome; el('abI').textContent=curto(e.inicio)+(e.hora_ini?' · '+e.hora_ini:'')+' · '+e.casa+(e.cidade?' · '+e.cidade:'');
+  [].forEach.call(document.querySelectorAll('.segs i'),function(s,i){ s.className=i<S.ab?'ja':(i===S.ab?'on':''); });
+  S.abT=setTimeout(function(){ S.ab=(S.ab+1)%l.length; if(S.ab===0) [].forEach.call(document.querySelectorAll('.segs i'),function(s){ s.className=''; }); passa(); },5000);
+}
+/* ---------- agenda ---------- */
+function agenda(){
+  var cid={}; S.ag.forEach(function(e){ if(e.cidade) cid[e.cidade]=1; });
+  tela('<div class="bar"><span class="marca" style="font-size:26px">live<i>fest</i></span><b></b><button class="ib" onclick="meus()" aria-label="Meus ingressos">🎟️</button></div><div class="busca"><input id="bq" placeholder="🔍 Festa, casa ou cidade" value="'+esc(S.busca)+'"></div><div class="chips"><button class="chip'+(S.filtro?'':' on')+'" data-f="">Todos</button><button class="chip'+(S.filtro==='hoje'?' on':'')+'" data-f="hoje">Hoje</button><button class="chip'+(S.filtro==='fds'?' on':'')+'" data-f="fds">Fim de semana</button>'+Object.keys(cid).map(function(c){ return '<button class="chip'+(S.filtro==='c:'+c?' on':'')+'" data-f="c:'+esc(c)+'">'+esc(c)+'</button>'; }).join('')+'</div><div id="lista"></div>');
+  el('bq').oninput=function(){ S.busca=this.value; listaPinta(); };
+  [].forEach.call(document.querySelectorAll('.chip'),function(c){ c.onclick=function(){ S.filtro=c.dataset.f; agenda(); }; });
+  listaPinta();
+}
+function listaPinta(){
+  var hj=new Date(Date.now()-3*3600000).toISOString().slice(0,10), q=S.busca.trim().toLowerCase(), ult='', h='';
+  var l=S.ag.filter(function(e){ var d=new Date(e.inicio+'T12:00:00').getDay();
+    if(S.filtro==='hoje'&&!(e.inicio<=hj&&e.fim>=hj)) return false;
+    if(S.filtro==='fds'&&!(d===5||d===6||d===0)) return false;
+    if(S.filtro.indexOf('c:')===0&&e.cidade!==S.filtro.slice(2)) return false;
+    return !q||(e.nome+' '+e.casa+' '+e.cidade+' '+e.categoria).toLowerCase().indexOf(q)>=0; });
+  l.forEach(function(e){ if(e.inicio!==ult){ ult=e.inicio; h+='<div class="dia">'+diaTxt(e.inicio)+'</div>'; }
+    h+='<button class="ev" onclick="evento(\''+esc(e.id)+'\')"><div class="th" style="'+ban(e)+'"></div><div><b>'+esc(e.nome)+'</b><small>'+esc(e.casa)+(e.hora_ini?' · '+esc(e.hora_ini):'')+(e.cidade?' · '+esc(e.cidade):'')+'</small><small>'+(e.categoria?esc(e.categoria):'')+(e.idade?' · '+e.idade+'+':'')+'</small><div class="pr">'+(e.a_partir?'a partir de '+brl(e.a_partir):'Esgotado')+'</div></div></button>'; });
+  el('lista').innerHTML=h||'<div class="vazio">Nenhum evento encontrado.</div>';
+}
+/* ---------- evento ---------- */
+function evento(id){
+  tela('<div class="vazio">Carregando...</div>');
+  api('/fest/evento/'+encodeURIComponent(id)).then(function(d){
+    if(!d.ok){ tela('<div class="bar"><button class="ib" onclick="agenda()">←</button><b>Evento</b></div><div class="vazio">'+esc(d.mensagem||'Evento não encontrado.')+'</div>'); return; }
+    if(!S.ev||S.ev.id!==d.evento.id){ S.car={}; S.sal=0; } S.ev=d.evento; eventoPinta();
+  });
+}
+function eventoPinta(){
+  var e=S.ev, h='<div class="hero" style="'+ban(e)+'"><button class="ib" onclick="agenda()" aria-label="Voltar">←</button></div><div class="info"><h1>'+esc(e.nome)+'</h1><div class="ln">📅 '+curto(e.inicio)+(e.hora_ini?' · '+esc(e.hora_ini):'')+(e.hora_fim?' às '+esc(e.hora_fim):'')+'</div><div class="ln">📍 '+esc(e.local||e.casa)+(e.cidade?' · '+esc(e.cidade):'')+(e.idade?' · '+e.idade+'+':'')+'</div></div>'+(e.descricao?'<div class="desc">'+esc(e.descricao)+'</div>':'');
+  h+='<div class="tabs">'+e.saloes.map(function(s,i){ return '<button class="'+(i===S.sal?'on':'')+'" onclick="S.sal='+i+';eventoPinta()">'+esc(s.nome)+'</button>'; }).join('')+'</div><div id="sets"></div><div class="rod"><div><small id="qtd"></small><b id="tot"></b></div><button class="bt" id="bCont" onclick="continuar()">Continuar</button></div>';
+  tela(h); setores();
+}
+function setores(){
+  var s=S.ev.saloes[S.sal]; if(!s){ el('sets').innerHTML='<div class="vazio">Ingressos em breve.</div>'; return totais(); }
+  el('sets').innerHTML=s.setores.map(function(x){ var q=S.car[x.id]||0;
+    return '<div class="set"><div class="h"><div><b>'+esc(x.nome)+'</b><small>'+[x.pessoas>1?'Para '+x.pessoas+' pessoas':'',x.consumacao?brl(x.consumacao)+' de consumação na comanda':'',x.inclui,x.meia?'Meia-entrada com documento':''].filter(Boolean).map(esc).join(' · ')+'</small><span class="lote'+(x.esgotado?' esg':'')+'">'+(x.esgotado?'Esgotado':esc(x.lote)+(x.restantes<=10?' · últimos '+x.restantes:''))+'</span></div><div class="vl">'+(x.ant?'<s>'+brl(x.ant)+'</s>':'')+(x.esgotado?'':brl(x.preco))+(x.taxa?'<em>+ '+brl(x.taxa)+' de taxa</em>':'')+'</div></div>'+
+      (x.esgotado?'':'<div class="qt"><button onclick="poe(\''+x.id+'\',-1)" aria-label="Menos">−</button><b>'+q+'</b><button onclick="poe(\''+x.id+'\',1)" aria-label="Mais">+</button></div>')+'</div>'; }).join('')||'<div class="vazio">Ingressos em breve.</div>';
+  totais();
+}
+function todos(){ var m={}; S.ev.saloes.forEach(function(s){ s.setores.forEach(function(x){ x.salao=s.nome; m[x.id]=x; }); }); return m; }
+function poe(id,d){ var x=todos()[id], n=Object.keys(S.car).reduce(function(a,k){ return a+S.car[k]; },0); var q=(S.car[id]||0)+d; if(q<0) q=0; if(q>x.restantes) q=x.restantes; if(d>0&&n>=10) q=S.car[id]||0; S.car[id]=q; setores(); }
+function totais(){ var m=todos(), n=0, t=0; Object.keys(S.car).forEach(function(k){ if(m[k]){ n+=S.car[k]; t+=S.car[k]*m[k].unit; } }); el('qtd').textContent=n?n+(n===1?' ingresso':' ingressos'):'Escolha os ingressos'; el('tot').textContent=brl(t); el('bCont').disabled=!n; }
+function itens(){ var m=todos(); return Object.keys(S.car).filter(function(k){ return S.car[k]>0&&m[k]; }).map(function(k){ return {setor:k,qtd:S.car[k],x:m[k]}; }); }
+function continuar(){ if(!S.tk){ S.volta=checkout; return entrar(); } checkout(); }
+/* ---------- entrar: só o WhatsApp ---------- */
+function entrar(){
+  tela('<div class="pg"><div class="bar"><button class="ib" onclick="'+(S.ev?'eventoPinta()':'agenda()')+'">←</button><b></b></div><div class="lg"><div class="lvL" id="lvL"></div><div class="bal">Oi! É só o seu WhatsApp.</div><h2>Entrar na LiveFest</h2><p>Uma conta para todos os eventos.</p></div><div style="padding:6px 22px"><input class="inp" id="fo" type="tel" inputmode="numeric" autocomplete="tel" placeholder="(47) 99999-9999" maxlength="16"><div id="cdBox" hidden><input class="inp" id="cd" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Código de 6 números" style="letter-spacing:6px;text-align:center;font-size:20px"><div class="nota" style="text-align:center">Digite o código que chegou no WhatsApp.</div></div><button class="bt w" id="bE" style="margin-top:12px" onclick="pedeCodigo()">Receber código</button></div><div class="erro" id="er"></div></div>');
+  live('lvL','feliz'); el('fo').focus();
+}
+function pedeCodigo(){
+  var b=el('bE'), fo=el('fo').value.replace(/\D/g,'');
+  if(!el('cdBox').hidden){ var cd=el('cd').value.replace(/\D/g,''); if(cd.length!==6){ el('er').textContent='Digite os 6 números.'; return; } b.disabled=true;
+    api('/fest/conta/entrar',{fone:fo,codigo:cd}).then(function(d){ b.disabled=false; if(!d.ok){ el('er').textContent=d.mensagem||'Não deu certo.'; return; } S.tk=d.token; try{ localStorage.setItem('fest_tk',S.tk); }catch(e){} var v=S.volta; S.volta=null; (v||meus)(); }); return; }
+  if(fo.length<10){ el('er').textContent='Confira o número: DDD + número.'; return; } b.disabled=true; el('er').textContent='';
+  api('/fest/conta/codigo',{fone:fo}).then(function(d){ b.disabled=false; if(!d.ok&&d.erro!=='aguarde'){ el('er').textContent=d.mensagem||'Não consegui enviar.'; return; } el('cdBox').hidden=false; el('fo').readOnly=true; b.textContent='Entrar'; el('cd').focus(); if(d.erro==='aguarde') el('er').textContent='Já enviamos um código. Digite abaixo.'; });
+}
+/* ---------- compra: dados do comprador só aqui, e quem usa cada ingresso ---------- */
+function checkout(){
+  var it=itens(); if(!it.length) return eventoPinta();
+  tela('<div class="pg"><div class="vazio" style="color:#6B6B73">Carregando...</div></div>');
+  api('/fest/conta').then(function(d){
+    if(!d.ok){ S.volta=checkout; return entrar(); }
+    S.conta=d.conta; var c=d.conta, n=it.reduce(function(a,x){ return a+x.qtd; },0), val=0, tx=0;
+    it.forEach(function(x){ val+=x.x.preco*x.qtd; tx+=x.x.taxa*x.qtd; });
+    var h='<div class="pg"><div class="bar"><button class="ib" onclick="eventoPinta()">←</button><b>Pagamento</b></div><div class="cx"><h3>'+esc(S.ev.nome)+'</h3>'+it.map(function(x){ return '<div class="lin"><span>'+x.qtd+'× '+esc(x.x.nome)+' · '+esc(x.x.lote)+'</span><span>'+brl(x.x.preco*x.qtd)+'</span></div>'; }).join('')+(tx?'<div class="lin"><span>Taxa de serviço</span><span>'+brl(tx)+'</span></div>':'')+'<div class="lin t"><span>Total</span><span>'+brl(val+tx)+'</span></div></div>';
+    h+='<div class="cx"><h3>Seus dados para a compra</h3><input class="inp" id="c-nm" placeholder="Nome completo *" value="'+esc(c.nome)+'"><input class="inp" id="c-cpf" inputmode="numeric" placeholder="CPF *" value="'+esc(c.cpf)+'" maxlength="14"><input class="inp" id="c-em" type="email" placeholder="E-mail *" value="'+esc(c.email)+'"><div class="nota">O ingresso 1 é seu. Depois já vem preenchido.</div></div>';
+    for(var i=1;i<n;i++) h+='<div class="cx"><h3>Ingresso '+(i+1)+' · quem vai usar</h3><input class="inp t-nm" placeholder="Nome completo *"><input class="inp t-cpf" inputmode="numeric" placeholder="CPF *" maxlength="14"><input class="inp t-fo" type="tel" inputmode="numeric" placeholder="WhatsApp *" maxlength="16"><div class="nota">O ingresso vai para o WhatsApp dessa pessoa.</div></div>';
+    h+='<div class="cx"><h3>Pagar com Pix</h3><div class="nota" style="margin:0">O ingresso sai assim que o Pix cair. Desistiu? Até 7 dias após a compra, e antes do evento, o valor volta.</div></div><div class="erro" id="er"></div><div class="rod" style="background:#fff;border-top-color:#E6E6EA"><div><small style="color:#6B6B73">Total</small><b>'+brl(val+tx)+'</b></div><button class="bt" id="bP" onclick="paga()">Pagar com Pix</button></div></div>';
+    tela(h);
+  });
+}
+function paga(){
+  var tit=[null]; [].forEach.call(document.querySelectorAll('.t-nm'),function(x,i){ tit.push({nome:x.value,cpf:document.querySelectorAll('.t-cpf')[i].value,fone:document.querySelectorAll('.t-fo')[i].value}); });
+  var b=el('bP'); b.disabled=true; b.textContent='Gerando o Pix...'; el('er').textContent='';
+  api('/fest/comprar',{evento:S.ev.id,itens:itens().map(function(x){ return {setor:x.setor,qtd:x.qtd}; }),comprador:{nome:el('c-nm').value,cpf:el('c-cpf').value,email:el('c-em').value},titulares:tit}).then(function(d){
+    if(!d.ok){ b.disabled=false; b.textContent='Pagar com Pix'; el('er').textContent=d.mensagem||'Não consegui gerar o Pix.'; if(d._st===401){ S.volta=checkout; entrar(); } return; }
+    S.ped=d.pedido; S.car={}; pix();
+  });
+}
+function pix(){
+  var p=S.ped;
+  tela('<div class="pg"><div class="bar"><button class="ib" onclick="agenda()">✕</button><b>Pague no Pix</b></div><div class="cx" style="text-align:center"><div style="font-size:26px;font-weight:800">'+brl(p.total)+'</div><div class="qr">'+(p.pix&&p.pix.imagem?'<img alt="QR code do Pix" src="data:image/png;base64,'+esc(p.pix.imagem)+'">':'')+'</div><div class="nota" style="margin:0">Abra o app do banco e leia o QR, ou copie o código.</div><div class="copia"><input id="pc" readonly value="'+esc(p.pix?p.pix.payload:'')+'"><button class="bt" style="padding:10px 14px" onclick="copia()">Copiar</button></div></div><div class="cx" style="text-align:center;font-weight:800" id="pst">⏳ Esperando o pagamento...</div></div>');
+  clearInterval(S.poll); S.poll=setInterval(function(){ api('/fest/pedido/'+encodeURIComponent(p.id)).then(function(d){ if(!d.ok) return; if(d.pedido.status==='pago'){ clearInterval(S.poll); meus('Pagamento confirmado!'); } else if(d.pedido.status==='expirado'){ clearInterval(S.poll); el('pst').textContent='O Pix venceu. Faça a compra de novo.'; } }); },4000);
+}
+function copia(){ var i=el('pc'); try{ navigator.clipboard.writeText(i.value).then(function(){ el('pst').textContent='Código copiado. Cole no app do banco.'; },function(){ i.select(); }); }catch(e){ i.select(); } }
+/* ---------- meus ingressos ---------- */
+function meus(msg){
+  if(!S.tk){ S.volta=function(){ meus(); }; return entrar(); }
+  clearInterval(S.poll);
+  tela('<div class="bar"><button class="ib" onclick="agenda()">←</button><b>Meus ingressos</b></div><div id="ml"><div class="vazio">Carregando...</div></div>');
+  api('/fest/ingressos').then(function(d){
+    if(!d.ok){ S.volta=function(){ meus(); }; return entrar(); }
+    var l=d.ingressos||[];
+    el('ml').innerHTML=(msg?'<div class="cx" style="background:rgba(22,163,74,.18);border:0;color:#fff;font-weight:800;text-align:center">✓ '+esc(msg)+'</div>':'')+(l.length?l.map(function(x,i){
+      return '<div class="ing"><div class="t1"><small>'+esc(x.evento)+'</small><b>'+esc(x.setor)+'</b><span>'+curto(x.inicio)+(x.hora_ini?' · '+esc(x.hora_ini):'')+' · '+esc(x.nome)+'</span></div><div class="q" id="q'+i+'"></div><div class="t2"><span>'+(x.comanda?'Comanda '+esc(x.comanda):'')+'</span><span>'+esc(x.casa)+'</span></div>'+
+        (x.meu?(x.facial?'<div class="fac ok"><b>✓ Facial cadastrada. É só olhar para a câmera na entrada.</b></div>':'<div class="fac"><b>Cadastre sua facial para ter acesso mais rápido.</b><a class="bt" href="'+esc(x.link)+'">Cadastrar</a></div>'):'<div class="fac"><b>Ingresso de '+esc(String(x.nome).split(' ')[0])+'</b><a class="bt" target="_blank" rel="noopener" href="https://wa.me/'+esc(x.fone)+'?text='+encodeURIComponent('Seu ingresso para '+x.evento+': '+x.link)+'">Enviar</a></div>')+'</div>'; }).join(''):'<div class="vazio">Você ainda não tem ingressos.<br><br><button class="bt" onclick="agenda()">Ver a Agenda</button></div>');
+    var pinta=function(){ l.forEach(function(x,i){ try{ new QRCode(el('q'+i),{text:x.qr,width:180,height:180,colorDark:'#0B0908',colorLight:'#ffffff'}); }catch(e){ el('q'+i).textContent=x.qr; } }); };
+    if(window.QRCode) pinta(); else if(l.length){ var s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'; s.onload=pinta; document.head.appendChild(s); }
+  });
+}
+/* início: link direto de um evento (?ev=) ou a abertura */
+api('/fest/agenda').then(function(d){ S.ag=(d&&d.eventos)||[]; if(Q.get('ev')) evento(Q.get('ev')); else if(Q.get('tela')==='agenda') agenda(); else abertura(); });
+</script>
+</body>
+</html>

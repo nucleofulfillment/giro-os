@@ -271,6 +271,9 @@ td.vin{color:var(--green);font-weight:800;white-space:nowrap}td.vout{color:var(-
       <div id="apk-info" class="sub2" style="padding:0 2px 8px">O site entrega direto o arquivo enviado aqui.</div>
     </div>
     <div class="card">
+      <h3><span>LiveFest</span><span class="sub2" id="fest-resumo">ingressos com split: comissão e casas que vendem</span><span class="dir"><span class="lnk" onclick="abrirFest()">Configurar</span><a class="lnk" href="livefest.html" target="_blank" rel="noopener" style="text-decoration:none">Abrir o app</a></span></h3>
+    </div>
+    <div class="card">
       <h3><span>Paytime</span><span class="sub2">pagamentos na mesa e na maquininha (teste)</span><span class="dir"><span class="lnk" onclick="abrirPaytime()">Testar conexão</span><span class="lnk" onclick="abrirPtEventos()">Avisos recebidos</span></span></h3>
     </div>
     <div class="card">
@@ -685,6 +688,33 @@ function enviarApk(app){
   };
   rd.onerror=function(){bt.disabled=false;msg.textContent='Não consegui ler o arquivo.';};
   rd.readAsDataURL(f);
+}
+/* (181) LIVEFEST: comissão do LiveFood em cada ingresso (taxa por cima, paga pelo cliente, ou descontada da casa), exceções por casa e casas liberadas.
+   O pagamento usa o Asaas master com split: a parte da casa cai direto na conta dela */
+var FEST=null;
+function abrirFest(){
+  abrirModal('<h3>LiveFest</h3><div class="vazio">Carregando...</div>');
+  chamar('GET','/admin/fest').then(function(d){ if(!d.ok){ abrirModal('<h3>LiveFest</h3><div class="vazio">'+esc(d.mensagem||'Não consegui carregar.')+'</div>'); return; } FEST=d; festPinta(); }).catch(function(){});
+}
+function festPinta(){
+  var c=FEST.cfg, rs=FEST.resumo, num=function(v){ return String(v).replace('.',','); };
+  var h='<h3>LiveFest</h3><p class="sub">'+(FEST.master?'':'<b style="color:#991B1B">Falta ligar o Asaas master: sem ele a LiveFest não cobra. </b>')+'Vendido: '+reais(Math.round(rs.total*100))+' em '+rs.pedidos+' compra(s) · comissão LiveFood: <b>'+reais(Math.round(rs.comissao*100))+'</b></p>'+
+    '<div class="linha2"><div><label>Comissão (% por ingresso)</label><input id="fs-pct" inputmode="decimal" value="'+num(c.pct)+'"></div><div><label>Mínimo por ingresso (R$)</label><input id="fs-min" inputmode="decimal" value="'+num(c.min)+'"></div></div>'+
+    '<label>Modelo</label><div class="linha2"><label style="display:flex;gap:8px;align-items:center;font-weight:700;margin:0"><input type="radio" name="fs-mod" value="cima" style="width:auto;margin:0"'+(c.modelo!=='casa'?' checked':'')+'> Taxa por cima (cliente paga)</label><label style="display:flex;gap:8px;align-items:center;font-weight:700;margin:0"><input type="radio" name="fs-mod" value="casa" style="width:auto;margin:0"'+(c.modelo==='casa'?' checked':'')+'> Descontada da casa</label></div>'+
+    '<p class="sub" style="margin:6px 0 0">Ex.: ingresso de R$ 70 com 10%. Taxa por cima: cliente paga R$ 77, casa recebe R$ 70. Descontada: cliente paga R$ 70, casa recebe R$ 63.</p>'+
+    '<label style="margin-top:14px">Casas e exceções</label><p class="sub" style="margin:0 0 6px">Marque quem pode vender. Deixe a exceção vazia para usar a regra geral.</p>'+
+    '<div style="max-height:300px;overflow:auto;border:1px solid #f1d5d0;border-radius:10px">'+FEST.clientes.map(function(x){ var e=c.exc[x.id]||{}, on=c.casas.indexOf(x.id)>=0;
+      return '<div style="display:grid;grid-template-columns:1fr 70px 120px;gap:8px;align-items:center;padding:8px 10px;border-bottom:1px solid #f6e6e2"><label style="display:flex;gap:8px;align-items:center;font-weight:700;margin:0"><input type="checkbox" class="fs-casa" value="'+esc(x.id)+'" style="width:auto;margin:0"'+(on?' checked':'')+'> '+esc(x.nome)+(x.asaas?'':' <span style="color:#991B1B;font-weight:600;font-size:12px">· sem Asaas</span>')+'</label>'+
+        '<input class="fs-ep" data-c="'+esc(x.id)+'" placeholder="%" inputmode="decimal" value="'+(e.pct!=null?num(e.pct):'')+'" style="margin:0">'+
+        '<select class="fs-em" data-c="'+esc(x.id)+'" style="margin:0"><option value="">regra geral</option><option value="cima"'+(e.modelo==='cima'?' selected':'')+'>por cima</option><option value="casa"'+(e.modelo==='casa'?' selected':'')+'>da casa</option></select></div>'; }).join('')+'</div>'+
+    '<div class="erro" id="fs-erro"></div><div class="acoes" style="margin-top:10px;justify-content:flex-end"><button class="btn" onclick="fechar()">Cancelar</button> <button class="btn pri" id="fs-btn" onclick="salvarFest()">Salvar</button></div>';
+  abrirModal(h);
+}
+function salvarFest(){
+  var exc={}; [].forEach.call(document.querySelectorAll('.fs-ep'),function(i){ var id=i.dataset.c, m=document.querySelector('.fs-em[data-c="'+id+'"]').value; if(i.value.trim()||m){ exc[id]={}; if(i.value.trim()) exc[id].pct=i.value.trim(); if(m) exc[id].modelo=m; } });
+  var corpo={pct:el('fs-pct').value,min:el('fs-min').value,modelo:(document.querySelector('input[name="fs-mod"]:checked')||{}).value||'cima',casas:[].map.call(document.querySelectorAll('.fs-casa:checked'),function(x){ return x.value; }),exc:exc};
+  el('fs-btn').disabled=true;
+  chamar('POST','/admin/fest',corpo).then(function(d){ if(!d.ok){ el('fs-erro').textContent=d.mensagem||'Erro ao salvar.'; el('fs-btn').disabled=false; return; } fechar(); toast('LiveFest salva!'); }).catch(function(){ el('fs-btn').disabled=false; });
 }
 function abrirModal(html){el('modal').innerHTML=html;el('fundo').classList.add('on');}
 function fechar(){el('fundo').classList.remove('on');el('modal').innerHTML='';}

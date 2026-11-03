@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<link rel="icon" type="image/svg+xml" href="/site/img/favicon.svg">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0E0A12">
+<meta name="robots" content="noindex">
+<title>LiveFest · Painel do evento</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<!-- (181) painel do dono do evento na LiveFest: o evento é o mesmo do LiveFace; aqui entram dados, banner, salões, setores, lotes, publicação e vendas -->
+<style>
+:root{--lf:#FF5A00;--mg:#E0249A;--noite:#0E0A12;--tx:#1C1C1E;--mu:#6B6B73;--bd:#E6E6EA;--s1:#F7F7F8;--s2:#F1F1F3;--ok:#16A34A;--er:#C62828;--f:'Manrope',-apple-system,system-ui,sans-serif;--t:'Baloo 2',var(--f)}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:var(--f);background:#F4F1F6;color:var(--tx);-webkit-font-smoothing:antialiased}
+[hidden]{display:none!important}
+.marca{font:800 1em/1 var(--t);letter-spacing:-.03em;color:#fff}.marca i{font-style:normal;background:linear-gradient(90deg,var(--lf),var(--mg));-webkit-background-clip:text;background-clip:text;color:transparent}
+.topo{background:radial-gradient(120% 160% at 0% 0%,#3A1030,var(--noite) 60%);color:#fff;padding:18px max(18px,env(safe-area-inset-left)) 22px}
+.topo .in{max-width:1100px;margin:0 auto;display:flex;align-items:center;gap:16px}
+.topo .marca{font-size:32px}
+.topo .tx{flex:1;min-width:0}.topo .tx b{display:block;font-size:15px}.topo .tx small{display:block;margin-top:4px;opacity:.75;font-weight:700;font-size:12.5px}
+.topo a{color:#fff;text-decoration:none;font-weight:800;font-size:12.5px;background:rgba(255,255,255,.12);padding:8px 13px;border-radius:99px}
+.lv{width:64px;flex:none}
+.wrap{max-width:1100px;margin:0 auto;padding:18px max(18px,env(safe-area-inset-right)) 60px max(18px,env(safe-area-inset-left))}
+.aviso{border-radius:14px;padding:12px 14px;font-weight:700;font-size:13.5px;margin-bottom:12px;background:#FFF4E5;color:#7A4A00}
+.aviso.er{background:#FDECEC;color:var(--er)}
+.info{font-size:13px;color:var(--mu);font-weight:600;margin:0 0 14px}
+.btn{font:inherit;font-weight:800;border-radius:12px;border:0;cursor:pointer;padding:10px 15px;font-size:14px;background:var(--s2);color:var(--tx)}
+.btn.pri{background:linear-gradient(90deg,var(--lf),var(--mg));color:#fff}.btn.sm{padding:7px 11px;font-size:12.5px}.btn.er{color:var(--er)}
+.btn:disabled{opacity:.6}
+.lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:12px}
+.ev{background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 10px 30px -20px rgba(40,10,40,.5);cursor:pointer;border:0;text-align:left;font:inherit;padding:0;color:inherit}
+.ev .ban{height:110px;background:linear-gradient(135deg,#2B0F3F,#B5179E 60%,#FF5A00) center/cover no-repeat}
+.ev .c{padding:12px 14px}.ev b{display:block;font-size:16px}.ev small{display:block;color:var(--mu);font-weight:600;font-size:12.5px;margin-top:3px}
+.tag{display:inline-block;font-size:11px;font-weight:800;padding:3px 9px;border-radius:99px;margin-top:8px}
+.tag.pub{background:#EAF7EE;color:#15803D}.tag.ras{background:#FFF6DC;color:#8A6200}
+.cab{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.cab h1{font-size:24px;margin:0;flex:1;min-width:200px}
+.abas{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.abas button{font:inherit;font-weight:800;font-size:13.5px;border:0;border-radius:99px;padding:8px 14px;background:#fff;color:var(--mu);cursor:pointer}
+.abas button.on{background:var(--noite);color:#fff}
+.cx{background:#fff;border-radius:18px;padding:16px;box-shadow:0 10px 30px -22px rgba(40,10,40,.5);margin-bottom:12px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.g4{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:8px}
+label.cp{display:block;font-size:12px;font-weight:800;color:var(--mu)}
+.inp{width:100%;font:inherit;font-size:14.5px;font-weight:600;color:var(--tx);padding:10px 12px;border:1.5px solid #E2E2E6;border-radius:12px;background:var(--s1);margin-top:4px;outline:none}
+.inp:focus{border-color:var(--tx);background:#fff}
+textarea.inp{min-height:80px;resize:vertical}
+.banner{height:150px;border-radius:14px;background:#F6EDF3 center/cover no-repeat;display:flex;align-items:center;justify-content:center;color:#C2187F;font-weight:800;font-size:13px;border:2px dashed #EBB6D6;cursor:pointer;text-align:center;padding:10px}
+.chk{display:flex;gap:8px;align-items:center;font-weight:700;font-size:14px}
+.chk input{width:18px;height:18px}
+.sal{border:1px solid var(--bd);border-radius:16px;overflow:hidden;margin-bottom:12px;background:#fff}
+.sal .sh{display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--s1);flex-wrap:wrap}
+.sal .sh b{font-size:15px;flex:1}.sal .sh small{font-size:12px;color:var(--mu);font-weight:700}
+.st{display:grid;grid-template-columns:1.4fr 1.6fr .8fr auto;gap:10px;align-items:center;padding:10px 14px;border-top:1px solid var(--bd);font-size:13px;font-weight:700}
+.st small{display:block;color:var(--mu);font-weight:600;font-size:11.5px}
+.tp{display:inline-block;font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:99px;margin-right:4px;background:var(--s2)}
+.lts{display:flex;gap:5px;flex-wrap:wrap}.lts span{font-size:11px;font-weight:800;padding:3px 7px;border-radius:7px;background:var(--s2)}.lts span.at{background:#FFF1E8;color:#E04A00}
+.lote{display:grid;grid-template-columns:1.2fr 1fr 1.2fr 1fr auto;gap:6px;margin-top:6px;align-items:end}
+.erro{color:var(--er);font-weight:800;font-size:13px;min-height:18px;margin-top:8px}
+.kp{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}.kp div{background:#fff;border-radius:14px;padding:12px}.kp small{font-size:11px;font-weight:800;color:var(--mu);text-transform:uppercase;letter-spacing:.06em}.kp b{display:block;font-size:20px;margin-top:4px}
+.vd{display:flex;gap:10px;padding:9px 0;border-top:1px solid var(--bd);font-size:13px;font-weight:700}.vd div{flex:1}.vd small{display:block;color:var(--mu);font-weight:600}
+.fundo{position:fixed;inset:0;background:rgba(14,10,18,.55);z-index:40;display:flex;align-items:center;justify-content:center;padding:14px}
+.folha{background:#fff;border-radius:20px;width:min(640px,100%);max-height:92vh;overflow:auto;padding:18px}
+.folha h2{margin:0 0 10px;font-size:19px}
+.vazio{padding:28px;text-align:center;color:var(--mu);font-weight:700;background:#fff;border-radius:18px}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:60;background:var(--noite);color:#fff;font-weight:800;font-size:14px;padding:10px 16px;border-radius:99px}
+.live-mascote{position:relative;width:100%;aspect-ratio:220/230}.live-corpo{position:absolute;inset:0;transform-origin:50% 46%}.live-corpo svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}.live-rosto{position:absolute;border-radius:14% / 18%}.live-sombra{position:absolute;left:22%;right:22%;bottom:-6%;height:9%;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.35),transparent)}
+@media (max-width:700px){.g2,.g3,.g4,.kp{grid-template-columns:1fr}.st{grid-template-columns:1fr}.lote{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="topo"><div class="in"><div class="lv" id="lv" aria-hidden="true"></div><div class="tx"><span class="marca">live<i>fest</i></span><small id="loja">Painel do evento</small></div><a href="hub.html">← Hub</a></div></div>
+<main class="wrap" id="app"><div class="vazio">Carregando...</div></main>
+<div class="toast" id="toast" hidden></div>
+<script src="site/js/live-mascote.js"></script>
+<script>
+var API='https://giro-os-api.nucleofull.workers.dev', TK='', US=null, D=null, EV=null, ABA='dados', live=null;
+try{ TK=localStorage.getItem('dd_jwt')||''; US=JSON.parse(localStorage.getItem('dd_user')||'null'); }catch(e){}
+if(!TK) location.replace('hub.html');
+function el(i){ return document.getElementById(i); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function brl(v){ return 'R$ '+Number(v||0).toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.'); }
+function dt(i){ i=String(i||''); return i.slice(8,10)+'/'+i.slice(5,7); }
+var tT=null; function toast(m){ var t=el('toast'); t.textContent=m; t.hidden=false; clearTimeout(tT); tT=setTimeout(function(){ t.hidden=true; },3200); }
+function api(c,b){ var h={'Authorization':'Bearer '+TK}; if(b) h['Content-Type']='application/json'; return fetch(API+c,b?{method:'POST',headers:h,body:JSON.stringify(b)}:{headers:h,cache:'no-store'}).then(function(r){ if(r.status===401){ location.replace('hub.html'); throw new Error('sessao'); } return r.json(); }); }
+function diz(t){ if(live) try{ live.falar(t,40); }catch(e){} }
+if(US&&US.cliente_nome) el('loja').textContent='Painel do evento · '+US.cliente_nome;
+try{ if(window.LiveMascote){ live=LiveMascote.criar(el('lv'),{rotulo:'Live'}); live.expressao('feliz'); } }catch(e){}
+var TIPOS={pista:'Pista',mesa:'Mesa',camarote:'Camarote',backstage:'Backstage',vip:'VIP',outro:'Outro'};
+function carrega(id){ return api('/painel/fest-eventos').then(function(d){ if(!d.ok) throw new Error(d.mensagem||''); D=d; if(id) EV=D.eventos.filter(function(e){ return e.id===id; })[0]||null; pinta(); }).catch(function(e){ if(e.message!=='sessao') el('app').innerHTML='<div class="vazio">'+esc(e.message||'Não consegui carregar.')+'</div>'; }); }
+function avisos(){
+  var h=''; if(!D.liberada) h+='<div class="aviso">Sua casa ainda não está liberada para vender na LiveFest. Você já pode montar o evento; para publicar, fale com o LiveFood.</div>';
+  if(!D.asaas) h+='<div class="aviso er">Ligue a conta de pagamento (Asaas) em Painel › Configurações › Formas de pagamento. O valor dos ingressos cai direto nela.</div>';
+  var c=D.comissao; h+='<p class="info">Comissão LiveFood: '+String(c.pct).replace('.',',')+'% por ingresso (mínimo '+brl(c.min)+'), '+(c.modelo==='casa'?'descontada do seu valor':'paga pelo cliente como taxa')+'.</p>';
+  return h;
+}
+function pinta(){ if(!EV) lista(); else evento(); }
+function lista(){
+  var h=avisos()+'<div class="cab"><h1>Meus eventos</h1><button class="btn pri" onclick="novoEvento()">+ Novo evento</button></div>';
+  h+=D.eventos.length?'<div class="lista">'+D.eventos.map(function(e){ var n=0; e.saloes.forEach(function(s){ n+=s.setores.length; });
+    return '<button class="ev" onclick="abre(\''+esc(e.id)+'\')"><div class="ban" style="'+(e.banner?'background-image:url('+API+'/fest/banner/'+esc(e.id)+'?v='+Date.now()+')':'')+'"></div><div class="c"><b>'+esc(e.nome)+'</b><small>'+dt(e.inicio)+(e.hora_ini?' · '+esc(e.hora_ini):'')+' · '+e.saloes.length+' salão(ões) · '+n+' setor(es)</small><small>'+e.vendas.ingressos+' ingresso(s) · '+brl(e.vendas.casa)+' para a casa</small><span class="tag '+(e.pub?'pub':'ras')+'">'+(e.pub?'Na agenda':'Rascunho')+'</span></div></button>'; }).join('')+'</div>':'<div class="vazio">Crie o primeiro evento.</div>';
+  el('app').innerHTML=h; diz(D.eventos.length?'Escolha um evento para editar.':'Vamos criar o seu primeiro evento?');
+}
+function abre(id){ EV=D.eventos.filter(function(e){ return e.id===id; })[0]; ABA='dados'; pinta(); scrollTo(0,0); }
+function folha(h){ var f=document.createElement('div'); f.className='fundo'; f.id='fd'; f.innerHTML='<div class="folha">'+h+'</div>'; f.onclick=function(e){ if(e.target===f) fecha(); }; document.body.appendChild(f); }
+function fecha(){ var f=el('fd'); if(f) f.remove(); }
+function novoEvento(){
+  folha('<h2>Novo evento</h2><label class="cp">Nome<input class="inp" id="ne-nm" maxlength="80" placeholder="Festa de Verão"></label><div class="g2" style="margin-top:8px"><label class="cp">Começa no dia<input class="inp" type="date" id="ne-ini"></label><label class="cp">às<input class="inp" type="time" id="ne-hi" value="22:00"></label><label class="cp">Termina no dia<input class="inp" type="date" id="ne-fim"></label><label class="cp">às<input class="inp" type="time" id="ne-hf" value="04:00"></label></div><div class="erro" id="ne-er"></div><div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn" onclick="fecha()">Cancelar</button><button class="btn pri" id="ne-b" onclick="criaEvento()">Criar</button></div>');
+}
+function criaEvento(){ var b={nome:el('ne-nm').value,inicio:el('ne-ini').value,hora_ini:el('ne-hi').value,fim:el('ne-fim').value||el('ne-ini').value,hora_fim:el('ne-hf').value}; el('ne-b').disabled=true;
+  api('/painel/lf-evento',b).then(function(d){ if(!d.ok){ el('ne-er').textContent=d.mensagem||'Não consegui criar.'; el('ne-b').disabled=false; return; } fecha(); carrega(d.id).then(function(){ ABA='saloes'; pinta(); }); }).catch(function(){ el('ne-b').disabled=false; }); }
+function evento(){
+  var e=EV, h=avisos()+'<div class="cab"><button class="btn sm" onclick="EV=null;pinta()">← Eventos</button><h1>'+esc(e.nome)+'</h1>'+(e.pub?'<a class="btn sm" href="livefest.html?ev='+esc(e.id)+'" target="_blank" rel="noopener" style="text-decoration:none">Ver na LiveFest</a>':'')+'<button class="btn '+(e.pub?'':'pri')+'" onclick="publica('+(e.pub?0:1)+')">'+(e.pub?'Tirar da agenda':'Publicar na agenda')+'</button></div>';
+  h+='<div class="abas">'+[['dados','Dados e banner'],['saloes','Salões e setores'],['vendas','Vendas']].map(function(a){ return '<button class="'+(ABA===a[0]?'on':'')+'" onclick="ABA=\''+a[0]+'\';pinta()">'+a[1]+'</button>'; }).join('')+'</div><div id="corpo"></div>';
+  el('app').innerHTML=h; if(ABA==='dados') dados(); else if(ABA==='saloes') saloes(); else vendas();
+}
+function dados(){
+  var e=EV;
+  el('corpo').innerHTML='<div class="cx"><div class="g2"><div><label class="cp">Descrição (aparece na página do evento)<textarea class="inp" id="ed-ds" maxlength="600" placeholder="Atrações, dress code, o que está incluso">'+esc(e.descricao)+'</textarea></label>'+
+    '<div class="g2" style="margin-top:8px"><label class="cp">Local<input class="inp" id="ed-lc" maxlength="80" value="'+esc(e.local)+'" placeholder="Restaurante Cinquenta"></label><label class="cp">Cidade<input class="inp" id="ed-cd" maxlength="60" value="'+esc(e.cidade)+'" placeholder="Itajaí"></label>'+
+    '<label class="cp">Categoria<select class="inp" id="ed-ct">'+['Festa','Show','Balada','Sertanejo','Pagode','Eletrônica','Bar e música ao vivo','Outro'].map(function(x){ return '<option'+(x===e.categoria?' selected':'')+'>'+x+'</option>'; }).join('')+'</select></label><label class="cp">Idade mínima<select class="inp" id="ed-id">'+[0,14,16,18].map(function(x){ return '<option value="'+x+'"'+(x==e.idade?' selected':'')+'>'+(x?x+' anos':'Livre')+'</option>'; }).join('')+'</select></label></div></div>'+
+    '<div><label class="cp">Banner (aparece na agenda) · 1200 × 600</label><div class="banner" id="ed-bn" style="'+(e.banner?'background-image:url('+API+'/fest/banner/'+esc(e.id)+'?v='+Date.now()+');color:transparent;border-style:solid':'')+'" onclick="el(\'ed-fl\').click()">+ Enviar imagem</div><input type="file" id="ed-fl" accept="image/*" hidden onchange="banner(this)"><p class="info" style="margin-top:8px">'+dt(e.inicio)+(e.hora_ini?' às '+esc(e.hora_ini):'')+' até '+dt(e.fim)+(e.hora_fim?' às '+esc(e.hora_fim):'')+'. Data e hora se mudam no LiveFace, em Eventos e ingressos.</p></div></div>'+
+    '<div class="erro" id="ed-er"></div><div style="display:flex;justify-content:flex-end"><button class="btn pri" id="ed-b" onclick="salvaDados()">Salvar</button></div></div>';
+}
+function corpoDados(pub){ return {id:EV.id,descricao:el('ed-ds')?el('ed-ds').value:EV.descricao,local:el('ed-lc')?el('ed-lc').value:EV.local,cidade:el('ed-cd')?el('ed-cd').value:EV.cidade,categoria:el('ed-ct')?el('ed-ct').value:EV.categoria,idade:el('ed-id')?el('ed-id').value:EV.idade,pub:pub}; }
+function salvaDados(){ el('ed-b').disabled=true; api('/painel/fest-evento',corpoDados(EV.pub)).then(function(d){ el('ed-b').disabled=false; if(!d.ok){ el('ed-er').textContent=d.mensagem||'Não consegui salvar.'; return; } toast('Salvo'); carrega(EV.id); }).catch(function(){ el('ed-b').disabled=false; }); }
+function publica(p){ api('/painel/fest-evento',corpoDados(p)).then(function(d){ if(!d.ok){ toast(d.mensagem||'Não deu certo.'); diz(d.mensagem||'Não deu certo.'); return; } toast(p?'Publicado na agenda':'Tirado da agenda'); if(p) diz('Seu evento está na agenda da LiveFest!'); carrega(EV.id); }); }
+/* banner: reduz no próprio aparelho para 1200 × 600 antes de enviar */
+function banner(inp){ var f=inp.files&&inp.files[0]; if(!f) return; var r=new FileReader(); r.onload=function(){ var im=new Image(); im.onload=function(){ var c=document.createElement('canvas'); c.width=1200; c.height=600; var x=c.getContext('2d'), k=Math.max(1200/im.width,600/im.height), w=im.width*k, h=im.height*k; x.drawImage(im,(1200-w)/2,(600-h)/2,w,h); var u=c.toDataURL('image/jpeg',.82);
+  api('/painel/fest-banner',{id:EV.id,img:u}).then(function(d){ if(!d.ok){ toast(d.mensagem||'Não consegui enviar.'); return; } el('ed-bn').style.backgroundImage='url('+u+')'; el('ed-bn').style.color='transparent'; EV.banner=1; toast('Banner salvo'); }); }; im.src=r.result; }; r.readAsDataURL(f); }
+function saloes(){
+  var e=EV, ar=D.areas||[];
+  var h=e.saloes.map(function(s){ var an=(ar.filter(function(a){ return a.id===s.area; })[0]||{}).nome;
+    return '<div class="sal"><div class="sh"><b>'+esc(s.nome)+'</b><small>'+(s.capacidade?s.capacidade+' pessoas':'')+(an?' · área do mapa: '+esc(an):'')+'</small><button class="btn sm" onclick="salao(\''+esc(s.id)+'\')">Editar</button><button class="btn sm pri" onclick="setor(\''+esc(s.id)+'\')">+ Setor</button></div>'+
+      (s.setores.length?s.setores.map(function(x){ return '<div class="st"><div><span class="tp">'+esc(TIPOS[x.tipo]||x.tipo)+'</span>'+esc(x.nome)+'<small>'+[x.pessoas>1?x.pessoas+' pessoas':'',x.consumacao?brl(x.consumacao)+' de consumação':'',x.meia?'meia-entrada':'',x.inclui].filter(Boolean).map(esc).join(' · ')+'</small></div><div class="lts">'+x.lotes.map(function(l){ return '<span class="'+(l.nome===x.lote?'at':'')+'">'+esc(l.nome)+' · '+brl(l.preco)+'</span>'; }).join('')+'</div><div>'+x.vendidos+(x.qtd?' / '+x.qtd:'')+'<small>vendidos</small></div><button class="btn sm" onclick="setor(\''+esc(s.id)+'\',\''+esc(x.id)+'\')">Editar</button></div>'; }).join(''):'<div class="st" style="color:var(--mu)">Nenhum setor ainda. Toque em + Setor.</div>')+'</div>'; }).join('');
+  el('corpo').innerHTML=(h||'<div class="vazio">Crie o primeiro salão. Ex.: Salão Principal, Rooftop.</div>')+'<button class="btn pri" style="margin-top:6px" onclick="salao()">+ Salão</button>';
+  if(!e.saloes.length) diz('Comece criando um salão.');
+}
+function salao(id){
+  var s=id?EV.saloes.filter(function(x){ return x.id===id; })[0]:{nome:'',area:'',capacidade:''};
+  folha('<h2>'+(id?'Editar salão':'Novo salão')+'</h2><label class="cp">Nome<input class="inp" id="sl-nm" maxlength="60" value="'+esc(s.nome)+'" placeholder="Salão Principal"></label><div class="g2" style="margin-top:8px"><label class="cp">Área do mapa do salão (para mesas e camarotes)<select class="inp" id="sl-ar"><option value="">Nenhuma</option>'+(D.areas||[]).map(function(a){ return '<option value="'+esc(a.id)+'"'+(a.id===s.area?' selected':'')+'>'+esc(a.nome)+'</option>'; }).join('')+'</select></label><label class="cp">Capacidade<input class="inp" id="sl-cp" inputmode="numeric" value="'+esc(s.capacidade||'')+'" placeholder="400"></label></div><div class="erro" id="sl-er"></div><div style="display:flex;gap:8px;justify-content:space-between">'+(id?'<button class="btn er" onclick="apagaSalao(\''+esc(id)+'\')">Excluir</button>':'<span></span>')+'<span><button class="btn" onclick="fecha()">Cancelar</button> <button class="btn pri" onclick="salvaSalao(\''+(id||'')+'\')">Salvar</button></span></div>');
+}
+function salvaSalao(id){ api('/painel/fest-salao',{id:id||undefined,evento:EV.id,nome:el('sl-nm').value,area:el('sl-ar').value,capacidade:el('sl-cp').value}).then(function(d){ if(!d.ok){ el('sl-er').textContent=d.mensagem||'Não consegui salvar.'; return; } fecha(); carrega(EV.id); }); }
+function apagaSalao(id){ api('/painel/fest-salao-apagar',{id:id}).then(function(d){ if(!d.ok){ el('sl-er').textContent=d.mensagem||'Não consegui excluir.'; return; } fecha(); carrega(EV.id); }); }
+function loteLinha(l){ l=l||{}; return '<div class="lote"><label class="cp">Lote<input class="inp lt-n" value="'+esc(l.nome||'')+'" placeholder="Lote 1"></label><label class="cp">Preço (R$)<input class="inp lt-p" inputmode="decimal" value="'+(l.preco?String(l.preco).replace('.',','):'')+'" placeholder="50,00"></label><label class="cp">Vale até o dia<input class="inp lt-d" type="date" value="'+esc(l.ate||'')+'"></label><label class="cp">ou até vender<input class="inp lt-q" inputmode="numeric" value="'+(l.qtd||'')+'" placeholder="100"></label><button class="btn sm er" onclick="this.parentNode.remove()" title="Tirar lote">✕</button></div>'; }
+function setor(sid,id){
+  var s=EV.saloes.filter(function(x){ return x.id===sid; })[0], x=id?s.setores.filter(function(y){ return y.id===id; })[0]:{nome:'',tipo:'pista',pessoas:1,qtd:'',meia:0,consumacao:'',inclui:'',lotes:[{nome:'Lote 1'}]};
+  folha('<h2>'+(id?'Editar setor':'Novo setor')+' · '+esc(s.nome)+'</h2><div class="g3"><label class="cp">Nome<input class="inp" id="se-nm" maxlength="60" value="'+esc(x.nome)+'" placeholder="Pista"></label><label class="cp">Tipo<select class="inp" id="se-tp">'+Object.keys(TIPOS).map(function(k){ return '<option value="'+k+'"'+(k===x.tipo?' selected':'')+'>'+TIPOS[k]+'</option>'; }).join('')+'</select></label><label class="cp">Pessoas por compra<input class="inp" id="se-ps" inputmode="numeric" value="'+esc(x.pessoas||1)+'"></label></div>'+
+    '<div class="g3" style="margin-top:8px"><label class="cp">Quantidade à venda<input class="inp" id="se-qt" inputmode="numeric" value="'+esc(x.qtd||'')+'" placeholder="300"></label><label class="cp">Consumação inclusa (R$)<input class="inp" id="se-cs" inputmode="decimal" value="'+(x.consumacao?String(x.consumacao).replace('.',','):'')+'" placeholder="0,00"></label><label class="cp">O que mais inclui<input class="inp" id="se-in" maxlength="160" value="'+esc(x.inclui)+'" placeholder="1 garrafa · pulseira VIP"></label></div>'+
+    '<label class="chk" style="margin-top:10px"><input type="checkbox" id="se-me"'+(x.meia?' checked':'')+'> Aceita meia-entrada (documento conferido na entrada)</label>'+
+    '<div style="margin-top:12px;font-weight:800;font-size:14px">Lotes de preço</div><p class="info" style="margin:2px 0 0">O lote vira o próximo na data ou ao vender a quantidade, o que vier primeiro.</p><div id="se-lts">'+(x.lotes.length?x.lotes:[{}]).map(loteLinha).join('')+'</div><button class="btn sm" style="margin-top:8px" onclick="el(\'se-lts\').insertAdjacentHTML(\'beforeend\',loteLinha({nome:\'Lote \'+(document.querySelectorAll(\'.lote\').length+1)}))">+ Lote</button>'+
+    '<div class="erro" id="se-er"></div><div style="display:flex;gap:8px;justify-content:space-between">'+(id?'<button class="btn er" onclick="apagaSetor(\''+esc(id)+'\')">Excluir</button>':'<span></span>')+'<span><button class="btn" onclick="fecha()">Cancelar</button> <button class="btn pri" onclick="salvaSetor(\''+esc(sid)+'\',\''+(id||'')+'\')">Salvar</button></span></div>');
+}
+function salvaSetor(sid,id){
+  var lotes=[].map.call(document.querySelectorAll('.lote'),function(l){ return {nome:l.querySelector('.lt-n').value,preco:l.querySelector('.lt-p').value,ate:l.querySelector('.lt-d').value,qtd:l.querySelector('.lt-q').value}; });
+  api('/painel/fest-setor',{id:id||undefined,salao:sid,nome:el('se-nm').value,tipo:el('se-tp').value,pessoas:el('se-ps').value,qtd:el('se-qt').value,consumacao:el('se-cs').value,inclui:el('se-in').value,meia:el('se-me').checked?1:0,lotes:lotes}).then(function(d){ if(!d.ok){ el('se-er').textContent=d.mensagem||'Não consegui salvar.'; return; } fecha(); carrega(EV.id); });
+}
+function apagaSetor(id){ api('/painel/fest-setor-apagar',{id:id}).then(function(d){ if(!d.ok){ el('se-er').textContent=d.mensagem||'Não consegui excluir.'; return; } fecha(); toast(d.oculto?'Setor escondido (já tinha vendas)':'Setor excluído'); carrega(EV.id); }); }
+function vendas(){
+  var v=EV.vendas; el('corpo').innerHTML='<div class="kp"><div><small>Ingressos</small><b>'+v.ingressos+'</b></div><div><small>Vendido</small><b>'+brl(v.total)+'</b></div><div><small>Para a casa</small><b>'+brl(v.casa)+'</b></div></div><div class="cx" id="vd-l">Carregando...</div>';
+  api('/painel/fest-vendas?ev='+encodeURIComponent(EV.id)).then(function(d){ var l=(d&&d.vendas)||[]; el('vd-l').innerHTML=l.length?l.map(function(x){ return '<div class="vd"><div>'+esc(x.nome||'Comprador')+'<small>'+x.qtd+' ingresso(s) · '+new Date(x.criado).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+'</small></div><div style="text-align:right">'+brl(x.casa)+'<small>'+(x.status==='pago'?'Pago':'Aguardando Pix')+'</small></div></div>'; }).join(''):'<p class="info" style="margin:0">Nenhuma venda ainda.</p>'; });
+}
+carrega();
+</script>
+</body>
+</html>
