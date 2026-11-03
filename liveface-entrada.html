@@ -57,6 +57,21 @@ button{font:inherit;color:inherit;cursor:pointer}
 .painel input,.painel select{min-height:54px;border-radius:14px;border:1.5px solid var(--linha-forte);background:var(--grafite-2);color:var(--texto);font:700 17px var(--corpo);padding:0 14px;width:100%}
 .pes{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--linha)}.pes div{flex:1;min-width:0}.pes b{font-weight:800}.pes small{display:block;color:var(--suave)}
 .pes .bt{min-height:42px;font-size:14px;padding:0 14px;flex:none}
+.app.cheio .visor{flex:0 0 0;min-height:0;height:0}
+.app.cheio .lado{flex:1;height:auto;justify-content:center;align-items:center;text-align:center;padding-top:max(24px,env(safe-area-inset-top))}
+.app.cheio .lv{width:100%;max-width:640px;text-align:left}
+.app.cheio .res{flex:0 0 auto;align-items:center;width:100%;max-width:760px;gap:10px}
+.app.cheio .est{font-size:48px;justify-content:center}
+.app.cheio .nome{font-size:40px}
+.app.cheio .acoes{justify-content:center;width:100%}
+.app.cheio .catraca{margin-top:18px;width:100%}
+.viva{font:800 28px/1.2 var(--titulo)}
+.tot{font:800 64px/1 var(--titulo)}
+.pg{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:6px}
+.pgc{background:#fff;color:#1B1412;border-radius:18px;padding:12px 12px 14px;width:224px;display:flex;flex-direction:column;align-items:center;gap:4px;font:800 18px/1.2 var(--titulo)}
+.pgc .qr{width:184px;height:184px;display:flex;align-items:center;justify-content:center;font:800 13px var(--corpo);text-align:center}
+.pgc .qr img,.pgc .qr canvas{display:block;width:184px;height:184px}
+.pgc small{font:700 12.5px/1.3 var(--corpo);color:#5a4d46}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -145,9 +160,11 @@ button{font:inherit;color:inherit;cursor:pointer}
   }
   function diz(t,o){ o=o||{}; var b=$('balao'); if(b) b.textContent=t; if(!live) return; try{ if(o.expr) live.expressao(o.expr); if(o.gesto) live.gesto(o.gesto); }catch(e){} }
   function setVis(e,s){ var v=$('vis'); if(v) v.dataset.e=e; var x=$('selo'); if(x) x.textContent=s; }
+  /* (179) reconheceu: a câmera sai da tela e o resultado ocupa o centro. Volta quando o tablet espera a próxima pessoa */
+  function cheio(on){ var a=$('app'); if(a) a.classList.toggle('cheio',!!on); }
   function catraca(a,t){ return '<div class="catraca '+(a?'aberta':'')+'"><i></i>'+esc(t)+'</div>'; }
   function aguardando(){
-    RACHA=null; contaPara(); setVis('busca','Olhe para a câmera'); pausa=0; cand=null; candN=0; falhas=0;
+    RACHA=null; cheio(false); contaPara(); setVis('busca','Olhe para a câmera'); pausa=0; cand=null; candN=0; falhas=0;
     $('res').innerHTML='<h2 style="font-size:30px">Pare em frente à câmera</h2><p class="mut">'+(SAI?'Eu confiro sua conta e libero a saída.':'A catraca abre sozinha quando eu reconhecer você.')+'</p><div class="acoes" style="margin-top:6px"><button class="bt bt-sec" id="beq">Equipe: buscar por nome</button></div>'+catraca(false,SAI?'Catraca de saída aguardando':'Catraca de entrada aguardando');
     $('beq').onclick=busca; diz('Oi! Olha aqui para mim.',{expr:'feliz'});
   }
@@ -156,13 +173,13 @@ button{font:inherit;color:inherit;cursor:pointer}
   function registra(p,met,sim){ var t=Date.now(); ENT[p.id]={t:t,metodo:met}; FILA.push({id:p.id,t:t,metodo:met,sim:sim?Math.round(sim*100)/100:0}); salvaFila(); sincroniza(); }
   function libera(p,met,sim){
     pausa=Date.now()+LIM.msRes; registra(p,met,sim); abreCatraca();
-    setVis('ok','Liberado');
-    $('res').innerHTML='<div class="est ok">✓ Liberado</div><div class="nome">Boas-vindas, '+esc(String(p.nome).split(' ')[0])+'!</div><p class="mut">'+(p.comanda?'Comanda '+esc(p.comanda)+' aberta · ':'')+esc(p.tipo||'Ingresso')+' · '+(met==='rosto'?'pelo rosto':(met==='qr'?'pelo QR code':'liberado pela equipe'))+'</p>'+catraca(true,'Catraca de entrada liberada');
+    setVis('ok','Liberado'); cheio(true);
+    $('res').innerHTML='<div class="nome">'+esc(String(p.nome).split(' ')[0])+',</div><div class="est ok">✓ Acesso liberado!</div><p class="viva">Aproveite seu evento! 🎉</p><p class="mut">'+(p.comanda?'Comanda '+esc(p.comanda)+' aberta · ':'')+esc(p.tipo||'Ingresso')+' · '+(met==='rosto'?'pelo rosto':(met==='qr'?'pelo QR code':'liberado pela equipe'))+'</p>'+catraca(true,'Catraca de entrada liberada');
     diz('Boa festa, '+String(p.nome).split(' ')[0]+'!',{gesto:'boas_vindas'});
     agenda(LIM.msRes,aguardando);
   }
   function jaEntrou(p){
-    pausa=Date.now()+LIM.msErro; setVis('alerta','Já entrou');
+    pausa=Date.now()+LIM.msErro; setVis('alerta','Já entrou'); cheio(true);
     $('res').innerHTML='<div class="est aten">! Este ingresso já entrou</div><div class="nome">'+esc(String(p.nome).split(' ')[0])+'</div><p class="mut">Entrada registrada às '+hora(ENT[p.id].t)+'. Se precisar, a equipe libera.</p><div class="acoes"><button class="bt bt-sec" id="bfor">Equipe: liberar mesmo assim</button></div>'+catraca(false,'Catraca de entrada fechada');
     $('bfor').onclick=function(){ libera(p,'equipe'); };
     diz('Esse ingresso já passou por aqui. Chame a equipe.',{gesto:'confuso'});
@@ -171,7 +188,7 @@ button{font:inherit;color:inherit;cursor:pointer}
   function naoReconheceu(m){
     /* (177) quem cadastrou o rosto agora ainda não está no tablet: busca a lista na hora (no máximo a cada 20 s) */
     if(navigator.onLine!==false&&Date.now()-(atualizaLista.t||0)>20000) atualizaLista();
-    pausa=Date.now()+LIM.msErro; setVis('alerta','Não reconhecido');
+    pausa=Date.now()+LIM.msErro; setVis('alerta','Não reconhecido'); cheio(false);
     $('res').innerHTML='<div class="est aten">! '+esc(m||'Não reconheci')+'</div><p class="mut">Tire o boné ou os óculos e olhe de novo. Ou mostre o QR code do ingresso aqui na câmera.</p><div class="acoes"><button class="bt bt-sec" id="beq">Equipe: buscar por nome</button></div>'+catraca(false,'Catraca de entrada fechada');
     $('beq').onclick=busca; diz('Ops, não consegui ver direito. Vamos de novo?',{gesto:'confuso'});
     agenda(LIM.msErro,aguardando);
@@ -266,14 +283,14 @@ button{font:inherit;color:inherit;cursor:pointer}
   function saiVolta(ms){ agenda(ms,function(){ saiParaLoop(); aguardando(); }); }
   function saiPost(c,p,extra){ var b={ev:EV.id,id:p.id}; Object.keys(extra||{}).forEach(function(k){ b[k]=extra[k]; }); return api(c,b); }
   function saiLibera(p,met,txt){
-    saiParaLoop(); pausa=Date.now()+LIM.msRes; abreCatraca(); setVis('ok','Saída liberada');
+    saiParaLoop(); pausa=Date.now()+LIM.msRes; abreCatraca(); setVis('ok','Saída liberada'); cheio(true);
     var pn=String(p.nome).split(' ')[0];
     saiPost('/painel/lf-saida',p,{metodo:met}).catch(function(){});
-    $('res').innerHTML='<div class="est ok">✓ Saída liberada</div><div class="nome">Até a próxima, '+esc(pn)+'!</div><p class="mut">'+esc(txt)+'</p>'+catraca(true,'Catraca de saída liberada');
+    $('res').innerHTML='<div class="nome">'+esc(pn)+',</div><div class="est ok">✓ Saída liberada!</div><p class="viva">Valeu pela presença. Volte sempre!</p><p class="mut">'+esc(txt)+'</p>'+catraca(true,'Catraca de saída liberada');
     diz('Valeu pela presença, '+pn+'! Volte sempre.',{gesto:'comemorar'}); saiVolta(LIM.msRes);
   }
   function saiAviso(tit,txt,p,fala){
-    pausa=Date.now()+60000; setVis('alerta',tit);
+    pausa=Date.now()+60000; setVis('alerta',tit); cheio(true);
     $('res').innerHTML='<div class="est aten">! '+esc(tit)+'</div><p class="mut">'+esc(txt)+'</p><div class="acoes">'+(p?'<button class="bt bt-sec" id="bsl">Equipe: liberar a saída</button>':'')+'<button class="bt bt-sec" id="bsv">Voltar</button></div>'+catraca(false,'Catraca de saída fechada');
     if(p) $('bsl').onclick=function(){ saiLibera(p,'equipe','Liberada pela equipe.'); };
     $('bsv').onclick=function(){ saiParaLoop(); aguardando(); };
@@ -281,7 +298,7 @@ button{font:inherit;color:inherit;cursor:pointer}
   }
   function saida(p,met){
     if(p===undefined) return; RACHA=null;
-    pausa=Date.now()+600000; timers.forEach(clearTimeout); saiParaLoop(); setVis('busca','Conferindo sua conta');
+    pausa=Date.now()+600000; timers.forEach(clearTimeout); saiParaLoop(); setVis('busca','Conferindo sua conta'); cheio(true);
     var pn=String(p.nome).split(' ')[0];
     $('res').innerHTML='<div class="nome">'+esc(pn)+'</div><p class="mut">Conferindo sua conta...</p>'+catraca(false,'Catraca de saída fechada'); diz('Deixa eu ver sua conta...',{expr:'pensativo'});
     saiPost('/painel/lf-saida-conta',p).then(function(d){
@@ -292,25 +309,36 @@ button{font:inherit;color:inherit;cursor:pointer}
       saiConta(p,d,met);
     }).catch(function(e){ if(e.message!=='sessao') saiAviso('Sem internet','Não consegui conferir a conta. A equipe confere e libera.',p,'Estou sem internet. Chame a equipe.'); });
   }
+  /* (179) conta no centro: Pix (QR do banco) e cartão (QR abre o pagamento no celular). A equipe pode baixar na maquininha */
+  function qrDe(el,txt){ var pinta=function(){ try{ el.innerHTML=''; new QRCode(el,{text:txt,width:184,height:184,colorDark:'#0B0908',colorLight:'#ffffff'}); }catch(e){ el.textContent='Use o Pix'; } }; if(window.QRCode) pinta(); else { var s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'; s.onload=pinta; s.onerror=function(){ el.textContent='Use o Pix'; }; document.head.appendChild(s); } }
   function saiConta(p,d,met){
-    setVis('alerta','Conta em aberto');
-    $('res').innerHTML='<div class="est aten">! Conta em aberto</div><div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap"><div id="sqr" style="background:#fff;border-radius:14px;padding:8px;min-width:150px;min-height:150px;display:flex;align-items:center;justify-content:center;color:#1B1412;font-size:13px;font-weight:800">Gerando o Pix...</div><div style="flex:1;min-width:150px"><div style="font:800 42px/1 var(--titulo)" id="sval">'+reais(d.total)+'</div><p class="mut" style="margin-top:6px" id="stx">Leia o Pix com o celular. Quando cair, a saída abre sozinha.</p></div></div><div class="acoes"><button class="bt bt-pri" id="brc">Rachar: passar para um amigo</button><button class="bt bt-sec" id="bsl">Equipe: liberar a saída</button><button class="bt bt-sec" id="bsv">Cancelar</button></div>';
+    setVis('alerta','Conta em aberto'); cheio(true);
+    var pn=String(p.nome).split(' ')[0];
+    $('res').innerHTML='<div class="nome">'+esc(pn)+', sua conta</div><div class="tot" id="sval">'+reais(d.total)+'</div><p class="mut" id="stx">Pague pelo celular. Quando o pagamento cair, a saída abre sozinha.</p>'+
+      '<div class="pg"><div class="pgc"><div class="qr" id="sqr">Gerando o Pix...</div>Pix<small>Leia no app do banco</small></div><div class="pgc"><div class="qr" id="scq">Gerando...</div>Cartão<small>Leia com a câmera do celular e pague no cartão</small></div></div>'+
+      '<div class="acoes" style="margin-top:12px"><button class="bt bt-pri" id="brc">Rachar: passar para um amigo</button><button class="bt bt-sec" id="bmq">Equipe: pago na maquininha</button><button class="bt bt-sec" id="bsl">Equipe: liberar sem pagar</button><button class="bt bt-sec" id="bsv">Cancelar</button></div>';
     $('brc').onclick=function(){ racha(p,d,met); };
     $('bsl').onclick=function(){ saiLibera(p,'equipe','Liberada pela equipe. O valor continua na comanda até ser baixado no Atendimento.'); };
     $('bsv').onclick=function(){ saiParaLoop(); aguardando(); };
+    var bmq=$('bmq'); bmq.onclick=function(){
+      if(!bmq.dataset.ok){ bmq.dataset.ok='1'; bmq.textContent='Confirmar: recebi '+reais(d.total)+' na maquininha'; return; }
+      bmq.disabled=true; bmq.textContent='Baixando...';
+      saiPost('/painel/lf-saida-maquina',p).then(function(x){ if(!x||!x.ok){ saiAviso('Não deu para baixar',(x&&x.mensagem)||'Chame o gerente.',p,(x&&x.mensagem)||'Não deu certo.'); return; } saiLibera(p,'equipe','Pago na maquininha'+(x.valor?': '+reais(x.valor):'')+'.'); }).catch(function(e){ if(e.message!=='sessao') saiAviso('Sem internet','Não consegui baixar a conta. Tente de novo.',p); });
+    };
     diz('Falta só fechar a conta para eu abrir a catraca.',{expr:'pensativo'});
     saiPost('/painel/lf-saida-pix',p).then(function(x){
-      if(!x||!x.ok){ if($('sqr')) $('sqr').textContent='Sem Pix'; if($('stx')) $('stx').textContent=(x&&x.mensagem)||'Pague no caixa.'; return; }
-      if($('sqr')) $('sqr').innerHTML=x.pix.imagem?'<img alt="QR code Pix" width="150" height="150" src="data:image/png;base64,'+esc(x.pix.imagem)+'" style="display:block">':'Pix pronto';
+      if(!x||!x.ok){ if($('sqr')) $('sqr').textContent='Sem Pix'; if($('scq')) $('scq').textContent='Sem cartão'; if($('stx')) $('stx').textContent=(x&&x.mensagem)||'Pague no caixa.'; return; }
+      if($('sqr')) $('sqr').innerHTML=x.pix&&x.pix.imagem?'<img alt="QR code Pix" src="data:image/png;base64,'+esc(x.pix.imagem)+'">':'Pix pelo cartão ao lado';
+      if($('scq')){ if(x.link) qrDe($('scq'),x.link); else $('scq').textContent='Cartão indisponível'; }
     }).catch(function(){ if($('stx')) $('stx').textContent='Sem internet. Pague no caixa.'; });
     var t0=Date.now(); saiTimer=setInterval(function(){
       if(Date.now()-t0>600000){ saiParaLoop(); aguardando(); return; }
-      saiPost('/painel/lf-saida-status',p).then(function(s){ if(!saiTimer||!s||!s.ok) return; if(!(s.total>0)){ saiLibera(p,met==='equipe'?'equipe':met,'Conta paga no Pix.'); return; } if($('sval')) $('sval').textContent=reais(s.total); }).catch(function(){});
+      saiPost('/painel/lf-saida-status',p).then(function(s){ if(!saiTimer||!s||!s.ok) return; if(!(s.total>0)){ saiLibera(p,met==='equipe'?'equipe':met,'Conta paga.'); return; } d.total=s.total; if($('sval')) $('sval').textContent=reais(s.total); }).catch(function(){});
     },4000);
   }
   /* (175) RACHAR: o amigo mostra o QR do ingresso dele e a conta inteira passa para a comanda dele. Ele paga na saída */
   function racha(p,d,met){
-    saiParaLoop(); timers.forEach(clearTimeout); RACHA={p:p,d:d,met:met}; pausa=0; setVis('busca','Mostre o QR do amigo');
+    saiParaLoop(); timers.forEach(clearTimeout); RACHA={p:p,d:d,met:met}; pausa=0; setVis('busca','Mostre o QR do amigo'); cheio(false);
     $('res').innerHTML='<div class="nome">Rachar a conta</div><p class="mut">O amigo abre o ingresso dele no celular, toca em <b>Ver o QR code do ingresso</b> e mostra aqui na câmera. A conta de '+reais(d.total)+' passa inteira para a comanda dele.</p><div class="acoes"><button class="bt bt-sec" id="brb">Equipe: buscar o amigo</button><button class="bt bt-sec" id="brv">Voltar</button></div>'+catraca(false,'Catraca de saída fechada');
     $('brb').onclick=busca; $('brv').onclick=function(){ saida(p,met); };
     diz('Mostra o QR code do seu amigo para mim.',{expr:'feliz'});
@@ -321,7 +349,7 @@ button{font:inherit;color:inherit;cursor:pointer}
     if(a.id===r.p.id){ diz('Esse é o seu QR. Preciso do QR do amigo.',{gesto:'confuso'}); return; }
     RACHA=null; pausa=Date.now()+600000; timers.forEach(clearTimeout);
     var an=String(a.nome).split(' ')[0], pn=String(r.p.nome).split(' ')[0];
-    setVis('busca','Confirme o rachar');
+    setVis('busca','Confirme o rachar'); cheio(true);
     $('res').innerHTML='<div class="nome">Passar para '+esc(an)+'?</div><p class="mut">'+reais(r.d.total)+' da conta de '+esc(pn)+' vão para a comanda de '+esc(an)+', que paga na saída.</p><div class="acoes"><button class="bt bt-pri" id="brok">Confirmar</button><button class="bt bt-sec" id="brv">Cancelar</button></div>'+catraca(false,'Catraca de saída fechada');
     $('brv').onclick=function(){ saida(r.p,r.met); };
     $('brok').onclick=function(){ var b=$('brok'); b.disabled=true; b.textContent='Passando...';
