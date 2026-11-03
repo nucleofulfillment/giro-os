@@ -1400,8 +1400,10 @@ function ckLf(){
     else if(d.evento&&!d.visitante&&!$('ck-lfe')) e.insertAdjacentHTML('beforeend','<div class="nt" id="ck-lfe" style="margin-top:8px;font-size:13.5px">Este WhatsApp não tem ingresso dentro do evento, então o pedido fica na conta da mesa. Tem ingresso em outro número? <button class="lk" onclick="ckLfEntrar()">Entrar com outro WhatsApp</button></div>'); };
   if(LFC.tok===CT.tok){ if(LFC.d) pinta(LFC.d); return; }
   LFC.tok=CT.tok; LFC.d=null;
-  var bt0=$('ct-bt'); if(bt0) bt0.disabled=true;   /* não deixa pedir antes de saber se vai para a comanda */
-  ctApi('/food/pedidos-lf',null,true).then(function(d){ if(LFC.tok!==CT.tok) return; LFC.d=d&&d.ok?d:null; var b=$('ct-bt'); if(b) b.disabled=false; pinta(LFC.d); });
+  /* não deixa pedir antes de saber se vai para a comanda, mas nunca trava mais de 1,5 s (internet lenta) */
+  var bt0=$('ct-bt'), solta=function(){ var b=$('ct-bt'); if(b&&!(LFC.d&&LFC.d.evento&&LFC.d.visitante&&!LFC.d.ativo&&!CK.lfSem)) b.disabled=false; };
+  if(bt0) bt0.disabled=true; setTimeout(solta,1500);
+  ctApi('/food/pedidos-lf',null,true).then(function(d){ if(LFC.tok!==CT.tok) return; LFC.d=d&&d.ok?d:null; solta(); pinta(LFC.d); });
 }
 function ckLfEntrar(){ CT.real=1; CT.ctx='ck'; CT.tok=''; CT.conta=null; ctLogin(); }
 function ckLfSem(){ CK.lfSem=1; ckKeep(); }
