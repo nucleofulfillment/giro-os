@@ -102,7 +102,8 @@ a{color:inherit}
 .info{padding:14px 16px 6px}.info h1{margin:0;font-size:24px;letter-spacing:-.01em;text-wrap:balance}
 .ln{display:flex;gap:8px;margin-top:7px;font-size:13px;font-weight:700;color:var(--tx2)}
 .ln small{display:block;font-weight:600;color:var(--mu);margin-top:2px}
-.loc{display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:9px 14px;border-radius:99px;border:1.5px solid var(--ln2);font-size:13px;font-weight:800;text-decoration:none}
+.loc{display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:9px 14px;border-radius:99px;border:1.5px solid var(--ln2);background:none;color:var(--tx);cursor:pointer;font-size:13px;font-weight:800;text-decoration:none}
+.mapa{margin-top:10px;border-radius:16px;overflow:hidden;background:var(--c1);box-shadow:var(--sh);animation:surge .3s ease}.mapa iframe{display:block;width:100%;height:240px;border:0}.mapa .bt{border-radius:0;font-size:14px;padding:12px}
 .desc{margin:10px 16px 4px;font-size:13.5px;line-height:1.5;color:var(--tx2);font-weight:600;white-space:pre-line}
 .tabs{display:flex;gap:16px;padding:6px 16px 0;border-bottom:1px solid var(--ln);overflow:auto;scrollbar-width:none}
 .tabs button{flex:none;font-size:14px;font-weight:800;border:0;background:none;padding:10px 0;border-bottom:3px solid transparent;color:var(--mu2)}
@@ -222,6 +223,11 @@ function endereco(fim){ if(!ROTA.casa) return; try{ history.replaceState(history
 function tela(h,nome){ clearTimeout(S.abT); tiraLives(); S.tela=nome||''; el('app').innerHTML=h; scrollTo(0,0); temaPinta(); mascoteOk(); }
 function voltar(onclick,rot){ return '<button class="ib" onclick="'+onclick+'" aria-label="'+(rot||'Voltar')+'">'+SETA+'</button>'; }
 /* (184) localização: o ponto marcado no mapa pelo dono do evento, ou o endereço escrito */
+/* (189) o mapa abre dentro do app, num quadro que expande embaixo do botão; o Google Maps em outra aba fica só para traçar a rota */
+function mapsQ(e){ return e.lat!=null&&e.lng!=null?e.lat+','+e.lng:[e.endereco,e.local||e.casa,e.cidade].filter(Boolean).join(', '); }
+function mapaVer(box,bt,e){ var b=el(box), k=el(bt); if(!b||!e) return; if(!b.hidden){ b.hidden=true; b.innerHTML=''; if(k) k.innerHTML=k.dataset.t||k.innerHTML; return; }
+  var q=mapsQ(e); if(!q) return; if(k){ k.dataset.t=k.innerHTML; k.innerHTML=k.tagName==='A'?'Fechar mapa':'✕ Fechar mapa'; }
+  b.innerHTML='<iframe title="Mapa do local" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://maps.google.com/maps?q='+encodeURIComponent(q)+'&z=16&hl=pt-BR&output=embed"></iframe><a class="bt cl w" href="https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(q)+'" target="_blank" rel="noopener">🧭 Traçar rota no Google Maps</a>'; b.hidden=false; }
 function mapsUrl(e){ if(e.lat!=null&&e.lng!=null) return 'https://www.google.com/maps/search/?api=1&query='+e.lat+','+e.lng; var q=[e.endereco,e.local||e.casa,e.cidade].filter(Boolean).join(', '); return q?'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(q):''; }
 
 /* ---------- abertura: slides do Admin e capas dos eventos (foto ou vídeo), com chamada, título e botão ---------- */
@@ -298,7 +304,7 @@ function evento(id){
   });
 }
 function eventoPinta(manter){
-  var e=S.ev, y=scrollY, mp=mapsUrl(e), h='<div class="hero" style="'+ban(e)+'">'+voltar('agenda()')+'</div><div class="info"><h1>'+esc(e.nome)+'</h1><div class="ln">📅 '+curto(e.inicio)+(e.hora_ini?' · '+esc(e.hora_ini):'')+(e.hora_fim?' às '+esc(e.hora_fim):'')+'</div><div class="ln"><span>📍</span><span>'+esc(e.local||e.casa)+(e.cidade?' · '+esc(e.cidade):'')+(e.idade?' · '+e.idade+'+':'')+(e.endereco?'<small>'+esc(e.endereco)+'</small>':'')+'</span></div>'+(mp?'<a class="loc" href="'+esc(mp)+'" target="_blank" rel="noopener">🗺️ Ver localização</a>':'')+'</div>'+(e.descricao?'<div class="desc">'+esc(e.descricao)+'</div>':'');
+  var e=S.ev, y=scrollY, mp=mapsUrl(e), h='<div class="hero" style="'+ban(e)+'">'+voltar('agenda()')+'</div><div class="info"><h1>'+esc(e.nome)+'</h1><div class="ln">📅 '+curto(e.inicio)+(e.hora_ini?' · '+esc(e.hora_ini):'')+(e.hora_fim?' às '+esc(e.hora_fim):'')+'</div><div class="ln"><span>📍</span><span>'+esc(e.local||e.casa)+(e.cidade?' · '+esc(e.cidade):'')+(e.idade?' · '+e.idade+'+':'')+(e.endereco?'<small>'+esc(e.endereco)+'</small>':'')+'</span></div>'+(mp?'<button class="loc" id="locB" onclick="mapaVer(\'locBox\',\'locB\',S.ev)">🗺️ Ver localização</button><div class="mapa" id="locBox" hidden></div>':'')+'</div>'+(e.descricao?'<div class="desc">'+esc(e.descricao)+'</div>':'');
   h+='<div class="tabs" id="tabs"></div><div id="sets"></div><div class="rod"><div><small id="qtd"></small><b id="tot"></b></div><button class="bt" id="bCont" onclick="continuar()">Continuar</button></div>';
   tela(h,'evento'); if(manter) scrollTo(0,y); abas(); setores(); endereco('/'+(e.slug||e.id));
 }
@@ -347,7 +353,6 @@ function m3Prepara(){ var e=S.ev; if(!e||!e.saloes||!e.cli) return; var tem=e.sa
 function mapa3d(sid){
   var sal=S.ev.saloes[S.sal], x=todos()[sid]; if(!sal) return;
   var m=m3Cria(S.ev.cli); m.o.hidden=false; el('m3r').textContent=rot3d(x); el('m3s').textContent=x.nome; el('m3i').textContent=m.pronto?'Montando o salão…':'Carregando o salão…'; S.m3={sid:sid,msg:null};
-  try{ history.pushState({m3:1},''); S.m3h=1; }catch(e){}
   api('/fest/planta/'+encodeURIComponent(S.ev.id)+'?salao='+encodeURIComponent(sal.id)).then(function(d){
     if(m.o.hidden||!S.m3||S.m3.sid!==sid) return;
     if(!d.ok){ el('m3i').textContent=d.mensagem||'Este salão ainda não tem mapa.'; return; }
@@ -357,8 +362,7 @@ function mapa3d(sid){
     if(m.pronto) m.f.contentWindow.postMessage(S.m3.msg,'*');
   });
 }
-function fecha3d(daVolta){ if(!M3||M3.o.hidden) return; M3.o.hidden=true; S.m3=null; try{ M3.f.contentWindow.postMessage({tipo:'salao3d-pausa'},'*'); }catch(e){} if(!daVolta&&S.m3h){ S.m3h=0; try{ history.back(); }catch(e){} } S.m3h=0; }
-addEventListener('popstate',function(){ if(M3&&!M3.o.hidden) fecha3d(true); });
+function fecha3d(){ if(!M3||M3.o.hidden) return; M3.o.hidden=true; S.m3=null; try{ M3.f.contentWindow.postMessage({tipo:'salao3d-pausa'},'*'); }catch(e){} }
 function tiraMesa(sid,n){ S.mesas[sid]=(S.mesas[sid]||[]).filter(function(x){ return x!==n; }); S.car[sid]=S.mesas[sid].length; setores(); }
 addEventListener('message',function(e){ var m=e.data, f=M3&&M3.f; if(!m||!f||e.source!==f.contentWindow) return;
   if(m.tipo==='prev3d-pronto'){ M3.pronto=true; if(S.m3&&S.m3.msg) f.contentWindow.postMessage(S.m3.msg,'*'); }
@@ -429,7 +433,7 @@ function ingPinta(msg){
     var extra=[x.meia?'Meia-entrada · leve o documento':'',x.credito?brl(x.credito)+' de consumação na comanda':''].filter(Boolean), mp=mapsUrl(x);
     var acao=x.convidado?'<div class="fac"><b>Convidado. Diga quem vai usar.</b><button class="bt" onclick="transf('+i+')">Preencher</button></div>':
       x.meu?(x.facial?'<div class="fac ok"><b>✓ Facial cadastrada. É só olhar para a câmera na entrada.</b></div>':'<div class="fac"><b>Cadastre sua facial para ter acesso mais rápido.</b><a class="bt" href="'+esc(x.link)+'">Cadastrar</a></div>'):'<div class="fac"><b>Ingresso de '+esc(String(x.nome).split(' ')[0])+'</b><a class="bt" target="_blank" rel="noopener" href="https://wa.me/'+esc(x.fone)+'?text='+encodeURIComponent('Seu ingresso para '+x.evento+': '+x.link)+'">Enviar</a></div>';
-    return '<div class="ing"><div class="t1"><small>'+esc(x.evento)+'</small><b>'+esc(x.setor)+'</b><span>'+curto(x.inicio)+(x.hora_ini?' · '+esc(x.hora_ini):'')+' · '+esc(x.nome)+'</span>'+(extra.length?'<span style="display:block;margin-top:4px;color:#FFB27A">'+extra.map(esc).join(' · ')+'</span>':'')+'</div><div class="q" id="q'+i+'"></div><div class="t2"><span>'+(x.comanda?'Comanda '+esc(x.comanda):'')+'</span><span>'+esc(x.casa)+(mp?' · <a href="'+esc(mp)+'" target="_blank" rel="noopener">Como chegar</a>':'')+'</span></div>'+acao+(x.transferir&&!x.convidado?'<button class="bt cl" style="margin:0 16px 14px;width:calc(100% - 32px)" onclick="transf('+i+')">Transferir ingresso</button>':'')+'</div>'; }).join(''):'<div class="vazio">Você ainda não tem ingressos.<br><br><button class="bt" onclick="agenda()">Ver a Agenda</button></div>');
+    return '<div class="ing"><div class="t1"><small>'+esc(x.evento)+'</small><b>'+esc(x.setor)+'</b><span>'+curto(x.inicio)+(x.hora_ini?' · '+esc(x.hora_ini):'')+' · '+esc(x.nome)+'</span>'+(extra.length?'<span style="display:block;margin-top:4px;color:#FFB27A">'+extra.map(esc).join(' · ')+'</span>':'')+'</div><div class="q" id="q'+i+'"></div><div class="t2"><span>'+(x.comanda?'Comanda '+esc(x.comanda):'')+'</span><span>'+esc(x.casa)+(mp?' · <a href="#" id="cmB'+i+'" onclick="event.preventDefault();mapaVer(\'cmBox'+i+'\',\'cmB'+i+'\',S.ings['+i+'])">Como chegar</a>':'')+'</span></div><div class="mapa" id="cmBox'+i+'" hidden style="margin:0 16px 14px"></div>'+acao+(x.transferir&&!x.convidado?'<button class="bt cl" style="margin:0 16px 14px;width:calc(100% - 32px)" onclick="transf('+i+')">Transferir ingresso</button>':'')+'</div>'; }).join(''):'<div class="vazio">Você ainda não tem ingressos.<br><br><button class="bt" onclick="agenda()">Ver a Agenda</button></div>');
   var pinta=function(){ l.forEach(function(x,i){ try{ new QRCode(el('q'+i),{text:x.qr,width:180,height:180,colorDark:'#0B0908',colorLight:'#ffffff'}); }catch(e){ el('q'+i).textContent=x.qr; } }); };
   if(window.QRCode) pinta(); else if(l.length){ var s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'; s.onload=pinta; document.head.appendChild(s); }
 }
@@ -440,6 +444,11 @@ function transf(i){
 }
 function transfOk(id){ var b=el('bT'), nm=el('tr-nm').value.trim(); b.disabled=true;
   api('/fest/transferir',{id:id,nome:nm,cpf:el('tr-cpf').value,fone:el('tr-fo').value}).then(function(d){ b.disabled=false; if(!d.ok){ el('er').textContent=d.mensagem||'Não deu certo.'; return; } S.ings=d.ingressos||[]; tela('<div class="bar">'+voltar('agenda()')+'<b>Meus ingressos</b></div><div id="ml"></div>','meus'); ingPinta('Ingresso passado para '+nm.split(' ')[0]+'.'); }); }
+/* (189) o voltar do celular não sai do app nem troca de tela: a navegação é pelas setas e pelo menu.
+   O navegador só respeita a trava criada depois de um toque, por isso ela é refeita a cada toque */
+function travaVoltar(){ try{ if(!history.state||!history.state.lf) history.pushState({lf:1},''); }catch(e){} }
+addEventListener('pointerdown',travaVoltar,true);
+addEventListener('popstate',function(){ try{ history.pushState({lf:1},''); }catch(e){} });
 /* (184) início: mostra na hora a agenda guardada no aparelho e atualiza por trás */
 var CK='fest_ag1'+(CASA?'_'+CASA:'');
 try{ var c0=JSON.parse(localStorage.getItem(CK)||'null'); if(c0&&Array.isArray(c0.eventos)){ S.ag=c0.eventos; S.sl=c0.abertura||[]; S.casa=c0.casa||null; S.carregou=true; } }catch(e){}
