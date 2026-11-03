@@ -75,6 +75,8 @@ label.cp{display:block;font-size:12px;font-weight:800;color:var(--mu)}
 .inp{width:100%;font:inherit;font-size:14.5px;font-weight:600;color:var(--tx);padding:10px 12px;border:1.5px solid #E2E2E6;border-radius:12px;background:var(--s1);margin-top:4px;outline:none}
 .inp::placeholder{color:var(--ph);font-weight:500;opacity:1}
 .inp.vz{color:var(--ph)}
+input[type=date].inp,input[type=time].inp{cursor:pointer}
+.dsem{display:block;margin-top:4px;font-size:11.5px;font-weight:800;color:#C2187F;text-transform:none;letter-spacing:0;min-height:14px}
 .inp:focus{border-color:var(--tx);background:#fff}
 textarea.inp{min-height:84px;resize:vertical}
 .chk{display:flex;gap:8px;align-items:center;font-weight:700;font-size:14px}
@@ -156,8 +158,13 @@ function hoje(){ return new Date(Date.now()-3*3600000).toISOString().slice(0,10)
 if(US&&US.cliente_nome) el('loja').textContent=US.cliente_nome;
 try{ if(window.LiveMascote){ live=LiveMascote.criar(el('lv'),{rotulo:'Live'}); live.expressao('feliz'); } }catch(e){}
 /* campos de data vazios ficam apagados, como os exemplos dos outros campos */
-function datasVazias(){ [].forEach.call(document.querySelectorAll('input[type=date].inp'),function(i){ i.classList.toggle('vz',!i.value); }); }
-document.addEventListener('input',function(e){ if(e.target&&e.target.type==='date') e.target.classList.toggle('vz',!e.target.value); });
+/* (189) tocar em qualquer parte do campo de data ou hora abre o calendário; embaixo da data aparece o dia da semana por extenso */
+var SEMANA=['domingo','segunda','terça','quarta','quinta','sexta','sábado'], MESES=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+function diaSemana(i){ var s=i.nextElementSibling; if(!s||!s.classList.contains('dsem')){ s=document.createElement('small'); s.className='dsem'; i.insertAdjacentElement('afterend',s); } var v=i.value; s.textContent=/^\d{4}-\d{2}-\d{2}$/.test(v)?SEMANA[new Date(v+'T12:00:00').getDay()]+', '+(+v.slice(8,10))+' de '+MESES[+v.slice(5,7)-1]:''; }
+function datasVazias(){ [].forEach.call(document.querySelectorAll('input[type=date].inp'),function(i){ i.classList.toggle('vz',!i.value); diaSemana(i); }); }
+document.addEventListener('input',function(e){ if(e.target&&e.target.type==='date'){ e.target.classList.toggle('vz',!e.target.value); diaSemana(e.target); } });
+document.addEventListener('change',function(e){ if(e.target&&e.target.type==='date') diaSemana(e.target); });
+document.addEventListener('click',function(e){ var i=e.target; if(i&&i.tagName==='INPUT'&&(i.type==='date'||i.type==='time')&&i.showPicker){ try{ i.showPicker(); }catch(x){} } });
 [].forEach.call(document.querySelectorAll('#nav button'),function(b){ b.onclick=function(){ VISTA=b.dataset.v; EV=null; pinta(); scrollTo(0,0); }; });
 var TIPOS={pista:'Pista',mesa:'Mesa',camarote:'Camarote',backstage:'Backstage',vip:'VIP',outro:'Outro'};
 function carrega(id,quieto){ return api('/painel/fest-eventos').then(function(d){ if(!d.ok) throw new Error(d.mensagem||''); D=d; if(id) EV=D.eventos.filter(function(e){ return e.id===id; })[0]||null; if(!quieto) pinta(); }).catch(function(e){ if(e.message!=='sessao') el('app').innerHTML='<div class="vazio">'+esc(e.message||'Não consegui carregar.')+'</div>'; }); }
@@ -236,7 +243,7 @@ function dados(){
       '<input type="file" id="fl-v" accept="image/*" hidden onchange="foto(\'v\',this)"><input type="file" id="fl-cv" accept="video/mp4,video/webm,video/quicktime" hidden onchange="capaVideo(this)"></div>'+
   '</div></div>'+
   '<div class="erro" id="ed-er"></div><div class="salvar"><button class="btn pri" id="ed-b" onclick="salvaDados()">Salvar</button><span>Fotos e vídeo já ficam salvos ao enviar.</span></div>';
-  fotos(); mapaTx(); mapaIni();
+  fotos(); mapaTx(); mapaIni(); datasVazias();
 }
 function fotos(){
   var e=EV, h=el('fx-h'); if(!h) return;

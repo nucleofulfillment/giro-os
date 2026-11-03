@@ -49,7 +49,9 @@ a{color:inherit}
 .abt{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:18px 18px max(22px,env(safe-area-inset-bottom));pointer-events:none}
 .abt>*{pointer-events:auto}
 .abtop{position:absolute;left:0;right:0;top:calc(max(12px,env(safe-area-inset-top)) + 16px);z-index:2;text-align:center;pointer-events:none}
-.som{position:absolute;top:calc(max(12px,env(safe-area-inset-top)) + 14px);right:14px;z-index:4;width:42px;height:42px;border-radius:50%;border:0;background:rgba(0,0,0,.45);color:#fff;font-size:18px;display:flex;align-items:center;justify-content:center}
+#somc{position:absolute;z-index:4;left:50%;top:44%;transform:translate(-50%,-50%) scale(.85);width:78px;height:78px;border-radius:50%;border:0;background:#0009;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;cursor:pointer}
+#somc.on{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
+.segs i.vd b{transition:width .3s linear}
 .abtop .marca{font-size:40px;text-shadow:0 2px 18px rgba(0,0,0,.35)}
 .abc{font-size:13px;font-weight:800;opacity:.9;margin-top:4px}
 /* (185) o Live da abertura é a ajuda do app */
@@ -165,7 +167,7 @@ var API='https://giro-os-api.nucleofull.workers.dev', Q=new URLSearchParams(loca
 var CASA=String(ROTA.casa||Q.get('casa')||'').toLowerCase().replace(/[^a-z0-9_-]/g,'');
 var SETA='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4.5 7.5 12l7.5 7.5"/></svg>';
 var S={sl:[],si:0,slA:[],ag:[],casa:null,ev:null,sal:0,car:{},mesas:{},filtro:'',busca:'',tk:'',conta:null,ped:null,poll:null,abT:null,volta:null,tela:'',carregou:false};
-try{ S.tk=localStorage.getItem('fest_tk')||''; S.som=sessionStorage.getItem('fest_som')==='1'; }catch(e){}
+try{ S.tk=localStorage.getItem('fest_tk')||''; S.som=sessionStorage.getItem('fest_som')!=='0'; }catch(e){}
 function el(i){ return document.getElementById(i); }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 function brl(v){ return 'R$ '+Number(v||0).toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.'); }
@@ -237,11 +239,12 @@ function slides(){
 }
 function abertura(){
   var l=S.slA=slides(); S.si=0; endereco('');
-  tela('<div class="ab"><div class="abm" id="abM"></div><div class="segs">'+(l.length>1?l.map(function(){ return '<i><b></b></i>'; }).join(''):'')+'</div><button class="som" id="abS" onclick="trocaSom()" hidden aria-label="Ligar o som">🔇</button><div class="abtop"><div class="marca">live<i>fest</i></div>'+(S.casa?'<div class="abc">'+esc(S.casa.nome)+'</div>':'')+'</div><button class="lvA" onclick="ajuda()" aria-label="Como posso ajudar? Fale com o Live"><span class="lvM" id="lvA"></span><span class="bal2">Como posso ajudar?</span></button><div class="abt"><span class="kick" id="abK" hidden></span><h1 id="abN">'+(l.length?'':S.carregou?'Festas e shows perto de você':'')+'</h1><small id="abI">'+(l.length?'':S.carregou?'Toque em Agenda para ver os eventos.':'Carregando a agenda…')+'</small><button class="bt w cta" id="abC" hidden></button><div class="bts"><button class="bt" onclick="agenda()">📅 Agenda</button><button class="bt cl" onclick="meus()">🎟️ Meus ingressos</button></div></div></div>','abertura');
-  mascoteOk(); if(l.length){ el('abM').onclick=function(ev){ var r=this.getBoundingClientRect(); if(ev.clientX-r.left<r.width/3) ant(); else prox(); }; el('abC').onclick=function(){ vai(S.slA[S.si]); }; mostra(); }
+  tela('<div class="ab"><div class="abm" id="abM"></div><div class="segs">'+(l.length>1?l.map(function(){ return '<i><b></b></i>'; }).join(''):'')+'</div><button id="somc" onclick="alternaSom(event)" aria-label="Som"></button><div class="abtop"><div class="marca">live<i>fest</i></div>'+(S.casa?'<div class="abc">'+esc(S.casa.nome)+'</div>':'')+'</div><button class="lvA" onclick="ajuda()" aria-label="Como posso ajudar? Fale com o Live"><span class="lvM" id="lvA"></span><span class="bal2">Como posso ajudar?</span></button><div class="abt"><span class="kick" id="abK" hidden></span><h1 id="abN">'+(l.length?'':S.carregou?'Festas e shows perto de você':'')+'</h1><small id="abI">'+(l.length?'':S.carregou?'Toque em Agenda para ver os eventos.':'Carregando a agenda…')+'</small><button class="bt w cta" id="abC" hidden></button><div class="bts"><button class="bt" onclick="agenda()">📅 Agenda</button><button class="bt cl" onclick="meus()">🎟️ Meus ingressos</button></div></div></div>','abertura');
+  mascoteOk(); if(l.length){ el('abM').onclick=function(ev){ var r=this.getBoundingClientRect(); var px=(ev.clientX-r.left)/r.width; if(px<0.3) ant(); else if(px>0.7) prox(); else mostraSom(); }; el('abC').onclick=function(){ vai(S.slA[S.si]); }; mostra(); }
 }
 function vai(x){ if(!x) return; if(x.evento) evento(x.evento); else if(x.link) location.href=x.link; else agenda(); }
-function segs(d){ [].forEach.call(document.querySelectorAll('.segs i'),function(s,i){ var b=s.firstChild; if(i===S.si&&d) b.style.animationDuration=d+'s'; s.className=i<S.si?'ja':(i===S.si?'on':''); }); }
+/* (189) a barra de cada vídeo anda junto com o vídeo (antes corria enquanto o vídeo ainda carregava) */
+function segs(d,video){ [].forEach.call(document.querySelectorAll('.segs i'),function(s,i){ var b=s.firstChild; b.style.width=''; b.style.animationDuration=''; if(i===S.si){ if(video){ s.className='vd'; b.style.width='0%'; } else { if(d) b.style.animationDuration=d+'s'; s.className='on'; } } else s.className=i<S.si?'ja':''; }); }
 function mostra(){
   var l=S.slA, x=l[S.si], m=el('abM'); if(!x||!m) return; clearTimeout(S.abT);
   var ev=x.evento?S.ag.filter(function(e){ return e.id===x.evento; })[0]:null;
@@ -250,18 +253,26 @@ function mostra(){
   el('abN').textContent=x.titulo||(ev?ev.nome:'');
   el('abI').textContent=ev?curto(ev.inicio)+(ev.hora_ini?' · '+ev.hora_ini:'')+' · '+ev.casa+(ev.cidade?' · '+ev.cidade:''):'';
   var bt=x.botao||(x.evento?'Garantir ingresso':''); el('abC').hidden=!bt||!(x.evento||x.link); el('abC').textContent=bt+' →';
-  if(x.foto){ segs(6); if(l.length>1) S.abT=setTimeout(prox,6000); }
-  else { var v=m.querySelector('video'); segs(8); el('abS').hidden=false; v.muted=!S.som||S.somTrava; v.onloadedmetadata=function(){ if(isFinite(v.duration)&&v.duration>0) segs(Math.min(v.duration,30)); }; v.onended=prox; v.onerror=function(){ S.abT=setTimeout(prox,400); };
-    try{ var p=v.play(); if(p&&p.catch) p.catch(function(er){ if(!er||er.name!=='NotAllowedError'||v.muted) return; v.muted=true; S.somTrava=true; somPinta(); v.play().catch(function(){}); }); }catch(e){} if(l.length>1) S.abT=setTimeout(prox,31000); }
-  if(x.foto) el('abS').hidden=true; somPinta();
-  var nx=l[(S.si+1)%l.length]; if(nx&&nx.foto&&nx!==x){ var im=new Image(); im.src=nx.midia; }
+  if(x.foto){ segs(6); el('somc').classList.remove('on'); if(l.length>1) S.abT=setTimeout(prox,6000); }
+  else { var v=m.querySelector('video'), sb=document.querySelectorAll('.segs i')[S.si]; segs(0,true); v.muted=!S.som||S.somTrava;
+    v.ontimeupdate=function(){ if(sb&&v.duration>0) sb.firstChild.style.width=Math.min(100,v.currentTime*100/v.duration)+'%'; };
+    v.onended=prox; v.onerror=function(){ S.abT=setTimeout(prox,400); };
+    v.onplaying=function(){ clearTimeout(S.abT); if(l.length>1) S.abT=setTimeout(prox,(Math.min(isFinite(v.duration)&&v.duration>0?v.duration:30,30)+2)*1000); };
+    if(l.length>1) S.abT=setTimeout(prox,15000);   /* vídeo que não começa em 15 s é pulado */
+    try{ var p=v.play(); if(p&&p.catch) p.catch(function(er){ if(!er||er.name!=='NotAllowedError'||v.muted) return; v.muted=true; if(S.som) S.somTrava=true; somPinta(); mostraSom(); v.play().catch(function(){}); }); }catch(e){}
+    if(!S.somVisto){ S.somVisto=1; mostraSom(); } somPinta(); }
+  var nx=l[(S.si+1)%l.length]; if(nx&&nx!==x){ if(nx.foto){ var im=new Image(); im.src=nx.midia; } else { S.pre=document.createElement('video'); S.pre.preload='auto'; S.pre.muted=true; S.pre.src=nx.midia; } }   /* o próximo já vai carregando */
 }
-/* (186) som dos vídeos da abertura, igual às ofertas do cardápio: começa sem som; tocou no alto-falante, liga e vale para os próximos.
-   Se o celular bloquear o som sozinho, o vídeo segue mudo e o botão volta a mostrar 🔇 */
-function somPinta(){ var b=el('abS'); if(!b) return; var on=S.som&&!S.somTrava; b.textContent=on?'🔊':'🔇'; b.setAttribute('aria-label',on?'Tirar o som':'Ligar o som'); }
-function trocaSom(){ var v=el('abM')&&el('abM').querySelector('video'); S.som=!(S.som&&!S.somTrava); S.somTrava=false; try{ sessionStorage.setItem('fest_som',S.som?'1':''); }catch(e){}
-  if(v){ v.muted=!S.som; if(S.som){ var p=v.play(); if(p&&p.catch) p.catch(function(){ v.muted=true; S.som=false; try{ sessionStorage.setItem('fest_som',''); }catch(e){} somPinta(); }); } } somPinta(); }
-/* (188) como nos stories: tocar na direita passa para o próximo, na esquerda volta. Comprar fica no botão */
+/* (189) som igual às ofertas do cardápio: abre com som; se o celular exigir um toque antes, o vídeo começa mudo, o ícone fica no meio
+   da tela e o primeiro toque em qualquer lugar liga o som. Tocar no meio do vídeo mostra o botão, que some sozinho em 3 s */
+var IC_ON='<svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5Z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></svg>', IC_OFF='<svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5Z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></svg>';
+function somPinta(){ var b=el('somc'); if(!b) return; var on=S.som&&!S.somTrava; b.innerHTML=on?IC_ON:IC_OFF; b.setAttribute('aria-label',on?'Tirar o som':'Ligar o som'); }
+function mostraSom(){ var b=el('somc'); if(!b) return; var v=el('abM')&&el('abM').querySelector('video'); if(!v) return; b.classList.add('on'); clearTimeout(S.stT); if(S.somTrava) return; S.stT=setTimeout(function(){ b.classList.remove('on'); },3000); }
+function somAplica(){ var v=el('abM')&&el('abM').querySelector('video'); try{ sessionStorage.setItem('fest_som',S.som?'1':'0'); }catch(e){} if(v){ v.muted=!S.som; if(S.som){ var p=v.play(); if(p&&p.catch) p.catch(function(){ v.muted=true; S.somTrava=true; somPinta(); mostraSom(); }); } } somPinta(); }
+function alternaSom(e){ if(e) e.stopPropagation(); if(S.somTrava){ S.somTrava=false; S.som=true; } else S.som=!S.som; somAplica(); mostraSom(); }
+function somDestrava(e){ if(!S.somTrava||S.tela!=='abertura'||(e&&e.target&&e.target.closest&&e.target.closest('#somc'))) return; S.somTrava=false; S.som=true; somAplica(); mostraSom(); }
+['click','touchend','keydown'].forEach(function(t){ document.addEventListener(t,somDestrava,true); });
+/* (188) como nos stories: tocar na direita passa, na esquerda volta; no meio mostra o botão do som. Comprar fica no botão */
 function ant(){ if(S.tela!=='abertura'||S.slA.length<2) return; S.si=(S.si-1+S.slA.length)%S.slA.length; mostra(); }
 function prox(){ if(S.tela!=='abertura'||S.slA.length<2) return; S.si=(S.si+1)%S.slA.length; mostra(); }
 /* ---------- agenda ---------- */
@@ -455,11 +466,12 @@ try{ var c0=JSON.parse(localStorage.getItem(CK)||'null'); if(c0&&Array.isArray(c
 var EV0=ROTA.ev||Q.get('ev');
 if(EV0) evento(EV0); else if(Q.get('tela')==='agenda') agenda(); else abertura();
 api('/fest/agenda'+(CASA?'?casa='+encodeURIComponent(CASA):'')).then(function(d){
-  if(!d||!d.ok) return; var antes=JSON.stringify([S.ag,S.sl,S.casa]), ja=S.carregou;
+  /* (189) a abertura só recomeça se os vídeos mudaram (antes recomeçava sempre que a agenda chegava, 2 a 3 s depois) */
+  if(!d||!d.ok) return; var abAntes=JSON.stringify([S.sl,S.casa]), agAntes=JSON.stringify(S.ag), ja=S.carregou;
   S.ag=d.eventos||[]; S.sl=d.abertura||[]; S.casa=d.casa||null; S.carregou=true;
   try{ localStorage.setItem(CK,JSON.stringify({eventos:S.ag,abertura:S.sl,casa:S.casa})); }catch(e){}
-  if(ja&&antes===JSON.stringify([S.ag,S.sl,S.casa])) return;
-  if(S.tela==='abertura') abertura(); else if(S.tela==='agenda') agenda();
+  if(S.tela==='abertura'){ if(!ja||abAntes!==JSON.stringify([S.sl,S.casa])) abertura(); }
+  else if(S.tela==='agenda'&&(!ja||agAntes!==JSON.stringify(S.ag))) agenda();
 });
 </script>
 <script src="site/js/live-mascote.js" async onload="mascoteOk()"></script>
