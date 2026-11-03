@@ -111,7 +111,7 @@ button{font:inherit;color:inherit;cursor:pointer}
     return pag('');
   }
   /* quem se cadastra depois entra na lista sozinho: atualiza ao abrir e a cada 2 minutos. Sem internet, segue com a lista guardada */
-  function atualizaLista(){ if(!EV||!PES.length&&!rodando) return Promise.resolve(); return baixaTudo(EV.id).then(function(acc){ preparaPessoas(acc); pintaQt(); return guarda(); }).catch(function(){}); }
+  function atualizaLista(){ if(!EV||!PES.length&&!rodando) return Promise.resolve(); atualizaLista.t=Date.now(); return baixaTudo(EV.id).then(function(acc){ preparaPessoas(acc); pintaQt(); return guarda(); }).catch(function(){}); }
   function qtRostos(){ return PES.filter(function(p){ return p.vet&&p.vet.length; }).length; }
   function pintaQt(){ var q=$('qt'); if(!q) return; var n=qtRostos(); q.textContent=n+(n===1?' rosto':' rostos'); q.classList.toggle('off',!n); }
   function baixa(ev){
@@ -169,6 +169,8 @@ button{font:inherit;color:inherit;cursor:pointer}
     agenda(LIM.msErro,aguardando);
   }
   function naoReconheceu(m){
+    /* (177) quem cadastrou o rosto agora ainda não está no tablet: busca a lista na hora (no máximo a cada 20 s) */
+    if(navigator.onLine!==false&&Date.now()-(atualizaLista.t||0)>20000) atualizaLista();
     pausa=Date.now()+LIM.msErro; setVis('alerta','Não reconhecido');
     $('res').innerHTML='<div class="est aten">! '+esc(m||'Não reconheci')+'</div><p class="mut">Tire o boné ou os óculos e olhe de novo. Ou mostre o QR code do ingresso aqui na câmera.</p><div class="acoes"><button class="bt bt-sec" id="beq">Equipe: buscar por nome</button></div>'+catraca(false,'Catraca de entrada fechada');
     $('beq').onclick=busca; diz('Ops, não consegui ver direito. Vamos de novo?',{gesto:'confuso'});
@@ -369,7 +371,7 @@ button{font:inherit;color:inherit;cursor:pointer}
     if(!stream) camera().catch(function(){ setTimeout(function(){ if(rodando&&!stream&&document.visibilityState==='visible') camera().catch(function(){}); },3000); });
     if(navigator.wakeLock) navigator.wakeLock.request('screen').then(function(w){ wake=w; }).catch(function(){});
   });
-  if(LOCAL) window.__lf={carregaLeitor:carregaLeitor,usaLista:function(ev,l){ EV=ev; preparaPessoas(l); },comeca:comeca,saida:function(id){ saida(POR[id],'rosto'); },qr:qrLido,racha:function(){ return RACHA; },procura:procura,cont:function(){ return CONT?{n:contUlt,nome:CONT.p.nome}:null; },atualizaLista:atualizaLista,qtRostos:qtRostos,estado:function(){ return {ENT:ENT,FILA:FILA,falhas:falhas}; },LIM:LIM};
+  if(LOCAL) window.__lf={carregaLeitor:carregaLeitor,usaLista:function(ev,l){ EV=ev; preparaPessoas(l); },comeca:comeca,saida:function(id){ saida(POR[id],'rosto'); },qr:qrLido,racha:function(){ return RACHA; },procura:procura,cont:function(){ return CONT?{n:contUlt,nome:CONT.p.nome}:null; },atualizaLista:atualizaLista,qtRostos:qtRostos,nao:function(){ naoReconheceu(); },estado:function(){ return {ENT:ENT,FILA:FILA,falhas:falhas}; },LIM:LIM};
 
   if(LOCAL&&Q.get('teste')==='1') return;
   carregaGuardada().then(function(g){ if(g&&g.ev&&g.ev.fim>=hoje()){ EV=g.ev; preparaPessoas(g.pes); comeca(); atualizaLista(); } else telaEventos(); });
