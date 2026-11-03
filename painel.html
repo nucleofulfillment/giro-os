@@ -4061,6 +4061,8 @@ function abrirApp(){
   var t=el('tb-tenant'); if(t) t.textContent=(DD_USER&&DD_USER.cliente_nome)||'';
   var av=document.querySelector('.tb-av'); if(av&&DD_USER&&DD_USER.nome) av.textContent=DD_USER.nome.charAt(0).toUpperCase();
   try{ montarTudo(); carregarPonto(); ptCarregarLista(); waCarregar(); contaRapido(); planoCarrega(); }finally{ srvCarregar(); }
+  /* (180) a página do LiveFace abre o Painel já nas configurações do LiveFace (painel.html#liveface) */
+  if(location.hash==='#liveface'){ history.replaceState(null,'',location.pathname); setTimeout(function(){ try{ lfAbrir(); }catch(e){} },500); }
 }
 /* ── (120) entrar com CÓDIGO: 6 dígitos no WhatsApp e no e-mail do cadastro (sem senha) ── */
 var LG={modo:'senha',etapa:1};

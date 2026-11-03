@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<link rel="icon" type="image/svg+xml" href="/site/img/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="/site/img/icone-32.png">
+<link rel="apple-touch-icon" href="/site/img/icone-180.png">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#FF5A00">
+<meta name="robots" content="noindex">
+<title>LiveFood — LiveFace</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<!-- (180) página do LiveFace: o Hub tem um card só, e aqui ficam os tablets da entrada e da saída e as configurações do evento -->
+<style>
+:root{--lf:#FF5A00;--lf2:#FF7A1A;--tx:#1C1C1E;--mu:#5E5E66;--ok:#16A34A;--f:'Manrope',-apple-system,system-ui,sans-serif}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;font-family:var(--f);color:#fff;-webkit-font-smoothing:antialiased}
+body{min-height:100vh;background:linear-gradient(150deg,var(--lf) 0%,#FF6A10 55%,#FF8A33 100%);overflow-x:hidden;position:relative}
+body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(rgba(255,255,255,.18) 1px,transparent 1.5px);background-size:22px 22px;-webkit-mask-image:radial-gradient(70% 60% at 50% 30%,#000,transparent);mask-image:radial-gradient(70% 60% at 50% 30%,#000,transparent);pointer-events:none}
+.wrap{position:relative;max-width:1080px;margin:0 auto;padding:clamp(28px,6vw,56px) max(20px,env(safe-area-inset-right)) 48px max(20px,env(safe-area-inset-left))}
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:clamp(24px,4vw,40px)}
+header img{height:38px;width:auto;display:block}
+.volta{font:inherit;font-size:12.5px;font-weight:800;color:#fff;background:rgba(0,0,0,.16);padding:8px 14px;border-radius:99px;text-decoration:none}
+.volta:hover{background:rgba(0,0,0,.28)}
+.topo{display:flex;align-items:center;gap:clamp(14px,3vw,28px);margin-bottom:clamp(20px,3vw,32px)}
+.lv{flex:none;width:clamp(86px,11vw,120px)}
+.loja{display:inline-block;margin-bottom:10px;font-size:13px;font-weight:800;background:rgba(255,255,255,.2);padding:6px 12px;border-radius:99px}
+h1{font-size:clamp(34px,5vw,54px);font-weight:800;line-height:1.02;letter-spacing:-.02em;margin:0 0 8px;text-wrap:balance}
+h1 b{color:#1C1C1E}
+.sub{font-size:clamp(15px,1.6vw,18px);font-weight:600;opacity:.92;margin:0;max-width:560px}
+/* evento em andamento */
+.ev{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:rgba(0,0,0,.16);border-radius:20px;padding:14px 18px;margin-bottom:22px}
+.ev .pt{width:12px;height:12px;border-radius:50%;background:#fff;flex:none}
+.ev.on .pt{background:#4ADE80;box-shadow:0 0 0 0 rgba(74,222,128,.6);animation:pulsa 1.8s ease-out infinite}
+@keyframes pulsa{to{box-shadow:0 0 0 10px rgba(74,222,128,0)}}
+.ev div{flex:1;min-width:200px}
+.ev b{display:block;font-size:17px;font-weight:800}
+.ev small{font-size:13.5px;font-weight:700;opacity:.9}
+.ev .nums{display:flex;gap:8px;flex-wrap:wrap}
+.ev .nums span{background:rgba(255,255,255,.18);border-radius:99px;padding:5px 11px;font-size:12.5px;font-weight:800}
+/* atalhos */
+.grade{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:16px}
+.card{position:relative;display:flex;flex-direction:column;gap:10px;min-height:230px;padding:22px;border-radius:22px;background:#fff;color:var(--tx);text-decoration:none;box-shadow:0 18px 40px -22px rgba(80,20,0,.6);transition:transform .25s cubic-bezier(.34,1.56,.64,1),box-shadow .25s;animation:sobe .6s cubic-bezier(.16,1,.3,1) both}
+.card:nth-child(2){animation-delay:.06s}.card:nth-child(3){animation-delay:.12s}
+@keyframes sobe{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+.card:hover,.card:focus-visible{transform:translateY(-6px);box-shadow:0 26px 50px -22px rgba(80,20,0,.75);outline:none}
+.card:focus-visible{box-shadow:0 0 0 4px #1C1C1E,0 26px 50px -22px rgba(80,20,0,.75)}
+.ic{width:56px;height:56px;border-radius:16px;background:#1C1C1E;color:#fff;display:flex;align-items:center;justify-content:center;transition:background .2s}
+.ic svg{width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.card:hover .ic{background:var(--lf)}
+.card.cfg .ic{background:var(--lf)}.card.cfg:hover .ic{background:#1C1C1E}
+.card h2{margin:4px 0 0;font-size:22px;font-weight:800}
+.card p{margin:0;font-size:14px;line-height:1.45;color:var(--mu);font-weight:600}
+.card ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:5px;flex:1}
+.card li{font-size:13px;font-weight:700;color:var(--mu);display:flex;gap:7px}
+.card li::before{content:'';flex:none;width:6px;height:6px;border-radius:50%;background:var(--lf);margin-top:6px}
+.ir{display:flex;align-items:center;gap:6px;font-size:14px;font-weight:800;color:var(--lf)}
+.ir i{font-style:normal;transition:transform .25s}
+.card:hover .ir i{transform:translateX(4px)}
+.dica{margin:22px 4px 0;font-size:13px;font-weight:700;opacity:.88;max-width:720px;line-height:1.5}
+footer{margin-top:36px;font-size:12.5px;font-weight:700;opacity:.75;text-align:center}
+.live-mascote{position:relative;width:100%;aspect-ratio:220/230}.live-corpo{position:absolute;inset:0;transform-origin:50% 46%;will-change:transform}.live-corpo svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 10px 18px rgba(80,20,0,.35))}.live-rosto{position:absolute;border-radius:14% / 18%}.live-sombra{position:absolute;left:22%;right:22%;bottom:-6%;height:9%;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.35),transparent)}
+@media (max-width:560px){.topo{align-items:flex-start}.lv{width:76px}}
+@media (prefers-reduced-motion:reduce){.card{animation:none;transition:none}.ev.on .pt{animation:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><img src="livefood-logo-branca.png" alt="LiveFood"><a class="volta" href="hub.html">← Hub</a></header>
+  <div class="topo">
+    <div class="lv" id="lv" aria-hidden="true"></div>
+    <div><span class="loja" id="loja" hidden></span><h1>Live<b>Face</b></h1><p class="sub">O rosto é o ingresso e a comanda. Escolha o tablet ou configure o evento.</p></div>
+  </div>
+  <div class="ev" id="ev" role="status"><span class="pt"></span><div><b>Carregando os eventos…</b></div></div>
+  <nav class="grade" aria-label="LiveFace">
+    <a class="card" href="liveface-entrada.html"><span class="ic"><svg viewBox="0 0 24 24"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 10v1M15 10v1M9 15.5c1.8 1.4 4.2 1.4 6 0"/></svg></span><h2>Tablet da entrada</h2><p>Reconhece o rosto, abre a catraca e a comanda da pessoa.</p><ul><li>QR code para quem não cadastrou o rosto</li><li>Funciona sem internet depois de baixar a lista</li></ul><span class="ir">Abrir <i>→</i></span></a>
+    <a class="card" href="liveface-entrada.html?modo=saida"><span class="ic"><svg viewBox="0 0 24 24"><path d="M9 21H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3M15 16l5-4-5-4M20 12H9"/></svg></span><h2>Tablet da saída</h2><p>Confere a conta e libera quando estiver paga.</p><ul><li>Pix na tela ou cartão na maquininha</li><li>Rachar: passa a conta para um amigo</li></ul><span class="ir">Abrir <i>→</i></span></a>
+    <a class="card cfg" href="painel.html#liveface"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></span><h2>Eventos e ingressos</h2><p>Configurações do evento, no Painel.</p><ul><li>Data e hora, mesas do evento</li><li>Código da equipe</li><li>Ingressos e link para cadastrar o rosto</li></ul><span class="ir">Configurar <i>→</i></span></a>
+  </nav>
+  <p class="dica">Use um tablet só para a entrada e outro só para a saída. Na tela do cliente não há botões da equipe: o atendente toca em “Chamar equipe”, depois em “Sou da equipe”, e digita o código do evento.</p>
+  <footer>LiveFood · LiveFace</footer>
+</div>
+<script src="site/js/live-mascote.js"></script>
+<script>
+(function(){
+  'use strict';
+  var API='https://giro-os-api.nucleofull.workers.dev', TK='', US=null;
+  try{ TK=localStorage.getItem('dd_jwt')||''; US=JSON.parse(localStorage.getItem('dd_user')||'null'); }catch(e){}
+  if(!TK){ location.replace('hub.html'); return; }
+  var $=function(i){ return document.getElementById(i); };
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function dt(i){ i=String(i||''); return i.slice(8,10)+'/'+i.slice(5,7); }
+  if(US&&US.cliente_nome){ $('loja').textContent=US.cliente_nome; $('loja').hidden=false; }
+  var live=null; try{ if(window.LiveMascote) live=LiveMascote.criar($('lv'),{rotulo:'Live'}); if(live) live.expressao('feliz'); }catch(e){}
+  /* janela do evento no horário de Brasília, como no servidor (passa da meia-noite quando o fim é antes do início) */
+  function janela(e){ var a=Date.parse((e.inicio||e.fim)+'T'+(e.hora_ini||'00:00')+':00-03:00'), b=Date.parse(e.fim+'T'+(e.hora_fim||'23:59')+':59-03:00'); if(b<=a) b+=86400000; return [a,b]; }
+  function quando(e){ var j=janela(e), f=function(t){ var d=new Date(t-3*3600000).toISOString(); return dt(d.slice(0,10))+' '+d.slice(11,16); }; return f(j[0])+' até '+f(j[1]); }
+  fetch(API+'/painel/lf-eventos',{headers:{'Authorization':'Bearer '+TK},cache:'no-store'}).then(function(r){ if(r.status===401){ location.replace('hub.html'); throw new Error('sessao'); } return r.json(); }).then(function(d){
+    var ev=$('ev'); if(!d||!d.ok){ ev.innerHTML='<span class="pt"></span><div><b>'+esc((d&&d.mensagem)||'Não consegui carregar os eventos.')+'</b></div>'; return; }
+    var ag=Date.now(), l=(d.eventos||[]).filter(function(e){ return janela(e)[1]>=ag; }).sort(function(a,b){ return janela(a)[0]-janela(b)[0]; });
+    if(!l.length){ ev.innerHTML='<span class="pt"></span><div><b>Nenhum evento marcado</b><small>Crie o evento em Eventos e ingressos.</small></div>'; if(live) live.expressao('curioso'); return; }
+    var e=l[0], on=janela(e)[0]<=ag;
+    ev.className='ev'+(on?' on':'');
+    ev.innerHTML='<span class="pt"></span><div><b>'+(on?'Agora: ':'Próximo: ')+esc(e.nome)+'</b><small>'+esc(quando(e))+(l.length>1?' · mais '+(l.length-1)+(l.length===2?' evento':' eventos'):'')+'</small></div><div class="nums"><span>'+e.ingressos+' ingresso'+(e.ingressos==1?'':'s')+'</span><span>'+e.rostos+' rosto'+(e.rostos==1?'':'s')+'</span>'+(e.tem_codigo?'':'<span>⚠️ sem código da equipe</span>')+'</div>';
+    if(live){ live.gesto(on?'comemorar':'boas_vindas'); }
+  }).catch(function(e){ if(e.message!=='sessao') $('ev').innerHTML='<span class="pt"></span><div><b>Sem conexão.</b><small>Os tablets continuam funcionando com a lista guardada.</small></div>'; });
+})();
+</script>
+</body>
+</html>

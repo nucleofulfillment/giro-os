@@ -118,7 +118,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 
   /* ---------- 1. escolher o evento e baixar ---------- */
   function telaEventos(){
-    $('app').innerHTML='<div class="cen"><div class="marca">live<b>face</b></div><h1 style="font-size:32px">'+(SAI?'Tablet da saída':'Tablet da entrada')+'</h1><p class="mut">Escolha o evento. A lista fica guardada neste aparelho e funciona mesmo se a internet cair.</p><div id="evs" class="mut">Carregando...</div><a class="bt bt-sec" href="hub.html">Voltar ao Hub</a></div>';
+    $('app').innerHTML='<div class="cen"><div class="marca">live<b>face</b></div><h1 style="font-size:32px">'+(SAI?'Tablet da saída':'Tablet da entrada')+'</h1><p class="mut">Escolha o evento. A lista fica guardada neste aparelho e funciona mesmo se a internet cair.</p><div id="evs" class="mut">Carregando...</div><a class="bt bt-sec" href="liveface.html">Voltar ao LiveFace</a></div>';
     if(!TK){ location.href='hub.html'; return; }
     api('/painel/lf-eventos').then(function(d){
       if(!d||!d.ok){ $('evs').textContent=(d&&d.mensagem)||'Não consegui carregar os eventos.'; return; }
@@ -402,7 +402,7 @@ button{font:inherit;color:inherit;cursor:pointer}
     $('bq').oninput=pinta; pinta(); $('bq').focus();
   }
   function menu(){
-    $('over').innerHTML='<div class="painel"><h1 style="font-size:28px">Menu</h1><p class="mut">'+esc(EV.nome)+' · '+PES.filter(function(p){ return p.vet.length; }).length+' rostos e '+PES.length+' ingressos neste aparelho</p><label class="mut" style="font-weight:800">Câmera<select id="mcam"></select></label><div id="mq" class="mut"></div><button class="bt bt-sec" id="matu">Atualizar a lista</button><a class="bt bt-sec" href="hub.html">Voltar ao Hub</a><button class="bt bt-sec" id="mapa">Apagar a lista deste aparelho</button><button class="bt bt-pri" id="mx" style="margin-top:auto">Voltar para a entrada</button></div>';
+    $('over').innerHTML='<div class="painel"><h1 style="font-size:28px">Menu</h1><p class="mut">'+esc(EV.nome)+' · '+PES.filter(function(p){ return p.vet.length; }).length+' rostos e '+PES.length+' ingressos neste aparelho</p><label class="mut" style="font-weight:800">Câmera<select id="mcam"></select></label><div id="mq" class="mut"></div><button class="bt bt-sec" id="matu">Atualizar a lista</button><a class="bt bt-sec" href="liveface.html">Voltar ao LiveFace</a><button class="bt bt-sec" id="mapa">Apagar a lista deste aparelho</button><button class="bt bt-pri" id="mx" style="margin-top:auto">Voltar para a entrada</button></div>';
     $('mq').textContent=FILA.length?FILA.length+' entrada(s) aguardando internet.':'';
     $('mx').onclick=fechaOver;
     $('matu').onclick=function(){ paraTudo(); baixa(EV); };
