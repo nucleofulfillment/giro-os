@@ -1394,12 +1394,17 @@ function ckResumo(){
 var LFC={tok:'',d:null};
 function ckLf(){
   if(!MESA||!CT.tok||!$('ck-lf')) return;
-  var pinta=function(d){ var e=$('ck-lf'); if(!e||!d) return; if(d.ativo) e.innerHTML='<div class="ad on" style="cursor:default;margin-top:12px"><div class="tx"><b>🎟️ Comanda '+esc(d.comanda)+' · '+esc(d.evento)+'</b><small>'+esc(d.nome)+', o pedido vai para a sua comanda do evento. Você paga na saída.</small></div></div>'; else if(d.evento&&d.visitante&&!$('ck-lfe')) e.insertAdjacentHTML('beforeend','<div class="nt" id="ck-lfe" style="margin-top:8px;font-size:13.5px">Está no evento com ingresso? <button class="lk" onclick="ckLfEntrar()">Entre com seu WhatsApp</button> e o pedido vai para a sua comanda.</div>'); };
+  var pinta=function(d){ var e=$('ck-lf'); if(!e||!d) return; if(d.ativo) e.innerHTML='<div class="ad on" style="cursor:default;margin-top:12px"><div class="tx"><b>🎟️ Comanda '+esc(d.comanda)+' · '+esc(d.evento)+'</b><small>'+esc(d.nome)+', o pedido vai para a sua comanda do evento. Você paga na saída.</small></div></div>'; 
+    /* (176) com o evento rolando, o visitante escolhe antes de pedir: sem isso o pedido ia para a mesa e a saída não cobrava */
+    else if(d.evento&&d.visitante&&!CK.lfSem){ e.innerHTML='<div class="ad on" style="cursor:default;margin-top:12px"><div class="tx"><b>🎟️ Você tem ingresso do evento?</b><small>Entre com o WhatsApp do ingresso e o pedido vai para a sua comanda. Você paga na saída.</small></div></div><button class="bt c" style="flex:none;width:100%;margin-top:10px" onclick="ckLfEntrar()">Entrar com o WhatsApp do ingresso</button><button class="lk" style="display:block;margin:12px auto 0" onclick="ckLfSem()">Não tenho ingresso, pago na mesa</button>'; var bt=$('ct-bt'); if(bt) bt.disabled=true; }
+    else if(d.evento&&!d.visitante&&!$('ck-lfe')) e.insertAdjacentHTML('beforeend','<div class="nt" id="ck-lfe" style="margin-top:8px;font-size:13.5px">Este WhatsApp não tem ingresso dentro do evento, então o pedido fica na conta da mesa. Tem ingresso em outro número? <button class="lk" onclick="ckLfEntrar()">Entrar com outro WhatsApp</button></div>'); };
   if(LFC.tok===CT.tok){ if(LFC.d) pinta(LFC.d); return; }
   LFC.tok=CT.tok; LFC.d=null;
-  ctApi('/food/pedidos-lf',null,true).then(function(d){ if(LFC.tok!==CT.tok) return; LFC.d=d&&d.ok?d:null; pinta(LFC.d); });
+  var bt0=$('ct-bt'); if(bt0) bt0.disabled=true;   /* não deixa pedir antes de saber se vai para a comanda */
+  ctApi('/food/pedidos-lf',null,true).then(function(d){ if(LFC.tok!==CT.tok) return; LFC.d=d&&d.ok?d:null; var b=$('ct-bt'); if(b) b.disabled=false; pinta(LFC.d); });
 }
 function ckLfEntrar(){ CT.real=1; CT.ctx='ck'; CT.tok=''; CT.conta=null; ctLogin(); }
+function ckLfSem(){ CK.lfSem=1; ckKeep(); }
 var CPFN=0;   /* (060) vira 1 só se o Asaas do restaurante exigir CPF para o Pix */
 function ckSemEnd(){
   ctErro('Cadastre ou escolha um endereço de entrega.'); toast('Falta o endereço de entrega. Toque em "Cadastrar endereço".');
