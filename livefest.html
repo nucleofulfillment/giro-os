@@ -49,6 +49,7 @@ a{color:inherit}
 .abt{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:18px 18px max(22px,env(safe-area-inset-bottom));pointer-events:none}
 .abt>*{pointer-events:auto}
 .abtop{position:absolute;left:0;right:0;top:calc(max(12px,env(safe-area-inset-top)) + 16px);z-index:2;text-align:center;pointer-events:none}
+.som{position:absolute;top:calc(max(12px,env(safe-area-inset-top)) + 14px);right:14px;z-index:4;width:42px;height:42px;border-radius:50%;border:0;background:rgba(0,0,0,.45);color:#fff;font-size:18px;display:flex;align-items:center;justify-content:center}
 .abtop .marca{font-size:40px;text-shadow:0 2px 18px rgba(0,0,0,.35)}
 .abc{font-size:13px;font-weight:800;opacity:.9;margin-top:4px}
 /* (185) o Live da abertura é a ajuda do app */
@@ -119,6 +120,7 @@ a{color:inherit}
 .livres{display:block;margin-top:10px;font-size:12.3px;color:var(--mu);font-weight:700}
 .b3d{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:10px;padding:13px;border-radius:14px;border:1.5px dashed rgba(255,138,51,.75);background:rgba(255,90,0,.08);color:var(--ac2);font-weight:800;font-size:15px}
 .m3d{position:fixed;inset:0;z-index:50;background:#110d0a;display:flex;flex-direction:column}.m3d iframe{flex:1;border:0;width:100%}
+.m3i{padding:0 16px 8px;font-size:12.5px;font-weight:700;color:#CFC5D6}
 .m3t{display:flex;align-items:center;gap:12px;padding:max(12px,env(safe-area-inset-top)) 14px 10px;color:#fff}
 .m3t div{flex:1;min-width:0}.m3t b{display:block;font-size:15px}.m3t small{display:block;font-size:12px;opacity:.75;font-weight:700;margin-top:2px}
 .vt{display:inline-flex;align-items:center;gap:4px;flex:none;border:0;border-radius:99px;padding:9px 15px 9px 9px;background:rgba(255,255,255,.16);font-weight:800;font-size:14px}
@@ -161,7 +163,7 @@ var API='https://giro-os-api.nucleofull.workers.dev', Q=new URLSearchParams(loca
 var CASA=String(ROTA.casa||Q.get('casa')||'').toLowerCase().replace(/[^a-z0-9_-]/g,'');
 var SETA='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4.5 7.5 12l7.5 7.5"/></svg>';
 var S={sl:[],si:0,slA:[],ag:[],casa:null,ev:null,sal:0,car:{},mesas:{},filtro:'',busca:'',tk:'',conta:null,ped:null,poll:null,abT:null,volta:null,tela:'',carregou:false};
-try{ S.tk=localStorage.getItem('fest_tk')||''; }catch(e){}
+try{ S.tk=localStorage.getItem('fest_tk')||''; S.som=sessionStorage.getItem('fest_som')==='1'; }catch(e){}
 function el(i){ return document.getElementById(i); }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 function brl(v){ return 'R$ '+Number(v||0).toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.'); }
@@ -171,7 +173,10 @@ function curto(i){ var d=new Date(i+'T12:00:00'); return SEM[d.getDay()].slice(0
 function api(c,b){ var h={}; if(S.tk) h.Authorization='Bearer '+S.tk; if(b) h['Content-Type']='application/json'; return fetch(API+c,b?{method:'POST',headers:h,body:JSON.stringify(b)}:{headers:h,cache:'no-store'}).then(function(r){ return r.json().catch(function(){ return {}; }).then(function(d){ d._st=r.status; if(r.status===401&&S.tk&&c.indexOf('/fest/conta/')!==0){ S.tk=''; try{ localStorage.removeItem('fest_tk'); }catch(e){} } return d; }); }).catch(function(){ return {ok:false,_st:0,mensagem:'Sem conexão. Tente de novo.'}; }); }
 var GRAD='linear-gradient(135deg,#2B0F3F,#B5179E 60%,#FF5A00)';
 function ban(e){ return e&&e.img_h?'background-image:url('+e.img_h+'),'+GRAD:''; }
-function live(id,expr){ try{ if(window.LiveMascote&&el(id)&&!el(id).firstChild){ var l=LiveMascote.criar(el(id),{rotulo:'Live'}); l.expressao(expr||'feliz'); return l; } }catch(e){} return null; }
+/* (186) cada Live animado é desligado quando a tela sai (antes as animações escondidas se acumulavam e o app ficava lento) */
+var LIVES=[];
+function live(id,expr){ try{ if(window.LiveMascote&&el(id)&&!el(id).firstChild){ var l=LiveMascote.criar(el(id),{rotulo:'Live'}); l.expressao(expr||'feliz'); LIVES.push({id:id,l:l}); return l; } }catch(e){} return null; }
+function tiraLives(so){ LIVES=LIVES.filter(function(x){ if(so?x.id!==so:x.id==='lvC') return true; try{ x.l.destruir(); }catch(e){} return false; }); }
 function mascoteOk(){ live('lvA','animado'); live('lvL','feliz'); live('lvF','feliz'); live('lvC','feliz'); }
 /* (185) tema claro e escuro, guardado no aparelho */
 function temaAtual(){ return document.documentElement.getAttribute('data-tema')==='claro'?'claro':'escuro'; }
@@ -189,7 +194,7 @@ function ajuda(){
   if(!CH.length) CH.push({r:'assistant',t:'Oi! Eu sou o Live 👋\nPosso ajudar a achar um evento, comprar o ingresso, reservar mesa, cadastrar a facial ou transferir. O que você quer saber?'});
   chatPinta();
 }
-function fechaAjuda(){ var o=el('chat'); if(o) o.remove(); }
+function fechaAjuda(){ var o=el('chat'); if(o) o.remove(); tiraLives('lvC'); }
 var ACOES={agenda:['📅 Ver a agenda',"fechaAjuda();agenda()"],meus:['🎟️ Meus ingressos',"fechaAjuda();meus()"],entrar:['Entrar com o WhatsApp',"fechaAjuda();meus()"]};
 function chatPinta(){
   var m=el('chm'); if(!m) return;
@@ -208,7 +213,7 @@ function pergunta(q){
     CH.push(d.ok?{r:'assistant',t:d.resposta,acao:d.acao,evento:d.evento}:{r:'assistant',t:d.mensagem||'Não consegui responder agora. Tente de novo.'});
     chatPinta(); });
 }
-function tela(h,nome){ clearTimeout(S.abT); S.tela=nome||''; el('app').innerHTML=h; scrollTo(0,0); temaPinta(); mascoteOk(); }
+function tela(h,nome){ clearTimeout(S.abT); tiraLives(); S.tela=nome||''; el('app').innerHTML=h; scrollTo(0,0); temaPinta(); mascoteOk(); }
 function voltar(onclick,rot){ return '<button class="ib" onclick="'+onclick+'" aria-label="'+(rot||'Voltar')+'">'+SETA+'</button>'; }
 /* (184) localização: o ponto marcado no mapa pelo dono do evento, ou o endereço escrito */
 function mapsUrl(e){ if(e.lat!=null&&e.lng!=null) return 'https://www.google.com/maps/search/?api=1&query='+e.lat+','+e.lng; var q=[e.endereco,e.local||e.casa,e.cidade].filter(Boolean).join(', '); return q?'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(q):''; }
@@ -220,7 +225,7 @@ function slides(){
 }
 function abertura(){
   var l=S.slA=slides(); S.si=0;
-  tela('<div class="ab"><div class="abm" id="abM"></div><div class="segs">'+(l.length>1?l.map(function(){ return '<i><b></b></i>'; }).join(''):'')+'</div><div class="abtop"><div class="marca">live<i>fest</i></div>'+(S.casa?'<div class="abc">'+esc(S.casa.nome)+'</div>':'')+'</div><button class="lvA" onclick="ajuda()" aria-label="Tirar dúvidas com o Live"><span class="bal2">Dúvida? Fale comigo 👋</span><span class="lvM" id="lvA"></span></button><div class="abt"><span class="kick" id="abK" hidden></span><h1 id="abN">'+(l.length?'':S.carregou?'Festas e shows perto de você':'')+'</h1><small id="abI">'+(l.length?'':S.carregou?'Toque em Agenda para ver os eventos.':'Carregando a agenda…')+'</small><button class="bt w cta" id="abC" hidden></button><div class="bts"><button class="bt" onclick="agenda()">📅 Agenda</button><button class="bt cl" onclick="meus()">🎟️ Meus ingressos</button></div></div></div>','abertura');
+  tela('<div class="ab"><div class="abm" id="abM"></div><div class="segs">'+(l.length>1?l.map(function(){ return '<i><b></b></i>'; }).join(''):'')+'</div><button class="som" id="abS" onclick="trocaSom()" hidden aria-label="Ligar o som">🔇</button><div class="abtop"><div class="marca">live<i>fest</i></div>'+(S.casa?'<div class="abc">'+esc(S.casa.nome)+'</div>':'')+'</div><button class="lvA" onclick="ajuda()" aria-label="Tirar dúvidas com o Live"><span class="bal2">Dúvida? Fale comigo 👋</span><span class="lvM" id="lvA"></span></button><div class="abt"><span class="kick" id="abK" hidden></span><h1 id="abN">'+(l.length?'':S.carregou?'Festas e shows perto de você':'')+'</h1><small id="abI">'+(l.length?'':S.carregou?'Toque em Agenda para ver os eventos.':'Carregando a agenda…')+'</small><button class="bt w cta" id="abC" hidden></button><div class="bts"><button class="bt" onclick="agenda()">📅 Agenda</button><button class="bt cl" onclick="meus()">🎟️ Meus ingressos</button></div></div></div>','abertura');
   mascoteOk(); if(l.length){ el('abM').onclick=function(){ vai(S.slA[S.si]); }; el('abC').onclick=function(){ vai(S.slA[S.si]); }; mostra(); }
 }
 function vai(x){ if(!x) return; if(x.evento) evento(x.evento); else if(x.link) location.href=x.link; else agenda(); }
@@ -234,10 +239,16 @@ function mostra(){
   el('abI').textContent=ev?curto(ev.inicio)+(ev.hora_ini?' · '+ev.hora_ini:'')+' · '+ev.casa+(ev.cidade?' · '+ev.cidade:''):'';
   var bt=x.botao||(x.evento?'Garantir ingresso':''); el('abC').hidden=!bt||!(x.evento||x.link); el('abC').textContent=bt+' →';
   if(x.foto){ segs(6); if(l.length>1) S.abT=setTimeout(prox,6000); }
-  else { var v=m.querySelector('video'); segs(8); v.onloadedmetadata=function(){ if(isFinite(v.duration)&&v.duration>0) segs(Math.min(v.duration,30)); }; v.onended=prox; v.onerror=function(){ S.abT=setTimeout(prox,400); };
-    try{ var p=v.play(); if(p&&p.catch) p.catch(function(){}); }catch(e){} if(l.length>1) S.abT=setTimeout(prox,31000); }
+  else { var v=m.querySelector('video'); segs(8); el('abS').hidden=false; v.muted=!S.som||S.somTrava; v.onloadedmetadata=function(){ if(isFinite(v.duration)&&v.duration>0) segs(Math.min(v.duration,30)); }; v.onended=prox; v.onerror=function(){ S.abT=setTimeout(prox,400); };
+    try{ var p=v.play(); if(p&&p.catch) p.catch(function(er){ if(!er||er.name!=='NotAllowedError'||v.muted) return; v.muted=true; S.somTrava=true; somPinta(); v.play().catch(function(){}); }); }catch(e){} if(l.length>1) S.abT=setTimeout(prox,31000); }
+  if(x.foto) el('abS').hidden=true; somPinta();
   var nx=l[(S.si+1)%l.length]; if(nx&&nx.foto&&nx!==x){ var im=new Image(); im.src=nx.midia; }
 }
+/* (186) som dos vídeos da abertura, igual às ofertas do cardápio: começa sem som; tocou no alto-falante, liga e vale para os próximos.
+   Se o celular bloquear o som sozinho, o vídeo segue mudo e o botão volta a mostrar 🔇 */
+function somPinta(){ var b=el('abS'); if(!b) return; var on=S.som&&!S.somTrava; b.textContent=on?'🔊':'🔇'; b.setAttribute('aria-label',on?'Tirar o som':'Ligar o som'); }
+function trocaSom(){ var v=el('abM')&&el('abM').querySelector('video'); S.som=!(S.som&&!S.somTrava); S.somTrava=false; try{ sessionStorage.setItem('fest_som',S.som?'1':''); }catch(e){}
+  if(v){ v.muted=!S.som; if(S.som){ var p=v.play(); if(p&&p.catch) p.catch(function(){ v.muted=true; S.som=false; try{ sessionStorage.setItem('fest_som',''); }catch(e){} somPinta(); }); } } somPinta(); }
 function prox(){ if(S.tela!=='abertura'||S.slA.length<2) return; S.si=(S.si+1)%S.slA.length; mostra(); }
 /* ---------- agenda ---------- */
 function agenda(){
@@ -257,18 +268,23 @@ function listaPinta(){
     return !q||(e.nome+' '+e.casa+' '+e.cidade+' '+e.categoria).toLowerCase().indexOf(q)>=0; });
   l.forEach(function(e){ if(e.inicio!==ult){ ult=e.inicio; h+='<div class="dia">'+diaTxt(e.inicio)+'</div>'; }
     var tg=[e.categoria,e.idade?e.idade+'+':''].filter(Boolean).join(' · ');
-    h+='<button class="ev" onclick="evento(\''+esc(e.id)+'\')"><div class="th" style="'+ban(e)+'">'+(tg?'<span class="tg">'+esc(tg)+'</span>':'')+'</div><div class="ei"><div><b>'+esc(e.nome)+'</b><small>'+esc(e.casa)+(e.hora_ini?' · '+esc(e.hora_ini):'')+(e.cidade?' · '+esc(e.cidade):'')+'</small></div><span class="pr">'+(e.a_partir?'a partir de<b>'+brl(e.a_partir)+'</b>':'<b>Esgotado</b>')+'</span></div></button>'; });
+    h+='<button class="ev" onclick="evento(\''+esc(e.id)+'\')" ontouchstart="evBusca(\''+esc(e.id)+'\')" onmouseenter="evBusca(\''+esc(e.id)+'\')"><div class="th" style="'+ban(e)+'">'+(tg?'<span class="tg">'+esc(tg)+'</span>':'')+'</div><div class="ei"><div><b>'+esc(e.nome)+'</b><small>'+esc(e.casa)+(e.hora_ini?' · '+esc(e.hora_ini):'')+(e.cidade?' · '+esc(e.cidade):'')+'</small></div><span class="pr">'+(e.a_partir?'a partir de<b>'+brl(e.a_partir)+'</b>':'<b>Esgotado</b>')+'</span></div></button>'; });
   el('lista').innerHTML=h||'<div class="vazio">'+(S.carregou?'Nenhum evento encontrado.':'Carregando…')+'</div>';
 }
 /* ---------- evento: abre na hora com o que já veio da agenda; os ingressos chegam logo depois ---------- */
+/* (186) o evento começa a carregar quando o dedo encosta no cartão, e fica guardado por 45 segundos */
+var EVC={};
+function evBusca(id){ var c=EVC[id]; if(c&&Date.now()-c.t<45000) return c.p; var p=api('/fest/evento/'+encodeURIComponent(id)); c=EVC[id]={t:Date.now(),p:p}; p.then(function(d){ if(d&&d.ok) c.d=d; else delete EVC[id]; }); return p; }
 function evento(id){
-  var pre=S.ag.filter(function(e){ return e.id===id; })[0];
-  if(!S.ev||S.ev.id!==id){ S.car={}; S.mesas={}; S.sal=0; S.ev=pre?Object.assign({},pre,{saloes:null}):null; }
+  var pre=S.ag.filter(function(e){ return e.id===id; })[0], novo=!S.ev||S.ev.id!==id, c=EVC[id];
+  if(novo){ S.car={}; S.mesas={}; S.sal=0; }
+  if(c&&c.d&&Date.now()-c.t<45000){ S.ev=c.d.evento; if(S.sal>=S.ev.saloes.length) S.sal=0; eventoPinta(); m3Prepara(); return; }
+  if(novo) S.ev=pre?Object.assign({},pre,{saloes:null}):null;
   if(S.ev) eventoPinta(); else tela('<div class="vazio">Carregando...</div>','evento');
-  api('/fest/evento/'+encodeURIComponent(id)).then(function(d){
-    if(S.tela!=='evento') return;
+  evBusca(id).then(function(d){
+    if(S.tela!=='evento'||(S.ev&&S.ev.id!==id)) return;
     if(!d.ok){ tela('<div class="bar">'+voltar('agenda()')+'<b>Evento</b></div><div class="vazio">'+esc(d.mensagem||'Evento não encontrado.')+'</div>','evento'); return; }
-    S.ev=d.evento; if(S.sal>=S.ev.saloes.length) S.sal=0; eventoPinta(true);
+    S.ev=d.evento; if(S.sal>=S.ev.saloes.length) S.sal=0; eventoPinta(true); m3Prepara();
   });
 }
 function eventoPinta(manter){
@@ -307,25 +323,36 @@ function poe(k,d){
 function totais(){ if(!el('qtd')) return; var n=0, t=0; itens().forEach(function(i){ n+=i.qtd; t+=i.qtd*(i.meia?i.x.meia_unit:i.x.unit); }); el('qtd').textContent=n?n+(n===1?' ingresso':' ingressos'):'Escolha os ingressos'; el('tot').textContent=brl(t); el('bCont').disabled=!n; }
 function itens(){ var m=todos(); return Object.keys(S.car).filter(function(k){ return S.car[k]>0&&m[k.split(':')[0]]; }).map(function(k){ var id=k.split(':')[0]; return {setor:id,meia:/:m$/.test(k)?1:0,qtd:S.car[k],x:m[id],mesas:/:m$/.test(k)?undefined:S.mesas[id]}; }); }
 /* (183) mesa e camarote escolhidos no 3D do salão (o mesmo 3D das reservas do cardápio).
-   (184) botão Voltar visível, e o voltar do celular fecha o 3D em vez de sair do app */
+   (186) o 3D fica guardado por trás: abre já carregado no evento com mesas e a segunda mesa aparece na hora.
+   O iframe nasce com o endereço; antes o endereço entrava no histórico e o Voltar desfazia o 3D em vez de fechar, o que travava a volta */
+var M3=null;
+function m3Cria(cli){
+  if(M3&&M3.cli===cli) return M3; if(M3) M3.o.remove();
+  var o=document.createElement('div'); o.id='m3d'; o.className='m3d'; o.hidden=true;
+  o.innerHTML='<div class="m3t"><button class="vt" onclick="fecha3d()">'+SETA+'Voltar</button><div><b id="m3r"></b><small id="m3s"></small></div></div><div class="m3i" id="m3i"></div>';
+  var f=document.createElement('iframe'); f.title='Salão em 3D'; f.src='livefood.html?c='+encodeURIComponent(cli)+'&prev3d=1'; o.appendChild(f); document.body.appendChild(o);
+  M3={o:o,f:f,cli:cli,pronto:false}; return M3;
+}
+function m3Prepara(){ var e=S.ev; if(!e||!e.saloes||!e.cli) return; var tem=e.saloes.some(function(s){ return s.area&&s.setores.some(function(x){ return x.mesas&&x.mesas.length&&!x.esgotado; }); }); if(tem) setTimeout(function(){ if(S.tela==='evento'&&S.ev===e) m3Cria(e.cli); },900); }
 function mapa3d(sid){
   var sal=S.ev.saloes[S.sal], x=todos()[sid]; if(!sal) return;
-  var o=document.createElement('div'); o.id='m3d'; o.className='m3d'; o.innerHTML='<div class="m3t"><button class="vt" onclick="fecha3d()">'+SETA+'Voltar</button><div><b>'+esc(rot3d(x))+'</b><small>'+esc(x.nome)+'</small></div></div><div style="padding:0 16px 8px;font-size:12.5px;font-weight:700;color:#CFC5D6" id="m3i">Carregando o salão…</div><iframe id="m3f" title="Salão em 3D"></iframe>'; document.body.appendChild(o);
+  var m=m3Cria(S.ev.cli); m.o.hidden=false; el('m3r').textContent=rot3d(x); el('m3s').textContent=x.nome; el('m3i').textContent=m.pronto?'Montando o salão…':'Carregando o salão…'; S.m3={sid:sid,msg:null};
   try{ history.pushState({m3:1},''); S.m3h=1; }catch(e){}
   api('/fest/planta/'+encodeURIComponent(S.ev.id)+'?salao='+encodeURIComponent(sal.id)).then(function(d){
-    if(!el('m3d')) return;
+    if(m.o.hidden||!S.m3||S.m3.sid!==sid) return;
     if(!d.ok){ el('m3i').textContent=d.mensagem||'Este salão ainda não tem mapa.'; return; }
     var oc=d.ocupadas.concat(Object.keys(S.mesas).reduce(function(a,k){ return k===sid?a:a.concat(S.mesas[k]); },[])).concat(S.mesas[sid]||[]);
-    S.m3={sid:sid,msg:{tipo:'salao3d',escolher:1,areas:[d.area],area:d.area.id,pecas:d.pecas,ocupadas:oc,permitidas:x.mesas,setor:x.nome}};
-    el('m3i').textContent='Toque numa mesa verde. Vermelha já foi vendida.'; el('m3f').src='livefood.html?c='+encodeURIComponent(d.cli)+'&prev3d=1&v='+Date.now();
+    S.m3.msg={tipo:'salao3d',escolher:1,areas:[d.area],area:d.area.id,pecas:d.pecas,ocupadas:oc,permitidas:x.mesas,setor:x.nome};
+    el('m3i').textContent='Toque numa mesa verde. Vermelha já foi vendida.';
+    if(m.pronto) m.f.contentWindow.postMessage(S.m3.msg,'*');
   });
 }
-function fecha3d(){ if(S.m3h){ S.m3h=0; try{ history.back(); return; }catch(e){} } var o=el('m3d'); if(o) o.remove(); S.m3=null; }
-addEventListener('popstate',function(){ if(el('m3d')){ S.m3h=0; fecha3d(); } });
+function fecha3d(daVolta){ if(!M3||M3.o.hidden) return; M3.o.hidden=true; S.m3=null; try{ M3.f.contentWindow.postMessage({tipo:'salao3d-pausa'},'*'); }catch(e){} if(!daVolta&&S.m3h){ S.m3h=0; try{ history.back(); }catch(e){} } S.m3h=0; }
+addEventListener('popstate',function(){ if(M3&&!M3.o.hidden) fecha3d(true); });
 function tiraMesa(sid,n){ S.mesas[sid]=(S.mesas[sid]||[]).filter(function(x){ return x!==n; }); S.car[sid]=S.mesas[sid].length; setores(); }
-addEventListener('message',function(e){ var m=e.data, f=el('m3f'); if(!m||!f||e.source!==f.contentWindow||!S.m3) return;
-  if(m.tipo==='prev3d-pronto') f.contentWindow.postMessage(S.m3.msg,'*');
-  if(m.tipo==='prev3d-mesa'){ var sid=S.m3.sid, x=todos()[sid], l=S.mesas[sid]||[], n=Object.keys(S.car).reduce(function(a,c){ return a+S.car[c]; },0); if(l.indexOf(m.n)<0&&n<10&&l.length<x.restantes){ l.push(m.n); S.mesas[sid]=l; S.car[sid]=l.length; } fecha3d(); setores(); }
+addEventListener('message',function(e){ var m=e.data, f=M3&&M3.f; if(!m||!f||e.source!==f.contentWindow) return;
+  if(m.tipo==='prev3d-pronto'){ M3.pronto=true; if(S.m3&&S.m3.msg) f.contentWindow.postMessage(S.m3.msg,'*'); }
+  if(m.tipo==='prev3d-mesa'&&S.m3){ var sid=S.m3.sid, x=todos()[sid], l=S.mesas[sid]||[], n=Object.keys(S.car).reduce(function(a,c){ return a+S.car[c]; },0); if(l.indexOf(m.n)<0&&n<10&&l.length<x.restantes){ l.push(m.n); S.mesas[sid]=l; S.car[sid]=l.length; } fecha3d(); setores(); }
 });
 function continuar(){ if(!S.tk){ S.volta=checkout; return entrar(); } checkout(); }
 /* ---------- entrar: só o WhatsApp ---------- */
@@ -370,7 +397,7 @@ function paga(){
   var b=el('bP'); b.disabled=true; b.textContent='Gerando o Pix...'; el('er').textContent='';
   api('/fest/comprar',{evento:S.ev.id,itens:itens().map(function(x){ return {setor:x.setor,qtd:x.qtd,meia:x.meia,mesas:x.mesas}; }),comprador:{nome:el('c-nm').value,cpf:el('c-cpf').value,email:el('c-em').value},titulares:tit,cupom:S.cupom?S.cupom.codigo:undefined}).then(function(d){
     if(!d.ok){ b.disabled=false; b.textContent='Pagar com Pix'; el('er').textContent=d.mensagem||'Não consegui gerar o Pix.'; if(d._st===401){ S.volta=checkout; entrar(); } return; }
-    S.ped=d.pedido; S.car={}; S.mesas={}; pix();
+    S.ped=d.pedido; S.car={}; S.mesas={}; EVC={}; pix();
   });
 }
 function pix(){

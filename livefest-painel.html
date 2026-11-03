@@ -159,7 +159,7 @@ function datasVazias(){ [].forEach.call(document.querySelectorAll('input[type=da
 document.addEventListener('input',function(e){ if(e.target&&e.target.type==='date') e.target.classList.toggle('vz',!e.target.value); });
 [].forEach.call(document.querySelectorAll('#nav button'),function(b){ b.onclick=function(){ VISTA=b.dataset.v; EV=null; pinta(); scrollTo(0,0); }; });
 var TIPOS={pista:'Pista',mesa:'Mesa',camarote:'Camarote',backstage:'Backstage',vip:'VIP',outro:'Outro'};
-function carrega(id){ return api('/painel/fest-eventos').then(function(d){ if(!d.ok) throw new Error(d.mensagem||''); D=d; if(id) EV=D.eventos.filter(function(e){ return e.id===id; })[0]||null; pinta(); }).catch(function(e){ if(e.message!=='sessao') el('app').innerHTML='<div class="vazio">'+esc(e.message||'Não consegui carregar.')+'</div>'; }); }
+function carrega(id,quieto){ return api('/painel/fest-eventos').then(function(d){ if(!d.ok) throw new Error(d.mensagem||''); D=d; if(id) EV=D.eventos.filter(function(e){ return e.id===id; })[0]||null; if(!quieto) pinta(); }).catch(function(e){ if(e.message!=='sessao') el('app').innerHTML='<div class="vazio">'+esc(e.message||'Não consegui carregar.')+'</div>'; }); }
 function linkCasa(){ return 'https://livefood.tec.br/livefest/'+encodeURIComponent(D.slug||D.cli||''); }
 function linkEv(e){ return linkCasa()+'/'+encodeURIComponent(e.id); }
 function copiar(t){ try{ navigator.clipboard.writeText(t).then(function(){ toast('Link copiado'); },function(){ prompt('Copie o link:',t); }); }catch(e){ prompt('Copie o link:',t); } }
@@ -243,18 +243,22 @@ function fotos(){
   previa();
 }
 function previa(){ var c=el('pv-c'), b=el('pv-b'); if(!c) return; var ch=el('ed-ch')?el('ed-ch').value.trim():EV.chamada; c.textContent=ch; c.hidden=!ch; b.textContent=((el('ed-bt')&&el('ed-bt').value.trim())||'Garantir ingresso')+' →'; }
-/* fotos: reduzidas no próprio aparelho (horizontal 1200 × 600, em pé 1080 × 1920) antes de enviar */
-function foto(lado,inp){ var f=inp.files&&inp.files[0]; inp.value=''; if(!f) return; var W=lado==='v'?1080:1200, H=lado==='v'?1920:600; toast('Enviando a foto…');
-  var r=new FileReader(); r.onload=function(){ var im=new Image(); im.onload=function(){ var c=document.createElement('canvas'); c.width=W; c.height=H; var x=c.getContext('2d'), k=Math.max(W/im.width,H/im.height), w=im.width*k, h=im.height*k; x.drawImage(im,(W-w)/2,(H-h)/2,w,h); var u=c.toDataURL('image/jpeg',.84);
-    api('/painel/fest-banner',{id:EV.id,img:u,lado:lado}).then(function(d){ if(!d.ok){ toast(d.mensagem||'Não consegui enviar.'); return; } EV[lado==='v'?'img_v':'img_h']=d.url||u; if(lado==='h') EV.banner=1; fotos(); toast('Foto salva'); }); }; im.onerror=function(){ toast('Não consegui abrir essa imagem.'); }; im.src=r.result; }; r.readAsDataURL(f); }
-function tiraFoto(lado){ api('/painel/fest-banner',{id:EV.id,img:'',lado:lado}).then(function(d){ if(!d.ok){ toast(d.mensagem||'Não deu certo.'); return; } EV[lado==='v'?'img_v':'img_h']=''; if(lado==='h') EV.banner=0; fotos(); toast('Foto tirada'); }); }
+/* fotos: reduzidas no próprio aparelho (horizontal 1200 × 600, em pé 1080 × 1920) e enviadas como arquivo.
+   (186) a prévia aparece na hora, e o envio segue por trás (antes ia como texto, 33% maior, e só mostrava no fim) */
+function foto(lado,inp){ var f=inp.files&&inp.files[0]; inp.value=''; if(!f) return; var W=lado==='v'?1080:1200, H=lado==='v'?1920:600, k0=lado==='v'?'img_v':'img_h', ant=EV[k0], uL=URL.createObjectURL(f);
+  EV[k0]=uL; fotos(); toast('Enviando a foto…');
+  var im=new Image(); im.onload=function(){ var c=document.createElement('canvas'); c.width=W; c.height=H; var x=c.getContext('2d'), k=Math.max(W/im.width,H/im.height), w=im.width*k, h=im.height*k; x.drawImage(im,(W-w)/2,(H-h)/2,w,h);
+    c.toBlob(function(bl){ if(!bl){ toast('Não consegui preparar essa imagem.'); EV[k0]=ant; fotos(); return; }
+      fetch(API+'/painel/fest-foto?ev='+encodeURIComponent(EV.id)+'&lado='+lado,{method:'POST',headers:{'Content-Type':'image/jpeg','Authorization':'Bearer '+TK},body:bl}).then(function(r){ return r.json(); }).then(function(d){
+        if(!d.ok){ toast(d.mensagem||'Não consegui enviar.'); EV[k0]=ant; fotos(); return; } EV[k0]=d.url; if(lado==='h') EV.banner=1; toast('Foto salva'); }).catch(function(){ toast('Sem conexão. A foto não foi salva.'); EV[k0]=ant; fotos(); }); },'image/jpeg',.82); };
+  im.onerror=function(){ toast('Não consegui abrir essa imagem.'); EV[k0]=ant; fotos(); }; im.src=uL; }function tiraFoto(lado){ api('/painel/fest-banner',{id:EV.id,img:'',lado:lado}).then(function(d){ if(!d.ok){ toast(d.mensagem||'Não deu certo.'); return; } EV[lado==='v'?'img_v':'img_h']=''; if(lado==='h') EV.banner=0; fotos(); toast('Foto tirada'); }); }
 function capaVideo(inp){ var f=inp.files&&inp.files[0]; inp.value=''; if(!f) return; if(f.size>60000000){ toast('Vídeo grande demais (máximo 60 MB).'); return; }
   var b=el('bt-cv'); if(b){ b.disabled=true; b.textContent='Enviando…'; }
   fetch(API+'/painel/fest-video?ev='+encodeURIComponent(EV.id),{method:'POST',headers:{'Content-Type':f.type||'video/mp4','Authorization':'Bearer '+TK},body:f}).then(function(r){ return r.json(); }).then(function(d){ if(!d.ok){ toast(d.mensagem||'Não consegui enviar.'); fotos(); return; } EV.video=d.video; fotos(); toast('Vídeo salvo'); }).catch(function(){ toast('Sem conexão.'); fotos(); }); }
 function tiraVideo(){ api('/painel/fest-video-apagar',{id:EV.id}).then(function(d){ if(!d.ok){ toast('Não deu certo.'); return; } EV.video=''; fotos(); toast('Vídeo tirado'); }); }
 /* mapa: OpenStreetMap com o ponto que o cliente abre no Google Maps (botão Ver localização no app) */
-var LFL=null; function leaflet(cb){ if(window.L) return cb(); if(LFL){ LFL.push(cb); return; } LFL=[cb]; var c=document.createElement('link'); c.rel='stylesheet'; c.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'; document.head.appendChild(c); var s=document.createElement('script'); s.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'; s.onload=function(){ var l=LFL; LFL=null; l.forEach(function(f){ f(); }); }; s.onerror=function(){ LFL=null; var t=el('ed-mt'); if(t) t.textContent='Não consegui abrir o mapa agora. O endereço escrito já vale.'; }; document.head.appendChild(s); }
-function mapaIni(){ leaflet(function(){ var bx=el('ed-mapa'); if(!bx||MAPA) return;
+var LFL=null; function carregaMapa(cb){ if(window.L) return cb(); if(LFL){ LFL.push(cb); return; } LFL=[cb]; var c=document.createElement('link'); c.rel='stylesheet'; c.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'; document.head.appendChild(c); var s=document.createElement('script'); s.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'; s.onload=function(){ var l=LFL; LFL=null; l.forEach(function(f){ f(); }); }; s.onerror=function(){ LFL=null; var t=el('ed-mt'); if(t) t.textContent='Não consegui abrir o mapa agora. O endereço escrito já vale.'; }; document.head.appendChild(s); }
+function mapaIni(){ carregaMapa(function(){ var bx=el('ed-mapa'); if(!bx||MAPA) return;
   MAPA=L.map(bx,{scrollWheelZoom:false}).setView(PONTO||[-14.2,-51.9],PONTO?16:4);
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(MAPA);
   if(PONTO) poePin(PONTO,true); else if(el('ed-cd').value.trim()) procura(true);
@@ -272,7 +276,8 @@ function procura(soVista){
     var p=[+l[0].lat,+l[0].lon]; if(soVista) MAPA.setView(p,13); else { MAPA.setView(p,17); poePin(p); } }).catch(function(){ if(!soVista) toast('Não consegui procurar agora. Toque no mapa para marcar.'); }); }
 function corpoDados(pub){ var tem=!!el('ed-ds'), v=function(i,k){ return tem?el(i).value:EV[k]; };
   return {id:EV.id,descricao:v('ed-ds','descricao'),local:v('ed-lc','local'),cidade:v('ed-cd','cidade'),categoria:v('ed-ct','categoria'),idade:v('ed-id','idade'),endereco:v('ed-en','endereco'),chamada:v('ed-ch','chamada'),botao:v('ed-bt','botao'),lat:tem?(PONTO?PONTO[0]:''):EV.lat,lng:tem?(PONTO?PONTO[1]:''):EV.lng,pub:pub}; }
-function salvaDados(){ el('ed-b').disabled=true; api('/painel/fest-evento',corpoDados(EV.pub)).then(function(d){ el('ed-b').disabled=false; if(!d.ok){ el('ed-er').textContent=d.mensagem||'Não consegui salvar.'; return; } toast('Salvo'); carrega(EV.id); }).catch(function(){ el('ed-b').disabled=false; }); }
+/* (186) salvar não redesenha a tela nem o mapa: guarda aqui e atualiza a lista por trás */
+function salvaDados(){ var cp=corpoDados(EV.pub); el('ed-b').disabled=true; api('/painel/fest-evento',cp).then(function(d){ el('ed-b').disabled=false; if(!d.ok){ el('ed-er').textContent=d.mensagem||'Não consegui salvar.'; return; } el('ed-er').textContent=''; ['descricao','local','cidade','categoria','endereco','chamada','botao'].forEach(function(k){ EV[k]=cp[k]; }); EV.idade=+cp.idade||0; EV.lat=cp.lat===''?null:cp.lat; EV.lng=cp.lng===''?null:cp.lng; toast('Salvo'); carrega(EV.id,true); }).catch(function(){ el('ed-b').disabled=false; }); }
 function publica(p){ api('/painel/fest-evento',corpoDados(p)).then(function(d){ if(!d.ok){ toast(d.mensagem||'Não deu certo.'); diz(d.mensagem||'Não deu certo.'); return; } toast(p?'Publicado na agenda':'Tirado da agenda'); if(p) diz('Seu evento está na agenda da LiveFest!'); carrega(EV.id); }); }
 /* ---------- salões e setores ---------- */
 function saloes(){
