@@ -180,7 +180,7 @@ button{font:inherit;color:inherit;cursor:pointer}
   function libera(p,met,sim){
     pausa=Date.now()+LIM.msRes; registra(p,met,sim); abreCatraca();
     setVis('ok','Liberado'); cheio(true);
-    $('res').innerHTML='<div class="nome">'+esc(String(p.nome).split(' ')[0])+',</div><div class="est ok">✓ Acesso liberado!</div><p class="viva">Aproveite seu evento! 🎉</p><p class="mut">'+(p.comanda?'Comanda '+esc(p.comanda)+' aberta · ':'')+esc(p.tipo||'Ingresso')+' · '+(met==='rosto'?'pelo rosto':(met==='qr'?'pelo QR code':'liberado pela equipe'))+'</p>'+catraca(true,'Catraca de entrada liberada');
+    $('res').innerHTML='<div class="nome">'+esc(String(p.nome).split(' ')[0])+',</div><div class="est ok">✓ Acesso liberado!</div><p class="viva">Aproveite seu evento! 🎉</p>'+(/Meia/.test(p.tipo||'')?'<p class="viva" style="color:var(--alerta)">Meia-entrada: confira o documento</p>':'')+'<p class="mut">'+(p.comanda?'Comanda '+esc(p.comanda)+' aberta · ':'')+esc(p.tipo||'Ingresso')+' · '+(met==='rosto'?'pelo rosto':(met==='qr'?'pelo QR code':'liberado pela equipe'))+'</p>'+catraca(true,'Catraca de entrada liberada');
     diz('Boa festa, '+String(p.nome).split(' ')[0]+'!',{gesto:'boas_vindas'});
     agenda(LIM.msRes,aguardando);
   }

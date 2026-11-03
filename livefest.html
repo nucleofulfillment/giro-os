@@ -68,6 +68,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .qt{display:flex;align-items:center;gap:12px;margin-top:8px;justify-content:flex-end}
 .qt button{width:34px;height:34px;border-radius:50%;border:1.5px solid rgba(255,255,255,.22);background:transparent;font-weight:800;font-size:18px}
 .qt b{min-width:18px;text-align:center}
+.mrow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px;font-size:13.5px;font-weight:800}.mrow small{display:block;font-size:11.5px;color:var(--mu);font-weight:600}.mrow .qt{margin-top:0}
 .rod{position:sticky;bottom:0;z-index:5;background:var(--noite);border-top:1px solid rgba(255,255,255,.08);padding:10px 16px max(14px,env(safe-area-inset-bottom));display:flex;align-items:center;gap:12px}
 .rod div{flex:1}.rod small{display:block;font-size:12px;opacity:.7;font-weight:700}.rod b{font-size:19px}
 /* telas claras: entrar, compra, Pix */
@@ -161,15 +162,24 @@ function eventoPinta(){
 }
 function setores(){
   var s=S.ev.saloes[S.sal]; if(!s){ el('sets').innerHTML='<div class="vazio">Ingressos em breve.</div>'; return totais(); }
-  el('sets').innerHTML=s.setores.map(function(x){ var q=S.car[x.id]||0;
-    return '<div class="set"><div class="h"><div><b>'+esc(x.nome)+'</b><small>'+[x.pessoas>1?'Para '+x.pessoas+' pessoas':'',x.consumacao?brl(x.consumacao)+' de consumação na comanda':'',x.inclui,x.meia?'Meia-entrada com documento':''].filter(Boolean).map(esc).join(' · ')+'</small><span class="lote'+(x.esgotado?' esg':'')+'">'+(x.esgotado?'Esgotado':esc(x.lote)+(x.restantes<=10?' · últimos '+x.restantes:''))+'</span></div><div class="vl">'+(x.ant?'<s>'+brl(x.ant)+'</s>':'')+(x.esgotado?'':brl(x.preco))+(x.taxa?'<em>+ '+brl(x.taxa)+' de taxa</em>':'')+'</div></div>'+
-      (x.esgotado?'':'<div class="qt"><button onclick="poe(\''+x.id+'\',-1)" aria-label="Menos">−</button><b>'+q+'</b><button onclick="poe(\''+x.id+'\',1)" aria-label="Mais">+</button></div>')+'</div>'; }).join('')||'<div class="vazio">Ingressos em breve.</div>';
+  var ctl=function(k,q){ return '<div class="qt"><button onclick="poe(\''+k+'\',-1)" aria-label="Menos">−</button><b>'+q+'</b><button onclick="poe(\''+k+'\',1)" aria-label="Mais">+</button></div>'; };
+  el('sets').innerHTML=s.setores.map(function(x){
+    var h='<div class="set"><div class="h"><div><b>'+esc(x.nome)+'</b><small>'+[x.pessoas>1?'Para '+x.pessoas+' pessoas':'',x.consumacao?brl(x.consumacao)+' de consumação na comanda':'',x.inclui].filter(Boolean).map(esc).join(' · ')+'</small><span class="lote'+(x.esgotado?' esg':'')+'">'+(x.esgotado?'Esgotado':esc(x.lote)+(x.restantes<=10?' · últimos '+x.restantes:''))+'</span></div><div class="vl">'+(x.ant?'<s>'+brl(x.ant)+'</s>':'')+(x.esgotado?'':brl(x.preco))+(x.taxa?'<em>+ '+brl(x.taxa)+' de taxa</em>':'')+'</div></div>';
+    if(!x.esgotado) h+=(x.meia?'<div class="mrow"><span>Inteira</span>'+ctl(x.id,S.car[x.id]||0)+'</div>':ctl(x.id,S.car[x.id]||0));
+    if(!x.esgotado&&x.meia) h+=x.meia_rest>0?'<div class="mrow"><span>Meia-entrada · '+brl(x.meia_preco)+(x.meia_taxa?' + '+brl(x.meia_taxa):'')+'<small>Estudante, idoso ou PcD. Documento na entrada.</small></span>'+ctl(x.id+':m',S.car[x.id+':m']||0)+'</div>':'<div class="mrow"><span>Meia-entrada esgotada</span></div>';
+    return h+'</div>'; }).join('')||'<div class="vazio">Ingressos em breve.</div>';
   totais();
 }
 function todos(){ var m={}; S.ev.saloes.forEach(function(s){ s.setores.forEach(function(x){ x.salao=s.nome; m[x.id]=x; }); }); return m; }
-function poe(id,d){ var x=todos()[id], n=Object.keys(S.car).reduce(function(a,k){ return a+S.car[k]; },0); var q=(S.car[id]||0)+d; if(q<0) q=0; if(q>x.restantes) q=x.restantes; if(d>0&&n>=10) q=S.car[id]||0; S.car[id]=q; setores(); }
-function totais(){ var m=todos(), n=0, t=0; Object.keys(S.car).forEach(function(k){ if(m[k]){ n+=S.car[k]; t+=S.car[k]*m[k].unit; } }); el('qtd').textContent=n?n+(n===1?' ingresso':' ingressos'):'Escolha os ingressos'; el('tot').textContent=brl(t); el('bCont').disabled=!n; }
-function itens(){ var m=todos(); return Object.keys(S.car).filter(function(k){ return S.car[k]>0&&m[k]; }).map(function(k){ return {setor:k,qtd:S.car[k],x:m[k]}; }); }
+/* carrinho: "id" é inteira, "id:m" é meia-entrada do mesmo setor */
+function poe(k,d){
+  var id=k.split(':')[0], meia=/:m$/.test(k), x=todos()[id], n=Object.keys(S.car).reduce(function(a,c){ return a+S.car[c]; },0), set=(S.car[id]||0)+(S.car[id+':m']||0);
+  var q=(S.car[k]||0)+d; if(q<0) q=0;
+  if(d>0&&(n>=10||set>=x.restantes||(meia&&(S.car[k]||0)>=x.meia_rest))) q=S.car[k]||0;
+  S.car[k]=q; setores();
+}
+function totais(){ var n=0, t=0; itens().forEach(function(i){ n+=i.qtd; t+=i.qtd*(i.meia?i.x.meia_unit:i.x.unit); }); el('qtd').textContent=n?n+(n===1?' ingresso':' ingressos'):'Escolha os ingressos'; el('tot').textContent=brl(t); el('bCont').disabled=!n; }
+function itens(){ var m=todos(); return Object.keys(S.car).filter(function(k){ return S.car[k]>0&&m[k.split(':')[0]]; }).map(function(k){ return {setor:k.split(':')[0],meia:/:m$/.test(k)?1:0,qtd:S.car[k],x:m[k.split(':')[0]]}; }); }
 function continuar(){ if(!S.tk){ S.volta=checkout; return entrar(); } checkout(); }
 /* ---------- entrar: só o WhatsApp ---------- */
 function entrar(){
@@ -183,25 +193,35 @@ function pedeCodigo(){
   if(fo.length<10){ el('er').textContent='Confira o número: DDD + número.'; return; } b.disabled=true; el('er').textContent='';
   api('/fest/conta/codigo',{fone:fo}).then(function(d){ b.disabled=false; if(!d.ok&&d.erro!=='aguarde'){ el('er').textContent=d.mensagem||'Não consegui enviar.'; return; } el('cdBox').hidden=false; el('fo').readOnly=true; b.textContent='Entrar'; el('cd').focus(); if(d.erro==='aguarde') el('er').textContent='Já enviamos um código. Digite abaixo.'; });
 }
-/* ---------- compra: dados do comprador só aqui, e quem usa cada ingresso ---------- */
+/* ---------- compra: dados do comprador só aqui, e uma vaga por pessoa (mesa e camarote: titular + convidados opcionais) ---------- */
+function vagas(it){ var v=[]; it.forEach(function(i){ for(var u=0;u<i.qtd;u++) for(var p=0;p<(i.x.pessoas||1);p++) v.push({x:i.x,meia:i.meia,titular:p===0,p:p,n:i.x.pessoas||1}); }); return v; }
 function checkout(){
   var it=itens(); if(!it.length) return eventoPinta();
   tela('<div class="pg"><div class="vazio" style="color:#6B6B73">Carregando...</div></div>');
   api('/fest/conta').then(function(d){
     if(!d.ok){ S.volta=checkout; return entrar(); }
-    S.conta=d.conta; var c=d.conta, n=it.reduce(function(a,x){ return a+x.qtd; },0), val=0, tx=0;
-    it.forEach(function(x){ val+=x.x.preco*x.qtd; tx+=x.x.taxa*x.qtd; });
-    var h='<div class="pg"><div class="bar"><button class="ib" onclick="eventoPinta()">←</button><b>Pagamento</b></div><div class="cx"><h3>'+esc(S.ev.nome)+'</h3>'+it.map(function(x){ return '<div class="lin"><span>'+x.qtd+'× '+esc(x.x.nome)+' · '+esc(x.x.lote)+'</span><span>'+brl(x.x.preco*x.qtd)+'</span></div>'; }).join('')+(tx?'<div class="lin"><span>Taxa de serviço</span><span>'+brl(tx)+'</span></div>':'')+'<div class="lin t"><span>Total</span><span>'+brl(val+tx)+'</span></div></div>';
-    h+='<div class="cx"><h3>Seus dados para a compra</h3><input class="inp" id="c-nm" placeholder="Nome completo *" value="'+esc(c.nome)+'"><input class="inp" id="c-cpf" inputmode="numeric" placeholder="CPF *" value="'+esc(c.cpf)+'" maxlength="14"><input class="inp" id="c-em" type="email" placeholder="E-mail *" value="'+esc(c.email)+'"><div class="nota">O ingresso 1 é seu. Depois já vem preenchido.</div></div>';
-    for(var i=1;i<n;i++) h+='<div class="cx"><h3>Ingresso '+(i+1)+' · quem vai usar</h3><input class="inp t-nm" placeholder="Nome completo *"><input class="inp t-cpf" inputmode="numeric" placeholder="CPF *" maxlength="14"><input class="inp t-fo" type="tel" inputmode="numeric" placeholder="WhatsApp *" maxlength="16"><div class="nota">O ingresso vai para o WhatsApp dessa pessoa.</div></div>';
-    h+='<div class="cx"><h3>Pagar com Pix</h3><div class="nota" style="margin:0">O ingresso sai assim que o Pix cair. Desistiu? Até 7 dias após a compra, e antes do evento, o valor volta.</div></div><div class="erro" id="er"></div><div class="rod" style="background:#fff;border-top-color:#E6E6EA"><div><small style="color:#6B6B73">Total</small><b>'+brl(val+tx)+'</b></div><button class="bt" id="bP" onclick="paga()">Pagar com Pix</button></div></div>';
-    tela(h);
+    S.conta=d.conta; S.cupom=null; var c=d.conta, vg=vagas(it);
+    var h='<div class="pg"><div class="bar"><button class="ib" onclick="eventoPinta()">←</button><b>Pagamento</b></div><div class="cx" id="resumo"></div>';
+    h+='<div class="cx"><h3>Seus dados para a compra</h3><input class="inp" id="c-nm" placeholder="Nome completo *" value="'+esc(c.nome)+'"><input class="inp" id="c-cpf" inputmode="numeric" placeholder="CPF *" value="'+esc(c.cpf)+'" maxlength="14"><input class="inp" id="c-em" type="email" placeholder="E-mail *" value="'+esc(c.email)+'"><div class="nota">O primeiro ingresso ('+esc(vg[0].x.nome)+') é seu. Depois já vem preenchido.</div></div>';
+    vg.forEach(function(v,i){ if(!i) return; var tit=v.titular, rot=v.n>1?esc(v.x.nome)+' · '+(tit?'titular':'convidado '+(v.p+1)+' de '+v.n):esc(v.x.nome)+(v.meia?' · meia':'');
+      h+='<div class="cx"><h3>Ingresso '+(i+1)+' · '+rot+'</h3><input class="inp t-nm" data-i="'+i+'" placeholder="Nome completo'+(tit?' *':'')+'"><input class="inp t-cpf" data-i="'+i+'" inputmode="numeric" placeholder="CPF'+(tit?' *':'')+'" maxlength="14"><input class="inp t-fo" data-i="'+i+'" type="tel" inputmode="numeric" placeholder="WhatsApp'+(tit?' *':'')+'" maxlength="16"><div class="nota">'+(tit?'O ingresso vai para o WhatsApp dessa pessoa.':'Opcional. Pode deixar em branco e preencher depois em Meus ingressos.')+'</div></div>'; });
+    h+='<div class="cx"><h3>Cupom</h3><div class="copia" style="margin-top:0"><input id="cp" placeholder="Código do cupom" style="text-transform:uppercase"><button class="bt cl" style="padding:10px 14px;background:#F1F1F3;color:#1C1C1E" onclick="cupom()">Aplicar</button></div><div class="nota" id="cpm"></div></div>';
+    h+='<div class="cx"><h3>Pagar com Pix</h3><div class="nota" style="margin:0">O ingresso sai assim que o Pix cair. Desistiu? Até 7 dias após a compra, e antes do evento, o valor volta.</div></div><div class="erro" id="er"></div><div class="rod" style="background:#fff;border-top-color:#E6E6EA"><div><small style="color:#6B6B73">Total</small><b id="ctot"></b></div><button class="bt" id="bP" onclick="paga()">Pagar com Pix</button></div></div>';
+    tela(h); resumo();
   });
 }
+function resumo(){
+  var it=itens(), val=0, tx=0, ds=0; it.forEach(function(i){ val+=(i.meia?i.x.meia_preco:i.x.preco)*i.qtd; tx+=(i.meia?i.x.meia_taxa:i.x.taxa)*i.qtd; });
+  if(S.cupom) ds=Math.min(val,S.cupom.tipo==='pct'?Math.round(val*S.cupom.valor)/100:S.cupom.valor);
+  el('resumo').innerHTML='<h3>'+esc(S.ev.nome)+'</h3>'+it.map(function(i){ return '<div class="lin"><span>'+i.qtd+'× '+esc(i.x.nome)+(i.meia?' · meia':'')+' · '+esc(i.x.lote)+'</span><span>'+brl((i.meia?i.x.meia_preco:i.x.preco)*i.qtd)+'</span></div>'; }).join('')+(tx?'<div class="lin"><span>Taxa de serviço</span><span>'+brl(tx)+'</span></div>':'')+(ds?'<div class="lin" style="color:#15803D"><span>Cupom '+esc(S.cupom.codigo)+'</span><span>− '+brl(ds)+'</span></div>':'')+'<div class="lin t"><span>Total</span><span>'+brl(val+tx-ds)+'</span></div>';
+  el('ctot').textContent=brl(val+tx-ds);
+}
+function cupom(){ var c=el('cp').value.trim(); if(!c){ S.cupom=null; resumo(); return; }
+  api('/fest/cupom',{evento:S.ev.id,codigo:c}).then(function(d){ if(!d.ok){ S.cupom=null; el('cpm').textContent=d.mensagem||'Cupom não encontrado.'; el('cpm').style.color='#C62828'; } else { S.cupom=d.cupom; el('cpm').textContent='Cupom aplicado: '+(d.cupom.tipo==='pct'?String(d.cupom.valor).replace('.',',')+'% de desconto':brl(d.cupom.valor)+' de desconto')+'.'; el('cpm').style.color='#15803D'; } resumo(); }); }
 function paga(){
-  var tit=[null]; [].forEach.call(document.querySelectorAll('.t-nm'),function(x,i){ tit.push({nome:x.value,cpf:document.querySelectorAll('.t-cpf')[i].value,fone:document.querySelectorAll('.t-fo')[i].value}); });
+  var tit=[null]; [].forEach.call(document.querySelectorAll('.t-nm'),function(x){ var i=+x.dataset.i; tit[i]={nome:x.value,cpf:document.querySelector('.t-cpf[data-i="'+i+'"]').value,fone:document.querySelector('.t-fo[data-i="'+i+'"]').value}; });
   var b=el('bP'); b.disabled=true; b.textContent='Gerando o Pix...'; el('er').textContent='';
-  api('/fest/comprar',{evento:S.ev.id,itens:itens().map(function(x){ return {setor:x.setor,qtd:x.qtd}; }),comprador:{nome:el('c-nm').value,cpf:el('c-cpf').value,email:el('c-em').value},titulares:tit}).then(function(d){
+  api('/fest/comprar',{evento:S.ev.id,itens:itens().map(function(x){ return {setor:x.setor,qtd:x.qtd,meia:x.meia}; }),comprador:{nome:el('c-nm').value,cpf:el('c-cpf').value,email:el('c-em').value},titulares:tit,cupom:S.cupom?S.cupom.codigo:undefined}).then(function(d){
     if(!d.ok){ b.disabled=false; b.textContent='Pagar com Pix'; el('er').textContent=d.mensagem||'Não consegui gerar o Pix.'; if(d._st===401){ S.volta=checkout; entrar(); } return; }
     S.ped=d.pedido; S.car={}; pix();
   });
@@ -217,16 +237,25 @@ function meus(msg){
   if(!S.tk){ S.volta=function(){ meus(); }; return entrar(); }
   clearInterval(S.poll);
   tela('<div class="bar"><button class="ib" onclick="agenda()">←</button><b>Meus ingressos</b></div><div id="ml"><div class="vazio">Carregando...</div></div>');
-  api('/fest/ingressos').then(function(d){
-    if(!d.ok){ S.volta=function(){ meus(); }; return entrar(); }
-    var l=d.ingressos||[];
-    el('ml').innerHTML=(msg?'<div class="cx" style="background:rgba(22,163,74,.18);border:0;color:#fff;font-weight:800;text-align:center">✓ '+esc(msg)+'</div>':'')+(l.length?l.map(function(x,i){
-      return '<div class="ing"><div class="t1"><small>'+esc(x.evento)+'</small><b>'+esc(x.setor)+'</b><span>'+curto(x.inicio)+(x.hora_ini?' · '+esc(x.hora_ini):'')+' · '+esc(x.nome)+'</span></div><div class="q" id="q'+i+'"></div><div class="t2"><span>'+(x.comanda?'Comanda '+esc(x.comanda):'')+'</span><span>'+esc(x.casa)+'</span></div>'+
-        (x.meu?(x.facial?'<div class="fac ok"><b>✓ Facial cadastrada. É só olhar para a câmera na entrada.</b></div>':'<div class="fac"><b>Cadastre sua facial para ter acesso mais rápido.</b><a class="bt" href="'+esc(x.link)+'">Cadastrar</a></div>'):'<div class="fac"><b>Ingresso de '+esc(String(x.nome).split(' ')[0])+'</b><a class="bt" target="_blank" rel="noopener" href="https://wa.me/'+esc(x.fone)+'?text='+encodeURIComponent('Seu ingresso para '+x.evento+': '+x.link)+'">Enviar</a></div>')+'</div>'; }).join(''):'<div class="vazio">Você ainda não tem ingressos.<br><br><button class="bt" onclick="agenda()">Ver a Agenda</button></div>');
-    var pinta=function(){ l.forEach(function(x,i){ try{ new QRCode(el('q'+i),{text:x.qr,width:180,height:180,colorDark:'#0B0908',colorLight:'#ffffff'}); }catch(e){ el('q'+i).textContent=x.qr; } }); };
-    if(window.QRCode) pinta(); else if(l.length){ var s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'; s.onload=pinta; document.head.appendChild(s); }
-  });
+  api('/fest/ingressos').then(function(d){ if(!d.ok){ S.volta=function(){ meus(); }; return entrar(); } S.ings=d.ingressos||[]; ingPinta(msg); });
 }
+function ingPinta(msg){
+  var l=S.ings||[];
+  el('ml').innerHTML=(msg?'<div class="cx" style="background:rgba(22,163,74,.18);border:0;color:#fff;font-weight:800;text-align:center">✓ '+esc(msg)+'</div>':'')+(l.length?l.map(function(x,i){
+    var extra=[x.meia?'Meia-entrada · leve o documento':'',x.credito?brl(x.credito)+' de consumação na comanda':''].filter(Boolean);
+    var acao=x.convidado?'<div class="fac"><b>Convidado. Diga quem vai usar.</b><button class="bt" onclick="transf('+i+')">Preencher</button></div>':
+      x.meu?(x.facial?'<div class="fac ok"><b>✓ Facial cadastrada. É só olhar para a câmera na entrada.</b></div>':'<div class="fac"><b>Cadastre sua facial para ter acesso mais rápido.</b><a class="bt" href="'+esc(x.link)+'">Cadastrar</a></div>'):'<div class="fac"><b>Ingresso de '+esc(String(x.nome).split(' ')[0])+'</b><a class="bt" target="_blank" rel="noopener" href="https://wa.me/'+esc(x.fone)+'?text='+encodeURIComponent('Seu ingresso para '+x.evento+': '+x.link)+'">Enviar</a></div>';
+    return '<div class="ing"><div class="t1"><small>'+esc(x.evento)+'</small><b>'+esc(x.setor)+'</b><span>'+curto(x.inicio)+(x.hora_ini?' · '+esc(x.hora_ini):'')+' · '+esc(x.nome)+'</span>'+(extra.length?'<span style="display:block;margin-top:4px;color:#FFB27A">'+extra.map(esc).join(' · ')+'</span>':'')+'</div><div class="q" id="q'+i+'"></div><div class="t2"><span>'+(x.comanda?'Comanda '+esc(x.comanda):'')+'</span><span>'+esc(x.casa)+'</span></div>'+acao+(x.transferir&&!x.convidado?'<button class="bt cl" style="margin:0 16px 14px;width:calc(100% - 32px)" onclick="transf('+i+')">Transferir ingresso</button>':'')+'</div>'; }).join(''):'<div class="vazio">Você ainda não tem ingressos.<br><br><button class="bt" onclick="agenda()">Ver a Agenda</button></div>');
+  var pinta=function(){ l.forEach(function(x,i){ try{ new QRCode(el('q'+i),{text:x.qr,width:180,height:180,colorDark:'#0B0908',colorLight:'#ffffff'}); }catch(e){ el('q'+i).textContent=x.qr; } }); };
+  if(window.QRCode) pinta(); else if(l.length){ var s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'; s.onload=pinta; document.head.appendChild(s); }
+}
+/* transferir: passa o ingresso para outra pessoa até o início do evento (a facial é refeita por ela) */
+function transf(i){
+  var x=S.ings[i];
+  tela('<div class="pg"><div class="bar"><button class="ib" onclick="meus()">←</button><b>'+(x.convidado?'Quem vai usar':'Transferir ingresso')+'</b></div><div class="cx"><h3>'+esc(x.evento)+' · '+esc(x.setor)+'</h3><input class="inp" id="tr-nm" placeholder="Nome completo *"><input class="inp" id="tr-cpf" inputmode="numeric" placeholder="CPF *" maxlength="14"><input class="inp" id="tr-fo" type="tel" inputmode="numeric" placeholder="WhatsApp *" maxlength="16"><div class="nota">'+(x.convidado?'':'O ingresso sai da sua conta e a facial cadastrada é apagada. ')+'A pessoa recebe o link para cadastrar a facial.</div></div><div class="erro" id="er"></div><div style="padding:8px 16px"><button class="bt w" id="bT" onclick="transfOk(\''+esc(x.id)+'\')">Confirmar</button></div></div>');
+}
+function transfOk(id){ var b=el('bT'), nm=el('tr-nm').value.trim(); b.disabled=true;
+  api('/fest/transferir',{id:id,nome:nm,cpf:el('tr-cpf').value,fone:el('tr-fo').value}).then(function(d){ b.disabled=false; if(!d.ok){ el('er').textContent=d.mensagem||'Não deu certo.'; return; } S.ings=d.ingressos||[]; tela('<div class="bar"><button class="ib" onclick="agenda()">←</button><b>Meus ingressos</b></div><div id="ml"></div>'); ingPinta('Ingresso passado para '+nm.split(' ')[0]+'.'); }); }
 /* início: link direto de um evento (?ev=) ou a abertura */
 api('/fest/agenda').then(function(d){ S.ag=(d&&d.eventos)||[]; if(Q.get('ev')) evento(Q.get('ev')); else if(Q.get('tela')==='agenda') agenda(); else abertura(); });
 </script>
