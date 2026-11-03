@@ -21,6 +21,17 @@
 <script>
 (function () {
   var p = location.pathname.replace(/^\/+|\/+$/g, '').split('/');
+  /* (184) LiveFest da casa: livefood.tec.br/livefest/<casa> e livefood.tec.br/livefest/<casa>/<evento>
+     (no domínio livefest.com.br, quando existir: livefest.com.br/<casa>) */
+  var fp = location.hostname.indexOf('livefest') >= 0 ? p : (p[0] === 'livefest' ? p.slice(1) : null);
+  if (fp && fp.length >= 1 && fp.length <= 2 && /^[A-Za-z0-9_-]{2,40}$/.test(fp[0]) && (!fp[1] || /^[A-Za-z0-9]{4,30}$/.test(fp[1]))) {
+    var fr = { casa: fp[0].toLowerCase(), ev: fp[1] || '' };
+    fetch('/livefest.html', { cache: 'no-cache' }).then(function (r) { return r.text(); }).then(function (h) {
+      h = h.replace(/<head>/i, '<head><base href="/"><script>window.LF_FEST=' + JSON.stringify(fr) + '<\/script>');
+      document.open(); document.write(h); document.close();
+    }).catch(function () { location.replace('/livefest.html?casa=' + encodeURIComponent(fr.casa) + (fr.ev ? '&ev=' + fr.ev : '')); });
+    return;
+  }
   var loja = /^[A-Za-z0-9_-]{2,40}$/.test(p[0] || '') ? p[0] : '';
   /* (109) livefood.tec.br/<loja>/cardapio → versão do WhatsApp: monta a sacola e envia o pedido pelo WhatsApp da loja */
   var wa = p.length === 2 && p[1].toLowerCase() === 'cardapio';

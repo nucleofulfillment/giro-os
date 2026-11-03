@@ -7,48 +7,96 @@
 <meta name="theme-color" content="#0E0A12">
 <meta name="robots" content="noindex">
 <title>LiveFest · Painel do evento</title>
+<link rel="preconnect" href="https://giro-os-api.nucleofull.workers.dev" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
-<!-- (181) painel do dono do evento na LiveFest: o evento é o mesmo do LiveFace; aqui entram dados, banner, salões, setores, lotes, publicação e vendas -->
+<!-- (181) painel do dono do evento na LiveFest: o evento é o mesmo do LiveFace; aqui entram dados, banner, salões, setores, lotes, publicação e vendas.
+     (184) menu lateral (Meus eventos, Vendas, Minha página), foto horizontal e capa em pé (foto ou vídeo) com chamada e botão, endereço com ponto no mapa -->
 <style>
-:root{--lf:#FF5A00;--mg:#E0249A;--noite:#0E0A12;--tx:#1C1C1E;--mu:#6B6B73;--bd:#E6E6EA;--s1:#F7F7F8;--s2:#F1F1F3;--ok:#16A34A;--er:#C62828;--f:'Manrope',-apple-system,system-ui,sans-serif;--t:'Baloo 2',var(--f)}
+:root{--lf:#FF5A00;--mg:#E0249A;--noite:#0E0A12;--tx:#1C1C1E;--mu:#6B6B73;--ph:#BDB8C3;--bd:#E6E6EA;--s1:#F7F7F8;--s2:#F1F1F3;--ok:#16A34A;--er:#C62828;--f:'Manrope',-apple-system,system-ui,sans-serif;--t:'Baloo 2',var(--f)}
 *{box-sizing:border-box}
 html,body{margin:0}
 body{font-family:var(--f);background:#F4F1F6;color:var(--tx);-webkit-font-smoothing:antialiased}
 [hidden]{display:none!important}
+a{color:inherit}
 .marca{font:800 1em/1 var(--t);letter-spacing:-.03em;color:#fff}.marca i{font-style:normal;background:linear-gradient(90deg,var(--lf),var(--mg));-webkit-background-clip:text;background-clip:text;color:transparent}
-.topo{background:radial-gradient(120% 160% at 0% 0%,#3A1030,var(--noite) 60%);color:#fff;padding:18px max(18px,env(safe-area-inset-left)) 22px}
-.topo .in{max-width:1100px;margin:0 auto;display:flex;align-items:center;gap:16px}
-.topo .marca{font-size:32px}
-.topo .tx{flex:1;min-width:0}.topo .tx b{display:block;font-size:15px}.topo .tx small{display:block;margin-top:4px;opacity:.75;font-weight:700;font-size:12.5px}
-.topo a{color:#fff;text-decoration:none;font-weight:800;font-size:12.5px;background:rgba(255,255,255,.12);padding:8px 13px;border-radius:99px}
-.lv{width:64px;flex:none}
-.wrap{max-width:1100px;margin:0 auto;padding:18px max(18px,env(safe-area-inset-right)) 60px max(18px,env(safe-area-inset-left))}
+.seta{display:block;flex:none}
+/* menu lateral */
+.lay{display:grid;grid-template-columns:248px minmax(0,1fr);min-height:100vh}
+.side{background:var(--noite);color:#fff;padding:22px 14px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:20px;z-index:20}
+.sb{display:flex;align-items:center;gap:10px;padding:0 6px}.sb .lv{width:54px;flex:none}.sb .marca{font-size:30px;display:block}.sb small{display:block;margin-top:4px;opacity:.72;font-weight:700;font-size:12.5px}
+.side nav{display:flex;flex-direction:column;gap:4px}
+.side nav button{display:flex;align-items:center;gap:10px;text-align:left;border:0;background:none;color:#CFC5D6;font:inherit;font-weight:800;font-size:14.5px;padding:12px 14px;border-radius:13px;cursor:pointer;white-space:nowrap}
+.side nav button:hover{background:rgba(255,255,255,.06);color:#fff}
+.side nav button.on{background:linear-gradient(90deg,var(--lf),var(--mg));color:#fff}
+.hub{margin-top:auto;display:inline-flex;align-items:center;gap:6px;color:#fff;text-decoration:none;font-weight:800;font-size:13px;background:rgba(255,255,255,.1);padding:9px 14px 9px 10px;border-radius:99px;align-self:flex-start}
+.wrap{padding:26px max(26px,env(safe-area-inset-right)) 80px 30px;max-width:1180px;width:100%}
+@media (max-width:860px){
+  .lay{grid-template-columns:1fr}
+  .side{height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;padding:12px max(14px,env(safe-area-inset-left));gap:10px}
+  .sb .lv{width:40px}.sb .marca{font-size:24px}
+  .side nav{flex-direction:row;overflow:auto;width:100%;order:3;scrollbar-width:none}.side nav::-webkit-scrollbar{display:none}
+  .side nav button{padding:9px 13px;font-size:13.5px}
+  .hub{margin:0 0 0 auto}
+  .wrap{padding:18px max(16px,env(safe-area-inset-right)) 80px max(16px,env(safe-area-inset-left))}
+}
+/* geral */
 .aviso{border-radius:14px;padding:12px 14px;font-weight:700;font-size:13.5px;margin-bottom:12px;background:#FFF4E5;color:#7A4A00}
 .aviso.er{background:#FDECEC;color:var(--er)}
 .info{font-size:13px;color:var(--mu);font-weight:600;margin:0 0 14px}
-.btn{font:inherit;font-weight:800;border-radius:12px;border:0;cursor:pointer;padding:10px 15px;font-size:14px;background:var(--s2);color:var(--tx)}
+.btn{font:inherit;font-weight:800;border-radius:12px;border:0;cursor:pointer;padding:10px 15px;font-size:14px;background:var(--s2);color:var(--tx);display:inline-flex;align-items:center;gap:6px;text-decoration:none}
 .btn.pri{background:linear-gradient(90deg,var(--lf),var(--mg));color:#fff}.btn.sm{padding:7px 11px;font-size:12.5px}.btn.er{color:var(--er)}
+.btn.lin{background:#fff;color:#C2187F;border:1.5px dashed #EBB6D6}
+.btn.vt{background:#fff;padding:8px 14px 8px 9px}
 .btn:disabled{opacity:.6}
-.lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:12px}
-.ev{background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 10px 30px -20px rgba(40,10,40,.5);cursor:pointer;border:0;text-align:left;font:inherit;padding:0;color:inherit}
-.ev .ban{height:110px;background:linear-gradient(135deg,#2B0F3F,#B5179E 60%,#FF5A00) center/cover no-repeat}
-.ev .c{padding:12px 14px}.ev b{display:block;font-size:16px}.ev small{display:block;color:var(--mu);font-weight:600;font-size:12.5px;margin-top:3px}
-.tag{display:inline-block;font-size:11px;font-weight:800;padding:3px 9px;border-radius:99px;margin-top:8px}
-.tag.pub{background:#EAF7EE;color:#15803D}.tag.ras{background:#FFF6DC;color:#8A6200}
-.cab{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
-.cab h1{font-size:24px;margin:0;flex:1;min-width:200px}
+.tit{margin-bottom:16px}.tit h1{font-size:26px;margin:0}.tit p{margin:4px 0 0;color:var(--mu);font-weight:600;font-size:14px}
+.kp{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.kp div{background:#fff;border-radius:16px;padding:14px 16px;border:1px solid #ECE6EF}
+.kp small{display:block;font-size:11px;font-weight:800;color:var(--mu);text-transform:uppercase;letter-spacing:.08em}.kp b{display:block;font-size:24px;margin-top:6px;letter-spacing:-.01em}
+.tb{background:#fff;border-radius:18px;border:1px solid #ECE6EF;overflow:hidden}
+.tr{display:grid;grid-template-columns:minmax(0,2.3fr) 1fr 1fr 1fr 96px;gap:12px;align-items:center;padding:13px 18px;border-top:1px solid var(--bd);font-size:14px;font-weight:700}
+.tr.th{border-top:0;font-size:11.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--mu);padding-top:14px;padding-bottom:10px}
+.tr.cl{cursor:pointer}.tr.cl:hover{background:#FBF8FC}
+.tr small{display:block;color:var(--mu);font-weight:600;font-size:12.5px;margin-top:2px}
+.tr .ab{justify-self:end;background:#fff;color:#C2187F;border:1.5px dashed #EBB6D6}
+.tag{display:inline-block;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px;font-style:normal}
+.tag.pub{background:#EAF7EE;color:#15803D}.tag.ras{background:#FFF6DC;color:#8A6200}.tag.fim{background:var(--s2);color:var(--mu)}
+@media (max-width:700px){.kp{grid-template-columns:1fr 1fr}.tr{grid-template-columns:1fr auto;gap:6px 12px;padding:12px 14px}.tr.th{display:none}.tr>span:nth-child(2),.tr>span:nth-child(4){font-size:12.5px;color:var(--mu);text-align:right}.tr>span:last-child{display:none}}
+.cab{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.cab h1{font-size:25px;margin:0;flex:1;min-width:200px}
 .abas{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
-.abas button{font:inherit;font-weight:800;font-size:13.5px;border:0;border-radius:99px;padding:8px 14px;background:#fff;color:var(--mu);cursor:pointer}
+.abas button{font:inherit;font-weight:800;font-size:13.5px;border:0;border-radius:99px;padding:9px 15px;background:#fff;color:var(--mu);cursor:pointer}
 .abas button.on{background:var(--noite);color:#fff}
-.cx{background:#fff;border-radius:18px;padding:16px;box-shadow:0 10px 30px -22px rgba(40,10,40,.5);margin-bottom:12px}
+.cx{background:#fff;border-radius:18px;padding:18px;border:1px solid #ECE6EF;margin-bottom:12px}
+.cx h2{margin:0 0 12px;font-size:16px}
+.col2{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:12px;align-items:start}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.g4{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:8px}
 label.cp{display:block;font-size:12px;font-weight:800;color:var(--mu)}
 .inp{width:100%;font:inherit;font-size:14.5px;font-weight:600;color:var(--tx);padding:10px 12px;border:1.5px solid #E2E2E6;border-radius:12px;background:var(--s1);margin-top:4px;outline:none}
+.inp::placeholder{color:var(--ph);font-weight:500;opacity:1}
+.inp.vz{color:var(--ph)}
 .inp:focus{border-color:var(--tx);background:#fff}
-textarea.inp{min-height:80px;resize:vertical}
-.banner{height:150px;border-radius:14px;background:#F6EDF3 center/cover no-repeat;display:flex;align-items:center;justify-content:center;color:#C2187F;font-weight:800;font-size:13px;border:2px dashed #EBB6D6;cursor:pointer;text-align:center;padding:10px}
+textarea.inp{min-height:84px;resize:vertical}
 .chk{display:flex;gap:8px;align-items:center;font-weight:700;font-size:14px}
 .chk input{width:18px;height:18px}
+/* fotos e capa */
+.fh{aspect-ratio:2/1;width:100%;border-radius:14px;background:#F6EDF3 center/cover no-repeat;border:2px dashed #EBB6D6;display:flex;align-items:center;justify-content:center;color:#C2187F;font-weight:800;font-size:13px;cursor:pointer;text-align:center;padding:10px}
+.fh.tem{border:0;color:transparent}
+.capa{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
+.fv{position:relative;width:180px;flex:none;aspect-ratio:9/16;border-radius:16px;overflow:hidden;background:linear-gradient(200deg,#5B1150,#120A1C 55%,#2B0F3F) center/cover no-repeat;color:#fff}
+.fv video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.fv::after{content:'';position:absolute;inset:0;background:linear-gradient(transparent 40%,rgba(0,0,0,.85))}
+.fv .pv{position:absolute;left:10px;right:10px;bottom:12px;z-index:1}
+.fv .pv i{display:inline-block;font-style:normal;font-size:9px;font-weight:800;padding:3px 7px;border-radius:99px;background:linear-gradient(90deg,var(--lf),var(--mg))}
+.fv .pv b{display:block;font:800 17px/1.05 var(--t);margin:5px 0 7px}
+.fv .pv span{display:block;text-align:center;background:#fff;color:#0E0A12;border-radius:9px;font-size:10px;font-weight:800;padding:6px}
+.fv .vz2{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:14px;font-weight:800;font-size:12px;opacity:.8;z-index:1}
+.capa .ct{flex:1;min-width:220px;display:flex;flex-direction:column;gap:10px}
+.bts{display:flex;gap:6px;flex-wrap:wrap}
+.salvar{position:sticky;bottom:14px;z-index:5;display:flex;align-items:center;gap:12px;margin-top:4px}
+.salvar .btn{padding:12px 26px;font-size:15px;box-shadow:0 10px 24px -10px rgba(224,36,154,.7)}.salvar span{font-size:12.5px;color:var(--mu);font-weight:700;background:#fff;border-radius:99px;padding:6px 12px;box-shadow:0 4px 14px -8px rgba(40,10,40,.4)}
+#ed-mapa{height:250px;border-radius:14px;margin-top:10px;background:var(--s2);z-index:0}
+.pin{font-size:30px;line-height:1;filter:drop-shadow(0 3px 3px rgba(0,0,0,.35))}
+/* salões e setores */
 .sal{border:1px solid var(--bd);border-radius:16px;overflow:hidden;margin-bottom:12px;background:#fff}
 .sal .sh{display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--s1);flex-wrap:wrap}
 .sal .sh b{font-size:15px;flex:1}.sal .sh small{font-size:12px;color:var(--mu);font-weight:700}
@@ -58,21 +106,29 @@ textarea.inp{min-height:80px;resize:vertical}
 .lts{display:flex;gap:5px;flex-wrap:wrap}.lts span{font-size:11px;font-weight:800;padding:3px 7px;border-radius:7px;background:var(--s2)}.lts span.at{background:#FFF1E8;color:#E04A00}
 .lote{display:grid;grid-template-columns:1.2fr 1fr 1.2fr 1fr auto;gap:6px;margin-top:6px;align-items:end}
 .erro{color:var(--er);font-weight:800;font-size:13px;min-height:18px;margin-top:8px}
-.kp{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}.kp div{background:#fff;border-radius:14px;padding:12px}.kp small{font-size:11px;font-weight:800;color:var(--mu);text-transform:uppercase;letter-spacing:.06em}.kp b{display:block;font-size:20px;margin-top:4px}
-.vd{display:flex;gap:10px;padding:9px 0;border-top:1px solid var(--bd);font-size:13px;font-weight:700}.vd div{flex:1}.vd small{display:block;color:var(--mu);font-weight:600}
+.vd{display:flex;gap:10px;padding:10px 0;border-top:1px solid var(--bd);font-size:13.5px;font-weight:700}.vd:first-child{border-top:0}.vd div{flex:1}.vd small{display:block;color:var(--mu);font-weight:600}
 .fundo{position:fixed;inset:0;background:rgba(14,10,18,.55);z-index:40;display:flex;align-items:center;justify-content:center;padding:14px}
 .folha{background:#fff;border-radius:20px;width:min(640px,100%);max-height:92vh;overflow:auto;padding:18px}
 .folha h2{margin:0 0 10px;font-size:19px}
 .mesas{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:4px 10px}.mesas small{color:var(--mu);font-weight:600}
 .vazio{padding:28px;text-align:center;color:var(--mu);font-weight:700;background:#fff;border-radius:18px}
+.link{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--s1);border:1.5px solid #E2E2E6;border-radius:14px;padding:10px 10px 10px 14px;font-weight:800;font-size:15px}
+.link span{flex:1;min-width:0;word-break:break-all}
 .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:60;background:var(--noite);color:#fff;font-weight:800;font-size:14px;padding:10px 16px;border-radius:99px}
 .live-mascote{position:relative;width:100%;aspect-ratio:220/230}.live-corpo{position:absolute;inset:0;transform-origin:50% 46%}.live-corpo svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}.live-rosto{position:absolute;border-radius:14% / 18%}.live-sombra{position:absolute;left:22%;right:22%;bottom:-6%;height:9%;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.35),transparent)}
-@media (max-width:700px){.g2,.g3,.g4,.kp{grid-template-columns:1fr}.st{grid-template-columns:1fr}.lote{grid-template-columns:1fr 1fr}}
+@media (max-width:900px){.col2{grid-template-columns:1fr}}
+@media (max-width:700px){.g2,.g3,.g4{grid-template-columns:1fr}.st{grid-template-columns:1fr}.lote{grid-template-columns:1fr 1fr}.fv{width:150px}}
 </style>
 </head>
 <body>
-<div class="topo"><div class="in"><div class="lv" id="lv" aria-hidden="true"></div><div class="tx"><span class="marca">live<i>fest</i></span><small id="loja">Painel do evento</small></div><a href="hub.html">← Hub</a></div></div>
-<main class="wrap" id="app"><div class="vazio">Carregando...</div></main>
+<div class="lay">
+  <aside class="side">
+    <div class="sb"><div class="lv" id="lv" aria-hidden="true"></div><div><span class="marca">live<i>fest</i></span><small id="loja">Painel do evento</small></div></div>
+    <nav id="nav"><button data-v="eventos" class="on">🎉 Meus eventos</button><button data-v="vendas">💰 Vendas</button><button data-v="pagina">🔗 Minha página</button></nav>
+    <a class="hub" href="hub.html"><svg class="seta" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4.5 7.5 12l7.5 7.5"/></svg>Hub</a>
+  </aside>
+  <main class="wrap" id="app"><div class="vazio">Carregando...</div></main>
+</div>
 <div class="toast" id="toast" hidden></div>
 <script src="site/js/live-mascote.js"></script>
 <script>
@@ -84,7 +140,8 @@ function mpLiveCarregar(cb){ if(window.LiveMascote){ cb(); return; } var s=docum
 </script>
 <script src="live-ajuda.js"></script>
 <script>
-var API='https://giro-os-api.nucleofull.workers.dev', TK='', US=null, D=null, EV=null, ABA='dados', live=null;
+var API='https://giro-os-api.nucleofull.workers.dev', TK='', US=null, D=null, EV=null, ABA='dados', VISTA='eventos', live=null;
+var SETA='<svg class="seta" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4.5 7.5 12l7.5 7.5"/></svg>';
 try{ TK=localStorage.getItem('dd_jwt')||''; US=JSON.parse(localStorage.getItem('dd_user')||'null'); }catch(e){}
 if(!TK) location.replace('hub.html');
 function el(i){ return document.getElementById(i); }
@@ -94,73 +151,153 @@ function dt(i){ i=String(i||''); return i.slice(8,10)+'/'+i.slice(5,7); }
 var tT=null; function toast(m){ var t=el('toast'); t.textContent=m; t.hidden=false; clearTimeout(tT); tT=setTimeout(function(){ t.hidden=true; },3200); }
 function api(c,b){ var h={'Authorization':'Bearer '+TK}; if(b) h['Content-Type']='application/json'; return fetch(API+c,b?{method:'POST',headers:h,body:JSON.stringify(b)}:{headers:h,cache:'no-store'}).then(function(r){ if(r.status===401){ location.replace('hub.html'); throw new Error('sessao'); } return r.json(); }); }
 function diz(t){ if(live) try{ live.falar(t,40); }catch(e){} }
-if(US&&US.cliente_nome) el('loja').textContent='Painel do evento · '+US.cliente_nome;
+function hoje(){ return new Date(Date.now()-3*3600000).toISOString().slice(0,10); }
+if(US&&US.cliente_nome) el('loja').textContent=US.cliente_nome;
 try{ if(window.LiveMascote){ live=LiveMascote.criar(el('lv'),{rotulo:'Live'}); live.expressao('feliz'); } }catch(e){}
+/* campos de data vazios ficam apagados, como os exemplos dos outros campos */
+function datasVazias(){ [].forEach.call(document.querySelectorAll('input[type=date].inp'),function(i){ i.classList.toggle('vz',!i.value); }); }
+document.addEventListener('input',function(e){ if(e.target&&e.target.type==='date') e.target.classList.toggle('vz',!e.target.value); });
+[].forEach.call(document.querySelectorAll('#nav button'),function(b){ b.onclick=function(){ VISTA=b.dataset.v; EV=null; pinta(); scrollTo(0,0); }; });
 var TIPOS={pista:'Pista',mesa:'Mesa',camarote:'Camarote',backstage:'Backstage',vip:'VIP',outro:'Outro'};
 function carrega(id){ return api('/painel/fest-eventos').then(function(d){ if(!d.ok) throw new Error(d.mensagem||''); D=d; if(id) EV=D.eventos.filter(function(e){ return e.id===id; })[0]||null; pinta(); }).catch(function(e){ if(e.message!=='sessao') el('app').innerHTML='<div class="vazio">'+esc(e.message||'Não consegui carregar.')+'</div>'; }); }
+function linkCasa(){ return 'https://livefood.tec.br/livefest/'+encodeURIComponent(D.slug||D.cli||''); }
+function linkEv(e){ return linkCasa()+'/'+encodeURIComponent(e.id); }
+function copiar(t){ try{ navigator.clipboard.writeText(t).then(function(){ toast('Link copiado'); },function(){ prompt('Copie o link:',t); }); }catch(e){ prompt('Copie o link:',t); } }
 function avisos(){
   var h=''; if(!D.liberada) h+='<div class="aviso">Sua casa ainda não está liberada para vender na LiveFest. Você já pode montar o evento; para publicar, fale com o LiveFood.</div>';
   if(!D.asaas) h+='<div class="aviso er">Ligue a conta de pagamento (Asaas) em Painel › Configurações › Formas de pagamento. O valor dos ingressos cai direto nela.</div>';
-  var c=D.comissao; h+='<p class="info">Comissão LiveFood: '+String(c.pct).replace('.',',')+'% por ingresso (mínimo '+brl(c.min)+'), '+(c.modelo==='casa'?'descontada do seu valor':'paga pelo cliente como taxa')+'.</p>';
   return h;
 }
-function pinta(){ if(!EV) lista(); else evento(); }
-function lista(){
-  var h=avisos()+'<div class="cab"><h1>Meus eventos</h1><button class="btn pri" onclick="novoEvento()">+ Novo evento</button></div>';
-  h+=D.eventos.length?'<div class="lista">'+D.eventos.map(function(e){ var n=0; e.saloes.forEach(function(s){ n+=s.setores.length; });
-    return '<button class="ev" onclick="abre(\''+esc(e.id)+'\')"><div class="ban" style="'+(e.banner?'background-image:url('+API+'/fest/banner/'+esc(e.id)+'?v='+Date.now()+')':'')+'"></div><div class="c"><b>'+esc(e.nome)+'</b><small>'+dt(e.inicio)+(e.hora_ini?' · '+esc(e.hora_ini):'')+' · '+e.saloes.length+' salão(ões) · '+n+' setor(es)</small><small>'+e.vendas.ingressos+' ingresso(s) · '+brl(e.vendas.casa)+' para a casa</small><span class="tag '+(e.pub?'pub':'ras')+'">'+(e.pub?'Na agenda':'Rascunho')+'</span></div></button>'; }).join('')+'</div>':'<div class="vazio">Crie o primeiro evento.</div>';
-  el('app').innerHTML=h; diz(D.eventos.length?'Escolha um evento para editar.':'Vamos criar o seu primeiro evento?');
+function comissao(){ var c=D.comissao; return '<p class="info">Comissão LiveFood: '+String(c.pct).replace('.',',')+'% por ingresso (mínimo '+brl(c.min)+'), '+(c.modelo==='casa'?'descontada do seu valor':'paga pelo cliente como taxa')+'.</p>'; }
+function pinta(){
+  [].forEach.call(document.querySelectorAll('#nav button'),function(b){ b.classList.toggle('on',b.dataset.v===VISTA); });
+  if(EV) return evento(); if(VISTA==='vendas') return vendasTodas(); if(VISTA==='pagina') return pagina(); lista();
 }
-function abre(id){ EV=D.eventos.filter(function(e){ return e.id===id; })[0]; ABA='dados'; pinta(); scrollTo(0,0); }
-function folha(h){ var f=document.createElement('div'); f.className='fundo'; f.id='fd'; f.innerHTML='<div class="folha">'+h+'</div>'; f.onclick=function(e){ if(e.target===f) fecha(); }; document.body.appendChild(f); }
+/* números de um evento: vendidos (pagos) e o total à venda nos setores */
+function conta(e){ var nS=0, cap=0; e.saloes.forEach(function(s){ nS+=s.setores.length; s.setores.forEach(function(x){ cap+=x.qtd||0; }); }); return {setores:nS,cap:cap}; }
+function situacao(e){ return e.fim<hoje()?'<i class="tag fim">Encerrado</i>':e.pub?'<i class="tag pub">À venda</i>':'<i class="tag ras">Rascunho</i>'; }
+function lista(){
+  var ev=D.eventos, av=ev.filter(function(e){ return e.pub&&e.fim>=hoje(); }).length, tot=0, ing=0, casa=0;
+  ev.forEach(function(e){ tot+=e.vendas.total; ing+=e.vendas.ingressos; casa+=e.vendas.casa; });
+  var h=avisos()+'<div class="cab" style="margin-bottom:4px"><div class="tit" style="flex:1;margin:0"><h1>Meus eventos</h1><p>O que você publicar aparece na Agenda da LiveFest.</p></div><button class="btn pri" onclick="novoEvento()">+ Novo evento</button></div><div style="height:14px"></div>';
+  h+='<div class="kp"><div><small>À venda</small><b>'+av+'</b></div><div><small>Vendido</small><b>'+brl(tot)+'</b></div><div><small>Ingressos</small><b>'+ing+'</b></div><div><small>Para a casa</small><b>'+brl(casa)+'</b></div></div>';
+  h+=ev.length?'<div class="tb"><div class="tr th"><span>Evento</span><span>Data</span><span>Situação</span><span>Vendidos</span><span></span></div>'+ev.map(function(e){ var c=conta(e);
+    return '<div class="tr cl" onclick="abre(\''+esc(e.id)+'\')"><span><b>'+esc(e.nome)+'</b><small>'+(e.saloes.length?e.saloes.length+(e.saloes.length===1?' salão':' salões')+' · '+c.setores+(c.setores===1?' setor':' setores'):'sem salão ainda')+'</small></span><span>'+dt(e.inicio)+(e.hora_ini?' · '+esc(e.hora_ini):'')+'</span><span>'+situacao(e)+'</span><span>'+(c.cap||e.vendas.ingressos?e.vendas.ingressos+(c.cap?' / '+c.cap:''):'—')+'</span><span style="text-align:right"><button class="btn sm ab">Abrir</button></span></div>'; }).join('')+'</div>':'<div class="vazio">Crie o primeiro evento.</div>';
+  h+='<div style="margin-top:14px"><button class="btn lin" onclick="novoEvento()">+ Novo evento</button></div><div style="margin-top:14px">'+comissao()+'</div>';
+  el('app').innerHTML=h; diz(ev.length?'Escolha um evento para editar.':'Vamos criar o seu primeiro evento?');
+}
+function vendasTodas(){
+  var ev=D.eventos.filter(function(e){ return e.vendas.pedidos||e.pub; });
+  var h='<div class="tit"><h1>Vendas</h1><p>Ingressos pagos de cada evento. O valor da casa cai direto na sua conta Asaas.</p></div>';
+  h+=ev.length?'<div class="tb"><div class="tr th"><span>Evento</span><span>Ingressos</span><span>Vendido</span><span>Para a casa</span><span></span></div>'+ev.map(function(e){ return '<div class="tr cl" onclick="abre(\''+esc(e.id)+'\',\'vendas\')"><span><b>'+esc(e.nome)+'</b><small>'+dt(e.inicio)+' · '+e.vendas.pedidos+(e.vendas.pedidos===1?' compra':' compras')+'</small></span><span>'+e.vendas.ingressos+'</span><span>'+brl(e.vendas.total)+'</span><span>'+brl(e.vendas.casa)+'</span><span style="text-align:right"><button class="btn sm ab">Ver</button></span></div>'; }).join('')+'</div>':'<div class="vazio">Nenhuma venda ainda.</div>';
+  el('app').innerHTML=h;
+}
+/* (184) endereço curto da casa na LiveFest: hoje em livefood.tec.br/livefest/<casa>; depois, livefest.com.br/<casa> */
+function pagina(){
+  var l=linkCasa(), ev=D.eventos.filter(function(e){ return e.pub&&e.fim>=hoje(); });
+  var h='<div class="tit"><h1>Minha página</h1><p>Só os seus eventos, com a sua marca. Mande no Instagram, no WhatsApp ou na bio.</p></div><div class="cx"><h2>Agenda da casa</h2><div class="link"><span>'+esc(l)+'</span><button class="btn sm" onclick="copiar(\''+esc(l)+'\')">Copiar</button><a class="btn sm pri" href="'+esc(l)+'" target="_blank" rel="noopener">Abrir</a></div><p class="info" style="margin:10px 0 0">Quando o endereço livefest.com.br estiver no ar, ele passa a ser livefest.com.br/'+esc(D.slug||D.cli)+'.</p></div>';
+  h+='<div class="cx"><h2>Link de cada evento</h2>'+(ev.length?ev.map(function(e){ var le=linkEv(e); return '<div class="vd"><div>'+esc(e.nome)+'<small>'+esc(le)+'</small></div><button class="btn sm" onclick="copiar(\''+esc(le)+'\')">Copiar</button></div>'; }).join(''):'<p class="info" style="margin:0">Publique um evento para ter o link dele.</p>')+'</div>';
+  el('app').innerHTML=h;
+}
+function abre(id,aba){ EV=D.eventos.filter(function(e){ return e.id===id; })[0]; ABA=aba||'dados'; pinta(); scrollTo(0,0); }
+function folha(h){ var f=document.createElement('div'); f.className='fundo'; f.id='fd'; f.innerHTML='<div class="folha">'+h+'</div>'; f.onclick=function(e){ if(e.target===f) fecha(); }; document.body.appendChild(f); datasVazias(); }
 function fecha(){ var f=el('fd'); if(f) f.remove(); }
 function novoEvento(){
-  folha('<h2>Novo evento</h2><label class="cp">Nome<input class="inp" id="ne-nm" maxlength="80" placeholder="Festa de Verão"></label><div class="g2" style="margin-top:8px"><label class="cp">Começa no dia<input class="inp" type="date" id="ne-ini"></label><label class="cp">às<input class="inp" type="time" id="ne-hi" value="22:00"></label><label class="cp">Termina no dia<input class="inp" type="date" id="ne-fim"></label><label class="cp">às<input class="inp" type="time" id="ne-hf" value="04:00"></label></div><div class="erro" id="ne-er"></div><div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn" onclick="fecha()">Cancelar</button><button class="btn pri" id="ne-b" onclick="criaEvento()">Criar</button></div>');
+  folha('<h2>Novo evento</h2><label class="cp">Nome<input class="inp" id="ne-nm" maxlength="80" placeholder="Ex.: Festa de Verão"></label><div class="g2" style="margin-top:8px"><label class="cp">Começa no dia<input class="inp" type="date" id="ne-ini"></label><label class="cp">às<input class="inp" type="time" id="ne-hi" value="22:00"></label><label class="cp">Termina no dia<input class="inp" type="date" id="ne-fim"></label><label class="cp">às<input class="inp" type="time" id="ne-hf" value="04:00"></label></div><div class="erro" id="ne-er"></div><div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn" onclick="fecha()">Cancelar</button><button class="btn pri" id="ne-b" onclick="criaEvento()">Criar</button></div>');
 }
 function criaEvento(){ var b={nome:el('ne-nm').value,inicio:el('ne-ini').value,hora_ini:el('ne-hi').value,fim:el('ne-fim').value||el('ne-ini').value,hora_fim:el('ne-hf').value}; el('ne-b').disabled=true;
-  api('/painel/lf-evento',b).then(function(d){ if(!d.ok){ el('ne-er').textContent=d.mensagem||'Não consegui criar.'; el('ne-b').disabled=false; return; } fecha(); carrega(d.id).then(function(){ ABA='saloes'; pinta(); }); }).catch(function(){ el('ne-b').disabled=false; }); }
+  api('/painel/lf-evento',b).then(function(d){ if(!d.ok){ el('ne-er').textContent=d.mensagem||'Não consegui criar.'; el('ne-b').disabled=false; return; } fecha(); VISTA='eventos'; carrega(d.id).then(function(){ ABA='saloes'; pinta(); }); }).catch(function(){ el('ne-b').disabled=false; }); }
 function evento(){
-  var e=EV, h=avisos()+'<div class="cab"><button class="btn sm" onclick="EV=null;pinta()">← Eventos</button><h1>'+esc(e.nome)+'</h1>'+(e.pub?'<a class="btn sm" href="livefest.html?ev='+esc(e.id)+'" target="_blank" rel="noopener" style="text-decoration:none">Ver na LiveFest</a>':'')+'<button class="btn '+(e.pub?'':'pri')+'" onclick="publica('+(e.pub?0:1)+')">'+(e.pub?'Tirar da agenda':'Publicar na agenda')+'</button></div>';
-  h+='<div class="abas">'+[['dados','Dados e banner'],['saloes','Salões e setores'],['cupons','Cupons'],['vendas','Vendas']].map(function(a){ return '<button class="'+(ABA===a[0]?'on':'')+'" onclick="ABA=\''+a[0]+'\';pinta()">'+a[1]+'</button>'; }).join('')+'</div><div id="corpo"></div>';
+  var e=EV, h=avisos()+'<div class="cab"><button class="btn vt" onclick="EV=null;pinta()">'+SETA+(VISTA==='vendas'?'Vendas':'Eventos')+'</button><h1>'+esc(e.nome)+'</h1>'+(e.pub?'<button class="btn sm" onclick="copiar(\''+esc(linkEv(e))+'\')">Copiar link</button><a class="btn sm" href="'+esc(linkEv(e))+'" target="_blank" rel="noopener">Ver na LiveFest</a>':'')+'<button class="btn '+(e.pub?'':'pri')+'" onclick="publica('+(e.pub?0:1)+')">'+(e.pub?'Tirar da agenda':'Publicar na agenda')+'</button></div>';
+  h+='<div class="abas">'+[['dados','Dados, fotos e local'],['saloes','Salões e setores'],['cupons','Cupons'],['vendas','Vendas']].map(function(a){ return '<button class="'+(ABA===a[0]?'on':'')+'" onclick="ABA=\''+a[0]+'\';pinta()">'+a[1]+'</button>'; }).join('')+'</div><div id="corpo"></div>';
   el('app').innerHTML=h; if(ABA==='dados') dados(); else if(ABA==='saloes') saloes(); else if(ABA==='cupons') cupons(); else vendas();
 }
+/* ---------- dados, fotos e local ---------- */
+var MAPA=null, PIN=null, PONTO=null;
 function dados(){
-  var e=EV;
-  el('corpo').innerHTML='<div class="cx"><div class="g2"><div><label class="cp">Descrição (aparece na página do evento)<textarea class="inp" id="ed-ds" maxlength="600" placeholder="Atrações, dress code, o que está incluso">'+esc(e.descricao)+'</textarea></label>'+
-    '<div class="g2" style="margin-top:8px"><label class="cp">Local<input class="inp" id="ed-lc" maxlength="80" value="'+esc(e.local)+'" placeholder="Restaurante Cinquenta"></label><label class="cp">Cidade<input class="inp" id="ed-cd" maxlength="60" value="'+esc(e.cidade)+'" placeholder="Itajaí"></label>'+
-    '<label class="cp">Categoria<select class="inp" id="ed-ct">'+['Festa','Show','Balada','Sertanejo','Pagode','Eletrônica','Bar e música ao vivo','Outro'].map(function(x){ return '<option'+(x===e.categoria?' selected':'')+'>'+x+'</option>'; }).join('')+'</select></label><label class="cp">Idade mínima<select class="inp" id="ed-id">'+[0,14,16,18].map(function(x){ return '<option value="'+x+'"'+(x==e.idade?' selected':'')+'>'+(x?x+' anos':'Livre')+'</option>'; }).join('')+'</select></label></div></div>'+
-    '<div><label class="cp">Banner (aparece na agenda) · 1200 × 600</label><div class="banner" id="ed-bn" style="'+(e.banner?'background-image:url('+API+'/fest/banner/'+esc(e.id)+'?v='+Date.now()+');color:transparent;border-style:solid':'')+'" onclick="el(\'ed-fl\').click()">+ Enviar imagem</div><input type="file" id="ed-fl" accept="image/*" hidden onchange="banner(this)"><p class="info" style="margin-top:8px">'+dt(e.inicio)+(e.hora_ini?' às '+esc(e.hora_ini):'')+' até '+dt(e.fim)+(e.hora_fim?' às '+esc(e.hora_fim):'')+'. Data e hora se mudam no LiveFace, em Eventos e ingressos.</p></div></div>'+
-    '<div class="erro" id="ed-er"></div><div style="display:flex;justify-content:flex-end"><button class="btn pri" id="ed-b" onclick="salvaDados()">Salvar</button></div></div>';
+  var e=EV; PONTO=e.lat!=null&&e.lng!=null?[e.lat,e.lng]:null; if(MAPA){ try{ MAPA.remove(); }catch(x){} } MAPA=null; PIN=null;
+  el('corpo').innerHTML='<div class="col2"><div>'+
+    '<div class="cx"><h2>Sobre o evento</h2><label class="cp">Descrição (aparece na página do evento)<textarea class="inp" id="ed-ds" maxlength="600" placeholder="Atrações, dress code, o que está incluso">'+esc(e.descricao)+'</textarea></label>'+
+      '<div class="g2" style="margin-top:8px"><label class="cp">Categoria<select class="inp" id="ed-ct">'+['Festa','Show','Balada','Sertanejo','Pagode','Eletrônica','Bar e música ao vivo','Outro'].map(function(x){ return '<option'+(x===e.categoria?' selected':'')+'>'+x+'</option>'; }).join('')+'</select></label><label class="cp">Idade mínima<select class="inp" id="ed-id">'+[0,14,16,18].map(function(x){ return '<option value="'+x+'"'+(x==e.idade?' selected':'')+'>'+(x?x+' anos':'Livre')+'</option>'; }).join('')+'</select></label></div>'+
+      '<p class="info" style="margin:10px 0 0">'+dt(e.inicio)+(e.hora_ini?' às '+esc(e.hora_ini):'')+' até '+dt(e.fim)+(e.hora_fim?' às '+esc(e.hora_fim):'')+'. Data e hora se mudam no LiveFace, em Eventos e ingressos.</p></div>'+
+    '<div class="cx"><h2>Local</h2><div class="g2"><label class="cp">Nome do local<input class="inp" id="ed-lc" maxlength="80" value="'+esc(e.local)+'" placeholder="Ex.: Restaurante Cinquenta"></label><label class="cp">Cidade<input class="inp" id="ed-cd" maxlength="60" value="'+esc(e.cidade)+'" placeholder="Ex.: Itajaí"></label></div>'+
+      '<label class="cp" style="margin-top:8px">Endereço<input class="inp" id="ed-en" maxlength="160" value="'+esc(e.endereco)+'" placeholder="Ex.: Rua Hercílio Luz, 50 · Centro"></label>'+
+      '<div class="bts" style="margin-top:10px"><button class="btn sm" onclick="procura()">📍 Achar o endereço no mapa</button><button class="btn sm er" id="ed-tp" onclick="tiraPonto()"'+(PONTO?'':' hidden')+'>Tirar o ponto</button></div>'+
+      '<div id="ed-mapa" role="application" aria-label="Mapa do local"></div><p class="info" id="ed-mt" style="margin:8px 0 0"></p></div>'+
+  '</div><div>'+
+    '<div class="cx"><h2>Foto horizontal</h2><p class="info" style="margin:-6px 0 10px">Aparece na agenda e no alto da página do evento. 1200 × 600.</p><div id="fx-h"></div><input type="file" id="fl-h" accept="image/*" hidden onchange="foto(\'h\',this)"></div>'+
+    '<div class="cx"><h2>Capa do app (em pé)</h2><p class="info" style="margin:-6px 0 10px">Passa na abertura do app, em tela cheia. Pode ser foto ou vídeo curto (até 30 s).</p><div class="capa"><div class="fv" id="fx-v"></div><div class="ct"><div class="bts" id="fx-vb"></div>'+
+      '<label class="cp">Chamada (opcional)<input class="inp" id="ed-ch" maxlength="40" value="'+esc(e.chamada)+'" placeholder="Ex.: Últimos ingressos do lote 1" oninput="previa()"></label>'+
+      '<label class="cp">Texto do botão<input class="inp" id="ed-bt" maxlength="28" value="'+esc(e.botao)+'" placeholder="Garantir ingresso" oninput="previa()"></label></div></div>'+
+      '<input type="file" id="fl-v" accept="image/*" hidden onchange="foto(\'v\',this)"><input type="file" id="fl-cv" accept="video/mp4,video/webm,video/quicktime" hidden onchange="capaVideo(this)"></div>'+
+  '</div></div>'+
+  '<div class="erro" id="ed-er"></div><div class="salvar"><button class="btn pri" id="ed-b" onclick="salvaDados()">Salvar</button><span>Fotos e vídeo já ficam salvos ao enviar.</span></div>';
+  fotos(); mapaTx(); mapaIni();
 }
-function corpoDados(pub){ return {id:EV.id,descricao:el('ed-ds')?el('ed-ds').value:EV.descricao,local:el('ed-lc')?el('ed-lc').value:EV.local,cidade:el('ed-cd')?el('ed-cd').value:EV.cidade,categoria:el('ed-ct')?el('ed-ct').value:EV.categoria,idade:el('ed-id')?el('ed-id').value:EV.idade,pub:pub}; }
+function fotos(){
+  var e=EV, h=el('fx-h'); if(!h) return;
+  h.innerHTML='<div class="fh'+(e.img_h?' tem':'')+'" style="'+(e.img_h?'background-image:url('+esc(e.img_h)+')':'')+'" onclick="el(\'fl-h\').click()">+ Enviar foto horizontal</div>'+(e.img_h?'<div class="bts" style="margin-top:8px"><button class="btn sm" onclick="el(\'fl-h\').click()">Trocar foto</button><button class="btn sm er" onclick="tiraFoto(\'h\')">Tirar</button></div>':'');
+  var v=el('fx-v'); v.style.backgroundImage=e.img_v?'url('+e.img_v+'),linear-gradient(200deg,#5B1150,#120A1C 55%,#2B0F3F)':'';
+  v.innerHTML=(e.video?'<video muted autoplay loop playsinline src="'+esc(e.video)+'"'+(e.img_v?' poster="'+esc(e.img_v)+'"':'')+'></video>':'')+(e.video||e.img_v?'<div class="pv"><i id="pv-c"></i><b>'+esc(e.nome)+'</b><span id="pv-b"></span></div>':'<div class="vz2">Sem capa. A abertura mostra a foto horizontal.</div>');
+  el('fx-vb').innerHTML='<button class="btn sm" onclick="el(\'fl-v\').click()">'+(e.img_v?'Trocar foto':'Enviar foto')+'</button><button class="btn sm" id="bt-cv" onclick="el(\'fl-cv\').click()">'+(e.video?'Trocar vídeo':'Enviar vídeo')+'</button>'+(e.img_v?'<button class="btn sm er" onclick="tiraFoto(\'v\')">Tirar foto</button>':'')+(e.video?'<button class="btn sm er" onclick="tiraVideo()">Tirar vídeo</button>':'');
+  previa();
+}
+function previa(){ var c=el('pv-c'), b=el('pv-b'); if(!c) return; var ch=el('ed-ch')?el('ed-ch').value.trim():EV.chamada; c.textContent=ch; c.hidden=!ch; b.textContent=((el('ed-bt')&&el('ed-bt').value.trim())||'Garantir ingresso')+' →'; }
+/* fotos: reduzidas no próprio aparelho (horizontal 1200 × 600, em pé 1080 × 1920) antes de enviar */
+function foto(lado,inp){ var f=inp.files&&inp.files[0]; inp.value=''; if(!f) return; var W=lado==='v'?1080:1200, H=lado==='v'?1920:600; toast('Enviando a foto…');
+  var r=new FileReader(); r.onload=function(){ var im=new Image(); im.onload=function(){ var c=document.createElement('canvas'); c.width=W; c.height=H; var x=c.getContext('2d'), k=Math.max(W/im.width,H/im.height), w=im.width*k, h=im.height*k; x.drawImage(im,(W-w)/2,(H-h)/2,w,h); var u=c.toDataURL('image/jpeg',.84);
+    api('/painel/fest-banner',{id:EV.id,img:u,lado:lado}).then(function(d){ if(!d.ok){ toast(d.mensagem||'Não consegui enviar.'); return; } EV[lado==='v'?'img_v':'img_h']=d.url||u; if(lado==='h') EV.banner=1; fotos(); toast('Foto salva'); }); }; im.onerror=function(){ toast('Não consegui abrir essa imagem.'); }; im.src=r.result; }; r.readAsDataURL(f); }
+function tiraFoto(lado){ api('/painel/fest-banner',{id:EV.id,img:'',lado:lado}).then(function(d){ if(!d.ok){ toast(d.mensagem||'Não deu certo.'); return; } EV[lado==='v'?'img_v':'img_h']=''; if(lado==='h') EV.banner=0; fotos(); toast('Foto tirada'); }); }
+function capaVideo(inp){ var f=inp.files&&inp.files[0]; inp.value=''; if(!f) return; if(f.size>60000000){ toast('Vídeo grande demais (máximo 60 MB).'); return; }
+  var b=el('bt-cv'); if(b){ b.disabled=true; b.textContent='Enviando…'; }
+  fetch(API+'/painel/fest-video?ev='+encodeURIComponent(EV.id),{method:'POST',headers:{'Content-Type':f.type||'video/mp4','Authorization':'Bearer '+TK},body:f}).then(function(r){ return r.json(); }).then(function(d){ if(!d.ok){ toast(d.mensagem||'Não consegui enviar.'); fotos(); return; } EV.video=d.video; fotos(); toast('Vídeo salvo'); }).catch(function(){ toast('Sem conexão.'); fotos(); }); }
+function tiraVideo(){ api('/painel/fest-video-apagar',{id:EV.id}).then(function(d){ if(!d.ok){ toast('Não deu certo.'); return; } EV.video=''; fotos(); toast('Vídeo tirado'); }); }
+/* mapa: OpenStreetMap com o ponto que o cliente abre no Google Maps (botão Ver localização no app) */
+var LFL=null; function leaflet(cb){ if(window.L) return cb(); if(LFL){ LFL.push(cb); return; } LFL=[cb]; var c=document.createElement('link'); c.rel='stylesheet'; c.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'; document.head.appendChild(c); var s=document.createElement('script'); s.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'; s.onload=function(){ var l=LFL; LFL=null; l.forEach(function(f){ f(); }); }; s.onerror=function(){ LFL=null; var t=el('ed-mt'); if(t) t.textContent='Não consegui abrir o mapa agora. O endereço escrito já vale.'; }; document.head.appendChild(s); }
+function mapaIni(){ leaflet(function(){ var bx=el('ed-mapa'); if(!bx||MAPA) return;
+  MAPA=L.map(bx,{scrollWheelZoom:false}).setView(PONTO||[-14.2,-51.9],PONTO?16:4);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(MAPA);
+  if(PONTO) poePin(PONTO,true); else if(el('ed-cd').value.trim()) procura(true);
+  MAPA.on('click',function(ev){ poePin([ev.latlng.lat,ev.latlng.lng]); }); }); }
+function poePin(p,inicio){ PONTO=[Math.round(p[0]*1e6)/1e6,Math.round(p[1]*1e6)/1e6];
+  if(PIN) PIN.setLatLng(PONTO); else { PIN=L.marker(PONTO,{draggable:true,icon:L.divIcon({className:'pin',html:'📍',iconSize:[32,32],iconAnchor:[16,30]})}).addTo(MAPA); PIN.on('dragend',function(){ var q=PIN.getLatLng(); PONTO=[Math.round(q.lat*1e6)/1e6,Math.round(q.lng*1e6)/1e6]; mapaTx(); }); }
+  el('ed-tp').hidden=false; mapaTx(); }
+function tiraPonto(){ PONTO=null; if(PIN&&MAPA){ MAPA.removeLayer(PIN); } PIN=null; el('ed-tp').hidden=true; mapaTx(); }
+function mapaTx(){ var t=el('ed-mt'); if(t) t.textContent=PONTO?'✓ Ponto marcado. Arraste o 📍 ou toque no mapa para ajustar. Toque em Salvar.':'Toque no mapa para marcar a entrada do evento. No app aparece o botão Ver localização.'; }
+function procura(soVista){
+  var q=soVista?el('ed-cd').value.trim():[el('ed-en').value.trim(),el('ed-cd').value.trim()].filter(Boolean).join(', ');
+  if(!q){ toast('Escreva o endereço e a cidade.'); return; }
+  fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br&q='+encodeURIComponent(q)).then(function(r){ return r.json(); }).then(function(l){
+    if(!MAPA) return; if(!l||!l.length){ if(!soVista) toast('Não achei esse endereço. Toque no mapa para marcar.'); return; }
+    var p=[+l[0].lat,+l[0].lon]; if(soVista) MAPA.setView(p,13); else { MAPA.setView(p,17); poePin(p); } }).catch(function(){ if(!soVista) toast('Não consegui procurar agora. Toque no mapa para marcar.'); }); }
+function corpoDados(pub){ var tem=!!el('ed-ds'), v=function(i,k){ return tem?el(i).value:EV[k]; };
+  return {id:EV.id,descricao:v('ed-ds','descricao'),local:v('ed-lc','local'),cidade:v('ed-cd','cidade'),categoria:v('ed-ct','categoria'),idade:v('ed-id','idade'),endereco:v('ed-en','endereco'),chamada:v('ed-ch','chamada'),botao:v('ed-bt','botao'),lat:tem?(PONTO?PONTO[0]:''):EV.lat,lng:tem?(PONTO?PONTO[1]:''):EV.lng,pub:pub}; }
 function salvaDados(){ el('ed-b').disabled=true; api('/painel/fest-evento',corpoDados(EV.pub)).then(function(d){ el('ed-b').disabled=false; if(!d.ok){ el('ed-er').textContent=d.mensagem||'Não consegui salvar.'; return; } toast('Salvo'); carrega(EV.id); }).catch(function(){ el('ed-b').disabled=false; }); }
 function publica(p){ api('/painel/fest-evento',corpoDados(p)).then(function(d){ if(!d.ok){ toast(d.mensagem||'Não deu certo.'); diz(d.mensagem||'Não deu certo.'); return; } toast(p?'Publicado na agenda':'Tirado da agenda'); if(p) diz('Seu evento está na agenda da LiveFest!'); carrega(EV.id); }); }
-/* banner: reduz no próprio aparelho para 1200 × 600 antes de enviar */
-function banner(inp){ var f=inp.files&&inp.files[0]; if(!f) return; var r=new FileReader(); r.onload=function(){ var im=new Image(); im.onload=function(){ var c=document.createElement('canvas'); c.width=1200; c.height=600; var x=c.getContext('2d'), k=Math.max(1200/im.width,600/im.height), w=im.width*k, h=im.height*k; x.drawImage(im,(1200-w)/2,(600-h)/2,w,h); var u=c.toDataURL('image/jpeg',.82);
-  api('/painel/fest-banner',{id:EV.id,img:u}).then(function(d){ if(!d.ok){ toast(d.mensagem||'Não consegui enviar.'); return; } el('ed-bn').style.backgroundImage='url('+u+')'; el('ed-bn').style.color='transparent'; EV.banner=1; toast('Banner salvo'); }); }; im.src=r.result; }; r.readAsDataURL(f); }
+/* ---------- salões e setores ---------- */
 function saloes(){
   var e=EV, ar=D.areas||[];
   var h=e.saloes.map(function(s){ var an=(ar.filter(function(a){ return a.id===s.area; })[0]||{}).nome;
     return '<div class="sal"><div class="sh"><b>'+esc(s.nome)+'</b><small>'+(s.capacidade?s.capacidade+' pessoas':'')+(an?' · área do mapa: '+esc(an):'')+'</small><button class="btn sm" onclick="salao(\''+esc(s.id)+'\')">Editar</button><button class="btn sm pri" onclick="setor(\''+esc(s.id)+'\')">+ Setor</button></div>'+
-      (s.setores.length?s.setores.map(function(x){ return '<div class="st"><div><span class="tp">'+esc(TIPOS[x.tipo]||x.tipo)+'</span>'+esc(x.nome)+'<small>'+[x.pessoas>1?x.pessoas+' pessoas':'',x.consumacao?brl(x.consumacao)+' de consumação':'',x.meia?'meia-entrada':'',x.inclui].filter(Boolean).map(esc).join(' · ')+'</small></div><div class="lts">'+x.lotes.map(function(l){ return '<span class="'+(l.nome===x.lote?'at':'')+'">'+esc(l.nome)+' · '+brl(l.preco)+'</span>'; }).join('')+'</div><div>'+x.vendidos+(x.qtd?' / '+x.qtd:'')+'<small>vendidos</small></div><button class="btn sm" onclick="setor(\''+esc(s.id)+'\',\''+esc(x.id)+'\')">Editar</button></div>'; }).join(''):'<div class="st" style="color:var(--mu)">Nenhum setor ainda. Toque em + Setor.</div>')+'</div>'; }).join('');
+      (s.setores.length?s.setores.map(function(x){ return '<div class="st"><div><span class="tp">'+esc(TIPOS[x.tipo]||x.tipo)+'</span>'+esc(x.nome)+'<small>'+[x.pessoas>1?x.pessoas+' pessoas':'',x.consumacao?brl(x.consumacao)+' de consumação':'',x.meia?'meia-entrada':'',x.mesas&&x.mesas.length?x.mesas.length+' mesas no 3D':'',x.inclui].filter(Boolean).map(esc).join(' · ')+'</small></div><div class="lts">'+x.lotes.map(function(l){ return '<span class="'+(l.nome===x.lote?'at':'')+'">'+esc(l.nome)+' · '+brl(l.preco)+'</span>'; }).join('')+'</div><div>'+x.vendidos+(x.qtd?' / '+x.qtd:'')+'<small>vendidos</small></div><button class="btn sm" onclick="setor(\''+esc(s.id)+'\',\''+esc(x.id)+'\')">Editar</button></div>'; }).join(''):'<div class="st" style="color:var(--mu)">Nenhum setor ainda. Toque em + Setor.</div>')+'</div>'; }).join('');
   el('corpo').innerHTML=(h||'<div class="vazio">Crie o primeiro salão. Ex.: Salão Principal, Rooftop.</div>')+'<button class="btn pri" style="margin-top:6px" onclick="salao()">+ Salão</button>';
   if(!e.saloes.length) diz('Comece criando um salão.');
 }
 function salao(id){
   var s=id?EV.saloes.filter(function(x){ return x.id===id; })[0]:{nome:'',area:'',capacidade:''};
-  folha('<h2>'+(id?'Editar salão':'Novo salão')+'</h2><label class="cp">Nome<input class="inp" id="sl-nm" maxlength="60" value="'+esc(s.nome)+'" placeholder="Salão Principal"></label><div class="g2" style="margin-top:8px"><label class="cp">Área do mapa do salão (para mesas e camarotes)<select class="inp" id="sl-ar"><option value="">Nenhuma</option>'+(D.areas||[]).map(function(a){ return '<option value="'+esc(a.id)+'"'+(a.id===s.area?' selected':'')+'>'+esc(a.nome)+'</option>'; }).join('')+'</select></label><label class="cp">Capacidade<input class="inp" id="sl-cp" inputmode="numeric" value="'+esc(s.capacidade||'')+'" placeholder="400"></label></div><div class="erro" id="sl-er"></div><div style="display:flex;gap:8px;justify-content:space-between">'+(id?'<button class="btn er" onclick="apagaSalao(\''+esc(id)+'\')">Excluir</button>':'<span></span>')+'<span><button class="btn" onclick="fecha()">Cancelar</button> <button class="btn pri" onclick="salvaSalao(\''+(id||'')+'\')">Salvar</button></span></div>');
+  folha('<h2>'+(id?'Editar salão':'Novo salão')+'</h2><label class="cp">Nome<input class="inp" id="sl-nm" maxlength="60" value="'+esc(s.nome)+'" placeholder="Ex.: Salão Principal"></label><div class="g2" style="margin-top:8px"><label class="cp">Área do mapa do salão (para mesas e camarotes)<select class="inp" id="sl-ar"><option value="">Nenhuma</option>'+(D.areas||[]).map(function(a){ return '<option value="'+esc(a.id)+'"'+(a.id===s.area?' selected':'')+'>'+esc(a.nome)+'</option>'; }).join('')+'</select></label><label class="cp">Capacidade<input class="inp" id="sl-cp" inputmode="numeric" value="'+esc(s.capacidade||'')+'" placeholder="Ex.: 400"></label></div><div class="erro" id="sl-er"></div><div style="display:flex;gap:8px;justify-content:space-between">'+(id?'<button class="btn er" onclick="apagaSalao(\''+esc(id)+'\')">Excluir</button>':'<span></span>')+'<span><button class="btn" onclick="fecha()">Cancelar</button> <button class="btn pri" onclick="salvaSalao(\''+(id||'')+'\')">Salvar</button></span></div>');
 }
 function salvaSalao(id){ api('/painel/fest-salao',{id:id||undefined,evento:EV.id,nome:el('sl-nm').value,area:el('sl-ar').value,capacidade:el('sl-cp').value}).then(function(d){ if(!d.ok){ el('sl-er').textContent=d.mensagem||'Não consegui salvar.'; return; } fecha(); carrega(EV.id); }); }
 function apagaSalao(id){ api('/painel/fest-salao-apagar',{id:id}).then(function(d){ if(!d.ok){ el('sl-er').textContent=d.mensagem||'Não consegui excluir.'; return; } fecha(); carrega(EV.id); }); }
 function loteLinha(l){ l=l||{}; return '<div class="lote"><label class="cp">Lote<input class="inp lt-n" value="'+esc(l.nome||'')+'" placeholder="Lote 1"></label><label class="cp">Preço (R$)<input class="inp lt-p" inputmode="decimal" value="'+(l.preco?String(l.preco).replace('.',','):'')+'" placeholder="50,00"></label><label class="cp">Vale até o dia<input class="inp lt-d" type="date" value="'+esc(l.ate||'')+'"></label><label class="cp">ou até vender<input class="inp lt-q" inputmode="numeric" value="'+(l.qtd||'')+'" placeholder="100"></label><button class="btn sm er" onclick="this.parentNode.remove()" title="Tirar lote">✕</button></div>'; }
 function setor(sid,id){
   var s=EV.saloes.filter(function(x){ return x.id===sid; })[0], x=id?s.setores.filter(function(y){ return y.id===id; })[0]:{nome:'',tipo:'pista',pessoas:1,qtd:'',meia:0,consumacao:'',inclui:'',lotes:[{nome:'Lote 1'}]};
-  folha('<h2>'+(id?'Editar setor':'Novo setor')+' · '+esc(s.nome)+'</h2><div class="g3"><label class="cp">Nome<input class="inp" id="se-nm" maxlength="60" value="'+esc(x.nome)+'" placeholder="Pista"></label><label class="cp">Tipo<select class="inp" id="se-tp">'+Object.keys(TIPOS).map(function(k){ return '<option value="'+k+'"'+(k===x.tipo?' selected':'')+'>'+TIPOS[k]+'</option>'; }).join('')+'</select></label><label class="cp">Pessoas por compra<input class="inp" id="se-ps" inputmode="numeric" value="'+esc(x.pessoas||1)+'"></label></div>'+
-    '<div class="g3" style="margin-top:8px"><label class="cp">Quantidade à venda<input class="inp" id="se-qt" inputmode="numeric" value="'+esc(x.qtd||'')+'" placeholder="300"></label><label class="cp">Consumação inclusa (R$)<input class="inp" id="se-cs" inputmode="decimal" value="'+(x.consumacao?String(x.consumacao).replace('.',','):'')+'" placeholder="0,00"></label><label class="cp">O que mais inclui<input class="inp" id="se-in" maxlength="160" value="'+esc(x.inclui)+'" placeholder="1 garrafa · pulseira VIP"></label></div>'+
+  folha('<h2>'+(id?'Editar setor':'Novo setor')+' · '+esc(s.nome)+'</h2><div class="g3"><label class="cp">Nome<input class="inp" id="se-nm" maxlength="60" value="'+esc(x.nome)+'" placeholder="Ex.: Pista"></label><label class="cp">Tipo<select class="inp" id="se-tp">'+Object.keys(TIPOS).map(function(k){ return '<option value="'+k+'"'+(k===x.tipo?' selected':'')+'>'+TIPOS[k]+'</option>'; }).join('')+'</select></label><label class="cp">Pessoas por compra<input class="inp" id="se-ps" inputmode="numeric" value="'+esc(x.pessoas||1)+'"></label></div>'+
+    '<div class="g3" style="margin-top:8px"><label class="cp">Quantidade à venda<input class="inp" id="se-qt" inputmode="numeric" value="'+esc(x.qtd||'')+'" placeholder="Ex.: 300"></label><label class="cp">Consumação inclusa (R$)<input class="inp" id="se-cs" inputmode="decimal" value="'+(x.consumacao?String(x.consumacao).replace('.',','):'')+'" placeholder="0,00"></label><label class="cp">O que mais inclui<input class="inp" id="se-in" maxlength="160" value="'+esc(x.inclui)+'" placeholder="Ex.: 1 garrafa · pulseira VIP"></label></div>'+
     '<label class="chk" style="margin-top:10px"><input type="checkbox" id="se-me"'+(x.meia?' checked':'')+'> Aceita meia-entrada: metade do preço, até 40% do setor, documento conferido na entrada</label><p class="info" style="margin:6px 0 0">Mesa e camarote: cada pessoa recebe um ingresso, e a consumação vira crédito na comanda do titular.</p>'+
     (function(){ var ar=(D.mesas||{})[s.area]||[], sel=x.mesas||[]; if(!s.area) return '<p class="info" style="margin:10px 0 0">Para vender mesa ou camarote escolhendo no 3D, ligue este salão a uma área do mapa (Editar salão).</p>'; if(!ar.length) return '<p class="info" style="margin:10px 0 0">A área do mapa deste salão ainda não tem mesas.</p>';
-      return '<div style="margin-top:12px;font-weight:800;font-size:14px">Mesas do mapa (para escolher no 3D)</div><p class="info" style="margin:2px 0 6px">Marque as mesas que este setor vende. Sem nenhuma marcada, vende por quantidade.</p><div class="mesas">'+ar.map(function(m){ return '<label class="chk"><input type="checkbox" class="se-ms" value="'+m.n+'"'+(sel.indexOf(m.n)>=0?' checked':'')+'> '+m.n+(m.lug?'<small> · '+m.lug+' lug.</small>':'')+'</label>'; }).join('')+'</div>'; })()+
-    '<div style="margin-top:12px;font-weight:800;font-size:14px">Lotes de preço</div><p class="info" style="margin:2px 0 0">O lote vira o próximo na data ou ao vender a quantidade, o que vier primeiro.</p><div id="se-lts">'+(x.lotes.length?x.lotes:[{}]).map(loteLinha).join('')+'</div><button class="btn sm" style="margin-top:8px" onclick="el(\'se-lts\').insertAdjacentHTML(\'beforeend\',loteLinha({nome:\'Lote \'+(document.querySelectorAll(\'.lote\').length+1)}))">+ Lote</button>'+
+      return '<div style="margin-top:12px;font-weight:800;font-size:14px">Mesas do mapa (o cliente reserva no 3D)</div><p class="info" style="margin:2px 0 6px">Marque as mesas que este setor vende. Sem nenhuma marcada, vende por quantidade.</p><div class="mesas">'+ar.map(function(m){ return '<label class="chk"><input type="checkbox" class="se-ms" value="'+m.n+'"'+(sel.indexOf(m.n)>=0?' checked':'')+'> '+m.n+(m.lug?'<small> · '+m.lug+' lug.</small>':'')+'</label>'; }).join('')+'</div>'; })()+
+    '<div style="margin-top:12px;font-weight:800;font-size:14px">Lotes de preço</div><p class="info" style="margin:2px 0 0">O lote vira o próximo na data ou ao vender a quantidade, o que vier primeiro.</p><div id="se-lts">'+(x.lotes.length?x.lotes:[{}]).map(loteLinha).join('')+'</div><button class="btn sm" style="margin-top:8px" onclick="el(\'se-lts\').insertAdjacentHTML(\'beforeend\',loteLinha({nome:\'Lote \'+(document.querySelectorAll(\'.lote\').length+1)}));datasVazias()">+ Lote</button>'+
     '<div class="erro" id="se-er"></div><div style="display:flex;gap:8px;justify-content:space-between">'+(id?'<button class="btn er" onclick="apagaSetor(\''+esc(id)+'\')">Excluir</button>':'<span></span>')+'<span><button class="btn" onclick="fecha()">Cancelar</button> <button class="btn pri" onclick="salvaSetor(\''+esc(sid)+'\',\''+(id||'')+'\')">Salvar</button></span></div>');
 }
 function salvaSetor(sid,id){
@@ -170,13 +307,14 @@ function salvaSetor(sid,id){
 function apagaSetor(id){ api('/painel/fest-setor-apagar',{id:id}).then(function(d){ if(!d.ok){ el('se-er').textContent=d.mensagem||'Não consegui excluir.'; return; } fecha(); toast(d.oculto?'Setor escondido (já tinha vendas)':'Setor excluído'); carrega(EV.id); }); }
 /* (182) cupons: o desconto sai da parte da casa */
 function cupons(){
-  el('corpo').innerHTML='<div class="cx"><div class="g4"><label class="cp">Código<input class="inp" id="cu-cd" maxlength="20" placeholder="VERAO10" style="text-transform:uppercase"></label><label class="cp">Desconto<select class="inp" id="cu-tp"><option value="pct">%</option><option value="valor">R$</option></select></label><label class="cp">Valor<input class="inp" id="cu-vl" inputmode="decimal" placeholder="10"></label><label class="cp">Usos (0 = sem limite)<input class="inp" id="cu-mx" inputmode="numeric" value="0"></label></div><div class="g2" style="margin-top:8px"><label class="cp">Vale até o dia (opcional)<input class="inp" type="date" id="cu-dt"></label><label class="chk" style="margin-top:22px"><input type="checkbox" id="cu-td"> Vale para todos os meus eventos</label></div><div class="erro" id="cu-er"></div><div style="display:flex;justify-content:flex-end"><button class="btn pri" onclick="criaCupom()">Criar cupom</button></div></div><div class="cx" id="cu-l">Carregando...</div>';
+  el('corpo').innerHTML='<div class="cx"><div class="g4"><label class="cp">Código<input class="inp" id="cu-cd" maxlength="20" placeholder="Ex.: VERAO10" style="text-transform:uppercase"></label><label class="cp">Desconto<select class="inp" id="cu-tp"><option value="pct">%</option><option value="valor">R$</option></select></label><label class="cp">Valor<input class="inp" id="cu-vl" inputmode="decimal" placeholder="Ex.: 10"></label><label class="cp">Limite de usos<input class="inp" id="cu-mx" inputmode="numeric" placeholder="Sem limite"></label></div><div class="g2" style="margin-top:8px"><label class="cp">Vale até o dia (opcional)<input class="inp" type="date" id="cu-dt"></label><label class="chk" style="margin-top:22px"><input type="checkbox" id="cu-td"> Vale para todos os meus eventos</label></div><div class="erro" id="cu-er"></div><div style="display:flex;justify-content:flex-end"><button class="btn pri" onclick="criaCupom()">Criar cupom</button></div></div><div class="cx" id="cu-l">Carregando...</div>';
+  datasVazias();
   api('/painel/fest-cupons?ev='+encodeURIComponent(EV.id)).then(function(d){ var l=(d&&d.cupons)||[]; el('cu-l').innerHTML=l.length?l.map(function(c){ return '<div class="vd"><div><b>'+esc(c.codigo)+'</b><small>'+(c.tipo==='pct'?String(c.valor).replace('.',',')+'%':brl(c.valor))+' de desconto · '+c.usos+(c.max_usos?' de '+c.max_usos:'')+' uso(s)'+(c.validade?' · até '+dt(c.validade):'')+(c.todos?' · todos os eventos':'')+'</small></div><button class="btn sm er" onclick="apagaCupom(\''+esc(c.id)+'\')">Desativar</button></div>'; }).join(''):'<p class="info" style="margin:0">Nenhum cupom ainda. O desconto sai da sua parte do ingresso.</p>'; });
 }
 function criaCupom(){ api('/painel/fest-cupom',{codigo:el('cu-cd').value,tipo:el('cu-tp').value,valor:el('cu-vl').value,max_usos:el('cu-mx').value,validade:el('cu-dt').value,evento:el('cu-td').checked?'':EV.id}).then(function(d){ if(!d.ok){ el('cu-er').textContent=d.mensagem||'Não consegui criar.'; return; } toast('Cupom criado'); cupons(); }); }
 function apagaCupom(id){ api('/painel/fest-cupom-apagar',{id:id}).then(function(){ toast('Cupom desativado'); cupons(); }); }
 function vendas(){
-  var v=EV.vendas; el('corpo').innerHTML='<div class="kp"><div><small>Ingressos</small><b>'+v.ingressos+'</b></div><div><small>Vendido</small><b>'+brl(v.total)+'</b></div><div><small>Para a casa</small><b>'+brl(v.casa)+'</b></div></div><div class="cx" id="vd-l">Carregando...</div>';
+  var v=EV.vendas; el('corpo').innerHTML='<div class="kp" style="grid-template-columns:repeat(3,minmax(0,1fr))"><div><small>Ingressos</small><b>'+v.ingressos+'</b></div><div><small>Vendido</small><b>'+brl(v.total)+'</b></div><div><small>Para a casa</small><b>'+brl(v.casa)+'</b></div></div><div class="cx" id="vd-l">Carregando...</div>';
   api('/painel/fest-vendas?ev='+encodeURIComponent(EV.id)).then(function(d){ var l=(d&&d.vendas)||[]; el('vd-l').innerHTML=l.length?l.map(function(x){ return '<div class="vd"><div>'+esc(x.nome||'Comprador')+'<small>'+x.qtd+' ingresso(s) · '+new Date(x.criado).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+'</small></div><div style="text-align:right">'+brl(x.casa)+'<small>'+(x.status==='pago'?'Pago':'Aguardando Pix')+'</small></div></div>'; }).join(''):'<p class="info" style="margin:0">Nenhuma venda ainda.</p>'; });
 }
 carrega();
