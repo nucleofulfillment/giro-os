@@ -73,7 +73,7 @@ button{font:inherit;color:inherit;cursor:pointer}
   /* Calibragem: a semelhança vai de 0 a 1. ?diag=1 mostra os números na tela para ajustar no local do evento */
   var LIM={sim:.6,margem:.05,quadros:2,minBox:.12,yaw:.6,vivo:.4,msContagem:5000,msPerde:2500,msSemMatch:3000,msPassando:25000,msRes:3500,msErro:4500};
   var DIAG=Q.get('diag')==='1', SEM_VIVO=LOCAL&&Q.get('semvivo')==='1';
-  var EV=null, PES=[], POR={}, ENT={}, FILA=[], H=null, stream=null, rodando=false, pausa=0, cand=null, candN=0, falhas=0, live=null, wake=null, timers=[];
+  var RACHA=null, EV=null, PES=[], POR={}, ENT={}, FILA=[], H=null, stream=null, rodando=false, pausa=0, cand=null, candN=0, falhas=0, live=null, wake=null, timers=[];
   var $=function(i){ return document.getElementById(i); };
   function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
   function hdr(){ return {'Content-Type':'application/json','Authorization':'Bearer '+TK}; }
@@ -147,7 +147,7 @@ button{font:inherit;color:inherit;cursor:pointer}
   function setVis(e,s){ var v=$('vis'); if(v) v.dataset.e=e; var x=$('selo'); if(x) x.textContent=s; }
   function catraca(a,t){ return '<div class="catraca '+(a?'aberta':'')+'"><i></i>'+esc(t)+'</div>'; }
   function aguardando(){
-    contaPara(); setVis('busca','Olhe para a câmera'); pausa=0; cand=null; candN=0; falhas=0;
+    RACHA=null; contaPara(); setVis('busca','Olhe para a câmera'); pausa=0; cand=null; candN=0; falhas=0;
     $('res').innerHTML='<h2 style="font-size:30px">Pare em frente à câmera</h2><p class="mut">'+(SAI?'Eu confiro sua conta e libero a saída.':'A catraca abre sozinha quando eu reconhecer você.')+'</p><div class="acoes" style="margin-top:6px"><button class="bt bt-sec" id="beq">Equipe: buscar por nome</button></div>'+catraca(false,SAI?'Catraca de saída aguardando':'Catraca de entrada aguardando');
     $('beq').onclick=busca; diz('Oi! Olha aqui para mim.',{expr:'feliz'});
   }
@@ -196,7 +196,7 @@ button{font:inherit;color:inherit;cursor:pointer}
   function agenda(ms,f){ timers.forEach(clearTimeout); timers=[setTimeout(f,ms)]; }
   function trata(p,met,sim){ if(SAI){ saida(p,met); return; } var e=ENT[p.id]; if(e&&Date.now()-e.t<LIM.msPassando){ cand=null; candN=0; return; } if(e) jaEntrou(p); else libera(p,met,sim); }
   function analisaFaces(faces){
-    if(Date.now()<pausa||$('over').innerHTML) return;
+    if(Date.now()<pausa||$('over').innerHTML||RACHA) return;
     if(!faces||!faces.length){ cand=null; candN=0; falhas=0; return; }
     if(faces.length>1){ if(!CONT) setVis('busca','Uma pessoa por vez'); return; }
     var f=faces[0], rot=f.rotation&&f.rotation.angle;
@@ -212,11 +212,12 @@ button{font:inherit;color:inherit;cursor:pointer}
   }
   function lerQr(){
     var v=$('vid'); if(!v||v.readyState<2||Date.now()<pausa||$('over').innerHTML) return Promise.resolve();
-    var trata2=function(t){ var m=/^LF1:([a-z0-9]+)$/.exec(String(t||'')); if(!m) return; var p=POR[m[1]]; if(!p){ naoReconheceu('QR de outro evento'); return; } trata(p,'qr'); };
+    var trata2=qrLido;
     if(window.BarcodeDetector){ if(!lerQr.d){ try{ lerQr.d=new BarcodeDetector({formats:['qr_code']}); }catch(e){ lerQr.d=null; } } if(lerQr.d) return lerQr.d.detect(v).then(function(c){ if(c&&c[0]) trata2(c[0].rawValue); }).catch(function(){}); }
     if(window.jsQR){ var c=lerQr.c||(lerQr.c=document.createElement('canvas')); c.width=480; c.height=Math.round(480*v.videoHeight/Math.max(1,v.videoWidth)); var x=c.getContext('2d',{willReadFrequently:true}); x.drawImage(v,0,0,c.width,c.height); var q=jsQR(x.getImageData(0,0,c.width,c.height).data,c.width,c.height); if(q) trata2(q.data); }
     return Promise.resolve();
   }
+  function qrLido(t){ var m=/^LF1:([a-z0-9]+)$/.exec(String(t||'')); if(!m) return; var p=POR[m[1]]; if(RACHA){ rachaAmigo(p||{id:m[1],nome:'Amigo'}); return; } if(!p){ naoReconheceu('QR de outro evento'); return; } trata(p,'qr'); }
   function camera(){
     var pede=function(){ var id=null; try{ id=localStorage.getItem('lf_cam'); }catch(e){} return navigator.mediaDevices.getUserMedia({video:id?{deviceId:{exact:id},width:{ideal:1280},height:{ideal:1280}}:{facingMode:'user',width:{ideal:1280},height:{ideal:1280}},audio:false}).catch(function(e){ if(id&&e.name==='OverconstrainedError'){ try{ localStorage.removeItem('lf_cam'); }catch(x){} return navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false}); } throw e; }); };
     return pede().then(function(st){ if(stream) stream.getTracks().forEach(function(t){ t.stop(); }); stream=st; var v=$('vid'); v.srcObject=st; try{ var pl=v.play(); if(pl&&pl.catch) pl.catch(function(){}); }catch(e){} });
@@ -253,7 +254,7 @@ button{font:inherit;color:inherit;cursor:pointer}
     diz(fala||tit,{gesto:'confuso'}); saiVolta(20000);
   }
   function saida(p,met){
-    if(p===undefined) return;
+    if(p===undefined) return; RACHA=null;
     pausa=Date.now()+600000; timers.forEach(clearTimeout); saiParaLoop(); setVis('busca','Conferindo sua conta');
     var pn=String(p.nome).split(' ')[0];
     $('res').innerHTML='<div class="nome">'+esc(pn)+'</div><p class="mut">Conferindo sua conta...</p>'+catraca(false,'Catraca de saída fechada'); diz('Deixa eu ver sua conta...',{expr:'pensativo'});
@@ -267,7 +268,8 @@ button{font:inherit;color:inherit;cursor:pointer}
   }
   function saiConta(p,d,met){
     setVis('alerta','Conta em aberto');
-    $('res').innerHTML='<div class="est aten">! Conta em aberto</div><div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap"><div id="sqr" style="background:#fff;border-radius:14px;padding:8px;min-width:150px;min-height:150px;display:flex;align-items:center;justify-content:center;color:#1B1412;font-size:13px;font-weight:800">Gerando o Pix...</div><div style="flex:1;min-width:150px"><div style="font:800 42px/1 var(--titulo)" id="sval">'+reais(d.total)+'</div><p class="mut" style="margin-top:6px" id="stx">Leia o Pix com o celular. Quando cair, a saída abre sozinha.</p></div></div><div class="acoes"><button class="bt bt-sec" id="bsl">Equipe: liberar a saída</button><button class="bt bt-sec" id="bsv">Cancelar</button></div>';
+    $('res').innerHTML='<div class="est aten">! Conta em aberto</div><div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap"><div id="sqr" style="background:#fff;border-radius:14px;padding:8px;min-width:150px;min-height:150px;display:flex;align-items:center;justify-content:center;color:#1B1412;font-size:13px;font-weight:800">Gerando o Pix...</div><div style="flex:1;min-width:150px"><div style="font:800 42px/1 var(--titulo)" id="sval">'+reais(d.total)+'</div><p class="mut" style="margin-top:6px" id="stx">Leia o Pix com o celular. Quando cair, a saída abre sozinha.</p></div></div><div class="acoes"><button class="bt bt-pri" id="brc">Rachar: passar para um amigo</button><button class="bt bt-sec" id="bsl">Equipe: liberar a saída</button><button class="bt bt-sec" id="bsv">Cancelar</button></div>';
+    $('brc').onclick=function(){ racha(p,d,met); };
     $('bsl').onclick=function(){ saiLibera(p,'equipe','Liberada pela equipe. O valor continua na comanda até ser baixado no Atendimento.'); };
     $('bsv').onclick=function(){ saiParaLoop(); aguardando(); };
     diz('Falta só fechar a conta para eu abrir a catraca.',{expr:'pensativo'});
@@ -280,12 +282,34 @@ button{font:inherit;color:inherit;cursor:pointer}
       saiPost('/painel/lf-saida-status',p).then(function(s){ if(!saiTimer||!s||!s.ok) return; if(!(s.total>0)){ saiLibera(p,met==='equipe'?'equipe':met,'Conta paga no Pix.'); return; } if($('sval')) $('sval').textContent=reais(s.total); }).catch(function(){});
     },4000);
   }
+  /* (175) RACHAR: o amigo mostra o QR do ingresso dele e a conta inteira passa para a comanda dele. Ele paga na saída */
+  function racha(p,d,met){
+    saiParaLoop(); timers.forEach(clearTimeout); RACHA={p:p,d:d,met:met}; pausa=0; setVis('busca','Mostre o QR do amigo');
+    $('res').innerHTML='<div class="nome">Rachar a conta</div><p class="mut">O amigo abre o ingresso dele no celular, toca em <b>Ver o QR code do ingresso</b> e mostra aqui na câmera. A conta de '+reais(d.total)+' passa inteira para a comanda dele.</p><div class="acoes"><button class="bt bt-sec" id="brb">Equipe: buscar o amigo</button><button class="bt bt-sec" id="brv">Voltar</button></div>'+catraca(false,'Catraca de saída fechada');
+    $('brb').onclick=busca; $('brv').onclick=function(){ saida(p,met); };
+    diz('Mostra o QR code do seu amigo para mim.',{expr:'feliz'});
+    agenda(90000,function(){ if(RACHA) aguardando(); });
+  }
+  function rachaAmigo(a){
+    var r=RACHA; if(!r) return;
+    if(a.id===r.p.id){ diz('Esse é o seu QR. Preciso do QR do amigo.',{gesto:'confuso'}); return; }
+    RACHA=null; pausa=Date.now()+600000; timers.forEach(clearTimeout);
+    var an=String(a.nome).split(' ')[0], pn=String(r.p.nome).split(' ')[0];
+    setVis('busca','Confirme o rachar');
+    $('res').innerHTML='<div class="nome">Passar para '+esc(an)+'?</div><p class="mut">'+reais(r.d.total)+' da conta de '+esc(pn)+' vão para a comanda de '+esc(an)+', que paga na saída.</p><div class="acoes"><button class="bt bt-pri" id="brok">Confirmar</button><button class="bt bt-sec" id="brv">Cancelar</button></div>'+catraca(false,'Catraca de saída fechada');
+    $('brv').onclick=function(){ saida(r.p,r.met); };
+    $('brok').onclick=function(){ var b=$('brok'); b.disabled=true; b.textContent='Passando...';
+      saiPost('/painel/lf-saida-rachar',r.p,{para:a.id}).then(function(x){ if(!x||!x.ok){ saiAviso('Não deu para rachar',(x&&x.mensagem)||'Chame a equipe.',r.p,(x&&x.mensagem)||'Não deu certo. Chame a equipe.'); return; } saiLibera(r.p,r.met==='equipe'?'equipe':r.met,'A conta de '+reais(x.valor)+' foi para a comanda '+x.para_comanda+' de '+x.para_nome+'.'); }).catch(function(e){ if(e.message!=='sessao') saiAviso('Sem internet','Não consegui passar a conta. Tente de novo.',r.p); });
+    };
+    diz('Confere comigo: passo a conta para '+an+'?',{expr:'pensativo'});
+    agenda(60000,aguardando);
+  }
   /* ---------- plano B: equipe busca por nome ---------- */
   function fechaOver(){ $('over').innerHTML=''; }
   function busca(){
     $('over').innerHTML='<div class="painel"><h1 style="font-size:28px">Buscar ingresso</h1><input id="bq" placeholder="Nome da pessoa" autocomplete="off"><div id="bl"></div><button class="bt bt-sec" id="bx" style="margin-top:auto">Fechar</button></div>';
     $('bx').onclick=fechaOver;
-    var pinta=function(){ var q=$('bq').value.trim().toLowerCase(), l=q?PES.filter(function(p){ return String(p.nome).toLowerCase().indexOf(q)>=0; }).slice(0,30):[]; $('bl').innerHTML=l.length?l.map(function(p){ var e=ENT[p.id]; return '<div class="pes"><div><b>'+esc(p.nome)+'</b><small>'+(e?'Entrou às '+hora(e.t):esc(p.tipo||'Ingresso'))+'</small></div><button class="bt '+(e?'bt-sec':'bt-pri')+'" data-id="'+esc(p.id)+'">Liberar</button></div>'; }).join(''):(q?'<p class="mut">Ninguém com esse nome neste evento.</p>':'<p class="mut">Digite o nome e confira o documento antes de liberar.</p>'); Array.prototype.forEach.call($('bl').querySelectorAll('[data-id]'),function(b){ b.onclick=function(){ var p=POR[b.dataset.id]; fechaOver(); if(SAI) saida(p,'equipe'); else libera(p,'equipe'); }; }); };
+    var pinta=function(){ var q=$('bq').value.trim().toLowerCase(), l=q?PES.filter(function(p){ return String(p.nome).toLowerCase().indexOf(q)>=0; }).slice(0,30):[]; $('bl').innerHTML=l.length?l.map(function(p){ var e=ENT[p.id]; return '<div class="pes"><div><b>'+esc(p.nome)+'</b><small>'+(e?'Entrou às '+hora(e.t):esc(p.tipo||'Ingresso'))+'</small></div><button class="bt '+(e?'bt-sec':'bt-pri')+'" data-id="'+esc(p.id)+'">Liberar</button></div>'; }).join(''):(q?'<p class="mut">Ninguém com esse nome neste evento.</p>':'<p class="mut">Digite o nome e confira o documento antes de liberar.</p>'); Array.prototype.forEach.call($('bl').querySelectorAll('[data-id]'),function(b){ b.onclick=function(){ var p=POR[b.dataset.id]; fechaOver(); if(RACHA) rachaAmigo(p); else if(SAI) saida(p,'equipe'); else libera(p,'equipe'); }; }); };
     $('bq').oninput=pinta; pinta(); $('bq').focus();
   }
   function menu(){
@@ -311,7 +335,7 @@ button{font:inherit;color:inherit;cursor:pointer}
   setInterval(function(){ if(rodando&&!$('over').innerHTML) atualizaLista(); },120000);
   addEventListener('online',sincroniza); addEventListener('offline',function(){ rede(false); });
   document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible'&&rodando&&navigator.wakeLock) navigator.wakeLock.request('screen').then(function(w){ wake=w; }).catch(function(){}); });
-  if(LOCAL) window.__lf={carregaLeitor:carregaLeitor,usaLista:function(ev,l){ EV=ev; preparaPessoas(l); },comeca:comeca,saida:function(id){ saida(POR[id],'rosto'); },procura:procura,cont:function(){ return CONT?{n:contUlt,nome:CONT.p.nome}:null; },atualizaLista:atualizaLista,qtRostos:qtRostos,estado:function(){ return {ENT:ENT,FILA:FILA,falhas:falhas}; },LIM:LIM};
+  if(LOCAL) window.__lf={carregaLeitor:carregaLeitor,usaLista:function(ev,l){ EV=ev; preparaPessoas(l); },comeca:comeca,saida:function(id){ saida(POR[id],'rosto'); },qr:qrLido,racha:function(){ return RACHA; },procura:procura,cont:function(){ return CONT?{n:contUlt,nome:CONT.p.nome}:null; },atualizaLista:atualizaLista,qtRostos:qtRostos,estado:function(){ return {ENT:ENT,FILA:FILA,falhas:falhas}; },LIM:LIM};
 
   if(LOCAL&&Q.get('teste')==='1') return;
   carregaGuardada().then(function(g){ if(g&&g.ev&&g.ev.fim>=hoje()){ EV=g.ev; preparaPessoas(g.pes); comeca(); atualizaLista(); } else telaEventos(); });
