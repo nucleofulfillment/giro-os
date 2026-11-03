@@ -3883,26 +3883,60 @@ function planoPedirUpgrade(k,b){
   }).catch(function(){ if(b){ b.disabled=false; b.textContent='Tentar de novo'; } aviso('Não consegui enviar o pedido. Tente de novo.'); });
 }
 /* (172) LiveFace: eventos e ingressos */
-var LF={ev:null,evs:[],chave:true};
+var LF={ev:null,evs:[],chave:true,areas:[],faixa:{}};
 function lfApi(cam,corpo){ return fetch(DELTADIS_API+cam,corpo?{method:'POST',headers:cdHdr(),body:JSON.stringify(corpo)}:{headers:cdHdr()}).then(function(r){ return r.json(); }); }
 function lfDataBr(i){ i=String(i||''); return i.slice(8,10)+'/'+i.slice(5,7)+'/'+i.slice(0,4); }
 function lfAbrir(){ fecharTudo(); abrir('sh-liveface'); lfEventos(); }
 function lfEventos(){
   LF.ev=null; el('lf-corpo').innerHTML='<div style="color:var(--muted);font-size:13px">Carregando...</div>';
-  lfApi('/painel/lf-eventos').then(function(d){
-    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'');
-    LF.evs=d.eventos||[]; LF.chave=d.chave;
+  Promise.all([lfApi('/painel/lf-eventos'),lfApi('/painel/salao').catch(function(){ return null; })]).then(function(rr){
+    var d=rr[0]; if(!d||!d.ok) throw new Error((d&&d.mensagem)||'');
+    LF.evs=d.eventos||[]; LF.chave=d.chave; lfSalao(rr[1]);
     el('lf-corpo').innerHTML=(LF.chave?'':'<div style="padding:10px 12px;border-radius:10px;background:var(--s2);font-size:13px;font-weight:700;margin-bottom:12px">⚠️ O cadastro do rosto ainda não está ligado. Falta configurar a chave de segurança do LiveFace. Até lá, os ingressos funcionam só pelo QR code.</div>')+
-      '<div style="display:grid;grid-template-columns:1fr 150px;gap:8px;align-items:end;margin-bottom:6px"><label style="font-size:12px;color:var(--muted)">Nome do evento<input class="inp" id="lf-nm" maxlength="80" placeholder="Festa de Verão"></label><label style="font-size:12px;color:var(--muted)">Último dia<input class="inp" type="date" id="lf-fim"></label></div><button class="btn pri wide" onclick="lfCriaEvento()">Criar evento</button><div id="lf-m1" style="color:#c0392b;font-size:13px;font-weight:700;margin-top:6px"></div>'+
-      '<div style="margin-top:14px">'+(LF.evs.length?LF.evs.map(function(e){ return '<div style="display:flex;gap:10px;align-items:center;padding:11px 0;border-top:1px solid var(--border);flex-wrap:wrap"><div style="flex:1;min-width:170px"><b>'+esc(e.nome)+'</b><div style="font-size:12.5px;color:var(--muted)">até '+lfDataBr(e.fim)+' · '+e.ingressos+' ingresso'+(e.ingressos==1?'':'s')+' · '+e.rostos+' rosto'+(e.rostos==1?'':'s')+'</div></div><button class="btn sec sm" onclick="lfAbreEvento(\''+esc(e.id)+'\')">Abrir</button></div>'; }).join(''):'<div style="padding:20px;text-align:center;color:var(--muted)">Crie o primeiro evento acima.</div>')+'</div>';
+      lfFormEv(null)+
+      '<div style="margin-top:14px">'+(LF.evs.length?LF.evs.map(function(e){ return '<div style="display:flex;gap:10px;align-items:center;padding:11px 0;border-top:1px solid var(--border);flex-wrap:wrap"><div style="flex:1;min-width:170px"><b>'+esc(e.nome)+'</b><div style="font-size:12.5px;color:var(--muted)">'+esc(lfQuando(e))+' · '+e.ingressos+' ingresso'+(e.ingressos==1?'':'s')+' · '+e.rostos+' rosto'+(e.rostos==1?'':'s')+'</div></div><button class="btn sec sm" onclick="lfAbreEvento(\''+esc(e.id)+'\')">Abrir</button></div>'; }).join(''):'<div style="padding:20px;text-align:center;color:var(--muted)">Crie o primeiro evento acima.</div>')+'</div>';
   }).catch(function(e){ el('lf-corpo').innerHTML='<div style="color:#c0392b;font-size:13px;font-weight:700">'+esc(e.message||'Não consegui abrir o LiveFace.')+'</div>'; });
 }
-function lfCriaEvento(){ var m=el('lf-m1'); m.textContent=''; lfApi('/painel/lf-evento',{nome:el('lf-nm').value,fim:el('lf-fim').value}).then(function(d){ if(!d||!d.ok){ m.textContent=(d&&d.mensagem)||'Não consegui criar.'; return; } LF.evs.unshift({id:d.id,nome:el('lf-nm').value.trim(),fim:el('lf-fim').value}); lfAbreEvento(d.id); }).catch(function(){ m.textContent='Sem conexão.'; }); }
+/* (178) o evento vale nas áreas do salão marcadas e no horário dele. As outras mesas seguem normais */
+function lfSalao(s){
+  LF.areas=(s&&s.ok&&s.areas)||[]; var mx={};
+  ((s&&s.pecas)||[]).forEach(function(p){ if(p.t!=='mesa') return; var a=mx[p.area]||(mx[p.area]=[]); a.push(p.n); });
+  LF.faixa={}; Object.keys(mx).forEach(function(k){ var l=mx[k].sort(function(a,b){ return a-b; }); LF.faixa[k]=l.length+(l.length===1?' mesa':' mesas')+' ('+l[0]+(l.length>1?' a '+l[l.length-1]:'')+')'; });
+}
+function lfAreasEv(e){ try{ var a=JSON.parse((e&&e.areas)||'[]'); return Array.isArray(a)?a:[]; }catch(x){ return []; } }
+function lfQuando(e){
+  var leg=!e.hora_ini&&!e.hora_fim&&!lfAreasEv(e).length;
+  var q=(e.inicio&&e.inicio!==e.fim?lfDataBr(e.inicio)+(e.hora_ini?' '+e.hora_ini:'')+' até ':'')+(leg?'até ':'')+lfDataBr(e.fim)+(e.hora_fim?' '+e.hora_fim:'');
+  if(e.inicio===e.fim&&e.hora_ini) q=lfDataBr(e.fim)+', '+e.hora_ini+' às '+e.hora_fim;
+  var ar=lfAreasEv(e); return q+(ar.length?' · '+ar.map(function(id){ var x=(LF.areas||[]).filter(function(a){ return a.id===id; })[0]; return x?x.nome:'área removida'; }).join(', '):' · todas as mesas');
+}
+function lfFormEv(e){
+  var ar=lfAreasEv(e), ed=!!e;
+  return '<div style="border:1px solid var(--border);border-radius:12px;padding:12px">'+(ed?'<div style="font-weight:800;margin-bottom:8px">Editar evento</div>':'')+
+    '<label style="font-size:12px;color:var(--muted)">Nome do evento<input class="inp" id="lf-nm" maxlength="80" placeholder="Festa de Verão" value="'+esc(e?e.nome:'')+'"></label>'+
+    '<div style="display:grid;grid-template-columns:1fr 110px;gap:8px;margin-top:8px"><label style="font-size:12px;color:var(--muted)">Começa no dia<input class="inp" type="date" id="lf-ini" value="'+esc(e?(e.inicio||e.fim):'')+'"></label><label style="font-size:12px;color:var(--muted)">às<input class="inp" type="time" id="lf-hi" value="'+esc(e&&e.hora_ini||'18:00')+'"></label>'+
+    '<label style="font-size:12px;color:var(--muted)">Termina no dia<input class="inp" type="date" id="lf-fim" value="'+esc(e?e.fim:'')+'"></label><label style="font-size:12px;color:var(--muted)">às<input class="inp" type="time" id="lf-hf" value="'+esc(e&&e.hora_fim||'23:59')+'"></label></div>'+
+    '<div style="font-size:12px;color:var(--muted);margin-top:10px">Mesas do evento (áreas do mapa do salão)</div>'+
+    (LF.areas&&LF.areas.length?LF.areas.map(function(a){ return '<label style="display:flex;gap:8px;align-items:center;padding:6px 0;font-size:14px;font-weight:700"><input type="checkbox" name="lf-ar" value="'+esc(a.id)+'"'+(ar.indexOf(a.id)>=0?' checked':'')+'> '+esc(a.nome)+'<span style="font-weight:500;color:var(--muted);font-size:12.5px">'+esc(LF.faixa[a.id]||'sem mesas')+'</span></label>'; }).join(''):'<div style="font-size:12.5px;color:var(--muted);padding:6px 0">O mapa do salão ainda não tem áreas.</div>')+
+    '<div style="font-size:12px;color:var(--muted);margin:4px 0 10px">Sem área marcada, o evento vale para todas as mesas. Nas mesas do evento, o cardápio pede o WhatsApp do ingresso e o pedido vai para a comanda. Para um mapa só do evento, crie uma área nova no mapa do salão.</div>'+
+    '<button class="btn pri wide" onclick="lfSalvaEvento('+(ed?'\''+esc(e.id)+'\'':'')+')">'+(ed?'Salvar evento':'Criar evento')+'</button>'+(ed?'<button class="btn sec wide" style="margin-top:8px" onclick="lfAbreEvento(\''+esc(e.id)+'\')">Cancelar</button>':'')+'<div id="lf-m1" style="color:#c0392b;font-size:13px;font-weight:700;margin-top:6px"></div></div>';
+}
+function lfSalvaEvento(id){
+  var m=el('lf-m1'); m.textContent='';
+  var b={id:id||undefined,nome:el('lf-nm').value,inicio:el('lf-ini').value,hora_ini:el('lf-hi').value,fim:el('lf-fim').value,hora_fim:el('lf-hf').value,areas:Array.prototype.map.call(document.querySelectorAll('input[name="lf-ar"]:checked'),function(x){ return x.value; })};
+  if(!b.fim&&b.inicio) b.fim=b.inicio;
+  lfApi('/painel/lf-evento',b).then(function(d){ if(!d||!d.ok){ m.textContent=(d&&d.mensagem)||'Não consegui salvar.'; return; }
+    var ev=LF.evs.filter(function(x){ return x.id===d.id; })[0]; if(!ev){ ev={id:d.id,ingressos:0,rostos:0}; LF.evs.unshift(ev); }
+    ev.nome=b.nome.trim(); ev.inicio=b.inicio||b.fim; ev.fim=b.fim; ev.hora_ini=b.hora_ini||'00:00'; ev.hora_fim=b.hora_fim||'23:59'; ev.areas=JSON.stringify(b.areas);
+    lfAbreEvento(d.id); }).catch(function(){ m.textContent='Sem conexão.'; });
+}
+function lfEditaEvento(){ var ev=LF.evs.filter(function(x){ return x.id===LF.ev; })[0]; if(ev) el('lf-corpo').innerHTML=lfFormEv(ev); }
+function lfCriaEvento(){ lfSalvaEvento(); }
 function lfAbreEvento(id){
   lfApi('/painel/lf-ingressos?ev='+encodeURIComponent(id)).then(function(d){
     if(!d||!d.ok) throw new Error((d&&d.mensagem)||'');
     var ev=LF.evs.filter(function(x){ return x.id===id; })[0]||{nome:'Evento',fim:''}; LF.ev=id; LF.igs=d.ingressos||[];
-    el('lf-corpo').innerHTML='<button class="btn sec sm" onclick="lfEventos()">← Eventos</button><div style="font-weight:800;font-size:16px;margin:10px 0 2px">'+esc(ev.nome)+'</div><div style="font-size:12.5px;color:var(--muted);margin-bottom:12px">'+(ev.fim?'Os dados do rosto são apagados depois de '+lfDataBr(ev.fim)+'.':'')+'</div>'+
+    el('lf-corpo').innerHTML='<button class="btn sec sm" onclick="lfEventos()">← Eventos</button><div style="font-weight:800;font-size:16px;margin:10px 0 2px">'+esc(ev.nome)+'</div><div style="font-size:12.5px;color:var(--muted);margin-bottom:4px">'+(ev.fim?esc(lfQuando(ev)):'')+' <button style="background:none;border:0;color:#E04A00;font-weight:800;cursor:pointer;padding:0;font-size:12.5px;text-decoration:underline" onclick="lfEditaEvento()">Editar</button></div><div style="font-size:12.5px;color:var(--muted);margin-bottom:12px">'+(ev.fim?'Os dados do rosto são apagados depois de '+lfDataBr(ev.fim)+'.':'')+'</div>'+
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><input class="inp" id="lf-in" maxlength="80" placeholder="Nome da pessoa"><input class="inp" id="lf-if" inputmode="numeric" placeholder="WhatsApp com DDD"></div><button class="btn pri wide" style="margin-top:8px" onclick="lfCriaIngresso()">Criar ingresso</button><a class="btn sec wide" style="margin-top:8px;text-align:center;text-decoration:none;display:block" href="liveface-entrada.html" target="_blank" rel="noopener">Abrir o tablet da entrada</a><a class="btn sec wide" style="margin-top:8px;text-align:center;text-decoration:none;display:block" href="liveface-entrada.html?modo=saida" target="_blank" rel="noopener">Abrir o tablet da saída</a><div id="lf-m2" style="color:#c0392b;font-size:13px;font-weight:700;margin-top:6px"></div>'+
       '<div style="margin-top:14px">'+(LF.igs.length?LF.igs.map(function(g,i){ var lfH=function(x){ return new Date(x).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); }; var st=(g.joia?'Comanda '+esc(g.joia)+' · ':'')+(g.saiu_t?'👋 Saiu às '+lfH(g.saiu_t)+(g.saiu_total>0?' com '+'R$ '+Number(g.saiu_total).toFixed(2).replace('.',',')+' em aberto':''):g.entrou_t?'🎟️ Entrou às '+lfH(g.entrou_t):(g.rosto_t?'✅ Rosto cadastrado':(g.metodo==='qr'?'🔳 Entra com QR code':'⏳ Aguardando cadastro'))); return '<div style="display:flex;gap:8px;align-items:center;padding:10px 0;border-top:1px solid var(--border);flex-wrap:wrap"><div style="flex:1;min-width:170px"><b>'+esc(g.nome)+'</b><div style="font-size:12.5px;color:var(--muted)">'+st+'</div></div><button class="btn sec sm" onclick="lfCopia('+i+',this)">Copiar link</button>'+(g.fone?'<a class="btn sec sm" target="_blank" rel="noopener" href="'+esc(lfZap(g))+'">WhatsApp</a>':'')+'<button class="btn sec sm" onclick="lfApaga('+i+')">Excluir</button></div>'; }).join(''):'<div style="padding:18px;text-align:center;color:var(--muted)">Nenhum ingresso ainda.</div>')+'</div>';
   }).catch(function(e){ aviso(e.message||'Não consegui abrir o evento.'); });

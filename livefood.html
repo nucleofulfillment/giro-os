@@ -1169,7 +1169,7 @@ function abreSacola(){ navOn('sac'); CK.on=0; CK.open=0;
 /* ── conta do cliente (5B): entra pelo WhatsApp com código, guarda nome e endereços ── */
 var CT={tok:'',conta:null,fone:'',conhecido:false,tmr:null,edit:null,ctx:'ck'}, EN={modo:'entrega',end:''};
 function ctk(){ return (MESA?'lf_contamesa_':'lf_conta_')+(D.cli||CLI); }
-function LOGM(){ return !!(MESA&&D&&D.cfg&&D.cfg.loginMesa); }
+function LOGM(){ return !!(MESA&&((D&&D.cfg&&D.cfg.loginMesa)||LFE)); }   /* (178) mesa de evento LiveFace também pede o WhatsApp */
 function ctLer(){ try{ var v=JSON.parse(localStorage.getItem(ctk())||'null'); if(v&&v.tok&&!(LOGM()&&v.conta&&/^mesa/i.test(String(v.conta.fone||'')))){ CT.tok=v.tok; CT.conta=v.conta||null; } }catch(e){} try{ var e=JSON.parse(localStorage.getItem('lf_entrega_'+(D.cli||CLI))||'null'); if(e&&e.modo) EN=e; }catch(x){} }
 function ctGrava(){ try{ localStorage.setItem(ctk(),JSON.stringify({tok:CT.tok,conta:CT.conta})); localStorage.setItem('lf_entrega_'+(D.cli||CLI),JSON.stringify(EN)); }catch(e){} }
 function ctSair(){ CT.tok=''; CT.conta=null; try{ localStorage.removeItem(ctk()); }catch(e){} ctLogin(); }
@@ -1313,6 +1313,7 @@ var GAR={ult:0};
 function mesaInit(force){
   if(!MESA){ var s0=$('mside'); if(s0){ s0.style.display='flex'; s0.children[1].style.display='none'; s0.children[2].style.display='none'; } return; }
   if(geoCfg()) geoPega(function(ok){ var cf=geoCfg(); if(!ok){ toast('Ative a localização para fazer pedidos pela mesa'); return; } if(geoDist(GEO.lat,GEO.lng,cf.lat,cf.lng)-Math.min(GEO.acc,100)>cf.raio) toast('Você está longe '+lojaDo()+': dá para ver '+catRef()+', mas não para pedir'); });
+  lfeCarrega(function(){ if(!LFE) return; var s=$('msp'); if(!s||s.style.display==='none') return; var h=s.querySelector('h1'), p=s.querySelector('p'), bv=s.querySelector('button'); if(h) h.textContent='🎟️ '+LFE.nome; if(p) p.textContent='Entre com o WhatsApp do seu ingresso. Seus pedidos vão para a sua comanda e você paga na saída do evento.'; if(bv) bv.textContent='Entrar com o WhatsApp'; Array.prototype.forEach.call(s.querySelectorAll('button'),function(x){ if(/Fechar conta/.test(x.textContent)) x.style.display='none'; }); });
   if(mpOn()) setTimeout(mpPre,300); var sd=$('mside'); if(sd) sd.style.display='flex'; var nc=$('nv-conta'); if(nc) nc.style.display='none';
   var k='lf_splash_'+(D.cli||CLI)+'_'+MESA, vis=false; try{ vis=!!sessionStorage.getItem(k); }catch(e){}
   if(vis&&force!==true) return;
@@ -1320,7 +1321,7 @@ function mesaInit(force){
   $('msp').innerHTML=lg+'<div class="mn">Mesa '+esc(MESA)+'</div><h1>Bem-vindo(a)!</h1><p>Veja o cardápio, faça o pedido pelo celular e levamos até a sua mesa. Você paga só no final.</p><button class="bt c" onclick="mesaVer()">Ver o cardápio</button><button class="bt c g" onclick="garcomChama()">🛎 Chamar o garçom</button><button class="bt c g" onclick="mesaSplashFecha();mesaFechar()">🧾 Fechar conta</button><img src="livefood-logo.png" alt="LiveFood" style="height:34px;align-self:center;margin-top:26px;opacity:.95">';
   $('msp').style.display='flex';
 }
-function mesaVer(){ if(!LOGM()){ mesaSplashFecha(); return; } CT.ctx='ini'; ctLer(); if(CT.tok){ mesaSplashFecha(); return; } ctLogin(); }
+function mesaVer(){ if(!LFEok){ setTimeout(mesaVer,200); return; } if(!LOGM()){ mesaSplashFecha(); return; } CT.ctx='ini'; ctLer(); if(CT.tok){ mesaSplashFecha(); return; } ctLogin(); }
 function mesaSplashFecha(){ $('msp').style.display='none'; try{ sessionStorage.setItem('lf_splash_'+(D.cli||CLI)+'_'+MESA,'1'); }catch(e){} }
 function garcomChama(){
   if(!MESA) return; if(Date.now()-GAR.ult<30000){ toast('O garçom já foi avisado. Já vamos até você!'); return; }
@@ -1390,23 +1391,26 @@ function ckResumo(){
   ckLf();
 }
 
-/* (175) evento com LiveFace: na posição, o pedido de quem entrou com ingresso vai para a comanda dele e é pago na saída */
+/* (175) evento com LiveFace: na mesa do evento, o pedido de quem entrou com ingresso vai para a comanda dele e é pago na saída.
+   (178) o WhatsApp é pedido ao abrir o cardápio (LFE), só nas mesas do evento e no horário dele. Aqui a sacola só mostra para onde o pedido vai */
 var LFC={tok:'',d:null};
 function ckLf(){
-  if(!MESA||!CT.tok||!$('ck-lf')) return;
-  var pinta=function(d){ var e=$('ck-lf'); if(!e||!d) return; if(d.ativo) e.innerHTML='<div class="ad on" style="cursor:default;margin-top:12px"><div class="tx"><b>🎟️ Comanda '+esc(d.comanda)+' · '+esc(d.evento)+'</b><small>'+esc(d.nome)+', o pedido vai para a sua comanda do evento. Você paga na saída.</small></div></div>'; 
-    /* (176) com o evento rolando, o visitante escolhe antes de pedir: sem isso o pedido ia para a mesa e a saída não cobrava */
-    else if(d.evento&&d.visitante&&!CK.lfSem){ e.innerHTML='<div class="ad on" style="cursor:default;margin-top:12px"><div class="tx"><b>🎟️ Você tem ingresso do evento?</b><small>Entre com o WhatsApp do ingresso e o pedido vai para a sua comanda. Você paga na saída.</small></div></div><button class="bt c" style="flex:none;width:100%;margin-top:10px" onclick="ckLfEntrar()">Entrar com o WhatsApp do ingresso</button><button class="lk" style="display:block;margin:12px auto 0" onclick="ckLfSem()">Não tenho ingresso, pago na mesa</button>'; var bt=$('ct-bt'); if(bt) bt.disabled=true; }
-    else if(d.evento&&!d.visitante&&!$('ck-lfe')) e.insertAdjacentHTML('beforeend','<div class="nt" id="ck-lfe" style="margin-top:8px;font-size:13.5px">Este WhatsApp não tem ingresso dentro do evento, então o pedido fica na conta da mesa. Tem ingresso em outro número? <button class="lk" onclick="ckLfEntrar()">Entrar com outro WhatsApp</button></div>'); };
+  if(!MESA||!LFE||!CT.tok||!$('ck-lf')) return;
+  var pinta=function(d){ var e=$('ck-lf'); if(!e||!d) return; if(d.ativo) e.innerHTML='<div class="ad on" style="cursor:default;margin-top:12px"><div class="tx"><b>🎟️ Comanda '+esc(d.comanda)+' · '+esc(d.evento)+'</b><small>'+esc(d.nome)+', o pedido vai para a sua comanda do evento. Você paga na saída.</small></div></div>';
+    else if(d.evento&&!$('ck-lfe')) e.insertAdjacentHTML('beforeend','<div class="nt" id="ck-lfe" style="margin-top:8px;font-size:13.5px">Este WhatsApp não tem ingresso dentro do evento, então o pedido fica na conta da mesa. Tem ingresso em outro número? <button class="lk" onclick="ckLfEntrar()">Entrar com outro WhatsApp</button></div>'); };
   if(LFC.tok===CT.tok){ if(LFC.d) pinta(LFC.d); return; }
   LFC.tok=CT.tok; LFC.d=null;
-  /* não deixa pedir antes de saber se vai para a comanda, mas nunca trava mais de 1,5 s (internet lenta) */
-  var bt0=$('ct-bt'), solta=function(){ var b=$('ct-bt'); if(b&&!(LFC.d&&LFC.d.evento&&LFC.d.visitante&&!LFC.d.ativo&&!CK.lfSem)) b.disabled=false; };
-  if(bt0) bt0.disabled=true; setTimeout(solta,1500);
-  ctApi('/food/pedidos-lf',null,true).then(function(d){ if(LFC.tok!==CT.tok) return; LFC.d=d&&d.ok?d:null; solta(); pinta(LFC.d); });
+  ctApi('/food/pedidos-lf?mesa='+encodeURIComponent(MESA),null,true).then(function(d){ if(LFC.tok!==CT.tok) return; LFC.d=d&&d.ok?d:null; pinta(LFC.d); });
 }
-function ckLfEntrar(){ CT.real=1; CT.ctx='ck'; CT.tok=''; CT.conta=null; ctLogin(); }
-function ckLfSem(){ CK.lfSem=1; ckKeep(); }
+function ckLfEntrar(){ CT.real=1; CT.ctx='ck'; CT.tok=''; CT.conta=null; try{ localStorage.removeItem(ctk()); }catch(e){} ctLogin(); }
+/* (178) a mesa é de um evento agora? Pergunta uma vez ao abrir o cardápio */
+var LFE=null, LFEok=false;
+function lfeCarrega(cb){
+  if(!MESA){ LFEok=true; if(cb) cb(); return; }
+  var feito=false, fim=function(){ if(feito) return; feito=true; LFEok=true; if(cb) cb(); };
+  setTimeout(fim,2500);
+  fetch(API+'/food/pedidos-lf-mesa?cli='+encodeURIComponent(D.cli||CLI)+'&mesa='+encodeURIComponent(MESA),{cache:'no-store'}).then(function(r){ return r.json(); }).then(function(d){ LFE=(d&&d.ok&&d.evento)||null; fim(); }).catch(fim);
+}
 var CPFN=0;   /* (060) vira 1 só se o Asaas do restaurante exigir CPF para o Pix */
 function ckSemEnd(){
   ctErro('Cadastre ou escolha um endereço de entrega.'); toast('Falta o endereço de entrega. Toque em "Cadastrar endereço".');
