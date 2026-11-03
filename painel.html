@@ -3916,6 +3916,7 @@ function lfFormEv(e){
     '<label style="font-size:12px;color:var(--muted)">Nome do evento<input class="inp" id="lf-nm" maxlength="80" placeholder="Festa de Verão" value="'+esc(e?e.nome:'')+'"></label>'+
     '<div style="display:grid;grid-template-columns:1fr 110px;gap:8px;margin-top:8px"><label style="font-size:12px;color:var(--muted)">Começa no dia<input class="inp" type="date" id="lf-ini" value="'+esc(e?(e.inicio||e.fim):'')+'"></label><label style="font-size:12px;color:var(--muted)">às<input class="inp" type="time" id="lf-hi" value="'+esc(e&&e.hora_ini||'18:00')+'"></label>'+
     '<label style="font-size:12px;color:var(--muted)">Termina no dia<input class="inp" type="date" id="lf-fim" value="'+esc(e?e.fim:'')+'"></label><label style="font-size:12px;color:var(--muted)">às<input class="inp" type="time" id="lf-hf" value="'+esc(e&&e.hora_fim||'23:59')+'"></label></div>'+
+    '<label style="font-size:12px;color:var(--muted);display:block;margin-top:8px">Código da equipe (4 a 6 números)<input class="inp" id="lf-cod" type="password" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="'+(e&&e.tem_codigo?'Já definido. Deixe vazio para manter':'Ex.: 2580')+'"></label><div style="font-size:12px;color:var(--muted);margin-top:2px">O atendente digita no tablet para liberar a saída, dar baixa na maquininha ou buscar alguém pelo nome. O cliente não vê esses botões.</div>'+
     '<div style="font-size:12px;color:var(--muted);margin-top:10px">Mesas do evento (áreas do mapa do salão)</div>'+
     (LF.areas&&LF.areas.length?LF.areas.map(function(a){ return '<label style="display:flex;gap:8px;align-items:center;padding:6px 0;font-size:14px;font-weight:700"><input type="checkbox" name="lf-ar" value="'+esc(a.id)+'"'+(ar.indexOf(a.id)>=0?' checked':'')+'> '+esc(a.nome)+'<span style="font-weight:500;color:var(--muted);font-size:12.5px">'+esc(LF.faixa[a.id]||'sem mesas')+'</span></label>'; }).join(''):'<div style="font-size:12.5px;color:var(--muted);padding:6px 0">O mapa do salão ainda não tem áreas.</div>')+
     '<div style="font-size:12px;color:var(--muted);margin:4px 0 10px">Sem área marcada, o evento vale para todas as mesas. Nas mesas do evento, o cardápio pede o WhatsApp do ingresso e o pedido vai para a comanda. Para um mapa só do evento, crie uma área nova no mapa do salão.</div>'+
@@ -3923,11 +3924,11 @@ function lfFormEv(e){
 }
 function lfSalvaEvento(id){
   var m=el('lf-m1'); m.textContent='';
-  var b={id:id||undefined,nome:el('lf-nm').value,inicio:el('lf-ini').value,hora_ini:el('lf-hi').value,fim:el('lf-fim').value,hora_fim:el('lf-hf').value,areas:Array.prototype.map.call(document.querySelectorAll('input[name="lf-ar"]:checked'),function(x){ return x.value; })};
+  var b={id:id||undefined,nome:el('lf-nm').value,inicio:el('lf-ini').value,hora_ini:el('lf-hi').value,fim:el('lf-fim').value,hora_fim:el('lf-hf').value,codigo:el('lf-cod').value.replace(/\D/g,''),areas:Array.prototype.map.call(document.querySelectorAll('input[name="lf-ar"]:checked'),function(x){ return x.value; })};
   if(!b.fim&&b.inicio) b.fim=b.inicio;
   lfApi('/painel/lf-evento',b).then(function(d){ if(!d||!d.ok){ m.textContent=(d&&d.mensagem)||'Não consegui salvar.'; return; }
     var ev=LF.evs.filter(function(x){ return x.id===d.id; })[0]; if(!ev){ ev={id:d.id,ingressos:0,rostos:0}; LF.evs.unshift(ev); }
-    ev.nome=b.nome.trim(); ev.inicio=b.inicio||b.fim; ev.fim=b.fim; ev.hora_ini=b.hora_ini||'00:00'; ev.hora_fim=b.hora_fim||'23:59'; ev.areas=JSON.stringify(b.areas);
+    ev.nome=b.nome.trim(); ev.inicio=b.inicio||b.fim; ev.fim=b.fim; ev.hora_ini=b.hora_ini||'00:00'; ev.hora_fim=b.hora_fim||'23:59'; ev.areas=JSON.stringify(b.areas); if(b.codigo) ev.tem_codigo=1;
     lfAbreEvento(d.id); }).catch(function(){ m.textContent='Sem conexão.'; });
 }
 function lfEditaEvento(){ var ev=LF.evs.filter(function(x){ return x.id===LF.ev; })[0]; if(ev) el('lf-corpo').innerHTML=lfFormEv(ev); }

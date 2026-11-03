@@ -414,24 +414,26 @@ function chamBip(){
   try{ navigator.vibrate&&navigator.vibrate([250,120,250]); }catch(e){}
   try{ chamAudio(); var a=CHM.ctx; if(!a||a.state!=='running') return; [[880,0],[1175,.17],[1568,.34],[1175,.62],[1568,.79]].forEach(function(n){ var o=a.createOscillator(), g=a.createGain(), t=a.currentTime+n[1]; o.type='triangle'; o.frequency.value=n[0]; g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(.32,t+.02); g.gain.exponentialRampToValueAtTime(.0001,t+.2); o.connect(g); g.connect(a.destination); o.start(t); o.stop(t+.22); }); }catch(e){}
 }
+/* (180) chamado do tablet do LiveFace (entrada/saída) vem com texto no lugar do número da mesa */
+function chamNm(c){ return /^\d+$/.test(String(c.mesa))?'Mesa '+c.mesa:String(c.mesa); }
 function chamTempo(){ var c=CHM.atual, e=$('chm-tm'); if(!c||!e) return; var s=Math.max(0,Math.floor((Date.now()+CHM.dif-c.criado)/1000)); e.textContent=s<60?'Chamou há '+s+' segundos':'Chamou há '+Math.floor(s/60)+(s<120?' minuto':' minutos'); }
 function chamFecha(){ clearInterval(CHM.tSom); clearInterval(CHM.tRel); CHM.tSom=CHM.tRel=0; CHM.atual=null; var m=$('chm'); if(m) m.classList.remove('on'); if(CHM.tit){ document.title=CHM.tit; CHM.tit=''; } }
 function chamPinta(){
   var at=CHM.atual, l=CHM.lista;
-  if(at&&!l.some(function(c){ return c.id===at.id; })){ if(!CHM.meus[at.id]) toast('Mesa '+at.mesa+' já foi atendida'); chamFecha(); at=null; }
+  if(at&&!l.some(function(c){ return c.id===at.id; })){ if(!CHM.meus[at.id]) toast(chamNm(at)+' já foi atendida'); chamFecha(); at=null; }
   if(!l.length){ chamFecha(); return; }
   var m=$('chm'); if(!m){ m=document.createElement('div'); m.id='chm'; m.setAttribute('role','alertdialog'); m.setAttribute('aria-modal','true'); document.body.appendChild(m); }
   if(!at){
     at=CHM.atual=l[0];
-    m.innerHTML='<div class="cx"><div class="tp"><div class="an"><i></i><i></i><i></i><div class="sn"><svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9"/><path d="M10.3 20a2 2 0 0 0 3.4 0"/></svg></div></div><div class="lb">Chamando o garçom</div><div class="ms">MESA</div><div class="nm">'+esc(at.mesa)+'</div></div><div class="bx"><div class="tm" id="chm-tm"></div><div class="fl" id="chm-fl"></div><button class="bt" type="button" onclick="chamAtendo()">Eu atendo</button></div></div>';
-    m.classList.add('on'); if(!CHM.tit) CHM.tit=document.title; document.title='🛎 Mesa '+at.mesa+' chamando';
+    m.innerHTML='<div class="cx"><div class="tp"><div class="an"><i></i><i></i><i></i><div class="sn"><svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9"/><path d="M10.3 20a2 2 0 0 0 3.4 0"/></svg></div></div><div class="lb">'+(/^\d+$/.test(String(at.mesa))?'Chamando o garçom':'Chamando a equipe')+'</div><div class="ms">'+(/^\d+$/.test(String(at.mesa))?'MESA':'LIVEFACE')+'</div><div class="nm">'+esc(at.mesa)+'</div></div><div class="bx"><div class="tm" id="chm-tm"></div><div class="fl" id="chm-fl"></div><button class="bt" type="button" onclick="chamAtendo()">Eu atendo</button></div></div>';
+    m.classList.add('on'); if(!CHM.tit) CHM.tit=document.title; document.title='🛎 '+chamNm(at)+' chamando';
     chamBip(); clearInterval(CHM.tSom); CHM.tSom=setInterval(chamBip,5000); clearInterval(CHM.tRel); CHM.tRel=setInterval(chamTempo,1000);
   }
   chamTempo(); var n=l.length-1, f=$('chm-fl'); if(f) f.textContent=n>0?'Mais '+n+(n===1?' mesa chamando':' mesas chamando'):'';
 }
 function chamAtendo(){
   var c=CHM.atual; if(!c) return; CHM.meus[c.id]=1; CHM.lista=CHM.lista.filter(function(x){ return x.id!==c.id; }); chamFecha(); chamPinta();
-  api('/painel/atend-chamado-ok',{id:c.id}).then(function(d){ if(!d.ok){ delete CHM.meus[c.id]; toast(d.mensagem||'Não consegui avisar. Tente de novo.'); chamPoll(); return; } toast(d.ja?'Outro garçom já estava atendendo a mesa '+c.mesa:'Mesa '+c.mesa+': você está atendendo'); });
+  api('/painel/atend-chamado-ok',{id:c.id}).then(function(d){ if(!d.ok){ delete CHM.meus[c.id]; toast(d.mensagem||'Não consegui avisar. Tente de novo.'); chamPoll(); return; } toast(d.ja?'Outro garçom já estava atendendo: '+chamNm(c):chamNm(c)+': você está atendendo'); });
 }
 function chamPoll(){
   if(!TK||CHM.busy||$('app').classList.contains('hide')) return; CHM.busy=1;
