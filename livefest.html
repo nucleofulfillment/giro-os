@@ -53,9 +53,10 @@ a{color:inherit}
 .abtop .marca{font-size:40px;text-shadow:0 2px 18px rgba(0,0,0,.35)}
 .abc{font-size:13px;font-weight:800;opacity:.9;margin-top:4px}
 /* (185) o Live da abertura é a ajuda do app */
-.lvA{position:absolute;right:12px;bottom:262px;z-index:3;display:flex;align-items:flex-end;gap:6px;border:0;background:none;padding:0;cursor:pointer}
-.lvA .bal2,.fab .bal2{background:#fff;color:#1C1820;font-size:12.5px;font-weight:800;padding:8px 11px;border-radius:14px 14px 4px 14px;box-shadow:0 8px 20px -10px rgba(0,0,0,.6);margin-bottom:30px;white-space:nowrap}
-.lvA .lvM{width:78px}
+.lvA{position:absolute;right:10px;bottom:calc(max(22px,env(safe-area-inset-bottom)) + 196px);z-index:3;display:flex;flex-direction:column;align-items:center;gap:1px;border:0;background:none;padding:0;cursor:pointer}
+.lvA .bal2{font-size:10px;font-weight:800;color:#fff;background:rgba(14,10,18,.62);border:1px solid rgba(255,255,255,.16);padding:3px 8px;border-radius:99px;white-space:nowrap}
+.fab .bal2{background:#fff;color:#1C1820;font-size:12.5px;font-weight:800;padding:8px 11px;border-radius:14px 14px 4px 14px;box-shadow:0 8px 20px -10px rgba(0,0,0,.6);margin-bottom:30px;white-space:nowrap}
+.lvA .lvM{width:64px}
 .fab{position:fixed;right:max(12px,calc(50% - 268px));bottom:max(14px,env(safe-area-inset-bottom));z-index:20;display:flex;align-items:flex-end;gap:4px;border:0;background:none;padding:0;cursor:pointer}
 .fab .lvM{width:62px}.fab .bal2{margin-bottom:24px}
 .tema{font-size:18px}
@@ -75,7 +76,7 @@ a{color:inherit}
 .chi input{flex:1;min-width:0;font:inherit;font-size:15px;font-weight:600;color:var(--tx);background:var(--c2);border:0;border-radius:14px;padding:12px 13px;outline:none}.chi input::placeholder{color:var(--mu2);font-weight:500}
 .chi .bt{padding:12px 16px}
 .kick{display:inline-block;margin-top:14px;font-size:12px;font-weight:800;letter-spacing:.04em;padding:5px 11px;border-radius:99px;background:linear-gradient(90deg,var(--lf),var(--mg))}
-.abt h1{margin:8px 0 4px;font:800 34px/1.02 var(--t);letter-spacing:-.02em;text-wrap:balance}
+.abt h1{padding-right:64px;margin:8px 0 4px;font:800 34px/1.02 var(--t);letter-spacing:-.02em;text-wrap:balance}
 .abt small{display:block;font-size:13.5px;opacity:.85;font-weight:700}
 .cta{margin-top:14px;background:#fff;color:#0E0A12}
 .abt .bts{display:grid;grid-template-columns:1.3fr 1fr;gap:10px;margin-top:10px}
@@ -176,8 +177,11 @@ function ban(e){ return e&&e.img_h?'background-image:url('+e.img_h+'),'+GRAD:'';
 /* (186) cada Live animado é desligado quando a tela sai (antes as animações escondidas se acumulavam e o app ficava lento) */
 var LIVES=[];
 function live(id,expr){ try{ if(window.LiveMascote&&el(id)&&!el(id).firstChild){ var l=LiveMascote.criar(el(id),{rotulo:'Live'}); l.expressao(expr||'feliz'); LIVES.push({id:id,l:l}); return l; } }catch(e){} return null; }
+/* (187) o Live da abertura mexe de tempos em tempos (acena, pisca, pula) para chamar a atenção sem atrapalhar o vídeo */
+var GESTOS_AB=['acenar','piscadinha','boas_vindas','apaixonado','acenar','comemorar'], gestoT=null;
+function animaLive(){ clearInterval(gestoT); var k=0, vai=function(){ var x=LIVES.filter(function(y){ return y.id==='lvA'; })[0]; if(!x||S.tela!=='abertura'){ clearInterval(gestoT); return; } try{ x.l.gesto(GESTOS_AB[k++%GESTOS_AB.length]); }catch(e){} }; setTimeout(vai,700); gestoT=setInterval(vai,6000); }
 function tiraLives(so){ LIVES=LIVES.filter(function(x){ if(so?x.id!==so:x.id==='lvC') return true; try{ x.l.destruir(); }catch(e){} return false; }); }
-function mascoteOk(){ live('lvA','animado'); live('lvL','feliz'); live('lvF','feliz'); live('lvC','feliz'); }
+function mascoteOk(){ if(live('lvA','animado')) animaLive(); live('lvL','feliz'); live('lvF','feliz'); live('lvC','feliz'); }
 /* (185) tema claro e escuro, guardado no aparelho */
 function temaAtual(){ return document.documentElement.getAttribute('data-tema')==='claro'?'claro':'escuro'; }
 function temaPinta(){ var m=document.querySelector('meta[name=theme-color]'); if(m) m.content=temaAtual()==='claro'?'#F7F4F9':'#0E0A12'; [].forEach.call(document.querySelectorAll('.tema'),function(b){ b.textContent=temaAtual()==='claro'?'🌙':'☀️'; b.setAttribute('aria-label',temaAtual()==='claro'?'Usar tema escuro':'Usar tema claro'); }); }
@@ -225,7 +229,7 @@ function slides(){
 }
 function abertura(){
   var l=S.slA=slides(); S.si=0;
-  tela('<div class="ab"><div class="abm" id="abM"></div><div class="segs">'+(l.length>1?l.map(function(){ return '<i><b></b></i>'; }).join(''):'')+'</div><button class="som" id="abS" onclick="trocaSom()" hidden aria-label="Ligar o som">🔇</button><div class="abtop"><div class="marca">live<i>fest</i></div>'+(S.casa?'<div class="abc">'+esc(S.casa.nome)+'</div>':'')+'</div><button class="lvA" onclick="ajuda()" aria-label="Tirar dúvidas com o Live"><span class="bal2">Dúvida? Fale comigo 👋</span><span class="lvM" id="lvA"></span></button><div class="abt"><span class="kick" id="abK" hidden></span><h1 id="abN">'+(l.length?'':S.carregou?'Festas e shows perto de você':'')+'</h1><small id="abI">'+(l.length?'':S.carregou?'Toque em Agenda para ver os eventos.':'Carregando a agenda…')+'</small><button class="bt w cta" id="abC" hidden></button><div class="bts"><button class="bt" onclick="agenda()">📅 Agenda</button><button class="bt cl" onclick="meus()">🎟️ Meus ingressos</button></div></div></div>','abertura');
+  tela('<div class="ab"><div class="abm" id="abM"></div><div class="segs">'+(l.length>1?l.map(function(){ return '<i><b></b></i>'; }).join(''):'')+'</div><button class="som" id="abS" onclick="trocaSom()" hidden aria-label="Ligar o som">🔇</button><div class="abtop"><div class="marca">live<i>fest</i></div>'+(S.casa?'<div class="abc">'+esc(S.casa.nome)+'</div>':'')+'</div><button class="lvA" onclick="ajuda()" aria-label="Como posso ajudar? Fale com o Live"><span class="lvM" id="lvA"></span><span class="bal2">Como posso ajudar?</span></button><div class="abt"><span class="kick" id="abK" hidden></span><h1 id="abN">'+(l.length?'':S.carregou?'Festas e shows perto de você':'')+'</h1><small id="abI">'+(l.length?'':S.carregou?'Toque em Agenda para ver os eventos.':'Carregando a agenda…')+'</small><button class="bt w cta" id="abC" hidden></button><div class="bts"><button class="bt" onclick="agenda()">📅 Agenda</button><button class="bt cl" onclick="meus()">🎟️ Meus ingressos</button></div></div></div>','abertura');
   mascoteOk(); if(l.length){ el('abM').onclick=function(){ vai(S.slA[S.si]); }; el('abC').onclick=function(){ vai(S.slA[S.si]); }; mostra(); }
 }
 function vai(x){ if(!x) return; if(x.evento) evento(x.evento); else if(x.link) location.href=x.link; else agenda(); }
