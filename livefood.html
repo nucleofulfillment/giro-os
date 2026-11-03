@@ -1986,6 +1986,9 @@ var PEDS=[];
 (function(){
   var mob=('ontouchstart' in window)&&Math.min(screen.width,screen.height)<=820, feito=false;
   function trava(){ try{ if(screen.orientation&&screen.orientation.lock) screen.orientation.lock('portrait').catch(function(){}); }catch(e){} }
+  /* (189) dentro de outra página (o 3D da LiveFest e do painel) não pede tela cheia: cobria a seta Voltar do app */
+  var dentro=false; try{ dentro=window.self!==window.top; }catch(e){ dentro=true; }
+  if(dentro) return;
   trava();
   if(!mob) return;
   function tenta(){
