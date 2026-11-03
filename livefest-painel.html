@@ -161,7 +161,7 @@ document.addEventListener('input',function(e){ if(e.target&&e.target.type==='dat
 var TIPOS={pista:'Pista',mesa:'Mesa',camarote:'Camarote',backstage:'Backstage',vip:'VIP',outro:'Outro'};
 function carrega(id,quieto){ return api('/painel/fest-eventos').then(function(d){ if(!d.ok) throw new Error(d.mensagem||''); D=d; if(id) EV=D.eventos.filter(function(e){ return e.id===id; })[0]||null; if(!quieto) pinta(); }).catch(function(e){ if(e.message!=='sessao') el('app').innerHTML='<div class="vazio">'+esc(e.message||'Não consegui carregar.')+'</div>'; }); }
 function linkCasa(){ return 'https://livefood.tec.br/livefest/'+encodeURIComponent(D.slug||D.cli||''); }
-function linkEv(e){ return linkCasa()+'/'+encodeURIComponent(e.id); }
+function linkEv(e){ return linkCasa()+'/'+encodeURIComponent(e.slug||e.id); }
 function copiar(t){ try{ navigator.clipboard.writeText(t).then(function(){ toast('Link copiado'); },function(){ prompt('Copie o link:',t); }); }catch(e){ prompt('Copie o link:',t); } }
 function avisos(){
   var h=''; if(!D.liberada) h+='<div class="aviso">Sua casa ainda não está liberada para vender na LiveFest. Você já pode montar o evento; para publicar, fale com o LiveFood.</div>';
@@ -209,6 +209,7 @@ function criaEvento(){ var b={nome:el('ne-nm').value,inicio:el('ne-ini').value,h
   api('/painel/lf-evento',b).then(function(d){ if(!d.ok){ el('ne-er').textContent=d.mensagem||'Não consegui criar.'; el('ne-b').disabled=false; return; } fecha(); VISTA='eventos'; carrega(d.id).then(function(){ ABA='saloes'; pinta(); }); }).catch(function(){ el('ne-b').disabled=false; }); }
 function evento(){
   var e=EV, h=avisos()+'<div class="cab"><button class="btn vt" onclick="EV=null;pinta()">'+SETA+(VISTA==='vendas'?'Vendas':'Eventos')+'</button><h1>'+esc(e.nome)+'</h1>'+(e.pub?'<button class="btn sm" onclick="copiar(\''+esc(linkEv(e))+'\')">Copiar link</button><a class="btn sm" href="'+esc(linkEv(e))+'" target="_blank" rel="noopener">Ver na LiveFest</a>':'')+'<button class="btn '+(e.pub?'':'pri')+'" onclick="publica('+(e.pub?0:1)+')">'+(e.pub?'Tirar da agenda':'Publicar na agenda')+'</button></div>';
+  if(e.pub) h+='<div class="link" style="margin:-4px 0 14px;font-size:13.5px"><span>🔗 '+esc(linkEv(e))+'</span><button class="btn sm" onclick="copiar(\''+esc(linkEv(e))+'\')">Copiar</button></div>';
   h+='<div class="abas">'+[['dados','Dados, fotos e local'],['saloes','Salões e setores'],['cupons','Cupons'],['vendas','Vendas']].map(function(a){ return '<button class="'+(ABA===a[0]?'on':'')+'" onclick="ABA=\''+a[0]+'\';pinta()">'+a[1]+'</button>'; }).join('')+'</div><div id="corpo"></div>';
   el('app').innerHTML=h; if(ABA==='dados') dados(); else if(ABA==='saloes') saloes(); else if(ABA==='cupons') cupons(); else vendas();
 }

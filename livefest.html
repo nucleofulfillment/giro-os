@@ -217,6 +217,8 @@ function pergunta(q){
     CH.push(d.ok?{r:'assistant',t:d.resposta,acao:d.acao,evento:d.evento}:{r:'assistant',t:d.mensagem||'Não consegui responder agora. Tente de novo.'});
     chatPinta(); });
 }
+/* (187) na página da casa, a barra de endereço mostra o link do que está aberto (dá para copiar e mandar) */
+function endereco(fim){ if(!ROTA.casa) return; try{ history.replaceState(history.state,'','/livefest/'+CASA+(fim||'')); }catch(e){} }
 function tela(h,nome){ clearTimeout(S.abT); tiraLives(); S.tela=nome||''; el('app').innerHTML=h; scrollTo(0,0); temaPinta(); mascoteOk(); }
 function voltar(onclick,rot){ return '<button class="ib" onclick="'+onclick+'" aria-label="'+(rot||'Voltar')+'">'+SETA+'</button>'; }
 /* (184) localização: o ponto marcado no mapa pelo dono do evento, ou o endereço escrito */
@@ -228,7 +230,7 @@ function slides(){
   return S.ag.filter(function(e){ return e.img_h; }).slice(0,6).map(function(e){ return {midia:e.img_h,foto:1,titulo:e.nome,evento:e.id,botao:'Garantir ingresso'}; });
 }
 function abertura(){
-  var l=S.slA=slides(); S.si=0;
+  var l=S.slA=slides(); S.si=0; endereco('');
   tela('<div class="ab"><div class="abm" id="abM"></div><div class="segs">'+(l.length>1?l.map(function(){ return '<i><b></b></i>'; }).join(''):'')+'</div><button class="som" id="abS" onclick="trocaSom()" hidden aria-label="Ligar o som">🔇</button><div class="abtop"><div class="marca">live<i>fest</i></div>'+(S.casa?'<div class="abc">'+esc(S.casa.nome)+'</div>':'')+'</div><button class="lvA" onclick="ajuda()" aria-label="Como posso ajudar? Fale com o Live"><span class="lvM" id="lvA"></span><span class="bal2">Como posso ajudar?</span></button><div class="abt"><span class="kick" id="abK" hidden></span><h1 id="abN">'+(l.length?'':S.carregou?'Festas e shows perto de você':'')+'</h1><small id="abI">'+(l.length?'':S.carregou?'Toque em Agenda para ver os eventos.':'Carregando a agenda…')+'</small><button class="bt w cta" id="abC" hidden></button><div class="bts"><button class="bt" onclick="agenda()">📅 Agenda</button><button class="bt cl" onclick="meus()">🎟️ Meus ingressos</button></div></div></div>','abertura');
   mascoteOk(); if(l.length){ el('abM').onclick=function(){ vai(S.slA[S.si]); }; el('abC').onclick=function(){ vai(S.slA[S.si]); }; mostra(); }
 }
@@ -258,7 +260,7 @@ function prox(){ if(S.tela!=='abertura'||S.slA.length<2) return; S.si=(S.si+1)%S
 function agenda(){
   var cid={}; S.ag.forEach(function(e){ if(e.cidade) cid[e.cidade]=1; });
   tela('<div class="bar">'+voltar('abertura()','Voltar para o início')+'<span class="marca" style="font-size:25px">live<i>fest</i></span><b style="font-size:13.5px;color:var(--mu)">'+(S.casa?esc(S.casa.nome):'')+'</b>'+botaoTema()+'<button class="ib" onclick="meus()" aria-label="Meus ingressos">🎟️</button></div><div class="busca"><input id="bq" placeholder="🔍 Festa, casa ou cidade" value="'+esc(S.busca)+'"></div><div class="chips"><button class="chip'+(S.filtro?'':' on')+'" data-f="">Todos</button><button class="chip'+(S.filtro==='hoje'?' on':'')+'" data-f="hoje">Hoje</button><button class="chip'+(S.filtro==='fds'?' on':'')+'" data-f="fds">Fim de semana</button>'+Object.keys(cid).map(function(c){ return '<button class="chip'+(S.filtro==='c:'+c?' on':'')+'" data-f="c:'+esc(c)+'">'+esc(c)+'</button>'; }).join('')+'</div><div id="lista"></div>'+(CASA?'<a class="todos" href="/livefest">Ver todos os eventos da LiveFest</a>':'')+'<div style="height:70px"></div>'+fab(),'agenda');
-  el('bq').oninput=function(){ S.busca=this.value; listaPinta(); };
+  el('bq').oninput=function(){ S.busca=this.value; listaPinta(); }; endereco('');
   [].forEach.call(document.querySelectorAll('.chip'),function(c){ c.onclick=function(){ S.filtro=c.dataset.f; agenda(); }; });
   listaPinta();
 }
@@ -278,15 +280,16 @@ function listaPinta(){
 /* ---------- evento: abre na hora com o que já veio da agenda; os ingressos chegam logo depois ---------- */
 /* (186) o evento começa a carregar quando o dedo encosta no cartão, e fica guardado por 45 segundos */
 var EVC={};
-function evBusca(id){ var c=EVC[id]; if(c&&Date.now()-c.t<45000) return c.p; var p=api('/fest/evento/'+encodeURIComponent(id)); c=EVC[id]={t:Date.now(),p:p}; p.then(function(d){ if(d&&d.ok) c.d=d; else delete EVC[id]; }); return p; }
+function evBusca(id){ var c=EVC[id]; if(c&&Date.now()-c.t<45000) return c.p; var p=api('/fest/evento/'+encodeURIComponent(id)+(CASA?'?casa='+encodeURIComponent(CASA):'')); c=EVC[id]={t:Date.now(),p:p}; p.then(function(d){ if(d&&d.ok) c.d=d; else delete EVC[id]; }); return p; }
 function evento(id){
-  var pre=S.ag.filter(function(e){ return e.id===id; })[0], novo=!S.ev||S.ev.id!==id, c=EVC[id];
+  /* (187) o link pode trazer o código ou o nome do evento (livefest/<casa>/<nome>) */
+  var pre=S.ag.filter(function(e){ return e.id===id||e.slug===id; })[0], rid=pre?pre.id:id, novo=!S.ev||(S.ev.id!==rid&&S.ev.slug!==id), c=EVC[id];
   if(novo){ S.car={}; S.mesas={}; S.sal=0; }
   if(c&&c.d&&Date.now()-c.t<45000){ S.ev=c.d.evento; if(S.sal>=S.ev.saloes.length) S.sal=0; eventoPinta(); m3Prepara(); return; }
   if(novo) S.ev=pre?Object.assign({},pre,{saloes:null}):null;
   if(S.ev) eventoPinta(); else tela('<div class="vazio">Carregando...</div>','evento');
   evBusca(id).then(function(d){
-    if(S.tela!=='evento'||(S.ev&&S.ev.id!==id)) return;
+    if(S.tela!=='evento'||(d.ok&&S.ev&&S.ev.id!==d.evento.id)) return;
     if(!d.ok){ tela('<div class="bar">'+voltar('agenda()')+'<b>Evento</b></div><div class="vazio">'+esc(d.mensagem||'Evento não encontrado.')+'</div>','evento'); return; }
     S.ev=d.evento; if(S.sal>=S.ev.saloes.length) S.sal=0; eventoPinta(true); m3Prepara();
   });
@@ -294,7 +297,7 @@ function evento(id){
 function eventoPinta(manter){
   var e=S.ev, y=scrollY, mp=mapsUrl(e), h='<div class="hero" style="'+ban(e)+'">'+voltar('agenda()')+'</div><div class="info"><h1>'+esc(e.nome)+'</h1><div class="ln">📅 '+curto(e.inicio)+(e.hora_ini?' · '+esc(e.hora_ini):'')+(e.hora_fim?' às '+esc(e.hora_fim):'')+'</div><div class="ln"><span>📍</span><span>'+esc(e.local||e.casa)+(e.cidade?' · '+esc(e.cidade):'')+(e.idade?' · '+e.idade+'+':'')+(e.endereco?'<small>'+esc(e.endereco)+'</small>':'')+'</span></div>'+(mp?'<a class="loc" href="'+esc(mp)+'" target="_blank" rel="noopener">🗺️ Ver localização</a>':'')+'</div>'+(e.descricao?'<div class="desc">'+esc(e.descricao)+'</div>':'');
   h+='<div class="tabs" id="tabs"></div><div id="sets"></div><div class="rod"><div><small id="qtd"></small><b id="tot"></b></div><button class="bt" id="bCont" onclick="continuar()">Continuar</button></div>';
-  tela(h,'evento'); if(manter) scrollTo(0,y); abas(); setores();
+  tela(h,'evento'); if(manter) scrollTo(0,y); abas(); setores(); endereco('/'+(e.slug||e.id));
 }
 function abas(){ var t=el('tabs'); if(!t) return; t.innerHTML=(S.ev.saloes||[]).map(function(s,i){ return '<button class="'+(i===S.sal?'on':'')+'" onclick="trocaSal('+i+')">'+esc(s.nome)+'</button>'; }).join(''); t.hidden=!(S.ev.saloes||[]).length; }
 function trocaSal(i){ S.sal=i; abas(); setores(); }
