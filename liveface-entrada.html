@@ -218,8 +218,29 @@ button{font:inherit;color:inherit;cursor:pointer}
     return Promise.resolve();
   }
   function qrLido(t){ var m=/^LF1:([a-z0-9]+)$/.exec(String(t||'')); if(!m) return; var p=POR[m[1]]; if(RACHA){ rachaAmigo(p||{id:m[1],nome:'Amigo'}); return; } if(!p){ naoReconheceu('QR de outro evento'); return; } trata(p,'qr'); }
+  /* (175) notebooks com Windows Hello têm uma câmera infravermelha (IR) que não abre como vídeo: ela é pulada e fica a câmera normal */
+  function ehIR(l){ return /\bIR\b|infra/i.test(String(l||'')); }
+  function abreId(id){ return navigator.mediaDevices.getUserMedia({video:{deviceId:{exact:id},width:{ideal:1280},height:{ideal:1280}},audio:false}); }
+  function outraCamera(fora,erro){
+    return navigator.mediaDevices.enumerateDevices().then(function(l){
+      var cs=l.filter(function(d){ return d.kind==='videoinput'&&d.deviceId&&fora.indexOf(d.deviceId)<0; }).sort(function(a,b){ return ehIR(a.label)-ehIR(b.label); });
+      var tenta=function(i){ if(i>=cs.length) throw erro; return abreId(cs[i].deviceId).then(function(st){ try{ localStorage.setItem('lf_cam',cs[i].deviceId); }catch(x){} return st; },function(){ return tenta(i+1); }); };
+      return tenta(0);
+    });
+  }
   function camera(){
-    var pede=function(){ var id=null; try{ id=localStorage.getItem('lf_cam'); }catch(e){} return navigator.mediaDevices.getUserMedia({video:id?{deviceId:{exact:id},width:{ideal:1280},height:{ideal:1280}}:{facingMode:'user',width:{ideal:1280},height:{ideal:1280}},audio:false}).catch(function(e){ if(id&&e.name==='OverconstrainedError'){ try{ localStorage.removeItem('lf_cam'); }catch(x){} return navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false}); } throw e; }); };
+    var pede=function(){ var id=null; try{ id=localStorage.getItem('lf_cam'); }catch(e){}
+      return (id?abreId(id):navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1280},height:{ideal:1280}},audio:false})).then(function(st){
+        var tr=st.getVideoTracks()[0], s=(tr&&tr.getSettings&&tr.getSettings())||{};
+        if(!tr||!ehIR(tr.label)) return st;
+        st.getTracks().forEach(function(t){ t.stop(); });
+        return outraCamera([s.deviceId||''],new Error('ir')).catch(function(){ return navigator.mediaDevices.getUserMedia({video:{deviceId:{exact:s.deviceId}},audio:false}); });
+      },function(e){
+        if(e.name==='NotAllowedError') throw e;
+        if(id){ try{ localStorage.removeItem('lf_cam'); }catch(x){} }
+        return outraCamera(id?[id]:[],e);
+      });
+    };
     return pede().then(function(st){ if(stream) stream.getTracks().forEach(function(t){ t.stop(); }); stream=st; var v=$('vid'); v.srcObject=st; try{ var pl=v.play(); if(pl&&pl.catch) pl.catch(function(){}); }catch(e){} });
   }
   function laco(){
