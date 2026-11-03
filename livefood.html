@@ -2835,7 +2835,8 @@ function waIntro(){
 }
 /* a abertura do WhatsApp entra depois que a tela de carregamento (Live + logo) sai */
 function waDepoisAbertura(){ var t0=Date.now(); (function espera(){ if(!$('lf-abertura')||Date.now()-t0>9000) waIntro(); else setTimeout(espera,150); })(); }
-carregar(true).then(function(){ if(window.LiveApp) LiveApp.pronto(); waInit(); waDepoisAbertura(); }); setInterval(function(){ carregar(false); },60000);
+/* (188) no 3D da LiveFest e do painel (?prev3d=1) só o salão importa: o cardápio não é baixado nem montado (no celular, montar o cardápio por trás travava a escolha da mesa) */
+if(!PREV3D){ carregar(true).then(function(){ if(window.LiveApp) LiveApp.pronto(); waInit(); waDepoisAbertura(); }); setInterval(function(){ carregar(false); },60000); }
 </script>
 </body>
 </html>

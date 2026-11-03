@@ -232,7 +232,7 @@ function slides(){
 function abertura(){
   var l=S.slA=slides(); S.si=0; endereco('');
   tela('<div class="ab"><div class="abm" id="abM"></div><div class="segs">'+(l.length>1?l.map(function(){ return '<i><b></b></i>'; }).join(''):'')+'</div><button class="som" id="abS" onclick="trocaSom()" hidden aria-label="Ligar o som">🔇</button><div class="abtop"><div class="marca">live<i>fest</i></div>'+(S.casa?'<div class="abc">'+esc(S.casa.nome)+'</div>':'')+'</div><button class="lvA" onclick="ajuda()" aria-label="Como posso ajudar? Fale com o Live"><span class="lvM" id="lvA"></span><span class="bal2">Como posso ajudar?</span></button><div class="abt"><span class="kick" id="abK" hidden></span><h1 id="abN">'+(l.length?'':S.carregou?'Festas e shows perto de você':'')+'</h1><small id="abI">'+(l.length?'':S.carregou?'Toque em Agenda para ver os eventos.':'Carregando a agenda…')+'</small><button class="bt w cta" id="abC" hidden></button><div class="bts"><button class="bt" onclick="agenda()">📅 Agenda</button><button class="bt cl" onclick="meus()">🎟️ Meus ingressos</button></div></div></div>','abertura');
-  mascoteOk(); if(l.length){ el('abM').onclick=function(){ vai(S.slA[S.si]); }; el('abC').onclick=function(){ vai(S.slA[S.si]); }; mostra(); }
+  mascoteOk(); if(l.length){ el('abM').onclick=function(ev){ var r=this.getBoundingClientRect(); if(ev.clientX-r.left<r.width/3) ant(); else prox(); }; el('abC').onclick=function(){ vai(S.slA[S.si]); }; mostra(); }
 }
 function vai(x){ if(!x) return; if(x.evento) evento(x.evento); else if(x.link) location.href=x.link; else agenda(); }
 function segs(d){ [].forEach.call(document.querySelectorAll('.segs i'),function(s,i){ var b=s.firstChild; if(i===S.si&&d) b.style.animationDuration=d+'s'; s.className=i<S.si?'ja':(i===S.si?'on':''); }); }
@@ -255,6 +255,8 @@ function mostra(){
 function somPinta(){ var b=el('abS'); if(!b) return; var on=S.som&&!S.somTrava; b.textContent=on?'🔊':'🔇'; b.setAttribute('aria-label',on?'Tirar o som':'Ligar o som'); }
 function trocaSom(){ var v=el('abM')&&el('abM').querySelector('video'); S.som=!(S.som&&!S.somTrava); S.somTrava=false; try{ sessionStorage.setItem('fest_som',S.som?'1':''); }catch(e){}
   if(v){ v.muted=!S.som; if(S.som){ var p=v.play(); if(p&&p.catch) p.catch(function(){ v.muted=true; S.som=false; try{ sessionStorage.setItem('fest_som',''); }catch(e){} somPinta(); }); } } somPinta(); }
+/* (188) como nos stories: tocar na direita passa para o próximo, na esquerda volta. Comprar fica no botão */
+function ant(){ if(S.tela!=='abertura'||S.slA.length<2) return; S.si=(S.si-1+S.slA.length)%S.slA.length; mostra(); }
 function prox(){ if(S.tela!=='abertura'||S.slA.length<2) return; S.si=(S.si+1)%S.slA.length; mostra(); }
 /* ---------- agenda ---------- */
 function agenda(){
@@ -286,12 +288,13 @@ function evento(id){
   var pre=S.ag.filter(function(e){ return e.id===id||e.slug===id; })[0], rid=pre?pre.id:id, novo=!S.ev||(S.ev.id!==rid&&S.ev.slug!==id), c=EVC[id];
   if(novo){ S.car={}; S.mesas={}; S.sal=0; }
   if(c&&c.d&&Date.now()-c.t<45000){ S.ev=c.d.evento; if(S.sal>=S.ev.saloes.length) S.sal=0; eventoPinta(); m3Prepara(); return; }
-  if(novo) S.ev=pre?Object.assign({},pre,{saloes:null}):null;
-  if(S.ev) eventoPinta(); else tela('<div class="vazio">Carregando...</div>','evento');
+  /* (188) a agenda já traz os ingressos: o evento abre completo na hora e só confere por trás */
+  if(novo) S.ev=pre?Object.assign({},pre,{saloes:Array.isArray(pre.saloes)?pre.saloes:null}):null;
+  if(S.ev){ eventoPinta(); if(S.ev.saloes) m3Prepara(); } else tela('<div class="vazio">Carregando...</div>','evento');
   evBusca(id).then(function(d){
     if(S.tela!=='evento'||(d.ok&&S.ev&&S.ev.id!==d.evento.id)) return;
     if(!d.ok){ tela('<div class="bar">'+voltar('agenda()')+'<b>Evento</b></div><div class="vazio">'+esc(d.mensagem||'Evento não encontrado.')+'</div>','evento'); return; }
-    S.ev=d.evento; if(S.sal>=S.ev.saloes.length) S.sal=0; eventoPinta(true); m3Prepara();
+    var igual=S.ev&&S.ev.saloes&&JSON.stringify(S.ev.saloes)===JSON.stringify(d.evento.saloes); S.ev=d.evento; if(S.sal>=S.ev.saloes.length) S.sal=0; if(!igual){ eventoPinta(true); m3Prepara(); }
   });
 }
 function eventoPinta(manter){
@@ -340,7 +343,7 @@ function m3Cria(cli){
   var f=document.createElement('iframe'); f.title='Salão em 3D'; f.src='livefood.html?c='+encodeURIComponent(cli)+'&prev3d=1'; o.appendChild(f); document.body.appendChild(o);
   M3={o:o,f:f,cli:cli,pronto:false}; return M3;
 }
-function m3Prepara(){ var e=S.ev; if(!e||!e.saloes||!e.cli) return; var tem=e.saloes.some(function(s){ return s.area&&s.setores.some(function(x){ return x.mesas&&x.mesas.length&&!x.esgotado; }); }); if(tem) setTimeout(function(){ if(S.tela==='evento'&&S.ev===e) m3Cria(e.cli); },900); }
+function m3Prepara(){ var e=S.ev; if(!e||!e.saloes||!e.cli) return; var tem=e.saloes.some(function(s){ return s.area&&s.setores.some(function(x){ return x.mesas&&x.mesas.length&&!x.esgotado; }); }); if(tem) setTimeout(function(){ var vai=function(){ if(S.tela==='evento'&&S.ev&&S.ev.id===e.id) m3Cria(e.cli); }; if(window.requestIdleCallback) requestIdleCallback(vai,{timeout:4000}); else vai(); },2500); }   /* (188) só quando o celular está livre */
 function mapa3d(sid){
   var sal=S.ev.saloes[S.sal], x=todos()[sid]; if(!sal) return;
   var m=m3Cria(S.ev.cli); m.o.hidden=false; el('m3r').textContent=rot3d(x); el('m3s').textContent=x.nome; el('m3i').textContent=m.pronto?'Montando o salão…':'Carregando o salão…'; S.m3={sid:sid,msg:null};

@@ -68,6 +68,7 @@ a{color:inherit}
 .abas button.on{background:var(--noite);color:#fff}
 .cx{background:#fff;border-radius:18px;padding:18px;border:1px solid #ECE6EF;margin-bottom:12px}
 .cx h2{margin:0 0 12px;font-size:16px}
+.g4d{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1.3fr) minmax(0,1fr);gap:8px}@media (max-width:700px){.g4d{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr)}}
 .col2{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:12px;align-items:start}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.g4{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:8px}
 label.cp{display:block;font-size:12px;font-weight:800;color:var(--mu)}
@@ -218,9 +219,11 @@ var MAPA=null, PIN=null, PONTO=null;
 function dados(){
   var e=EV; PONTO=e.lat!=null&&e.lng!=null?[e.lat,e.lng]:null; if(MAPA){ try{ MAPA.remove(); }catch(x){} } MAPA=null; PIN=null;
   el('corpo').innerHTML='<div class="col2"><div>'+
-    '<div class="cx"><h2>Sobre o evento</h2><label class="cp">Descrição (aparece na página do evento)<textarea class="inp" id="ed-ds" maxlength="600" placeholder="Atrações, dress code, o que está incluso">'+esc(e.descricao)+'</textarea></label>'+
+    '<div class="cx"><h2>Sobre o evento</h2><label class="cp">Nome do evento<input class="inp" id="ed-nm" maxlength="80" value="'+esc(e.nome)+'" placeholder="Ex.: Verão 2027"></label>'+
+      '<div class="g4d" style="margin:8px 0"><label class="cp">Começa no dia<input class="inp" type="date" id="ed-ini" value="'+esc(e.inicio)+'"></label><label class="cp">às<input class="inp" type="time" id="ed-hi" value="'+esc(e.hora_ini)+'"></label><label class="cp">Termina no dia<input class="inp" type="date" id="ed-fim" value="'+esc(e.fim)+'"></label><label class="cp">às<input class="inp" type="time" id="ed-hf" value="'+esc(e.hora_fim)+'"></label></div>'+
+      '<label class="cp">Descrição (aparece na página do evento)<textarea class="inp" id="ed-ds" maxlength="600" placeholder="Atrações, dress code, o que está incluso">'+esc(e.descricao)+'</textarea></label>'+
       '<div class="g2" style="margin-top:8px"><label class="cp">Categoria<select class="inp" id="ed-ct">'+['Festa','Show','Balada','Sertanejo','Pagode','Eletrônica','Bar e música ao vivo','Outro'].map(function(x){ return '<option'+(x===e.categoria?' selected':'')+'>'+x+'</option>'; }).join('')+'</select></label><label class="cp">Idade mínima<select class="inp" id="ed-id">'+[0,14,16,18].map(function(x){ return '<option value="'+x+'"'+(x==e.idade?' selected':'')+'>'+(x?x+' anos':'Livre')+'</option>'; }).join('')+'</select></label></div>'+
-      '<p class="info" style="margin:10px 0 0">'+dt(e.inicio)+(e.hora_ini?' às '+esc(e.hora_ini):'')+' até '+dt(e.fim)+(e.hora_fim?' às '+esc(e.hora_fim):'')+'. Data e hora se mudam no LiveFace, em Eventos e ingressos.</p></div>'+
+      (e.pub?'<p class="info" style="margin:10px 0 0">Se mudar o nome, o link do evento muda junto.</p>':'')+'</div>'+
     '<div class="cx"><h2>Local</h2><div class="g2"><label class="cp">Nome do local<input class="inp" id="ed-lc" maxlength="80" value="'+esc(e.local)+'" placeholder="Ex.: Restaurante Cinquenta"></label><label class="cp">Cidade<input class="inp" id="ed-cd" maxlength="60" value="'+esc(e.cidade)+'" placeholder="Ex.: Itajaí"></label></div>'+
       '<label class="cp" style="margin-top:8px">Endereço<input class="inp" id="ed-en" maxlength="160" value="'+esc(e.endereco)+'" placeholder="Ex.: Rua Hercílio Luz, 50 · Centro"></label>'+
       '<div class="bts" style="margin-top:10px"><button class="btn sm" onclick="procura()">📍 Achar o endereço no mapa</button><button class="btn sm er" id="ed-tp" onclick="tiraPonto()"'+(PONTO?'':' hidden')+'>Tirar o ponto</button></div>'+
@@ -276,9 +279,11 @@ function procura(soVista){
     if(!MAPA) return; if(!l||!l.length){ if(!soVista) toast('Não achei esse endereço. Toque no mapa para marcar.'); return; }
     var p=[+l[0].lat,+l[0].lon]; if(soVista) MAPA.setView(p,13); else { MAPA.setView(p,17); poePin(p); } }).catch(function(){ if(!soVista) toast('Não consegui procurar agora. Toque no mapa para marcar.'); }); }
 function corpoDados(pub){ var tem=!!el('ed-ds'), v=function(i,k){ return tem?el(i).value:EV[k]; };
-  return {id:EV.id,descricao:v('ed-ds','descricao'),local:v('ed-lc','local'),cidade:v('ed-cd','cidade'),categoria:v('ed-ct','categoria'),idade:v('ed-id','idade'),endereco:v('ed-en','endereco'),chamada:v('ed-ch','chamada'),botao:v('ed-bt','botao'),lat:tem?(PONTO?PONTO[0]:''):EV.lat,lng:tem?(PONTO?PONTO[1]:''):EV.lng,pub:pub}; }
+  var o={id:EV.id,descricao:v('ed-ds','descricao'),local:v('ed-lc','local'),cidade:v('ed-cd','cidade'),categoria:v('ed-ct','categoria'),idade:v('ed-id','idade'),endereco:v('ed-en','endereco'),chamada:v('ed-ch','chamada'),botao:v('ed-bt','botao'),lat:tem?(PONTO?PONTO[0]:''):EV.lat,lng:tem?(PONTO?PONTO[1]:''):EV.lng,pub:pub};
+  if(tem&&el('ed-nm')){ o.nome=el('ed-nm').value; o.inicio=el('ed-ini').value; o.hora_ini=el('ed-hi').value; o.fim=el('ed-fim').value; o.hora_fim=el('ed-hf').value; }   /* (188) nome e datas */
+  return o; }
 /* (186) salvar não redesenha a tela nem o mapa: guarda aqui e atualiza a lista por trás */
-function salvaDados(){ var cp=corpoDados(EV.pub); el('ed-b').disabled=true; api('/painel/fest-evento',cp).then(function(d){ el('ed-b').disabled=false; if(!d.ok){ el('ed-er').textContent=d.mensagem||'Não consegui salvar.'; return; } el('ed-er').textContent=''; ['descricao','local','cidade','categoria','endereco','chamada','botao'].forEach(function(k){ EV[k]=cp[k]; }); EV.idade=+cp.idade||0; EV.lat=cp.lat===''?null:cp.lat; EV.lng=cp.lng===''?null:cp.lng; toast('Salvo'); carrega(EV.id,true); }).catch(function(){ el('ed-b').disabled=false; }); }
+function salvaDados(){ var cp=corpoDados(EV.pub); el('ed-b').disabled=true; api('/painel/fest-evento',cp).then(function(d){ el('ed-b').disabled=false; if(!d.ok){ el('ed-er').textContent=d.mensagem||'Não consegui salvar.'; return; } el('ed-er').textContent=''; ['descricao','local','cidade','categoria','endereco','chamada','botao'].forEach(function(k){ EV[k]=cp[k]; }); EV.idade=+cp.idade||0; EV.lat=cp.lat===''?null:cp.lat; EV.lng=cp.lng===''?null:cp.lng; toast('Salvo'); var mudouNome=cp.nome!==undefined&&(cp.nome.trim()!==EV.nome||cp.inicio!==EV.inicio||cp.fim!==EV.fim||cp.hora_ini!==EV.hora_ini||cp.hora_fim!==EV.hora_fim); carrega(EV.id,!mudouNome); }).catch(function(){ el('ed-b').disabled=false; }); }
 function publica(p){ api('/painel/fest-evento',corpoDados(p)).then(function(d){ if(!d.ok){ toast(d.mensagem||'Não deu certo.'); diz(d.mensagem||'Não deu certo.'); return; } toast(p?'Publicado na agenda':'Tirado da agenda'); if(p) diz('Seu evento está na agenda da LiveFest!'); carrega(EV.id); }); }
 /* ---------- salões e setores ---------- */
 function saloes(){
