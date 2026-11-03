@@ -232,7 +232,10 @@ button{font:inherit;color:inherit;cursor:pointer}
     montaTela(); diz('Estou me preparando...',{expr:'pensativo'}); $('res').innerHTML='<p class="mut" id="st">Abrindo a câmera e o leitor de rosto.</p>';
     leFila(); sincroniza();
     if(!window.BarcodeDetector&&!window.jsQR){ var s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js'; document.head.appendChild(s); }
-    return camera().then(carregaLeitor).then(function(){ rodando=true; aguardando(); laco(); setInterval(lerQr,500); if(navigator.wakeLock) navigator.wakeLock.request('screen').then(function(w){ wake=w; }).catch(function(){}); }).catch(function(e){ var neg=e&&(e.name==='NotAllowedError'); $('res').innerHTML='<div class="est aten">! '+(neg?'Câmera bloqueada':'Não abriu')+'</div><p class="mut">'+esc(neg?'Libere a câmera nas configurações do navegador.':(e.message||'Verifique a câmera e a internet.'))+'</p><div class="acoes"><button class="bt bt-pri" id="de">Tentar de novo</button><button class="bt bt-sec" id="beq">Equipe: buscar por nome</button></div>'; $('de').onclick=comeca; $('beq').onclick=busca; diz('Preciso da câmera para reconhecer as pessoas.',{gesto:'confuso'}); });
+    return camera().then(carregaLeitor).then(function(){ rodando=true; aguardando(); laco(); if(!comeca.qr) comeca.qr=setInterval(lerQr,500); if(navigator.wakeLock) navigator.wakeLock.request('screen').then(function(w){ wake=w; }).catch(function(){}); }).catch(function(e){ var neg=e&&(e.name==='NotAllowedError'), ocu=e&&(e.name==='NotReadableError'||e.name==='TrackStartError'||e.name==='AbortError');
+      /* (175) câmera ocupada por outra aba ou programa: tenta de novo sozinho até ela ficar livre */
+      if(ocu){ clearTimeout(comeca.re); comeca.re=setTimeout(function(){ if(!rodando&&$('de')) comeca(); },5000); }
+      $('res').innerHTML='<div class="est aten">! '+(neg?'Câmera bloqueada':ocu?'Câmera ocupada':'Não abriu')+'</div><p class="mut">'+esc(neg?'Libere a câmera nas configurações do navegador.':ocu?'Outra aba ou outro programa está usando a câmera (outra tela do LiveFace, videochamada ou gravação). Feche o outro e eu tento de novo sozinho.':(e.message||'Verifique a câmera e a internet.'))+'</p><div class="acoes"><button class="bt bt-pri" id="de">Tentar de novo</button><button class="bt bt-sec" id="beq">Equipe: buscar por nome</button></div>'; $('de').onclick=comeca; $('beq').onclick=busca; diz('Preciso da câmera para reconhecer as pessoas.',{gesto:'confuso'}); });
   }
   /* ---------- 3. saída: confere a conta, mostra o Pix e libera quando o pagamento cair ---------- */
   function reais(v){ return 'R$ '+Number(v||0).toFixed(2).replace('.',','); }
@@ -334,7 +337,13 @@ button{font:inherit;color:inherit;cursor:pointer}
   setInterval(sincroniza,10000);
   setInterval(function(){ if(rodando&&!$('over').innerHTML) atualizaLista(); },120000);
   addEventListener('online',sincroniza); addEventListener('offline',function(){ rede(false); });
-  document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible'&&rodando&&navigator.wakeLock) navigator.wakeLock.request('screen').then(function(w){ wake=w; }).catch(function(){}); });
+  /* (175) aba escondida solta a câmera, para a Entrada e a Saída poderem ficar abertas no mesmo computador */
+  document.addEventListener('visibilitychange',function(){
+    if(document.visibilityState==='hidden'){ if(rodando&&stream){ stream.getTracks().forEach(function(t){ t.stop(); }); stream=null; } return; }
+    if(!rodando) return;
+    if(!stream) camera().catch(function(){ setTimeout(function(){ if(rodando&&!stream&&document.visibilityState==='visible') camera().catch(function(){}); },3000); });
+    if(navigator.wakeLock) navigator.wakeLock.request('screen').then(function(w){ wake=w; }).catch(function(){});
+  });
   if(LOCAL) window.__lf={carregaLeitor:carregaLeitor,usaLista:function(ev,l){ EV=ev; preparaPessoas(l); },comeca:comeca,saida:function(id){ saida(POR[id],'rosto'); },qr:qrLido,racha:function(){ return RACHA; },procura:procura,cont:function(){ return CONT?{n:contUlt,nome:CONT.p.nome}:null; },atualizaLista:atualizaLista,qtRostos:qtRostos,estado:function(){ return {ENT:ENT,FILA:FILA,falhas:falhas}; },LIM:LIM};
 
   if(LOCAL&&Q.get('teste')==='1') return;
