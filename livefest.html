@@ -68,6 +68,9 @@ button{font:inherit;color:inherit;cursor:pointer}
 .qt{display:flex;align-items:center;gap:12px;margin-top:8px;justify-content:flex-end}
 .qt button{width:34px;height:34px;border-radius:50%;border:1.5px solid rgba(255,255,255,.22);background:transparent;font-weight:800;font-size:18px}
 .qt b{min-width:18px;text-align:center}
+.chipm{border:0;border-radius:99px;background:rgba(255,90,0,.2);color:#FFB27A;font-weight:800;font-size:12.5px;padding:6px 10px;margin:0 6px 6px 0}
+.m3d{position:fixed;inset:0;z-index:50;background:#110d0a;display:flex;flex-direction:column}.m3d iframe{flex:1;border:0;width:100%}
+.m3t{display:flex;align-items:center;gap:10px;padding:max(12px,env(safe-area-inset-top)) 14px 10px;color:#fff}.m3t b{font-size:15px}.m3t span{margin-left:auto;font-size:12.5px;opacity:.75;font-weight:700}
 .mrow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px;font-size:13.5px;font-weight:800}.mrow small{display:block;font-size:11.5px;color:var(--mu);font-weight:600}.mrow .qt{margin-top:0}
 .rod{position:sticky;bottom:0;z-index:5;background:var(--noite);border-top:1px solid rgba(255,255,255,.08);padding:10px 16px max(14px,env(safe-area-inset-bottom));display:flex;align-items:center;gap:12px}
 .rod div{flex:1}.rod small{display:block;font-size:12px;opacity:.7;font-weight:700}.rod b{font-size:19px}
@@ -103,7 +106,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 <script src="site/js/live-mascote.js"></script>
 <script>
 var API='https://giro-os-api.nucleofull.workers.dev', Q=new URLSearchParams(location.search);
-var S={ag:[],ev:null,sal:0,car:{},filtro:'',busca:'',tk:'',conta:null,ped:null,poll:null,ab:0,abT:null,volta:null};
+var S={ab:[],mesas:{},ag:[],ev:null,sal:0,car:{},filtro:'',busca:'',tk:'',conta:null,ped:null,poll:null,ab:0,abT:null,volta:null};
 try{ S.tk=localStorage.getItem('fest_tk')||''; }catch(e){}
 function el(i){ return document.getElementById(i); }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
@@ -118,10 +121,21 @@ function tela(h){ clearTimeout(S.abT); el('app').innerHTML=h; scrollTo(0,0); }
 
 /* ---------- abertura: os eventos em destaque passam sozinhos, como as ofertas do cardápio ---------- */
 function abertura(){
+  if(S.ab.length) return aberturaVideo();
   var l=S.ag.slice(0,6);
   tela('<div class="ab"><div class="img" id="abImg"></div><div class="segs">'+l.map(function(){ return '<i><b></b></i>'; }).join('')+'</div><div class="lvA" id="lvA"></div><div class="abt"><div class="marca">live<i>fest</i></div><h1 id="abN">'+(l.length?'':'Festas e shows perto de você')+'</h1><small id="abI">'+(l.length?'':'Em breve, os eventos da sua cidade.')+'</small><div class="bts"><button class="bt" onclick="agenda()">📅 Agenda</button><button class="bt cl" onclick="meus()">🎟️ Meus ingressos</button></div></div></div>');
   live('lvA','animado'); if(l.length){ S.ab=0; passa(); el('abImg').onclick=function(){ evento(l[S.ab].id); }; }
 }
+/* (183) abertura com os vídeos escolhidos no Admin: tocam um depois do outro, sem som; tocar abre o evento ligado */
+function aberturaVideo(){
+  var l=S.ab;
+  tela('<div class="ab"><video id="abV" class="img" muted playsinline autoplay preload="auto" style="width:100%;height:100%;object-fit:cover"></video><div class="segs">'+l.map(function(){ return '<i><b></b></i>'; }).join('')+'</div><div class="lvA" id="lvA"></div><div class="abt"><div class="marca">live<i>fest</i></div><h1 id="abN"></h1><small id="abI"></small><div class="bts"><button class="bt" onclick="agenda()">📅 Agenda</button><button class="bt cl" onclick="meus()">🎟️ Meus ingressos</button></div></div></div>');
+  live('lvA','animado'); S.ab0=0; var v=el('abV'); v.onended=function(){ S.ab0=(S.ab0+1)%l.length; toca(); }; v.onclick=function(){ var x=l[S.ab0]; if(x&&x.evento) evento(x.evento); }; toca();
+}
+function toca(){ var l=S.ab, x=l[S.ab0], v=el('abV'); if(!v||!x) return; var ev=S.ag.filter(function(e){ return e.id===x.evento; })[0];
+  v.src=x.video; v.loop=l.length===1; try{ var p=v.play(); if(p&&p.catch) p.catch(function(){}); }catch(e){}
+  el('abN').textContent=x.titulo||(ev?ev.nome:''); el('abI').textContent=ev?curto(ev.inicio)+(ev.hora_ini?' · '+ev.hora_ini:'')+' · '+ev.casa:'';
+  [].forEach.call(document.querySelectorAll('.segs i'),function(s,i){ s.className=i<S.ab0?'ja':(i===S.ab0?'ja':''); }); }
 function passa(){
   var l=S.ag.slice(0,6), e=l[S.ab]; if(!e||!el('abImg')) return;
   el('abImg').style.cssText=ban(e)+';cursor:pointer'; el('abN').textContent=e.nome; el('abI').textContent=curto(e.inicio)+(e.hora_ini?' · '+e.hora_ini:'')+' · '+e.casa+(e.cidade?' · '+e.cidade:'');
@@ -152,7 +166,7 @@ function evento(id){
   tela('<div class="vazio">Carregando...</div>');
   api('/fest/evento/'+encodeURIComponent(id)).then(function(d){
     if(!d.ok){ tela('<div class="bar"><button class="ib" onclick="agenda()">←</button><b>Evento</b></div><div class="vazio">'+esc(d.mensagem||'Evento não encontrado.')+'</div>'); return; }
-    if(!S.ev||S.ev.id!==d.evento.id){ S.car={}; S.sal=0; } S.ev=d.evento; eventoPinta();
+    if(!S.ev||S.ev.id!==d.evento.id){ S.car={}; S.mesas={}; S.sal=0; } S.ev=d.evento; eventoPinta();
   });
 }
 function eventoPinta(){
@@ -165,6 +179,7 @@ function setores(){
   var ctl=function(k,q){ return '<div class="qt"><button onclick="poe(\''+k+'\',-1)" aria-label="Menos">−</button><b>'+q+'</b><button onclick="poe(\''+k+'\',1)" aria-label="Mais">+</button></div>'; };
   el('sets').innerHTML=s.setores.map(function(x){
     var h='<div class="set"><div class="h"><div><b>'+esc(x.nome)+'</b><small>'+[x.pessoas>1?'Para '+x.pessoas+' pessoas':'',x.consumacao?brl(x.consumacao)+' de consumação na comanda':'',x.inclui].filter(Boolean).map(esc).join(' · ')+'</small><span class="lote'+(x.esgotado?' esg':'')+'">'+(x.esgotado?'Esgotado':esc(x.lote)+(x.restantes<=10?' · últimos '+x.restantes:''))+'</span></div><div class="vl">'+(x.ant?'<s>'+brl(x.ant)+'</s>':'')+(x.esgotado?'':brl(x.preco))+(x.taxa?'<em>+ '+brl(x.taxa)+' de taxa</em>':'')+'</div></div>';
+    if(!x.esgotado&&x.mesas&&x.mesas.length){ var ms=S.mesas[x.id]||[]; h+='<div class="mrow"><span>'+(ms.length?ms.map(function(n){ return '<button class="chipm" onclick="tiraMesa(\''+x.id+'\','+n+')">Mesa '+n+' ✕</button>'; }).join(''):'Escolha no mapa'+'<small>'+(x.mesas.length-x.ocupadas.length)+' livre(s)</small>')+'</span><button class="bt" style="padding:9px 13px;font-size:13px" onclick="mapa3d(\''+x.id+'\')">🧊 '+(ms.length?'Mais uma':'Ver no 3D')+'</button></div>'; return h+'</div>'; }
     if(!x.esgotado) h+=(x.meia?'<div class="mrow"><span>Inteira</span>'+ctl(x.id,S.car[x.id]||0)+'</div>':ctl(x.id,S.car[x.id]||0));
     if(!x.esgotado&&x.meia) h+=x.meia_rest>0?'<div class="mrow"><span>Meia-entrada · '+brl(x.meia_preco)+(x.meia_taxa?' + '+brl(x.meia_taxa):'')+'<small>Estudante, idoso ou PcD. Documento na entrada.</small></span>'+ctl(x.id+':m',S.car[x.id+':m']||0)+'</div>':'<div class="mrow"><span>Meia-entrada esgotada</span></div>';
     return h+'</div>'; }).join('')||'<div class="vazio">Ingressos em breve.</div>';
@@ -179,7 +194,24 @@ function poe(k,d){
   S.car[k]=q; setores();
 }
 function totais(){ var n=0, t=0; itens().forEach(function(i){ n+=i.qtd; t+=i.qtd*(i.meia?i.x.meia_unit:i.x.unit); }); el('qtd').textContent=n?n+(n===1?' ingresso':' ingressos'):'Escolha os ingressos'; el('tot').textContent=brl(t); el('bCont').disabled=!n; }
-function itens(){ var m=todos(); return Object.keys(S.car).filter(function(k){ return S.car[k]>0&&m[k.split(':')[0]]; }).map(function(k){ return {setor:k.split(':')[0],meia:/:m$/.test(k)?1:0,qtd:S.car[k],x:m[k.split(':')[0]]}; }); }
+function itens(){ var m=todos(); return Object.keys(S.car).filter(function(k){ return S.car[k]>0&&m[k.split(':')[0]]; }).map(function(k){ var id=k.split(':')[0]; return {setor:id,meia:/:m$/.test(k)?1:0,qtd:S.car[k],x:m[id],mesas:/:m$/.test(k)?undefined:S.mesas[id]}; }); }
+/* (183) mesa e camarote escolhidos no 3D do salão (o mesmo 3D das reservas do cardápio) */
+function mapa3d(sid){
+  var sal=S.ev.saloes[S.sal], x=todos()[sid]; if(!sal) return;
+  var o=document.createElement('div'); o.id='m3d'; o.className='m3d'; o.innerHTML='<div class="m3t"><button class="ib" onclick="fecha3d()" aria-label="Fechar">✕</button><b>'+esc(x.nome)+'</b><span id="m3i">Carregando o salão…</span></div><iframe id="m3f" title="Salão em 3D"></iframe>'; document.body.appendChild(o);
+  api('/fest/planta/'+encodeURIComponent(S.ev.id)+'?salao='+encodeURIComponent(sal.id)).then(function(d){
+    if(!d.ok){ el('m3i').textContent=d.mensagem||'Este salão ainda não tem mapa.'; return; }
+    var oc=d.ocupadas.concat(Object.keys(S.mesas).reduce(function(a,k){ return k===sid?a:a.concat(S.mesas[k]); },[])).concat(S.mesas[sid]||[]);
+    S.m3={sid:sid,msg:{tipo:'salao3d',escolher:1,areas:[d.area],area:d.area.id,pecas:d.pecas,ocupadas:oc,permitidas:x.mesas,setor:x.nome}};
+    el('m3i').textContent='Toque numa mesa verde'; el('m3f').src='livefood.html?c='+encodeURIComponent(d.cli)+'&prev3d=1&v='+Date.now();
+  });
+}
+function fecha3d(){ var o=el('m3d'); if(o) o.remove(); S.m3=null; }
+function tiraMesa(sid,n){ S.mesas[sid]=(S.mesas[sid]||[]).filter(function(x){ return x!==n; }); S.car[sid]=S.mesas[sid].length; setores(); }
+addEventListener('message',function(e){ var m=e.data, f=el('m3f'); if(!m||!f||e.source!==f.contentWindow||!S.m3) return;
+  if(m.tipo==='prev3d-pronto') f.contentWindow.postMessage(S.m3.msg,'*');
+  if(m.tipo==='prev3d-mesa'){ var sid=S.m3.sid, x=todos()[sid], l=S.mesas[sid]||[], n=Object.keys(S.car).reduce(function(a,c){ return a+S.car[c]; },0); if(l.indexOf(m.n)<0&&n<10&&l.length<x.restantes){ l.push(m.n); S.mesas[sid]=l; S.car[sid]=l.length; } fecha3d(); setores(); }
+});
 function continuar(){ if(!S.tk){ S.volta=checkout; return entrar(); } checkout(); }
 /* ---------- entrar: só o WhatsApp ---------- */
 function entrar(){
@@ -194,7 +226,7 @@ function pedeCodigo(){
   api('/fest/conta/codigo',{fone:fo}).then(function(d){ b.disabled=false; if(!d.ok&&d.erro!=='aguarde'){ el('er').textContent=d.mensagem||'Não consegui enviar.'; return; } el('cdBox').hidden=false; el('fo').readOnly=true; b.textContent='Entrar'; el('cd').focus(); if(d.erro==='aguarde') el('er').textContent='Já enviamos um código. Digite abaixo.'; });
 }
 /* ---------- compra: dados do comprador só aqui, e uma vaga por pessoa (mesa e camarote: titular + convidados opcionais) ---------- */
-function vagas(it){ var v=[]; it.forEach(function(i){ for(var u=0;u<i.qtd;u++) for(var p=0;p<(i.x.pessoas||1);p++) v.push({x:i.x,meia:i.meia,titular:p===0,p:p,n:i.x.pessoas||1}); }); return v; }
+function vagas(it){ var v=[]; it.forEach(function(i){ for(var u=0;u<i.qtd;u++) for(var p=0;p<(i.x.pessoas||1);p++) v.push({x:i.x,meia:i.meia,titular:p===0,p:p,n:i.x.pessoas||1,mesa:i.mesas&&i.mesas[u]}); }); return v; }
 function checkout(){
   var it=itens(); if(!it.length) return eventoPinta();
   tela('<div class="pg"><div class="vazio" style="color:#6B6B73">Carregando...</div></div>');
@@ -203,7 +235,7 @@ function checkout(){
     S.conta=d.conta; S.cupom=null; var c=d.conta, vg=vagas(it);
     var h='<div class="pg"><div class="bar"><button class="ib" onclick="eventoPinta()">←</button><b>Pagamento</b></div><div class="cx" id="resumo"></div>';
     h+='<div class="cx"><h3>Seus dados para a compra</h3><input class="inp" id="c-nm" placeholder="Nome completo *" value="'+esc(c.nome)+'"><input class="inp" id="c-cpf" inputmode="numeric" placeholder="CPF *" value="'+esc(c.cpf)+'" maxlength="14"><input class="inp" id="c-em" type="email" placeholder="E-mail *" value="'+esc(c.email)+'"><div class="nota">O primeiro ingresso ('+esc(vg[0].x.nome)+') é seu. Depois já vem preenchido.</div></div>';
-    vg.forEach(function(v,i){ if(!i) return; var tit=v.titular, rot=v.n>1?esc(v.x.nome)+' · '+(tit?'titular':'convidado '+(v.p+1)+' de '+v.n):esc(v.x.nome)+(v.meia?' · meia':'');
+    vg.forEach(function(v,i){ if(!i) return; var tit=v.titular, rot=(v.mesa?'Mesa '+v.mesa+' · ':'')+(v.n>1?esc(v.x.nome)+' · '+(tit?'titular':'convidado '+(v.p+1)+' de '+v.n):esc(v.x.nome)+(v.meia?' · meia':''));
       h+='<div class="cx"><h3>Ingresso '+(i+1)+' · '+rot+'</h3><input class="inp t-nm" data-i="'+i+'" placeholder="Nome completo'+(tit?' *':'')+'"><input class="inp t-cpf" data-i="'+i+'" inputmode="numeric" placeholder="CPF'+(tit?' *':'')+'" maxlength="14"><input class="inp t-fo" data-i="'+i+'" type="tel" inputmode="numeric" placeholder="WhatsApp'+(tit?' *':'')+'" maxlength="16"><div class="nota">'+(tit?'O ingresso vai para o WhatsApp dessa pessoa.':'Opcional. Pode deixar em branco e preencher depois em Meus ingressos.')+'</div></div>'; });
     h+='<div class="cx"><h3>Cupom</h3><div class="copia" style="margin-top:0"><input id="cp" placeholder="Código do cupom" style="text-transform:uppercase"><button class="bt cl" style="padding:10px 14px;background:#F1F1F3;color:#1C1C1E" onclick="cupom()">Aplicar</button></div><div class="nota" id="cpm"></div></div>';
     h+='<div class="cx"><h3>Pagar com Pix</h3><div class="nota" style="margin:0">O ingresso sai assim que o Pix cair. Desistiu? Até 7 dias após a compra, e antes do evento, o valor volta.</div></div><div class="erro" id="er"></div><div class="rod" style="background:#fff;border-top-color:#E6E6EA"><div><small style="color:#6B6B73">Total</small><b id="ctot"></b></div><button class="bt" id="bP" onclick="paga()">Pagar com Pix</button></div></div>';
@@ -221,9 +253,9 @@ function cupom(){ var c=el('cp').value.trim(); if(!c){ S.cupom=null; resumo(); r
 function paga(){
   var tit=[null]; [].forEach.call(document.querySelectorAll('.t-nm'),function(x){ var i=+x.dataset.i; tit[i]={nome:x.value,cpf:document.querySelector('.t-cpf[data-i="'+i+'"]').value,fone:document.querySelector('.t-fo[data-i="'+i+'"]').value}; });
   var b=el('bP'); b.disabled=true; b.textContent='Gerando o Pix...'; el('er').textContent='';
-  api('/fest/comprar',{evento:S.ev.id,itens:itens().map(function(x){ return {setor:x.setor,qtd:x.qtd,meia:x.meia}; }),comprador:{nome:el('c-nm').value,cpf:el('c-cpf').value,email:el('c-em').value},titulares:tit,cupom:S.cupom?S.cupom.codigo:undefined}).then(function(d){
+  api('/fest/comprar',{evento:S.ev.id,itens:itens().map(function(x){ return {setor:x.setor,qtd:x.qtd,meia:x.meia,mesas:x.mesas}; }),comprador:{nome:el('c-nm').value,cpf:el('c-cpf').value,email:el('c-em').value},titulares:tit,cupom:S.cupom?S.cupom.codigo:undefined}).then(function(d){
     if(!d.ok){ b.disabled=false; b.textContent='Pagar com Pix'; el('er').textContent=d.mensagem||'Não consegui gerar o Pix.'; if(d._st===401){ S.volta=checkout; entrar(); } return; }
-    S.ped=d.pedido; S.car={}; pix();
+    S.ped=d.pedido; S.car={}; S.mesas={}; pix();
   });
 }
 function pix(){
@@ -257,7 +289,7 @@ function transf(i){
 function transfOk(id){ var b=el('bT'), nm=el('tr-nm').value.trim(); b.disabled=true;
   api('/fest/transferir',{id:id,nome:nm,cpf:el('tr-cpf').value,fone:el('tr-fo').value}).then(function(d){ b.disabled=false; if(!d.ok){ el('er').textContent=d.mensagem||'Não deu certo.'; return; } S.ings=d.ingressos||[]; tela('<div class="bar"><button class="ib" onclick="agenda()">←</button><b>Meus ingressos</b></div><div id="ml"></div>'); ingPinta('Ingresso passado para '+nm.split(' ')[0]+'.'); }); }
 /* início: link direto de um evento (?ev=) ou a abertura */
-api('/fest/agenda').then(function(d){ S.ag=(d&&d.eventos)||[]; if(Q.get('ev')) evento(Q.get('ev')); else if(Q.get('tela')==='agenda') agenda(); else abertura(); });
+api('/fest/agenda').then(function(d){ S.ag=(d&&d.eventos)||[]; S.ab=(d&&d.abertura)||[]; if(Q.get('ev')) evento(Q.get('ev')); else if(Q.get('tela')==='agenda') agenda(); else abertura(); });
 </script>
 </body>
 </html>

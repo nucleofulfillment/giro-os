@@ -63,6 +63,7 @@ textarea.inp{min-height:80px;resize:vertical}
 .fundo{position:fixed;inset:0;background:rgba(14,10,18,.55);z-index:40;display:flex;align-items:center;justify-content:center;padding:14px}
 .folha{background:#fff;border-radius:20px;width:min(640px,100%);max-height:92vh;overflow:auto;padding:18px}
 .folha h2{margin:0 0 10px;font-size:19px}
+.mesas{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:4px 10px}.mesas small{color:var(--mu);font-weight:600}
 .vazio{padding:28px;text-align:center;color:var(--mu);font-weight:700;background:#fff;border-radius:18px}
 .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:60;background:var(--noite);color:#fff;font-weight:800;font-size:14px;padding:10px 16px;border-radius:99px}
 .live-mascote{position:relative;width:100%;aspect-ratio:220/230}.live-corpo{position:absolute;inset:0;transform-origin:50% 46%}.live-corpo svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}.live-rosto{position:absolute;border-radius:14% / 18%}.live-sombra{position:absolute;left:22%;right:22%;bottom:-6%;height:9%;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.35),transparent)}
@@ -74,6 +75,14 @@ textarea.inp{min-height:80px;resize:vertical}
 <main class="wrap" id="app"><div class="vazio">Carregando...</div></main>
 <div class="toast" id="toast" hidden></div>
 <script src="site/js/live-mascote.js"></script>
+<script>
+/* (183) o Live de ajuda do Painel, aqui no painel do evento: o chat usa o mesmo login e o manual já fala da LiveFest */
+var DELTADIS_API='https://giro-os-api.nucleofull.workers.dev', DD_TOKEN='', DD_USER=null, PAG='livefest';
+try{ DD_TOKEN=localStorage.getItem('dd_jwt')||''; DD_USER=JSON.parse(localStorage.getItem('dd_user')||'null'); }catch(e){}
+function cdHdr(){ return {'Content-Type':'application/json','Authorization':'Bearer '+DD_TOKEN}; }
+function mpLiveCarregar(cb){ if(window.LiveMascote){ cb(); return; } var s=document.createElement('script'); s.src='site/js/live-mascote.js'; s.onload=cb; document.head.appendChild(s); }
+</script>
+<script src="live-ajuda.js"></script>
 <script>
 var API='https://giro-os-api.nucleofull.workers.dev', TK='', US=null, D=null, EV=null, ABA='dados', live=null;
 try{ TK=localStorage.getItem('dd_jwt')||''; US=JSON.parse(localStorage.getItem('dd_user')||'null'); }catch(e){}
@@ -149,12 +158,14 @@ function setor(sid,id){
   folha('<h2>'+(id?'Editar setor':'Novo setor')+' · '+esc(s.nome)+'</h2><div class="g3"><label class="cp">Nome<input class="inp" id="se-nm" maxlength="60" value="'+esc(x.nome)+'" placeholder="Pista"></label><label class="cp">Tipo<select class="inp" id="se-tp">'+Object.keys(TIPOS).map(function(k){ return '<option value="'+k+'"'+(k===x.tipo?' selected':'')+'>'+TIPOS[k]+'</option>'; }).join('')+'</select></label><label class="cp">Pessoas por compra<input class="inp" id="se-ps" inputmode="numeric" value="'+esc(x.pessoas||1)+'"></label></div>'+
     '<div class="g3" style="margin-top:8px"><label class="cp">Quantidade à venda<input class="inp" id="se-qt" inputmode="numeric" value="'+esc(x.qtd||'')+'" placeholder="300"></label><label class="cp">Consumação inclusa (R$)<input class="inp" id="se-cs" inputmode="decimal" value="'+(x.consumacao?String(x.consumacao).replace('.',','):'')+'" placeholder="0,00"></label><label class="cp">O que mais inclui<input class="inp" id="se-in" maxlength="160" value="'+esc(x.inclui)+'" placeholder="1 garrafa · pulseira VIP"></label></div>'+
     '<label class="chk" style="margin-top:10px"><input type="checkbox" id="se-me"'+(x.meia?' checked':'')+'> Aceita meia-entrada: metade do preço, até 40% do setor, documento conferido na entrada</label><p class="info" style="margin:6px 0 0">Mesa e camarote: cada pessoa recebe um ingresso, e a consumação vira crédito na comanda do titular.</p>'+
+    (function(){ var ar=(D.mesas||{})[s.area]||[], sel=x.mesas||[]; if(!s.area) return '<p class="info" style="margin:10px 0 0">Para vender mesa ou camarote escolhendo no 3D, ligue este salão a uma área do mapa (Editar salão).</p>'; if(!ar.length) return '<p class="info" style="margin:10px 0 0">A área do mapa deste salão ainda não tem mesas.</p>';
+      return '<div style="margin-top:12px;font-weight:800;font-size:14px">Mesas do mapa (para escolher no 3D)</div><p class="info" style="margin:2px 0 6px">Marque as mesas que este setor vende. Sem nenhuma marcada, vende por quantidade.</p><div class="mesas">'+ar.map(function(m){ return '<label class="chk"><input type="checkbox" class="se-ms" value="'+m.n+'"'+(sel.indexOf(m.n)>=0?' checked':'')+'> '+m.n+(m.lug?'<small> · '+m.lug+' lug.</small>':'')+'</label>'; }).join('')+'</div>'; })()+
     '<div style="margin-top:12px;font-weight:800;font-size:14px">Lotes de preço</div><p class="info" style="margin:2px 0 0">O lote vira o próximo na data ou ao vender a quantidade, o que vier primeiro.</p><div id="se-lts">'+(x.lotes.length?x.lotes:[{}]).map(loteLinha).join('')+'</div><button class="btn sm" style="margin-top:8px" onclick="el(\'se-lts\').insertAdjacentHTML(\'beforeend\',loteLinha({nome:\'Lote \'+(document.querySelectorAll(\'.lote\').length+1)}))">+ Lote</button>'+
     '<div class="erro" id="se-er"></div><div style="display:flex;gap:8px;justify-content:space-between">'+(id?'<button class="btn er" onclick="apagaSetor(\''+esc(id)+'\')">Excluir</button>':'<span></span>')+'<span><button class="btn" onclick="fecha()">Cancelar</button> <button class="btn pri" onclick="salvaSetor(\''+esc(sid)+'\',\''+(id||'')+'\')">Salvar</button></span></div>');
 }
 function salvaSetor(sid,id){
   var lotes=[].map.call(document.querySelectorAll('.lote'),function(l){ return {nome:l.querySelector('.lt-n').value,preco:l.querySelector('.lt-p').value,ate:l.querySelector('.lt-d').value,qtd:l.querySelector('.lt-q').value}; });
-  api('/painel/fest-setor',{id:id||undefined,salao:sid,nome:el('se-nm').value,tipo:el('se-tp').value,pessoas:el('se-ps').value,qtd:el('se-qt').value,consumacao:el('se-cs').value,inclui:el('se-in').value,meia:el('se-me').checked?1:0,lotes:lotes}).then(function(d){ if(!d.ok){ el('se-er').textContent=d.mensagem||'Não consegui salvar.'; return; } fecha(); carrega(EV.id); });
+  api('/painel/fest-setor',{id:id||undefined,salao:sid,nome:el('se-nm').value,tipo:el('se-tp').value,pessoas:el('se-ps').value,qtd:el('se-qt').value,consumacao:el('se-cs').value,inclui:el('se-in').value,meia:el('se-me').checked?1:0,lotes:lotes,mesas:[].map.call(document.querySelectorAll('.se-ms:checked'),function(c){ return +c.value; })}).then(function(d){ if(!d.ok){ el('se-er').textContent=d.mensagem||'Não consegui salvar.'; return; } fecha(); carrega(EV.id); });
 }
 function apagaSetor(id){ api('/painel/fest-setor-apagar',{id:id}).then(function(d){ if(!d.ok){ el('se-er').textContent=d.mensagem||'Não consegui excluir.'; return; } fecha(); toast(d.oculto?'Setor escondido (já tinha vendas)':'Setor excluído'); carrega(EV.id); }); }
 /* (182) cupons: o desconto sai da parte da casa */
