@@ -353,7 +353,11 @@ button{font:inherit;color:inherit;cursor:pointer}
   function sincroniza(){
     if(!EV||sincronizando) return; sincronizando=true;
     var lote=FILA.slice(0,50);
-    (lote.length?api('/painel/lf-entrada',{ev:EV.id,itens:lote}).then(function(d){ if(d&&d.ok){ FILA=FILA.slice(lote.length); salvaFila(); } }):Promise.resolve()).then(function(){ return api('/painel/lf-entradas?ev='+encodeURIComponent(EV.id)); }).then(function(d){ if(d&&d.ok) (d.entradas||[]).forEach(function(x){ ENT[x.id]={t:x.t,metodo:x.metodo}; }); rede(true); }).catch(function(){ rede(false); }).then(function(){ sincronizando=false; });
+    (lote.length?api('/painel/lf-entrada',{ev:EV.id,itens:lote}).then(function(d){ if(d&&d.ok){ FILA=FILA.slice(lote.length); salvaFila(); } }):Promise.resolve()).then(function(){ return api('/painel/lf-entradas?ev='+encodeURIComponent(EV.id)); }).then(function(d){ if(d&&d.ok) (d.entradas||[]).forEach(function(x){
+      /* (176) quem saiu pode entrar de novo: o tablet esquece a entrada antiga, menos a que ainda está na fila para enviar */
+      if(x.saiu&&x.saiu>=x.t){ if(!FILA.some(function(f){ return f.id===x.id&&f.t>x.saiu; })) delete ENT[x.id]; }
+      else ENT[x.id]={t:x.t,metodo:x.metodo};
+    }); rede(true); }).catch(function(){ rede(false); }).then(function(){ sincronizando=false; });
   }
   setInterval(sincroniza,10000);
   setInterval(function(){ if(rodando&&!$('over').innerHTML) atualizaLista(); },120000);
