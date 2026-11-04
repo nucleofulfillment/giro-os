@@ -233,7 +233,8 @@ td{padding:11px 12px;border-top:1px solid var(--border);font-size:13px}
         <div><label>Nome ou atividade</label><input id="f-q" placeholder="ex.: pizza" onkeydown="if(event.key==='Enter')carregaBase()"></div>
         <div><label>De onde veio</label><select id="f-lote"><option value="">Tudo</option></select></div>
         <div><label>Telefone</label><select id="f-cel"><option value="">Celular e fixo</option><option value="1">Só celular</option></select></div>
-        <div><label>Cardápio</label><select id="f-prep"><option value="">Todos</option><option value="pronto">Com cardápio pronto</option><option value="sem">Sem cardápio</option></select></div>
+        <div><label>Onde está o cardápio</label><select id="f-card"><option value="">Todos</option><option value="online">🍽 Cardápio online (dá para montar)</option><option value="montavel">Online ou site a verificar</option><option value="insta">📷 Só Instagram</option><option value="site">🌐 Site a verificar</option><option value="sem">Sem site</option></select></div>
+        <div><label>Cardápio montado</label><select id="f-prep"><option value="">Todos</option><option value="pronto">Já montado</option><option value="sem">Ainda não montado</option></select></div>
         <div><label>Mostrar</label><select id="f-so"><option value="novos">Só os que podem ser chamados</option><option value="">Todos</option></select></div>
         <div><label>Quantos</label><select id="f-lim"><option>100</option><option selected>300</option><option>1000</option></select></div>
       </div>
@@ -250,6 +251,7 @@ td{padding:11px 12px;border-top:1px solid var(--border);font-size:13px}
         <div class="barra-sel" id="barra" hidden>
           <b><span id="sel-n">0</span> selecionados</b><span style="opacity:.75;font-size:12.5px" id="sel-custo"></span>
           <span class="esp"></span>
+          <button class="btn peq" onclick="verificarSel()">🌐 Verificar sites</button>
           <button class="btn peq" onclick="prepararSel()">🍽 Preparar cardápios</button>
           <button class="btn peq pri" onclick="aba('mensagem')">Revisar mensagem →</button>
         </div>
@@ -522,7 +524,7 @@ function carregaFiltros(lote){chamar('GET','/admin/mkt/filtros').then(function(d
   var c=$('f-cidade').value;$('f-cidade').innerHTML='<option value="">Todas</option>'+(d.cidades||[]).map(function(l){return '<option value="'+esc(l.cidade)+'">'+esc(l.cidade)+' ('+l.n+')</option>'}).join('');$('f-cidade').value=c;
   var t=$('f-tipo').value;$('f-tipo').innerHTML='<option value="">Todos</option>'+(d.tipos||[]).map(function(l){return '<option value="'+esc(l.tipo)+'">'+esc(l.tipo)+' ('+l.n+')</option>'}).join('');$('f-tipo').value=t})}
 function carregaBase(fixar){var p=new URLSearchParams(),lo=$('f-lote').value;if(lo)p.set('lote',lo);
-  [['cidade','f-cidade'],['tipo','f-tipo'],['bairro','f-bairro'],['q','f-q'],['so','f-so'],['celular','f-cel'],['prep','f-prep']].forEach(function(k){var v=$(k[1]).value.trim();if(v)p.set(k[0],v)});p.set('limite',$('f-lim').value);
+  [['cidade','f-cidade'],['tipo','f-tipo'],['bairro','f-bairro'],['q','f-q'],['so','f-so'],['celular','f-cel'],['prep','f-prep'],['card','f-card']].forEach(function(k){var v=$(k[1]).value.trim();if(v)p.set(k[0],v)});p.set('limite',$('f-lim').value);
   return chamar('GET','/admin/mkt/lista?'+p.toString()).then(function(d){if(!d.ok){toast(d.mensagem||d.erro||'Erro',1);return}
     res=d.itens;sel=new Set();if(fixar)res.forEach(function(r){if(r.id===fixar&&podeSel(r))sel.add(r.id)});
     var temGeo=res.some(function(r){return r.lat!=null});mostraMapa(temGeo);setTimeout(function(){desenhaPinos(true)},80);
@@ -530,9 +532,23 @@ function carregaBase(fixar){var p=new URLSearchParams(),lo=$('f-lote').value;if(
 
 /* ── CARDÁPIO PRONTO (conta de prévia montada pela IA) ── */
 var PARAR_PREP=false, LK_ID='';
+/* onde está o cardápio (mesma regra do servidor): pelo endereço do site e pela verificação */
+var PLATS=['ifood.com','goomer','anota.ai','cardapioweb','menudino','aiqfome','olaclick','saipos','linktr.ee','beacons.ai','linkbio','bio.link','cardapio','menu.','/menu','delivery','pedir','whatsmenu','instadelivery','consumer.','neemo','deliverydireto','app.cardapio'];
+function classe(r){var s=String(r.site||'').toLowerCase();if(r.card_status==='ok')return 'online';if(!s)return 'sem';if(/instagram\.com|facebook\.com|fb\.com/.test(s))return 'insta';if(PLATS.some(function(p){return s.indexOf(p)>=0}))return 'online';if(r.card_status==='nao')return 'nao';return 'site'}
+function ondeCard(r){var c=classe(r);
+  if(c==='online')return '<span class="tg ok" title="'+esc(r.card_url||r.site)+'">🍽 Cardápio online</span> <span class="sub2" style="font-size:12px">dá para montar</span>';
+  if(c==='insta')return '<span class="tg cl">📷 Só Instagram</span> <a href="'+esc(r.site)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:var(--roxo);font-weight:800;font-size:12px">abrir</a> <a href="#" onclick="event.stopPropagation();abreLink(\''+esc(r.id)+'\');return false" style="color:var(--roxo);font-weight:800;font-size:12px">colar link da bio</a>';
+  if(c==='site')return '<span class="tg cz">🌐 Site a verificar</span>';
+  if(c==='nao')return '<span class="tg cz">🌐 Site sem cardápio</span> <a href="#" onclick="event.stopPropagation();abreLink(\''+esc(r.id)+'\');return false" style="color:var(--roxo);font-weight:800;font-size:12px">colar link</a>';
+  return '<span class="tg no" style="opacity:.8">Sem site</span>'}
+function verificarSel(){var ids=Array.from(sel).filter(function(id){var r=res.find(function(x){return x.id===id});return r&&classe(r)==='site'});
+  if(!ids.length){toast('Nenhum marcado com "Site a verificar"',1);return}toast('Verificando '+ids.length+' site'+(ids.length>1?'s':'')+'...');
+  var i=0;(function prox(){if(i>=ids.length){desenhaLista();toast('Sites verificados');return}var lote=ids.slice(i,i+4);i+=4;
+    chamar('POST','/admin/mkt/verificar',{ids:lote}).then(function(d){(d.itens||[]).forEach(function(v){var r=res.find(function(x){return x.id===v.id});if(r){r.card_status=v.card_status;r.card_url=v.card_url}});desenhaLista();prox()}).catch(function(){desenhaLista()})})()}
 function prepLinha(r){var x='';
   if(r.prep==='pronto')x='<span class="tg ok">🍽 Cardápio pronto · '+(r.prep_n||0)+' itens</span> <a href="https://livefood.tec.br/'+esc(r.slug_demo)+'/mesa/1" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:var(--roxo);font-weight:800;font-size:12px">ver</a> <a href="#" onclick="event.stopPropagation();abreLink(\''+esc(r.id)+'\');return false" style="color:var(--muted2);font-weight:700;font-size:12px">refazer</a> <a href="#" onclick="event.stopPropagation();apagaDemo(\''+esc(r.id)+'\');return false" style="color:var(--muted2);font-weight:700;font-size:12px">apagar</a>'+(r.abriu_em?' <span class="tg cl">👀 abriu '+(r.aberturas||1)+'x</span>':'');
   else if(r.prep==='erro')x='<span style="color:#B91C1C;font-size:12px;font-weight:700">'+esc(r.prep_msg||'Não deu para montar')+'</span> <a href="#" onclick="event.stopPropagation();abreLink(\''+esc(r.id)+'\');return false" style="color:var(--roxo);font-weight:800;font-size:12px">colar link</a>';
+  else x=ondeCard(r);
   return x?'<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">'+x+'</div>':''}
 function prepUm(id,url){return chamar('POST','/admin/mkt/preparar',{id:id,url:url||''}).then(function(d){var r=res.find(function(x){return x.id===id});
   if(r){if(d.ok){r.prep='pronto';r.prep_n=d.itens;r.slug_demo=d.slug;r.prep_msg=''}else{r.prep='erro';r.prep_msg=d.mensagem||d.erro}}return d})}
