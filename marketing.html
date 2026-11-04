@@ -176,6 +176,7 @@ td{padding:11px 12px;border-top:1px solid var(--border);font-size:13px}
 <main>
   <div class="cab">
     <div><h1>Marketing</h1><div class="sub">encontrar estabelecimentos, chamar no WhatsApp e oferecer 7 dias de teste</div></div>
+    <div class="dir" style="margin-left:auto"><button class="btn pri" onclick="abreCad()">+ Cadastrar estabelecimento</button></div>
   </div>
   <div class="status" id="status"><span>Conferindo conexões...</span></div>
 
@@ -317,6 +318,21 @@ td{padding:11px 12px;border-top:1px solid var(--border);font-size:13px}
   <label style="margin-top:12px">Seu WhatsApp</label><input id="t-fone" placeholder="(47) 9 0000-0000" inputmode="tel">
   <div class="res-env" id="t-res"></div>
   <div class="modal acoes" style="padding:0;box-shadow:none"><button class="btn" onclick="fecha('m-teste')">Fechar</button><button class="btn pri" id="t-btn" onclick="enviarTeste()">Enviar teste</button></div>
+</div></div>
+
+<div class="fundo" id="m-cad"><div class="modal">
+  <h3>Cadastrar estabelecimento</h3>
+  <p class="sub2">Entra na base como qualquer outro e já fica marcado na lista para enviar a mensagem.</p>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
+    <div style="grid-column:1/-1"><label>Nome do estabelecimento *</label><input id="c-nome" placeholder="ex.: Cantina Bella"></div>
+    <div><label>Celular (WhatsApp) *</label><input id="c-fone" placeholder="(47) 9 9999-9999" inputmode="tel"></div>
+    <div><label>Tipo</label><select id="c-tipo"><option>Restaurante</option><option>Bar</option><option>Casa noturna</option><option>Lanchonete</option><option>Pizzaria</option><option>Padaria</option><option>Marmitaria / delivery</option><option>Mercado</option><option>Farmácia</option><option>Eventos</option><option>Outro</option></select></div>
+    <div><label>Cidade</label><input id="c-cidade" placeholder="Itajaí"></div>
+    <div><label>Bairro</label><input id="c-bairro" placeholder="Praia Brava"></div>
+    <div style="grid-column:1/-1"><label>E-mail</label><input id="c-email" type="email" placeholder="opcional"></div>
+  </div>
+  <div class="res-env" id="c-res"></div>
+  <div class="acoes"><button class="btn" onclick="fecha('m-cad')">Cancelar</button><button class="btn pri" id="c-btn" onclick="salvaCad()">Cadastrar</button></div>
 </div></div>
 
 <div class="fundo" id="m-envio"><div class="modal">
@@ -465,6 +481,21 @@ function carregaBase(){var lo=$('f-lote').value,p=new URLSearchParams();if(lo===
     res=d.itens;sel=new Set();var temGeo=res.some(function(r){return r.lat!=null});mostraMapa(temGeo);camada.clearLayers();PINOS={};
     if(temGeo){var b=[];res.forEach(function(r){if(r.lat==null)return;b.push([r.lat,r.lng]);var m=L.marker([r.lat,r.lng],{icon:L.divIcon({className:'',html:'<div class="pin"></div>',iconSize:[16,16]})}).addTo(camada);m.bindTooltip(r.nome);m.on('click',function(){alterna(r.id)});PINOS[r.id]=m});if(b.length)mapa.fitBounds(b,{padding:[20,20]})}
     $('f-total').textContent=d.total+' com esse filtro'+(d.total>res.length?' · mostrando '+res.length:'');aba('buscar');desenhaLista();toast(res.length+' carregados na lista')})}
+/* ── cadastro manual: usa a mesma rota da planilha, com 1 linha ── */
+function abreCad(){['c-nome','c-fone','c-cidade','c-bairro','c-email'].forEach(function(i){$(i).value=''});$('c-res').innerHTML='';abre('m-cad');setTimeout(function(){$('c-nome').focus()},50)}
+function salvaCad(){var nome=$('c-nome').value.trim(),fone=$('c-fone').value.replace(/\D/g,'').replace(/^55(?=\d{11}$)/,'');
+  if(!nome){$('c-res').innerHTML='<div class="aviso" style="margin:0">Informe o nome.</div>';return}
+  if(!(fone.length===11&&fone[2]==='9')){$('c-res').innerHTML='<div class="aviso" style="margin:0">Informe um celular com DDD, ex.: (47) 9 9999-9999.</div>';return}
+  var b=$('c-btn');b.disabled=true;b.textContent='Cadastrando...';
+  chamar('POST','/admin/mkt/importar',{lote:'Cadastro manual',itens:[{nome:nome,fone:fone,tipo:$('c-tipo').value,cidade:$('c-cidade').value.trim(),bairro:$('c-bairro').value.trim(),email:$('c-email').value.trim().toLowerCase()}]}).then(function(d){
+    b.disabled=false;b.textContent='Cadastrar';
+    if(!d.ok){$('c-res').innerHTML='<div class="aviso" style="margin:0">'+esc(d.mensagem||d.erro||'Não foi')+'</div>';return}
+    if(d.telefone_repetido){$('c-res').innerHTML='<div class="aviso" style="margin:0">Esse celular já está cadastrado em outro estabelecimento. Procure por ele em Planilha e base.</div>';return}
+    chamar('GET','/admin/mkt/lista?lote='+encodeURIComponent('Cadastro manual')+'&limite=300').then(function(l){
+      res=l.itens||[];var novo=res.find(function(r){return r.id==='tel:'+fone});sel=new Set();
+      if(novo&&novo.etapa!=='novo'){toast('Já estava cadastrado e já foi contatado',1)}else if(novo&&novo.cliente){toast('Cadastrado, mas o nome parece de um cliente do LiveFood',1)}else if(novo){sel.add(novo.id)}
+      mostraMapa(false);fecha('m-cad');aba('buscar');desenhaLista();carregaStatus();if(novo&&sel.size)toast('Cadastrado e marcado. Agora é só ir em Mensagem.')})})
+  .catch(function(){b.disabled=false;b.textContent='Cadastrar';$('c-res').innerHTML='<div class="aviso" style="margin:0">Sem conexão.</div>'})}
 iniciaMapa();carregaStatus();previa();
 </script>
 </body>
