@@ -157,6 +157,19 @@ td{padding:11px 12px;border-top:1px solid var(--border);font-size:13px}
 /* mapa no mesmo estilo do Mapeamento do painel: MapLibre + OpenFreeMap "liberty" com as cores do LiveFood, botão 3D e alfinete gota */
 .mp-wrap{position:relative;border-radius:14px;overflow:hidden;border:1px solid var(--border2);background:var(--s3)}
 #mapa-real{height:460px;width:100%}
+/* tela cheia: mapa ocupa a tela e a lista fica num painel à direita */
+#duo.cheio{position:fixed;inset:0;z-index:60;margin:0;gap:0;grid-template-columns:minmax(0,1fr) 420px!important;background:var(--bg)}
+#duo.cheio>.card{margin:0;border-radius:0;border:0;box-shadow:none}
+#duo.cheio #mapa-card{padding:0!important}#duo.cheio .mp-wrap{border-radius:0;border:0;height:100vh}#duo.cheio #mapa-real{height:100vh}
+#duo.cheio>.card:last-child{height:100vh;overflow:hidden;display:flex;flex-direction:column;border-left:1px solid var(--border2);padding:14px 14px 10px}
+#duo.cheio>.card:last-child .lista{max-height:none;flex:1;min-height:0}
+#duo.cheio>.card:last-child h3 .dir{margin-left:0;width:100%}
+#duo.cheio #r-busca{flex:1;width:auto!important}
+#duo.cheio .barra-sel{position:static;margin-top:10px;padding:10px}
+#duo.cheio .barra-sel .btn{font-size:11.5px;padding:6px 9px}
+.fundo{z-index:80!important}#toast{z-index:90!important}
+#duo.cheio .mp-cheio-btn{background:var(--grad);color:#fff;border-color:transparent}
+@media(max-width:800px){#duo.cheio{grid-template-columns:1fr!important;grid-template-rows:55vh 45vh}#duo.cheio .mp-wrap,#duo.cheio #mapa-real{height:55vh}#duo.cheio>.card:last-child{height:45vh;border-left:0;border-top:1px solid var(--border2)}}
 .mp-3d-btn{position:absolute;top:10px;left:10px;z-index:5;width:38px;height:38px;border-radius:10px;border:1px solid var(--border2);background:#fff;font-size:12px;font-weight:800;color:#111;cursor:pointer;box-shadow:0 2px 6px rgba(22,22,26,.25)}
 .mp-3d-btn.on{background:var(--grad);color:#fff;border-color:transparent}
 .mp-leg{position:absolute;left:10px;bottom:10px;z-index:5;background:#fff;border-radius:10px;padding:6px 10px;font-size:11.5px;font-weight:700;color:var(--muted2);box-shadow:0 2px 8px rgba(22,22,26,.2);display:flex;gap:10px;flex-wrap:wrap}
@@ -241,7 +254,7 @@ td{padding:11px 12px;border-top:1px solid var(--border);font-size:13px}
       <div style="margin-top:14px"><button class="btn pri" onclick="carregaBase()">Filtrar</button></div>
     </div>
     <div class="duo" id="duo">
-      <div class="card" style="padding:12px" id="mapa-card"><div class="mp-wrap"><div id="mapa-real"></div><button class="mp-3d-btn" onclick="tres(mapa,this)" title="Visão inclinada (3D) / de cima">3D</button>
+      <div class="card" style="padding:12px" id="mapa-card"><div class="mp-wrap"><div id="mapa-real"></div><button class="mp-3d-btn" onclick="tres(mapa,this)" title="Visão inclinada (3D) / de cima">3D</button><button class="mp-3d-btn mp-cheio-btn" id="b-cheio" onclick="telaCheia()" title="Mapa em tela cheia" style="top:56px;font-size:17px">⛶</button>
         <div class="mp-leg"><span><i style="background:#FF5A00"></i>celular</span><span><i style="background:#F59E0B"></i>fixo</span><span><i style="background:#1C1C1E"></i>marcado</span><span><i style="background:#B8B8BE"></i>contatado</span></div></div></div>
       <div class="card">
         <h3>Estabelecimentos <span class="sub2" id="r-resumo">use o filtro acima</span>
@@ -529,6 +542,11 @@ function carregaBase(fixar){var p=new URLSearchParams(),lo=$('f-lote').value;if(
     res=d.itens;sel=new Set();if(fixar)res.forEach(function(r){if(r.id===fixar&&podeSel(r))sel.add(r.id)});
     var temGeo=res.some(function(r){return r.lat!=null});mostraMapa(temGeo);setTimeout(function(){desenhaPinos(true)},80);
     $('f-total').textContent=d.total+' com esse filtro'+(d.total>res.length?' · mostrando '+res.length:'');desenhaLista()})}
+
+/* mapa em tela cheia (Esc sai) */
+function telaCheia(){var d=$('duo'),on=!d.classList.contains('cheio');d.classList.toggle('cheio',on);$('b-cheio').textContent=on?'✕':'⛶';$('b-cheio').title=on?'Sair da tela cheia':'Mapa em tela cheia';
+  document.body.style.overflow=on?'hidden':'';if(on&&$('mapa-card').hidden)mostraMapa(true);setTimeout(function(){if(mapa){mapa.resize();espalhar()}},80)}
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&$('duo').classList.contains('cheio')&&!document.querySelector('.fundo.on'))telaCheia()});
 
 /* ── CARDÁPIO PRONTO (conta de prévia montada pela IA) ── */
 var PARAR_PREP=false, LK_ID='';
