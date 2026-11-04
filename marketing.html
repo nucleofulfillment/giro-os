@@ -239,6 +239,7 @@ td{padding:11px 12px;border-top:1px solid var(--border);font-size:13px}
     <button class="aba" data-a="funil" onclick="aba('funil')">Funil<span class="n" id="n-funil">0</span></button>
     <button class="aba" data-a="conversas" onclick="aba('conversas')">Conversas<span class="n" id="n-conv">0</span></button>
     <button class="aba" data-a="campanhas" onclick="aba('campanhas')">Histórico</button>
+    <button class="aba" onclick="abreVideos()">🎬 Vídeos</button>
   </div>
 
   <!-- BASE: filtrar, marcar e seguir para a mensagem -->
@@ -418,6 +419,18 @@ td{padding:11px 12px;border-top:1px solid var(--border);font-size:13px}
   <p class="sub2">Para cada estabelecimento: acha o cardápio no site, a IA lê e monta uma conta de prévia (15 dias, sem cobrança) com o link da mesa 1. Leva de 30 s a 2 min por estabelecimento.</p>
   <div id="pp-lista" style="max-height:52vh;overflow:auto;margin-top:10px"></div>
   <div class="acoes"><button class="btn" id="pp-parar" onclick="PARAR_PREP=true">Parar</button><button class="btn pri" onclick="fecha('m-prep');carregaBase()">Fechar</button></div>
+</div></div>
+
+<div class="fundo" id="m-videos"><div class="modal" style="max-width:560px">
+  <h3>Vídeos por categoria</h3>
+  <p class="sub2">O vídeo da categoria entra como abertura do cardápio em toda prévia daquela linha (sushi, pizzaria...).</p>
+  <label style="margin-top:12px">Categoria</label><select id="vd-lin" onchange="mostraVideo()"></select>
+  <div id="vd-atual" style="margin-top:12px"></div>
+  <label style="margin-top:12px">Texto do botão no vídeo</label><input id="vd-bot" maxlength="30" placeholder="Ver o cardápio">
+  <label style="margin-top:12px">Vídeo (MP4, até 90 MB · vertical 9:16)</label><input type="file" id="vd-arq" accept="video/mp4,video/webm,video/quicktime" style="background:#fff">
+  <div class="limite" id="vd-prog" hidden style="margin-top:12px"><span id="vd-prog-t">0%</span><div class="bar"><i id="vd-prog-b" style="width:0%"></i></div></div>
+  <div class="res-env" id="vd-res"></div>
+  <div class="acoes"><button class="btn" onclick="fecha('m-videos')">Fechar</button><button class="btn" id="vd-apl" onclick="aplicarVideo()">Aplicar nas prévias existentes</button><button class="btn pri" id="vd-btn" onclick="enviarVideo()">Enviar vídeo</button></div>
 </div></div>
 
 <div class="fundo" id="m-ativar"><div class="modal">
@@ -602,6 +615,26 @@ function verificarSel(){var ids=Array.from(sel).filter(function(id){var r=res.fi
     chamar('POST','/admin/mkt/verificar',{ids:lote}).then(function(d){(d.itens||[]).forEach(function(v){var r=res.find(function(x){return x.id===v.id});if(r){r.card_status=v.card_status;r.card_url=v.card_url}});desenhaLista();prox()}).catch(function(){desenhaLista()})})()}
 /* logo da prévia: automática (conferir), subida à mão, ou sem logo */
 var LOGO_V=Date.now();
+/* ── VÍDEOS POR CATEGORIA ── */
+var VIDS=[];
+function abreVideos(manter){if(!manter)$('vd-res').innerHTML='';$('vd-prog').hidden=true;$('vd-arq').value='';abre('m-videos');chamar('GET','/admin/mkt/videos').then(function(d){VIDS=d.itens||[];var v=$('vd-lin').value;
+  $('vd-lin').innerHTML=VIDS.map(function(x){return '<option value="'+x.linha+'">'+esc(x.nome)+(x.video?' · ✓ tem vídeo':' · sem vídeo')+'</option>'}).join('');if(v)$('vd-lin').value=v;mostraVideo()})}
+function mostraVideo(){var x=VIDS.find(function(y){return y.linha===$('vd-lin').value});if(!x)return;$('vd-bot').value=(x.video&&x.video.botao)||'Ver o cardápio';
+  $('vd-atual').innerHTML=x.video?'<video src="'+esc(x.video.url)+'" controls muted playsinline style="width:100%;max-height:300px;border-radius:12px;background:#000"></video><div class="sub2" style="margin-top:6px">'+(Math.round((x.video.tam||0)/104857.6)/10)+' MB · enviado em '+new Date(x.video.t).toLocaleDateString('pt-BR')+' · <a href="#" onclick="tirarVideo();return false" style="color:#B91C1C;font-weight:800">tirar vídeo</a></div>':'<div class="info" style="margin:0">Esta categoria ainda não tem vídeo.</div>';
+  $('vd-apl').disabled=!x.video}
+function enviarVideo(){var f=$('vd-arq').files[0],ln=$('vd-lin').value;if(!f){$('vd-res').innerHTML='<div class="aviso" style="margin:0">Escolha o arquivo do vídeo.</div>';return}
+  if(f.size>94000000){$('vd-res').innerHTML='<div class="aviso" style="margin:0">Vídeo grande demais (máximo 90 MB).</div>';return}
+  var dur=0,tmp=document.createElement('video');tmp.preload='metadata';tmp.src=URL.createObjectURL(f);tmp.onloadedmetadata=function(){dur=tmp.duration||0;manda()};tmp.onerror=manda;
+  function manda(){var b=$('vd-btn');b.disabled=true;b.textContent='Enviando...';$('vd-prog').hidden=false;$('vd-res').innerHTML='';ocupa(1);
+    var x=new XMLHttpRequest();x.open('POST',API+'/admin/mkt/video?linha='+encodeURIComponent(ln)+'&botao='+encodeURIComponent($('vd-bot').value.trim())+'&dur='+Math.round(dur*10)/10);
+    x.setRequestHeader('Authorization','Bearer '+TOKEN);x.setRequestHeader('Content-Type',f.type||'video/mp4');
+    x.upload.onprogress=function(e){if(e.lengthComputable){var p=Math.round(e.loaded/e.total*100);$('vd-prog-t').textContent=p+'%';$('vd-prog-b').style.width=p+'%'}};
+    x.onload=function(){ocupa(-1);b.disabled=false;b.textContent='Enviar vídeo';var d={};try{d=JSON.parse(x.responseText)}catch(e){}
+      if(x.status===200&&d.ok){$('vd-res').innerHTML='<div class="info" style="margin:0">✓ Vídeo salvo. As próximas prévias desta categoria já saem com ele. Para as que já existem, toque em <b>Aplicar nas prévias existentes</b>.</div>';$('vd-arq').value='';abreVideos(1)}
+      else $('vd-res').innerHTML='<div class="aviso" style="margin:0">'+esc(d.mensagem||('Não enviou (HTTP '+x.status+')'))+'</div>'};
+    x.onerror=function(){ocupa(-1);b.disabled=false;b.textContent='Enviar vídeo';$('vd-res').innerHTML='<div class="aviso" style="margin:0">Sem conexão.</div>'};x.send(f)}}
+function aplicarVideo(){var ln=$('vd-lin').value;chamar('POST','/admin/mkt/video-aplicar',{linha:ln}).then(function(d){$('vd-res').innerHTML='<div class="info" style="margin:0">✓ Aplicado em '+(d.aplicados||0)+' prévia'+(d.aplicados===1?'':'s')+' desta categoria.</div>'})}
+function tirarVideo(){var ln=$('vd-lin').value;chamar('POST','/admin/mkt/video-tirar',{linha:ln}).then(function(){toast('Vídeo tirado');abreVideos()})}
 /* possível duplicado, ativar conta, planilha no mapa */
 function dupLinha(r){if(!r.dup_talvez)return '';var id=esc(r.id);return '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;width:100%;margin-top:4px"><span class="tg am">⚠ possível duplicado de '+esc(r.dup_nome||'outro cadastro')+'</span> <a href="#" onclick="event.stopPropagation();resolveDup(\''+id+'\',\'juntar\');return false" style="color:var(--roxo);font-weight:800;font-size:12px">é o mesmo, juntar</a> <a href="#" onclick="event.stopPropagation();resolveDup(\''+id+'\',\'separar\');return false" style="color:var(--muted2);font-weight:700;font-size:12px">são diferentes</a></div>'}
 function resolveDup(id,acao){chamar('POST','/admin/mkt/dup',{id:id,acao:acao}).then(function(){if(acao==='juntar')res=res.filter(function(x){return x.id!==id});else{var r=res.find(function(x){return x.id===id});if(r)r.dup_talvez=null}desenhaLista();desenhaPinos(false);toast(acao==='juntar'?'Juntado: fica o cadastro do Google':'Marcado como lugares diferentes')})}
