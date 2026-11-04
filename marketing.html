@@ -231,7 +231,7 @@ td{padding:11px 12px;border-top:1px solid var(--border);font-size:13px}
     <button class="aba" data-a="importar" onclick="aba('importar')">Importar planilha</button>
     <button class="aba" data-a="mensagem" onclick="aba('mensagem')">Mensagem</button>
     <button class="aba" data-a="funil" onclick="aba('funil')">Funil<span class="n" id="n-funil">0</span></button>
-    <button class="aba" data-a="conversas" onclick="aba('conversas')">Conversas</button>
+    <button class="aba" data-a="conversas" onclick="aba('conversas')">Conversas<span class="n" id="n-conv">0</span></button>
     <button class="aba" data-a="campanhas" onclick="aba('campanhas')">Histórico</button>
   </div>
 
@@ -365,8 +365,15 @@ td{padding:11px 12px;border-top:1px solid var(--border);font-size:13px}
   </section>
 
   <section id="s-conversas" hidden>
-    <div class="card"><h3>Conversas</h3>
-      <div class="info" style="margin:0">Próxima etapa: as respostas chegam aqui, a IA conversa e oferece o teste, e você pode assumir a conversa. Por enquanto as respostas chegam no WhatsApp do número que enviou.</div></div>
+    <div class="conv-grid">
+      <div class="card" style="margin:0;padding:12px"><h3 style="margin:4px 4px 10px;font-size:15px">Conversas <span class="sub2" id="cv-n"></span><span class="dir"><button class="btn peq" onclick="carregaConversas()">↻</button></span></h3><div class="cv-lista" id="cv-lista"><div class="sub2">Carregando...</div></div></div>
+      <div class="chat">
+        <div id="ch-topo" style="background:#075E54;color:#fff;padding:12px 14px;display:flex;gap:10px;align-items:center;min-height:56px"><span style="opacity:.8">Escolha uma conversa</span></div>
+        <div class="conv" id="ch-conv"></div>
+        <div class="rodape"><input id="ch-txt" placeholder="Escrever como você (a IA pausa nesta conversa)" onkeydown="if(event.key==='Enter')responder()"><button class="btn peq" style="background:#25D366;color:#fff;border:0" onclick="responder()">Enviar</button></div>
+      </div>
+      <div class="card ficha" style="margin:0" id="ficha"><div class="sub2">A IA responde sozinha as dúvidas e marca a apresentação. Quando alguém pede uma pessoa ou marca a visita, chega um e-mail para você.</div></div>
+    </div>
   </section>
 
   <section id="s-campanhas" hidden>
@@ -441,7 +448,7 @@ var ABAS=['base','buscar','importar','mensagem','funil','conversas','campanhas']
 function aba(a){document.querySelectorAll('.aba').forEach(function(b){b.classList.toggle('on',b.dataset.a===a)});ABAS.forEach(function(s){$('s-'+s).hidden=s!==a});
   if(a==='base'){carregaFiltros();if(mapa)setTimeout(function(){mapa.resize();espalhar()},50)}
   if(a==='buscar'){carregaCidades();if(mapaB)setTimeout(function(){mapaB.resize();mostraCidade()},50)}
-  if(a==='mensagem')previa(); if(a==='funil')carregaFunil(); if(a==='campanhas')carregaBuscas()}
+  if(a==='mensagem')previa(); if(a==='funil')carregaFunil(); if(a==='campanhas')carregaBuscas(); if(a==='conversas')carregaConversas()}
 $('tipos').addEventListener('click',function(e){var c=e.target.closest('.chip');if(c){c.classList.toggle('on');custo()}});
 $('b-max').addEventListener('change',custo);
 function reais(v){return v.toFixed(2).replace('.',',')}
@@ -659,7 +666,26 @@ function enviar(){var b=$('env-btn');b.disabled=true;b.textContent='Enviando...'
     sel.clear();desenhaLista();carregaStatus();toast(ok+' enviada'+(ok!==1?'s':''))}).catch(function(){fecha('m-envio');toast('Sem conexão',1)})}
 
 /* ── FUNIL E HISTÓRICO ── */
-var ETAPAS=[['novo','Na base (voltar)'],['contatado','Contatados'],['respondeu','Responderam'],['teste','Em teste'],['cliente','Viraram clientes'],['perdido','Sem interesse']];
+var ETAPAS=[['novo','Na base (voltar)'],['contatado','Contatados'],['respondeu','Responderam'],['visita','Apresentação marcada'],['teste','Em teste'],['cliente','Viraram clientes'],['perdido','Sem interesse']];
+/* ── CONVERSAS (assistente de vendas) ── */
+var CV_ID='', CV_TIMER=null;
+function hora(t){var d=new Date(t);return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}
+function carregaConversas(){chamar('GET','/admin/mkt/conversas').then(function(d){var L=d.itens||[];$('cv-n').textContent=L.length?L.length+'':'';$('n-conv')&&($('n-conv').textContent=L.length);
+  $('cv-lista').innerHTML=L.map(function(c){var et=(ETAPAS.find(function(e){return e[0]===c.etapa})||[,''])[1];return '<div class="cv '+(c.id===CV_ID?'on':'')+'" onclick="abreConversa(\''+esc(c.id)+'\')"><div class="lin"><b>'+esc(c.nome)+'</b>'+(c.ia_off?'<span class="tg am">Você</span>':'<span class="tg ok">IA</span>')+'</div><p>'+(c.ult_dir==='in'?'💬 ':'')+esc(c.ultima||'')+'</p><div class="lin" style="margin-top:4px"><small class="sub2" style="font-size:11px">'+esc(et)+(c.visita_quando?' · 📅 '+esc(c.visita_quando):'')+'</small><small class="sub2" style="font-size:11px">'+(c.msg_t?hora(c.msg_t):'')+'</small></div></div>'}).join('')||'<div class="sub2" style="padding:8px">Ninguém respondeu ainda. Quando um restaurante escrever (pela mensagem ou pelo botão do cardápio), a conversa aparece aqui.</div>';
+  if(CV_ID)abreConversa(CV_ID,1)})}
+function abreConversa(id,quieto){CV_ID=id;if(!quieto)document.querySelectorAll('.cv').forEach(function(e){e.classList.toggle('on',e.getAttribute('onclick').indexOf(id)>=0)});
+  chamar('GET','/admin/mkt/conversa?id='+encodeURIComponent(id)).then(function(d){if(!d.ok)return;var l=d.lead;
+    $('ch-topo').innerHTML='<div style="width:34px;height:34px;border-radius:50%;background:#fff;color:#075E54;display:flex;align-items:center;justify-content:center;font-weight:800">'+esc((l.nome||'?')[0])+'</div><div><b>'+esc(l.nome)+'</b><small style="display:block;opacity:.75;font-size:11px">'+esc(foneFmt(l.contato_fone||l.fone))+'</small></div>';
+    var ev=(d.envios||[]).map(function(e){return {dir:'env',texto:'Modelo enviado: '+e.modelo+(e.ok?'':' (falhou: '+(e.erro||'')+')'),t:e.t}});
+    var all=ev.concat(d.msgs||[]).sort(function(a,b){return a.t-b.t});
+    $('ch-conv').innerHTML=all.map(function(m){if(m.dir==='env')return '<div class="dia">'+esc(m.texto)+' · '+hora(m.t)+'</div>';return '<div class="bal '+(m.dir==='in'?'ele':'eu')+' '+(m.dir==='ia'?'ia':'')+'">'+(m.dir==='ia'?'<b style="color:var(--grad);font-size:11px">IA do LiveFood</b>\n':m.dir==='out'?'<b style="font-size:11px;color:#075E54">Você</b>\n':'')+esc(m.texto)+'<span class="hr">'+hora(m.t)+'</span></div>'}).join('')||'<div class="dia">Sem mensagens</div>';
+    $('ch-conv').scrollTop=1e6;
+    $('ficha').innerHTML='<div class="ia-on" style="'+(l.ia_off?'background:#FEF3C7;border-color:#FDE68A;color:#92400E':'')+'"><button class="sw '+(l.ia_off?'off':'')+'" onclick="alternaIA(\''+esc(l.id)+'\','+(l.ia_off?1:0)+')"></button>'+(l.ia_off?'Você está respondendo, IA pausada':'A IA está respondendo')+'</div>'+
+      '<h3 style="margin-bottom:10px">'+esc(l.nome)+'</h3><dl><dt>Etapa</dt><dd>'+esc((ETAPAS.find(function(e){return e[0]===l.etapa})||[,l.etapa])[1])+'</dd><dt>Tipo</dt><dd>'+esc(l.tipo||'—')+'</dd><dt>Endereço</dt><dd>'+esc([l.endereco,l.bairro,l.cidade].filter(Boolean).join(', ')||'—')+'</dd><dt>Cardápio</dt><dd>'+(l.slug_demo?'<a href="https://livefood.tec.br/'+esc(l.slug_demo)+'/mesa/1" target="_blank" rel="noopener" style="color:var(--roxo)">'+(l.prep==='amostra'?'amostra':'prévia')+'</a>'+(l.abriu_em?' · abriu':''):'—')+'</dd></dl>'+
+      '<label style="margin-top:14px">Apresentação marcada</label><div style="display:flex;gap:6px"><input id="vq" value="'+esc(l.visita_quando||'')+'" placeholder="ex.: quinta 06/11 às 15h"><button class="btn peq" onclick="salvaVisita(\''+esc(l.id)+'\')">Salvar</button></div>'})}
+function responder(){var t=$('ch-txt').value.trim();if(!t||!CV_ID)return;chamar('POST','/admin/mkt/responder',{id:CV_ID,texto:t}).then(function(d){if(!d.ok){toast(d.mensagem||'Não enviou',1);return}$('ch-txt').value='';abreConversa(CV_ID,1);carregaConversas()})}
+function alternaIA(id,ligar){chamar('POST','/admin/mkt/ia',{id:id,on:!!ligar}).then(function(){abreConversa(id,1);carregaConversas();toast(ligar?'IA ligada nesta conversa':'IA pausada: você responde')})}
+function salvaVisita(id){chamar('POST','/admin/mkt/visita',{id:id,quando:$('vq').value.trim()}).then(function(){toast('Apresentação salva');carregaConversas()})}
 function carregaFunil(){$('funil').innerHTML='<div class="sub2">Carregando...</div>';chamar('GET','/admin/mkt/leads').then(function(d){var L=d.itens||[];$('n-funil').textContent=L.length;
   $('funil').innerHTML=ETAPAS.slice(1).map(function(e){var l=L.filter(function(x){return x.etapa===e[0]});return '<div class="col"><h4><span>'+e[1]+'</span><span>'+l.length+'</span></h4>'+(l.map(function(x){
     return '<div class="lead"><b>'+esc(x.nome)+'</b><small>'+esc(x.tipo)+(x.bairro?' · '+esc(x.bairro):'')+'</small><div class="pe"><select style="width:auto;padding:4px 6px;font-size:11.5px" onchange="mudaEtapa(\''+esc(x.id)+'\',this.value)">'+ETAPAS.map(function(o){return '<option value="'+o[0]+'"'+(o[0]===x.etapa?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select></div></div>'}).join('')||'<div class="sub2" style="padding:8px">vazio</div>')+'</div>'}).join('')})}
