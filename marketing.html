@@ -189,6 +189,7 @@ td{padding:11px 12px;border-top:1px solid var(--border);font-size:13px}
 
   <div class="abas" id="abas">
     <button class="aba on" data-a="buscar" onclick="aba('buscar')">Buscar</button>
+    <button class="aba" data-a="base" onclick="aba('base')">Planilha e base</button>
     <button class="aba" data-a="mensagem" onclick="aba('mensagem')">Mensagem</button>
     <button class="aba" data-a="funil" onclick="aba('funil')">Funil<span class="n" id="n-funil">0</span></button>
     <button class="aba" data-a="conversas" onclick="aba('conversas')">Conversas</button>
@@ -216,8 +217,8 @@ td{padding:11px 12px;border-top:1px solid var(--border);font-size:13px}
       </div>
       <div class="sub2" style="margin-top:10px">Cada tipo marcado é uma busca no Google (até 20 resultados por tipo).</div>
     </div>
-    <div class="duo">
-      <div class="card" style="padding:12px"><div id="mapa-real"></div></div>
+    <div class="duo" id="duo">
+      <div class="card" style="padding:12px" id="mapa-card"><div id="mapa-real"></div></div>
       <div class="card">
         <h3>Resultado <span class="sub2" id="r-resumo">faça uma busca</span>
           <span class="dir"><select id="r-filtro" style="width:auto;padding:7px 10px;font-size:12.5px" onchange="desenhaLista()"><option value="todos">Todos</option><option value="cel">Só com celular</option><option value="novos">Só os que podem ser chamados</option></select>
@@ -229,6 +230,38 @@ td{padding:11px 12px;border-top:1px solid var(--border);font-size:13px}
           <button class="btn peq pri" onclick="aba('mensagem')">Revisar mensagem →</button>
         </div>
       </div>
+    </div>
+  </section>
+
+  <section id="s-base" hidden>
+    <div class="card">
+      <h3>Importar planilha <span class="sub2">.xlsx, .xls ou .csv · a primeira linha precisa ter os nomes das colunas</span></h3>
+      <input type="file" id="i-arq" accept=".xlsx,.xls,.csv" onchange="lerPlanilha(this.files[0])" style="background:#fff">
+      <div id="i-passo2" hidden style="margin-top:16px">
+        <div class="kpis" id="i-resumo" style="margin-bottom:14px"></div>
+        <h3 style="font-size:14px;margin-bottom:8px">Colunas <span class="sub2">conferi sozinho; troque se alguma estiver errada</span></h3>
+        <div id="i-mapa" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px"></div>
+        <h3 style="font-size:14px;margin:16px 0 8px">Prévia <span class="sub2">as 5 primeiras linhas como vão entrar</span></h3>
+        <div class="tw"><table><thead><tr><th>Nome</th><th>Tipo</th><th>Celular</th><th>Bairro</th><th>Cidade</th><th>Abertura</th></tr></thead><tbody id="i-prev"></tbody></table></div>
+        <div style="display:flex;gap:10px;align-items:end;flex-wrap:wrap;margin-top:16px">
+          <div style="flex:1;min-width:220px"><label>Nome desta planilha</label><input id="i-lote"></div>
+          <button class="btn pri" id="i-btn" onclick="importar()">Importar</button>
+        </div>
+        <div class="limite" id="i-prog" hidden style="margin-top:14px"><span id="i-prog-t">0%</span><div class="bar"><i id="i-prog-b" style="width:0%"></i></div></div>
+        <div id="i-fim"></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Escolher da base <span class="sub2" id="f-total"></span></h3>
+      <div class="busca-grid" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr))">
+        <div><label>De onde veio</label><select id="f-lote"><option value="">Tudo</option><option value="@google">Buscas do Google</option></select></div>
+        <div><label>Cidade</label><select id="f-cidade"><option value="">Todas</option></select></div>
+        <div><label>Tipo</label><select id="f-tipo"><option value="">Todos</option></select></div>
+        <div><label>Nome, bairro ou atividade</label><input id="f-q" placeholder="ex.: pizza, Centro" onkeydown="if(event.key==='Enter')carregaBase()"></div>
+        <div><label>Mostrar</label><select id="f-so"><option value="novos">Só os que podem ser chamados</option><option value="">Todos</option></select></div>
+        <div><label>Quantos</label><select id="f-lim"><option>100</option><option selected>300</option><option>1000</option></select></div>
+      </div>
+      <div style="margin-top:14px"><button class="btn pri" onclick="carregaBase()">Carregar na lista para marcar →</button></div>
     </div>
   </section>
 
@@ -294,6 +327,7 @@ td{padding:11px 12px;border-top:1px solid var(--border);font-size:13px}
 <div id="toast"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 var API='https://giro-os-api.nucleofull.workers.dev', TOKEN='';
 try{TOKEN=localStorage.getItem('lf_admin_jwt')||'';}catch(e){}
@@ -307,8 +341,8 @@ function abre(id){$(id).classList.add('on')} function fecha(id){$(id).classList.
 document.querySelectorAll('.fundo').forEach(function(f){f.addEventListener('click',function(e){if(e.target===f)f.classList.remove('on')})});
 function chamar(m,c,corpo){return fetch(API+c,{method:m,headers:{'Content-Type':'application/json','Authorization':'Bearer '+TOKEN},cache:'no-store',body:corpo?JSON.stringify(corpo):undefined}).then(function(r){
   if(r.status===401){location.href='admin.html';throw new Error('sessao')} return r.json().catch(function(){return {}}).then(function(d){d._status=r.status;return d})})}
-function aba(a){document.querySelectorAll('.aba').forEach(function(b){b.classList.toggle('on',b.dataset.a===a)});['buscar','mensagem','funil','conversas','campanhas'].forEach(function(s){$('s-'+s).hidden=s!==a});
-  if(a==='mensagem')previa(); if(a==='funil')carregaFunil(); if(a==='campanhas')carregaBuscas(); if(a==='buscar'&&mapa)setTimeout(function(){mapa.invalidateSize()},50)}
+function aba(a){document.querySelectorAll('.aba').forEach(function(b){b.classList.toggle('on',b.dataset.a===a)});['buscar','base','mensagem','funil','conversas','campanhas'].forEach(function(s){$('s-'+s).hidden=s!==a});
+  if(a==='base')carregaFiltros(); if(a==='mensagem')previa(); if(a==='funil')carregaFunil(); if(a==='campanhas')carregaBuscas(); if(a==='buscar'&&mapa)setTimeout(function(){mapa.invalidateSize()},50)}
 $('tipos').addEventListener('click',function(e){var c=e.target.closest('.chip');if(c)c.classList.toggle('on')});
 function reais(v){return v.toFixed(2).replace('.',',')}
 function carregaStatus(){chamar('GET','/admin/mkt/status').then(function(d){
@@ -330,11 +364,11 @@ function buscar(){var tipos=[].map.call(document.querySelectorAll('#tipos .chip.
   ULT={local:$('b-local').value,raio_km:Number($('b-raio').value),nota_min:Number($('b-nota').value),tipos:tipos};
   chamar('POST','/admin/mkt/buscar',ULT).then(function(d){btn.disabled=false;btn.textContent='🔎 Buscar no Google Maps';
     if(!d.ok){$('lista').innerHTML='<div class="aviso">'+esc(d.mensagem||d.erro||'Erro na busca')+'</div>';return}
-    res=d.itens; sel=new Set(); desenhaLista(); desenhaMapa(d.centro,d.raio_km); carregaStatus(); toast(d.total+' estabelecimentos encontrados');
+    res=d.itens; sel=new Set(); mostraMapa(true); desenhaLista(); desenhaMapa(d.centro,d.raio_km); carregaStatus(); toast(d.total+' estabelecimentos encontrados');
   }).catch(function(){btn.disabled=false;btn.textContent='🔎 Buscar no Google Maps';$('lista').innerHTML='<div class="aviso">Sem conexão com o servidor.</div>'})}
 function desenhaLista(){var f=$('r-filtro').value, l=res.filter(function(r){return f==='cel'?r.celular:f==='novos'?podeSel(r):true});
   $('lista').innerHTML=l.map(function(r){return '<div class="est '+(sel.has(r.id)?'sel ':'')+(podeSel(r)?'':'bloq')+'" onclick="alterna(\''+r.id+'\')">'+
-   '<div class="ck">'+(sel.has(r.id)?'✓':'')+'</div><div style="min-width:0"><div class="nm">'+esc(r.nome)+'</div><div class="mt"><span>'+esc(r.tipo)+'</span><span>'+esc(r.bairro)+'</span>'+(r.nota?'<span>★ '+r.nota.toFixed(1).replace('.',',')+' ('+r.avaliacoes+')</span>':'')+'<span>'+String(r.dist).replace('.',',')+' km</span>'+(r.fone?'<span>'+foneFmt(r.fone)+'</span>':'')+(r.maps?'<a href="'+esc(r.maps)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:var(--roxo);font-weight:800">Maps</a>':'')+'</div></div><div>'+situ(r)+'</div></div>'}).join('')||'<div class="info">Nada com esse filtro.</div>';
+   '<div class="ck">'+(sel.has(r.id)?'✓':'')+'</div><div style="min-width:0"><div class="nm">'+esc(r.nome)+'</div><div class="mt"><span>'+esc(r.tipo)+'</span><span>'+esc(r.bairro)+'</span>'+(r.nota?'<span>★ '+r.nota.toFixed(1).replace('.',',')+' ('+r.avaliacoes+')</span>':'')+(r.dist!=null?'<span>'+String(r.dist).replace('.',',')+' km</span>':'')+(r.cidade?'<span>'+esc(r.cidade)+'</span>':'')+(r.abertura?'<span>aberta em '+esc(fmtData(r.abertura))+'</span>':'')+(r.fone?'<span>'+foneFmt(r.fone)+'</span>':'')+(r.maps?'<a href="'+esc(r.maps)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:var(--roxo);font-weight:800">Maps</a>':'')+'</div></div><div>'+situ(r)+'</div></div>'}).join('')||'<div class="info">Nada com esse filtro.</div>';
   $('r-resumo').textContent=res.length+' encontrados · '+res.filter(podeSel).length+' podem ser chamados'; atualizaSel(); pintaPinos()}
 var PINOS={};
 function desenhaMapa(c,raio){camada.clearLayers();PINOS={};
@@ -343,7 +377,7 @@ function desenhaMapa(c,raio){camada.clearLayers();PINOS={};
   mapa.fitBounds(L.circle([c.lat,c.lng],{radius:raio*1000}).addTo(mapa).getBounds()); mapa.eachLayer(function(x){if(x instanceof L.Circle&&!camada.hasLayer(x))mapa.removeLayer(x)}); pintaPinos()}
 function pintaPinos(){res.forEach(function(r){var m=PINOS[r.id];if(m)m.setIcon(L.divIcon({className:'',html:'<div class="pin '+(sel.has(r.id)?'sel':podeSel(r)?'':'blq')+'"></div>',iconSize:[16,16]}))})}
 function alterna(id){var r=res.find(function(x){return x.id===id});if(!r)return;
-  if(!podeSel(r)){toast(r.cliente?'Já é cliente do LiveFood':r.etapa!=='novo'?'Já recebeu a mensagem':'Sem celular no Google',1);return}
+  if(!podeSel(r)){toast(r.cliente?'Já é cliente do LiveFood':r.etapa!=='novo'?'Já recebeu a mensagem':'Sem celular',1);return}
   sel.has(id)?sel.delete(id):sel.add(id);desenhaLista()}
 function selTodos(){var p=res.filter(podeSel),todos=p.length&&p.every(function(r){return sel.has(r.id)});p.forEach(function(r){todos?sel.delete(r.id):sel.add(r.id)});desenhaLista()}
 function atualizaSel(){var n=sel.size;$('barra').hidden=!n;$('sel-n').textContent=n;$('sel-custo').textContent='≈ R$ '+reais(n*0.32)+' em mensagens';
@@ -379,6 +413,58 @@ function carregaBuscas(){chamar('GET','/admin/mkt/buscas').then(function(d){var 
   window._BUSCAS=L})}
 function rodar(i){var r=window._BUSCAS[i],t=[];try{t=JSON.parse(r.tipos)}catch(e){}$('b-local').value=r.local;$('b-raio').value=String(r.raio_km);$('b-nota').value=String(r.nota_min||0);
   document.querySelectorAll('#tipos .chip').forEach(function(c){c.classList.toggle('on',t.indexOf(c.dataset.t)>=0)});aba('buscar');buscar()}
+/* ── (190) PLANILHA: lê no navegador, confere as colunas, manda em partes de 200 ── */
+function fmtData(s){s=String(s||'');var m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);return m?m[3]+'/'+m[2]+'/'+m[1]:s}
+function mostraMapa(sim){$('mapa-card').hidden=!sim;$('duo').style.gridTemplateColumns=sim?'':'1fr';if(sim&&mapa)setTimeout(function(){mapa.invalidateSize()},50)}
+var CAMPOS=[['nome_fantasia','Nome fantasia',/fantasia|^nome$|estabelecimento|empresa$/],['razao','Razão social',/raz[aã]o/],['fone','Telefone',/telefone|celular|whats|fone/],['cidade','Cidade',/munic|cidade/],['uf','UF',/^uf$|estado/],
+ ['bairro','Bairro',/bairro/],['logradouro','Endereço',/logradouro|endere|^rua/],['numero','Número',/^n[uú]mero$|^nº?$/],['email','E-mail',/e-?mail/],['cnpj','CNPJ',/cnpj/],['abertura','Data de abertura',/abertura|in[ií]cio/],['atividade','Atividade',/descri[cç][aã]o da atividade principal|atividade principal|^atividade|categoria|segmento|^tipo$/]];
+var PL={linhas:[],cab:[],mapa:{}};
+function tipoDe(a,n){var s=(String(a||'')+' '+String(n||'')).toLowerCase();
+  if(/pizz/.test(s))return 'Pizzaria'; if(/farm[aá]c|drogaria/.test(s))return 'Farmácia'; if(/padaria|confeitaria|panifica/.test(s))return 'Padaria';
+  if(/conveni[eê]ncia|produtos aliment[ií]cios em geral/.test(s))return 'Mercado'; if(/pratos prontos/.test(s))return 'Marmitaria / delivery'; if(/feiras|festas|buffet/.test(s))return 'Eventos';
+  if(/lanchonete|sucos|hamburg|burger|lanches/.test(s))return 'Lanchonete'; if(/bares? |servir bebidas|choperia|pub /.test(s))return 'Bar';
+  if(/varejista de bebidas|distribuidora/.test(s))return 'Bebidas'; if(/minimercado|mercearia|supermercado|mercadorias em geral|a[cç]ougue|hortifr/.test(s))return 'Mercado';
+  if(/alimentos preparados|marmit|ambulante/.test(s))return 'Marmitaria / delivery'; if(/restaurante|similares|gastron|bistr|cantina/.test(s))return 'Restaurante'; if(/noturn|boate|eventos|dan[cç]/.test(s))return 'Casa noturna'; return 'Outro'}
+function titulo(s){s=String(s||'').trim();if(!s)return '';if(s!==s.toUpperCase())return s;return s.toLowerCase().replace(/(^|[\s(\-\/])([a-zà-ú])/g,function(m,a,b){return a+b.toUpperCase()}).replace(/\b(De|Da|Do|Das|Dos|E)\b/g,function(m){return m.toLowerCase()})}
+function limpaRazao(s){return titulo(String(s||'').replace(/\s+(LTDA|ME|EPP|EIRELI|S\/?A|SOCIEDADE UNIPESSOAL|SLU|MEI)\.?(\s|$)/gi,' ').replace(/^\d{2}\.?\d{3}\.?\d{3}\s+/,'').trim())}
+function escolheFone(t){var ps=String(t||'').split(/[,;\/|]+/),pr='';for(var i=0;i<ps.length;i++){var d=ps[i].replace(/\D/g,'').replace(/^55(?=\d{10,11}$)/,'').replace(/^0(?=\d{10,11}$)/,'');if(d.length===11&&d[2]==='9'&&!/^(\d)\1+$/.test(d.slice(2)))return d;if(!pr&&d.length>=10)pr=d}return pr}
+function lerPlanilha(f){if(!f)return;var rd=new FileReader();rd.onload=function(e){try{
+  var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',cellDates:false}),ws=wb.Sheets[wb.SheetNames[0]],m=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,defval:''});
+  PL.cab=(m[0]||[]).map(function(c){return String(c).trim()});PL.linhas=m.slice(1).filter(function(r){return r.some(function(c){return String(c).trim()})});PL.mapa={};
+  CAMPOS.forEach(function(c){var ix=PL.cab.findIndex(function(h){h=h.toLowerCase();return c[2].test(h)&&!/c[oó]digo|secund|porte|situa/.test(h)});PL.mapa[c[0]]=ix});
+  $('i-mapa').innerHTML=CAMPOS.map(function(c){return '<div><label>'+c[1]+'</label><select data-c="'+c[0]+'" onchange="PL.mapa[this.dataset.c]=Number(this.value);previaPlanilha()"><option value="-1">(nenhuma)</option>'+PL.cab.map(function(h,i){return '<option value="'+i+'"'+(i===PL.mapa[c[0]]?' selected':'')+'>'+esc(h)+'</option>'}).join('')+'</select></div>'}).join('');
+  $('i-lote').value=f.name.replace(/\.[^.]+$/,'').replace(/-[0-9a-f]{8}-[0-9a-f-]{27,}$/i,'').slice(0,60);
+  $('i-passo2').hidden=false;$('i-fim').innerHTML='';$('i-prog').hidden=true;previaPlanilha();
+ }catch(er){toast('Não consegui ler a planilha: '+er.message,1)}};rd.readAsArrayBuffer(f)}
+function linhaPara(r){var g=function(k){var i=PL.mapa[k];return i>=0?String(r[i]==null?'':r[i]).trim():''};
+  var nome=titulo(g('nome_fantasia'))||limpaRazao(g('razao')),at=g('atividade');
+  var end=[g('logradouro'),g('numero')].filter(Boolean).join(', ');
+  var ab=g('abertura');if(/^\d{2}\/\d{2}\/\d{4}/.test(ab))ab=ab.slice(6,10)+'-'+ab.slice(3,5)+'-'+ab.slice(0,2);
+  return {nome:nome,fone:escolheFone(g('fone')),cidade:titulo(g('cidade')),uf:g('uf').toUpperCase().slice(0,2),bairro:titulo(g('bairro')),endereco:titulo(end),email:g('email').toLowerCase(),cnpj:g('cnpj').replace(/\D/g,''),abertura:ab.slice(0,10),atividade:at,tipo:tipoDe(at,nome)}}
+function previaPlanilha(){var L=PL.linhas.map(linhaPara),cont={},cel=0,rep=0,sem=0;
+  L.forEach(function(x){if(x.fone)cont[x.fone]=(cont[x.fone]||0)+1});
+  L.forEach(function(x){if(!x.fone)sem++;else if(cont[x.fone]>1)rep++;if(x.fone&&x.fone.length===11&&cont[x.fone]===1)cel++});
+  var tipos={};L.forEach(function(x){tipos[x.tipo]=(tipos[x.tipo]||0)+1});
+  $('i-resumo').innerHTML='<div class="kpi"><div class="lb">Linhas</div><div class="vl">'+L.length+'</div></div><div class="kpi dest"><div class="lb">Com celular</div><div class="vl">'+cel+'</div><div class="dl">podem receber</div></div><div class="kpi"><div class="lb">Telefone repetido</div><div class="vl">'+rep+'</div><div class="dl">entra só o 1º (ex.: contador)</div></div><div class="kpi"><div class="lb">Sem telefone</div><div class="vl">'+sem+'</div></div><div class="kpi"><div class="lb">Tipos</div><div class="dl">'+Object.keys(tipos).sort(function(a,b){return tipos[b]-tipos[a]}).slice(0,5).map(function(t){return esc(t)+' '+tipos[t]}).join('<br>')+'</div></div>';
+  $('i-prev').innerHTML=L.slice(0,5).map(function(x){return '<tr><td><b>'+esc(x.nome)+'</b></td><td>'+esc(x.tipo)+'</td><td>'+esc(foneFmt(x.fone))+'</td><td>'+esc(x.bairro)+'</td><td>'+esc(x.cidade)+(x.uf?' - '+esc(x.uf):'')+'</td><td>'+esc(fmtData(x.abertura))+'</td></tr>'}).join('')}
+function importar(){var L=PL.linhas.map(linhaPara).filter(function(x){return x.nome});if(!L.length){toast('Nenhuma linha com nome',1);return}
+  var lote=$('i-lote').value.trim()||'Planilha',tot={novos:0,atualizados:0,telefone_repetido:0,sem_telefone:0},i=0,P=200,b=$('i-btn');b.disabled=true;$('i-prog').hidden=false;$('i-fim').innerHTML='';
+  (function parte(){if(i>=L.length){b.disabled=false;$('i-prog-t').textContent='100%';$('i-prog-b').style.width='100%';
+      $('i-fim').innerHTML='<div class="info" style="margin-top:12px">✓ Importação concluída: <b>'+tot.novos+'</b> novos, <b>'+tot.atualizados+'</b> atualizados, <b>'+tot.telefone_repetido+'</b> com telefone que já estava cadastrado (não entraram), <b>'+tot.sem_telefone+'</b> sem telefone.</div>';
+      carregaFiltros(lote);carregaStatus();return}
+    chamar('POST','/admin/mkt/importar',{lote:lote,itens:L.slice(i,i+P)}).then(function(d){if(!d.ok){b.disabled=false;$('i-fim').innerHTML='<div class="aviso">Parou na linha '+(i+1)+': '+esc(d.mensagem||d.erro||'erro')+'. Pode tocar em Importar de novo: o que já entrou não duplica.</div>';return}
+      ['novos','atualizados','telefone_repetido','sem_telefone'].forEach(function(k){tot[k]+=d[k]||0});i+=P;var pc=Math.round(Math.min(i,L.length)/L.length*100);$('i-prog-t').textContent=pc+'%';$('i-prog-b').style.width=pc+'%';parte()})
+    .catch(function(){b.disabled=false;$('i-fim').innerHTML='<div class="aviso">Sem conexão na linha '+(i+1)+'. Toque em Importar de novo: o que já entrou não duplica.</div>'})})()}
+function carregaFiltros(lote){chamar('GET','/admin/mkt/filtros').then(function(d){if(!d.ok)return;
+  var v=$('f-lote').value;$('f-lote').innerHTML='<option value="">Tudo</option><option value="@google">Buscas do Google</option>'+(d.lotes||[]).map(function(l){return '<option value="'+esc(l.lote)+'">'+esc(l.lote)+' ('+l.n+')</option>'}).join('');$('f-lote').value=lote||v;
+  var c=$('f-cidade').value;$('f-cidade').innerHTML='<option value="">Todas</option>'+(d.cidades||[]).map(function(l){return '<option value="'+esc(l.cidade)+'">'+esc(l.cidade)+' ('+l.n+')</option>'}).join('');$('f-cidade').value=c;
+  var t=$('f-tipo').value;$('f-tipo').innerHTML='<option value="">Todos</option>'+(d.tipos||[]).map(function(l){return '<option value="'+esc(l.tipo)+'">'+esc(l.tipo)+' ('+l.n+')</option>'}).join('');$('f-tipo').value=t})}
+function carregaBase(){var lo=$('f-lote').value,p=new URLSearchParams();if(lo==='@google')p.set('origem','google');else if(lo)p.set('lote',lo);
+  ['cidade','tipo','q','so'].forEach(function(k){var v=$('f-'+k).value.trim();if(v)p.set(k,v)});p.set('limite',$('f-lim').value);
+  chamar('GET','/admin/mkt/lista?'+p.toString()).then(function(d){if(!d.ok){toast(d.mensagem||d.erro||'Erro',1);return}
+    res=d.itens;sel=new Set();var temGeo=res.some(function(r){return r.lat!=null});mostraMapa(temGeo);camada.clearLayers();PINOS={};
+    if(temGeo){var b=[];res.forEach(function(r){if(r.lat==null)return;b.push([r.lat,r.lng]);var m=L.marker([r.lat,r.lng],{icon:L.divIcon({className:'',html:'<div class="pin"></div>',iconSize:[16,16]})}).addTo(camada);m.bindTooltip(r.nome);m.on('click',function(){alterna(r.id)});PINOS[r.id]=m});if(b.length)mapa.fitBounds(b,{padding:[20,20]})}
+    $('f-total').textContent=d.total+' com esse filtro'+(d.total>res.length?' · mostrando '+res.length:'');aba('buscar');desenhaLista();toast(res.length+' carregados na lista')})}
 iniciaMapa();carregaStatus();previa();
 </script>
 </body>
