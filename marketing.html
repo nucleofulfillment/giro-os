@@ -249,7 +249,7 @@ td{padding:11px 12px;border-top:1px solid var(--border);font-size:13px}
         <div><label>Onde está o cardápio</label><select id="f-card"><option value="">Todos</option><option value="online">🍽 Cardápio online (dá para montar)</option><option value="montavel">Online ou site a verificar</option><option value="insta">📷 Só Instagram</option><option value="site">🌐 Site a verificar</option><option value="sem">Sem site</option></select></div>
         <div><label>Cardápio montado</label><select id="f-prep"><option value="">Todos</option><option value="algum">Já montado (real ou amostra)</option><option value="pronto">Cardápio real</option><option value="amostra">Cardápio de amostra</option><option value="sem">Ainda não montado</option></select></div>
         <div><label>Mostrar</label><select id="f-so"><option value="novos">Só os que podem ser chamados</option><option value="">Todos</option></select></div>
-        <div><label>Quantos</label><select id="f-lim"><option>100</option><option selected>300</option><option>1000</option></select></div>
+        <div><label>Quantos</label><select id="f-lim"><option>100</option><option>300</option><option selected>1000</option><option value="3000">3000 (cidade inteira)</option></select></div>
       </div>
       <div style="margin-top:14px"><button class="btn pri" onclick="carregaBase()">Filtrar</button></div>
     </div>
@@ -499,7 +499,7 @@ function desenhaPinos(ajustar){
   res.forEach(function(r){if(r.lat==null||r.lng==null)return;n++;b.extend([r.lng,r.lat]);
     var d=document.createElement('div'),dd=document.createElement('div'),ii=document.createElement('div'),sp=document.createElement('span'),ln=document.createElement('div'),dt=document.createElement('div');
     d.className='mp-pkw';dd.className='mp-pkd';ii.className='mp-pk';ln.className='mp-pkl';dt.className='mp-pkdot';sp.textContent=EMO[r.tipo]||'';ii.appendChild(sp);dd.appendChild(ii);d.appendChild(ln);d.appendChild(dt);d.appendChild(dd);
-    ii.title=r.nome;ii.addEventListener('click',function(ev){ev.stopPropagation();alterna(r.id);var lt=$('lista');if(lt)lt.scrollTop=0});
+    ii.title=r.nome;ii.addEventListener('click',function(ev){ev.stopPropagation();alterna(r.id);var lt=$('lista');if(lt)lt.scrollTop=0;if(sel.has(r.id))infoPino(r);else if(INFO){try{INFO.remove()}catch(e){}}});
     ii.addEventListener('contextmenu',function(ev){ev.preventDefault();infoPino(r)});
     var mk=new maplibregl.Marker({element:d,anchor:'bottom'}).setLngLat([r.lng,r.lat]).addTo(mapa);PINOS[r.id]={mk:mk,el:d,in:ii,dd:dd,ln:ln};});
   pintaPinos();if(ajustar&&n)mapa.fitBounds(b,{padding:60,maxZoom:15,duration:0});setTimeout(espalhar,60)}
@@ -523,10 +523,12 @@ function mostraMapa(sim){$('mapa-card').hidden=!sim;$('duo').style.gridTemplateC
 
 /* ── BASE ── */
 function semAc(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')}
-function desenhaLista(){var f=$('r-filtro').value, qb=semAc($('r-busca').value.trim()), l=res.filter(function(r){return (f==='novos'?podeSel(r):true)&&(!qb||semAc(r.nome+' '+(r.bairro||'')).indexOf(qb)>=0)});
-  l=l.filter(function(r){return sel.has(r.id)}).concat(l.filter(function(r){return !sel.has(r.id)}));
+function desenhaLista(){var f=$('r-filtro').value, qb=semAc($('r-busca').value.trim()), l=res.filter(function(r){return !sel.has(r.id)&&(f==='novos'?podeSel(r):true)&&(!qb||semAc(r.nome+' '+(r.bairro||'')).indexOf(qb)>=0)});
+  /* marcados sempre no topo, mesmo fora da busca; a lista mostra até 400 linhas (o mapa mostra todos) para não pesar */
+  var marc=res.filter(function(r){return sel.has(r.id)}), resto=l.length; l=marc.concat(l.slice(0,400));
   $('lista').innerHTML=l.map(function(r){return '<div class="est '+(sel.has(r.id)?'sel ':'')+(podeSel(r)?'':'bloq')+'" onclick="alterna(\''+esc(r.id)+'\')">'+
    '<div class="ck">'+(sel.has(r.id)?'✓':'')+'</div><div style="min-width:0"><div class="nm">'+esc(r.nome)+'</div><div class="mt"><span>'+esc(r.tipo)+'</span>'+(r.bairro?'<span>'+esc(r.bairro)+'</span>':'')+(r.cidade?'<span>'+esc(r.cidade)+'</span>':'')+(r.nota?'<span>★ '+Number(r.nota).toFixed(1).replace('.',',')+' ('+r.avaliacoes+')</span>':'')+(r.abertura?'<span>aberta em '+esc(fmtData(r.abertura))+'</span>':'')+(r.fone?'<span>'+foneFmt(r.fone)+'</span>':'')+(r.maps?'<a href="'+esc(r.maps)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:var(--roxo);font-weight:800">Maps</a>':'')+(r.site?'<a href="'+esc(r.site)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:var(--roxo);font-weight:800">Site</a>':'')+'</div>'+prepLinha(r)+'</div><div style="text-align:right">'+situ(r)+'</div></div>'}).join('')||'<div class="info">Nada com esse filtro.</div>';
+  if(resto>400)$('lista').insertAdjacentHTML('beforeend','<div class="info">Mostrando 400 de '+resto+' na lista. Use a busca pelo nome ou toque no alfinete do mapa: o restaurante marcado vem para o topo.</div>');
   $('r-resumo').textContent=res.length+' na lista · '+res.filter(podeSel).length+' podem ser chamados'; atualizaSel(); pintaPinos()}
 function pintaPinos(){res.forEach(function(r){var o=PINOS[r.id];if(!o)return;o.in.style.setProperty('--pc',corPino(r));o.in.classList.toggle('sel',sel.has(r.id));o.el.style.zIndex=sel.has(r.id)?30:(podeSel(r)?2:1)})}
 function alterna(id){var r=res.find(function(x){return x.id===id});if(!r)return;
