@@ -186,6 +186,7 @@ td{padding:11px 12px;border-top:1px solid var(--border);font-size:13px}
 .mp-pkl{display:none;position:absolute;left:15px;top:35px;height:2px;margin-top:-1px;background:rgba(22,22,26,.65);transform-origin:0 50%;pointer-events:none;border-radius:2px}
 .mp-pkdot{display:none;position:absolute;left:11px;top:31px;width:8px;height:8px;border-radius:50%;background:#1C1C1E;border:1.5px solid #fff;pointer-events:none}
 .mp-pkw.esp .mp-pkl,.mp-pkw.esp .mp-pkdot{display:block}
+.mp-pk.pl{border-style:dashed;border-color:#1C1C1E;opacity:.88}
 .voltar{color:#111;font-weight:800;text-decoration:none;font-size:13px;margin-left:auto;display:inline-flex;gap:6px;align-items:center}
 .status{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
 .status span{font-size:12px;font-weight:800;padding:5px 10px;border-radius:99px;border:1px solid var(--border2);background:#fff}
@@ -251,11 +252,11 @@ td{padding:11px 12px;border-top:1px solid var(--border);font-size:13px}
         <div><label>Mostrar</label><select id="f-so"><option value="novos">Só os que podem ser chamados</option><option value="">Todos</option></select></div>
         <div><label>Quantos</label><select id="f-lim"><option>100</option><option>300</option><option selected>1000</option><option value="3000">3000 (cidade inteira)</option></select></div>
       </div>
-      <div style="margin-top:14px"><button class="btn pri" onclick="carregaBase()">Filtrar</button></div>
+      <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn pri" onclick="carregaBase()">Filtrar</button><button class="btn" onclick="geoPlanilha()" title="Converte o endereço da planilha em ponto no mapa e junta com o restaurante do Google que estiver no mesmo lugar">📍 Colocar planilha no mapa</button></div>
     </div>
     <div class="duo" id="duo">
       <div class="card" style="padding:12px" id="mapa-card"><div class="mp-wrap"><div id="mapa-real"></div><button class="mp-3d-btn" onclick="tres(mapa,this)" title="Visão inclinada (3D) / de cima">3D</button><button class="mp-3d-btn mp-cheio-btn" id="b-cheio" onclick="telaCheia()" title="Mapa em tela cheia" style="top:56px;font-size:17px">⛶</button>
-        <div class="mp-leg"><span><i style="background:#FF5A00"></i>celular</span><span><i style="background:#F59E0B"></i>fixo</span><span><i style="background:#1C1C1E"></i>marcado</span><span><i style="background:#B8B8BE"></i>contatado</span></div></div></div>
+        <div class="mp-leg"><span><i style="background:#FF5A00"></i>celular</span><span><i style="background:#F59E0B"></i>fixo</span><span><i style="background:#1C1C1E"></i>marcado</span><span><i style="background:#B8B8BE"></i>contatado</span><span><i style="background:#fff;border:2px dashed #1C1C1E;width:8px;height:8px"></i>planilha</span></div></div></div>
       <div class="card">
         <h3>Estabelecimentos <span class="sub2" id="r-resumo">use o filtro acima</span>
           <span class="dir"><input id="r-busca" placeholder="🔎 buscar na lista pelo nome" oninput="desenhaLista()" style="width:230px;max-width:100%;padding:7px 10px;font-size:12.5px"><select id="r-filtro" style="width:auto;padding:7px 10px;font-size:12.5px" onchange="desenhaLista()"><option value="todos">Todos da lista</option><option value="novos">Só os que podem ser chamados</option></select>
@@ -414,6 +415,22 @@ td{padding:11px 12px;border-top:1px solid var(--border);font-size:13px}
   <div class="acoes"><button class="btn" id="pp-parar" onclick="PARAR_PREP=true">Parar</button><button class="btn pri" onclick="fecha('m-prep');carregaBase()">Fechar</button></div>
 </div></div>
 
+<div class="fundo" id="m-ativar"><div class="modal">
+  <h3>Ativar conta</h3>
+  <p class="sub2">A prévia vira a conta do restaurante: o cardápio continua igual, a faixa de prévia some e o dono ganha acesso ao painel.</p>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
+    <div style="grid-column:1/-1"><label>Nome do restaurante</label><input id="at-loja"></div>
+    <div><label>Nome do dono *</label><input id="at-nome"></div>
+    <div><label>Celular do dono</label><input id="at-fone" inputmode="tel"></div>
+    <div><label>E-mail de acesso *</label><input id="at-email" type="email"></div>
+    <div><label>Senha inicial * (8+ caracteres)</label><input id="at-senha" type="text" autocomplete="off"></div>
+    <div><label>Plano</label><select id="at-plano"><option value="">Plano padrão</option></select></div>
+    <div><label>Dias de teste grátis</label><select id="at-dias"><option>7</option><option>15</option><option>30</option></select></div>
+  </div>
+  <div class="res-env" id="at-res"></div>
+  <div class="acoes"><button class="btn" onclick="fecha('m-ativar')">Fechar</button><button class="btn pri" id="at-btn" onclick="ativarConta()">Ativar conta</button></div>
+</div></div>
+
 <div class="fundo" id="m-link"><div class="modal">
   <h3>Link do cardápio</h3>
   <p class="sub2" id="lk-txt"></p>
@@ -516,7 +533,8 @@ function espalhar(){if(!mapa||!mapa._ok)return;var pts=[],usado={},i,j;
     var rr=Math.max(40,30/(2*Math.sin(Math.PI/n)));if(n>14)rr=Math.min(rr,150);
     g.forEach(function(x,m){var a=-Math.PI/2+m*2*Math.PI/n;desloca(pts[x].o,cx+Math.cos(a)*rr-pts[x].pt.x,cy+Math.sin(a)*rr-pts[x].pt.y)})}}
 function podeSel(r){return String(r.fone||'').length>=10&&r.etapa==='novo'}
-function situ(r){return r.etapa!=='novo'?'<span class="tg am">Já contatado</span>':String(r.fone||'').length<10?'<span class="tg no">Sem telefone</span>':(r.cliente?'<span class="tg pc" title="O nome é igual ao de um cliente do LiveFood. Dá para marcar mesmo assim.">Parece cliente</span> ':'')+(!r.celular?'<span class="tg am" title="Número fixo comercial: muitos usam WhatsApp Business. Se não tiver, a mensagem não é entregue.">Fixo · pode ter Whats</span>':'<span class="tg ok">Celular</span>')}
+function zapSt(r){var s=r.whats_st;return s==='read'?'<span class="tg cl">✓✓ lido</span>':s==='delivered'?'<span class="tg ok">✓✓ entregue</span>':s==='sent'?'<span class="tg cz">✓ enviado</span>':s==='failed'?'<span class="tg no" title="A Meta não entregou: quase sempre é número sem WhatsApp">✕ não entregue</span>':''}
+function situ(r){return r.etapa!=='novo'?(zapSt(r)||'<span class="tg am">Já contatado</span>'):String(r.fone||'').length<10?'<span class="tg no">Sem telefone</span>':(r.cliente?'<span class="tg pc" title="O nome é igual ao de um cliente do LiveFood. Dá para marcar mesmo assim.">Parece cliente</span> ':'')+(!r.celular?'<span class="tg am" title="Número fixo comercial: muitos usam WhatsApp Business. Se não tiver, a mensagem não é entregue.">Fixo · pode ter Whats</span>':'<span class="tg ok">Celular</span>')}
 function foneFmt(d){d=String(d||'');return d.length===11?'('+d.slice(0,2)+') '+d.slice(2,7)+'-'+d.slice(7):d.length===10?'('+d.slice(0,2)+') '+d.slice(2,6)+'-'+d.slice(6):d}
 function fmtData(s){s=String(s||'');var m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);return m?m[3]+'/'+m[2]+'/'+m[1]:s}
 function mostraMapa(sim){$('mapa-card').hidden=!sim;$('duo').style.gridTemplateColumns=sim?'':'1fr';if(sim&&mapa)setTimeout(function(){mapa.resize();espalhar()},50)}
@@ -530,7 +548,7 @@ function desenhaLista(){var f=$('r-filtro').value, qb=semAc($('r-busca').value.t
    '<div class="ck">'+(sel.has(r.id)?'✓':'')+'</div><div style="min-width:0"><div class="nm">'+esc(r.nome)+'</div><div class="mt"><span>'+esc(r.tipo)+'</span>'+(r.bairro?'<span>'+esc(r.bairro)+'</span>':'')+(r.cidade?'<span>'+esc(r.cidade)+'</span>':'')+(r.nota?'<span>★ '+Number(r.nota).toFixed(1).replace('.',',')+' ('+r.avaliacoes+')</span>':'')+(r.abertura?'<span>aberta em '+esc(fmtData(r.abertura))+'</span>':'')+(r.fone?'<span>'+foneFmt(r.fone)+'</span>':'')+(r.maps?'<a href="'+esc(r.maps)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:var(--roxo);font-weight:800">Maps</a>':'')+(r.site?'<a href="'+esc(r.site)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:var(--roxo);font-weight:800">Site</a>':'')+'</div>'+prepLinha(r)+'</div><div style="text-align:right">'+situ(r)+'</div></div>'}).join('')||'<div class="info">Nada com esse filtro.</div>';
   if(resto>400)$('lista').insertAdjacentHTML('beforeend','<div class="info">Mostrando 400 de '+resto+' na lista. Use a busca pelo nome ou toque no alfinete do mapa: o restaurante marcado vem para o topo.</div>');
   $('r-resumo').textContent=res.length+' na lista · '+res.filter(podeSel).length+' podem ser chamados'; atualizaSel(); pintaPinos()}
-function pintaPinos(){res.forEach(function(r){var o=PINOS[r.id];if(!o)return;o.in.style.setProperty('--pc',corPino(r));o.in.classList.toggle('sel',sel.has(r.id));o.el.style.zIndex=sel.has(r.id)?30:(podeSel(r)?2:1)})}
+function pintaPinos(){res.forEach(function(r){var o=PINOS[r.id];if(!o)return;o.in.style.setProperty('--pc',corPino(r));o.in.classList.toggle('pl',r.origem==='planilha');o.in.classList.toggle('sel',sel.has(r.id));o.el.style.zIndex=sel.has(r.id)?30:(podeSel(r)?2:1)})}
 function alterna(id){var r=res.find(function(x){return x.id===id});if(!r)return;
   if(!podeSel(r)){toast(r.etapa!=='novo'?'Já recebeu a mensagem':'Sem telefone',1);return}
   sel.has(id)?sel.delete(id):sel.add(id);desenhaLista();
@@ -574,6 +592,27 @@ function verificarSel(){var ids=Array.from(sel).filter(function(id){var r=res.fi
     chamar('POST','/admin/mkt/verificar',{ids:lote}).then(function(d){(d.itens||[]).forEach(function(v){var r=res.find(function(x){return x.id===v.id});if(r){r.card_status=v.card_status;r.card_url=v.card_url}});desenhaLista();prox()}).catch(function(){desenhaLista()})})()}
 /* logo da prévia: automática (conferir), subida à mão, ou sem logo */
 var LOGO_V=Date.now();
+/* possível duplicado, ativar conta, planilha no mapa */
+function dupLinha(r){if(!r.dup_talvez)return '';var id=esc(r.id);return '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;width:100%;margin-top:4px"><span class="tg am">⚠ possível duplicado de '+esc(r.dup_nome||'outro cadastro')+'</span> <a href="#" onclick="event.stopPropagation();resolveDup(\''+id+'\',\'juntar\');return false" style="color:var(--roxo);font-weight:800;font-size:12px">é o mesmo, juntar</a> <a href="#" onclick="event.stopPropagation();resolveDup(\''+id+'\',\'separar\');return false" style="color:var(--muted2);font-weight:700;font-size:12px">são diferentes</a></div>'}
+function resolveDup(id,acao){chamar('POST','/admin/mkt/dup',{id:id,acao:acao}).then(function(){if(acao==='juntar')res=res.filter(function(x){return x.id!==id});else{var r=res.find(function(x){return x.id===id});if(r)r.dup_talvez=null}desenhaLista();desenhaPinos(false);toast(acao==='juntar'?'Juntado: fica o cadastro do Google':'Marcado como lugares diferentes')})}
+function geoPlanilha(){var lo=$('f-lote').value,ci=$('f-cidade').value,tot={no_mapa:0,juntados:0,possiveis:0,sem_ponto:0},n=0;
+  if(!ci&&!lo){toast('Escolha a cidade (ou a planilha em "De onde veio") antes',1);return}
+  $('pp-lista').innerHTML='<div class="passo"><div class="bo">📍</div><div style="min-width:0"><b>Colocando a planilha no mapa</b><div class="sub2" id="geo-t">começando...</div></div></div>';$('m-prep').querySelector('h3').textContent='Colocar planilha no mapa';PARAR_PREP=false;abre('m-prep');
+  (function prox(){chamar('POST','/admin/mkt/geocodificar',{lote:lo&&lo.indexOf('Google')!==0?lo:'',cidade:ci}).then(function(d){if(!d.ok){$('geo-t').innerHTML='<span style="color:#B91C1C">'+esc(d.mensagem||d.erro||'erro')+'</span>';return}
+    ['no_mapa','juntados','possiveis','sem_ponto'].forEach(function(k){tot[k]+=d[k]||0});n+=d.feitos;
+    $('geo-t').innerHTML=n+' conferidos · <b>'+tot.no_mapa+'</b> no mapa · <b>'+tot.juntados+'</b> juntados com o Google · '+tot.possiveis+' possíveis duplicados · '+tot.sem_ponto+' sem endereço exato'+(d.faltam?' · faltam '+d.faltam:' · <b>pronto</b>');
+    if(d.faltam&&d.feitos&&!PARAR_PREP)prox();else{$('m-prep').querySelector('h3').textContent='Preparar cardápios';carregaBase()}}).catch(function(){$('geo-t').textContent='sem conexão'})})()}
+var PLANOS=null;
+function abreAtivar(id){var r=res.find(function(x){return x.id===id});if(!r)return;ATV_ID=id;$('at-loja').value=r.nome||'';['at-nome','at-email','at-fone','at-senha'].forEach(function(i){$(i).value=''});$('at-fone').value=foneFmt(r.contato_fone||r.fone||'');$('at-res').innerHTML='';
+  var pr=PLANOS?Promise.resolve(PLANOS):chamar('GET','/admin/planos').then(function(d){PLANOS=(d.planos||[]).filter(function(p){return p.ativo!==0&&p.ativo!==false});return PLANOS});
+  pr.then(function(L){$('at-plano').innerHTML='<option value="">Plano padrão</option>'+L.map(function(p){return '<option value="'+esc(p.id)+'">'+esc(p.nome)+'</option>'}).join('')});abre('m-ativar')}
+var ATV_ID='';
+function ativarConta(){var b=$('at-btn'),c={id:ATV_ID,nome:$('at-loja').value.trim(),plano_id:$('at-plano').value,dias_teste:Number($('at-dias').value)||7,dono:{nome:$('at-nome').value.trim(),email:$('at-email').value.trim(),telefone:$('at-fone').value.replace(/\D/g,''),senha:$('at-senha').value}};
+  b.disabled=true;b.textContent='Ativando...';chamar('POST','/admin/mkt/ativar',c).then(function(d){b.disabled=false;b.textContent='Ativar conta';
+    if(!d.ok){$('at-res').innerHTML='<div class="aviso" style="margin:0">'+esc(d.mensagem||d.erro)+'</div>';return}
+    var r=res.find(function(x){return x.id===ATV_ID});if(r){r.ativado=1;r.etapa='teste'}desenhaLista();
+    $('at-res').innerHTML='<div class="info" style="margin:0">✓ Conta ativa, em teste até '+esc(fmtData(d.teste_ate))+'. O dono entra em <b>livefood.tec.br/painel.html</b> com o e-mail e a senha que você definiu. O cardápio continua em livefood.tec.br/'+esc(d.slug)+' e a faixa de prévia saiu.</div>'})
+  .catch(function(){b.disabled=false;b.textContent='Ativar conta';$('at-res').innerHTML='<div class="aviso" style="margin:0">Sem conexão.</div>'})}
 function logoLinha(r){var id=esc(r.id),a=function(t,f,c){return '<a href="#" onclick="event.stopPropagation();'+f+'(\''+id+'\');return false" style="color:'+(c||'var(--roxo)')+';font-weight:800;font-size:12px">'+t+'</a>'};
   var img=(r.logo_st==='auto'||r.logo_st==='manual')?'<img src="'+API+'/food/foto/'+encodeURIComponent(r.cli_demo)+'/_logo?v='+LOGO_V+'" alt="" style="height:26px;max-width:80px;object-fit:contain;border-radius:6px;background:#fff;border:1px solid var(--border2);padding:2px">':'';
   var t=r.logo_st==='auto'?'<span class="tg am" title="'+esc(r.logo_fonte||'')+'">logo automática · conferir</span>':r.logo_st==='manual'?'<span class="tg ok">logo sua</span>':'<span class="tg cz">sem logo</span>';
@@ -588,7 +627,8 @@ function prepLinha(r){var x='';
   else if(r.prep==='amostra')x='<span class="tg am" title="'+esc(r.prep_msg||'')+'">🧪 Cardápio de amostra · '+(r.prep_n||0)+' itens</span> <a href="https://livefood.tec.br/'+esc(r.slug_demo)+'/mesa/1" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:var(--roxo);font-weight:800;font-size:12px">ver</a> <a href="#" onclick="event.stopPropagation();abreLink(\''+esc(r.id)+'\');return false" style="color:var(--roxo);font-weight:800;font-size:12px">colar link do cardápio real</a> <a href="#" onclick="event.stopPropagation();apagaDemo(\''+esc(r.id)+'\');return false" style="color:var(--muted2);font-weight:700;font-size:12px">apagar</a>'+(r.abriu_em?' <span class="tg cl">👀 abriu '+(r.aberturas||1)+'x</span>':'')+'<div class="sub2" style="font-size:11.5px;width:100%">Não deu para ler o cardápio: '+esc(r.prep_msg||'')+(r.prep_fonte?' · página lida: <a href="'+esc(r.prep_fonte)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:var(--muted2)">'+esc(String(r.prep_fonte).replace(/^https?:\/\//,'').slice(0,50))+'</a>':'')+'</div>';
   else if(r.prep==='erro')x='<span style="color:#B91C1C;font-size:12px;font-weight:700">'+esc(r.prep_msg||'Não deu para montar')+'</span> <a href="#" onclick="event.stopPropagation();abreLink(\''+esc(r.id)+'\');return false" style="color:var(--roxo);font-weight:800;font-size:12px">colar link</a>';
   else x=ondeCard(r);
-  if((r.prep==='pronto'||r.prep==='amostra')&&r.cli_demo)x+=logoLinha(r);
+  if((r.prep==='pronto'||r.prep==='amostra')&&r.cli_demo){x+=logoLinha(r);x+='<div style="width:100%;margin-top:4px">'+(r.ativado?'<span class="tg ok">✅ conta ativa</span>':'<a href="#" onclick="event.stopPropagation();abreAtivar(\''+esc(r.id)+'\');return false" style="color:var(--roxo);font-weight:800;font-size:12px">✅ fechou negócio? ativar conta</a>')+'</div>'}
+  x+=dupLinha(r);
   return x?'<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">'+x+'</div>':''}
 function prepUm(id,url){return chamar('POST','/admin/mkt/preparar',{id:id,url:url||''}).then(function(d){var r=res.find(function(x){return x.id===id});
   if(r){if(d.ok){r.prep=d.amostra?'amostra':'pronto';r.prep_n=d.itens;r.slug_demo=d.slug;r.cli_demo=d.cli;if(d.logo)r.logo_st=d.logo;LOGO_V=Date.now();r.prep_msg=d.amostra?d.motivo:'';r.prep_fonte=d.fonte||''}else if(!r.prep||r.prep==='erro'){r.prep='erro';r.prep_msg=d.mensagem||d.erro}else toast(d.mensagem||d.erro,1)}return d})}
