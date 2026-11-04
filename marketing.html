@@ -233,6 +233,7 @@ td{padding:11px 12px;border-top:1px solid var(--border);font-size:13px}
         <div><label>Nome ou atividade</label><input id="f-q" placeholder="ex.: pizza" onkeydown="if(event.key==='Enter')carregaBase()"></div>
         <div><label>De onde veio</label><select id="f-lote"><option value="">Tudo</option></select></div>
         <div><label>Telefone</label><select id="f-cel"><option value="">Celular e fixo</option><option value="1">Só celular</option></select></div>
+        <div><label>Cardápio</label><select id="f-prep"><option value="">Todos</option><option value="pronto">Com cardápio pronto</option><option value="sem">Sem cardápio</option></select></div>
         <div><label>Mostrar</label><select id="f-so"><option value="novos">Só os que podem ser chamados</option><option value="">Todos</option></select></div>
         <div><label>Quantos</label><select id="f-lim"><option>100</option><option selected>300</option><option>1000</option></select></div>
       </div>
@@ -249,6 +250,7 @@ td{padding:11px 12px;border-top:1px solid var(--border);font-size:13px}
         <div class="barra-sel" id="barra" hidden>
           <b><span id="sel-n">0</span> selecionados</b><span style="opacity:.75;font-size:12.5px" id="sel-custo"></span>
           <span class="esp"></span>
+          <button class="btn peq" onclick="prepararSel()">🍽 Preparar cardápios</button>
           <button class="btn peq pri" onclick="aba('mensagem')">Revisar mensagem →</button>
         </div>
       </div>
@@ -383,6 +385,21 @@ td{padding:11px 12px;border-top:1px solid var(--border);font-size:13px}
   <div class="acoes"><button class="btn" onclick="fecha('m-teste')">Fechar</button><button class="btn pri" id="t-btn" onclick="enviarTeste()">Enviar teste</button></div>
 </div></div>
 
+<div class="fundo" id="m-prep"><div class="modal" style="max-width:600px">
+  <h3>Preparar cardápios</h3>
+  <p class="sub2">Para cada estabelecimento: acha o cardápio no site, a IA lê e monta uma conta de prévia (15 dias, sem cobrança) com o link da mesa 1. Leva de 30 s a 2 min por estabelecimento.</p>
+  <div id="pp-lista" style="max-height:52vh;overflow:auto;margin-top:10px"></div>
+  <div class="acoes"><button class="btn" id="pp-parar" onclick="PARAR_PREP=true">Parar</button><button class="btn pri" onclick="fecha('m-prep');carregaBase()">Fechar</button></div>
+</div></div>
+
+<div class="fundo" id="m-link"><div class="modal">
+  <h3>Link do cardápio</h3>
+  <p class="sub2" id="lk-txt"></p>
+  <label style="margin-top:12px">Link</label><input id="lk-url" placeholder="https://... (cardápio, PDF, iFood, Linktree da bio do Instagram)">
+  <div class="res-env" id="lk-res"></div>
+  <div class="acoes"><button class="btn" onclick="fecha('m-link')">Cancelar</button><button class="btn pri" id="lk-btn" onclick="prepararLink()">Montar cardápio</button></div>
+</div></div>
+
 <div class="fundo" id="m-envio"><div class="modal">
   <h3>Enviar agora?</h3>
   <p class="sub2" id="env-txt"></p>
@@ -485,7 +502,7 @@ function mostraMapa(sim){$('mapa-card').hidden=!sim;$('duo').style.gridTemplateC
 /* ── BASE ── */
 function desenhaLista(){var f=$('r-filtro').value, l=res.filter(function(r){return f==='novos'?podeSel(r):true});
   $('lista').innerHTML=l.map(function(r){return '<div class="est '+(sel.has(r.id)?'sel ':'')+(podeSel(r)?'':'bloq')+'" onclick="alterna(\''+esc(r.id)+'\')">'+
-   '<div class="ck">'+(sel.has(r.id)?'✓':'')+'</div><div style="min-width:0"><div class="nm">'+esc(r.nome)+'</div><div class="mt"><span>'+esc(r.tipo)+'</span>'+(r.bairro?'<span>'+esc(r.bairro)+'</span>':'')+(r.cidade?'<span>'+esc(r.cidade)+'</span>':'')+(r.nota?'<span>★ '+Number(r.nota).toFixed(1).replace('.',',')+' ('+r.avaliacoes+')</span>':'')+(r.abertura?'<span>aberta em '+esc(fmtData(r.abertura))+'</span>':'')+(r.fone?'<span>'+foneFmt(r.fone)+'</span>':'')+(r.maps?'<a href="'+esc(r.maps)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:var(--roxo);font-weight:800">Maps</a>':'')+'</div></div><div style="text-align:right">'+situ(r)+'</div></div>'}).join('')||'<div class="info">Nada com esse filtro.</div>';
+   '<div class="ck">'+(sel.has(r.id)?'✓':'')+'</div><div style="min-width:0"><div class="nm">'+esc(r.nome)+'</div><div class="mt"><span>'+esc(r.tipo)+'</span>'+(r.bairro?'<span>'+esc(r.bairro)+'</span>':'')+(r.cidade?'<span>'+esc(r.cidade)+'</span>':'')+(r.nota?'<span>★ '+Number(r.nota).toFixed(1).replace('.',',')+' ('+r.avaliacoes+')</span>':'')+(r.abertura?'<span>aberta em '+esc(fmtData(r.abertura))+'</span>':'')+(r.fone?'<span>'+foneFmt(r.fone)+'</span>':'')+(r.maps?'<a href="'+esc(r.maps)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:var(--roxo);font-weight:800">Maps</a>':'')+(r.site?'<a href="'+esc(r.site)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:var(--roxo);font-weight:800">Site</a>':'')+'</div>'+prepLinha(r)+'</div><div style="text-align:right">'+situ(r)+'</div></div>'}).join('')||'<div class="info">Nada com esse filtro.</div>';
   $('r-resumo').textContent=res.length+' na lista · '+res.filter(podeSel).length+' podem ser chamados'; atualizaSel(); pintaPinos()}
 function pintaPinos(){res.forEach(function(r){var o=PINOS[r.id];if(!o)return;o.in.style.setProperty('--pc',corPino(r));o.in.classList.toggle('sel',sel.has(r.id));o.el.style.zIndex=sel.has(r.id)?30:(podeSel(r)?2:1)})}
 function alterna(id){var r=res.find(function(x){return x.id===id});if(!r)return;
@@ -502,11 +519,32 @@ function carregaFiltros(lote){chamar('GET','/admin/mkt/filtros').then(function(d
   var c=$('f-cidade').value;$('f-cidade').innerHTML='<option value="">Todas</option>'+(d.cidades||[]).map(function(l){return '<option value="'+esc(l.cidade)+'">'+esc(l.cidade)+' ('+l.n+')</option>'}).join('');$('f-cidade').value=c;
   var t=$('f-tipo').value;$('f-tipo').innerHTML='<option value="">Todos</option>'+(d.tipos||[]).map(function(l){return '<option value="'+esc(l.tipo)+'">'+esc(l.tipo)+' ('+l.n+')</option>'}).join('');$('f-tipo').value=t})}
 function carregaBase(fixar){var p=new URLSearchParams(),lo=$('f-lote').value;if(lo)p.set('lote',lo);
-  [['cidade','f-cidade'],['tipo','f-tipo'],['bairro','f-bairro'],['q','f-q'],['so','f-so'],['celular','f-cel']].forEach(function(k){var v=$(k[1]).value.trim();if(v)p.set(k[0],v)});p.set('limite',$('f-lim').value);
+  [['cidade','f-cidade'],['tipo','f-tipo'],['bairro','f-bairro'],['q','f-q'],['so','f-so'],['celular','f-cel'],['prep','f-prep']].forEach(function(k){var v=$(k[1]).value.trim();if(v)p.set(k[0],v)});p.set('limite',$('f-lim').value);
   return chamar('GET','/admin/mkt/lista?'+p.toString()).then(function(d){if(!d.ok){toast(d.mensagem||d.erro||'Erro',1);return}
     res=d.itens;sel=new Set();if(fixar)res.forEach(function(r){if(r.id===fixar&&podeSel(r))sel.add(r.id)});
     var temGeo=res.some(function(r){return r.lat!=null});mostraMapa(temGeo);setTimeout(function(){desenhaPinos(true)},80);
     $('f-total').textContent=d.total+' com esse filtro'+(d.total>res.length?' · mostrando '+res.length:'');desenhaLista()})}
+
+/* ── CARDÁPIO PRONTO (conta de prévia montada pela IA) ── */
+var PARAR_PREP=false, LK_ID='';
+function prepLinha(r){var x='';
+  if(r.prep==='pronto')x='<span class="tg ok">🍽 Cardápio pronto · '+(r.prep_n||0)+' itens</span> <a href="https://livefood.tec.br/'+esc(r.slug_demo)+'/mesa/1" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:var(--roxo);font-weight:800;font-size:12px">ver</a> <a href="#" onclick="event.stopPropagation();abreLink(\''+esc(r.id)+'\');return false" style="color:var(--muted2);font-weight:700;font-size:12px">refazer</a> <a href="#" onclick="event.stopPropagation();apagaDemo(\''+esc(r.id)+'\');return false" style="color:var(--muted2);font-weight:700;font-size:12px">apagar</a>'+(r.abriu_em?' <span class="tg cl">👀 abriu '+(r.aberturas||1)+'x</span>':'');
+  else if(r.prep==='erro')x='<span style="color:#B91C1C;font-size:12px;font-weight:700">'+esc(r.prep_msg||'Não deu para montar')+'</span> <a href="#" onclick="event.stopPropagation();abreLink(\''+esc(r.id)+'\');return false" style="color:var(--roxo);font-weight:800;font-size:12px">colar link</a>';
+  return x?'<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">'+x+'</div>':''}
+function prepUm(id,url){return chamar('POST','/admin/mkt/preparar',{id:id,url:url||''}).then(function(d){var r=res.find(function(x){return x.id===id});
+  if(r){if(d.ok){r.prep='pronto';r.prep_n=d.itens;r.slug_demo=d.slug;r.prep_msg=''}else{r.prep='erro';r.prep_msg=d.mensagem||d.erro}}return d})}
+function prepararSel(){var ids=Array.from(sel);if(!ids.length)return;PARAR_PREP=false;
+  $('pp-lista').innerHTML=ids.map(function(id,i){var r=res.find(function(x){return x.id===id})||{};return '<div class="passo" id="pp'+i+'"><div class="bo">'+(i+1)+'</div><div style="min-width:0"><b>'+esc(r.nome)+'</b><div class="sub2" id="ppt'+i+'">na fila</div></div></div>'}).join('');abre('m-prep');
+  var i=0;(function prox(){if(i>=ids.length||PARAR_PREP){desenhaLista();return}var k=i;$('ppt'+k).textContent='procurando e lendo o cardápio...';
+    prepUm(ids[k]).then(function(d){var p=$('pp'+k);if(d.ok){p.classList.add('ok');p.querySelector('.bo').textContent='✓';$('ppt'+k).innerHTML=d.itens+' itens em '+d.categorias+' categorias · <a href="'+esc(d.link)+'" target="_blank" rel="noopener" style="color:var(--roxo);font-weight:800">ver cardápio</a>'}
+      else{p.querySelector('.bo').textContent='✕';$('ppt'+k).innerHTML='<span style="color:#B91C1C">'+esc(d.mensagem||d.erro||'erro')+'</span>'}i++;prox()})
+    .catch(function(){$('ppt'+k).textContent='sem conexão';i++;prox()})})()}
+function abreLink(id){var r=res.find(function(x){return x.id===id});if(!r)return;LK_ID=id;$('lk-txt').innerHTML='Cole o link do cardápio de <b>'+esc(r.nome)+'</b>. No Instagram, use o link que está na bio do perfil.';$('lk-url').value=r.prep_fonte||'';$('lk-res').innerHTML='';abre('m-link')}
+function prepararLink(){var u=$('lk-url').value.trim(),b=$('lk-btn');if(!u){$('lk-res').innerHTML='<div class="aviso" style="margin:0">Cole o link.</div>';return}
+  b.disabled=true;b.textContent='Montando... (até 2 min)';prepUm(LK_ID,u).then(function(d){b.disabled=false;b.textContent='Montar cardápio';
+    if(d.ok){fecha('m-link');desenhaLista();toast(d.itens+' itens no cardápio')}else $('lk-res').innerHTML='<div class="aviso" style="margin:0">'+esc(d.mensagem||d.erro)+'</div>'})
+  .catch(function(){b.disabled=false;b.textContent='Montar cardápio';$('lk-res').innerHTML='<div class="aviso" style="margin:0">Sem conexão.</div>'})}
+function apagaDemo(id){var r=res.find(function(x){return x.id===id});if(!r)return;chamar('POST','/admin/mkt/apagar-demo',{id:id}).then(function(){r.prep=null;r.slug_demo=null;r.prep_n=null;desenhaLista();toast('Conta de prévia apagada')})}
 
 /* ── CIDADES E BUSCA NO GOOGLE ── */
 function carregaCidades(){return chamar('GET','/admin/mkt/cidades').then(function(d){CIDADES=d.itens||[];desenhaCidades()})}
@@ -546,7 +584,9 @@ function verNaBase(nome){aba('base');chamar('GET','/admin/mkt/filtros').then(fun
 
 /* ── MENSAGEM ── */
 function primeiro(){return res.find(function(x){return sel.has(x.id)})}
-function previa(){var r=primeiro()||{nome:'Nome do estabelecimento'};$('prev-quem').textContent=r.nome;
+var TEXTO_CARD='Olá, {{1}}! 👋\n\nAqui é o LiveFood. Montamos o cardápio digital de vocês, com pratos, preços e fotos, já pronto para usar.\n\nAlém do cardápio, o *LiveFood* tem o sistema completo de gestão para o seu restaurante:\n\n💬 Pedidos e delivery pelo WhatsApp, sem comissão\n🍽 Pedidos na mesa pelo QR Code e chamada do garçom\n🖨 Impressão automática na cozinha\n💰 Caixa, comandas e divisão da conta\n🛵 Gestão de entregadores\n💳 Maquininha de cartão integrada ao sistema\n\nToque abaixo para ver o cardápio que preparamos para vocês.';
+function previa(){var r=primeiro()||{nome:'Nome do estabelecimento'};$('prev-quem').textContent=r.nome+(r.prep==='pronto'?' (com cardápio pronto)':'');
+  if(r.prep==='pronto'){$('prev-conv').innerHTML='<div class="dia">HOJE</div><div class="bal eu"><img src="site/img/mkt-capa.jpg" alt="" style="width:100%;border-radius:8px;margin-bottom:6px;display:block">'+esc(TEXTO_CARD.replace('{{1}}',r.nome)).replace(/\*([^*]+)\*/g,'<b>$1</b>')+'<span class="hr">✓✓</span><div class="bts"><span>↗ Ver meu cardápio</span><span>↩ Não tenho interesse</span></div></div>';return}
   $('prev-conv').innerHTML='<div class="dia">HOJE</div><div class="bal eu">'+esc(TEXTO_MODELO.replace('{{1}}',r.nome))+'<span class="hr">✓✓</span><div class="bts"><span>↩ Quero testar 7 dias</span><span>↩ Não tenho interesse</span></div></div>'}
 function abreTeste(){var r=primeiro();if(!r){toast('Marque um estabelecimento em Base',1);return}
   $('t-txt').innerHTML='Vai para o seu WhatsApp a primeira mensagem com o nome <b>'+esc(r.nome)+'</b>. Não conta no limite e não marca o estabelecimento como contatado.';$('t-res').innerHTML='';abre('m-teste')}

@@ -32,6 +32,13 @@
     }).catch(function () { location.replace('/livefest.html?casa=' + encodeURIComponent(fr.casa) + (fr.ev ? '&ev=' + fr.ev : '')); });
     return;
   }
+  /* (193) livefood.tec.br/p/<loja> = link da mensagem do Marketing: anota que o dono abriu e vai para o cardápio da mesa 1 */
+  if (p[0] === 'p' && p.length === 2 && /^[A-Za-z0-9_-]{2,40}$/.test(p[1])) {
+    var lp = p[1].toLowerCase(), vai = function () { location.replace('/' + lp + '/mesa/1'); };
+    var to = setTimeout(vai, 2500);
+    fetch('https://giro-os-api.nucleofull.workers.dev/mkt/abriu/' + lp, { cache: 'no-store' }).then(function () { clearTimeout(to); vai(); }, function () { clearTimeout(to); vai(); });
+    return;
+  }
   var loja = /^[A-Za-z0-9_-]{2,40}$/.test(p[0] || '') ? p[0] : '';
   /* (109) livefood.tec.br/<loja>/cardapio → versão do WhatsApp: monta a sacola e envia o pedido pelo WhatsApp da loja */
   var wa = p.length === 2 && p[1].toLowerCase() === 'cardapio';
