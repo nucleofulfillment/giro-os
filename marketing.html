@@ -642,7 +642,7 @@ function enviarVideo(){var f=$('vd-arq').files[0],ln=$('vd-lin').value;if(!f){$(
     x.setRequestHeader('Authorization','Bearer '+TOKEN);x.setRequestHeader('Content-Type',f.type||'video/mp4');
     x.upload.onprogress=function(e){if(e.lengthComputable){var p=Math.round(e.loaded/e.total*100);$('vd-prog-t').textContent=p+'%';$('vd-prog-b').style.width=p+'%'}};
     x.onload=function(){ocupa(-1);b.disabled=false;b.textContent='Enviar vídeo';var d={};try{d=JSON.parse(x.responseText)}catch(e){}
-      if(x.status===200&&d.ok){$('vd-res').innerHTML='<div class="info" style="margin:0">✓ Vídeo salvo. As próximas prévias desta categoria já saem com ele. Para as que já existem, toque em <b>Aplicar nas prévias existentes</b>.</div>';$('vd-arq').value='';abreVideos(1)}
+      if(x.status===200&&d.ok){$('vd-res').innerHTML='<div class="info" style="margin:0">✓ Vídeo salvo'+(d.aplicados!=null?' e já colocado em '+d.aplicados+' prévia'+(d.aplicados===1?'':'s')+' desta categoria':'')+'. As próximas prévias já saem com ele.'+(d.aplicados==null?' Para as que já existem, toque em <b>Aplicar nas prévias existentes</b>.':'')+'</div>';$('vd-arq').value='';abreVideos(1)}
       else $('vd-res').innerHTML='<div class="aviso" style="margin:0">'+esc(d.mensagem||('Não enviou (HTTP '+x.status+')'))+'</div>'};
     x.onerror=function(){ocupa(-1);b.disabled=false;b.textContent='Enviar vídeo';$('vd-res').innerHTML='<div class="aviso" style="margin:0">Sem conexão.</div>'};x.send(f)}}
 function aplicarVideo(){var ln=$('vd-lin').value;chamar('POST','/admin/mkt/video-aplicar',{linha:ln}).then(function(d){$('vd-res').innerHTML='<div class="info" style="margin:0">✓ Aplicado em '+(d.aplicados||0)+' prévia'+(d.aplicados===1?'':'s')+' desta categoria.</div>'})}
