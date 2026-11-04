@@ -224,7 +224,7 @@ td{padding:11px 12px;border-top:1px solid var(--border);font-size:13px}
         <h3>Resultado <span class="sub2" id="r-resumo">faça uma busca</span>
           <span class="dir"><select id="r-filtro" style="width:auto;padding:7px 10px;font-size:12.5px" onchange="desenhaLista()"><option value="todos">Todos</option><option value="cel">Só com celular</option><option value="novos">Só os que podem ser chamados</option></select>
           <button class="btn peq" onclick="selTodos()">Marcar todos</button></span></h3>
-        <div class="lista" id="lista"><div class="info">Escolha o local, o raio e os tipos e toque em <b>Buscar no Google Maps</b>. Quem já é cliente, já foi contatado ou não tem celular aparece marcado e não recebe a mensagem.</div></div>
+        <div class="lista" id="lista"><div class="info">Escolha o local, o raio e os tipos e toque em <b>Buscar no Google Maps</b>. Quem já é cliente, já foi contatado ou não tem telefone aparece marcado e não recebe a mensagem. Fixo comercial pode ser marcado: muitos usam WhatsApp Business.</div></div>
         <div class="barra-sel" id="barra" hidden>
           <b><span id="sel-n">0</span> selecionados</b><span style="opacity:.75;font-size:12.5px" id="sel-custo"></span>
           <span class="esp"></span>
@@ -325,7 +325,7 @@ td{padding:11px 12px;border-top:1px solid var(--border);font-size:13px}
   <p class="sub2">Entra na base como qualquer outro e já fica marcado na lista para enviar a mensagem.</p>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
     <div style="grid-column:1/-1"><label>Nome do estabelecimento *</label><input id="c-nome" placeholder="ex.: Cantina Bella"></div>
-    <div><label>Celular (WhatsApp) *</label><input id="c-fone" placeholder="(47) 9 9999-9999" inputmode="tel"></div>
+    <div><label>WhatsApp (celular ou fixo) *</label><input id="c-fone" placeholder="(47) 9 9999-9999" inputmode="tel"></div>
     <div><label>Tipo</label><select id="c-tipo"><option>Restaurante</option><option>Bar</option><option>Casa noturna</option><option>Lanchonete</option><option>Pizzaria</option><option>Padaria</option><option>Marmitaria / delivery</option><option>Mercado</option><option>Farmácia</option><option>Eventos</option><option>Outro</option></select></div>
     <div><label>Cidade</label><input id="c-cidade" placeholder="Itajaí"></div>
     <div><label>Bairro</label><input id="c-bairro" placeholder="Praia Brava"></div>
@@ -370,8 +370,8 @@ function carregaStatus(){chamar('GET','/admin/mkt/status').then(function(d){
 }).catch(function(){$('status').innerHTML='<span class="no">Sem conexão com o servidor</span>'})}
 function iniciaMapa(){mapa=L.map('mapa-real',{zoomControl:true}).setView([-26.95,-48.63],13);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(mapa); camada=L.layerGroup().addTo(mapa)}
-function podeSel(r){return r.celular&&!r.cliente&&r.etapa==='novo'}
-function situ(r){return r.cliente?'<span class="tg cl">Já é cliente</span>':r.etapa!=='novo'?'<span class="tg am">Já contatado</span>':!r.fone?'<span class="tg no">Sem telefone</span>':!r.celular?'<span class="tg no">Só fixo</span>':'<span class="tg ok">Pode chamar</span>'}
+function podeSel(r){return String(r.fone||'').length>=10&&!r.cliente&&r.etapa==='novo'}
+function situ(r){return r.cliente?'<span class="tg cl">Já é cliente</span>':r.etapa!=='novo'?'<span class="tg am">Já contatado</span>':String(r.fone||'').length<10?'<span class="tg no">Sem telefone</span>':!r.celular?'<span class="tg am" title="Número fixo comercial: muitos usam WhatsApp Business. Se não tiver, a mensagem não é entregue.">Fixo · pode ter Whats</span>':'<span class="tg ok">Celular</span>'}
 function foneFmt(d){d=String(d||'');return d.length===11?'('+d.slice(0,2)+') '+d.slice(2,7)+'-'+d.slice(7):d.length===10?'('+d.slice(0,2)+') '+d.slice(2,6)+'-'+d.slice(6):d}
 var ULT=null;
 function buscar(){var tipos=[].map.call(document.querySelectorAll('#tipos .chip.on'),function(c){return c.dataset.t});
@@ -393,7 +393,7 @@ function desenhaMapa(c,raio){camada.clearLayers();PINOS={};
   mapa.fitBounds(L.circle([c.lat,c.lng],{radius:raio*1000}).addTo(mapa).getBounds()); mapa.eachLayer(function(x){if(x instanceof L.Circle&&!camada.hasLayer(x))mapa.removeLayer(x)}); pintaPinos()}
 function pintaPinos(){res.forEach(function(r){var m=PINOS[r.id];if(m)m.setIcon(L.divIcon({className:'',html:'<div class="pin '+(sel.has(r.id)?'sel':podeSel(r)?'':'blq')+'"></div>',iconSize:[16,16]}))})}
 function alterna(id){var r=res.find(function(x){return x.id===id});if(!r)return;
-  if(!podeSel(r)){toast(r.cliente?'Já é cliente do LiveFood':r.etapa!=='novo'?'Já recebeu a mensagem':'Sem celular',1);return}
+  if(!podeSel(r)){toast(r.cliente?'Já é cliente do LiveFood':r.etapa!=='novo'?'Já recebeu a mensagem':'Sem telefone',1);return}
   sel.has(id)?sel.delete(id):sel.add(id);desenhaLista()}
 function selTodos(){var p=res.filter(podeSel),todos=p.length&&p.every(function(r){return sel.has(r.id)});p.forEach(function(r){todos?sel.delete(r.id):sel.add(r.id)});desenhaLista()}
 function atualizaSel(){var n=sel.size;$('barra').hidden=!n;$('sel-n').textContent=n;$('sel-custo').textContent='≈ R$ '+reais(n*0.32)+' em mensagens';
@@ -485,7 +485,7 @@ function carregaBase(){var lo=$('f-lote').value,p=new URLSearchParams();if(lo===
 function abreCad(){['c-nome','c-fone','c-cidade','c-bairro','c-email'].forEach(function(i){$(i).value=''});$('c-res').innerHTML='';abre('m-cad');setTimeout(function(){$('c-nome').focus()},50)}
 function salvaCad(){var nome=$('c-nome').value.trim(),fone=$('c-fone').value.replace(/\D/g,'').replace(/^55(?=\d{11}$)/,'');
   if(!nome){$('c-res').innerHTML='<div class="aviso" style="margin:0">Informe o nome.</div>';return}
-  if(!(fone.length===11&&fone[2]==='9')){$('c-res').innerHTML='<div class="aviso" style="margin:0">Informe um celular com DDD, ex.: (47) 9 9999-9999.</div>';return}
+  if(fone.length!==10&&fone.length!==11){$('c-res').innerHTML='<div class="aviso" style="margin:0">Informe o telefone com DDD: celular (47) 9 9999-9999 ou fixo com WhatsApp (47) 3333-3333.</div>';return}
   var b=$('c-btn');b.disabled=true;b.textContent='Cadastrando...';
   chamar('POST','/admin/mkt/importar',{lote:'Cadastro manual',itens:[{nome:nome,fone:fone,tipo:$('c-tipo').value,cidade:$('c-cidade').value.trim(),bairro:$('c-bairro').value.trim(),email:$('c-email').value.trim().toLowerCase()}]}).then(function(d){
     b.disabled=false;b.textContent='Cadastrar';
