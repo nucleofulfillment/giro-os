@@ -244,7 +244,7 @@ td{padding:11px 12px;border-top:1px solid var(--border);font-size:13px}
         <div class="mp-leg"><span><i style="background:#FF5A00"></i>celular</span><span><i style="background:#F59E0B"></i>fixo</span><span><i style="background:#1C1C1E"></i>marcado</span><span><i style="background:#B8B8BE"></i>contatado</span></div></div></div>
       <div class="card">
         <h3>Estabelecimentos <span class="sub2" id="r-resumo">use o filtro acima</span>
-          <span class="dir"><select id="r-filtro" style="width:auto;padding:7px 10px;font-size:12.5px" onchange="desenhaLista()"><option value="todos">Todos da lista</option><option value="novos">Só os que podem ser chamados</option></select>
+          <span class="dir"><input id="r-busca" placeholder="🔎 buscar na lista pelo nome" oninput="desenhaLista()" style="width:230px;max-width:100%;padding:7px 10px;font-size:12.5px"><select id="r-filtro" style="width:auto;padding:7px 10px;font-size:12.5px" onchange="desenhaLista()"><option value="todos">Todos da lista</option><option value="novos">Só os que podem ser chamados</option></select>
           <button class="btn peq" onclick="selTodos()">Marcar todos</button></span></h3>
         <div class="lista" id="lista"><div class="info">Filtre por cidade, tipo ou bairro e toque em <b>Filtrar</b>. Depois marque quem vai receber e siga para <b>Mensagem</b>.</div></div>
         <div class="barra-sel" id="barra" hidden>
@@ -477,7 +477,7 @@ function desenhaPinos(ajustar){
   res.forEach(function(r){if(r.lat==null||r.lng==null)return;n++;b.extend([r.lng,r.lat]);
     var d=document.createElement('div'),dd=document.createElement('div'),ii=document.createElement('div'),sp=document.createElement('span'),ln=document.createElement('div'),dt=document.createElement('div');
     d.className='mp-pkw';dd.className='mp-pkd';ii.className='mp-pk';ln.className='mp-pkl';dt.className='mp-pkdot';sp.textContent=EMO[r.tipo]||'';ii.appendChild(sp);dd.appendChild(ii);d.appendChild(ln);d.appendChild(dt);d.appendChild(dd);
-    ii.title=r.nome;ii.addEventListener('click',function(ev){ev.stopPropagation();alterna(r.id)});
+    ii.title=r.nome;ii.addEventListener('click',function(ev){ev.stopPropagation();alterna(r.id);var lt=$('lista');if(lt)lt.scrollTop=0});
     ii.addEventListener('contextmenu',function(ev){ev.preventDefault();infoPino(r)});
     var mk=new maplibregl.Marker({element:d,anchor:'bottom'}).setLngLat([r.lng,r.lat]).addTo(mapa);PINOS[r.id]={mk:mk,el:d,in:ii,dd:dd,ln:ln};});
   pintaPinos();if(ajustar&&n)mapa.fitBounds(b,{padding:60,maxZoom:15,duration:0});setTimeout(espalhar,60)}
@@ -500,14 +500,17 @@ function fmtData(s){s=String(s||'');var m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);re
 function mostraMapa(sim){$('mapa-card').hidden=!sim;$('duo').style.gridTemplateColumns=sim?'':'1fr';if(sim&&mapa)setTimeout(function(){mapa.resize();espalhar()},50)}
 
 /* ── BASE ── */
-function desenhaLista(){var f=$('r-filtro').value, l=res.filter(function(r){return f==='novos'?podeSel(r):true});
+function semAc(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')}
+function desenhaLista(){var f=$('r-filtro').value, qb=semAc($('r-busca').value.trim()), l=res.filter(function(r){return (f==='novos'?podeSel(r):true)&&(!qb||semAc(r.nome+' '+(r.bairro||'')).indexOf(qb)>=0)});
+  l=l.filter(function(r){return sel.has(r.id)}).concat(l.filter(function(r){return !sel.has(r.id)}));
   $('lista').innerHTML=l.map(function(r){return '<div class="est '+(sel.has(r.id)?'sel ':'')+(podeSel(r)?'':'bloq')+'" onclick="alterna(\''+esc(r.id)+'\')">'+
    '<div class="ck">'+(sel.has(r.id)?'✓':'')+'</div><div style="min-width:0"><div class="nm">'+esc(r.nome)+'</div><div class="mt"><span>'+esc(r.tipo)+'</span>'+(r.bairro?'<span>'+esc(r.bairro)+'</span>':'')+(r.cidade?'<span>'+esc(r.cidade)+'</span>':'')+(r.nota?'<span>★ '+Number(r.nota).toFixed(1).replace('.',',')+' ('+r.avaliacoes+')</span>':'')+(r.abertura?'<span>aberta em '+esc(fmtData(r.abertura))+'</span>':'')+(r.fone?'<span>'+foneFmt(r.fone)+'</span>':'')+(r.maps?'<a href="'+esc(r.maps)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:var(--roxo);font-weight:800">Maps</a>':'')+(r.site?'<a href="'+esc(r.site)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:var(--roxo);font-weight:800">Site</a>':'')+'</div>'+prepLinha(r)+'</div><div style="text-align:right">'+situ(r)+'</div></div>'}).join('')||'<div class="info">Nada com esse filtro.</div>';
   $('r-resumo').textContent=res.length+' na lista · '+res.filter(podeSel).length+' podem ser chamados'; atualizaSel(); pintaPinos()}
 function pintaPinos(){res.forEach(function(r){var o=PINOS[r.id];if(!o)return;o.in.style.setProperty('--pc',corPino(r));o.in.classList.toggle('sel',sel.has(r.id));o.el.style.zIndex=sel.has(r.id)?30:(podeSel(r)?2:1)})}
 function alterna(id){var r=res.find(function(x){return x.id===id});if(!r)return;
   if(!podeSel(r)){toast(r.etapa!=='novo'?'Já recebeu a mensagem':'Sem telefone',1);return}
-  sel.has(id)?sel.delete(id):sel.add(id);desenhaLista()}
+  sel.has(id)?sel.delete(id):sel.add(id);desenhaLista();
+  if(sel.has(id)&&r.lat!=null&&mapa&&mapa._ok){try{var bb=mapa.getBounds();if(!bb.contains([r.lng,r.lat]))mapa.easeTo({center:[r.lng,r.lat],duration:600})}catch(e){}}}
 function selTodos(){var p=res.filter(podeSel),todos=p.length&&p.every(function(r){return sel.has(r.id)});p.forEach(function(r){todos?sel.delete(r.id):sel.add(r.id)});desenhaLista()}
 function atualizaSel(){var n=sel.size;$('barra').hidden=!n;$('sel-n').textContent=n;$('sel-custo').textContent='≈ R$ '+reais(n*0.32)+' em mensagens';
   var nomes=res.filter(function(r){return sel.has(r.id)}).map(function(r){return r.nome});
