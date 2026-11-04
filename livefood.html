@@ -582,9 +582,19 @@ function carregar(primeira){
   return fetch(API+'/food/cardapio/'+encodeURIComponent(CLI)).then(function(r){return r.json();}).then(function(d){
     if(!d||!d.ok){ if(primeira) vazio('Cardápio não encontrado',(d&&d.mensagem)||'Confira o link.'); return; }
     if(d.cfg&&d.cfg.logoTam) document.documentElement.style.setProperty('--logo-h',d.cfg.logoTam+'px');
-    if(primeira){ D=d; CLI=d.cli||CLI; sacLer(); aplicaTema(); navOn('inicio'); temaAplica(); wizPill(); mesaInit(); document.title=(d.empresa||'Cardápio'); $('emp').innerHTML=((d.cfg&&d.cfg.logo)?'<img class="lg" src="'+API+'/food/foto/'+encodeURIComponent(d.cli||CLI)+'/_logo?v='+(d.cfg.v||0)+'" alt="'+esc(d.empresa)+'" onerror="this.outerHTML=\''+esc(d.empresa).replace(/'/g,'')+'\'">':esc(d.empresa))+'<small id="stt"></small>'; pintaStatus(); try{ if(!estaAberto()&&!sessionStorage.getItem('lf_fcm_'+(d.cli||CLI))){ sessionStorage.setItem('lf_fcm_'+(d.cli||CLI),'1'); setTimeout(abreFechado,600); } }catch(e){} manifesto(); iniciar(); clbInit(); catAplica(); var rtP=(ROTA.r||Q.get('r')||'').replace(/[^a-f0-9]/g,''); if(rtP) setTimeout(function(){ rpAbre(rtP); },300); }
+    if(primeira){ D=d; CLI=d.cli||CLI; sacLer(); aplicaTema(); navOn('inicio'); temaAplica(); wizPill(); mesaInit(); document.title=(d.empresa||'Cardápio'); $('emp').innerHTML=((d.cfg&&d.cfg.logo)?'<img class="lg" src="'+API+'/food/foto/'+encodeURIComponent(d.cli||CLI)+'/_logo?v='+(d.cfg.v||0)+'" alt="'+esc(d.empresa)+'" onerror="this.outerHTML=\''+esc(d.empresa).replace(/'/g,'')+'\'">':esc(d.empresa))+'<small id="stt"></small>'; pintaStatus(); try{ if(!estaAberto()&&!sessionStorage.getItem('lf_fcm_'+(d.cli||CLI))){ sessionStorage.setItem('lf_fcm_'+(d.cli||CLI),'1'); setTimeout(abreFechado,600); } }catch(e){} manifesto(); iniciar(); clbInit(); catAplica(); try{ previaAviso(d); }catch(ePv){} var rtP=(ROTA.r||Q.get('r')||'').replace(/[^a-f0-9]/g,''); if(rtP) setTimeout(function(){ rpAbre(rtP); },300); }
     else { novoD=d; if(D&&d.cfg){ D.cfg=d.cfg; pintaStatus(); } }   /* horário salvo no painel vale sem o cliente recarregar a página */
   }).catch(function(){ if(primeira) vazio('Sem conexão','Não consegui abrir o cardápio. Tente de novo.'); });
+}
+/* (195) conta de prévia do Marketing: faixa no topo avisando que é uma prévia (cardápio lido) ou uma amostra (exemplo da linha de produtos) */
+function previaAviso(d){
+  var pv=d&&d.cfg&&d.cfg.previa; if(!pv||document.getElementById('lf-previa')) return;
+  var t=pv==='amostra'?'<b>Cardápio de exemplo</b> montado pelo LiveFood para '+esc(d.empresa||'o seu restaurante')+'. Os produtos e preços são ilustrativos: o seu cardápio de verdade entra em minutos.':'<b>Prévia</b> montada pelo LiveFood a partir do cardápio de '+esc(d.empresa||'vocês')+'. Confira produtos e preços: tudo pode ser ajustado.';
+  var b=document.createElement('div'); b.id='lf-previa';
+  b.style.cssText='position:fixed;left:10px;right:10px;top:calc(env(safe-area-inset-top,0px) + 10px);z-index:9999;background:#1C1C1E;color:#fff;border-radius:14px;padding:11px 40px 11px 14px;font:500 13px/1.45 Manrope,-apple-system,sans-serif;box-shadow:0 10px 30px -10px rgba(0,0,0,.5);max-width:560px;margin:0 auto';
+  b.innerHTML='<span style="display:inline-block;background:#FF5A00;border-radius:99px;padding:1px 8px;font-size:11px;font-weight:800;margin-right:6px">LiveFood</span>'+t+'<button aria-label="Fechar" style="position:absolute;right:8px;top:8px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(255,255,255,.15);color:#fff;font-size:14px;cursor:pointer">✕</button>';
+  b.querySelector('button').onclick=function(){ b.remove(); };
+  document.body.appendChild(b);
 }
 function vazio(t,p){ $('vzB').style.display='none'; $('vzT').textContent=t; $('vzP').textContent=p; $('vazio').style.display='flex'; }
 
