@@ -510,8 +510,16 @@ document.querySelectorAll('.fundo').forEach(function(f){f.addEventListener('clic
 var OCUP=0, ALVO_OCUP=[];
 function ocupa(d){OCUP=Math.max(0,OCUP+d);var on=OCUP>0,p=$('ocup');if(p)p.style.display=on?'flex':'none';if(!on){ALVO_OCUP.forEach(function(a){a.classList.remove('carreg')});ALVO_OCUP=[]}}
 document.addEventListener('click',function(e){var a=e.target.closest('#lista a[href="#"],.lead select,.modal .acoes .btn,.barra-sel .btn,.btn.peq,.card .btn,.cv,.rodape .btn');if(!a||a.classList.contains('carreg'))return;setTimeout(function(){if(OCUP>0){a.classList.add('carreg');ALVO_OCUP.push(a)}},30)},true);
-function chamar(m,c,corpo){ocupa(1);return fetch(API+c,{method:m,headers:{'Content-Type':'application/json','Authorization':'Bearer '+TOKEN},cache:'no-store',body:corpo?JSON.stringify(corpo):undefined}).then(function(r){
-  if(r.status===401){location.href='admin.html';throw new Error('sessao')} return r.json().catch(function(){return {}}).then(function(d){d._status=r.status;return d})}).then(function(d){ocupa(-1);return d},function(e){ocupa(-1);throw e})}
+/* (210) quieto = consulta de fundo, sem o aviso "Carregando…" */
+function chamar(m,c,corpo,quieto){if(!quieto)ocupa(1);var fim=function(){if(!quieto)ocupa(-1)};return fetch(API+c,{method:m,headers:{'Content-Type':'application/json','Authorization':'Bearer '+TOKEN},cache:'no-store',body:corpo?JSON.stringify(corpo):undefined}).then(function(r){
+  if(r.status===401){location.href='admin.html';throw new Error('sessao')} return r.json().catch(function(){return {}}).then(function(d){d._status=r.status;return d})}).then(function(d){fim();return d},function(e){fim();throw e})}
+/* (210) base guardada no navegador: abre na hora com o último filtro e atualiza por trás */
+var CACHE_K='lf_mkt_cache_v1';
+function cacheLer(){try{return JSON.parse(localStorage.getItem(CACHE_K)||'null')||{}}catch(e){return {}}}
+function cacheGrava(k,v){try{var c=cacheLer();c[k]=v;var s=JSON.stringify(c);if(s.length<4500000)localStorage.setItem(CACHE_K,s);else{delete c.lista;localStorage.setItem(CACHE_K,JSON.stringify(c))}}catch(e){}}
+var CAMPOS_F=['f-lote','f-cidade','f-tipo','f-bairro','f-q','f-so','f-cel','f-prep','f-card','f-lim'];
+function formLer(){var o={};CAMPOS_F.forEach(function(i){var e=$(i);if(e)o[i]=e.value});return o}
+function formPoe(o){if(!o)return;CAMPOS_F.forEach(function(i){var e=$(i);if(e&&o[i]!=null)e.value=o[i]})}
 var ABAS=['base','buscar','importar','mensagem','funil','conversas','campanhas'];
 function aba(a){document.querySelectorAll('.aba').forEach(function(b){b.classList.toggle('on',b.dataset.a===a)});ABAS.forEach(function(s){$('s-'+s).hidden=s!==a});
   if(a==='base'){carregaFiltros();if(mapa)setTimeout(function(){mapa.resize();espalhar()},50)}
@@ -521,7 +529,7 @@ $('tipos').addEventListener('click',function(e){var c=e.target.closest('.chip');
 $('b-max').addEventListener('change',custo);
 function reais(v){return v.toFixed(2).replace('.',',')}
 function custo(){var m=Number($('b-max').value);$('b-custo').textContent='até '+m+' chamadas ≈ US$ '+(m*0.035).toFixed(2).replace('.',',')+' (o Google dá uma faixa grátis por mês)'}
-function carregaStatus(){chamar('GET','/admin/mkt/status').then(function(d){
+function carregaStatus(){chamar('GET','/admin/mkt/status',null,1).then(function(d){
   if(!d.ok){$('status').innerHTML='<span class="no">'+esc(d.mensagem||d.erro||'Servidor sem o Worker do Marketing')+'</span>';return}
   ST=d; $('status').innerHTML='<span class="'+(d.google?'ok':'no')+'">'+(d.google?'✓ Google Maps ligado':'✕ Falta a chave do Google Maps')+'</span><span class="'+(d.whats?'ok':'no')+'">'+(d.whats?'✓ WhatsApp ligado':'✕ WhatsApp não configurado')+'</span><span>Modelo: '+esc(d.modelo)+'</span>';
   $('m-modelo-nome').textContent=d.modelo; $('k-enc').textContent=d.encontrados; $('k-con').textContent=d.contatados; $('k-con-d').textContent='hoje '+d.hoje+' de '+d.limite;
@@ -610,16 +618,23 @@ function atualizaSel(){var n=sel.size;$('barra').hidden=!n;$('sel-n').textConten
   $('m-para').innerHTML=n?'<b>'+n+'</b> estabelecimento'+(n>1?'s':'')+': '+esc(nomes.slice(0,4).join(', '))+(n>4?' e mais '+(n-4):''):'ninguém selecionado. Volte em Base e marque os estabelecimentos.';
   var livre=ST.limite-ST.hoje; $('m-enviar').disabled=!n||n>livre; $('m-enviar').textContent=n>livre?'Passa do limite ('+livre+' livres hoje)':'Enviar para '+(n||'os')+' selecionado'+(n>1?'s':'');
   $('lim-bar').style.width=Math.min(100,ST.hoje/ST.limite*100)+'%';$('lim-txt').textContent=ST.hoje+' de '+ST.limite}
-function carregaFiltros(lote){chamar('GET','/admin/mkt/filtros').then(function(d){if(!d.ok)return;
+function carregaFiltros(lote){chamar('GET','/admin/mkt/filtros',null,1).then(function(d){if(!d.ok)return;cacheGrava('filtros',d);aplicaFiltros(d,lote)})}
+function aplicaFiltros(d,lote){
   var v=$('f-lote').value;$('f-lote').innerHTML='<option value="">Tudo</option>'+(d.lotes||[]).map(function(l){return '<option value="'+esc(l.lote)+'">'+esc(l.lote)+' ('+l.n+')</option>'}).join('');$('f-lote').value=lote||v;
   var c=$('f-cidade').value;$('f-cidade').innerHTML='<option value="">Todas</option>'+(d.cidades||[]).map(function(l){return '<option value="'+esc(l.cidade)+'">'+esc(l.cidade)+' ('+l.n+')</option>'}).join('');$('f-cidade').value=c;
-  var t=$('f-tipo').value;$('f-tipo').innerHTML='<option value="">Todos</option>'+(d.tipos||[]).map(function(l){return '<option value="'+esc(l.tipo)+'">'+esc(l.tipo)+' ('+l.n+')</option>'}).join('');$('f-tipo').value=t})}
-function carregaBase(fixar){var p=new URLSearchParams(),lo=$('f-lote').value;if(lo)p.set('lote',lo);
+  var t=$('f-tipo').value;$('f-tipo').innerHTML='<option value="">Todos</option>'+(d.tipos||[]).map(function(l){return '<option value="'+esc(l.tipo)+'">'+esc(l.tipo)+' ('+l.n+')</option>'}).join('');$('f-tipo').value=t}
+var LISTA_ASS='';
+function carregaBase(fixar,quieto){var p=new URLSearchParams(),lo=$('f-lote').value;if(lo)p.set('lote',lo);
   [['cidade','f-cidade'],['tipo','f-tipo'],['bairro','f-bairro'],['q','f-q'],['so','f-so'],['celular','f-cel'],['prep','f-prep'],['card','f-card']].forEach(function(k){var v=$(k[1]).value.trim();if(v)p.set(k[0],v)});p.set('limite',$('f-lim').value);
-  return chamar('GET','/admin/mkt/lista?'+p.toString()).then(function(d){if(!d.ok){toast(d.mensagem||d.erro||'Erro',1);return}
-    res=d.itens;sel=new Set();if(fixar)res.forEach(function(r){if(r.id===fixar&&podeSel(r))sel.add(r.id)});
+  var form=formLer();
+  return chamar('GET','/admin/mkt/lista?'+p.toString(),null,quieto).then(function(d){if(!d.ok){if(!quieto)toast(d.mensagem||d.erro||'Erro',1);return}
+    var ass=JSON.stringify(d.itens).length+':'+d.total+':'+JSON.stringify(d.itens).slice(0,4000);
+    cacheGrava('lista',{itens:d.itens,total:d.total,form:form,t:Date.now()});
+    if(quieto&&ass===LISTA_ASS)return;   /* (210) nada mudou desde a última vez: não redesenha */
+    LISTA_ASS=ass;mostraBase(d,fixar)})}
+function mostraBase(d,fixar){res=d.itens||[];if(!fixar)sel=new Set();else{sel=new Set();res.forEach(function(r){if(r.id===fixar&&podeSel(r))sel.add(r.id)})}
     var temGeo=res.some(function(r){return r.lat!=null});mostraMapa(temGeo);setTimeout(function(){desenhaPinos(true)},80);
-    $('f-total').textContent=d.total+' com esse filtro'+(d.total>res.length?' · mostrando '+res.length:'');desenhaLista()})}
+    $('f-total').textContent=d.total+' com esse filtro'+(d.total>res.length?' · mostrando '+res.length:'');desenhaLista()}
 
 /* mapa em tela cheia (Esc sai) */
 function telaCheia(){var d=$('duo'),on=!d.classList.contains('cheio');d.classList.toggle('cheio',on);$('b-cheio').textContent=on?'✕':'⛶';$('b-cheio').title=on?'Sair da tela cheia':'Mapa em tela cheia';
@@ -759,7 +774,7 @@ function prepararLink(){var u=$('lk-url').value.trim(),b=$('lk-btn');if(!u){$('l
 function apagaDemo(id){var r=res.find(function(x){return x.id===id});if(!r)return;chamar('POST','/admin/mkt/apagar-demo',{id:id}).then(function(){r.prep=null;r.slug_demo=null;r.prep_n=null;desenhaLista();toast('Conta de prévia apagada')})}
 
 /* ── CIDADES E BUSCA NO GOOGLE ── */
-function carregaCidades(){return chamar('GET','/admin/mkt/cidades').then(function(d){CIDADES=d.itens||[];desenhaCidades()})}
+function carregaCidades(){return chamar('GET','/admin/mkt/cidades',null,1).then(function(d){CIDADES=d.itens||[];desenhaCidades()})}
 function desenhaCidades(){$('cids').innerHTML=CIDADES.map(function(c,i){return '<span class="cid">'+esc(c.nome)+'<button title="Tirar" onclick="tiraCidade('+i+')">✕</button></span>'}).join('')||'<span class="sub2">Nenhuma cidade ainda. Adicione abaixo.</span>';
   var v=$('b-cidade').value;$('b-cidade').innerHTML=CIDADES.map(function(c,i){return '<option value="'+i+'">'+esc(c.nome)+'</option>'}).join('')||'<option value="">adicione uma cidade acima</option>';if(v&&CIDADES[v])$('b-cidade').value=v;mostraCidade()}
 function addCidade(){var n=$('c-nova').value.trim();if(!n)return;chamar('POST','/admin/mkt/cidades',{nome:n}).then(function(d){if(!d.ok){toast(d.mensagem||d.erro,1);return}CIDADES=d.itens;$('c-nova').value='';desenhaCidades();
@@ -900,7 +915,12 @@ function salvaCad(){var nome=$('c-nome').value.trim(),fone=$('c-fone').value.rep
     carregaFiltros('Cadastro manual');setTimeout(function(){$('f-lote').value='Cadastro manual';carregaBase('tel:'+fone).then(function(){if(sel.size)toast('Cadastrado e marcado. Agora é só ir em Mensagem.');else toast('Cadastrado, mas já tinha sido contatado',1)})},400)})
   .catch(function(){b.disabled=false;b.textContent='Cadastrar';$('c-res').innerHTML='<div class="aviso" style="margin:0">Sem conexão.</div>'})}
 
-iniciaMapa();custo();carregaStatus();carregaFiltros();previa();
+iniciaMapa();custo();carregaStatus();
+/* (210) abre com a base guardada (último filtro) e confere com o servidor por trás, sem "Carregando…" */
+(function(){var C=cacheLer();if(C.filtros)aplicaFiltros(C.filtros);
+  if(C.lista&&C.lista.itens){formPoe(C.lista.form);LISTA_ASS=JSON.stringify(C.lista.itens).length+':'+C.lista.total+':'+JSON.stringify(C.lista.itens).slice(0,4000);setTimeout(function(){mostraBase(C.lista)},120)}
+  carregaFiltros();if(C.lista&&C.lista.itens)setTimeout(function(){carregaBase(null,1)},400)})();
+previa();
 </script>
 </body>
 </html>
