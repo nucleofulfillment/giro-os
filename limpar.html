@@ -31,7 +31,7 @@ function carregar(){
   if(!TK){cx.innerHTML='<h1>Limpar pedidos</h1><p class="mut">Entre primeiro no <a href="admin.html">admin</a> e depois abra esta página de novo.</p>';return;}
   chamar('GET').then(function(d){
     if(d._st===401||d._st===403){cx.innerHTML='<h1>Limpar pedidos</h1><p class="mut">Sessão do admin vencida. Entre no <a href="admin.html">admin</a> e volte aqui.</p>';return;}
-    if(!d.ok){cx.innerHTML='<h1>Limpar pedidos</h1><p class="mut">'+esc(d.mensagem||'Não consegui ler a loja.')+'</p>';return;}
+    if(!d.ok){cx.innerHTML='<h1>Limpar pedidos</h1><p class="mut">'+esc(d.mensagem||('O servidor ainda não tem a limpeza (código '+d._st+(d.erro?' · '+d.erro:'')+'). Confira se o Worker 215 foi colado no Cloudflare.'))+'</p>';return;}
     cx.innerHTML='<h1>Limpar pedidos · '+esc(d.loja.nome)+'</h1><p class="mut">Deixa a loja como se a conta tivesse sido criada hoje: apaga só pedidos e WhatsApp.</p>'+tabela(d.registros)+
       '<div class="av">Não tem como desfazer. Cardápio, fotos, configurações, usuários, mesas, reservas e clientes cadastrados <b>não</b> são apagados.</div>'+
       '<input id="cf" placeholder="Digite LIMPAR para confirmar" autocomplete="off"><button id="bt" disabled>Apagar pedidos e mensagens</button>';
