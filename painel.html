@@ -10026,6 +10026,10 @@ function cdPintarImport(av){
       +(o.tams.length?'<div style="font-size:11.5px;color:var(--muted);margin-top:3px">'+o.tams.map(function(t){ return esc(t.nome)+' R$ '+String(t.preco.toFixed(2)).replace('.',',')+' (até '+t.max+')'; }).join(' · ')+'</div>':'')+'</div>';
   }
   if(av.length) h+='<div style="background:var(--s2);border-radius:10px;padding:10px 12px;font-size:12px;margin:8px 0"><b>Avisos</b><ul style="margin:6px 0 0 16px;padding:0">'+av.map(function(x){ return '<li>'+esc(x)+'</li>'; }).join('')+'</ul></div>';
+  /* (212) produtos ativos do painel que não estão na planilha: opção de desativar (não apaga) */
+  var naPl={}; CD.imp.forEach(function(o){ naPl[cdNorm(o.nome)]=1; });
+  var fora=(CD.prods||[]).filter(function(p){ return p.ativo!==false&&!naPl[cdNorm(p.nome)]; });
+  if(fora.length) h+='<label style="display:flex;gap:10px;align-items:flex-start;border:1.5px solid var(--border2);border-radius:12px;padding:10px 12px;margin:8px 0;cursor:pointer"><input type="checkbox" id="cd-imp-fora" style="margin-top:3px;width:18px;height:18px;flex:none"><span style="font-size:12.5px;line-height:1.45"><b>Desativar os '+fora.length+' produto'+(fora.length==1?'':'s')+' que não estão na planilha</b><br><span style="color:var(--muted)">Eles saem do cardápio, mas não são apagados (dá para reativar depois): '+fora.map(function(p){ return esc(p.nome); }).join(', ')+'</span></span></label>';
   h+='<div style="font-size:11.5px;color:var(--muted);margin:6px 0">Produto que já existe: tamanhos, sabores e adicionais passam a ser os da planilha (o que não estiver nela sai). Fotos de sabores com o mesmo nome ficam.</div>'
     +'<div id="cd-imp-erro" style="color:var(--red);font-size:12.5px;margin:6px 0"></div><button class="btn pri wide" id="cd-imp-go" onclick="cdImportar()">Importar '+CD.imp.length+' produto'+(CD.imp.length==1?'':'s')+'</button>';
   res.innerHTML=h;
@@ -10058,7 +10062,11 @@ function cdImportar(){
       return cdSalvarApi('prod',it).then(function(){ feitos++; });
     }).then(function(){ return um(i+1); });
   }
-  um(0).then(function(){ fecharTudo(); aviso('Importado: '+feitos+' produto'+(feitos==1?'':'s')); cdCarregar(); })
+  /* (212) desativa os que não estão na planilha, se a opção foi marcada */
+  var cx=el('cd-imp-fora'), naPl={}; lista.forEach(function(o){ naPl[cdNorm(o.nome)]=1; });
+  var fora=(cx&&cx.checked)?(CD.prods||[]).filter(function(p){ return p.ativo!==false&&!naPl[cdNorm(p.nome)]; }):[], desat=0;
+  function desliga(i){ if(i>=fora.length) return Promise.resolve(); prog('Desativando '+(i+1)+' de '+fora.length+'…'); var c=JSON.parse(JSON.stringify(fora[i])); c.ativo=false; return cdSalvarApi('prod',c).then(function(){ desat++; return desliga(i+1); }); }
+  um(0).then(function(){ return desliga(0); }).then(function(){ fecharTudo(); aviso('Importado: '+feitos+' produto'+(feitos==1?'':'s')+(desat?' · '+desat+' desativado'+(desat==1?'':'s'):'')); cdCarregar(); })
     .catch(function(e){ b.disabled=false; prog('Tentar de novo'); er.textContent='Parou no meio: '+e.message+'. O que já foi importado ficou salvo; é só importar de novo (os produtos viram "atualiza").'; cdCarregar(); });
 }
 /* categorias */
