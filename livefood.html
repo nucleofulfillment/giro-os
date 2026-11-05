@@ -25,6 +25,7 @@ html,body{margin:0;height:100%;background:#000;color:var(--tx);font-family:Inter
 #segs{display:flex;gap:4px;margin-bottom:10px}
 #segs i{flex:1;height:3px;border-radius:3px;background:rgba(255,255,255,.28);overflow:hidden;position:relative}
 #segs i b{position:absolute;left:0;top:0;bottom:0;width:0;background:#fff;border-radius:3px}
+.lf-lgb #emp .lg,.lf-lgb #wi-marca img{filter:brightness(0) invert(1) drop-shadow(0 1px 8px #000a)!important}
 #emp .lg{height:var(--logo-h,56px);width:auto;max-width:min(calc(var(--logo-h,56px)*4.4),calc(100vw - 96px));object-fit:contain;object-position:left;vertical-align:middle;filter:drop-shadow(0 1px 6px #0009)}
 #cards{right:96px;padding-right:0}
 #mnb{position:absolute;right:12px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:5;width:76px;height:88px;border-radius:18px;background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--line);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;font:inherit}
@@ -582,6 +583,7 @@ function carregar(primeira){
   return fetch(API+'/food/cardapio/'+encodeURIComponent(CLI)).then(function(r){return r.json();}).then(function(d){
     if(!d||!d.ok){ if(primeira) vazio('Cardápio não encontrado',(d&&d.mensagem)||'Confira o link.'); return; }
     if(d.cfg&&d.cfg.logoTam) document.documentElement.style.setProperty('--logo-h',d.cfg.logoTam+'px');
+    if(d.cfg&&d.cfg.logoBranca) document.documentElement.classList.add('lf-lgb');   /* (208) prévia com logo recortada: sai toda branca por cima do vídeo */
     if(primeira){ D=d; CLI=d.cli||CLI; sacLer(); aplicaTema(); navOn('inicio'); temaAplica(); wizPill(); mesaInit(); document.title=(d.empresa||'Cardápio'); $('emp').innerHTML=((d.cfg&&d.cfg.logo)?'<img class="lg" src="'+API+'/food/foto/'+encodeURIComponent(d.cli||CLI)+'/_logo?v='+(d.cfg.v||0)+'" alt="'+esc(d.empresa)+'" onerror="this.outerHTML=\''+esc(d.empresa).replace(/'/g,'')+'\'">':esc(d.empresa))+'<small id="stt"></small>'; pintaStatus(); try{ if(!estaAberto()&&!sessionStorage.getItem('lf_fcm_'+(d.cli||CLI))){ sessionStorage.setItem('lf_fcm_'+(d.cli||CLI),'1'); setTimeout(abreFechado,600); } }catch(e){} manifesto(); iniciar(); clbInit(); catAplica(); try{ previaAviso(d); }catch(ePv){} var rtP=(ROTA.r||Q.get('r')||'').replace(/[^a-f0-9]/g,''); if(rtP) setTimeout(function(){ rpAbre(rtP); },300); }
     else { novoD=d; if(D&&d.cfg){ D.cfg=d.cfg; pintaStatus(); } }   /* horário salvo no painel vale sem o cliente recarregar a página */
   }).catch(function(){ if(primeira) vazio('Sem conexão','Não consegui abrir o cardápio. Tente de novo.'); });
@@ -592,17 +594,19 @@ function previaAviso(d){
   var t=pv==='amostra'?'<b>Cardápio de exemplo</b> montado pelo LiveFood para '+esc(d.empresa||'o seu restaurante')+'. Os produtos e preços são ilustrativos: o seu cardápio de verdade entra em minutos.':'<b>Prévia</b> montada pelo LiveFood a partir do cardápio de '+esc(d.empresa||'vocês')+'. Confira produtos e preços: tudo pode ser ajustado.';
   /* (205) em vez da faixa no topo (tapava a logo), o personagem Live flutua no canto de baixo com o balão "Gostou? Toque aqui!" e abre o convite */
   var wa=PV_WA(d); d._pvTexto=t;
-  if(!document.getElementById('lf-pv-css')){ var cs=document.createElement('style'); cs.id='lf-pv-css'; cs.textContent='#lf-previa{position:fixed;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 84px);z-index:60;display:flex;flex-direction:row-reverse;align-items:flex-end;gap:6px;border:0;background:none;padding:0;cursor:pointer;animation:pvEntra .6s cubic-bezier(.34,1.56,.64,1) both}#lf-previa .pvm{width:64px;flex:none;animation:pvBoia 3.2s ease-in-out infinite}#lf-previa .pvb{position:relative;margin-bottom:34px;max-width:170px;background:#fff;color:#1C1C1E;border-radius:14px 14px 4px 14px;padding:8px 11px;font:800 12.5px/1.3 Manrope,-apple-system,sans-serif;box-shadow:0 10px 24px -10px rgba(0,0,0,.6);text-align:left}#lf-previa .pvb small{display:block;font-weight:600;font-size:10.5px;color:#6b6b73;margin-top:2px}#lf-previa .pvx{position:absolute;top:-8px;right:-8px;width:20px;height:20px;border-radius:50%;border:0;background:#1C1C1E;color:#fff;font-size:10px;line-height:20px;cursor:pointer}@keyframes pvBoia{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}@keyframes pvEntra{from{opacity:0;transform:translateY(30px) scale(.8)}to{opacity:1;transform:none}}'; document.head.appendChild(cs); }
+  if(!document.getElementById('lf-pv-css')){ var cs=document.createElement('style'); cs.id='lf-pv-css'; cs.textContent='#lf-previa{position:fixed;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 84px);z-index:60;display:flex;flex-direction:column;align-items:center;gap:2px;border:0;background:none;padding:0;cursor:pointer;animation:pvEntra .6s cubic-bezier(.34,1.56,.64,1) both}#lf-previa .pvm{width:66px;flex:none;animation:pvBoia 3.2s ease-in-out infinite}#lf-previa .pvt{background:#FF5A00;color:#fff;font:800 11.5px/1 Manrope,-apple-system,sans-serif;padding:6px 10px;border-radius:99px;white-space:nowrap;box-shadow:0 6px 16px -6px rgba(0,0,0,.7)}@keyframes pvBoia{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}@keyframes pvEntra{from{opacity:0;transform:translateY(30px) scale(.8)}to{opacity:1;transform:none}}'; document.head.appendChild(cs); }
   var b=document.createElement('button'); b.id='lf-previa'; b.setAttribute('aria-label','LiveFood: gostou do cardápio? Toque aqui');
-  b.innerHTML='<div class="pvm" id="lf-pv-live"></div><div class="pvb">'+(pv==='amostra'?'Este é um cardápio de exemplo.':'Gostou do seu cardápio?')+'<br><span style="color:#FF5A00">Toque aqui!</span><small>LiveFood · apresentação grátis</small><span class="pvx" role="button" aria-label="Esconder balão">✕</span></div>';
+  /* (208) só o personagem e "Toque aqui!" embaixo: a pergunta e o aviso da prévia ficam no convite que abre */
+  b.innerHTML='<div class="pvm" id="lf-pv-live"></div><div class="pvt">Toque aqui!</div>';
   document.body.appendChild(b);
   /* (207) fica em cima da coluna da direita (Compartilhar, Garçom, Conta); sem a coluna na tela, vai para o canto de baixo */
-  var pvPos=function(){ try{ var m=document.getElementById('mside'),r=(m&&m.offsetParent!==null)?m.getBoundingClientRect():null;
-    if(r&&r.height>20&&r.top>120){ b.style.bottom=Math.round(innerHeight-r.top+6)+'px'; b.style.right=Math.max(6,Math.round(innerWidth-r.right+(r.width-64)/2))+'px'; }
+  var pvPos=function(){ try{ var sh=$('sheet'); b.style.visibility=(sh&&sh.classList.contains('on'))?'hidden':'';   /* (208) some enquanto o convite (ou outra folha) está aberto */
+    var m=document.getElementById('mside'),r=(m&&m.offsetParent!==null)?m.getBoundingClientRect():null;
+    if(r&&r.height>20&&r.top>120){ b.style.bottom=Math.round(innerHeight-r.top+6)+'px'; b.style.right=Math.max(6,Math.round(innerWidth-r.right+(r.width-b.offsetWidth)/2))+'px'; }
     else { b.style.bottom=''; b.style.right=''; } }catch(e){} };
-  pvPos(); addEventListener('resize',pvPos); setInterval(pvPos,800);
+  pvPos(); addEventListener('resize',pvPos); setInterval(pvPos,400);
   try{ if(window.LiveMascote){ var lvP=LiveMascote.criar($('lf-pv-live'),{sombra:true,expressao:'animado'}); var gs=['acenar','piscadinha','boas_vindas','comemorar'],gk=0; setTimeout(function(){ try{ lvP.gesto('acenar'); }catch(e){} },900); setInterval(function(){ try{ lvP.gesto(gs[gk++%gs.length]); }catch(e){} },7000); } else $('lf-pv-live').innerHTML='<div style="width:56px;height:56px;border-radius:50%;background:#FF5A00;color:#fff;font:900 22px Manrope;display:flex;align-items:center;justify-content:center">L</div>'; }catch(e){}
-  b.onclick=function(ev){ if(ev.target.classList&&ev.target.classList.contains('pvx')){ ev.stopPropagation(); var bb=b.querySelector('.pvb'); if(bb) bb.style.display='none'; return; } pvConvite(d); };
+  b.onclick=function(){ pvConvite(d); };
   /* (197) depois de uns 20 segundos olhando o cardápio, abre o convite para a apresentação (uma vez por visita) */
   if(wa){ var vez=0; try{ vez=sessionStorage.getItem('lf_pv_pop_'+(d.cli||'')); }catch(e){}
     if(!vez){ var tenta=function(){ var s=$('sheet'); if(s&&s.classList.contains('on')){ setTimeout(tenta,6000); return; } try{ sessionStorage.setItem('lf_pv_pop_'+(d.cli||''),'1'); }catch(e){} pvConvite(d); }; setTimeout(tenta,20000); } }
@@ -615,10 +619,10 @@ function pvConvite(d){
   var h='<div class="wb fcm" style="text-align:center;padding:26px 20px 22px;position:relative">'+ic
    +'<div style="font-size:20px;font-weight:800;margin-top:8px">Gostou do seu cardápio?</div>'
    +'<div class="nt" style="margin-top:6px;font-size:13.5px">Montamos esta prévia para o <b>'+esc(d.empresa||'seu restaurante')+'</b>. Que tal ver o LiveFood funcionando no seu salão?</div>'
-   +(d._pvTexto?'<div class="nt" style="margin-top:8px;font-size:12px;opacity:.8">'+d._pvTexto+'</div>':'')
    +'<div class="tk"><div class="tkp">Apresentação no seu restaurante</div><div class="tkr"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 0 0 6v3h18v-3a2 2 0 0 1 0-6V6H3z"/><path d="M14 6v2.5M14 11v2M14 15.5V18"/></svg><div><div class="tkq">sem custo e sem compromisso</div><div class="tkb">GRÁTIS</div></div></div></div>'
    +'<div style="text-align:left;margin:14px auto 0;max-width:300px;font-size:13px;line-height:1.9">'+mods.map(function(m){ return '<div>✓ '+esc(m)+'</div>'; }).join('')+'</div>'
-   +'<div style="display:flex;flex-direction:column;gap:10px;margin-top:16px"><button class="bt c" style="flex:none;width:100%" id="pv-ag">📅 Agendar apresentação</button><button class="bt c" style="flex:none;width:100%;background:transparent;border:2px solid #ffffff44;color:#fff" onclick="fechaSheet()">Continuar vendo o cardápio</button></div></div>';
+   +'<div style="display:flex;flex-direction:column;gap:10px;margin-top:16px"><button class="bt c" style="flex:none;width:100%" id="pv-ag">📅 Agendar apresentação</button><button class="bt c" style="flex:none;width:100%;background:transparent;border:2px solid #ffffff44;color:#fff" onclick="fechaSheet()">Continuar vendo o cardápio</button></div>'
+   +(d._pvTexto?'<div class="nt" style="margin-top:16px;padding-top:12px;border-top:1px solid #ffffff1f;font-size:11.5px;line-height:1.45;opacity:.7">'+d._pvTexto+'</div>':'')+'</div>';
   abreFolha(h); var g=document.getElementById('pv-ag'); if(g) g.onclick=function(){ pvAgendar(d); };
 }
 function vazio(t,p){ $('vzB').style.display='none'; $('vzT').textContent=t; $('vzP').textContent=p; $('vazio').style.display='flex'; }
@@ -2298,7 +2302,7 @@ var RS_PES='<svg viewBox="0 0 24 24" width="26" height="26" fill="var(--pri)"><c
 function rsvAbre(){
   toast('Abrindo as reservas…');
   fetch(API+'/food/reserva/'+encodeURIComponent(D.cli||CLI)).then(function(r){ return r.json(); }).then(function(d){
-    if(!d||!d.ok||!d.on){ toast('As reservas não estão disponíveis agora'); return; }
+    if(!d||!d.ok||!d.on){ if(D&&D.cfg&&D.cfg.previa){ toast('A reserva online liga no painel em 1 minuto'); pvConvite(D); return; } toast('As reservas não estão disponíveis agora'); return; }   /* (208) prévia: o botão de reserva mostra o convite */
     if(!(d.dias||[]).length){ toast('Não há horários de reserva nos próximos dias'); return; }
     RSV.d=d; RSV.mesa=null; RSV.area=''; if(RSV.pes>d.cfg.maxPessoas) RSV.pes=Math.min(2,d.cfg.maxPessoas); rsvLib(); rsvPessoas();
   }).catch(function(){ toast('Sem conexão. Tente de novo.'); });
