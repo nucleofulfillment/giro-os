@@ -825,9 +825,19 @@ function carregarDono(cid){
     if(!d.ok){el('ec-dono').innerHTML='<div class="vazio">'+esc(d.mensagem||'Erro.')+'</div>';return;}
     USUARIOS_CLI[cid]=d.usuarios||[];
     var dn=(d.usuarios||[]).filter(function(u){return u.perfil==='dono';});
-    if(!dn.length){el('ec-dono').innerHTML='<div class="vazio">Sem dono cadastrado.</div>';return;}
+    /* (208) conta sem dono (ex.: prévia do Marketing ou conta criada sem dono): cria o acesso ao painel aqui */
+    if(!dn.length){var ip='style="width:100%;padding:9px 11px;border:1px solid #e5d6d2;border-radius:10px;font:inherit;box-sizing:border-box"';
+      el('ec-dono').innerHTML='<div class="vazio" style="margin-bottom:10px">Sem dono cadastrado. Crie o acesso ao painel:</div>'
+        +'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px"><input id="nd-nome" placeholder="Nome do dono" '+ip+'><input id="nd-email" type="email" placeholder="E-mail (login)" '+ip+'><input id="nd-fone" placeholder="Celular com DDD" '+ip+'><input id="nd-senha" placeholder="Senha (mín. 8, letra e número)" '+ip+'></div>'
+        +'<button class="btn" style="margin-top:10px" onclick="criarDono(\''+esc(cid)+'\')">+ Criar dono</button>';return;}
     el('ec-dono').innerHTML=dn.map(function(u){return '<div class="usr"><div class="u1"><b>'+esc(u.nome)+'</b><small>✉️ '+esc(u.email)+'</small><small>📱 '+(u.telefone?esc(u.telefone):'sem celular')+'</small></div><span class="tag '+(u.ativo?'on':'off')+'">'+(u.ativo?'Ativo':'Desativado')+'</span><button class="btn peq" onclick="redefinir(\''+esc(cid)+'\',\''+esc(u.id)+'\')">Nova senha</button><button class="btn peq" onclick="celularDono(\''+esc(cid)+'\',\''+esc(u.id)+'\')">Celular</button></div>';}).join('');
   }).catch(function(){});
+}
+function criarDono(cid){
+  var v=function(i){var e=el(i);return e?e.value.trim():'';}, b={perfil:'dono',nome:v('nd-nome'),email:v('nd-email'),telefone:v('nd-fone'),senha:v('nd-senha')};
+  if(!b.nome||!b.email||!b.senha){toast('Preencha nome, e-mail e senha.',true);return;}
+  if(b.senha.length<8){toast('A senha precisa de pelo menos 8 caracteres.',true);return;}
+  chamar('POST','/admin/clientes/'+encodeURIComponent(cid)+'/usuarios',b).then(function(d){ if(!d.ok){toast(d.mensagem||d.erro||'Não deu para criar.',true);return;} toast('Dono criado. Já pode entrar no painel com esse e-mail e senha.'); carregarDono(cid); }).catch(function(){});
 }
 function redefinir(cid,uid){
   var u=(USUARIOS_CLI[cid]||[]).filter(function(x){return x.id===uid;})[0]; if(!u) return;
