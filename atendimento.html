@@ -742,6 +742,10 @@ document.addEventListener('keydown',function(e){
 },true);
 /* ── pedido (carrinho) ── */
 function cartTot(){ var t=0; CART.forEach(function(i){ t+=i.unit*i.qty; }); return Math.round(t*100)/100; }
+/* (219) taxa do garçom: o Worker manda a % só para o garçom; balcão não leva */
+function srvPct(){ var p=Number(D&&D.cfg&&D.cfg.servico)||0; return (p>0&&!(COM.avulso||COM.modo==='balcao'||ehBalM(COM.mesa)))?p:0; }
+function srvVal(t){ return Math.round(t*srvPct())/100; }
+function srvLinha(v,pct){ return v>0?'<div class="opt" style="color:var(--mu2)"><span class="n"><b>Serviço do garçom'+(pct?' ('+String(pct).replace('.',',')+'%)':'')+'</b></span><span class="p">'+brl(v)+'</span></div>':''; }
 function cartBar(){
   var on=CART.length&&ABA==='ped'&&(COM.avulso||COM.mesa+COM.joia!==''); $('cartbar').classList.toggle('hide',!on);
   if(on){ var n=0; CART.forEach(function(i){ n+=i.qty; }); $('cbN').textContent='Ver pedido · '+n+' ite'+(n==1?'m':'ns'); $('cbV').textContent=brl(cartTot()); }
@@ -749,9 +753,10 @@ function cartBar(){
 function descItem(i,br){ var d=[]; if(i.tam) d.push(i.tam); var n=i.sab.length; i.sab.forEach(function(s){ d.push((n>1?'1/'+n+' ':'')+s); }); if(i.borda) d.push('Borda: '+i.borda); i.adds.forEach(function(a){ d.push('+ '+a); }); if(i.obs) d.push('Obs: '+i.obs); return br?d.map(esc).join('<br>'):d.join(' · '); }
 function abreCarrinho(){
   var h=''; CART.forEach(function(i,k){ h+='<div class="opt"><span class="n"><b>'+i.qty+'x '+esc(i.nome)+'</b><small>'+descItem(i,1)+'</small></span><span class="p">'+brl(i.unit*i.qty)+'</span><button onclick="tiraItem('+k+')" style="border:0;background:var(--s3);border-radius:8px;width:32px;height:32px;font-weight:800">×</button></div>'; });
+  h+=srvLinha(srvVal(cartTot()),srvPct());
   h+='<label class="l">Observação do pedido (cozinha)</label><input class="inp" id="pObs" maxlength="300"><div class="er" id="pErr"></div>';
   h+='<label class="l" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="pImp" '+(impOn()?'checked':'')+' onchange="impSet(this.checked)" style="width:20px;height:20px"> Imprimir o pedido ao enviar</label>';
-  folha('Pedido · '+(COM.avulso||ehBalM(COM.mesa)?'Cliente Balcão':[(COM.mesa?(COM.modo==='balcao'?'Balcão ':'Mesa ')+COM.mesa:''),COM.joia].filter(Boolean).join(' · ')),h,'<button class="bt" id="pBt" style="margin:0" onclick="enviaPedido()">'+(COM.avulso?'Finalizar pedido':'Enviar para a cozinha')+' · '+brl(cartTot())+'</button>'); foco('#pBt');
+  folha('Pedido · '+(COM.avulso||ehBalM(COM.mesa)?'Cliente Balcão':[(COM.mesa?(COM.modo==='balcao'?'Balcão ':'Mesa ')+COM.mesa:''),COM.joia].filter(Boolean).join(' · ')),h,'<button class="bt" id="pBt" style="margin:0" onclick="enviaPedido()">'+(COM.avulso?'Finalizar pedido':'Enviar para a cozinha')+' · '+brl(Math.round((cartTot()+srvVal(cartTot()))*100)/100)+'</button>'); foco('#pBt');
 }
 function tiraItem(k){ CART.splice(k,1); if(!CART.length){ fecha(); cartBar(); } else { abreCarrinho(); cartBar(); } }
 function enviaPedido(){
@@ -774,6 +779,7 @@ function carregaCom(){
     COMS.forEach(function(c,i){
       var t=comTit(c)+(c.joia?(c.mesa?' · ':'')+pill(c.joia):'');
       h+='<div class="cm" id="cm'+i+'"><div class="h"><div><b>'+t+'</b><div style="font-size:12.5px;color:var(--mu2)">'+esc(c.nome||'')+'</div></div><span class="v">'+brl(c.total)+'</span></div>'+(c.pedidos.length&&c.pedidos[0].sub?'<div style="font-size:12px;font-weight:800;color:var(--mu2);margin-top:6px">PEDIDO #'+c.pedidos[0].num+'</div>':'')+'<div class="pd">'+c.pedidos.map(function(p,k){ return '<div class="pr"><div class="ph"><span><b>#'+plab(p)+'</b> · '+new Date(p.criado).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+(p.atend?' · '+esc(p.atend):'')+'</span><button onclick="reimp('+i+','+k+')" title="Imprimir">🖨</button></div>'+String(p.itens||'').split('; ').map(function(t){ return '<div class="pi">'+esc(t)+'</div>'; }).join('')+'</div>'; }).join('')+'</div>'
+        +(c.servico>0?'<div style="display:flex;justify-content:space-between;font-size:13px;color:var(--mu2);margin-top:6px"><span>Serviço do garçom</span><b>'+brl(c.servico)+'</b></div>':'')
         +'<div class="ac"><button class="bt s" onclick="ativaComanda(COMS['+i+'])">+ Pedido</button><button class="bt s" onclick="trocaForm('+i+')">Trocar mesa</button><button class="bt g" onclick="fechaForm('+i+')">Fechar conta</button></div></div>';
     });
     $('lCom').innerHTML=h||'<p style="color:var(--mu2)">Nenhuma comanda aberta agora.</p>'; achaPed();
@@ -812,7 +818,7 @@ function trocaFaz(para,juntar){
 /* (159) mesmo desenho das opções de pagamento do cliente na mesa: cartão com ícone, claro que dá para tocar */
 function fechaOpc(i,forma,ic,tit,sub){ return '<button type="button" class="pgop" onclick="fechaFazer('+i+',\''+forma+'\')"><span class="ic">'+ic+'</span><span class="n"><b>'+tit+'</b><small>'+sub+'</small></span><span class="ch">›</span></button>'; }
 function fechaForm(i){
-  var c=COMS[i], h='<div style="font-size:15px;margin:6px 0 10px"><b>'+comTit(c)+(c.joia?' '+pill(c.joia):'')+'</b>'+(ehBalM(c.mesa)?'':' · '+esc(c.nome||''))+'<br><span style="font-size:22px;font-weight:800;color:var(--pri)">'+brl(c.total)+'</span></div><div class="sec">Forma de pagamento</div>';
+  var c=COMS[i], h='<div style="font-size:15px;margin:6px 0 10px"><b>'+comTit(c)+(c.joia?' '+pill(c.joia):'')+'</b>'+(ehBalM(c.mesa)?'':' · '+esc(c.nome||''))+(c.servico>0?'<div style="font-size:13.5px;color:var(--mu2);margin-top:6px">Consumo '+brl(Math.round((c.total-c.servico)*100)/100)+' + Serviço do garçom '+brl(c.servico)+'</div>':'<br>')+'<span style="font-size:22px;font-weight:800;color:var(--pri)">'+brl(c.total)+'</span></div><div class="sec">Forma de pagamento</div>';
   [['pix','Pix','▦'],['cartao','Cartão','💳'],['dinheiro','Dinheiro','💵']].forEach(function(f){ h+=fechaOpc(i,f[0],f[2],f[1],'Pagou agora'); });
   if(c.joia) h+=fechaOpc(i,'marcar','📒','Marcar (pendurar)','Fica na conta do cliente para cobrar no fechamento');
   h+='<div class="er" id="fcErr"></div>'; folha('Fechar conta',h,c.avulso?'<button class="bt s" style="margin:0" onclick="fecha()">Cobrar depois (fica em Comandas)</button>':'');
@@ -885,7 +891,7 @@ function clienteDet(joia,fresh){
       var dd=dtBR(p.criado); if(dd!==dia){ dia=dd; h+='<div class="dia">'+esc(dd)+'</div>'; }
       var st={aberto:['y','Em aberto'],pendurado:['o','Pendurado'],cobranca:['r','Cobrança em aberto'],pago:['g','Pago'+(p.forma&&p.forma!=='conta'?' · '+p.forma:'')+(p.pago_em?' · '+new Date(p.pago_em).toLocaleDateString('pt-BR'):'')]}[p.situacao]||['a',p.situacao];
       h+='<div class="cm"><div class="h"><div><b>#'+plab(p)+'</b> · '+hrBR(p.criado)+(p.mesa?' · Mesa '+esc(p.mesa):'')+' <span class="tag '+st[0]+'">'+esc(st[1])+'</span></div><span class="v">'+brl(p.total)+'</span></div>'
-        +'<div class="ln">'+p.l.map(function(l){ return '<b>'+l.qty+'x '+esc(l.nome)+'</b>'+(linhaTxt(l)?' — '+esc(linhaTxt(l)):''); }).join('<br>')+(p.obs?'<br>Obs: '+esc(p.obs):'')+'</div>'
+        +'<div class="ln">'+p.l.map(function(l){ return '<b>'+l.qty+'x '+esc(l.nome)+'</b>'+(linhaTxt(l)?' — '+esc(linhaTxt(l)):''); }).join('<br>')+(p.servico>0?'<br>Serviço do garçom: '+brl(p.servico):'')+(p.obs?'<br>Obs: '+esc(p.obs):'')+'</div>'
         +(p.atend?'<div class="ln">Atendente: '+esc(p.atend)+'</div>':'')+'</div>';
     });
     if(!d.pedidos.length) h+='<p style="color:var(--mu2)">Ainda não consumiu nada.</p>';

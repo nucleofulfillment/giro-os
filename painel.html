@@ -1037,6 +1037,17 @@ html.loja-p .cd-dest{display:none!important}
       <!-- (218) GARÇONS: cadastro, vendas por garçom, regra de comissão e fechamento (vai para o Fluxo de Caixa) -->
       <section class="page" id="pg-garcons">
         <div class="pghd"><div><h1>Garçons</h1><div class="sub">equipe do salão, vendas e comissão · <span id="ga-total">—</span></div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sec" onclick="gcAbrir()">🍽 Mesas de cada garçom</button><button class="btn pri" onclick="gaNovo()">+ Novo garçom</button></div></div>
+        <!-- (219) taxa do garçom paga pelo cliente: linha separada na conta e vira a comissão do garçom -->
+        <div class="card" id="ga-serv-card" style="margin-bottom:16px">
+          <h3><span class="lft">Taxa do garçom na conta</span></h3>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <label class="wa-sw" title="Cobrar do cliente a comissão do garçom"><input type="checkbox" id="ga-serv-on" onchange="gaServMuda()"><span class="wa-bl"></span></label>
+            <span id="ga-serv-lbl" style="font-weight:700">Desligada</span>
+            <span id="ga-serv-vbox" style="display:flex;align-items:center;gap:6px"><input class="inp" id="ga-serv-pct" inputmode="decimal" placeholder="10" style="width:90px"><span style="font-weight:700;color:var(--muted)">%</span></span>
+            <button class="btn pri" id="ga-serv-bt" onclick="gaServSalvar()">Salvar</button>
+          </div>
+          <p id="ga-serv-txt" style="margin:10px 0 0;font-size:12.5px;line-height:1.5;color:var(--muted)">Ligada, o pedido que o garçom lança leva essa porcentagem a mais, numa linha separada na conta, e esse valor é a comissão dele.</p>
+        </div>
         <div class="card" id="ga-regra-card" style="margin-bottom:16px">
           <h3><span class="lft">Regra de comissão da loja</span></h3>
           <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
@@ -8501,7 +8512,7 @@ function clAbrir(j){
     var ps=d.pedidos||[]; if(!ps.length){ b.textContent='Nenhum pedido ainda.'; return; }
     var nm={aberto:['Em aberto','#f59e0b'],pendurado:['Pendurado','#8b5cf6'],cobranca:['Em cobrança','#ef4444'],pago:['Pago','#16a34a']};
     b.innerHTML=ps.map(function(p){ var sit=nm[p.situacao]||['—','#999'], dt=new Date(p.criado);
-      var it=(p.l||[]).map(function(l){ return '<div>'+l.qty+'x '+esc(l.nome)+(l.tam?' ('+esc(l.tam)+')':'')+'</div>'; }).join('');
+      var it=(p.l||[]).map(function(l){ return '<div>'+l.qty+'x '+esc(l.nome)+(l.tam?' ('+esc(l.tam)+')':'')+'</div>'; }).join('')+(p.servico>0?'<div style="color:var(--muted)">Serviço do garçom: '+moeda(p.servico)+'</div>':'');
       return '<div style="border:1px solid var(--border);border-radius:12px;padding:10px;margin-bottom:8px;color:var(--text,inherit)"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><b>#'+p.num+(p.sub?'-'+p.sub:'')+'</b><span style="font-size:12px;color:var(--muted)">'+dt.toLocaleDateString('pt-BR')+' '+msHora(p.criado)+(p.mesa?' · Mesa '+esc(p.mesa):'')+'</span><span style="font-size:11.5px;font-weight:800;color:#fff;background:'+sit[1]+';border-radius:10px;padding:2px 9px">'+sit[0]+'</span></div><div style="font-size:13px;margin:6px 0">'+it+'</div><div style="font-weight:800">'+moeda(p.total)+'</div></div>'; }).join('');
   }).catch(function(){ var b=el('cl-hist'); if(b) b.textContent='Não consegui carregar o histórico.'; });
 }
@@ -8612,15 +8623,19 @@ function gaPintar(){
   var d=GA.d; if(!d) return;
   var rl=d.regra_loja||{tipo:'nada',valor:0};
   if(document.activeElement!==el('ga-valor')){ el('ga-tipo').value=rl.tipo||'nada'; el('ga-valor').value=rl.valor?String(rl.valor).replace('.',','):''; gaTipoMuda('ga'); }
-  el('ga-regra-txt').innerHTML='Regra atual da loja: <b>'+esc(gaRegraTxt(rl))+'</b>. Vale para todos os garçons; para um garçom ter regra diferente, toque em <b>Regra</b> na linha dele.'+(rl.tipo==='dia'?' Na diária, conta cada dia em que ele lançou pelo menos um pedido de conta fechada.':'');
+  var sv=d.servico||{on:false,pct:0};
+  if(document.activeElement!==el('ga-serv-pct')){ el('ga-serv-on').checked=!!sv.on; el('ga-serv-pct').value=sv.pct?String(sv.pct).replace('.',','):''; gaServMuda(); }
+  el('ga-serv-txt').innerHTML=sv.on?('Ligada em <b>'+String(sv.pct).replace('.',',')+'%</b>: cada pedido que um garçom lança no Atendimento leva '+String(sv.pct).replace('.',',')+'% a mais, numa linha separada na conta (produto de '+moeda(10)+' fica '+moeda(10)+' + '+moeda(Math.round(10*sv.pct)/100)+' de serviço). Esse valor é a comissão do garçom. Não entra em pedido do QR da mesa, balcão, nem lançado pelo dono ou gerente.')
+    :'Ligada, o pedido que o garçom lança leva essa porcentagem a mais, numa linha separada na conta (ex.: 10% — produto de '+moeda(10)+' fica '+moeda(11)+'), e esse valor vira a comissão dele. O preço no cardápio não muda.';
+  el('ga-regra-txt').innerHTML=(sv.on?'<b style="color:#B45309">Com a taxa do garçom ligada, a regra abaixo só vale para pedidos sem a taxa</b> (lançados antes de ligar). ':'')+'Regra atual da loja: <b>'+esc(gaRegraTxt(rl))+'</b>. Vale para todos os garçons; para um garçom ter regra diferente, toque em <b>Regra</b> na linha dele.'+(rl.tipo==='dia'?' Na diária, conta cada dia em que ele lançou pelo menos um pedido de conta fechada.':'');
   var gs=d.garcons||[], h='', at=0;
   gs.forEach(function(g){ if(g.ativo) at++;
     var af=g.a_fechar||{}, r=g.regra||rl;
     h+='<tr'+(g.ativo?'':' style="opacity:.6"')+'><td><b>'+esc(g.nome)+'</b>'+(g.ativo?'':' <span class="badge b-no">Inativo</span>')+'<br><span style="font-size:11.5px;color:var(--muted);word-break:break-all">'+esc(g.email||'')+'</span></td>'+
-      '<td><b>'+moeda(g.vendas)+'</b><br><span style="font-size:11.5px;color:var(--muted)">'+g.n+(g.n===1?' pedido':' pedidos')+' · '+g.dias+(g.dias===1?' dia':' dias')+'</span></td>'+
+      '<td><b>'+moeda(g.vendas)+'</b><br><span style="font-size:11.5px;color:var(--muted)">'+g.n+(g.n===1?' pedido':' pedidos')+' · '+g.dias+(g.dias===1?' dia':' dias')+'</span>'+(g.servico>0?'<br><span style="font-size:11.5px;color:var(--muted)">+ '+moeda(g.servico)+' de taxa do garçom</span>':'')+'</td>'+
       '<td>'+(g.n_aberto?moeda(g.aberto)+'<br><span style="font-size:11.5px;color:var(--muted)">'+g.n_aberto+(g.n_aberto===1?' pedido':' pedidos')+'</span>':'<span style="color:var(--muted)">—</span>')+'</td>'+
       '<td>'+esc(gaRegraTxt(r))+'<br><span style="font-size:11.5px;color:var(--muted)">'+(r.propria?'regra própria':'regra da loja')+'</span></td>'+
-      '<td><b style="color:'+(af.n?'var(--text)':'var(--muted)')+'">'+moeda(af.comissao)+'</b><br><span style="font-size:11.5px;color:var(--muted)">'+(af.n?(moeda(af.vendas)+' em '+af.n+(af.n===1?' pedido':' pedidos')+(r.tipo==='dia'?' · '+(af.dias||[]).length+((af.dias||[]).length===1?' dia novo':' dias novos'):'')):'nada a fechar')+'</span></td>'+
+      '<td><b style="color:'+(af.n?'var(--text)':'var(--muted)')+'">'+moeda(af.comissao)+'</b><br><span style="font-size:11.5px;color:var(--muted)">'+(af.n?(moeda(af.vendas)+' em '+af.n+(af.n===1?' pedido':' pedidos')+(af.servico>0?' · taxa '+moeda(af.servico):'')+(r.tipo==='dia'?' · '+(af.dias||[]).length+((af.dias||[]).length===1?' dia novo':' dias novos'):'')):'nada a fechar')+'</span></td>'+
       '<td><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">'+
         '<button class="btn pri sm" data-id="'+esc(g.id)+'" onclick="gaFechar(this.getAttribute(\'data-id\'))"'+(af.n?'':' disabled title="Nada a fechar no período" style="opacity:.4;cursor:default"')+'>Fechar</button>'+
         '<button class="btn sec sm" data-id="'+esc(g.id)+'" onclick="gaRegra(this.getAttribute(\'data-id\'))">Regra</button>'+
@@ -8638,7 +8653,7 @@ function gaPintar(){
     var bd=st==='pago'?'<span class="badge b-ok">Pago</span>':(st==='zero'?'<span class="badge b-nu">Nada a pagar</span>':(st==='sem'?'<span class="badge b-no">Fora do Fluxo</span>':(st==='recusado'?'<span class="badge b-no">Não pagar</span>':'<span class="badge b-wt">Pendente</span>')));
     var pode=st!=='pago'&&!(l&&travadoPix(l));
     fh+='<tr><td>'+dataBR(f.ini)+(f.fim!==f.ini?' a '+dataBR(f.fim):'')+'</td><td><b>'+esc(f.nome)+'</b></td><td>'+moeda(f.vendas)+'<br><span style="font-size:11.5px;color:var(--muted)">'+f.n+(f.n===1?' pedido':' pedidos')+'</span></td>'+
-      '<td>'+moeda(f.comissao)+'<br><span style="font-size:11.5px;color:var(--muted)">'+esc(gaRegraTxt(f.regra))+(f.regra&&f.regra.tipo==='dia'?' · '+f.dias+(f.dias===1?' dia':' dias'):'')+'</span></td>'+
+      '<td>'+moeda(f.comissao)+'<br><span style="font-size:11.5px;color:var(--muted)">'+(f.servico>0?(f.servico>=f.comissao-0.005?'taxa do garçom':'taxa '+moeda(f.servico)+' + '+esc(gaRegraTxt(f.regra))):esc(gaRegraTxt(f.regra))+(f.regra&&f.regra.tipo==='dia'?' · '+f.dias+(f.dias===1?' dia':' dias'):''))+'</span></td>'+
       '<td><b>'+moeda(f.liquido)+'</b>'+(f.ajuste?'<br><span style="font-size:11.5px;color:'+(f.ajuste<0?'var(--red)':'var(--green)')+'">'+(f.ajuste<0?'− ':'+ ')+moeda(Math.abs(f.ajuste))+(f.ajuste_obs?' '+esc(f.ajuste_obs):'')+'</span>':'')+'</td>'+
       '<td>'+bd+(l&&l.data?'<br><span style="font-size:11.5px;color:var(--muted)">pagar em '+dataBR(l.data)+'</span>':'')+'</td>'+
       '<td><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">'+(st==='sem'?'<button class="btn sec sm" data-id="'+esc(f.id)+'" onclick="gaRelancar(this.getAttribute(\'data-id\'))">Lançar no Fluxo</button>':'')+(pode?'<button class="btn sec sm" data-id="'+esc(f.id)+'" onclick="gaFechExcluir(this.getAttribute(\'data-id\'))">Excluir</button>':'')+'</div></td></tr>';
@@ -8654,6 +8669,17 @@ function gaRegraSalvar(){
   if(t==='pct'&&v>100){ aviso('A porcentagem vai de 0 a 100'); return; }
   b.disabled=true;
   mzApi('/painel/garcons-regra',{uid:'',tipo:t,valor:v}).then(function(d){ b.disabled=false; if(!d||!d.ok) throw new Error((d&&d.mensagem)||'Não salvou.'); aviso('Regra da loja salva ✅'); el('ga-valor').blur(); gaCarregar(); })
+  .catch(function(e){ b.disabled=false; aviso(esc(e.message||'Não salvou.')); });
+}
+/* (219) taxa do garçom paga pelo cliente */
+function gaServMuda(){ var on=el('ga-serv-on').checked; el('ga-serv-lbl').textContent=on?'Ligada':'Desligada'; el('ga-serv-lbl').style.color=on?'var(--green)':'var(--muted)'; el('ga-serv-vbox').style.opacity=on?'1':'.45'; el('ga-serv-pct').disabled=!on; }
+function gaServSalvar(){
+  var on=el('ga-serv-on').checked, v=gaNum(el('ga-serv-pct').value), b=el('ga-serv-bt');
+  if(on&&!(v>0&&v<=30)){ aviso('Coloque a porcentagem da taxa (de 0,01 a 30)'); return; }
+  b.disabled=true;
+  mzApi('/painel/garcons-servico',{on:on,pct:on?v:0}).then(function(d){ b.disabled=false;
+    if(!d||!d.ok) throw new Error(d&&d.erro==='rota_nao_encontrada'?'Publique o Worker 219 para usar a taxa do garçom.':((d&&d.mensagem)||'Não salvou.'));
+    aviso(on?'Taxa do garçom ligada em '+String(v).replace('.',',')+'% ✅ Vale para os próximos pedidos':'Taxa do garçom desligada'); el('ga-serv-pct').blur(); gaCarregar(); })
   .catch(function(e){ b.disabled=false; aviso(esc(e.message||'Não salvou.')); });
 }
 /* regra própria de um garçom */
@@ -8716,7 +8742,8 @@ function gaFechar(id){
   gaSheet('Fechar '+g.nome,
     lin('Período',dataBR(GA.ini)+(GA.fim!==GA.ini?' a '+dataBR(GA.fim):''))+lin('Vendas a fechar',moeda(af.vendas)+' ('+af.n+(af.n===1?' pedido':' pedidos')+')')+
     (r.tipo==='dia'?lin('Dias trabalhados novos',(af.dias||[]).length+((af.dias||[]).length?' ('+(af.dias||[]).map(function(x){ return dataBR(x).slice(0,5); }).join(', ')+')':'')):'')+
-    lin('Regra',esc(gaRegraTxt(r)))+lin('<b>Comissão</b>','<b>'+moeda(af.comissao)+'</b>')+
+    (af.servico>0?lin('Taxa do garçom paga pelos clientes',moeda(af.servico)):'')+
+    (af.servico>0&&af.comissao-af.servico<0.005?'':lin(af.servico>0?'Regra (pedidos sem a taxa)':'Regra',esc(gaRegraTxt(r))))+lin('<b>Comissão</b>','<b>'+moeda(af.comissao)+'</b>')+
     (g.n_aberto?'<p style="margin:8px 0 0;font-size:12.5px;color:#B45309">'+g.n_aberto+(g.n_aberto===1?' pedido ainda está':' pedidos ainda estão')+' com a conta aberta ('+moeda(g.aberto)+'). Eles entram num próximo fechamento, depois que a conta fechar.</p>':'')+
     '<div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-top:14px"><div class="field" style="margin:0"><label>Ajuste (opcional)</label><select class="inp" id="gf-ajt" onchange="gaFechConta()" style="width:170px"><option value="-">− Vale / desconto</option><option value="+">+ Prêmio / extra</option></select></div><div class="field" style="margin:0"><label>Valor</label><input class="inp" id="gf-ajv" inputmode="decimal" placeholder="0,00" oninput="gaFechConta()" style="width:110px"></div><div class="field" style="margin:0;flex:1;min-width:140px"><label>Motivo</label><input class="inp" id="gf-ajo" maxlength="120" placeholder="ex.: vale do dia 03"></div></div>'+
     '<div class="field" style="margin-top:10px"><label>Data do pagamento</label><input type="date" class="inp" id="gf-data" value="'+gaHoje()+'" style="width:170px"></div>'+
@@ -10359,6 +10386,6 @@ function cdNovaCatRapida(){
     .catch(function(e){ el('cd-erro').textContent='Não criou a categoria: '+e.message; });
 }
 </script>
-<script src="live-ajuda.js?v=218"></script>
+<script src="live-ajuda.js?v=219"></script>
 </body>
 </html>
