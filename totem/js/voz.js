@@ -205,7 +205,10 @@
     const dados = await resp.json();
     if (estado.cancelado) return;
     const al = dados.alignment || dados.normalized_alignment || { characters: [], character_start_times_seconds: [], character_end_times_seconds: [] };
-    const audio = new Audio('data:audio/mpeg;base64,' + dados.audio_base64);
+    // usa o mesmo elemento liberado no toque (destravar): no iPhone, um Audio criado depois do toque não toca
+    const audio = audioLiberado || new Audio();
+    audio.onplay = audio.onended = audio.onerror = null;
+    audio.src = 'data:audio/mpeg;base64,' + dados.audio_base64;
     estado.audio = audio;
 
     await new Promise((resolve, reject) => {
@@ -392,9 +395,25 @@
     try {
       audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
       if (audioCtx.state === 'suspended') audioCtx.resume();
-      const a = new Audio();
-      a.play().catch(() => {});
+      // um elemento de áudio só, liberado agora com um silêncio curto e reaproveitado em todas as falas da ElevenLabs
+      if (!audioLiberado) audioLiberado = new Audio();
+      if (audioLiberado.paused) {
+        audioLiberado.src = silencioWav();
+        audioLiberado.play().catch(() => {});
+      }
     } catch (e) { /* sem áudio disponível */ }
+  }
+  let audioLiberado = null;
+  function silencioWav() {
+    // WAV de 0,05 s em silêncio (8 kHz, 8 bits), montado aqui para não depender de arquivo
+    const n = 400, b = new Uint8Array(44 + n), v = new DataView(b.buffer);
+    const txt = (o, s) => { for (let i = 0; i < s.length; i++) b[o + i] = s.charCodeAt(i); };
+    txt(0, 'RIFF'); v.setUint32(4, 36 + n, true); txt(8, 'WAVEfmt '); v.setUint32(16, 16, true);
+    v.setUint16(20, 1, true); v.setUint16(22, 1, true); v.setUint32(24, 8000, true); v.setUint32(28, 8000, true);
+    v.setUint16(32, 1, true); v.setUint16(34, 8, true); txt(36, 'data'); v.setUint32(40, n, true);
+    b.fill(128, 44);
+    let s = ''; for (let i = 0; i < b.length; i++) s += String.fromCharCode(b[i]);
+    return 'data:audio/wav;base64,' + btoa(s);
   }
 
   // ---------------------------------------------------------------------------

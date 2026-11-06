@@ -1111,6 +1111,7 @@
   $('#cfg-tom').addEventListener('input', (e) => { $('#cfg-tom-v').textContent = e.target.value; });
   $('#cfg-vel').addEventListener('input', (e) => { $('#cfg-vel-v').textContent = e.target.value; });
   $('#cfg-testar').addEventListener('click', () => {
+    Voz.destravar(); // libera o áudio neste toque (iPhone)
     const d = M.itens.find((i) => i.destaque) || M.itens[0];
     Voz.falar(`E aí! Eu sou o Live, seu atendente aqui. O ${d.nome} sai por ${BRL(d.preco)}!`, {
       voz: $('#cfg-voz').value, tom: parseFloat($('#cfg-tom').value), velocidade: parseFloat($('#cfg-vel').value),
