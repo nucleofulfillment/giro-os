@@ -451,6 +451,9 @@
     return false;
   }
 
+  // Celular (Android/iPhone): o sistema não deixa o reconhecimento de voz ligado enquanto sai som do alto-falante.
+  // Lá o microfone desliga quando o Live fala e liga de novo quando ele termina (no totem com Windows segue sempre ligado).
+  const CELULAR = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   let micBloqueado = false, avisouMicEm = 0, escuta = null, semCaptarDesde = 0, ouvidosAbertosEm = 0, primeiraFala = 0, quedasVoz = [];
 
   function garantirEscuta() {
@@ -488,6 +491,12 @@
           // O Edge também dá esse erro quando o serviço de voz recusa uma sessão por um instante.
           // Só considera bloqueado se a permissão do microfone estiver mesmo negada; senão a escuta religa sozinha.
           permissaoNegada().then((negada) => {
+            if (!negada && CELULAR) {
+              // no celular o reconhecimento às vezes só liga a partir de um toque: para de tentar sozinho e pede o toque
+              fecharEscuta(); estadoVoz('parado');
+              if (Date.now() - avisouMicEm > 8000) { avisouMicEm = Date.now(); aviso('Toque no microfone para falar.'); }
+              return;
+            }
             if (!negada) { console.warn('Serviço de voz recusou a sessão (' + e + '); religando.'); return; }
             micBloqueado = true;
             fecharEscuta(); estadoVoz('parado');
@@ -535,6 +544,7 @@
   }
 
   function tamparOuvidos() {
+    if (CELULAR) { fecharEscuta(); return; } // no celular o microfone fica desligado enquanto o Live fala
     garantirEscuta(); // já deixa o reconhecimento ligado (tampado) para abrir na hora certa
     if (escuta) escuta.ensurdecer();
     if (S.ouvindo) { S.ouvindo = false; Live.ouvindo(false); }
@@ -1011,9 +1021,10 @@
     if (!Voz.podeOuvir) { aviso('Este navegador não tem reconhecimento de voz. Use o Chrome ou o Edge.'); return; }
     S.ultimaAtividade = Date.now();
     if (S.falando) { Voz.parar(); return; } // interrompe; depois da fala ele volta a ouvir
-    if (S.ouvindo) return;
+    if (S.ouvindo && !CELULAR) return;
     micBloqueado = false;
     S.bipPendente = true;
+    if (CELULAR) fecharEscuta(); // liga um reconhecimento novo dentro do toque (o iPhone exige)
     abrirOuvidos();
   });
 
@@ -1065,7 +1076,7 @@
   // avisa o operador. As vozes "Natural" do Edge chegam alguns segundos depois de abrir, por isso a espera.
   const temVozPersonagem = () => !!((P && P.voz) || (cfg.elevenChave && cfg.elevenVoz));
   setTimeout(() => {
-    if (temVozPersonagem() || Voz.vozes.some((v) => /Natural/i.test(v.name))) return;
+    if (CELULAR || temVozPersonagem() || Voz.vozes.some((v) => /Natural/i.test(v.name))) return;
     const edge = /Edg\//.test(navigator.userAgent);
     aviso(edge
       ? 'As vozes "Natural" do Edge não carregaram. Confira a internet e recarregue a página.'
@@ -1113,7 +1124,8 @@
   $('#cfg-testar').addEventListener('click', () => {
     Voz.destravar(); // libera o áudio neste toque (iPhone)
     const d = M.itens.find((i) => i.destaque) || M.itens[0];
-    Voz.falar(`E aí! Eu sou o Live, seu atendente aqui. O ${d.nome} sai por ${BRL(d.preco)}!`, {
+    const at = window.ATENDENTE();
+    Voz.falar(`E aí! Eu sou ${at.o} ${at.nome}, ${at.fem ? 'sua atendente' : 'seu atendente'} aqui. O ${d.nome} sai por ${BRL(d.preco)}!`, {
       voz: $('#cfg-voz').value, tom: parseFloat($('#cfg-tom').value), velocidade: parseFloat($('#cfg-vel').value),
       elevenChave: $('#cfg-el-chave').value.trim(), elevenVoz: $('#cfg-el-voz').value.trim(), elevenModelo: $('#cfg-el-modelo').value.trim(),
     });
@@ -1173,6 +1185,10 @@
   estadoVoz('parado');
   Live.montar($('#live'), $('#live-sombra'), $('#live-rosto'));
   Live.standby();
+  { // nome do atendente da loja na tela de espera ("fale com a Cintia")
+    const a = window.ATENDENTE();
+    if (a.proprio) $('#atrair p').textContent = `Toque na tela e fale com ${a.o} ${a.nome}`;
+  }
 
   // deixa a voz online já conectada antes do primeiro toque (senão as boas-vindas esperam uns 3 s)
   // e reaquece a cada 4 min enquanto o totem espera cliente

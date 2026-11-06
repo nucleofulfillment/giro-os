@@ -9,9 +9,9 @@
 window.FRASES = {
   // primeira fala quando alguém toca na tela
   boasVindas: [
-    'Seja bem-vindo {aoLoja}! Eu sou o Live. Qual é o seu nome?',
-    'Bem-vindo {aoLoja}! Sou o Live. Como você se chama?',
-    'Seja bem-vindo {aoLoja}! Eu sou o Live. Me fala seu nome?',
+    'Seja bem-vindo {aoLoja}! Eu sou {oAtendente}. Qual é o seu nome?',
+    'Bem-vindo {aoLoja}! Sou {oAtendente}. Como você se chama?',
+    'Seja bem-vindo {aoLoja}! Eu sou {oAtendente}. Me fala seu nome?',
   ],
   // resposta ao nome do cliente
   prazer: ['Prazer, {nome}! O que você vai querer hoje?', 'Que bom te ver, {nome}! Pode fazer seu pedido.', 'Beleza, {nome}! Tá com fome de quê?'],
@@ -103,7 +103,7 @@ window.FRASES = {
 /* As mesmas falas em inglês e espanhol (atendimento de estrangeiros). Chave que não estiver aqui usa a de português. */
 window.FRASES_IDIOMA = {
   en: {
-    boasVindas: ['Welcome {aoLoja}! I\'m Live. What\'s your name?', 'Hi, welcome {aoLoja}! I\'m Live. May I have your name?'],
+    boasVindas: ['Welcome {aoLoja}! I\'m {atendente}. What\'s your name?', 'Hi, welcome {aoLoja}! I\'m {atendente}. May I have your name?'],
     prazer: ['Nice to meet you, {nome}! What would you like today?', 'Great, {nome}! Go ahead and order whenever you\'re ready.'],
     fechamento: [
       'Order confirmed{nome}! Your number is {numero}, total {total}. Please pay at the cashier and pick it up at the counter. Enjoy your meal!',
@@ -116,7 +116,7 @@ window.FRASES_IDIOMA = {
     trocouIdioma: ['Sure, let\'s continue in English! What would you like?'],
   },
   es: {
-    boasVindas: ['¡Bienvenido {aoLoja}! Soy Live. ¿Cómo te llamas?', '¡Hola, bienvenido {aoLoja}! Soy Live. ¿Me dices tu nombre?'],
+    boasVindas: ['¡Bienvenido {aoLoja}! Soy {atendente}. ¿Cómo te llamas?', '¡Hola, bienvenido {aoLoja}! Soy {atendente}. ¿Me dices tu nombre?'],
     prazer: ['¡Mucho gusto, {nome}! ¿Qué te gustaría pedir hoy?', '¡Genial, {nome}! Puedes hacer tu pedido cuando quieras.'],
     fechamento: [
       '¡Pedido confirmado{nome}! Tu número es el {numero}, total {total}. Paga en la caja y retíralo en el mostrador. ¡Buen provecho!',
@@ -153,6 +153,15 @@ window.FRASES_LOJA = {
 };
 window.IDIOMA_ATUAL = 'pt';
 
+/* Nome do atendente (painel → Assistente Live → Nome do atendente). Em branco: "Live".
+   fem acerta o artigo e as palavras ("a Cintia", "a atendente"). */
+window.ATENDENTE = function () {
+  const s = window.LIVEFOOD && window.LIVEFOOD.servidor;
+  const nome = String((s && s.atendente) || '').trim();
+  const fem = !!(nome && s.genero === 'f');
+  return { nome: nome || 'Live', proprio: !!nome, fem, o: fem ? 'a' : 'o' };
+};
+
 /* Sorteia uma frase da lista, sem repetir a última usada, e troca os marcadores. */
 window.Frase = (function () {
   const ultimas = {};
@@ -162,6 +171,8 @@ window.Frase = (function () {
     const M = window.LIVEFOOD;
     const d = M.itens.find((i) => i.destaque) || M.itens[0];
     if (k === 'loja') return M.loja;
+    if (k === 'atendente') return window.ATENDENTE().nome;                                   // "Cintia"
+    if (k === 'oAtendente') { const a = window.ATENDENTE(); return a.o + ' ' + a.nome; }    // "a Cintia" / "o Live"
     // "ao Restaurante Cinquenta", "ao Trilhos", "à Pizzaria Bella" (nome que começa com palavra feminina leva "à")
     if (k === 'aoLoja') {
       if (window.IDIOMA_ATUAL === 'en') return 'to ' + M.loja.trim();

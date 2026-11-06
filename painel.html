@@ -9189,6 +9189,11 @@ function lvAbrir(){
     var sel=function(id,ops,val){ return '<select class="inp" id="'+id+'" style="margin:6px 0 14px">'+ops.map(function(o){ return '<option value="'+o[0]+'"'+(o[0]===val?' selected':'')+'>'+esc(o[1])+'</option>'; }).join('')+'</select>'; };
     el('cd-imp-corpo').innerHTML=(d.ia?'':'<div style="background:#3b1d1d;color:#fca5a5;border-radius:10px;padding:10px 12px;font-size:12.5px;margin-bottom:12px">A chave da IA do Live ainda não foi cadastrada no servidor (LIVE_ANTHROPIC_API_KEY). O Live só responde depois disso.</div>')
       +'<label style="display:flex;gap:8px;align-items:center;font-size:14px;font-weight:800;margin-bottom:14px"><input type="checkbox" id="lv-ativo" '+(c.ativo?'checked':'')+' style="width:18px;height:18px"> Live ligado nesta loja</label>'
+      /* (220) nome e gênero do atendente: "Eu sou a Cintia" no lugar de "Eu sou o Live" */
+      +'<label style="font-size:12px;font-weight:700;color:var(--muted2)">Nome do atendente (opcional)</label>'
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 4px"><input class="inp" id="lv-nome" maxlength="24" placeholder="em branco = Live" value="'+esc(c.nome||'')+'" style="flex:1;min-width:140px">'
+      +'<select class="inp" id="lv-genero" style="width:auto"><option value="m"'+(c.genero!=='f'?' selected':'')+'>Masculino (o atendente)</option><option value="f"'+(c.genero==='f'?' selected':'')+'>Feminino (a atendente)</option></select></div>'
+      +'<div style="font-size:12px;color:var(--muted);margin-bottom:14px">É como o atendente se apresenta no totem, ex.: "Eu sou a Cintia". Se o cliente perguntar, ele continua dizendo que é um atendente virtual.</div>'
       +'<label style="font-size:12px;font-weight:700;color:var(--muted2)">Cérebro (modelo de IA)</label>'
       +sel('lv-modelo',[['claude-sonnet-5-5','Sonnet 5.5 · equilibrado (recomendado)'],['claude-haiku-5-5','Haiku 5.5 · mais rápido e econômico'],['claude-opus-5-5','Opus 5.5 · mais inteligente, mais lento']],c.modelo)
       +'<label style="font-size:12px;font-weight:700;color:var(--muted2)">Velocidade × raciocínio</label>'
@@ -9283,10 +9288,11 @@ function lvCopiar(){
   (navigator.clipboard?navigator.clipboard.writeText(i.value):Promise.reject()).then(function(){ aviso('Link copiado'); },function(){ document.execCommand('copy'); aviso('Link copiado'); });
 }
 function lvSalvar(){
-  var body={ativo:el('lv-ativo').checked,modelo:el('lv-modelo').value,esforco:el('lv-esforco').value,enviar:el('lv-enviar').checked,treino:el('lv-treino').value,voz:el('lv-voz').value.trim(),treinoN:LV.gerN||(LV.cfg&&LV.cfg.treinoN)||0,treinoEm:LV.gerEm||(LV.cfg&&LV.cfg.treinoEm)||0};
+  var body={ativo:el('lv-ativo').checked,modelo:el('lv-modelo').value,esforco:el('lv-esforco').value,enviar:el('lv-enviar').checked,treino:el('lv-treino').value,voz:el('lv-voz').value.trim(),nome:el('lv-nome').value.trim(),genero:el('lv-genero').value,treinoN:LV.gerN||(LV.cfg&&LV.cfg.treinoN)||0,treinoEm:LV.gerEm||(LV.cfg&&LV.cfg.treinoEm)||0};
   fetch(DELTADIS_API+'/painel/live-config',{method:'POST',headers:cdHdr(),body:JSON.stringify(body)}).then(function(r){return r.json();}).then(function(d){
     if(!d||!d.ok) throw new Error((d&&d.mensagem)||'não salvou');
     var b=el('lv-badge'); if(b) b.textContent=d.cfg.ativo?'ligado':'desligado';
+    if(body.nome&&d.cfg.nome===undefined){ aviso('Live salvo, mas o nome do atendente só fica gravado depois de publicar o Worker 220.'); fecharTudo(); return; }
     aviso(d.cfg.ativo?'Live salvo e ligado':'Live salvo (desligado)'); fecharTudo();
   }).catch(function(e){ var m=el('lv-m'); if(m){ m.style.color='#f87171'; m.textContent=e.message||'Não salvou'; } });
 }
