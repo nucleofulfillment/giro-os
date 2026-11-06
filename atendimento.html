@@ -820,7 +820,10 @@ function fechaForm(i){
 function fechaFazer(i,forma){
   var c=COMS[i]; $('fcErr').textContent='';
   api('/painel/atend-fechar',{mesa:c.mesa,joia:c.joia,forma:forma}).then(function(r){
-    if(r.ok){ _ab=0; fecha(); if(window.LiveApp) LiveApp.comemorar({titulo:forma==='marcar'?'Marcado na conta!':'Conta fechada!',sub:(forma==='marcar'?(c.nome||'Cliente')+' · ':'')+brl(r.total),ms:1700}); else toast(forma==='marcar'?'Marcado na conta de '+(c.nome||'cliente')+' · '+brl(r.total):'Conta fechada · '+brl(r.total)); carregaCom(); return; }
+    if(r.ok){ _ab=0; fecha();
+      /* conta fechada: valor grande + forma de pagamento; a tela fica até tocar em NOVO PEDIDO */
+      var FP={pix:'▦ Pix',cartao:'💳 Cartão',dinheiro:'💵 Dinheiro',marcar:'📒 Marcado na conta'};
+      if(window.LiveApp){ LiveApp.comemorar({titulo:forma==='marcar'?'Marcado na conta!':'Conta fechada!',valor:brl(r.total),forma:FP[forma]||'',sub:forma==='marcar'?(c.nome||'Cliente'):(c.avulso||ehBalM(c.mesa)?'Cliente Balcão':(c.mesa?'Mesa '+c.mesa:'')),botao:{texto:'NOVO PEDIDO',acao:function(){ if(COM.avulso||COM.mesa||COM.joia) zeraComanda(); aba('ped'); }}}); carregaCom(); return; } else toast(forma==='marcar'?'Marcado na conta de '+(c.nome||'cliente')+' · '+brl(r.total):'Conta fechada · '+brl(r.total)); carregaCom(); return; }
     if(r._h===401){ mostraLogin('Entre de novo.'); return; } $('fcErr').textContent=r.mensagem||'Não consegui fechar.';
   });
 }

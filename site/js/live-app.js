@@ -34,6 +34,13 @@
   .lfc span{font-size:15px;font-weight:700;color:#8C817A;transform:translateY(12px);opacity:0;transition:all .5s .4s cubic-bezier(.16,1,.3,1)}
   .lfc.on b,.lfc.on span{transform:none;opacity:1}
   .lfc small{position:absolute;bottom:26px;font-size:12px;font-weight:700;color:#B5ACA5}
+  .lfc .lfc-val{font-size:clamp(44px,9vw,72px);font-weight:800;line-height:1;letter-spacing:-.02em;color:#FF5A00;font-variant-numeric:tabular-nums;transform:scale(.6);opacity:0;transition:all .6s .45s cubic-bezier(.34,1.56,.64,1)}
+  .lfc .lfc-fp{display:inline-flex;align-items:center;gap:8px;font-size:16px;font-weight:800;color:#29231E;background:#FFF1E8;border:1px solid #FFD9C2;border-radius:999px;padding:8px 16px;transform:translateY(12px);opacity:0;transition:all .5s .6s cubic-bezier(.16,1,.3,1)}
+  .lfc .lfc-bt{margin-top:10px;min-width:260px;padding:16px 28px;border:0;border-radius:14px;background:#FF5A00;color:#fff;font:800 18px/1 'Manrope','Nunito',system-ui,sans-serif;letter-spacing:.02em;cursor:pointer;box-shadow:0 10px 24px rgba(255,90,0,.3);transform:translateY(14px);opacity:0;transition:all .5s .75s cubic-bezier(.16,1,.3,1)}
+  .lfc .lfc-bt:active{transform:scale(.97)}
+  .lfc{overflow-y:auto;justify-content:safe center}
+  @media (max-height:640px){.lfc{gap:8px;padding:14px 16px}.lfc .lfc-live{width:96px;flex:none}.lfc b{font-size:20px}.lfc .lfc-val{font-size:40px}.lfc .lfc-bt{padding:13px 24px;margin-top:4px}}
+  .lfc.on .lfc-val{transform:none;opacity:1}.lfc.on .lfc-fp,.lfc.on .lfc-bt{transform:none;opacity:1}
   .lfc-confete{position:fixed;z-index:2147483002;left:0;top:0;font-size:26px;pointer-events:none;will-change:transform}`;
   const st = document.createElement('style');
   st.textContent = css;
@@ -103,9 +110,15 @@
     const box = document.createElement('div');
     box.className = 'lfc';
     box.setAttribute('role', 'status');
-    box.innerHTML = '<div class="lfc-live"></div><b></b><span></span><small>toque para continuar</small>';
+    /* fixa: a tela fica até tocar no botão (op.botao), com o valor grande e a forma de pagamento */
+    const fixa = !!(op.botao && op.botao.texto);
+    box.innerHTML = '<div class="lfc-live"></div><b></b>' + (op.valor ? '<div class="lfc-val"></div>' : '') + (op.forma ? '<div class="lfc-fp"></div>' : '') + '<span></span>' + (fixa ? '<button type="button" class="lfc-bt"></button>' : '<small>toque para continuar</small>');
     box.querySelector('b').textContent = op.titulo || 'Pedido enviado!';
     box.querySelector('span').textContent = op.sub || '';
+    if (op.valor) box.querySelector('.lfc-val').textContent = op.valor;
+    if (op.forma) box.querySelector('.lfc-fp').textContent = op.forma;
+    if (!op.sub) box.querySelector('span').remove();
+    if (fixa) box.querySelector('.lfc-bt').textContent = op.botao.texto;
     document.body.appendChild(box);
     const live = LiveMascote.criar(box.querySelector('.lfc-live'), { sombra: true, expressao: 'animado' });
     let fechado = false, timer = null;
@@ -118,8 +131,14 @@
         if (ativa && ativa.fechar === fechar) ativa = null;
       }
       ativa = { fechar };
-      box.addEventListener('click', fechar);
-      timer = setTimeout(fechar, ms);
+      if (fixa) {
+        const bt = box.querySelector('.lfc-bt');
+        bt.addEventListener('click', () => { fechar(); try { if (op.botao.acao) op.botao.acao(); } catch (e) {} });
+        setTimeout(() => { try { bt.focus(); } catch (e) {} }, 400);
+      } else {
+        box.addEventListener('click', fechar);
+        timer = setTimeout(fechar, ms);
+      }
     });
     requestAnimationFrame(() => box.classList.add('on'));
     (async () => {
@@ -129,7 +148,16 @@
       const r = box.querySelector('.lfc-live').getBoundingClientRect();
       confete(r.left + r.width / 2, r.top + r.height / 2);
       await live.gesto('comemorar');
-      if (!fechado) live.gesto('piscadinha');
+      if (!fechado) await live.gesto('piscadinha');
+      /* tela fixa: o Live segue se mexendo enquanto espera o próximo pedido */
+      const gestos = ['comemorar', 'piscadinha', 'boas_vindas', 'piscadinha'];
+      for (let k = 0; fixa && !fechado; k++) {
+        await espera(1800);
+        if (fechado) break;
+        try { await live.animar({ y: -18, sx: 1.04, sy: .97 }, 260, molaEase); await live.animar({ y: 0, sx: 1, sy: 1 }, 380, molaEase); } catch (e) {}
+        if (fechado) break;
+        try { await live.gesto(gestos[k % gestos.length]); } catch (e) {}
+      }
     })();
     return fim;
   }
