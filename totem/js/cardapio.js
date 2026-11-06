@@ -210,20 +210,78 @@
     if (!M.itens.length) { M = exemplo(); M.origem = 'exemplo'; M.erro = 'A loja não tem itens ativos no cardápio.'; }
   }
 
-  // topo: logo do restaurante (e o LiveFood assina no rodapé); sem loja ou sem logo, o topo fica com a do LiveFood
+  // topo: logo do restaurante (e o LiveFood assina no rodapé); sem loja ou sem logo, o topo fica com a do LiveFood.
+  // A logo fica guardada neste aparelho (live-logo-<loja>): da segunda abertura em diante ela aparece na hora,
+  // sem esperar o cardápio (uns 3 s) nem o download da imagem. Se a loja trocar a logo no painel, a nova substitui a guardada.
+  const kLogo = 'live-logo-' + codigo;
+  let logoNaTela = '';
+  function pintarLogo(src, clara, alt) {
+    const img = document.getElementById('logo-loja');
+    img.onload = img.onerror = null;
+    img.alt = alt || '';
+    img.classList.toggle('clara', !!clara); // logo branca (feita pra fundo escuro): no totem branco ela aparece escura
+    img.classList.add('da-loja', 'pronta');
+    img.src = src;
+    document.getElementById('rodape').classList.add('visivel');
+  }
+  function logoGuardada() {
+    if (!codigo) return;
+    const g = ler(kLogo);
+    if (!g || !g.data || !/^data:image\//.test(g.data)) return;
+    pintarLogo(g.data, g.clara, g.alt);
+    logoNaTela = g.url;
+  }
+  function guardarLogo(img, url, clara, alt) {
+    try {
+      // reduz para o tamanho em que ela aparece (2x, para ficar nítida) e guarda como texto
+      const h = Math.min(330, img.naturalHeight), w = Math.max(1, Math.round(h * img.naturalWidth / img.naturalHeight));
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      let data = c.toDataURL('image/webp', 0.92);
+      if (!/^data:image\/webp/.test(data)) data = c.toDataURL('image/png'); // Safari não faz webp
+      gravar(kLogo, { url, data, clara, alt });
+      return data;
+    } catch (e) { return ''; /* sem armazenamento: só não fica guardada */ }
+  }
   function mostrarLogo() {
     const img = document.getElementById('logo-loja');
-    const doLiveFood = () => { img.classList.remove('da-loja'); img.alt = 'livefood'; img.src = 'img/logo-livefood.png'; img.classList.add('pronta'); };
-    if (!M.logo) { doLiveFood(); return; }
-    img.onload = () => {
-      if (logoClara(img)) img.classList.add('clara'); // logo branca (feita pra fundo escuro): no totem branco ela aparece escura
-      img.classList.add('da-loja', 'pronta');
-      document.getElementById('rodape').classList.add('visivel');
+    const doLiveFood = () => {
+      img.onload = img.onerror = null;
+      img.classList.remove('da-loja', 'clara'); img.alt = 'livefood'; img.src = 'img/logo-livefood.png'; img.classList.add('pronta');
+      document.getElementById('rodape').classList.remove('visivel');
+      logoNaTela = '';
     };
-    img.onerror = () => { img.onerror = null; doLiveFood(); };
-    img.alt = M.loja;
-    img.crossOrigin = 'anonymous'; // permite medir as cores da logo
-    img.src = M.logo;
+    if (!M.logo) {
+      if (M.origem === 'livefood') { try { localStorage.removeItem(kLogo); } catch (e) { /* ok */ } doLiveFood(); } // a loja tirou a logo
+      else if (!logoNaTela) doLiveFood(); // sem internet e sem cópia: fica com a guardada, se houver
+      return;
+    }
+    if (logoNaTela === M.logo) return; // a guardada já é a atual
+    baixarLogo(M.logo, M.loja, () => { if (!logoNaTela) doLiveFood(); });
+  }
+  // baixa num objeto à parte: a guardada continua na tela até a nova chegar
+  function baixarLogo(url, alt, aoFalhar) {
+    const nova = new Image();
+    nova.crossOrigin = 'anonymous'; // permite medir as cores da logo e guardar
+    nova.onload = () => {
+      if (logoNaTela === url) return;
+      if (M && M.origem && M.logo !== url) return; // o cardápio já chegou com outra logo (ou sem logo)
+      const clara = logoClara(nova);
+      const data = guardarLogo(nova, url, clara, alt);
+      pintarLogo(data || url, clara, alt);
+      logoNaTela = url;
+    };
+    nova.onerror = () => { aoFalhar && aoFalhar(); };
+    nova.src = url;
+  }
+  logoGuardada();
+  // ainda sem logo guardada (primeira vez depois desta versão), mas com cópia do cardápio: já começa a baixar a logo
+  if (codigo && !logoNaTela) {
+    const copia = ler('live-cardapio-' + codigo);
+    if (copia && copia.ok && copia.cfg && copia.cfg.logo && copia.cli) {
+      baixarLogo(`${API}/food/foto/${encodeURIComponent(copia.cli)}/_logop?v=${copia.cfg.v || 0}`, copia.empresa || '');
+    }
   }
   // a logo é quase toda branca? (média de brilho dos pixels visíveis)
   function logoClara(img) {
@@ -242,8 +300,9 @@
     } catch (e) { return false; }
   }
 
-  Promise.all([carregar(), configDoPainel()]).then(([, painel]) => {
-    mostrarLogo();
+  // a logo aparece assim que o cardápio chega (sem esperar as configurações do painel)
+  const cardapioPronto = carregar().then(() => { try { mostrarLogo(); } catch (e) { console.warn('Logo:', e); } });
+  Promise.all([cardapioPronto, configDoPainel()]).then(([, painel]) => {
     M.codigo = codigo;
     M.api = API;
     M.servidor = painel && !painel.erro ? painel : null; // { k, ativo, modelo, esforco, enviar, treino, ia, voz }

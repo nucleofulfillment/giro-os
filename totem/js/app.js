@@ -454,7 +454,7 @@
   let micBloqueado = false, avisouMicEm = 0, escuta = null, semCaptarDesde = 0, ouvidosAbertosEm = 0, primeiraFala = 0, quedasVoz = [];
 
   function garantirEscuta() {
-    if ((escuta && escuta.ativo) || !Voz.podeOuvir || micBloqueado || S.modo !== 'conversa') return;
+    if ((escuta && escuta.ativo) || !Voz.podeOuvir || micBloqueado || (S.modo !== 'conversa' && S.modo !== 'entrando')) return;
     escuta = Voz.iniciarEscuta({
       aoInicio: () => {
         estadoVoz('ouvindo');
@@ -685,6 +685,15 @@
   // Atendimento
   // ---------------------------------------------------------------------------
 
+  // espera o reconhecimento de voz começar a captar (no máximo maxMs; sem microfone, não espera)
+  function microfonePronto(maxMs) {
+    const t0 = Date.now();
+    return new Promise((resolve) => {
+      const ver = () => (!escuta || !escuta.ativo || escuta.captando || micBloqueado || Date.now() - t0 >= maxMs ? resolve() : setTimeout(ver, 50));
+      ver();
+    });
+  }
+
   async function acordar(saudar = true) {
     if (S.modo !== 'standby') return;
     S.modo = 'entrando';
@@ -702,9 +711,13 @@
     setModo('conversa');
     Voz.destravar();
     if (cfg.filtroRuido !== 'desligado') Medidor.iniciar(); // precisa de um toque na tela pra liberar o áudio
+    // O microfone liga ANTES da primeira fala (tampado: nada do que ele ouve agora conta).
+    // No Windows, ligar o microfone mexe na saída de som; se isso acontece no meio da primeira frase,
+    // o som atrasa e sai fora da boca e da legenda. Da segunda fala em diante o microfone já estava ligado.
+    tamparOuvidos();
     // ele já começa a falar enquanto entra voando (sem esperar a animação terminar)
     const entrada = Live.entrar();
-    await espera(saudar ? 300 : 0);
+    await Promise.all([espera(saudar ? 300 : 0), saudar ? microfonePronto(1500) : null]);
     if (minha !== S.sessao) return;
     S.modo = 'conversa';
     if (!saudar) { await entrada; return; }

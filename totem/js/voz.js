@@ -23,11 +23,35 @@
       preferidas: [/(Alvaro|Álvaro|Jorge|Gerardo|Tomas|Tomás|Elias|Elías|Dario|Darío|Arnau|Liberto|Saul|Saúl|Teo|Cecilio)\b.*Natural/i, /Natural/i, /Pablo|Raul|Raúl/i, /Google/i] },
   };
 
+  let avisarVozes = [];
   function carregarVozes() {
     if (!synth) return;
     todasVozes = synth.getVoices();
     vozes = todasVozes.filter((v) => /^pt[-_]?BR/i.test(v.lang) || /portugu.*bra/i.test(v.name));
     if (window.Voz && window.Voz.aoMudarVozes) window.Voz.aoMudarVozes(vozes);
+    const fila = avisarVozes; avisarVozes = [];
+    fila.forEach((f) => f());
+  }
+
+  // A lista de vozes chega aos poucos: vazia no começo e, no Edge, as "Natural" (online) só depois das instaladas.
+  // Antes da primeira fala espera a lista ficar pronta (no máximo 1,5 s), senão ela sairia muda ou com outra voz.
+  const ehEdge = /\bEdg\//.test(navigator.userAgent);
+  let esperouVozes = false; // espera só uma vez (sem internet o Edge nunca mostra as "Natural")
+  function vozesProntas() {
+    if (!synth || esperouVozes) return Promise.resolve();
+    if (!vozes.length) carregarVozes();
+    const pronta = () => vozes.length && (!ehEdge || vozes.some((v) => /Natural/i.test(v.name)));
+    if (pronta()) return Promise.resolve();
+    esperouVozes = true;
+    return new Promise((resolve) => {
+      const t0 = Date.now();
+      const ver = () => {
+        if (pronta() || Date.now() - t0 >= 1500) return resolve();
+        avisarVozes.push(ver);
+        setTimeout(() => { carregarVozes(); }, 250); // alguns navegadores não avisam: confere de novo
+      };
+      ver();
+    });
   }
 
   // voz masculina do idioma (inglês/espanhol), dando preferência às "Natural" do Edge
@@ -241,11 +265,23 @@
         boca && boca.parar();
         boca = null;
         const u = new SpeechSynthesisUtterance(frase);
-        // a boca e a legenda só começam quando o som começa de verdade
-        u.onstart = () => {
-          if (estado.cancelado) return;
+        // a boca e a legenda só começam quando o som começa de verdade.
+        // Nas vozes "Natural" do Edge (online), o "início" chega quando o pedido sai pra Microsoft, não quando o som sai:
+        // na primeira fala (conexão ainda fria) isso dá até alguns segundos de diferença. Nelas, quem marca o início
+        // é a primeira palavra (onboundary), que vem junto com o som. Se nenhuma palavra chegar, começa assim mesmo.
+        const esperaPalavra = /Natural/i.test(v.name);
+        let comecouBoca = false, reserva = 0;
+        const comecarBoca = () => {
+          clearTimeout(reserva);
+          if (comecouBoca || estado.cancelado) return;
+          comecouBoca = true;
           boca = animadorBoca(frase, op.velocidade || 1, aoViseme);
           estado.comecou();
+        };
+        u.onstart = () => {
+          if (estado.cancelado) return;
+          if (esperaPalavra) reserva = setTimeout(comecarBoca, 2500);
+          else comecarBoca();
         };
         u.voice = v;
         u.lang = v.lang || IDIOMAS[idioma].rec;
@@ -259,6 +295,7 @@
         const ultimoInicio = frase.trimEnd().lastIndexOf(' ') + 1;
         u.onboundary = (e) => {
           const pos = e.charIndex || 0;
+          comecarBoca();
           boca && boca.ir(pos);
           if (idx >= frases.length && pos >= ultimoInicio && !estado.quaseFim) {
             estado.quaseFim = true;
@@ -266,8 +303,8 @@
             setTimeout(() => { if (!estado.cancelado) fim(); }, resto * 75 / u.rate + 250);
           }
         };
-        u.onend = () => { clearTimeout(seguranca); proxima(); };
-        u.onerror = () => { clearTimeout(seguranca); proxima(); };
+        u.onend = () => { clearTimeout(seguranca); clearTimeout(reserva); proxima(); };
+        u.onerror = () => { clearTimeout(seguranca); clearTimeout(reserva); proxima(); };
         synth.speak(u);
       };
       // cancelar sem nada tocando atrasa a próxima fala no Edge
@@ -297,7 +334,8 @@
     };
     falaAtual = minha;
     // se a voz demorar demais para sair, mostra a legenda mesmo assim
-    const seguranca = setTimeout(() => { if (!estado.cancelado) estado.comecou(); }, 1500);
+    // (era 1,5 s: na primeira fala a voz online do Edge às vezes demora mais que isso e a legenda saía antes do som)
+    const seguranca = setTimeout(() => { if (!estado.cancelado) estado.comecou(); }, 4000);
     try {
       if (op.elevenProxy || (op.elevenChave && op.elevenVoz)) {
         try {
@@ -305,9 +343,13 @@
         } catch (e) {
           if (estado.cancelado) return false;
           if (Voz.aoErroVoz) Voz.aoErroVoz(e);
+          await vozesProntas();
+          if (estado.cancelado) return false;
           await falarNavegador(limpo, op, aoViseme, estado);
         }
       } else {
+        await vozesProntas();
+        if (estado.cancelado) return false;
         await falarNavegador(limpo, op, aoViseme, estado);
       }
     } finally {
