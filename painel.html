@@ -2088,7 +2088,7 @@ function enviarPedidosServidor(forcar){
     setTimeout(agendarEnvioPedidos,60000);
   });
 }
-function pedExtra(p){ if(!(p.com||p.atn||p.tpe||p.prz||p.ref||p.op||p.cmid||p.tpg!=null||p.apg!=null||p.urg)) return 0; return {com:p.com||'',atn:p.atn||'',tpe:p.tpe||'',prz:p.prz||'',prt:p.prt||'',ref:p.ref||'',tpg:(p.tpg==null?null:p.tpg),apg:(p.apg==null?null:p.apg),op:p.op||'',cmid:p.cmid||'',urg:p.urg?1:0}; }
+function pedExtra(p){ if(!(p.com||p.atn||p.tpe||p.prz||p.ref||p.op||p.cmid||p.tpg!=null||p.apg!=null||p.urg||p.estorno)) return 0; var x={com:p.com||'',atn:p.atn||'',tpe:p.tpe||'',prz:p.prz||'',prt:p.prt||'',ref:p.ref||'',tpg:(p.tpg==null?null:p.tpg),apg:(p.apg==null?null:p.apg),op:p.op||'',cmid:p.cmid||'',urg:p.urg?1:0}; if(p.estorno) x.est=p.estorno; return x; }   /* (228) est = estorno */
 function packPed(){ var pc=[],i,p; for(i=0;i<PEDIDOS.length;i++){ p=PEDIDOS[i]; pc.push([p.cod,p.tr,p.mt,p.st,p.dia||'',p.hora||'',p.obs||'',(p.scan&&p.scan!==p.cod)?p.scan:'',p.ent||'',p.cliente||'',p.bairro||'',(p.vl==null?null:p.vl),p.cep||'',p.area||'',p.fechId||null,p.tel||'',p.canal||'',p.vend||'',p.rua||'',p.num||'',p.comp||'',p.bai||'',p.cid||'',p.endOrig||'',p.tam||'',p.hp||0,p.pg||'',p.pgp?1:0,p.pgr||'',(p.tx==null?null:p.tx),p.itens||'',p.atend||'',(p.lat==null?null:p.lat),(p.lng==null?null:p.lng),p.gq||0,p.ga||'',pedExtra(p)]); } return pc; }
 function salvarLocal(cb){
   var o; try{ sincStatusFech(); }catch(eSf){}
@@ -2111,7 +2111,7 @@ function aplicarSalvo(d){
   if(d.rast){ RASTREADOS={}; d.rast.forEach(function(c){ RASTREADOS[c]=1; }); }
   if(d.ciclos) CICLOS=d.ciclos; else if(d.ciclo && d.ciclo.modo) CICLOS=[{id:'c0',grupo:'todos',modo:d.ciclo.modo,tipo:d.ciclo.tipo,dia:d.ciclo.dia,prazo:d.ciclo.prazo}];
   if((d.pedidos||d.pc) && d.motoristas){
-    if(d.pc){ PEDIDOS=d.pc.map(function(a){ return {cod:a[0], tr:a[1], mt:a[2], cliente:a[9]||'', bairro:a[10]||'', vl:(a[11]==null?null:a[11]), cep:a[12]||'', area:a[13]||'', fechId:a[14]||null, tel:a[15]||'', canal:a[16]||'', vend:a[17]||'', rua:a[18]||'', num:a[19]||'', comp:a[20]||'', bai:a[21]||'', cid:a[22]||'', endOrig:a[23]||'', tam:a[24]||'', hp:a[25]||0, pg:a[26]||'', pgp:a[27]?1:0, pgr:a[28]||'', tx:(a[29]==null?null:a[29]), itens:a[30]||'', atend:a[31]||'', lat:(a[32]==null?null:a[32]), lng:(a[33]==null?null:a[33]), gq:a[34]||0, ga:a[35]||'', com:(a[36]&&a[36].com)||'', atn:(a[36]&&a[36].atn)||'', tpe:(a[36]&&a[36].tpe)||'', prz:(a[36]&&a[36].prz)||'', prt:(a[36]&&a[36].prt)||'', ref:(a[36]&&a[36].ref)||'', tpg:(a[36]&&a[36].tpg!=null)?a[36].tpg:null, apg:(a[36]&&a[36].apg!=null)?a[36].apg:null, op:(a[36]&&a[36].op)||'', cmid:(a[36]&&a[36].cmid)||'', urg:(a[36]&&a[36].urg)?1:0, st:a[3], t1:'', t2:'', scan:a[7]||a[0], dia:a[4], hora:a[5], obs:a[6], ent:a[8]}; }); }
+    if(d.pc){ PEDIDOS=d.pc.map(function(a){ return {cod:a[0], tr:a[1], mt:a[2], cliente:a[9]||'', bairro:a[10]||'', vl:(a[11]==null?null:a[11]), cep:a[12]||'', area:a[13]||'', fechId:a[14]||null, tel:a[15]||'', canal:a[16]||'', vend:a[17]||'', rua:a[18]||'', num:a[19]||'', comp:a[20]||'', bai:a[21]||'', cid:a[22]||'', endOrig:a[23]||'', tam:a[24]||'', hp:a[25]||0, pg:a[26]||'', pgp:a[27]?1:0, pgr:a[28]||'', tx:(a[29]==null?null:a[29]), itens:a[30]||'', atend:a[31]||'', lat:(a[32]==null?null:a[32]), lng:(a[33]==null?null:a[33]), gq:a[34]||0, ga:a[35]||'', com:(a[36]&&a[36].com)||'', atn:(a[36]&&a[36].atn)||'', tpe:(a[36]&&a[36].tpe)||'', prz:(a[36]&&a[36].prz)||'', prt:(a[36]&&a[36].prt)||'', ref:(a[36]&&a[36].ref)||'', tpg:(a[36]&&a[36].tpg!=null)?a[36].tpg:null, apg:(a[36]&&a[36].apg!=null)?a[36].apg:null, op:(a[36]&&a[36].op)||'', cmid:(a[36]&&a[36].cmid)||'', urg:(a[36]&&a[36].urg)?1:0, estorno:(a[36]&&a[36].est)||null, st:a[3], t1:'', t2:'', scan:a[7]||a[0], dia:a[4], hora:a[5], obs:a[6], ent:a[8]}; }); }
     else PEDIDOS=d.pedidos;
     PEDIDOS.forEach(garantirEndereco);
     MOTORISTAS=d.motoristas; EXTRATO=d.extrato||[];
@@ -2234,7 +2234,7 @@ function srvEnviarDireto(cb){
 /* ══ (70) VÁRIAS TELAS, MESMO LOGIN: antes cada tela guardava a própria cópia e a última a salvar apagava o que as outras tinham feito. Agora:
    • a cada 15 s (aba visível e nada pendente de envio) a tela pergunta ao servidor se algum bloco de pedidos mudou e traz o que mudou;
    • antes de enviar, se outra tela mexeu no mesmo bloco, junta os pedidos (nenhum some) e só então envia. ══ */
-function srvLinhaPed(a){ var p={cod:a[0], tr:a[1], mt:a[2], cliente:a[9]||'', bairro:a[10]||'', vl:(a[11]==null?null:a[11]), cep:a[12]||'', area:a[13]||'', fechId:a[14]||null, tel:a[15]||'', canal:a[16]||'', vend:a[17]||'', rua:a[18]||'', num:a[19]||'', comp:a[20]||'', bai:a[21]||'', cid:a[22]||'', endOrig:a[23]||'', tam:a[24]||'', hp:a[25]||0, pg:a[26]||'', pgp:a[27]?1:0, pgr:a[28]||'', tx:(a[29]==null?null:a[29]), itens:a[30]||'', atend:a[31]||'', lat:(a[32]==null?null:a[32]), lng:(a[33]==null?null:a[33]), gq:a[34]||0, ga:a[35]||'', com:(a[36]&&a[36].com)||'', atn:(a[36]&&a[36].atn)||'', tpe:(a[36]&&a[36].tpe)||'', prz:(a[36]&&a[36].prz)||'', prt:(a[36]&&a[36].prt)||'', ref:(a[36]&&a[36].ref)||'', tpg:(a[36]&&a[36].tpg!=null)?a[36].tpg:null, apg:(a[36]&&a[36].apg!=null)?a[36].apg:null, op:(a[36]&&a[36].op)||'', cmid:(a[36]&&a[36].cmid)||'', urg:(a[36]&&a[36].urg)?1:0, st:a[3], t1:'', t2:'', scan:a[7]||a[0], dia:a[4], hora:a[5], obs:a[6], ent:a[8]}; try{ garantirEndereco(p); }catch(e){} return p; }
+function srvLinhaPed(a){ var p={cod:a[0], tr:a[1], mt:a[2], cliente:a[9]||'', bairro:a[10]||'', vl:(a[11]==null?null:a[11]), cep:a[12]||'', area:a[13]||'', fechId:a[14]||null, tel:a[15]||'', canal:a[16]||'', vend:a[17]||'', rua:a[18]||'', num:a[19]||'', comp:a[20]||'', bai:a[21]||'', cid:a[22]||'', endOrig:a[23]||'', tam:a[24]||'', hp:a[25]||0, pg:a[26]||'', pgp:a[27]?1:0, pgr:a[28]||'', tx:(a[29]==null?null:a[29]), itens:a[30]||'', atend:a[31]||'', lat:(a[32]==null?null:a[32]), lng:(a[33]==null?null:a[33]), gq:a[34]||0, ga:a[35]||'', com:(a[36]&&a[36].com)||'', atn:(a[36]&&a[36].atn)||'', tpe:(a[36]&&a[36].tpe)||'', prz:(a[36]&&a[36].prz)||'', prt:(a[36]&&a[36].prt)||'', ref:(a[36]&&a[36].ref)||'', tpg:(a[36]&&a[36].tpg!=null)?a[36].tpg:null, apg:(a[36]&&a[36].apg!=null)?a[36].apg:null, op:(a[36]&&a[36].op)||'', cmid:(a[36]&&a[36].cmid)||'', urg:(a[36]&&a[36].urg)?1:0, estorno:(a[36]&&a[36].est)||null, st:a[3], t1:'', t2:'', scan:a[7]||a[0], dia:a[4], hora:a[5], obs:a[6], ent:a[8]}; try{ garantirEndereco(p); }catch(e){} return p; }
 function srvChaveDia(p){ return String(p.dia||'_').replace(/[^0-9A-Za-z_-]/g,'_').slice(0,40); }
 var SRV_FINAL={entregue:1,devolvido:1,extraviado:1};
 /* modo 'servidor': o servidor manda (tela sem nada pendente). modo 'juntar': une local + servidor (local vence, exceto status final vindo do servidor). */
@@ -4910,7 +4910,10 @@ function pdRecebHtml(p){
 /* cancelar pedido: sai da lista (só aparece no filtro "Cancelados") e some do Mapeamento */
 function pdAcaoHtml(p){
   if(p.tr!=='gir') return '';
+  if(p.estorno) return '<span class="badge b-nu" title="'+esc('Estornado em '+new Date(p.estorno.t).toLocaleString('pt-BR')+(p.estorno.motivo?' · '+p.estorno.motivo:''))+'">Estornado</span>';
   if(p.st==='cancelado') return '<button class="pd-ic" title="Restaurar pedido (volta para a fila)" onclick="event.stopPropagation();pdRestaurar(\''+esc(p.cod)+'\')">↩</button>';
+  /* (228) pedido de venda já pago (cardápio, WhatsApp, garçom/balcão): pode ser estornado */
+  if(pdPodeEstornar(p)) return '<button class="pd-ic" title="Estornar pedido (devolver o valor)" onclick="event.stopPropagation();pdEstornar(\''+esc(p.cod)+'\')">↺</button>'+(p.st==='entregue'||p.st==='devolvido'?'':'<button class="pd-ic" title="Cancelar pedido" onclick="event.stopPropagation();pdCancelar(\''+esc(p.cod)+'\')">🚫</button>');
   if(p.st==='entregue'||p.st==='devolvido') return '';
   return '<button class="pd-ic" title="Cancelar pedido" onclick="event.stopPropagation();pdCancelar(\''+esc(p.cod)+'\')">🚫</button>';
 }
@@ -4926,6 +4929,27 @@ function pdCancelar(cod){
   var m=p.st==='em rota'?motorista(p.mt):null;
   pdConfirmar('Cancelar pedido #'+esc(pdNum(p))+'?','<b>'+esc(p.cliente||'')+'</b> · '+moeda(p.vl)+(m?'<br><span class="mp-aviso">⚠ Este pedido já está em rota com '+esc(m.n)+'.</span>':'')+'<br>Ele sai da lista e só aparece no filtro <b>Cancelados</b>.','Cancelar pedido',function(){
     p.st='cancelado'; try{ recalcularReal(); }catch(e){} salvarLocal(); repintarTudo(); aviso('Pedido #'+esc(pdNum(p))+' cancelado');
+  });
+}
+/* ── (228) ESTORNO: o pedido pago volta. No servidor ele vira "estornado" (sai da cozinha, da comissão do garçom e das contas do cliente);
+   aqui ele vai para Cancelados com a marca de estorno e entra uma SAÍDA "Estorno" no Fluxo de Caixa com o mesmo valor.
+   O dinheiro em si o restaurante devolve na maquininha / Pix / Asaas: o sistema só registra. ── */
+function pdPago(p){ return !!(p.pgp||p.pg==='online'||EXTRATO.some(function(x){ return x.fdid&&('fd'+x.fdid)===p.cmid&&x.tp==='in'; })); }
+function pdPodeEstornar(p){ return !!(p&&!p.estorno&&p.st!=='cancelado'&&String(p.cmid||'').indexOf('fd')===0&&pdPago(p)); }
+function pdEstornar(cod){
+  var p=null,i; for(i=0;i<PEDIDOS.length;i++) if(PEDIDOS[i].cod===cod) p=PEDIDOS[i]; if(!p||!pdPodeEstornar(p)) return;
+  pdConfirmar('Estornar pedido #'+esc(pdNum(p))+'?','<b>'+esc(p.cliente||'')+'</b> · '+moeda(p.vl)+'<br>O pedido sai da cozinha e das contas, vai para <b>Cancelados</b> e entra uma saída de '+moeda(p.vl)+' no Fluxo de Caixa.<br><span class="mp-aviso">A devolução do dinheiro em si (maquininha, Pix ou link) é feita por vocês.</span><label style="display:block;font-size:12px;font-weight:700;color:var(--muted2);margin-top:12px">Motivo do estorno</label><input class="inp" id="pd-est-mot" maxlength="120" placeholder="Ex.: cliente desistiu, item em falta" style="margin-top:6px">','Estornar',function(){
+    var mot=((el('pd-est-mot')||{}).value||'').trim();
+    if(mot.length<3){ aviso('Escreva o motivo do estorno.'); setTimeout(function(){ pdEstornar(cod); },50); return; }
+    var fid=String(p.cmid).slice(2);
+    fetch(DELTADIS_API+'/painel/food-estorno',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+DD_TOKEN},body:JSON.stringify({id:fid,motivo:mot})}).then(function(r){ return r.json(); }).then(function(d){
+      if(!d||!d.ok){ aviso((d&&d.mensagem)||'Não consegui estornar. Publique o Worker 228 e tente de novo.'); return; }
+      p.estorno={t:Date.now(),motivo:mot,vl:Number(p.vl)||0,por:(DD_USER&&DD_USER.nome)||''}; p.st='cancelado';
+      var mx=0; EXTRATO.forEach(function(x){ if(Number(x.id)>mx) mx=Number(x.id); });
+      if(CATEGORIAS_FC.indexOf('Estorno')<0) CATEGORIAS_FC.push('Estorno');
+      EXTRATO.push({id:mx+1,tp:'out',tt:'Estorno · pedido #'+pdNum(p)+' · '+mot,categoria:'Estorno',data:hojeISO(),vl:Number(p.vl)||0,status:'pago',estdid:fid});
+      try{ recalcularReal(); }catch(e){} salvarLocal(); repintarTudo(); aviso('Pedido #'+esc(pdNum(p))+' estornado');
+    }).catch(function(){ aviso('Sem conexão. Tente de novo.'); });
   });
 }
 function pdRestaurar(cod){
@@ -9146,6 +9170,7 @@ function cdCfgClientes(){
     el('cd-imp-corpo').innerHTML='<div style="font-size:13px;color:var(--muted2);line-height:1.5;margin-bottom:12px">Valem para os clientes cadastrados no <b>Atendimento</b> (garçom/balcão) que penduram a conta com <b>Marcar</b>.</div>'
       +'<label style="display:flex;gap:8px;align-items:flex-start;font-size:13.5px;font-weight:700;margin-bottom:14px;padding:10px 12px;border:1px solid var(--border);border-radius:12px"><input type="checkbox" id="cc-bal" '+(c.balcao_livre?'checked':'')+' style="width:18px;height:18px;flex:none"><span>Vender no balcão sem cliente<small style="display:block;font-weight:500;color:var(--muted);margin-top:2px">No Atendimento, o Balcão não pede número nem cliente. O pedido sai como Cliente Balcão.</small></span></label>'
       +'<label style="display:flex;gap:8px;align-items:flex-start;font-size:13.5px;font-weight:700;margin-bottom:14px;padding:10px 12px;border:1px solid var(--border);border-radius:12px"><input type="checkbox" id="cc-pronto" '+(c.pronto_direto?'checked':'')+' style="width:18px;height:18px;flex:none"><span>Pedido do Atendimento já sai pronto<small style="display:block;font-weight:500;color:var(--muted);margin-top:2px">O pedido lançado pelo garçom entra na Cozinha direto como Pronto, sem passar por Em preparo. Bom para bar e itens entregues na hora. A comanda continua aberta até fechar a conta.</small></span></label>'
+      +'<label style="display:flex;gap:8px;align-items:flex-start;font-size:13.5px;font-weight:700;margin-bottom:14px;padding:10px 12px;border:1px solid var(--border);border-radius:12px"><input type="checkbox" id="cc-cobra" '+(c.cobra_hora?'checked':'')+' style="width:18px;height:18px;flex:none"><span>Cobrar na hora do pedido<small style="display:block;font-weight:500;color:var(--muted);margin-top:2px">No Atendimento, o botão do carrinho vira <b>Fechar comanda</b>: o garçom escolhe a forma de pagamento, mostra o resumo para o cliente e, com o pagamento aprovado, o pedido vai para a cozinha. Se o cliente desistir, cancela sem criar pedido.</small></span></label>'
       +'<label style="font-size:12px;font-weight:700;color:var(--muted2)">Bloquear cliente com cobrança vencida há mais de (dias)</label>'
       +'<input class="inp" id="cc-bloq" inputmode="numeric" pattern="[0-9]*" placeholder="0 = não bloquear" value="'+(c.bloq_dias||'')+'" style="margin:6px 0 14px">'
       +'<label style="display:flex;gap:8px;align-items:center;font-size:13.5px;font-weight:700;margin-bottom:6px"><input type="checkbox" id="cc-auto" '+(c.fecha_auto?'checked':'')+' style="width:18px;height:18px"> Fechar a conta e gerar a cobrança automaticamente</label>'
@@ -9157,11 +9182,12 @@ function cdCfgClientes(){
   }).catch(function(e){ el('cd-imp-corpo').innerHTML='<div style="color:#f87171;font-size:13px">'+esc(e.message||'Não consegui abrir.')+'</div>'; });
 }
 function cdCfgClientesSalvar(){
-  fetch(DELTADIS_API+'/painel/atend-cfg',{method:'POST',headers:cdHdr(),body:JSON.stringify({balcao_livre:el('cc-bal').checked,pronto_direto:el('cc-pronto').checked,bloq_dias:el('cc-bloq').value,fecha_auto:el('cc-auto').checked,fecha_dias:el('cc-dias').value,msg:el('cc-msg').value})}).then(function(r){return r.json();}).then(function(d){
+  fetch(DELTADIS_API+'/painel/atend-cfg',{method:'POST',headers:cdHdr(),body:JSON.stringify({balcao_livre:el('cc-bal').checked,pronto_direto:el('cc-pronto').checked,cobra_hora:el('cc-cobra').checked,bloq_dias:el('cc-bloq').value,fecha_auto:el('cc-auto').checked,fecha_dias:el('cc-dias').value,msg:el('cc-msg').value})}).then(function(r){return r.json();}).then(function(d){
     if(!d||!d.ok) throw new Error((d&&d.mensagem)||'não salvou');
     /* servidor antigo descarta a opção sem avisar: mostra em vez de dizer que salvou */
     if(el('cc-bal').checked&&!(d.cfg&&d.cfg.balcao_livre)) throw new Error('O servidor ainda não aceita esta opção. Publique o Worker 153 e salve de novo.');
     if(el('cc-pronto').checked&&!(d.cfg&&d.cfg.pronto_direto)) throw new Error('O servidor ainda não aceita esta opção. Publique o Worker 216 e salve de novo.');
+    if(el('cc-cobra').checked&&!(d.cfg&&d.cfg.cobra_hora)) throw new Error('O servidor ainda não aceita "Cobrar na hora do pedido". Publique o Worker 228 e salve de novo.');
     aviso('Configurações salvas'); fecharTudo();
   }).catch(function(e){ var m=el('cc-m'); if(m){ m.style.color='#f87171'; m.textContent=e.message||'Não salvou'; } });
 }

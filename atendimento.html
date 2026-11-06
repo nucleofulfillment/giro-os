@@ -150,6 +150,9 @@ label.l.big{font-size:14px;margin-top:16px}
  body:has(#v-ped:not(.hide) #p-ident:not(.hide)){overflow:hidden;height:100dvh;padding-bottom:0}
  body.kb:has(#v-ped:not(.hide) #p-ident:not(.hide)) #nav,body.kb #p-ident .sw,body.kb #p-ident h2{display:none}
  body.kb #p-ident .bt.big{bottom:10px}
+ /* (228) teclado que cobre a tela sem encolher a página (alguns Android/iPhone): a tela passa a ter a altura que sobra acima do teclado */
+ body.kbv:has(#v-ped:not(.hide) #p-ident:not(.hide)){height:var(--vvh,100dvh);overflow:auto}
+ body.kbv #p-ident .bt.big{position:static;margin-top:12px;box-shadow:none}
  body.kb #v-ped{padding-top:4px}
  #p-ident .card{padding-bottom:14px}
 }
@@ -160,8 +163,24 @@ label.l.big{font-size:14px;margin-top:16px}
  #p-ident .idL .sw svg{width:44px;height:44px}
  #p-ident .idR{display:flex;flex-direction:column}
  #p-ident .idR label.l.big:first-child{margin-top:0}
- #p-ident .idR .bt.big{order:4;margin-top:18px}#p-ident .idR #sugs,#p-ident .idR #joiaInfo,#p-ident .idR #idErr{order:3}
+ #p-ident .idR .bt.big{order:4;margin-top:18px}#p-ident .idR #idErr{order:3}
 }
+.mpick.abc{font:800 15px var(--f);letter-spacing:.5px;color:var(--pri)}
+.mpick.abc.on{background:var(--pri);border-color:var(--pri);color:#fff}
+/* (228) resumo para o cliente ver antes de passar o cartão (cobrar na hora) */
+#rz{position:fixed;inset:0;z-index:90;background:var(--bg);display:flex;flex-direction:column;overflow:auto}
+#rz .rzc{flex:1;max-width:560px;width:100%;margin:0 auto;padding:18px 18px 10px;box-sizing:border-box}
+#rz .rzm{width:118px;margin:2px auto 0;position:relative}
+#rz h3{margin:4px 0 2px;text-align:center;font-size:21px}
+#rz .rzs{text-align:center;color:var(--mu2);font-size:14px;margin-bottom:12px}
+#rz .rzl{background:var(--s1);border-radius:16px;padding:6px 14px;border:1px solid var(--b2)}
+#rz .rzi{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--s4);font-size:15.5px}#rz .rzi:last-child{border-bottom:0}
+#rz .rzi b{flex:1}#rz .rzi small{display:block;color:var(--mu);font-weight:500;font-size:12.5px;margin-top:2px}
+#rz .rzt{display:flex;justify-content:space-between;align-items:baseline;margin:14px 2px 4px;font-size:15px;color:var(--mu2)}
+#rz .rzT{display:flex;justify-content:space-between;align-items:baseline;margin:6px 2px 4px}#rz .rzT span{font-size:17px;font-weight:700}#rz .rzT b{font-size:34px;color:var(--pri)}
+#rz .rzf{display:flex;align-items:center;gap:10px;margin:12px 0 4px;padding:12px 14px;border-radius:14px;background:var(--s1);border:1.5px solid var(--pri);font-weight:800;font-size:17px}
+#rz .rzb{position:sticky;bottom:0;background:var(--bg);padding:12px 18px calc(12px + env(safe-area-inset-bottom));max-width:560px;width:100%;margin:0 auto;box-sizing:border-box}
+#rz .rzb .bt{margin:0 0 8px}#rz .rzx{display:block;width:100%;border:0;background:none;color:var(--er);font:700 15px var(--f);padding:10px;cursor:pointer}
 @media(min-width:900px){
  .main{max-width:1400px;margin:0 auto;padding:16px 24px}
  #chip{margin:14px auto 0;max-width:1352px}
@@ -281,10 +300,11 @@ label.l.big{font-size:14px;margin-top:16px}
       <div class="card">
         <div class="idL"><button id="sgM" class="sw on" onclick="modo('mesa')"><svg viewBox="0 0 24 24"><path d="M3 9h18M5 9l1 10M19 9l-1 10M12 9v10M7 5h10l1 4H6z"/></svg>Mesa</button>
         <button id="sgB" class="sw" onclick="modo('balcao')"><svg viewBox="0 0 24 24"><path d="M4 17h16M6 17a6 6 0 0112 0M12 7V5M10 5h4M3 20h18"/></svg>Balcão</button></div>
-        <div class="idR"><label class="l big" id="lbMesa">Número da mesa</label><div class="mrow"><input class="inp big" id="iMesa" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="off" oninput="linkMesa()" onfocus="carregaAbertas()"><button type="button" class="mpick hide" id="bMapa" onclick="abreMapa()" title="Escolher no mapa de mesas"><svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.4"/><circle cx="12" cy="6" r="2.4"/><circle cx="18" cy="6" r="2.4"/><circle cx="6" cy="12" r="2.4"/><circle cx="12" cy="12" r="2.4"/><circle cx="18" cy="12" r="2.4"/><circle cx="6" cy="18" r="2.4"/><circle cx="12" cy="18" r="2.4"/><circle cx="18" cy="18" r="2.4"/></svg></button></div>
-        <label class="l big" id="lbCli">Cliente</label><input class="inp big" id="iJoia" inputmode="numeric" pattern="[0-9]*" maxlength="12" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" onkeydown="if(event.key==='Enter'){ event.preventDefault(); if(SUGS&&SUGS.length===1) pickCli(0); else abreComanda(); }" placeholder="Digite o número do cliente" oninput="digJoia()" onfocus="carregaAbertas()">
+        <div class="idR"><!-- (228) o cliente (sócio) vem antes da mesa; o botão ABC troca o teclado para buscar pelo nome -->
+        <label class="l big" id="lbCli">Cliente</label><div class="mrow"><input class="inp big" id="iJoia" inputmode="numeric" pattern="[0-9]*" maxlength="40" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" onkeydown="if(event.key==='Enter'){ event.preventDefault(); if(SUGS&&SUGS.length===1) pickCli(0); else abreComanda(); }" placeholder="Digite o número do cliente" oninput="digJoia()" onfocus="carregaAbertas()"><button type="button" class="mpick abc" id="bAbc" onmousedown="event.preventDefault()" onclick="joiaTeclado()" title="Buscar pelo nome">ABC</button></div>
         <div id="sugs"></div>
         <div id="joiaInfo"></div>
+        <label class="l big" id="lbMesa">Número da mesa</label><div class="mrow"><input class="inp big" id="iMesa" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="off" oninput="linkMesa()" onfocus="carregaAbertas()"><button type="button" class="mpick hide" id="bMapa" onclick="abreMapa()" title="Escolher no mapa de mesas"><svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.4"/><circle cx="12" cy="6" r="2.4"/><circle cx="18" cy="6" r="2.4"/><circle cx="6" cy="12" r="2.4"/><circle cx="12" cy="12" r="2.4"/><circle cx="18" cy="12" r="2.4"/><circle cx="6" cy="18" r="2.4"/><circle cx="12" cy="18" r="2.4"/><circle cx="18" cy="18" r="2.4"/></svg></button></div>
         <div class="er" id="idErr"></div>
         <button class="bt big" onclick="abreComanda()">Continuar para o cardápio</button><button class="bt s bp-bt bpOn hide" type="button" onclick="bpCam()">▮▯▮▮ Bipar produto</button></div>
       </div>
@@ -492,10 +512,23 @@ var SUGS=[], _dj=0, CLIS=null;
 function digJoia(){
   clearTimeout(_dj); COM.nome=''; COM.bloq=false; COM.liberar=false; $('joiaInfo').innerHTML=''; var q=$('iJoia').value.trim(); if(!q){ $('sugs').innerHTML=''; AUTOJ=''; linkJoia(''); return; }
   if(CLIS){ var ql=q.toLowerCase(), num=/^\d+$/.test(q), r=[]; for(var i=0;i<CLIS.length&&r.length<8;i++){ var c=CLIS[i]; if(num?String(c[0])===q:c[1].toLowerCase().indexOf(ql)>=0) r.push({joia:c[0],nome:c[1]}); } return mostraSugs(r,true); }
-  _dj=setTimeout(function(){ api('/painel/atend-clientes?q='+encodeURIComponent(q)).then(function(d){ if($('iJoia').value.trim()!==q) return; mostraSugs((d.clientes||[]).filter(function(c){ return String(c.joia)===q; }),false); }); },120);
+  _dj=setTimeout(function(){ api('/painel/atend-clientes?q='+encodeURIComponent(q)).then(function(d){ if($('iJoia').value.trim()!==q) return; mostraSugs((d.clientes||[]).filter(function(c){ return !/^\d+$/.test(q)||String(c.joia)===q; }),false); }); },/^\d+$/.test(q)?120:300);   /* (228) pelo nome: mostra todos que batem */
 }
+/* (228) botão ABC: o teclado vira alfabeto para achar o cliente pelo nome; o número continua sendo o padrão */
+var JOIA_ABC=false;
+function joiaTeclado(forcaNum){
+  JOIA_ABC=forcaNum?false:!JOIA_ABC; var e=$('iJoia'), b=$('bAbc');
+  e.setAttribute('inputmode',JOIA_ABC?'text':'numeric'); if(JOIA_ABC) e.removeAttribute('pattern'); else e.setAttribute('pattern','[0-9]*');
+  e.setAttribute('autocapitalize',JOIA_ABC?'words':'off'); e.placeholder=JOIA_ABC?'Digite o nome do cliente':'Digite o número do cliente';
+  if(b){ b.textContent=JOIA_ABC?'123':'ABC'; b.classList.toggle('on',JOIA_ABC); b.title=JOIA_ABC?'Voltar para o número':'Buscar pelo nome'; }
+  if(forcaNum) return; e.value=''; digJoia(); e.blur(); setTimeout(function(){ e.focus(); },60);   /* sai e volta para o celular trocar o teclado */
+}
+/* (228) o campo em que o garçom está digitando fica sempre acima do teclado */
+function campoVisivel(){ var a=document.activeElement; if(!a||!/^(INPUT|TEXTAREA)$/.test(a.tagName)) return; try{ a.scrollIntoView({block:'center',behavior:'smooth'}); }catch(e){ try{ a.scrollIntoView(); }catch(e2){} } }
+document.addEventListener('focusin',function(ev){ if(ev.target&&/^(INPUT|TEXTAREA)$/.test(ev.target.tagName)) setTimeout(campoVisivel,320); });
+if(window.visualViewport) visualViewport.addEventListener('resize',function(){ var kb=window.innerHeight-visualViewport.height>120; document.body.style.setProperty('--vvh',visualViewport.height+'px'); document.body.classList.toggle('kbv',kb); if(kb) setTimeout(campoVisivel,60); });
 function mostraSugs(l,ok){ SUGS=l; linkJoia(l.length===1?String(l[0].joia):''); var h=''; l.forEach(function(c,i){ h+='<button class="sug" onclick="pickCli('+i+')">'+pill(c.joia)+'<b>'+esc(c.nome)+'</b>'+(c.bloqueado?'<span class="tag r">BLOQUEADO</span>':'')+'</button>'; }); $('sugs').innerHTML=h||(ok?'<div class="aviso er">Nenhum cliente encontrado.</div>':''); }
-function pickCli(i){ var c=SUGS[i]; if(!c) return; $('iJoia').value=c.joia; if(COM.modo!=='balcao'&&!$('iMesa').value.trim()){ abreComanda(); return; } $('sugs').innerHTML=''; abreComanda(); }
+function pickCli(i){ var c=SUGS[i]; if(!c) return; if(JOIA_ABC) joiaTeclado(true); $('iJoia').value=c.joia; if(COM.modo!=='balcao'&&!$('iMesa').value.trim()){ abreComanda(); return; } $('sugs').innerHTML=''; abreComanda(); }
 function buscaJoia(){
   var j=$('iJoia').value.replace(/\W/g,''); var box=$('joiaInfo'); COM.nome=''; COM.dev=0; COM.bloq=false; COM.liberar=false;
   if(!j){ box.innerHTML=''; return Promise.resolve(null); }
@@ -527,7 +560,7 @@ function mostraComanda(){
   $('chipT').innerHTML=t.join(' · '); $('chipS').textContent=COM.nome||'Comanda aberta'; $('chip').classList.remove('hide');
 }
 function trocaComanda(){ if(CART.length&&!confirm('Há itens no pedido que ainda não foram enviados. Trocar de comanda mesmo assim?')) return; zeraComanda(); }
-function zeraComanda(){ _ab=0; AUTOJ=''; AUTOM=''; carregaAbertas(); COM={mesa:'',joia:'',nome:'',modo:COM.modo,dev:0,bloq:false,liberar:false}; modo(COM.modo); CART=[]; $('chip').classList.add('hide'); $('iMesa').value=''; $('iJoia').value=''; $('joiaInfo').innerHTML=''; $('sugs').innerHTML=''; $('idErr').textContent=''; limpaBusca(); ['p-cats','p-prods'].forEach(function(i){ $(i).classList.add('hide'); }); $('p-ident').classList.remove('hide'); cartBar(); window.scrollTo(0,0); foco('#iMesa'); }
+function zeraComanda(){ _ab=0; AUTOJ=''; AUTOM=''; carregaAbertas(); COM={mesa:'',joia:'',nome:'',modo:COM.modo,dev:0,bloq:false,liberar:false}; modo(COM.modo); CART=[]; $('chip').classList.add('hide'); $('iMesa').value=''; $('iJoia').value=''; $('joiaInfo').innerHTML=''; $('sugs').innerHTML=''; $('idErr').textContent=''; limpaBusca(); ['p-cats','p-prods'].forEach(function(i){ $(i).classList.add('hide'); }); $('p-ident').classList.remove('hide'); cartBar(); window.scrollTo(0,0); if(JOIA_ABC) joiaTeclado(true); foco('#iJoia'); }   /* (228) começa pelo cliente */
 function ativaComanda(c){ COM={mesa:c.mesa||'',joia:c.joia||'',nome:c.nome||'',modo:(c.joia&&!c.mesa)||ehBalM(c.mesa)?'balcao':'mesa',dev:0,bloq:false,liberar:false}; modo(COM.modo); CART=[]; mostraComanda(); $('p-ident').classList.add('hide'); aba('ped'); verCats(); }
 /* ── cardápio: categorias em cards ── */
 function fotoProd(p){ return p.foto?API+'/food/foto/'+encodeURIComponent(CLI)+'/'+encodeURIComponent(p.id):''; }
@@ -756,7 +789,59 @@ function abreCarrinho(){
   h+=srvLinha(srvVal(cartTot()),srvPct());
   h+='<label class="l">Observação do pedido (cozinha)</label><input class="inp" id="pObs" maxlength="300"><div class="er" id="pErr"></div>';
   h+='<label class="l" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="pImp" '+(impOn()?'checked':'')+' onchange="impSet(this.checked)" style="width:20px;height:20px"> Imprimir o pedido ao enviar</label>';
-  folha('Pedido · '+(COM.avulso||ehBalM(COM.mesa)?'Cliente Balcão':[(COM.mesa?(COM.modo==='balcao'?'Balcão ':'Mesa ')+COM.mesa:''),COM.joia].filter(Boolean).join(' · ')),h,'<button class="bt" id="pBt" style="margin:0" onclick="enviaPedido()">'+(COM.avulso?'Finalizar pedido':'Enviar para a cozinha')+' · '+brl(Math.round((cartTot()+srvVal(cartTot()))*100)/100)+'</button>'); foco('#pBt');
+  var totC=Math.round((cartTot()+srvVal(cartTot()))*100)/100, hj=cobraHora();
+  folha('Pedido · '+(COM.avulso||ehBalM(COM.mesa)?'Cliente Balcão':[(COM.mesa?(COM.modo==='balcao'?'Balcão ':'Mesa ')+COM.mesa:''),COM.joia].filter(Boolean).join(' · ')),h,'<button class="bt" id="pBt" style="margin:0" onclick="'+(hj?'fcEscolher()':'enviaPedido()')+'">'+(hj?'Fechar comanda':(COM.avulso?'Finalizar pedido':'Enviar para a cozinha'))+' · '+brl(totC)+'</button>'); foco('#pBt');
+}
+/* ── (228) COBRAR NA HORA (opção da loja, no painel em Configurações clientes): o garçom fecha a comanda, escolhe a forma de pagamento,
+   mostra o resumo para o cliente e só depois do pagamento aprovado o pedido vai para a cozinha. Cancelar não cria pedido nenhum. ── */
+function cobraHora(){ return !!(D&&D.cfg&&D.cfg.cobra_hora); }
+var FC={forma:'',obs:'',imp:false,m:null};
+var FC_FORMAS={cartao:['💳','Cartão','Passe na maquininha'],pix:['▦','Pix','Pix da loja'],dinheiro:['💵','Dinheiro','Pago em dinheiro'],marcar:['📒','Marcar na conta','Fica na conta do cliente']};
+function fcEscolher(){
+  FC.obs=($('pObs')||{value:''}).value; FC.imp=!!($('pImp')&&$('pImp').checked);
+  var tot=Math.round((cartTot()+srvVal(cartTot()))*100)/100, h='<div style="font-size:15px;margin:4px 0 10px">Total <b style="font-size:22px;color:var(--pri)">'+brl(tot)+'</b></div><div class="sec">Forma de pagamento</div>';
+  ['cartao','pix','dinheiro'].concat(COM.joia?['marcar']:[]).forEach(function(f){ var x=FC_FORMAS[f]; h+='<button type="button" class="pgop" onclick="fcResumo(\''+f+'\')"><span class="ic">'+x[0]+'</span><span class="n"><b>'+x[1]+'</b><small>'+x[2]+'</small></span><span class="ch">›</span></button>'; });
+  folha('Fechar comanda',h,'<button class="bt s" style="margin:0" onclick="abreCarrinho()">Voltar ao pedido</button>');
+}
+function fcResumo(forma){
+  FC.forma=forma; fecha(); fcFechaTela();
+  var sub=cartTot(), sv=srvVal(sub), tot=Math.round((sub+sv)*100)/100, x=FC_FORMAS[forma]||['','',''], n=0, li='';
+  CART.forEach(function(i){ n+=i.qty; var d=descItem(i,0); li+='<div class="rzi"><b>'+i.qty+'x '+esc(i.nome)+(d?'<small>'+esc(d)+'</small>':'')+'</b><span>'+brl(i.unit*i.qty)+'</span></div>'; });
+  var quem=COM.avulso||ehBalM(COM.mesa)?'Cliente Balcão':[COM.nome?esc(COM.nome):'',COM.joia?pill(COM.joia):'',COM.mesa?'Mesa '+esc(COM.mesa):''].filter(Boolean).join(' · ');
+  var d=document.createElement('div'); d.id='rz';
+  d.innerHTML='<div class="rzc"><div class="rzm" id="rzMasc"></div><h3>Confira o seu pedido</h3><div class="rzs">'+quem+'</div>'
+    +'<div class="rzl">'+li+'</div>'
+    +'<div class="rzt"><span>'+n+(n===1?' item':' itens')+'</span><span>'+brl(sub)+'</span></div>'
+    +(sv>0?'<div class="rzt"><span>Serviço do garçom ('+String(srvPct()).replace('.',',')+'%)</span><span>'+brl(sv)+'</span></div>':'')
+    +'<div class="rzT"><span>Total</span><b>'+brl(tot)+'</b></div>'
+    +'<div class="rzf"><span style="font-size:22px">'+x[0]+'</span>'+x[1]+'</div>'
+    +(FC.obs?'<div class="rzs" style="text-align:left;margin-top:8px">Obs.: '+esc(FC.obs)+'</div>':'')
+    +'<div class="er" id="rzErr" style="margin-top:8px"></div></div>'
+    +'<div class="rzb"><button class="bt big" id="rzOk" onclick="fcConfirma()">'+(forma==='marcar'?'Confirmar e marcar na conta':'Pagamento aprovado ✓')+'</button>'
+    +'<button class="bt s" style="margin:0 0 4px" onclick="fcFechaTela();fcEscolher()">Trocar a forma de pagamento</button>'
+    +'<button class="rzx" onclick="fcCancela()">Cancelar pedido</button></div>';
+  document.body.appendChild(d);
+  try{ if(window.LiveMascote){ FC.m=LiveMascote.criar($('rzMasc'),{sombra:false,expressao:'animado'}); setTimeout(function(){ try{ FC.m.falar('Seu pedido deu '+brl(tot)); }catch(e){} },400); } }catch(e){}
+}
+function fcFechaTela(){ var d=$('rz'); if(FC.m){ try{ FC.m.destruir(); }catch(e){} FC.m=null; } if(d) d.remove(); }
+function fcCancela(){
+  if(!confirm('Cancelar este pedido? Os itens saem do carrinho e nada vai para a cozinha.')) return;
+  fcFechaTela(); CART=[]; cartBar(); zeraComanda(); toast('Pedido cancelado');
+}
+function fcConfirma(){
+  var b=$('rzOk'); if(!b||b.disabled) return; b.disabled=true; var tx0=b.textContent; b.textContent='Enviando…'; $('rzErr').textContent='';
+  api('/painel/atend-pedido',{modo:COM.modo,mesa:COM.mesa,joia:COM.joia,obs:FC.obs,liberar:COM.liberar,pagar:FC.forma,itens:CART.map(function(i){ return {p:i.p,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs,qty:i.qty}; })}).then(function(r){
+    if(r.ok&&r.pago){
+      var ped={num:r.num,sub:r.sub||0,mesa:COM.mesa||r.mesa||'',joia:COM.joia,nome:COM.nome,atend:D.usuario,criado:Date.now(),obs:FC.obs,modo:COM.modo,l:CART.map(function(i){ return {p:i.p,nome:i.nome,qty:i.qty,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs}; })};
+      var x=FC_FORMAS[FC.forma]||['','',''], tot=r.total; fcFechaTela(); CART=[]; cartBar(); if(FC.imp) imprimeAuto(ped);
+      zeraComanda();
+      if(window.LiveApp) LiveApp.comemorar({titulo:FC.forma==='marcar'?'Marcado na conta!':'Pedido #'+plab(r)+' pago!',valor:brl(tot),forma:x[0]+' '+x[1],sub:'Já foi para a cozinha 🍳',ms:2200}); else toast('Pedido #'+plab(r)+' pago · '+brl(tot));
+      return;
+    }
+    if(r._h===401){ mostraLogin('Entre de novo.'); return; }
+    b.disabled=false; b.textContent=tx0;
+    $('rzErr').innerHTML=r.ok?'O servidor ainda não tem o "cobrar na hora". Publique o Worker 228.':esc(r.mensagem||'Não consegui enviar.')+(r.erro==='bloqueado'&&r.pode_liberar?'<br><button class="bt mini r" style="margin-top:8px" onclick="COM.liberar=true;fcConfirma()">Liberar mesmo assim</button>':'');
+  });
 }
 function tiraItem(k){ CART.splice(k,1); if(!CART.length){ fecha(); cartBar(); } else { abreCarrinho(); cartBar(); } }
 function enviaPedido(){
