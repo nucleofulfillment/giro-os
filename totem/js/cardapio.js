@@ -22,12 +22,67 @@
   // e as configurações (modelo, treinamento, envio de pedidos) vêm do painel da loja.
   const chaveTotem = codigo && doEndereco ? String(Q.get('k') || '').replace(/[^a-f0-9]/g, '').slice(0, 64) : '';
 
+  // ---------------------------------------------------------------------------
+  // Abrir na hora: o cardápio e as configurações do painel ficam guardados neste aparelho.
+  // Com cópia guardada, o totem abre com ela (sem esperar os 2 a 3 s do servidor) e confere a versão
+  // do servidor por trás. Se algo mudou no painel, guarda a nova e recarrega a página assim que o
+  // totem estiver livre (tela de espera, sem a janela do operador aberta). Confere de novo a cada 10 min.
+  // Preço não tem risco: o pedido é sempre recalculado pelo servidor.
+  // ---------------------------------------------------------------------------
+  const kConfig = 'live-painel-' + codigo;
+  const urlConfig = () => `${API}/live/config?loja=${encodeURIComponent(codigo)}&k=${chaveTotem}`;
+  const urlCardapio = () => API + '/food/cardapio/' + encodeURIComponent(codigo);
+  const conferir = []; // { k, url, atual }
+  async function buscarJson(url, ms) {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), ms);
+    try {
+      const r = await fetch(url, { signal: ctrl.signal, cache: 'no-store' });
+      const d = await r.json();
+      return { r, d };
+    } finally { clearTimeout(t); }
+  }
+  function vigiar(k, url, d) { conferir.push({ k, url, atual: JSON.stringify(d) }); }
+  let recarregando = false;
+  async function conferirServidor() {
+    for (const c of conferir) {
+      try {
+        const { d } = await buscarJson(c.url, 15000);
+        if (d && d.ok === false) { // o servidor recusou (link desativado, loja desligada): esquece a cópia
+          try { localStorage.removeItem(c.k); } catch (e) { /* ok */ }
+          recarregarQuandoLivre();
+          continue;
+        }
+        if (!d || !d.ok) continue;
+        const s = JSON.stringify(d);
+        if (s === c.atual) continue;
+        gravar(c.k, d);
+        c.atual = s;
+        console.info('Live · mudou no painel (' + c.k + '): recarrega quando o totem estiver livre');
+        recarregarQuandoLivre();
+      } catch (e) { console.warn('Conferência com o servidor falhou:', e); }
+    }
+  }
+  function recarregarQuandoLivre() {
+    if (recarregando) return;
+    recarregando = true;
+    const ver = () => {
+      const T = window.Totem, dlg = document.getElementById('config');
+      const livre = (!T || T.estado.modo === 'standby') && !(dlg && dlg.open);
+      if (livre) location.reload(); else setTimeout(ver, 5000);
+    };
+    ver();
+  }
+
   async function configDoPainel() {
     if (!chaveTotem) return null;
+    const copia = ler(kConfig);
+    if (copia && copia.ok) { vigiar(kConfig, urlConfig(), copia); return { ...copia, k: chaveTotem }; }
     try {
-      const r = await fetch(`${API}/live/config?loja=${encodeURIComponent(codigo)}&k=${chaveTotem}`);
-      const d = await r.json();
+      const { d } = await buscarJson(urlConfig(), 8000);
       if (!d.ok) return { erro: d.mensagem || 'Link do totem inválido.' };
+      gravar(kConfig, d);
+      vigiar(kConfig, urlConfig(), d);
       return { ...d, k: chaveTotem };
     } catch (e) { return { erro: 'Não consegui falar com o servidor do LiveFood.' }; }
   }
@@ -198,14 +253,19 @@
   async function carregar() {
     if (!codigo) { M = exemplo(); M.origem = 'exemplo'; return; }
     const kc = 'live-cardapio-' + codigo;
+    // com cópia guardada: abre com ela na hora e confere o servidor por trás
+    const guardado = ler(kc);
+    if (guardado && guardado.ok) {
+      try {
+        const m = converter(guardado);
+        if (m.itens.length) { M = m; M.origem = 'livefood'; M.daCopia = true; vigiar(kc, urlCardapio(), guardado); return; }
+      } catch (e) { console.warn('Cópia do cardápio inválida:', e); }
+    }
     try {
-      const ctrl = new AbortController();
-      const t = setTimeout(() => ctrl.abort(), 8000);
-      const r = await fetch(API + '/food/cardapio/' + encodeURIComponent(codigo), { signal: ctrl.signal });
-      clearTimeout(t);
-      const d = await r.json();
+      const { r, d } = await buscarJson(urlCardapio(), 8000);
       if (!d.ok) throw new Error(d.mensagem || d.erro || 'HTTP ' + r.status);
-      gravar(kc, d); // cópia para continuar funcionando se a internet cair
+      gravar(kc, d); // cópia para abrir na hora da próxima vez e continuar funcionando se a internet cair
+      vigiar(kc, urlCardapio(), d);
       M = converter(d); M.origem = 'livefood';
     } catch (e) {
       console.warn('Cardápio do LiveFood não carregou:', e);
@@ -315,6 +375,9 @@
     M.precoUnit = precoUnit;
     M.precoLinha = (l) => precoUnit(M.itens.find((i) => i.id === l.id), l.sab || [], l.adds || []) * l.qtd;
     M.enviarPedido = enviarPedido;
+    // confere o servidor por trás (logo depois de abrir, sem disputar a rede com os scripts) e a cada 10 min
+    setTimeout(conferirServidor, 1500);
+    setInterval(conferirServidor, 10 * 60000);
     // pega o token do totem quando o cliente começa (vale 11 h); no fechamento sobra só o envio do pedido
     M.prepararEnvio = () => { if (M.cli) tokenTotem(false).catch((e) => console.warn('Token do totem:', e)); };
     window.LIVEFOOD = M;
