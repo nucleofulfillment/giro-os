@@ -1034,6 +1034,40 @@ html.loja-p .cd-dest{display:none!important}
         </div>
       </section>
 
+      <!-- (218) GARÇONS: cadastro, vendas por garçom, regra de comissão e fechamento (vai para o Fluxo de Caixa) -->
+      <section class="page" id="pg-garcons">
+        <div class="pghd"><div><h1>Garçons</h1><div class="sub">equipe do salão, vendas e comissão · <span id="ga-total">—</span></div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sec" onclick="gcAbrir()">🍽 Mesas de cada garçom</button><button class="btn pri" onclick="gaNovo()">+ Novo garçom</button></div></div>
+        <div class="card" id="ga-regra-card" style="margin-bottom:16px">
+          <h3><span class="lft">Regra de comissão da loja</span></h3>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <select class="inp" id="ga-tipo" onchange="gaTipoMuda('ga')" style="width:280px;max-width:100%"><option value="pct">Porcentagem das vendas</option><option value="dia">Valor fixo por dia trabalhado</option><option value="nada">Sem comissão</option></select>
+            <span id="ga-vbox" style="display:flex;align-items:center;gap:6px"><span id="ga-pre" style="font-weight:700;color:var(--muted)"></span><input class="inp" id="ga-valor" inputmode="decimal" placeholder="0" style="width:110px"><span id="ga-un" style="font-weight:700;color:var(--muted)">%</span></span>
+            <button class="btn pri" id="ga-regra-bt" onclick="gaRegraSalvar()">Salvar regra</button>
+          </div>
+          <p id="ga-regra-txt" style="margin:10px 0 0;font-size:12.5px;line-height:1.5;color:var(--muted)">Vale para todos os garçons. Para um garçom ter regra diferente, toque em Regra na linha dele.</p>
+        </div>
+        <div class="card" style="margin-bottom:16px">
+          <h3><span class="lft">Vendas por garçom</span></h3>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
+            <input type="date" class="inp" id="ga-ini" onchange="gaDatas()" style="width:150px"><span style="color:var(--muted);font-size:12px">até</span><input type="date" class="inp" id="ga-fim" onchange="gaDatas()" style="width:150px">
+            <span class="vertodos" onclick="gaPeriodo('hoje')">Hoje</span><span class="vertodos" onclick="gaPeriodo('7')">7 dias</span><span class="vertodos" onclick="gaPeriodo('mes')">Mês</span><span class="vertodos" onclick="gaCarregar()" title="Atualizar">↻</span>
+          </div>
+          <div class="tb-wrap"><table class="tb" id="ga-tabela">
+            <thead><tr><th>Garçom</th><th>Vendas fechadas</th><th>Em aberto</th><th>Regra</th><th>A fechar</th><th></th></tr></thead>
+            <tbody id="ga-corpo"></tbody>
+          </table></div>
+          <div id="ga-outros" style="font-size:12.5px;color:var(--muted);margin-top:10px;line-height:1.5"></div>
+          <p style="margin:10px 0 0;font-size:12px;line-height:1.5;color:var(--muted)">Conta o que cada garçom lançou no Atendimento, só de conta fechada (paga ou pendurada). Conta aberta aparece em "Em aberto" e entra quando fechar. Pedido feito pelo cliente no QR da mesa não conta para garçom.</p>
+        </div>
+        <div class="card">
+          <h3><span class="lft">Fechamentos</span></h3>
+          <div class="tb-wrap"><table class="tb" id="ga-fech-tabela">
+            <thead><tr><th>Período</th><th>Garçom</th><th>Vendas</th><th>Comissão</th><th>A pagar</th><th>Situação</th><th></th></tr></thead>
+            <tbody id="ga-fech-corpo"></tbody>
+          </table></div>
+        </div>
+      </section>
+
       <!-- FINANCEIRO (GMV mora aqui) -->
       <section class="page" id="pg-financeiro">
         <div class="pghd"><div><h1>Financeiro</h1><div class="sub">movimento do ponto de distribuição</div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" style="background:#fff;border:1.5px solid var(--roxo);color:var(--roxo)" onclick="abrirCustos()">+ Custo Operacional</button></div></div>
@@ -1272,10 +1306,10 @@ html.loja-p .cd-dest{display:none!important}
 <div class="sheet" id="sh-usuarios">
   <div class="sh-hd"><h3>Usuários do painel</h3><button onclick="fecharTudo()">✕</button></div>
   <div class="sh-bd">
-    <p style="margin:0 0 10px;font-size:12.5px;color:var(--muted)">Quem você cadastra aqui entra no painel com o próprio e-mail e senha. Os entregadores continuam na aba Entregadores.</p>
+    <p style="margin:0 0 10px;font-size:12.5px;color:var(--muted)">Quem você cadastra aqui entra no painel com o próprio e-mail e senha. Os entregadores continuam na aba Entregadores e os garçons ficam no menu <a href="#" onclick="fecharTudo();ir('garcons');return false" style="color:var(--roxo);font-weight:700">Garçons</a>.</p>
     <div id="us-lista" style="margin-bottom:14px"><div style="color:var(--muted);font-size:13px">Carregando...</div></div>
     <div id="us-tit" style="font-weight:800;font-size:12px;letter-spacing:.5px;color:var(--muted);margin-bottom:6px">NOVO USUÁRIO</div>
-    <div class="field"><label>Acesso</label><select class="inp" id="us-perfil"><option value="gerente">Operacional — todo o painel, menos Financeiro e Configurações</option><option value="mesa">Mesa — só a Mesa</option><option value="garcom">Garçom — só o Atendimento (pedidos e conta)</option></select></div>
+    <div class="field"><label>Acesso</label><select class="inp" id="us-perfil"><option value="gerente">Operacional — todo o painel, menos Financeiro e Configurações</option><option value="mesa">Mesa — só a Mesa</option></select></div>
     <div class="field"><label>Nome</label><input class="inp" id="us-nome" autocomplete="off"></div>
     <div class="field"><label>E-mail</label><input class="inp" id="us-email" type="email" autocomplete="off"></div>
     <div class="field"><label>Celular com DDD (opcional)</label><input class="inp" id="us-fone" inputmode="tel" autocomplete="off" placeholder="(47) 99999-9999"></div>
@@ -1913,7 +1947,7 @@ var DASH_G_INI=inicioMesISO();
 var DASH_G_FIM=hojeISO();
 
 /* fluxo de caixa: cada lançamento tem tipo (in/out), categoria, data (ISO) e status */
-var CATEGORIAS_FC=['Transportadora','Repasse motorista','Operacional','Tecnologia','Veículos','Outros'];
+var CATEGORIAS_FC=['Transportadora','Repasse motorista','Comissão garçom','Operacional','Tecnologia','Veículos','Outros'];
 var FAT_EXTRATO=[], FAT_T=0;   /* faturas do DeltaDis: aparecem como saída Tecnologia, fora do EXTRATO (não editável) */
 /* débitos dos veículos (multas, IPVA, licenciamento, DPVAT da última consulta) viram saídas automáticas no Fluxo de Caixa; quando pagos e consultados de novo, saem da lista */
 var VE_FC_T=0;
@@ -3753,6 +3787,7 @@ var NAV_DESKTOP=[
   {id:'mapeamento', lb:'Mapeamento', ic:'<path d="M12 21s7-6.2 7-11.2A7 7 0 105 9.8C5 14.8 12 21 12 21z"/><circle cx="12" cy="9.8" r="2.6"/>'},
   {id:'cardapio',   lb:'Cardápio',   ic:'<path d="M6 3v8a2 2 0 002 2v8M10 3v8M8 3v8M16 21V3c-2 1-3 4-3 8h3"/>'},
   {id:'mesas',      lb:'Mesas',      ic:'<circle cx="6" cy="6" r="2.3"/><circle cx="12" cy="6" r="2.3"/><circle cx="18" cy="6" r="2.3"/><circle cx="6" cy="12" r="2.3"/><circle cx="12" cy="12" r="2.3"/><circle cx="18" cy="12" r="2.3"/><circle cx="6" cy="18" r="2.3"/><circle cx="12" cy="18" r="2.3"/><circle cx="18" cy="18" r="2.3"/>'},
+  {id:'garcons',    lb:'Garçons',    ic:'<circle cx="12" cy="6.5" r="3"/><path d="M6 21v-3.5c0-3 2.7-5 6-5s6 2 6 5V21M9.5 13.2l2.5 2.3 2.5-2.3M12 15.5V21"/>'},
   {id:'clientes',   lb:'Clientes',   ic:'<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5M16 5.2a3.2 3.2 0 010 5.6M18 14.8c2 .6 3.5 2.4 3.5 5.2"/>'},
   {id:'motoristas', lb:'Entregadores', ic:'<rect x="1" y="7" width="15" height="10" rx="1.5"/><path d="M16 10h3l3 3v4h-6z"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="19" r="2"/>'},
   {id:'veiculos',   lb:'Veículos',   ic:'<path d="M5 17h14M5 17a2 2 0 110-4M19 17a2 2 0 100-4M3 13l2-6h14l2 6M7 10h10"/>'},
@@ -3771,7 +3806,7 @@ var NAV_MOBILE=[
 ];
 var PAG='dashboard';
 /* menu suspenso do celular: mostra todas as telas que o perfil pode abrir, por grupo. O botão voltar do celular fecha o menu. */
-var MM_GRUPOS=[['Vendas',['pedidos','cardapio','mesas','clientes','mensagens']],['Operação',['dashboard','mesa','mapeamento','motoristas','veiculos']],['Gestão',['financeiro','config']]], MM_HIST=false;
+var MM_GRUPOS=[['Vendas',['pedidos','cardapio','mesas','garcons','clientes','mensagens']],['Operação',['dashboard','mesa','mapeamento','motoristas','veiculos']],['Gestão',['financeiro','config']]], MM_HIST=false;
 function mmPinta(){
   var usados={}, h='', it=function(n){ usados[n.id]=1; return '<button class="it'+(n.id===PAG?' on':'')+'" type="button" data-p="'+n.id+'" onclick="mmVai(\''+n.id+'\')"'+(n.id===PAG?' aria-current="page"':'')+'><span class="ic">'+svgIco(n.ic)+'</span><span class="nm">'+esc(n.lb)+planoCad(n.id)+'</span><span class="sg" aria-hidden="true">›</span></button>'; }, ok=function(n){ return n&&pagOk(n.id)&&!navOculto(n.id); };
   MM_GRUPOS.forEach(function(g){ var l=g[1].map(function(id){ return NAV_DESKTOP.filter(function(n){ return n.id===id; })[0]; }).filter(ok); if(l.length) h+='<div class="gr">'+g[0]+'</div>'+l.map(it).join(''); });
@@ -3866,7 +3901,7 @@ function cteBaixarCsv(){
 /* (169) PERMISSÕES POR PLANO: sem lista de recursos (ou se a consulta falhar) tudo continua liberado. O que o plano não inclui aparece com cadeado e explica como liberar */
 var PLANO={plano:'',recursos:null,teste_ate:'',libera:{}};
 var REC_NOME={cardapio:'Cardápio digital',delivery:'Delivery',entregadores:'Entregadores',cozinha:'Tela da cozinha',pagamento:'Pagamento online',clientes:'Clientes',live_ajuda:'Live de ajuda',atendimento:'Atendimento de garçom e balcão',mesas:'Mesas e salão',reservas:'Reserva de mesas',mesa_pagto:'Pagamento na mesa e conta dividida',mapa:'Mapeamento',financeiro:'Financeiro',clube:'Clube de assinatura',ofertas:'Ofertas com vídeo',impressoras:'Impressoras',totem:'Totem de voz',veiculos:'Veículos',whats:'Atendimento no WhatsApp',liveface:'LiveFace, ingresso e comanda pelo rosto'};
-var PLANO_PAG={financeiro:'financeiro',mapeamento:'mapa',mesas:'mesas',veiculos:'veiculos',motoristas:'entregadores',clientes:'clientes'};
+var PLANO_PAG={financeiro:'financeiro',mapeamento:'mapa',mesas:'mesas',garcons:'mesas',veiculos:'veiculos',motoristas:'entregadores',clientes:'clientes'};
 var PLANO_FN={cdAbrirOfertas:'ofertas',clbAbrir:'clube',rvAbrir:'reservas',impAbrir:'impressoras',lvAbrir:'totem',slAbrir:'mesas',gcAbrir:'mesas',cdPagamento:'pagamento',pgAbrir:'pagamento',cdFrete:'delivery',cdGeo:'mesas',planoAtendimentoAbre:'atendimento',lfAbrir:'liveface'};
 function temRec(k){ return !PLANO.recursos||PLANO.recursos.indexOf(k)>=0; }
 function planoCad(pag){ return PLANO_PAG[pag]&&!temRec(PLANO_PAG[pag])?' 🔒':''; }
@@ -4038,6 +4073,7 @@ function ir(p){
   if(p==='cardapio') cdCarregar();
   if(p==='clientes') clCarregar();
   if(p==='mesas') mzCarregar();
+  if(p==='garcons') gaCarregar();
   if(p==='mapeamento'&&VIVO_ON) setTimeout(function(){ vivoBuscar(); },800);
   if(p==='mensagens') msgAbrirTela(); else clearInterval(MSG.timer);
   if(p==='cte') cteAbrirTela();
@@ -4242,7 +4278,7 @@ function usuCarregar(){
   fetch(DELTADIS_API+'/usuarios',{cache:'no-store'}).then(function(r){ return r.json().catch(function(){ return null; }); }).then(function(d){
     var box=el('us-lista'); if(!box) return;
     if(!d||!d.ok){ box.innerHTML='<div style="color:#c0392b;font-size:13px">Não consegui carregar a lista.</div>'; return; }
-    var l=(d.usuarios||[]).filter(function(u){ return u.perfil!=='motorista'; }), h='', i, u; US.lista=l;
+    var l=(d.usuarios||[]).filter(function(u){ return u.perfil!=='motorista'&&u.perfil!=='garcom'; }), h='', i, u; US.lista=l;   /* (218) garçons ficam no menu Garçons */
     for(i=0;i<l.length;i++){ u=l[i]; var dono=u.perfil==='dono';
       h+='<div style="border:1px solid var(--border2);border-radius:12px;padding:10px 12px;margin-bottom:8px;background:var(--s2)">'+
         '<div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><b>'+esc(u.nome)+'</b><span style="font-size:11.5px;font-weight:700;color:'+(u.ativo?'#2e7d32':'#c0392b')+'">'+(dono?'Dono':(u.perfil==='mesa'?'Mesa':(u.perfil==='garcom'?'Garçom':'Operacional')))+(u.ativo?'':' · inativo')+'</span></div>'+
@@ -8532,7 +8568,7 @@ function gcAbrir(){
 }
 function gcPinta(){
   var h='<p style="margin:0 0 12px;font-size:13px;line-height:1.55;color:var(--muted2)">Marque as mesas de cada garçom. O chamado da mesa vai para quem cuida dela. <b>Garçom sem mesa marcada recebe todas</b> e mesa sem garçom avisa todos. Se ninguém atender em 2 minutos, o aviso vai para todos.</p>';
-  if(!GC.g.length) h+='<div class="empty">Nenhum garçom cadastrado. Crie um acesso com o perfil <b>Garçom</b> na área de usuários.</div>';
+  if(!GC.g.length) h+='<div class="empty">Nenhum garçom cadastrado. Cadastre no menu <b>Garçons</b>, em + Novo garçom.</div>';
   if(GC.g.length&&!GC.mesas.length) h+='<div class="empty">Nenhuma mesa cadastrada ainda.</div>';
   if(GC.mesas.length) GC.g.forEach(function(g,i){
     h+='<div style="border:1px solid var(--border);border-radius:14px;padding:12px;margin-bottom:10px"><div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:9px"><b style="font-size:14.5px">'+esc(g.nome)+'</b><span style="font-size:12px;font-weight:700;color:var(--muted)">'+(g.mesas.length?g.mesas.length+(g.mesas.length===1?' mesa':' mesas'):'Todas as mesas')+'</span></div><div style="display:flex;flex-wrap:wrap;gap:6px">';
@@ -8550,6 +8586,182 @@ function gcSalvar(){
   b.disabled=true; m.textContent='';
   mud.reduce(function(p,g){ return p.then(function(){ return mzApi('/painel/atend-garcom-mesas',{uid:g.id,mesas:g.mesas}).then(function(d){ if(!d||!d.ok) throw new Error((d&&d.mensagem)||'Não salvou.'); g.orig=g.mesas.slice().sort().join(); }); }); },Promise.resolve())
   .then(function(){ fecharTudo(); aviso('Mesas dos garçons salvas'); }).catch(function(e){ b.disabled=false; m.textContent=e.message||'Não salvou.'; });
+}
+/* ══ (218) menu GARÇONS: cadastro (cria o usuário com perfil Garçom, que só abre o Atendimento), vendas, regra de comissão e fechamento.
+   O fechamento é gravado no Worker (marca os pedidos) e vira uma saída pendente "Comissão garçom" no Fluxo de Caixa (gfech = id do fechamento).
+   Pago/pendente vem do lançamento do Fluxo de Caixa, igual ao fechamento do entregador. ══ */
+var GA={d:null,ini:'',fim:'',edit:'',fech:null};
+function gaNum(v){ var n=parseFloat(String(v==null?'':v).replace(/\s/g,'').replace(/\.(?=\d{3}(\D|$))/g,'').replace(',','.')); return isFinite(n)?n:NaN; }
+function gaRegraTxt(r){ r=r||{}; return r.tipo==='pct'?(String(r.valor).replace('.',',')+'% das vendas'):(r.tipo==='dia'?(moeda(r.valor)+' por dia'):'Sem comissão'); }
+function gaHoje(){ return hojeISO(); }
+function gaMenosDias(n){ var d=new Date(); d.setDate(d.getDate()-n); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
+function gaPeriodo(t){ GA.fim=gaHoje(); GA.ini=t==='hoje'?GA.fim:(t==='7'?gaMenosDias(6):inicioMesISO()); gaCarregar(); }
+function gaDatas(){ var a=el('ga-ini').value, b=el('ga-fim').value; if(!a||!b) return; if(a>b){ aviso('A data inicial passa da final'); return; } GA.ini=a; GA.fim=b; gaCarregar(); }
+function gaTipoMuda(p){ var t=el(p+'-tipo').value, vb=el(p+'-vbox'); if(vb) vb.style.display=(t==='pct'||t==='dia')?'flex':'none'; var un=el(p+'-un'), pr=el(p+'-pre'); if(un) un.textContent=t==='pct'?'%':'por dia'; if(pr) pr.textContent=t==='dia'?'R$':''; }
+function gaCarregar(){
+  if(!GA.ini){ GA.ini=inicioMesISO(); GA.fim=gaHoje(); }
+  el('ga-ini').value=GA.ini; el('ga-fim').value=GA.fim;
+  el('ga-corpo').innerHTML='<tr><td colspan="6"><div class="empty">Carregando…</div></td></tr>';
+  mzApi('/painel/garcons?ini='+GA.ini+'&fim='+GA.fim).then(function(d){
+    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'Não consegui abrir os garçons. Publique o Worker 218.');
+    GA.d=d; gaPintar();
+  }).catch(function(e){ el('ga-corpo').innerHTML='<tr><td colspan="6"><div class="empty" style="color:var(--red)">'+esc(e.message||'Não consegui abrir.')+'</div></td></tr>'; el('ga-fech-corpo').innerHTML=''; });
+}
+function gaLanc(fid){ for(var i=0;i<EXTRATO.length;i++) if(EXTRATO[i].gfech===fid) return EXTRATO[i]; return null; }
+function gaPintar(){
+  var d=GA.d; if(!d) return;
+  var rl=d.regra_loja||{tipo:'nada',valor:0};
+  if(document.activeElement!==el('ga-valor')){ el('ga-tipo').value=rl.tipo||'nada'; el('ga-valor').value=rl.valor?String(rl.valor).replace('.',','):''; gaTipoMuda('ga'); }
+  el('ga-regra-txt').innerHTML='Regra atual da loja: <b>'+esc(gaRegraTxt(rl))+'</b>. Vale para todos os garçons; para um garçom ter regra diferente, toque em <b>Regra</b> na linha dele.'+(rl.tipo==='dia'?' Na diária, conta cada dia em que ele lançou pelo menos um pedido de conta fechada.':'');
+  var gs=d.garcons||[], h='', at=0;
+  gs.forEach(function(g){ if(g.ativo) at++;
+    var af=g.a_fechar||{}, r=g.regra||rl;
+    h+='<tr'+(g.ativo?'':' style="opacity:.6"')+'><td><b>'+esc(g.nome)+'</b>'+(g.ativo?'':' <span class="badge b-no">Inativo</span>')+'<br><span style="font-size:11.5px;color:var(--muted);word-break:break-all">'+esc(g.email||'')+'</span></td>'+
+      '<td><b>'+moeda(g.vendas)+'</b><br><span style="font-size:11.5px;color:var(--muted)">'+g.n+(g.n===1?' pedido':' pedidos')+' · '+g.dias+(g.dias===1?' dia':' dias')+'</span></td>'+
+      '<td>'+(g.n_aberto?moeda(g.aberto)+'<br><span style="font-size:11.5px;color:var(--muted)">'+g.n_aberto+(g.n_aberto===1?' pedido':' pedidos')+'</span>':'<span style="color:var(--muted)">—</span>')+'</td>'+
+      '<td>'+esc(gaRegraTxt(r))+'<br><span style="font-size:11.5px;color:var(--muted)">'+(r.propria?'regra própria':'regra da loja')+'</span></td>'+
+      '<td><b style="color:'+(af.n?'var(--text)':'var(--muted)')+'">'+moeda(af.comissao)+'</b><br><span style="font-size:11.5px;color:var(--muted)">'+(af.n?(moeda(af.vendas)+' em '+af.n+(af.n===1?' pedido':' pedidos')+(r.tipo==='dia'?' · '+(af.dias||[]).length+((af.dias||[]).length===1?' dia novo':' dias novos'):'')):'nada a fechar')+'</span></td>'+
+      '<td><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">'+
+        '<button class="btn pri sm" data-id="'+esc(g.id)+'" onclick="gaFechar(this.getAttribute(\'data-id\'))"'+(af.n?'':' disabled title="Nada a fechar no período" style="opacity:.4;cursor:default"')+'>Fechar</button>'+
+        '<button class="btn sec sm" data-id="'+esc(g.id)+'" onclick="gaRegra(this.getAttribute(\'data-id\'))">Regra</button>'+
+        '<button class="btn sec sm" data-id="'+esc(g.id)+'" onclick="gaEditar(this.getAttribute(\'data-id\'))">Editar</button>'+
+        '<button class="btn sec sm" data-id="'+esc(g.id)+'" onclick="usuNovaSenha(this.getAttribute(\'data-id\'))">Nova senha</button>'+
+        '<button class="btn sec sm" data-id="'+esc(g.id)+'" data-at="'+(g.ativo?0:1)+'" onclick="gaAtivo(this.getAttribute(\'data-id\'),this.getAttribute(\'data-at\'))">'+(g.ativo?'Desativar':'Ativar')+'</button>'+
+      '</div></td></tr>';
+  });
+  el('ga-corpo').innerHTML=h||'<tr><td colspan="6"><div class="empty">Nenhum garçom cadastrado. Toque em <b>+ Novo garçom</b>.</div></td></tr>';
+  el('ga-total').textContent=at+(at===1?' garçom ativo':' garçons ativos');
+  var ou=d.outros||[]; el('ga-outros').innerHTML=ou.length?('<b>Lançado por outros usuários</b> (não entra em comissão): '+ou.map(function(o){ return esc(o.nome)+' '+moeda(o.vendas)+' ('+o.n+')'; }).join(' · ')):'';
+  var fh='';
+  (d.fechamentos||[]).forEach(function(f){
+    var l=gaLanc(f.id), st=!f.liquido?'zero':(l?(l.status==='pago'?'pago':(l.status==='recusado'?'recusado':'pendente')):'sem');
+    var bd=st==='pago'?'<span class="badge b-ok">Pago</span>':(st==='zero'?'<span class="badge b-nu">Nada a pagar</span>':(st==='sem'?'<span class="badge b-no">Fora do Fluxo</span>':(st==='recusado'?'<span class="badge b-no">Não pagar</span>':'<span class="badge b-wt">Pendente</span>')));
+    var pode=st!=='pago'&&!(l&&travadoPix(l));
+    fh+='<tr><td>'+dataBR(f.ini)+(f.fim!==f.ini?' a '+dataBR(f.fim):'')+'</td><td><b>'+esc(f.nome)+'</b></td><td>'+moeda(f.vendas)+'<br><span style="font-size:11.5px;color:var(--muted)">'+f.n+(f.n===1?' pedido':' pedidos')+'</span></td>'+
+      '<td>'+moeda(f.comissao)+'<br><span style="font-size:11.5px;color:var(--muted)">'+esc(gaRegraTxt(f.regra))+(f.regra&&f.regra.tipo==='dia'?' · '+f.dias+(f.dias===1?' dia':' dias'):'')+'</span></td>'+
+      '<td><b>'+moeda(f.liquido)+'</b>'+(f.ajuste?'<br><span style="font-size:11.5px;color:'+(f.ajuste<0?'var(--red)':'var(--green)')+'">'+(f.ajuste<0?'− ':'+ ')+moeda(Math.abs(f.ajuste))+(f.ajuste_obs?' '+esc(f.ajuste_obs):'')+'</span>':'')+'</td>'+
+      '<td>'+bd+(l&&l.data?'<br><span style="font-size:11.5px;color:var(--muted)">pagar em '+dataBR(l.data)+'</span>':'')+'</td>'+
+      '<td><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">'+(st==='sem'?'<button class="btn sec sm" data-id="'+esc(f.id)+'" onclick="gaRelancar(this.getAttribute(\'data-id\'))">Lançar no Fluxo</button>':'')+(pode?'<button class="btn sec sm" data-id="'+esc(f.id)+'" onclick="gaFechExcluir(this.getAttribute(\'data-id\'))">Excluir</button>':'')+'</div></td></tr>';
+  });
+  el('ga-fech-corpo').innerHTML=fh||'<tr><td colspan="7"><div class="empty">Nenhum fechamento ainda</div></td></tr>';
+}
+function gaG(id){ var l=(GA.d&&GA.d.garcons)||[]; for(var i=0;i<l.length;i++) if(l[i].id===id) return l[i]; return null; }
+function gaSheet(tit,html){ el('sh-import').querySelector('h3').textContent=tit; el('cd-imp-corpo').innerHTML=html; abrir('sh-import'); }
+/* regra da loja */
+function gaRegraSalvar(){
+  var t=el('ga-tipo').value, v=t==='nada'?0:gaNum(el('ga-valor').value), b=el('ga-regra-bt');
+  if(t!=='nada'&&!(v>0)){ aviso('Informe o valor da comissão'); return; }
+  if(t==='pct'&&v>100){ aviso('A porcentagem vai de 0 a 100'); return; }
+  b.disabled=true;
+  mzApi('/painel/garcons-regra',{uid:'',tipo:t,valor:v}).then(function(d){ b.disabled=false; if(!d||!d.ok) throw new Error((d&&d.mensagem)||'Não salvou.'); aviso('Regra da loja salva ✅'); el('ga-valor').blur(); gaCarregar(); })
+  .catch(function(e){ b.disabled=false; aviso(esc(e.message||'Não salvou.')); });
+}
+/* regra própria de um garçom */
+function gaRegra(id){
+  var g=gaG(id); if(!g) return; var r=g.regra||{}, rl=(GA.d&&GA.d.regra_loja)||{};
+  GA.edit=id;
+  gaSheet('Regra de '+g.nome,'<p style="margin:0 0 12px;font-size:13px;line-height:1.55;color:var(--muted2)">A regra da loja é <b>'+esc(gaRegraTxt(rl))+'</b>. Escolha outra só se este garçom ganhar diferente.</p>'+
+    '<div class="field"><label>Comissão</label><select class="inp" id="gr-tipo" onchange="gaTipoMuda(\'gr\')"><option value="padrao">Usar a regra da loja</option><option value="pct">Porcentagem das vendas</option><option value="dia">Valor fixo por dia trabalhado</option><option value="nada">Sem comissão</option></select></div>'+
+    '<div class="field" id="gr-vbox" style="display:flex;align-items:center;gap:6px"><span id="gr-pre" style="font-weight:700;color:var(--muted)"></span><input class="inp" id="gr-valor" inputmode="decimal" placeholder="0" style="width:120px"><span id="gr-un" style="font-weight:700;color:var(--muted)">%</span></div>'+
+    '<div id="gr-msg" style="font-size:13px;font-weight:700;color:var(--red);min-height:18px;margin-bottom:6px"></div><button class="btn pri wide" id="gr-bt" type="button" onclick="gaRegraGarcom()">Salvar regra</button>');
+  el('gr-tipo').value=r.propria?r.tipo:'padrao'; el('gr-valor').value=r.propria&&r.valor?String(r.valor).replace('.',','):''; gaTipoMuda('gr');
+}
+function gaRegraGarcom(){
+  var t=el('gr-tipo').value, v=(t==='pct'||t==='dia')?gaNum(el('gr-valor').value):0, m=el('gr-msg'), b=el('gr-bt'); m.textContent='';
+  if((t==='pct'||t==='dia')&&!(v>0)){ m.textContent='Informe o valor da comissão.'; return; }
+  if(t==='pct'&&v>100){ m.textContent='A porcentagem vai de 0 a 100.'; return; }
+  b.disabled=true;
+  mzApi('/painel/garcons-regra',{uid:GA.edit,tipo:t,valor:v}).then(function(d){ if(!d||!d.ok) throw new Error((d&&d.mensagem)||'Não salvou.'); fecharTudo(); aviso('Regra salva ✅'); gaCarregar(); })
+  .catch(function(e){ b.disabled=false; m.textContent=e.message||'Não salvou.'; });
+}
+/* cadastro: cria/edita o usuário com perfil Garçom (só o Atendimento) */
+function gaForm(g){
+  GA.edit=g?g.id:'';
+  gaSheet(g?'Editar garçom':'Novo garçom','<p style="margin:0 0 12px;font-size:13px;line-height:1.55;color:var(--muted2)">O garçom entra com este e-mail e senha e <b>só vê o Atendimento</b> (lança pedidos e fecha a conta).</p>'+
+    '<div class="field"><label>Nome</label><input class="inp" id="gn-nome" autocomplete="off"></div>'+
+    '<div class="field"><label>E-mail (é o login dele)</label><input class="inp" id="gn-email" type="email" autocomplete="off"></div>'+
+    '<div class="field"><label>Celular com DDD (opcional)</label><input class="inp" id="gn-fone" inputmode="tel" autocomplete="off" placeholder="(47) 99999-9999"></div>'+
+    '<div class="field"><label>'+(g?'Nova senha (deixe em branco para manter)':'Senha (mínimo 8 caracteres)')+'</label><input class="inp" id="gn-senha" type="password" autocomplete="new-password"></div>'+
+    '<div id="gn-msg" style="font-size:13px;font-weight:700;color:var(--red);min-height:18px;margin-bottom:6px"></div><button class="btn pri wide" id="gn-bt" type="button" onclick="gaSalvarGarcom()">'+(g?'Salvar alterações':'Cadastrar garçom')+'</button>');
+  if(g){ el('gn-nome').value=g.nome||''; el('gn-email').value=g.email||''; el('gn-fone').value=g.telefone||''; }
+  setTimeout(function(){ try{ el('gn-nome').focus(); }catch(e){} },80);
+}
+function gaNovo(){ gaForm(null); }
+function gaEditar(id){ var g=gaG(id); if(g) gaForm(g); }
+function gaSalvarGarcom(){
+  var m=el('gn-msg'), b=el('gn-bt'), nome=el('gn-nome').value.trim(), email=el('gn-email').value.trim(), fone=el('gn-fone').value.trim(), senha=el('gn-senha').value; m.textContent='';
+  if(!nome){ m.textContent='Informe o nome.'; return; } if(!email){ m.textContent='Informe o e-mail.'; return; }
+  if((!GA.edit||senha)&&senha.length<8){ m.textContent='A senha precisa ter pelo menos 8 caracteres.'; return; }
+  var o={nome:nome,email:email,telefone:fone}; if(senha) o.senha=senha; if(!GA.edit) o.perfil='garcom';
+  b.disabled=true;
+  fetch(DELTADIS_API+'/usuarios'+(GA.edit?'/'+encodeURIComponent(GA.edit):''),{method:GA.edit?'PATCH':'POST',headers:cdHdr(),body:JSON.stringify(o)})
+  .then(function(r){ return r.json().catch(function(){ return {ok:false}; }); }).then(function(d){
+    b.disabled=false; if(!d||!d.ok){ m.textContent=(d&&d.mensagem)||'Não foi possível salvar.'; return; }
+    fecharTudo(); aviso(GA.edit?'Garçom atualizado ✅':'Garçom cadastrado ✅ Ele já pode entrar no Atendimento'); gaCarregar();
+  }).catch(function(){ b.disabled=false; m.textContent='Sem conexão com o servidor.'; });
+}
+function gaAtivo(id,at){
+  var g=gaG(id); if(!g) return;
+  if(at!=='1'&&!window.confirm('Desativar '+g.nome+'? Ele deixa de entrar no Atendimento. As vendas e os fechamentos continuam aqui.')) return;
+  fetch(DELTADIS_API+'/usuarios/'+encodeURIComponent(id),{method:'PATCH',headers:cdHdr(),body:JSON.stringify({ativo:at==='1'})})
+  .then(function(r){ return r.json().catch(function(){ return {ok:false}; }); }).then(function(d){ if(!d||!d.ok){ aviso(esc((d&&d.mensagem)||'Não foi possível mudar.')); return; } aviso(at==='1'?'Garçom ativado':'Garçom desativado'); gaCarregar(); })
+  .catch(function(){ aviso('Sem conexão com o servidor.'); });
+}
+/* fechamento: tudo que ainda não foi fechado no período escolhido */
+function gaFechar(id){
+  var g=gaG(id); if(!g) return; var af=g.a_fechar||{}, r=g.regra||{};
+  if(!af.n){ aviso('Nada a fechar para '+esc(g.nome)+' nesse período'); return; }
+  GA.fech={id:id,com:af.comissao};
+  var lin=function(k,v){ return '<div class="sh-row"><span class="k">'+k+'</span><span class="v">'+v+'</span></div>'; };
+  gaSheet('Fechar '+g.nome,
+    lin('Período',dataBR(GA.ini)+(GA.fim!==GA.ini?' a '+dataBR(GA.fim):''))+lin('Vendas a fechar',moeda(af.vendas)+' ('+af.n+(af.n===1?' pedido':' pedidos')+')')+
+    (r.tipo==='dia'?lin('Dias trabalhados novos',(af.dias||[]).length+((af.dias||[]).length?' ('+(af.dias||[]).map(function(x){ return dataBR(x).slice(0,5); }).join(', ')+')':'')):'')+
+    lin('Regra',esc(gaRegraTxt(r)))+lin('<b>Comissão</b>','<b>'+moeda(af.comissao)+'</b>')+
+    (g.n_aberto?'<p style="margin:8px 0 0;font-size:12.5px;color:#B45309">'+g.n_aberto+(g.n_aberto===1?' pedido ainda está':' pedidos ainda estão')+' com a conta aberta ('+moeda(g.aberto)+'). Eles entram num próximo fechamento, depois que a conta fechar.</p>':'')+
+    '<div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-top:14px"><div class="field" style="margin:0"><label>Ajuste (opcional)</label><select class="inp" id="gf-ajt" onchange="gaFechConta()" style="width:170px"><option value="-">− Vale / desconto</option><option value="+">+ Prêmio / extra</option></select></div><div class="field" style="margin:0"><label>Valor</label><input class="inp" id="gf-ajv" inputmode="decimal" placeholder="0,00" oninput="gaFechConta()" style="width:110px"></div><div class="field" style="margin:0;flex:1;min-width:140px"><label>Motivo</label><input class="inp" id="gf-ajo" maxlength="120" placeholder="ex.: vale do dia 03"></div></div>'+
+    '<div class="field" style="margin-top:10px"><label>Data do pagamento</label><input type="date" class="inp" id="gf-data" value="'+gaHoje()+'" style="width:170px"></div>'+
+    '<div class="field"><label>Observação (opcional)</label><input class="inp" id="gf-obs" maxlength="300"></div>'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-radius:12px;background:var(--s2);margin:6px 0 10px"><b>A pagar ao garçom</b><b id="gf-liq" style="font-size:18px">'+moeda(af.comissao)+'</b></div>'+
+    '<p style="margin:0 0 10px;font-size:12.5px;color:var(--muted)">Ao confirmar, vira uma saída <b>pendente</b> no Financeiro &gt; Fluxo de Caixa (categoria Comissão garçom). Marque como paga lá quando pagar.</p>'+
+    '<div id="gf-msg" style="font-size:13px;font-weight:700;color:var(--red);min-height:18px;margin-bottom:6px"></div><button class="btn pri wide" id="gf-bt" type="button" onclick="gaFecharOk()">Confirmar fechamento</button>');
+}
+function gaFechAjuste(){ var v=gaNum(el('gf-ajv').value); if(!(v>0)) return 0; return Math.round((el('gf-ajt').value==='-'?-v:v)*100)/100; }
+function gaFechConta(){ if(!GA.fech) return; var liq=Math.round((GA.fech.com+gaFechAjuste())*100)/100, e=el('gf-liq'); if(e){ e.textContent=moeda(liq); e.style.color=liq<0?'var(--red)':''; } }
+function gaFecharOk(){
+  var f=GA.fech, m=el('gf-msg'), b=el('gf-bt'), dt=el('gf-data').value; if(!f) return; m.textContent='';
+  var aj=gaFechAjuste(); if(GA.fech.com+aj<0){ m.textContent='O desconto passa do valor da comissão.'; return; }
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(dt)){ m.textContent='Escolha a data do pagamento.'; return; }
+  b.disabled=true; b.textContent='Fechando…';
+  mzApi('/painel/garcons-fechar',{uid:f.id,ini:GA.ini,fim:GA.fim,ajuste:aj,ajuste_obs:el('gf-ajo').value.trim(),obs:el('gf-obs').value.trim()}).then(function(d){
+    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'Não fechou.');
+    var fc=d.fechamento; if(fc.liquido>0) gaLancar(fc,dt);
+    fecharTudo(); aviso('Fechamento de '+esc(fc.nome)+': '+moeda(fc.liquido)+(fc.liquido>0?' lançado no Fluxo de Caixa':'')); gaCarregar();
+  }).catch(function(e){ b.disabled=false; b.textContent='Confirmar fechamento'; m.textContent=e.message||'Não fechou.'; });
+}
+/* saída pendente no Fluxo de Caixa (mesmo modelo do repasse do entregador) */
+function gaLancar(fc,data){
+  var l=gaLanc(fc.id), i, mx=0; if(l) return l;
+  for(i=0;i<EXTRATO.length;i++) if(typeof EXTRATO[i].id==='number'&&EXTRATO[i].id>mx) mx=EXTRATO[i].id;
+  if(CATEGORIAS_FC.indexOf('Comissão garçom')<0) CATEGORIAS_FC.push('Comissão garçom');
+  l={id:mx+1,tp:'out',tt:'Comissão garçom — '+fc.nome+' ('+dataBR(fc.ini)+(fc.fim!==fc.ini?' a '+dataBR(fc.fim):'')+')',categoria:'Comissão garçom',data:/^\d{4}-\d{2}-\d{2}$/.test(String(data||''))?data:hojeISO(),vl:fc.liquido,status:'pendente',gfech:fc.id,obs:fc.obs||''};
+  EXTRATO.push(l); if(REAL) salvarLocal(); try{ pintarFluxoCaixa(); }catch(e){}
+  return l;
+}
+function gaRelancar(fid){
+  var f=((GA.d&&GA.d.fechamentos)||[]).filter(function(x){ return x.id===fid; })[0]; if(!f) return;
+  if(!window.confirm('Lançar de novo no Fluxo de Caixa?\n\n'+f.nome+' — '+moeda(f.liquido))) return;
+  gaLancar(f,hojeISO()); aviso('Lançado no Fluxo de Caixa como pendente'); gaPintar();
+}
+function gaFechExcluir(fid){
+  var f=((GA.d&&GA.d.fechamentos)||[]).filter(function(x){ return x.id===fid; })[0]; if(!f) return;
+  var l=gaLanc(fid); if(l&&(l.status==='pago'||travadoPix(l))){ aviso('Esse fechamento já foi pago — não dá pra excluir'); return; }
+  if(!window.confirm('Excluir o fechamento de '+f.nome+' ('+moeda(f.liquido)+')?\n\nOs pedidos voltam para "a fechar" e a saída sai do Fluxo de Caixa.')) return;
+  mzApi('/painel/garcons-fech-excluir',{id:fid}).then(function(d){
+    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'Não excluiu.');
+    for(var i=EXTRATO.length-1;i>=0;i--) if(EXTRATO[i].gfech===fid) EXTRATO.splice(i,1);
+    if(REAL) salvarLocal(); try{ pintarFluxoCaixa(); }catch(e){}
+    aviso('Fechamento excluído'); gaCarregar();
+  }).catch(function(e){ aviso(esc(e.message||'Não excluiu.')); });
 }
 function mzCarregar(){
   mzCliBusca();
@@ -10141,6 +10353,6 @@ function cdNovaCatRapida(){
     .catch(function(e){ el('cd-erro').textContent='Não criou a categoria: '+e.message; });
 }
 </script>
-<script src="live-ajuda.js"></script>
+<script src="live-ajuda.js?v=218"></script>
 </body>
 </html>
