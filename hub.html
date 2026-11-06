@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
+<script>/* (216) garçom só usa o Atendimento */try{var _gu=JSON.parse(localStorage.getItem('dd_user')||'null');if(_gu&&_gu.perfil==='garcom')location.replace('atendimento.html');}catch(e){}</script>
 <meta charset="utf-8">
 <link rel="icon" type="image/svg+xml" href="/site/img/favicon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="/site/img/icone-32.png">
@@ -242,6 +243,7 @@ function $(i){ return document.getElementById(i); }
 function guarda(tk,us){ TK=tk||''; US=us||null; try{ if(tk){ localStorage.setItem('dd_jwt',tk); localStorage.setItem('dd_user',JSON.stringify(us||null)); } else { localStorage.removeItem('dd_jwt'); localStorage.removeItem('dd_user'); } }catch(e){} }
 function mostraLogin(m){ document.body.classList.add('em-login'); $('etHub').hidden=true; $('bSair').hidden=true; $('tag').hidden=false; $('etLogin').hidden=false; $('lgM').innerHTML=m||''; setTimeout(function(){ $('lgE').focus(); },50); }
 function mostraHub(){
+  if(US&&US.perfil==='garcom'){ location.replace('atendimento.html'); return; }   /* (216) garçom vai direto para o Atendimento */
   var nome=US&&US.nome?String(US.nome).split(' ')[0]:'';
   $('ola').textContent=nome?'Olá, '+nome+'! Para onde vamos?':'Para onde vamos agora?';
   $('loja').textContent=US&&US.cliente_nome?US.cliente_nome:''; $('loja').hidden=!(US&&US.cliente_nome);
