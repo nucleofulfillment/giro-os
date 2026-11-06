@@ -19,7 +19,7 @@ a{color:#FF5A00}
 <div class="cx" id="cx"><p class="mut">Carregando…</p></div>
 <script>
 var API='https://giro-os-api.nucleofull.workers.dev';
-var NOMES={food_pedidos:'Pedidos',giro_comandas:'Comandas',food_mesa_contas:'Contas de mesa',food_mesa_partes:'Partes da conta (racha)',food_fech:'Fechamentos',food_impressao:'Fila de impressão',giro_contador:'Numeração dos pedidos',food_chamados:'Chamados de garçom',whats_msgs:'Mensagens do WhatsApp',whats_arq:'Arquivos do WhatsApp',wap_conv:'Conversas de pedido no WhatsApp',whats_envios:'Registro de envios do WhatsApp'};
+var NOMES={food_pedidos:'Pedidos',giro_comandas:'Comandas',food_mesa_contas:'Contas de mesa',food_mesa_partes:'Partes da conta (racha)',food_fech:'Fechamentos',food_impressao:'Fila de impressão',giro_contador:'Numeração dos pedidos',food_chamados:'Chamados de garçom',whats_msgs:'Mensagens do WhatsApp',whats_arq:'Arquivos do WhatsApp',wap_conv:'Conversas de pedido no WhatsApp',whats_envios:'Registro de envios do WhatsApp',bipagens:'Bipagens',entregas_v2:'Entregas',mesa_entradas:'Entradas da mesa',mesa_eventos:'Eventos da mesa',motorista_romaneios:'Romaneios',motorista_lotes:'Lotes do entregador',ocorrencias_bip:'Ocorrências',pedido_historico:'Histórico dos pedidos',painel_pedidos:'Pedidos do painel (lista e Dashboard)',pedidos_ativos:'Pedidos em andamento'};
 var TK='';try{TK=localStorage.getItem('lf_admin_jwt')||'';}catch(e){}
 var loja=(new URLSearchParams(location.search).get('loja')||'').trim();
 var cx=document.getElementById('cx');
@@ -33,6 +33,7 @@ function carregar(){
     if(d._st===401||d._st===403){cx.innerHTML='<h1>Limpar pedidos</h1><p class="mut">Sessão do admin vencida. Entre no <a href="admin.html">admin</a> e volte aqui.</p>';return;}
     if(!d.ok){cx.innerHTML='<h1>Limpar pedidos</h1><p class="mut">'+esc(d.mensagem||('O servidor ainda não tem a limpeza (código '+d._st+(d.erro?' · '+d.erro:'')+'). Confira se o Worker 215 foi colado no Cloudflare.'))+'</p>';return;}
     cx.innerHTML='<h1>Limpar pedidos · '+esc(d.loja.nome)+'</h1><p class="mut">Deixa a loja como se a conta tivesse sido criada hoje: apaga só pedidos e WhatsApp.</p>'+tabela(d.registros)+
+      (d.registros.painel_pedidos===undefined?'<div class="av">Este servidor ainda não apaga os pedidos da tela Pedidos e do Dashboard. Cole o <b>Worker 221</b> no Cloudflare e abra esta página de novo.</div>':'')+
       '<div class="av">Não tem como desfazer. Cardápio, fotos, configurações, usuários, mesas, reservas e clientes cadastrados <b>não</b> são apagados.</div>'+
       '<input id="cf" placeholder="Digite LIMPAR para confirmar" autocomplete="off"><button id="bt" disabled>Apagar pedidos e mensagens</button>';
     var cf=document.getElementById('cf'),bt=document.getElementById('bt');
@@ -40,7 +41,7 @@ function carregar(){
     bt.onclick=function(){bt.disabled=true;bt.textContent='Apagando…';chamar('POST',{confirmar:cf.value}).then(function(r){
       if(!r.ok){bt.disabled=false;bt.textContent='Apagar pedidos e mensagens';alert(r.mensagem||'Não deu certo.');return;}
       var t=0;Object.keys(r.apagados||{}).forEach(function(k){t+=Number(r.apagados[k])||0;});
-      cx.innerHTML='<h1>Pronto · '+esc(r.loja.nome)+'</h1><div class="ok">'+t+' registros apagados. A loja está zerada de pedidos e mensagens; o próximo pedido começa no número 1.</div>';
+      cx.innerHTML='<h1>Pronto · '+esc(r.loja.nome)+'</h1><div class="ok">'+t+' registros apagados. A loja está zerada de pedidos e mensagens; o próximo pedido começa no número 1.</div><p class="mut" style="margin-top:12px">Painéis abertos dessa loja se atualizam sozinhos em até 15 segundos. Se ainda aparecer pedido, aperte F5.</p>';
     }).catch(function(){bt.disabled=false;bt.textContent='Apagar pedidos e mensagens';});};
   }).catch(function(){cx.innerHTML='<h1>Limpar pedidos</h1><p class="mut">Sem conexão com o servidor.</p>';});
 }
