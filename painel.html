@@ -7841,32 +7841,48 @@ function fundoSegueCursor(){
     f.style.setProperty('--my',y.toFixed(3));
   });
 }
+/* (fundo leve) mesmo desenho de antes, mas: tela interna 1280x720 (o CSS estica, igual ao DeltaDis),
+   até 30 quadros/s no login e 24 dentro do sistema, cores calculadas uma vez só,
+   e pausa enquanto digita ou rola a página (no DeltaDis o fundo pesado atrasava a digitação ~2 s). */
 function initCurves(){
   var cv=el('curves'); if(!cv) return;
-  var ctx=cv.getContext('2d'), W=cv.width=1920, H=cv.height=1080;
-  var mx=W*0.5,my=H*0.42,tx=mx,ty=my,t=0;
+  var ctx=cv.getContext('2d'), W=cv.width=1280, H=cv.height=720, S=W/1920;
+  var mx=W*0.5,my=H*0.42,tx=mx,ty=my,t=0, ult=0, pausa=0;
   document.addEventListener('pointermove',function(e){
     var rc=cv.getBoundingClientRect();
     tx=(e.clientX-rc.left)/rc.width*W; ty=(e.clientY-rc.top)/rc.height*H;
-  });
-  function draw(){
-    t+=0.008; mx+=(tx-mx)*0.06; my+=(ty-my)*0.06;
-    ctx.clearRect(0,0,W,H);
+  },{passive:true});
+  function segura(ms){ var a=Date.now()+ms; if(a>pausa) pausa=a; }
+  window.addEventListener('scroll',function(){ segura(350); },{passive:true,capture:true});
+  window.addEventListener('wheel',function(){ segura(350); },{passive:true});
+  document.addEventListener('keydown',function(){ segura(700); },true);
+  var cores=[], i;
+  for(i=0;i<9;i++){
+    var f=i/8, R=Math.round(255+(176-255)*f), G=Math.round(90+(176-90)*f), B=Math.round(0+(184-0)*f);   /* do laranja da marca ao cinza (sem amarelo) */
+    var g=ctx.createLinearGradient(0,0,W,0);
+    g.addColorStop(0,'rgba('+R+','+G+','+B+',0)');
+    g.addColorStop(0.5,'rgba('+R+','+G+','+B+',0.22)');
+    g.addColorStop(1,'rgba('+R+','+G+','+B+',0)');
+    cores.push(g);
+  }
+  var sig2=2*280*S*280*S, passoX=22*S, amp=24*S, abre=600*S;
+  function draw(ts){
+    requestAnimationFrame(draw);
+    var lg=el('login'), noLogin=!!(lg&&lg.style.display!=='none');
+    if(ts-ult<(noLogin?32:41)) return;
+    if(Date.now()<pausa){ ult=ts; return; }
+    var k=ult?Math.min(ts-ult,100)/16.67:1; ult=ts;
+    t+=0.008*k; var q=1-Math.pow(0.94,k); mx+=(tx-mx)*q; my+=(ty-my)*q;
+    ctx.clearRect(0,0,W,H); ctx.lineWidth=1.5*S;
     for(var i=0;i<9;i++){
-      var f=i/8, baseY=H*0.5+(f-0.5)*600; ctx.beginPath();
-      for(var x=0;x<=W;x+=22){
-        var d=x-mx, pull=Math.exp(-(d*d)/(2*280*280))*(my-baseY)*0.85;
-        var y=baseY+pull+Math.sin(x*0.0038+t*1.3+i*0.7)*24;
+      var f=i/8, baseY=H*0.5+(f-0.5)*abre; ctx.beginPath();
+      for(var x=0;x<=W+passoX;x+=passoX){
+        var d=x-mx, pull=Math.exp(-(d*d)/sig2)*(my-baseY)*0.85;
+        var y=baseY+pull+Math.sin(x/S*0.0038+t*1.3+i*0.7)*amp;
         if(x===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
       }
-      var R=Math.round(255+(176-255)*f), G=Math.round(90+(176-90)*f), B=Math.round(0+(184-0)*f);   /* do laranja da marca ao cinza (sem amarelo) */
-      var g=ctx.createLinearGradient(0,0,W,0);
-      g.addColorStop(0,'rgba('+R+','+G+','+B+',0)');
-      g.addColorStop(0.5,'rgba('+R+','+G+','+B+',0.22)');
-      g.addColorStop(1,'rgba('+R+','+G+','+B+',0)');
-      ctx.strokeStyle=g; ctx.lineWidth=1.5; ctx.stroke();
+      ctx.strokeStyle=cores[i]; ctx.stroke();
     }
-    requestAnimationFrame(draw);
   }
   requestAnimationFrame(draw);
 }
