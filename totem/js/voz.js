@@ -369,6 +369,24 @@
     }
   }
 
+  // Aquecimento da voz online: as vozes "Natural" do Edge (e as do Google) são geradas na internet, e a primeira fala
+  // depois de abrir a página espera a conexão com o serviço (uns 3 s). Uma falinha muda ("Oi" com volume zero) já abre
+  // essa conexão antes de o cliente tocar na tela; aí as boas-vindas saem na hora. O navegador deixa falar antes do
+  // primeiro toque (testado). Volta a aquecer de tempos em tempos enquanto o totem espera (a conexão esfria).
+  async function aquecer(nome) {
+    if (!synth || falaAtual || synth.speaking || synth.pending) return;
+    await vozesProntas();
+    const v = escolherVoz(nome);
+    if (!v || v.localService || !/Natural|Online|Google/i.test(v.name)) return; // voz instalada no computador não precisa
+    if (falaAtual || synth.speaking || synth.pending) return;
+    const u = new SpeechSynthesisUtterance('Oi');
+    u.voice = v;
+    u.lang = v.lang;
+    u.volume = 0;
+    u.rate = 1.5;
+    try { synth.speak(u); } catch (e) { /* sem voz */ }
+  }
+
   function destravar() {
     // A primeira fala precisa nascer de um toque do usuário (política de autoplay do navegador)
     try {
@@ -626,7 +644,7 @@
   }
 
   const Voz = {
-    falar, parar, ouvir, iniciarEscuta, pararOuvir, destravar, paraFala, bip,
+    falar, parar, ouvir, iniciarEscuta, pararOuvir, destravar, aquecer, paraFala, bip,
     get vozes() { return vozes; },
     get idioma() { return idioma; },
     set idioma(cod) { idioma = IDIOMAS[cod] ? cod : 'pt'; },

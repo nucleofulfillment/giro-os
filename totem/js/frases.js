@@ -83,6 +83,8 @@ window.FRASES = {
   ],
   // modo offline: cliente pediu pra fechar
   fechando: ['Fechado! {itens}, deu {total}. Já tá indo pra cozinha!', 'Prontinho: {itens}, total de {total}. Mandando pra cozinha!'],
+  // dita só se o servidor demorar para registrar o pedido (curtinha: o número vem logo depois)
+  enviando: ['Fechou! Mandando seu pedido.', 'Beleza! Já tô mandando.'],
 
   agradeceu: ['Imagina! Tô aqui pra isso.', 'Por nada!'],
   cumprimentou: ['Tudo certo por aqui! Me fala o que você tá com vontade de comer.', 'Tudo ótimo! O que vai ser hoje?'],
@@ -110,6 +112,7 @@ window.FRASES_IDIOMA = {
     cocegas: ['Hehe, that tickles!', 'Hey! My screen is sensitive!'],
     lojaFechada: ['Oh no, the restaurant is closed right now, so I can\'t send your order to the kitchen. Please talk to someone at the counter.'],
     erroEnvio: ['Oops, I couldn\'t send your order to the kitchen. Could you confirm it again? If it doesn\'t work, please ask at the counter.'],
+    enviando: ['Great! Sending your order.', 'All right, sending it now.'],
     trocouIdioma: ['Sure, let\'s continue in English! What would you like?'],
   },
   es: {
@@ -122,6 +125,7 @@ window.FRASES_IDIOMA = {
     cocegas: ['¡Jeje, eso da cosquillas!', '¡Oye! ¡Mi pantalla es sensible!'],
     lojaFechada: ['Uy, el restaurante está cerrado ahora y no puedo enviar tu pedido a la cocina. Habla con alguien en el mostrador, por favor.'],
     erroEnvio: ['Uy, no pude enviar tu pedido a la cocina. ¿Puedes confirmarlo de nuevo? Si no funciona, pregunta en el mostrador.'],
+    enviando: ['¡Listo! Enviando tu pedido.', '¡Perfecto! Ya lo estoy enviando.'],
     trocouIdioma: ['¡Claro, sigamos en español! ¿Qué te gustaría?'],
   },
 };

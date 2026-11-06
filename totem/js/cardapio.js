@@ -151,7 +151,12 @@
   // O totem entra como um cliente "Totem" da loja (igual à mesa por QR code) e manda o pedido
   // como retirada no balcão, pago no caixa. O painel importa esse pedido como os do app.
   // ---------------------------------------------------------------------------
-  async function tokenTotem(renovar) {
+  let tokenEmCurso = null; // o pedido do token já saiu no começo do atendimento: o fechamento aproveita o mesmo
+  function tokenTotem(renovar) {
+    if (renovar || !tokenEmCurso) tokenEmCurso = buscarToken(renovar).catch((e) => { tokenEmCurso = null; throw e; });
+    return tokenEmCurso;
+  }
+  async function buscarToken(renovar) {
     const k = 'live-token-' + M.cli, salvo = ler(k);
     if (!renovar && salvo && salvo.exp > Date.now()) return salvo.tk;
     const r = await fetch(API + '/food/conta/mesa-entrar', {
@@ -310,6 +315,8 @@
     M.precoUnit = precoUnit;
     M.precoLinha = (l) => precoUnit(M.itens.find((i) => i.id === l.id), l.sab || [], l.adds || []) * l.qtd;
     M.enviarPedido = enviarPedido;
+    // pega o token do totem quando o cliente começa (vale 11 h); no fechamento sobra só o envio do pedido
+    M.prepararEnvio = () => { if (M.cli) tokenTotem(false).catch((e) => console.warn('Token do totem:', e)); };
     window.LIVEFOOD = M;
     const versao = Date.now(); // sempre a versão mais nova dos arquivos (nada de arquivo antigo guardado pelo navegador)
     for (const src of SCRIPTS) {

@@ -715,13 +715,18 @@
     // No Windows, ligar o microfone mexe na saída de som; se isso acontece no meio da primeira frase,
     // o som atrasa e sai fora da boca e da legenda. Da segunda fala em diante o microfone já estava ligado.
     tamparOuvidos();
+    // já pega a autorização de mandar pedido pra loja (no fechamento fica só o envio do pedido)
+    if (enviaPedidos() && M.cli && M.prepararEnvio) M.prepararEnvio();
     // ele já começa a falar enquanto entra voando (sem esperar a animação terminar)
     const entrada = Live.entrar();
-    await Promise.all([espera(saudar ? 300 : 0), saudar ? microfonePronto(1500) : null]);
+    const toqueEm = Date.now();
+    await Promise.all([espera(saudar ? 300 : 0), saudar ? microfonePronto(1200) : null]);
+    if (saudar) console.info(`Live · entrada: microfone ligou em ${Date.now() - toqueEm} ms` + (escuta && escuta.captando ? '' : ' (ainda não estava captando)'));
     if (minha !== S.sessao) return;
     S.modo = 'conversa';
     if (!saudar) { await entrada; return; }
     entrada.then(() => { if (minha === S.sessao) Live.gesto('acenar'); });
+    S.cron = { fimFala: toqueEm, entregue: toqueEm }; // o cronômetro do console mede do toque até a voz sair
     const ok = await dizer(Frase('boasVindas'), { expressao: 'animado' });
     await entrada;
     if (ok) depoisDeFalar();
@@ -870,7 +875,20 @@
       // enquanto o pedido vai pro painel, o Live fica "pensando" (microfone fechado); quando entra, vai direto pro número
       S.ocupado = true;
       tamparOuvidos();
-      const envio = await enviarPedido();
+      // O servidor leva uns 2 a 3 s para registrar o pedido. Se passar de 0,6 s, o Live avisa que está mandando
+      // (fala curtinha), em vez de ficar parado em silêncio; o número vem logo depois.
+      const enviarEm = Date.now();
+      let chegou = false;
+      const envioP = enviarPedido().then((x) => { chegou = true; return x; });
+      await Promise.race([envioP, espera(600)]);
+      if (!chegou && minha === S.sessao) {
+        Live.pensando(false);
+        await dizer(Frase('enviando'), { expressao: 'animado', gesto: 'comemorar' });
+        if (!chegou && minha === S.sessao) { estadoVoz('pensando'); Live.pensando(true); }
+      }
+      const envio = await envioP;
+      Live.pensando(false);
+      console.info(`Live · pedido enviado em ${Date.now() - enviarEm} ms`);
       S.ocupado = false;
       if (minha !== S.sessao) return;
       if (!envio.ok) {
@@ -902,8 +920,6 @@
     } catch (e) {
       console.error(e);
       return { ok: false, erro: 'rede', mensagem: String((e && e.message) || e) };
-    } finally {
-      Live.pensando(false);
     }
   }
 
@@ -1156,6 +1172,12 @@
   estadoVoz('parado');
   Live.montar($('#live'), $('#live-sombra'), $('#live-rosto'));
   Live.standby();
+
+  // deixa a voz online já conectada antes do primeiro toque (senão as boas-vindas esperam uns 3 s)
+  // e reaquece a cada 4 min enquanto o totem espera cliente
+  const aquecerVoz = () => { if (!temVozPersonagem() && S.modo === 'standby') Voz.aquecer(cfg.voz); };
+  setTimeout(aquecerVoz, 300);
+  setInterval(aquecerVoz, 4 * 60000);
 
   // Ganchos para testes e para o painel do operador
   window.Totem = { estado: S, processar, clienteFalou, acordar, voltarStandby, tirarEco, semEco, extrairNome, vozDePerto, Medidor, aplicarIdioma, trocarIdiomaNaConversa };
