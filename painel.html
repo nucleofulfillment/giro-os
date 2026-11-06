@@ -8662,6 +8662,7 @@ function gaPintar(){
       '<td><b style="color:'+(af.n?'var(--text)':'var(--muted)')+'">'+moeda(af.comissao)+'</b><br><span style="font-size:11.5px;color:var(--muted)">'+(af.n?(moeda(af.vendas)+' em '+af.n+(af.n===1?' pedido':' pedidos')+(af.servico>0?' · taxa '+moeda(af.servico):'')+(r.tipo==='dia'?' · '+(af.dias||[]).length+((af.dias||[]).length===1?' dia novo':' dias novos'):'')):'nada a fechar')+'</span></td>'+
       '<td><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">'+
         '<button class="btn pri sm" data-id="'+esc(g.id)+'" onclick="gaFechar(this.getAttribute(\'data-id\'))"'+(af.n?'':' disabled title="Nada a fechar no período" style="opacity:.4;cursor:default"')+'>Fechar</button>'+
+        '<button class="btn sec sm" data-id="'+esc(g.id)+'" onclick="gaConciliar(this.getAttribute(\'data-id\'))" title="Conferir com o relatório da maquininha">📷 Conciliar</button>'+
         '<button class="btn sec sm" data-id="'+esc(g.id)+'" onclick="gaRegra(this.getAttribute(\'data-id\'))">Regra</button>'+
         '<button class="btn sec sm" data-id="'+esc(g.id)+'" onclick="gaEditar(this.getAttribute(\'data-id\'))">Editar</button>'+
         '<button class="btn sec sm" data-id="'+esc(g.id)+'" onclick="usuNovaSenha(this.getAttribute(\'data-id\'))">Nova senha</button>'+
@@ -8683,6 +8684,54 @@ function gaPintar(){
       '<td><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">'+(st==='sem'?'<button class="btn sec sm" data-id="'+esc(f.id)+'" onclick="gaRelancar(this.getAttribute(\'data-id\'))">Lançar no Fluxo</button>':'')+(pode?'<button class="btn sec sm" data-id="'+esc(f.id)+'" onclick="gaFechExcluir(this.getAttribute(\'data-id\'))">Excluir</button>':'')+'</div></td></tr>';
   });
   el('ga-fech-corpo').innerHTML=fh||'<tr><td colspan="7"><div class="empty">Nenhum fechamento ainda</div></td></tr>';
+}
+/* ── (229) CONCILIAÇÃO DA MAQUININHA: foto do relatório de fechamento → a IA lê → compara com as vendas do garçom no mesmo período ── */
+var GC={uid:''};
+function gaConciliar(id){
+  var g=gaG(id); if(!g) return; GC.uid=id;
+  gaSheet('Conciliar maquininha · '+g.nome,'<div style="font-size:13px;line-height:1.5;color:var(--muted2);margin-bottom:12px">No fim do dia, imprima o <b>relatório de fechamento</b> na maquininha deste garçom e tire uma foto dele inteiro, reto e com boa luz. O sistema lê o período, as transações e os valores por tipo e bandeira e compara com o que o garçom lançou no Atendimento no mesmo período.</div>'
+    +'<label class="btn pri" style="display:flex;justify-content:center;gap:8px;cursor:pointer;margin-bottom:12px">📷 Tirar ou escolher a foto<input type="file" accept="image/*" capture="environment" style="display:none" onchange="gaConcFoto(this)"></label>'
+    +'<div id="gc-res"></div><div style="font-weight:800;font-size:13.5px;margin:16px 0 6px">Conciliações anteriores</div><div id="gc-hist" style="font-size:13px;color:var(--muted)">Carregando…</div>');
+  gaConcHist();
+}
+function gaConcHist(){
+  mzApi('/painel/garcons-conciliar?uid='+encodeURIComponent(GC.uid)).then(function(d){
+    var h=el('gc-hist'); if(!h) return;
+    if(!d||!d.ok){ h.textContent=(d&&d.mensagem)||'Publique o Worker 229 para usar a conciliação.'; return; }
+    var l=d.conciliacoes||[]; if(!l.length){ h.textContent='Nenhuma ainda.'; return; }
+    GC.lista=l; h.innerHTML=l.map(function(c,i){ return '<div style="display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="gaConcMostra(GC.lista['+i+'])"><span>'+new Date(c.criado).toLocaleString('pt-BR').slice(0,17)+' · período '+gaConcDt(c.de)+' a '+gaConcDt(c.ate)+'</span>'+(c.ok?'<span class="badge b-ok">Bateu</span>':'<span class="badge b-no">Diferença</span>')+'</div>'; }).join('');
+  }).catch(function(){ var h=el('gc-hist'); if(h) h.textContent='Sem conexão.'; });
+}
+function gaConcDt(t){ if(!t) return '—'; var d=new Date(Number(t)); return ('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2)+' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); }
+function gaConcFoto(inp){
+  var f=inp.files&&inp.files[0]; if(!f) return; var res=el('gc-res'); res.innerHTML='<div style="padding:14px;border:1px dashed var(--border);border-radius:12px;font-size:13.5px">🔎 Lendo o relatório… (uns 10 a 20 segundos)</div>';
+  var rd=new FileReader();
+  rd.onload=function(ev){
+    var im=new Image(); im.onload=function(){
+      var mx=1800, k=Math.min(1,mx/Math.max(im.width,im.height)), cv=document.createElement('canvas'); cv.width=Math.round(im.width*k); cv.height=Math.round(im.height*k);
+      cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height); var b64=cv.toDataURL('image/jpeg',0.86);
+      mzApi('/painel/garcons-conciliar',{uid:GC.uid,foto:b64}).then(function(d){
+        if(!d||!d.ok){ res.innerHTML='<div style="color:var(--red);font-size:13.5px;padding:10px 0">'+esc((d&&d.mensagem)||'Não consegui conciliar. Publique o Worker 229.')+'</div>'; return; }
+        gaConcMostra(d.conciliacao); gaConcHist();
+      }).catch(function(){ res.innerHTML='<div style="color:var(--red)">Sem conexão. Tente de novo.</div>'; });
+    }; im.onerror=function(){ res.innerHTML='<div style="color:var(--red)">Não consegui abrir essa imagem.</div>'; }; im.src=ev.target.result;
+  };
+  rd.readAsDataURL(f); inp.value='';
+}
+function gaConcMostra(c){
+  var res=el('gc-res'); if(!res||!c) return; var mq=c.maquina||{}, s=c.sistema||{};
+  var q=function(n){ return n==null?'':'<br><span style="font-size:11.5px;color:var(--muted)">'+n+(n===1?' transação':' transações')+'</span>'; };
+  var h='<div style="padding:12px 14px;border-radius:12px;margin-bottom:10px;font-weight:800;font-size:15px;'+(c.ok?'background:#e8f7ee;color:#14753A">✔ Bateu: a maquininha e o sistema conferem':'background:#fdecec;color:#B91C1C">⚠ Tem diferença: confira as linhas em vermelho')+'</div>'
+    +'<div style="font-size:12.5px;color:var(--muted2);margin-bottom:8px">'+esc(mq.adquirente||'Maquininha')+' · período '+gaConcDt(c.de)+' a '+gaConcDt(c.ate)+(mq.canceladas?' · '+mq.canceladas+' cancelada(s) na máquina':'')+'</div>'
+    +'<table class="tbl" style="width:100%;font-size:13px"><thead><tr><th>Tipo</th><th>Maquininha</th><th>Sistema</th><th>Diferença</th></tr></thead><tbody>';
+  (c.linhas||[]).forEach(function(l){ h+='<tr style="'+(l.ok?'':'background:#fff4f4')+'"><td><b>'+esc(l.rotulo)+'</b>'+(l.dica?'<br><span style="font-size:11.5px;color:var(--muted)">'+esc(l.dica)+'</span>':'')+'</td><td>'+moeda(l.maquina)+q(l.mq_qtd)+'</td><td>'+moeda(l.sistema)+q(l.sis_qtd)+'</td><td style="font-weight:800;color:'+(l.ok?'var(--green)':'var(--red)')+'">'+(l.ok?'✔':(l.dif>0?'+ ':'− ')+moeda(Math.abs(l.dif))+(l.mq_qtd!=null&&l.sis_qtd!=null&&l.mq_qtd!==l.sis_qtd?'<br><span style="font-size:11.5px">'+(l.mq_qtd-l.sis_qtd>0?'+':'')+(l.mq_qtd-l.sis_qtd)+' transação(ões)</span>':''))+'</td></tr>'; });
+  h+='</tbody></table>';
+  var bd=(mq.bandeiras||[]).filter(function(b){ return b.aprovado_qtd||b.aprovado_valor||b.cancelado_qtd; });
+  if(bd.length) h+='<div style="font-weight:800;font-size:13px;margin:12px 0 4px">Por bandeira (da maquininha)</div>'+bd.map(function(b){ return '<div style="font-size:12.5px;padding:3px 0">'+esc(b.bandeira||'?')+' · '+({credito:'crédito',debito:'débito',pix:'Pix',voucher:'voucher'}[b.tipo]||b.tipo)+': '+b.aprovado_qtd+' aprovada(s) '+moeda(b.aprovado_valor)+(b.cancelado_qtd?' · '+b.cancelado_qtd+' cancelada(s) '+moeda(b.cancelado_valor):'')+'</div>'; }).join('');
+  var ex=[]; if(s.dinheiro&&s.dinheiro.qtd) ex.push('dinheiro '+moeda(s.dinheiro.valor)+' ('+s.dinheiro.qtd+')'); if(s.marcado&&s.marcado.qtd) ex.push('marcado na conta '+moeda(s.marcado.valor)+' ('+s.marcado.qtd+')'); if(s.estornado&&s.estornado.qtd) ex.push('estornados '+moeda(s.estornado.valor)+' ('+s.estornado.qtd+')');
+  if(ex.length) h+='<div style="font-size:12.5px;color:var(--muted2);margin-top:10px">Fora da maquininha no mesmo período: '+ex.join(' · ')+'.</div>';
+  if(mq.obs) h+='<div style="font-size:12px;color:var(--muted);margin-top:6px">Leitura: '+esc(mq.obs)+'</div>';
+  res.innerHTML=h;
 }
 function gaG(id){ var l=(GA.d&&GA.d.garcons)||[]; for(var i=0;i<l.length;i++) if(l[i].id===id) return l[i]; return null; }
 function gaSheet(tit,html){ el('sh-import').querySelector('h3').textContent=tit; el('cd-imp-corpo').innerHTML=html; abrir('sh-import'); }

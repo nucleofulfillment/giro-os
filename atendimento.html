@@ -796,11 +796,11 @@ function abreCarrinho(){
    mostra o resumo para o cliente e só depois do pagamento aprovado o pedido vai para a cozinha. Cancelar não cria pedido nenhum. ── */
 function cobraHora(){ return !!(D&&D.cfg&&D.cfg.cobra_hora); }
 var FC={forma:'',obs:'',imp:false,m:null};
-var FC_FORMAS={cartao:['💳','Cartão','Passe na maquininha'],pix:['▦','Pix','Pix da loja'],dinheiro:['💵','Dinheiro','Pago em dinheiro'],marcar:['📒','Marcar na conta','Fica na conta do cliente']};
+var FC_FORMAS={credito:['💳','Crédito','Cartão de crédito na maquininha'],debito:['💳','Débito','Cartão de débito na maquininha'],cartao:['💳','Cartão','Passe na maquininha'],pix:['▦','Pix','Pix na maquininha ou na chave da loja'],dinheiro:['💵','Dinheiro','Pago em dinheiro'],marcar:['📒','Marcar na conta','Fica na conta do cliente']};   /* (229) crédito e débito separados: a conciliação com a maquininha bate por tipo */
 function fcEscolher(){
   FC.obs=($('pObs')||{value:''}).value; FC.imp=!!($('pImp')&&$('pImp').checked);
   var tot=Math.round((cartTot()+srvVal(cartTot()))*100)/100, h='<div style="font-size:15px;margin:4px 0 10px">Total <b style="font-size:22px;color:var(--pri)">'+brl(tot)+'</b></div><div class="sec">Forma de pagamento</div>';
-  ['cartao','pix','dinheiro'].concat(COM.joia?['marcar']:[]).forEach(function(f){ var x=FC_FORMAS[f]; h+='<button type="button" class="pgop" onclick="fcResumo(\''+f+'\')"><span class="ic">'+x[0]+'</span><span class="n"><b>'+x[1]+'</b><small>'+x[2]+'</small></span><span class="ch">›</span></button>'; });
+  (D.cfg.cartao_tipo?['credito','debito']:['cartao']).concat(['pix','dinheiro'],COM.joia?['marcar']:[]).forEach(function(f){ var x=FC_FORMAS[f]; h+='<button type="button" class="pgop" onclick="fcResumo(\''+f+'\')"><span class="ic">'+x[0]+'</span><span class="n"><b>'+x[1]+'</b><small>'+x[2]+'</small></span><span class="ch">›</span></button>'; });
   folha('Fechar comanda',h,'<button class="bt s" style="margin:0" onclick="abreCarrinho()">Voltar ao pedido</button>');
 }
 function fcResumo(forma){
