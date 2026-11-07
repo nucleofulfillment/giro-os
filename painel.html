@@ -8668,6 +8668,7 @@ function gaPintar(){
         '<button class="btn sec sm" data-id="'+esc(g.id)+'" onclick="gaEditar(this.getAttribute(\'data-id\'))">Editar</button>'+
         '<button class="btn sec sm" data-id="'+esc(g.id)+'" onclick="usuNovaSenha(this.getAttribute(\'data-id\'))">Nova senha</button>'+
         '<button class="btn sec sm" data-id="'+esc(g.id)+'" data-at="'+(g.ativo?0:1)+'" onclick="gaAtivo(this.getAttribute(\'data-id\'),this.getAttribute(\'data-at\'))">'+(g.ativo?'Desativar':'Ativar')+'</button>'+
+        '<button class="btn sec sm" data-id="'+esc(g.id)+'" onclick="gaExcluir(this.getAttribute(\'data-id\'))" style="color:var(--red)">Excluir</button>'+
       '</div></td></tr>';
   });
   el('ga-corpo').innerHTML=h||'<tr><td colspan="6"><div class="empty">Nenhum garçom cadastrado. Toque em <b>+ Novo garçom</b>.</div></td></tr>';
@@ -8803,6 +8804,19 @@ function gaSalvarGarcom(){
     b.disabled=false; if(!d||!d.ok){ m.textContent=(d&&d.mensagem)||'Não foi possível salvar.'; return; }
     fecharTudo(); aviso(GA.edit?'Garçom atualizado ✅':'Garçom cadastrado ✅ Ele já pode entrar no Atendimento'+(senha==='12345678'?' com a senha 12345678':'')); gaCarregar();
   }).catch(function(){ b.disabled=false; m.textContent='Sem conexão com o servidor.'; });
+}
+/* (235) excluir garçom: some o login e as mesas dele; vendas e fechamentos ficam no histórico. Com vendas não fechadas, pergunta de novo */
+function gaExcluir(id,forcar){
+  var g=gaG(id); if(!g) return;
+  var faz=function(f){
+    fetch(DELTADIS_API+'/painel/garcons-excluir',{method:'POST',headers:cdHdr(),body:JSON.stringify({uid:id,forcar:!!f})}).then(function(r){ return r.json().catch(function(){ return {ok:false}; }); }).then(function(d){
+      if(d&&d.ok){ aviso(esc(g.nome)+' foi excluído'); gaCarregar(); return; }
+      if(d&&d.erro==='a_fechar'){ pdConfirmar('Excluir mesmo assim?',esc(d.mensagem)+'<br>As vendas continuam no histórico, mas as que não foram fechadas ficam sem a comissão dele. Se for pagar a comissão, toque em Voltar e faça o <b>Fechar</b> antes.','Excluir assim mesmo',function(){ faz(true); }); return; }
+      aviso(esc((d&&d.mensagem)||'Não consegui excluir. Publique o Worker 235 e tente de novo.'));
+    }).catch(function(){ aviso('Sem conexão. Tente de novo.'); });
+  };
+  if(forcar) return faz(true);
+  pdConfirmar('Excluir '+esc(g.nome)+'?','Ele deixa de entrar no Atendimento na hora e sai da lista de garçons e das mesas que cuidava. As vendas e os fechamentos dele continuam no histórico.<br>Para só pausar, use <b>Desativar</b>.','Excluir',function(){ faz(false); });
 }
 function gaAtivo(id,at){
   var g=gaG(id); if(!g) return;
