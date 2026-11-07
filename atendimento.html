@@ -142,6 +142,8 @@ label.l.big{font-size:14px;margin-top:16px}
 .sug b{flex:1}.sug .pill{font-size:16px}
 #p-ident .card{max-width:560px;margin-left:auto;margin-right:auto}
 #p-ident #sugs{min-height:66px}
+/* (232) busca pelo nome com muitos resultados: a lista rola sozinha (a tela do cliente não rola no celular) */
+#p-ident #sugs{max-height:42vh;max-height:42dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 @media(max-width:899px){
  #p-ident .sw{padding:13px;margin-bottom:8px;font-size:17px}
  #p-ident .sw svg{width:24px;height:24px}
@@ -522,7 +524,7 @@ function comTit(c){ return ehBalM(c.mesa)?'Cliente Balcão':(c.mesa?'Mesa '+esc(
 var SUGS=[], _dj=0, CLIS=null;
 function digJoia(){
   clearTimeout(_dj); COM.nome=''; COM.bloq=false; COM.liberar=false; $('joiaInfo').innerHTML=''; var q=$('iJoia').value.trim(); if(!q){ $('sugs').innerHTML=''; AUTOJ=''; linkJoia(''); return; }
-  if(CLIS){ var ql=semAcento(q).split(' '), num=/^\d+$/.test(q), r=[]; for(var i=0;i<CLIS.length&&r.length<8;i++){ var c=CLIS[i], nn=num?'':semAcento(c[1]); if(num?String(c[0])===q:ql.every(function(w){ return nn.indexOf(w)>=0; })) r.push({joia:c[0],nome:c[1]}); } return mostraSugs(r,true); }   /* (230) nome sem acento */
+  if(CLIS){ var ql=semAcento(q).split(' '), num=/^\d+$/.test(q), r=[]; for(var i=0;i<CLIS.length&&r.length<40;i++){   /* (232) até 40 nomes, a lista rola */ var c=CLIS[i], nn=num?'':semAcento(c[1]); if(num?String(c[0])===q:ql.every(function(w){ return nn.indexOf(w)>=0; })) r.push({joia:c[0],nome:c[1]}); } return mostraSugs(r,true); }   /* (230) nome sem acento */
   _dj=setTimeout(function(){ api('/painel/atend-clientes?q='+encodeURIComponent(q)).then(function(d){ if($('iJoia').value.trim()!==q) return; mostraSugs((d.clientes||[]).filter(function(c){ return !/^\d+$/.test(q)||String(c.joia)===q; }),false); }); },/^\d+$/.test(q)?120:300);   /* (228) pelo nome: mostra todos que batem */
 }
 /* (228) botão ABC: o teclado vira alfabeto para achar o cliente pelo nome; o número continua sendo o padrão */
@@ -817,12 +819,13 @@ function abreCarrinho(){
 /* ── (228) COBRAR NA HORA (opção da loja, no painel em Configurações clientes): o garçom fecha a comanda, escolhe a forma de pagamento,
    mostra o resumo para o cliente e só depois do pagamento aprovado o pedido vai para a cozinha. Cancelar não cria pedido nenhum. ── */
 function cobraHora(){ return !!(D&&D.cfg&&D.cfg.cobra_hora); }
+function marcarOk(){ return !(D&&D.cfg&&D.cfg.marcar===0); }   /* (232) opção da loja: deixar ou não o garçom Marcar na conta do cliente */
 var FC={forma:'',obs:'',imp:false,m:null};
 var FC_FORMAS={credito:['💳','Crédito','Cartão de crédito na maquininha'],debito:['💳','Débito','Cartão de débito na maquininha'],cartao:['💳','Cartão','Passe na maquininha'],pix:['▦','Pix','Pix na maquininha ou na chave da loja'],dinheiro:['💵','Dinheiro','Pago em dinheiro'],marcar:['📒','Marcar na conta','Fica na conta do cliente']};   /* (229) crédito e débito separados: a conciliação com a maquininha bate por tipo */
 function fcEscolher(){
   FC.obs=($('pObs')||{value:''}).value; FC.imp=true;
   var tot=Math.round((cartTot()+srvVal(cartTot()))*100)/100, h='<div style="font-size:15px;margin:4px 0 10px">Total <b style="font-size:22px;color:var(--pri)">'+brl(tot)+'</b></div><div class="sec">Forma de pagamento</div>';
-  (D.cfg.cartao_tipo?['credito','debito']:['cartao']).concat(['pix','dinheiro'],COM.joia?['marcar']:[]).forEach(function(f){ var x=FC_FORMAS[f]; h+='<button type="button" class="pgop" onclick="fcResumo(\''+f+'\')"><span class="ic">'+x[0]+'</span><span class="n"><b>'+x[1]+'</b><small>'+x[2]+'</small></span><span class="ch">›</span></button>'; });
+  (D.cfg.cartao_tipo?['credito','debito']:['cartao']).concat(['pix','dinheiro'],COM.joia&&marcarOk()?['marcar']:[]).forEach(function(f){ var x=FC_FORMAS[f]; h+='<button type="button" class="pgop" onclick="fcResumo(\''+f+'\')"><span class="ic">'+x[0]+'</span><span class="n"><b>'+x[1]+'</b><small>'+x[2]+'</small></span><span class="ch">›</span></button>'; });
   folha('Fechar comanda',h,'<button class="bt s" style="margin:0" onclick="abreCarrinho()">Voltar ao pedido</button>');
 }
 function fcResumo(forma){
@@ -927,7 +930,7 @@ function fechaOpc(i,forma,ic,tit,sub){ return '<button type="button" class="pgop
 function fechaForm(i){
   var c=COMS[i], h='<div style="font-size:15px;margin:6px 0 10px"><b>'+comTit(c)+(c.joia?' '+pill(c.joia):'')+'</b>'+(ehBalM(c.mesa)?'':' · '+esc(c.nome||''))+(c.servico>0?'<div style="font-size:13.5px;color:var(--mu2);margin-top:6px">Consumo '+brl(Math.round((c.total-c.servico)*100)/100)+' + Serviço do garçom '+brl(c.servico)+'</div>':'<br>')+'<span style="font-size:22px;font-weight:800;color:var(--pri)">'+brl(c.total)+'</span></div><div class="sec">Forma de pagamento</div>';
   [['pix','Pix','▦'],['cartao','Cartão','💳'],['dinheiro','Dinheiro','💵']].forEach(function(f){ h+=fechaOpc(i,f[0],f[2],f[1],'Pagou agora'); });
-  if(c.joia) h+=fechaOpc(i,'marcar','📒','Marcar (pendurar)','Fica na conta do cliente para cobrar no fechamento');
+  if(c.joia&&marcarOk()) h+=fechaOpc(i,'marcar','📒','Marcar (pendurar)','Fica na conta do cliente para cobrar no fechamento');
   h+='<div class="er" id="fcErr"></div>'; folha('Fechar conta',h,c.avulso?'<button class="bt s" style="margin:0" onclick="fecha()">Cobrar depois (fica em Comandas)</button>':'');
 }
 function fechaFazer(i,forma){
