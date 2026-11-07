@@ -88,7 +88,33 @@
   function grava(){ try{ sessionStorage.setItem('aj_hist',JSON.stringify(A.hist.slice(-30))); }catch(x){} }
   /* sem a IA, ainda acha o guia mais parecido */
   function busca(q){ var ws=norm(q).split(/[^a-z0-9]+/).filter(function(w){ return w.length>2; }), m=null, ms=0; Object.keys(GUIAS).forEach(function(id){ var g=GUIAS[id], tx=norm(g.t+' '+g.k), s=0; ws.forEach(function(w){ if(tx.indexOf(w)>=0) s++; }); if(s>ms){ ms=s; m=id; } }); return m; }
-  function bola(m){ var d=document.createElement('div'); d.className='aj-b '+(m.r==='user'?'u':'a'); d.innerHTML=e(m.t).replace(/\s+(\d{1,2})\.\s/g,'\n$1. ').replace(/\n/g,'<br>');   /* cada passo numerado em uma linha */ if(m.g&&GUIAS[m.g]){ var b=document.createElement('button'); b.type='button'; b.className='aj-mostra'; b.textContent='👉 Me mostra na tela'; b.onclick=function(){ iniciar(m.g); }; d.appendChild(b); var mod=MODELOS[m.g]; if(mod){ var bx=document.createElement('button'); bx.type='button'; bx.className='aj-mostra'; bx.textContent='⬇ Baixar planilha modelo'; bx.onclick=mod; d.insertBefore(bx,b); } } if(m.up&&typeof DD_USER!=='undefined'&&DD_USER&&DD_USER.perfil==='dono') d.appendChild(btUpgrade(m.up)); return d; }
+  function bola(m){ var d=document.createElement('div'); d.className='aj-b '+(m.r==='user'?'u':'a'); d.innerHTML=e(m.t).replace(/\s+(\d{1,2})\.\s/g,'\n$1. ').replace(/\n/g,'<br>');   /* cada passo numerado em uma linha */ if(m.g&&GUIAS[m.g]){ var b=document.createElement('button'); b.type='button'; b.className='aj-mostra'; b.textContent='👉 Me mostra na tela'; b.onclick=function(){ iniciar(m.g); }; d.appendChild(b); var mod=MODELOS[m.g]; if(mod){ var bx=document.createElement('button'); bx.type='button'; bx.className='aj-mostra'; bx.textContent='⬇ Baixar planilha modelo'; bx.onclick=mod; d.insertBefore(bx,b); } } if(m.up&&typeof DD_USER!=='undefined'&&DD_USER&&DD_USER.perfil==='dono') d.appendChild(btUpgrade(m.up)); if(m.acao&&m.acao.tipo==='cadastrar_garcons'&&(m.acao.garcons||[]).length) d.appendChild(cartaoGarcons(m)); return d; }
+  /* (233) o Live montou a lista de garçons: nada é criado até tocar em Cadastrar. Cada um ganha uma senha inicial, que aparece aqui para repassar */
+  function senhaNova(){ var ab='abcdefghjkmnpqrstuvwxyz23456789', a=new Uint8Array(8), s='', i; try{ crypto.getRandomValues(a); }catch(x){ for(i=0;i<8;i++) a[i]=Math.floor(Math.random()*256); } for(i=0;i<8;i++) s+=ab.charAt(a[i]%ab.length); return s; }
+  function cartaoGarcons(m){
+    var c=document.createElement('div'); c.style.cssText='margin-top:9px;border:1px solid var(--border,#e3e3e7);border-radius:12px;padding:8px 10px;background:var(--bg,#f6f6f7)';
+    var l=m.acao.garcons, h='';
+    if(m.feito){
+      m.feito.forEach(function(r){ h+='<div style="padding:5px 0;border-bottom:1px solid var(--border,#e3e3e7);font-size:13px">'+(r.ok?'✅ <b>'+e(r.nome)+'</b><br><span style="color:var(--muted,#8e8e93)">'+e(r.email)+' · senha: </span><b style="font-family:monospace;font-size:14px">'+e(r.senha)+'</b>':'⚠ <b>'+e(r.nome)+'</b> ('+e(r.email)+')<br><span style="color:#B91C1C">'+e(r.erro)+'</span>')+'</div>'; });
+      c.innerHTML=h+'<div style="font-size:12px;color:var(--muted,#8e8e93);margin-top:6px">Passe o e-mail e a senha para cada garçom. Ele entra em livefood.tec.br/atendimento.html e pode trocar a senha depois.</div>';
+      var ok=m.feito.filter(function(r){ return r.ok; });
+      if(ok.length){ var bc=document.createElement('button'); bc.type='button'; bc.className='aj-mostra'; bc.textContent='📋 Copiar e-mails e senhas'; bc.onclick=function(){ var tx=ok.map(function(r){ return r.nome+' — '+r.email+' — senha: '+r.senha; }).join('\n'); try{ navigator.clipboard.writeText(tx).then(function(){ bc.textContent='Copiado ✓'; }); }catch(x){} }; c.appendChild(bc); }
+      return c;
+    }
+    l.forEach(function(g){ h+='<div style="padding:5px 0;border-bottom:1px solid var(--border,#e3e3e7);font-size:13px"><b>'+e(g.nome)+'</b><br><span style="color:var(--muted,#8e8e93)">'+e(g.email)+(g.telefone?' · '+e(g.telefone):'')+'</span></div>'; });
+    c.innerHTML=h;
+    var b=document.createElement('button'); b.type='button'; b.className='aj-mostra'; b.textContent='✅ Cadastrar '+l.length+(l.length===1?' garçom':' garçons');
+    b.onclick=function(){ if(b.disabled) return; b.disabled=true; b.textContent='Cadastrando…'; var res=[], k=0;
+      (function prox(){
+        if(k>=l.length){ m.feito=res; grava(); pinta(); try{ if(typeof PAG!=='undefined'&&PAG==='garcons'&&typeof gaCarregar==='function') gaCarregar(); }catch(x){} return; }
+        var g=l[k++], sn=senhaNova();
+        fetch(DELTADIS_API+'/usuarios',{method:'POST',headers:cdHdr(),body:JSON.stringify({nome:g.nome,email:g.email,telefone:g.telefone||'',senha:sn,perfil:'garcom'})}).then(function(r){ return r.json().catch(function(){ return {ok:false}; }); })
+          .then(function(d){ res.push(d&&d.ok?{ok:1,nome:g.nome,email:g.email,senha:sn}:{ok:0,nome:g.nome,email:g.email,erro:(d&&d.mensagem)||'Não cadastrou.'}); prox(); })
+          .catch(function(){ res.push({ok:0,nome:g.nome,email:g.email,erro:'Sem conexão.'}); prox(); });
+      })();
+    };
+    c.appendChild(b); return c;
+  }
   /* planilhas modelo: baixa direto pelo chat, com as mesmas funções do painel */
   var MODELOS={importar_planilha:function(){ cdBaixarModelo(); },cliente_importar:function(){ clModelo(); }};
   function pinta(){
@@ -106,7 +132,7 @@
     try{ if(A.liveTopo) A.liveTopo.pensando(true); }catch(x){}
     var fim=function(m){ A.busy=false; A.hist.push(m); grava(); pinta(); try{ if(A.liveTopo){ A.liveTopo.pensando(false); A.liveTopo.expressao('feliz'); } }catch(x){} };
     fetch(API(),{method:'POST',headers:cdHdr(),body:JSON.stringify({pergunta:q,historico:ant,tela:(typeof PAG!=='undefined'?PAG:''),celular:innerWidth<860,perfil:(typeof DD_USER!=='undefined'&&DD_USER&&DD_USER.perfil)||''})}).then(function(r){ return r.json(); }).then(function(d){
-      if(d&&d.ok&&d.resposta){ fim({r:'assistant',t:d.resposta,g:d.guia&&d.guia!=='nenhum'?d.guia:'',up:d.up||null}); return; }
+      if(d&&d.ok&&d.resposta){ fim({r:'assistant',t:d.resposta,g:d.guia&&d.guia!=='nenhum'?d.guia:'',up:d.up||null,acao:(d.acao&&d.acao.tipo==='cadastrar_garcons')?d.acao:null}); return; }
       throw new Error((d&&d.mensagem)||'');
     }).catch(function(er){ var g=busca(q); fim({r:'assistant',t:(er&&er.message?er.message+' ':'Não consegui responder agora. ')+(g?'Mas acho que este guia ajuda: '+GUIAS[g].t+'.':'Tente de novo em instantes.'),g:g||''}); });
   }
