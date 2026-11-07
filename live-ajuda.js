@@ -88,7 +88,30 @@
   function grava(){ try{ sessionStorage.setItem('aj_hist',JSON.stringify(A.hist.slice(-30))); }catch(x){} }
   /* sem a IA, ainda acha o guia mais parecido */
   function busca(q){ var ws=norm(q).split(/[^a-z0-9]+/).filter(function(w){ return w.length>2; }), m=null, ms=0; Object.keys(GUIAS).forEach(function(id){ var g=GUIAS[id], tx=norm(g.t+' '+g.k), s=0; ws.forEach(function(w){ if(tx.indexOf(w)>=0) s++; }); if(s>ms){ ms=s; m=id; } }); return m; }
-  function bola(m){ var d=document.createElement('div'); d.className='aj-b '+(m.r==='user'?'u':'a'); d.innerHTML=e(m.t).replace(/\s+(\d{1,2})\.\s/g,'\n$1. ').replace(/\n/g,'<br>');   /* cada passo numerado em uma linha */ if(m.g&&GUIAS[m.g]){ var b=document.createElement('button'); b.type='button'; b.className='aj-mostra'; b.textContent='👉 Me mostra na tela'; b.onclick=function(){ iniciar(m.g); }; d.appendChild(b); var mod=MODELOS[m.g]; if(mod){ var bx=document.createElement('button'); bx.type='button'; bx.className='aj-mostra'; bx.textContent='⬇ Baixar planilha modelo'; bx.onclick=mod; d.insertBefore(bx,b); } } if(m.up&&typeof DD_USER!=='undefined'&&DD_USER&&DD_USER.perfil==='dono') d.appendChild(btUpgrade(m.up)); if(m.acao&&m.acao.tipo==='cadastrar_garcons'&&(m.acao.garcons||[]).length) d.appendChild(cartaoGarcons(m)); return d; }
+  function bola(m){ var d=document.createElement('div'); d.className='aj-b '+(m.r==='user'?'u':'a'); d.innerHTML=e(m.t).replace(/\s+(\d{1,2})\.\s/g,'\n$1. ').replace(/\n/g,'<br>');   /* cada passo numerado em uma linha */ if(m.g&&GUIAS[m.g]){ var b=document.createElement('button'); b.type='button'; b.className='aj-mostra'; b.textContent='👉 Me mostra na tela'; b.onclick=function(){ iniciar(m.g); }; d.appendChild(b); var mod=MODELOS[m.g]; if(mod){ var bx=document.createElement('button'); bx.type='button'; bx.className='aj-mostra'; bx.textContent='⬇ Baixar planilha modelo'; bx.onclick=mod; d.insertBefore(bx,b); } } if(m.up&&typeof DD_USER!=='undefined'&&DD_USER&&DD_USER.perfil==='dono') d.appendChild(btUpgrade(m.up)); if(m.acao&&m.acao.tipo==='cadastrar_garcons'&&(m.acao.garcons||[]).length) d.appendChild(cartaoGarcons(m)); if(m.acao&&m.acao.tipo==='cadastrar_mesas'&&(m.acao.mesas||[]).length) d.appendChild(cartaoMesas(m)); return d; }
+  /* (234) o Live montou a lista de mesas: nada é criado até tocar em Cadastrar; mesa que já existe não duplica */
+  function mesaTx(x){ return x.de===x.ate?'Mesa '+x.de:'Mesas '+x.de+' a '+x.ate+' ('+x.n+')'; }
+  function cartaoMesas(m){
+    var c=document.createElement('div'); c.style.cssText='margin-top:9px;border:1px solid var(--border,#e3e3e7);border-radius:12px;padding:8px 10px;background:var(--bg,#f6f6f7)';
+    var l=m.acao.mesas, h='', tot=0; l.forEach(function(x){ tot+=x.n||1; });
+    if(m.feito){
+      m.feito.forEach(function(r){ h+='<div style="padding:5px 0;border-bottom:1px solid var(--border,#e3e3e7);font-size:13px">'+(r.ok?'✅ <b>'+e(r.tx)+'</b>'+(r.novas<r.total?' <span style="color:var(--muted,#8e8e93)">· '+r.novas+' nova'+(r.novas===1?'':'s')+', '+(r.total-r.novas)+' já existia'+(r.total-r.novas===1?'':'m')+'</span>':''):'⚠ <b>'+e(r.tx)+'</b><br><span style="color:#B91C1C">'+e(r.erro)+'</span>')+'</div>'; });
+      c.innerHTML=h+'<div style="font-size:12px;color:var(--muted,#8e8e93);margin-top:6px">Elas já aparecem em Mesas. Para o QR ou a etiqueta NFC de cada mesa, é lá também.</div>'; return c;
+    }
+    l.forEach(function(x){ h+='<div style="padding:5px 0;border-bottom:1px solid var(--border,#e3e3e7);font-size:13px"><b>'+e(mesaTx(x))+'</b>'+(x.lugares?' <span style="color:var(--muted,#8e8e93)">· '+x.lugares+' lugares</span>':'')+'</div>'; });
+    c.innerHTML=h;
+    var b=document.createElement('button'); b.type='button'; b.className='aj-mostra'; b.textContent='✅ Cadastrar '+tot+(tot===1?' mesa':' mesas');
+    b.onclick=function(){ if(b.disabled) return; b.disabled=true; b.textContent='Cadastrando…'; var res=[], k=0;
+      (function prox(){
+        if(k>=l.length){ m.feito=res; grava(); pinta(); try{ if(typeof PAG!=='undefined'&&PAG==='mesas'&&typeof mzCarregar==='function') mzCarregar(); }catch(x){} return; }
+        var x=l[k++];
+        fetch(DELTADIS_API+'/painel/atend-mesas-salvar',{method:'POST',headers:cdHdr(),body:JSON.stringify({de:x.de,ate:x.ate,lugares:x.lugares||0})}).then(function(r){ return r.json().catch(function(){ return {ok:false}; }); })
+          .then(function(d){ res.push(d&&d.ok?{ok:1,tx:mesaTx(x),novas:Number(d.novas)||0,total:Number(d.total)||x.n||1}:{ok:0,tx:mesaTx(x),erro:(d&&d.mensagem)||'Não cadastrou.'}); prox(); })
+          .catch(function(){ res.push({ok:0,tx:mesaTx(x),erro:'Sem conexão.'}); prox(); });
+      })();
+    };
+    c.appendChild(b); return c;
+  }
   /* (233) o Live montou a lista de garçons: nada é criado até tocar em Cadastrar. Cada um ganha uma senha inicial, que aparece aqui para repassar */
   function senhaNova(){ var ab='abcdefghjkmnpqrstuvwxyz23456789', a=new Uint8Array(8), s='', i; try{ crypto.getRandomValues(a); }catch(x){ for(i=0;i<8;i++) a[i]=Math.floor(Math.random()*256); } for(i=0;i<8;i++) s+=ab.charAt(a[i]%ab.length); return s; }
   function cartaoGarcons(m){
@@ -132,7 +155,7 @@
     try{ if(A.liveTopo) A.liveTopo.pensando(true); }catch(x){}
     var fim=function(m){ A.busy=false; A.hist.push(m); grava(); pinta(); try{ if(A.liveTopo){ A.liveTopo.pensando(false); A.liveTopo.expressao('feliz'); } }catch(x){} };
     fetch(API(),{method:'POST',headers:cdHdr(),body:JSON.stringify({pergunta:q,historico:ant,tela:(typeof PAG!=='undefined'?PAG:''),celular:innerWidth<860,perfil:(typeof DD_USER!=='undefined'&&DD_USER&&DD_USER.perfil)||''})}).then(function(r){ return r.json(); }).then(function(d){
-      if(d&&d.ok&&d.resposta){ fim({r:'assistant',t:d.resposta,g:d.guia&&d.guia!=='nenhum'?d.guia:'',up:d.up||null,acao:(d.acao&&d.acao.tipo==='cadastrar_garcons')?d.acao:null}); return; }
+      if(d&&d.ok&&d.resposta){ fim({r:'assistant',t:d.resposta,g:d.guia&&d.guia!=='nenhum'?d.guia:'',up:d.up||null,acao:(d.acao&&(d.acao.tipo==='cadastrar_garcons'||d.acao.tipo==='cadastrar_mesas'))?d.acao:null}); return; }
       throw new Error((d&&d.mensagem)||'');
     }).catch(function(er){ var g=busca(q); fim({r:'assistant',t:(er&&er.message?er.message+' ':'Não consegui responder agora. ')+(g?'Mas acho que este guia ajuda: '+GUIAS[g].t+'.':'Tente de novo em instantes.'),g:g||''}); });
   }
