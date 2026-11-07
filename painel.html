@@ -10421,7 +10421,7 @@ function cdPintarCats(){
   var h='', i, b=el('cd-cats-ord'); if(b) b.style.display=CD_CAT_SUJO?'flex':'none';
   for(i=0;i<CD.cats.length;i++){
     var c=CD.cats[i], n=0, j; for(j=0;j<CD.prods.length;j++) if(CD.prods[j].cat===c.id) n++;
-    h+='<div class="cd-cat-row" data-id="'+esc(c.id)+'" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--border);background:var(--s1)"><span onpointerdown="cdCatArrasta(event,this)" title="Arraste para mudar a ordem" style="flex:none;cursor:grab;touch-action:none;user-select:none;font-size:20px;color:var(--muted);padding:6px 2px;line-height:1">⠿</span><div onclick="cdCatFotoEsc(\''+c.id+'\')" title="Foto da categoria" style="width:46px;height:46px;border-radius:10px;flex:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;background:var(--border) center/cover'+(c.foto?' url('+c.foto+')':'')+'">'+(c.foto?'':'📷')+'</div><div style="flex:1;font-weight:700;font-size:13.5px">'+esc(c.nome)+' <span style="font-weight:500;color:var(--muted);font-size:12px">· '+n+' produto'+(n===1?'':'s')+'</span></div>'
+    h+='<div class="cd-cat-row" data-id="'+esc(c.id)+'" onpointerdown="cdCatLinhaDown(event,this)" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--border);background:var(--s1);user-select:none;-webkit-user-select:none;cursor:grab"><span onpointerdown="event.stopPropagation();cdCatArrasta(event,this)" title="Arraste para mudar a ordem" style="flex:none;cursor:grab;touch-action:none;user-select:none;font-size:20px;color:var(--muted);padding:6px 2px;line-height:1">⠿</span><div onclick="cdCatFotoEsc(\''+c.id+'\')" title="Foto da categoria" style="width:46px;height:46px;border-radius:10px;flex:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;background:var(--border) center/cover'+(c.foto?' url('+c.foto+')':'')+'">'+(c.foto?'':'📷')+'</div><div style="flex:1;font-weight:700;font-size:13.5px">'+esc(c.nome)+' <span style="font-weight:500;color:var(--muted);font-size:12px">· '+n+' produto'+(n===1?'':'s')+'</span></div>'
       +'<select class="inp cd-dest" onchange="cdCatDest(\''+c.id+'\',this.value)" title="Para onde vai o pedido desta categoria" style="width:auto;padding:6px 8px;font-size:12.5px"><option value="cozinha"'+(cdDestDe(c)==='bar'?'':' selected')+'>🍳 Cozinha</option><option value="bar"'+(cdDestDe(c)==='bar'?' selected':'')+'>🍺 Bar</option></select><button class="btn sec sm" onclick="cdRenCat(\''+c.id+'\')">Renomear</button><button class="btn sec sm" onclick="cdDelCat(\''+c.id+'\')" style="color:var(--red)">Apagar</button></div>';
   }
   el('cd-cats-lista').innerHTML=h||'<div style="color:var(--muted);font-size:13px">Nenhuma categoria ainda.</div>';
@@ -10447,19 +10447,25 @@ function cdAddCat(){
 }
 function cdDestDe(c){ if(c.dest==='bar') return 'bar'; if(c.man&&c.dest==='cozinha') return 'cozinha'; return /bebida|drink|chopp|chope|cerveja|suco|refri|vinho|caipir|coquetel|destilad|dose|água|agua|energ|bar\b/i.test(c.nome||'')?'bar':'cozinha'; }
 /* (231) ARRASTAR para ordenar: segure a alça ⠿ e leve a linha até o lugar (dedo ou mouse). A ordem de cima para baixo é a do cardápio. */
+/* com o mouse, dá para agarrar a linha em qualquer ponto (menos botões, seletor e foto); no celular, só pela alça ⠿ para a lista continuar rolando */
+function cdCatLinhaDown(ev,row){ if(ev.pointerType!=='mouse'||ev.button!==0) return; var t=ev.target; while(t&&t!==row){ if(/^(BUTTON|SELECT|INPUT|OPTION)$/.test(t.tagName)||t.hasAttribute('onclick')) return; t=t.parentElement; } cdCatArrasta(ev,row); }
 function cdCatArrasta(ev,h){
+  try{ window.getSelection().removeAllRanges(); }catch(e){}
+  /* (231b) o movimento é escutado na página inteira: mudar a linha de lugar fazia o navegador soltar a alça e a linha travava */
   ev.preventDefault(); var row=h.closest('.cd-cat-row'), box=el('cd-cats-lista'), sb=box.closest('.sh-bd'); if(!row) return;
-  row.style.opacity='.55'; row.style.boxShadow='0 6px 18px rgba(0,0,0,.18)'; h.style.cursor='grabbing';
-  try{ h.setPointerCapture(ev.pointerId); }catch(e){}
+  var corpo=document.body, selAnt=corpo.style.userSelect; corpo.style.userSelect='none'; corpo.style.cursor='grabbing';
+  row.style.position='relative'; row.style.zIndex='2'; row.style.opacity='.85'; row.style.boxShadow='0 8px 22px rgba(0,0,0,.22)'; row.style.borderRadius='12px'; row.style.transform='scale(1.02)';
   var rolar=null, ultY=ev.clientY;
-  var move=function(y){ var rows=[].slice.call(box.querySelectorAll('.cd-cat-row')), k; for(k=0;k<rows.length;k++){ var r=rows[k]; if(r===row) continue; var b=r.getBoundingClientRect(); if(y>=b.top&&y<=b.bottom){ if(y<b.top+b.height/2) box.insertBefore(row,r); else box.insertBefore(row,r.nextSibling); break; } } };
-  h.onpointermove=function(e){ ultY=e.clientY; move(ultY); };
-  if(sb) rolar=setInterval(function(){ var bb=sb.getBoundingClientRect(); if(ultY<bb.top+50){ sb.scrollTop-=10; move(ultY); } else if(ultY>bb.bottom-50){ sb.scrollTop+=10; move(ultY); } },30);   /* perto da borda, a lista rola */
-  h.onpointerup=h.onpointercancel=function(){ h.onpointermove=h.onpointerup=h.onpointercancel=null; clearInterval(rolar); row.style.opacity=''; row.style.boxShadow=''; h.style.cursor='grab';
+  var move=function(y){ var rows=[].slice.call(box.querySelectorAll('.cd-cat-row')), k; for(k=0;k<rows.length;k++){ var r=rows[k]; if(r===row) continue; var b=r.getBoundingClientRect(); if(y>=b.top&&y<=b.bottom){ if(y<b.top+b.height/2){ if(row.nextSibling!==r) box.insertBefore(row,r); } else if(r.nextSibling!==row) box.insertBefore(row,r.nextSibling); break; } } };
+  var mv=function(e){ ultY=e.clientY; move(ultY); e.preventDefault(); };
+  var fim=function(){ document.removeEventListener('pointermove',mv,true); document.removeEventListener('pointerup',fim,true); document.removeEventListener('pointercancel',fim,true); clearInterval(rolar);
+    corpo.style.userSelect=selAnt; corpo.style.cursor=''; row.style.position=''; row.style.zIndex=''; row.style.opacity=''; row.style.boxShadow=''; row.style.borderRadius=''; row.style.transform='';
     var map={}; CD.cats.forEach(function(c){ map[c.id]=c; });
     var nova=[].map.call(box.querySelectorAll('.cd-cat-row'),function(r){ return map[r.getAttribute('data-id')]; }).filter(Boolean);
     if(nova.some(function(c,i){ return c!==CD.cats[i]; })){ CD.cats=nova; cdCatSujo(); }
   };
+  document.addEventListener('pointermove',mv,{capture:true,passive:false}); document.addEventListener('pointerup',fim,true); document.addEventListener('pointercancel',fim,true);
+  if(sb) rolar=setInterval(function(){ var bb=sb.getBoundingClientRect(); if(ultY<bb.top+50){ sb.scrollTop-=10; move(ultY); } else if(ultY>bb.bottom-50){ sb.scrollTop+=10; move(ultY); } },30);   /* perto da borda, a lista rola */
 }
 function cdCatDesfazer(){ CD.cats=CD_CATS_ORIG.slice(); CD.cats.forEach(function(c){ if(c._dest0!==undefined){ c.dest=c._dest0; c.man=c._man0; delete c._dest0; delete c._man0; } }); CD_CAT_SUJO=false; el('cd-cats-erro').textContent=''; cdPintarCats(); }
 /* salva a ordem (10, 20, 30… em quem mudou de lugar) e o Cozinha/Bar que foi trocado */
