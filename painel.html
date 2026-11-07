@@ -8637,15 +8637,23 @@ function gaTipoMuda(p){ var t=el(p+'-tipo').value, vb=el(p+'-vbox'); if(vb) vb.s
 function gaCarregar(){
   if(!GA.ini){ GA.ini=inicioMesISO(); GA.fim=gaHoje(); }
   el('ga-ini').value=GA.ini; el('ga-fim').value=GA.fim;
-  el('ga-corpo').innerHTML='<tr><td colspan="6"><div class="empty">Carregando…</div></td></tr>';
+  /* (236) a lista já vista aparece na hora (o período é o mesmo) e se atualiza por trás; a taxa e a regra vêm de uma rota leve, sem esperar as vendas */
+  var per=GA.ini+'|'+GA.fim, tok=GA.tok=(GA.tok||0)+1;
+  if(GA.d&&GA.dPer===per) gaPintar(); else { el('ga-corpo').innerHTML='<tr><td colspan="6"><div class="empty">Carregando…</div></td></tr>'; if(GA.cfg) gaPintaCfg(GA.cfg); }
+  mzApi('/painel/garcons-servico').then(function(c){ if(c&&c.ok&&tok===GA.tok&&!(GA.d&&GA.dPer===per&&GA.dTok===tok)){ GA.cfg={servico:c.servico,regra_loja:c.regra_loja}; gaPintaCfg(GA.cfg); } }).catch(function(){});
   mzApi('/painel/garcons?ini='+GA.ini+'&fim='+GA.fim).then(function(d){
+    if(tok!==GA.tok) return;
     if(!d||!d.ok) throw new Error((d&&d.mensagem)||'Não consegui abrir os garçons. Publique o Worker 218.');
-    GA.d=d; gaPintar();
-  }).catch(function(e){ el('ga-corpo').innerHTML='<tr><td colspan="6"><div class="empty" style="color:var(--red)">'+esc(e.message||'Não consegui abrir.')+'</div></td></tr>'; el('ga-fech-corpo').innerHTML=''; });
+    GA.d=d; GA.dPer=per; GA.dTok=tok; GA.cfg={servico:d.servico,regra_loja:d.regra_loja}; gaPintar();
+  }).catch(function(e){ if(tok!==GA.tok) return; el('ga-corpo').innerHTML='<tr><td colspan="6"><div class="empty" style="color:var(--red)">'+esc(e.message||'Não consegui abrir.')+'</div></td></tr>'; el('ga-fech-corpo').innerHTML=''; });
 }
 function gaLanc(fid){ for(var i=0;i<EXTRATO.length;i++) if(EXTRATO[i].gfech===fid) return EXTRATO[i]; return null; }
 function gaPintar(){
   var d=GA.d; if(!d) return;
+  gaPintaCfg(d); gaPintaLista(d);
+}
+/* (236) cards "Taxa do garçom na conta" e "Regra da loja": pintam sozinhos, sem esperar a lista de vendas */
+function gaPintaCfg(d){
   var rl=d.regra_loja||{tipo:'nada',valor:0};
   if(document.activeElement!==el('ga-valor')){ el('ga-tipo').value=rl.tipo||'nada'; el('ga-valor').value=rl.valor?String(rl.valor).replace('.',','):''; gaTipoMuda('ga'); }
   var sv=d.servico||{on:false,pct:0};
@@ -8653,6 +8661,9 @@ function gaPintar(){
   el('ga-serv-txt').innerHTML=sv.on?('Ligada em <b>'+String(sv.pct).replace('.',',')+'%</b>: cada pedido que um garçom lança no Atendimento leva '+String(sv.pct).replace('.',',')+'% a mais, numa linha separada na conta (produto de '+moeda(10)+' fica '+moeda(10)+' + '+moeda(Math.round(10*sv.pct)/100)+' de serviço). Esse valor é a comissão do garçom. Não entra em pedido do QR da mesa, balcão, nem lançado pelo dono ou gerente.')
     :'Ligada, o pedido que o garçom lança leva essa porcentagem a mais, numa linha separada na conta (ex.: 10% — produto de '+moeda(10)+' fica '+moeda(11)+'), e esse valor vira a comissão dele. O preço no cardápio não muda.';
   el('ga-regra-txt').innerHTML=(sv.on?'<b style="color:#B45309">Com a taxa do garçom ligada, a regra abaixo só vale para pedidos sem a taxa</b> (lançados antes de ligar). ':'')+'Regra atual da loja: <b>'+esc(gaRegraTxt(rl))+'</b>. Vale para todos os garçons; para um garçom ter regra diferente, toque em <b>Regra</b> na linha dele.'+(rl.tipo==='dia'?' Na diária, conta cada dia em que ele lançou pelo menos um pedido de conta fechada.':'');
+}
+function gaPintaLista(d){
+  var rl=d.regra_loja||{tipo:'nada',valor:0};
   var gs=d.garcons||[], h='', at=0;
   gs.forEach(function(g){ if(g.ativo) at++;
     var af=g.a_fechar||{}, r=g.regra||rl;

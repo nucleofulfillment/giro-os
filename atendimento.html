@@ -479,7 +479,7 @@ function mzBusca(){ return api('/painel/atend-mesas').then(function(d){ if(d&&d.
 function mzLista(){ return MZC||((D&&D.mesas)||[]).map(function(n){ return {num:n,oc:0}; }); }
 function mzGrade(l){ return '<div class="mlg"><span><i style="background:var(--pri)"></i>Livre</span><span><i style="background:#16A34A"></i>Comanda aberta</span></div><div class="mz">'+l.map(function(m){ return '<button class="mb'+(m.oc?' oc':'')+'" onclick="pegaMesa(\''+esc(m.num)+'\')">'+esc(m.num)+'</button>'; }).join('')+'</div>'; }
 function abreMapa(segue){
-  MZ_SEGUE=segue===true; var l=mzLista(), tok=MZ_ABRE=(MZ_ABRE||0)+1; carregaAbertas();
+  MZ_SEGUE=segue===true; MZ_TROCA=null; var l=mzLista(), tok=MZ_ABRE=(MZ_ABRE||0)+1; carregaAbertas();
   /* (230) cliente já informado: dá para seguir sem mesa (ex.: na piscina, no bar) */
   var semM=$('iJoia').value.trim()?'<button class="bt" style="margin:0 0 12px" onclick="semMesa()">Cliente sem mesa · ir para o cardápio</button>':'';
   folha('Escolha a mesa',semM+(l.length?'<div id="mzG">'+mzGrade(l)+'</div>':'<div id="mzG" style="padding:20px;color:var(--mu2)">Carregando…</div>'),'');
@@ -490,13 +490,34 @@ function abreMapa(segue){
   });
 }
 var MZ_ABRE=0;
-function semMesa(){ MZ_SEGUE=false; fecha(); $('iMesa').value=''; COM.semMesa=true; abreComanda(); }
-function pegaMesa(n){ var seg=MZ_SEGUE; MZ_SEGUE=false; $('iMesa').value=n; fecha(); $('idErr').textContent=''; linkMesa(); if(seg) carregaAbertas().then(function(){ linkMesa(); abreComanda(); }); }
+function semMesa(){ MZ_SEGUE=false; MZ_TROCA=null; fecha(); $('iMesa').value=''; COM.semMesa=true; abreComanda(); }
+function pegaMesa(n){ var seg=MZ_SEGUE, tp=MZ_TROCA; MZ_SEGUE=false; MZ_TROCA=null; $('iMesa').value=n; fecha(); $('idErr').textContent='';
+  /* (236) cliente trocou de mesa com comanda aberta: a comanda vai junto para a mesa nova */
+  if(tp&&String(n).toUpperCase()!==String(tp.mesa).toUpperCase()) return trocaAntes(tp,n,false);
+  linkMesa(); if(seg) carregaAbertas().then(function(){ linkMesa(); abreComanda(); }); }
+function trocaAntes(tp,n,juntar){
+  api('/painel/atend-transferir',{mesa:tp.mesa,joia:tp.joia,para:n,juntar:!!juntar}).then(function(r){
+    if(r._h===401){ mostraLogin('Entre de novo.'); return; }
+    if(r.erro==='ocupada'){ if(confirm('A mesa '+n+' já tem comanda aberta. Juntar as duas na mesma conta?')) return trocaAntes(tp,n,true); $('iMesa').value=''; return; }
+    if(r.ok) toast('Comanda do cliente agora na mesa '+r.para); else if(r.erro!=='sem_consumo') toast(r.mensagem||'Não consegui levar a comanda para a mesa nova.');
+    _ab=0; carregaAbertas().then(function(){ COM.mesaOk=true; abreComanda(); });
+  });
+}
+/* (236) cliente que já pediu hoje: a cada pedido novo o garçom escolhe manter a mesa ou trocar (em evento o cliente muda de lugar) */
+var MZ_TROCA=null;
+function perguntaMesa(joia,ms,aberta){
+  var loc=CLIS?CLIS.filter(function(c){ return String(c[0])===joia; })[0]:null, nm=loc?loc[1]:'';
+  folha('Mesa do cliente','<div style="font-size:15px;margin:4px 0 14px">'+pill(joia)+(nm?' <b>'+esc(nm)+'</b>':'')+'<div style="color:var(--mu2);margin-top:6px">'+(aberta?'Está com a comanda aberta na mesa ':'Hoje pediu na mesa ')+'<b>'+esc(ms)+'</b>.</div></div>'
+    +'<button class="bt" style="margin:0 0 10px" onclick="mantemMesa(\''+esc(ms)+'\')">Manter mesa '+esc(ms)+'</button>'
+    +'<button class="bt s" style="margin:0" onclick="trocaMesaCli(\''+esc(joia)+'\',\''+esc(ms)+'\','+(aberta?1:0)+')">Trocar de mesa</button>','');
+}
+function mantemMesa(ms){ fecha(); $('iMesa').value=ms; COM.mesaOk=true; abreComanda(); }
+function trocaMesaCli(joia,ms,aberta){ fecha(); abreMapa(true); if(aberta) MZ_TROCA={mesa:ms,joia:joia}; }
 /* vínculo mesa <-> cliente: só vale enquanto a comanda está aberta (fechou a conta, some) */
-var OPENL=[], _ab=0, AUTOJ='', AUTOM='';
+var OPENL=[], OPENH={}, _ab=0, AUTOJ='', AUTOM='';
 function carregaAbertas(){
   var t=Date.now(); if(t-_ab<4000) return Promise.resolve(); _ab=t;
-  return api('/painel/atend-comandas').then(function(d){ if(d&&d.ok) OPENL=(d.comandas||[]).filter(function(c){ return c.mesa&&c.joia; }); }).catch(function(){});
+  return api('/painel/atend-comandas').then(function(d){ if(d&&d.ok){ OPENL=(d.comandas||[]).filter(function(c){ return c.mesa&&c.joia; }); OPENH=d.hoje||{}; } }).catch(function(){});
 }
 function abertaMesa(m){ for(var i=0;i<OPENL.length;i++) if(String(OPENL[i].mesa).toUpperCase()===m) return OPENL[i]; return null; }
 function abertaJoia(j){ for(var i=0;i<OPENL.length;i++) if(String(OPENL[i].joia)===String(j)) return OPENL[i]; return null; }
@@ -512,8 +533,7 @@ function linkJoia(j){
   var m=$('iMesa'), cur=m.value.trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
   if(AUTOM&&m.value===AUTOM&&(!j||!abertaJoia(j)||String(abertaJoia(j).mesa).toUpperCase()!==AUTOM)){ m.value=''; AUTOM=''; }
   if(!j) return; var c=abertaJoia(j); if(!c||cur) return;
-  if(COM.modo==='balcao') return;   /* escolheu balcão: não puxa a mesa da comanda aberta nem troca a seleção */
-  m.value=c.mesa; AUTOM=String(c.mesa).toUpperCase(); $('idErr').textContent='';
+  /* (236) não preenche mais a mesa sozinho: ao continuar, o garçom escolhe manter a mesa ou trocar (perguntaMesa) */
 }
 function plab(p){ return p.sub?p.num+'-'+p.sub:String(p.num); }
 function modo(m){ COM.modo=m; mostraMapaBtn(); $('sgM').classList.toggle('on',m==='mesa'); $('sgB').classList.toggle('on',m==='balcao'); $('lbMesa').textContent=m==='mesa'?'Número da mesa':'Número da comanda do balcão (opcional)'; var liv=m==='balcao'&&balLivre(); $('lbCli').textContent=liv?'Cliente (opcional)':'Cliente'; $('iJoia').placeholder=liv?'Sem cliente: toque em Continuar':'Digite o número do cliente'; }
@@ -559,6 +579,8 @@ function abreComanda(){
   var mesa=$('iMesa').value.trim().toUpperCase().replace(/[^A-Z0-9]/g,''), joia=$('iJoia').value.replace(/\W/g,''), er=$('idErr'); er.textContent='';
   COM.modo=$('sgB').classList.contains('on')?'balcao':'mesa';   /* vale o botão que está marcado na tela */
   var semM=!!(COM.semMesa&&joia&&!mesa);   /* (230) "Cliente sem mesa" escolhido no mapa */
+  if(COM.modo!=='balcao'&&!mesa&&!semM&&joia&&!COM.mesaOk){ var ab=abertaJoia(joia), sg=ab?ab.mesa:OPENH[joia]; if(sg&&!ehBalM(sg)) return perguntaMesa(joia,String(sg),!!ab); }
+  COM.mesaOk=false;
   if(COM.modo!=='balcao'&&!mesa&&!semM){ if(mzLista().length) return abreMapa(true); er.textContent='⚠️ Você não preencheu o número da mesa.'; try{ $('iMesa').focus(); }catch(e){} return; }
   if(COM.modo!=='balcao'&&mesa&&D.mesas&&D.mesas.length&&D.mesas.indexOf(mesa)<0){ er.textContent='⚠️ A mesa '+mesa+' não está cadastrada. Escolha no mapa de mesas.'; return; }
   var avulso=!mesa&&!joia&&COM.modo==='balcao'&&balLivre();
@@ -885,7 +907,7 @@ var COMS=[];
 function carregaCom(){
   api('/painel/atend-comandas').then(function(d){
     if(d._h===401){ mostraLogin('Entre de novo.'); return; } if(!d.ok){ $('lCom').innerHTML='<p>'+esc(d.mensagem||'Erro')+'</p>'; return; }
-    COMS=d.comandas||[]; OPENL=COMS.filter(function(c){ return c.mesa&&c.joia; }); var h='';
+    COMS=d.comandas||[]; OPENL=COMS.filter(function(c){ return c.mesa&&c.joia; }); OPENH=d.hoje||OPENH; var h='';
     COMS.forEach(function(c,i){
       var t=comTit(c)+(c.joia?(c.mesa?' · ':'')+pill(c.joia):'');
       h+='<div class="cm" id="cm'+i+'"><div class="h"><div><b>'+t+'</b><div style="font-size:12.5px;color:var(--mu2)">'+esc(c.nome||'')+'</div></div><span class="v">'+brl(c.total)+'</span></div>'+(c.pedidos.length&&c.pedidos[0].sub?'<div style="font-size:12px;font-weight:800;color:var(--mu2);margin-top:6px">PEDIDO #'+c.pedidos[0].num+'</div>':'')+'<div class="pd">'+c.pedidos.map(function(p,k){ return '<div class="pr"><div class="ph"><span><b>#'+plab(p)+'</b> · '+new Date(p.criado).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+(p.atend?' · '+esc(p.atend):'')+'</span><button onclick="reimp('+i+','+k+')" title="Imprimir">🖨</button></div>'+String(p.itens||'').split('; ').map(function(t){ return '<div class="pi">'+esc(t)+'</div>'; }).join('')+'</div>'; }).join('')+'</div>'
