@@ -76,10 +76,13 @@
     if (!el || !window.LiveMascote) return;
     const minimo = Number(el.dataset.minimo) || 1500;
     const esperar = el.dataset.esperar === '1';
+    /* data-rapido="1" (app do garçom): sem a animação de boas-vindas e só uma vez por sessão (voltar do Hub não repete) */
+    const rapido = el.dataset.rapido === '1';
+    if (rapido) { let vista = false; try { vista = sessionStorage.getItem('lf_abertura_vista') === '1'; sessionStorage.setItem('lf_abertura_vista', '1'); } catch (e) {} if (vista) { el.remove(); return; } }
     const t0 = Date.now();
-    const live = LiveMascote.criar(el.querySelector('.lfa-live'), { sombra: true, expressao: 'surpreso' });
+    const live = LiveMascote.criar(el.querySelector('.lfa-live'), { sombra: true, expressao: rapido ? 'feliz' : 'surpreso' });
     el.classList.add('ok');
-    if (!reduzido) {
+    if (!reduzido && !rapido) {
       Object.assign(live.P, { y: -160, sx: 0.7, sy: 0.7 });
       await live.animar({ y: 0, sx: 1, sy: 1 }, 700, molaEase);
       live.expressao('animado');
@@ -87,12 +90,12 @@
       await live.gesto('piscadinha');
     }
     const prontoOuLoad = esperar ? pronto : (document.readyState === 'complete' ? Promise.resolve() : new Promise((r) => addEventListener('load', r, { once: true })));
-    await Promise.race([prontoOuLoad, espera(4500)]);
+    await Promise.race([prontoOuLoad, espera(rapido ? 3000 : 4500)]);
     const falta = minimo - (Date.now() - t0);
     if (falta > 0) await espera(falta);
-    el.style.transition = 'opacity .45s, visibility .45s, transform .5s';
+    el.style.transition = rapido ? 'opacity .25s, visibility .25s' : 'opacity .45s, visibility .45s, transform .5s';
     el.classList.add('sai');
-    setTimeout(() => { live.destruir(); el.remove(); }, 550);
+    setTimeout(() => { live.destruir(); el.remove(); }, rapido ? 280 : 550);
   }
   if (el) {
     if (window.LiveMascote) abertura();

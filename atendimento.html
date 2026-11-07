@@ -273,9 +273,9 @@ label.l.big{font-size:14px;margin-top:16px}
 </head>
 <body>
 <!-- abertura com o Live (fundo branco + logo laranja); curta, para não atrasar o garçom -->
-<div id="lf-abertura" data-minimo="1300" style="position:fixed;inset:0;z-index:2147483000;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px"><div class="lfa-live" style="width:140px"></div><img src="livefood-logo.png" alt="LiveFood" style="height:42px;width:auto"><div class="lfa-barra"><i></i></div></div>
-<script>setTimeout(function(){ var a=document.getElementById('lf-abertura'); if(a) a.remove(); },6000);</script>
-<script src="site/js/live-mascote.js"></script><script src="site/js/live-app.js"></script>
+<div id="lf-abertura" data-minimo="350" data-esperar="1" data-rapido="1" style="position:fixed;inset:0;z-index:2147483000;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px"><div class="lfa-live" style="width:140px"></div><img src="livefood-logo.png" alt="LiveFood" style="height:42px;width:auto"><div class="lfa-barra"><i></i></div></div>
+<script>setTimeout(function(){ var a=document.getElementById('lf-abertura'); if(a) a.remove(); },3500);   /* rede de segurança: a abertura nunca passa de 3,5 s */</script>
+<script src="site/js/live-mascote.js"></script><script src="site/js/live-app.js?v=2"></script>
 
 <div id="login">
   <div class="c">
@@ -377,12 +377,37 @@ function entrar(){
   }).catch(function(){ b.disabled=false; b.textContent='Entrar'; $('lgM').textContent='Sem conexão. Tente de novo.'; });
 }
 function tema(c){ if(!/^#[0-9a-fA-F]{6}$/.test(c||'')) return; var st=document.documentElement.style; st.setProperty('--pri',c); st.setProperty('--grad','linear-gradient(120deg,'+c+','+c+')'); var m=document.querySelector('meta[name=theme-color]'); if(m) m.content=c; }
-function sair(){ mostraLogin(''); }
+function sair(){ try{ localStorage.removeItem(dadosChave()); }catch(e){} mostraLogin(''); }   /* saiu: apaga a cópia guardada no celular */
+/* (abre rápido) o cardápio, os clientes e a configuração ficam guardados no celular: a tela abre na hora com a cópia e se atualiza por trás.
+   O servidor confere tudo de novo ao enviar o pedido (preço, bloqueio do cliente, mesa), então a cópia nunca grava nada errado. */
+function dadosChave(){ var u=null; try{ u=JSON.parse(localStorage.getItem('dd_user')||'null'); }catch(e){} return 'at_dados_'+((u&&(u.id||u.email))||''); }
+function dadosGuardados(){ try{ var x=JSON.parse(localStorage.getItem(dadosChave())||'null'); if(x&&x.d&&x.d.ok&&Date.now()-x.t<20*3600000) return x.d; }catch(e){} return null; }
+function dadosGuarda(d){ try{ localStorage.setItem(dadosChave(),JSON.stringify({t:Date.now(),d:d})); }catch(e){ try{ localStorage.removeItem(dadosChave()); }catch(e2){} } }
+function prontoTela(){ try{ window.LiveApp&&LiveApp.pronto(); }catch(e){} }
 function inicio(){
-  if(!TK){ mostraLogin(''); return; }
+  if(!TK){ mostraLogin(''); prontoTela(); return; }
+  var cp=dadosGuardados(), montou=false;
+  if(cp){ montaApp(cp); montou=true; prontoTela(); }
   api('/painel/atend-dados').then(function(d){
-    if(d._h===401||d._h===403){ mostraLogin('Entre de novo.'); return; }
-    if(!d.ok){ mostraLogin(d.mensagem||'Não consegui abrir agora.'); return; } carregaAbertas();
+    if(d._h===401||d._h===403){ try{ localStorage.removeItem(dadosChave()); }catch(e){} mostraLogin('Entre de novo.'); prontoTela(); return; }
+    if(!d.ok){ if(!montou) mostraLogin(d.mensagem||'Não consegui abrir agora.'); prontoTela(); return; }
+    dadosGuarda(d);
+    if(montou) atualizaDados(d); else montaApp(d);
+    prontoTela();
+  });
+}
+/* chegou a versão nova do servidor com a tela já aberta: troca os dados sem mexer no que o garçom está fazendo */
+function atualizaDados(d){
+  try{ (d.prods||[]).sort(function(a,b){ return String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR',{sensitivity:'base',numeric:true}); }); }catch(e){}
+  var mudouCard=JSON.stringify([D.cats,D.prods])!==JSON.stringify([d.cats,d.prods]), mudouMesas=JSON.stringify(D.mesas)!==JSON.stringify(d.mesas), mudouCfg=JSON.stringify(D.cfg)!==JSON.stringify(d.cfg);
+  D=d; CLI=d.cli; GEST=!!d.gestor; CLIS=(d.clientes&&d.clientes.length<5000)?d.clientes:null; tema(d.cor);
+  [].forEach.call(document.querySelectorAll('.gest'),function(b){ b.classList.toggle('hide',!GEST); });
+  if(mudouCard){ try{ pintaCats(); if($('bProd')&&$('bProd').value) buscaProd(); }catch(e){} }
+  if(mudouMesas) try{ mostraMapaBtn(); }catch(e){}
+  if(mudouCfg){ try{ abaComNome(); bpBotoes(); if(!(COM.mesa||COM.joia||COM.avulso)) modo(COM.modo); }catch(e){} }
+}
+function montaApp(d){
+    carregaAbertas();
     D=d; try{ (D.prods||[]).sort(function(a,b){ return String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR',{sensitivity:'base',numeric:true}); }); }catch(e){} CLI=d.cli; try{ window.GiroMarca&&GiroMarca.set(CLI); }catch(e){} GEST=!!d.gestor; CLIS=(d.clientes&&d.clientes.length<5000)?d.clientes:null; tema(d.cor);
     $('login').classList.add('hide'); $('app').classList.remove('hide'); abaComNome();
     $('emp').innerHTML=d.logo?'<img src="'+API+'/food/foto/'+encodeURIComponent(d.cli)+'/_logop" alt="'+esc(d.empresa||'')+'" style="height:30px;border-radius:6px;vertical-align:middle">':esc(d.empresa||'Atendimento'); $('usu').textContent=d.usuario||''; try{ var li=$('emp').querySelector('img'); if(li&&window.GiroMarca&&GiroMarca.ajusta) GiroMarca.ajusta(li,'claro'); }catch(e){}
@@ -391,7 +416,6 @@ function inicio(){
     if(!GEST){ $('sgB').classList.add('hide'); COM.modo='mesa'; }
     aba('ped'); pintaCats(); mostraMapaBtn(); mzBusca(); chamInicia(); bpBotoes(); modo(COM.modo); nfcMesaInicia();
     try{ var qm=new URLSearchParams(location.search).get('mesa'); if(qm&&!COM.mesa&&!$('iMesa').value){ modo('mesa'); $('iMesa').value=String(qm).replace(/[^A-Za-z0-9]/g,'').slice(0,8).toUpperCase(); } }catch(e){}
-  });
 }
 /* ── abas ── */
 function aba(a){
