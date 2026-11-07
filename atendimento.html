@@ -796,7 +796,7 @@ document.addEventListener('keydown',function(e){
 /* ── pedido (carrinho) ── */
 function cartTot(){ var t=0; CART.forEach(function(i){ t+=i.unit*i.qty; }); return Math.round(t*100)/100; }
 /* (219) taxa do garçom: o Worker manda a % só para o garçom; balcão não leva */
-function srvPct(){ var p=Number(D&&D.cfg&&D.cfg.servico)||0; return (p>0&&COM.mesa&&!(COM.avulso||COM.modo==='balcao'||ehBalM(COM.mesa)))?p:0; }   /* (230) sem mesa não leva a taxa */
+function srvPct(){ var p=Number(D&&D.cfg&&D.cfg.servico)||0; return (p>0&&!(COM.avulso||COM.modo==='balcao'||ehBalM(COM.mesa)))?p:0; }   /* (231) só o Balcão fica sem a taxa; cliente sem mesa leva */
 function srvVal(t){ return Math.round(t*srvPct())/100; }
 function srvLinha(v,pct){ return v>0?'<div class="opt" style="color:var(--mu2)"><span class="n"><b>Serviço do garçom'+(pct?' ('+String(pct).replace('.',',')+'%)':'')+'</b></span><span class="p">'+brl(v)+'</span></div>':''; }
 function cartBar(){
