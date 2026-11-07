@@ -329,6 +329,7 @@ input{font:inherit;color:inherit}
 main,.hero .txt,.lado{min-width:0}
 /* kits, evento, idade, painel */
 .unid{font-size:12px;font-weight:800;color:var(--mg)}
+.rodape{max-width:1360px;margin:0 auto;padding:20px 20px 40px;font-size:12px;font-weight:600;color:var(--mu);text-align:center;border-top:1px solid var(--ln)}
 .kits{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px}
 .kit{background:var(--c1);border-radius:22px;box-shadow:var(--sombra);padding:16px;cursor:pointer;transition:transform .2s;display:flex;flex-direction:column;gap:6px;animation:entra .45s both}
 .kit:hover{transform:translateY(-3px)}
@@ -545,6 +546,8 @@ main,.hero .txt,.lado{min-width:0}
   </main>
 </div>
 
+<footer class="rodape">Como Associado da Amazon, o LiveMarket ganha com compras qualificadas. Preços e prazos podem mudar no site de cada portal.</footer>
+
 <div class="veu" id="veu"></div>
 <aside class="gav" id="gav" aria-hidden="true"></aside>
 
@@ -719,6 +722,10 @@ var P=REAIS.map(function(r,i){
   return {id:i+1,asin:r[1],cat:cat,sub:sub,un:qtdKit(r[2]),n:r[2],m:m,mod:'',s:{},conf:0,img:'https://m.media-amazon.com/images/I/'+r[3]+'._AC_UL640_.jpg',
     o:[['am',r[4],r[5]>r[4]?r[5]:0,0,diasEntrega(r[6]),/GRÁTIS/.test(r[6]),'Amazon',0,'https://www.amazon.com.br/dp/'+r[1],r[6],r[7]]]};
 });
+/* links de afiliado: o link original fica guardado; a tag entra só na hora de abrir */
+var TAG_AMAZON='jrrmachado-20';
+function linkAfiliado(o){ var u=o[8]||'#'; if(o[0]==='am'&&u!=='#'&&TAG_AMAZON){ u=u.replace(/([?&])tag=[^&]*&?/,'$1').replace(/[?&]$/,''); u+=(u.indexOf('?')<0?'?':'&')+'tag='+TAG_AMAZON; } return u; }
+function o0am(p){ return p.o.some(function(o){ return o[0]==='am'; }); }
 
 var CATM={}; function contaCats(){ CATS.forEach(function(c){ CATM[c.id]=c; c.q=P.filter(function(p){return p.cat===c.id;}).length; }); } contaCats();
 function vis(p){ var c=CATM[p.cat]; return !(c&&c.off)&&(S.maior||p.cat!=='alc'); }
@@ -925,10 +932,10 @@ function abre(id){
      '<div><span class="mp '+o[0]+'" style="box-shadow:none;padding:0;background:none;font-size:13px">'+fav(o[0],o)+mpNome(o[0],o)+'</span> '+(o[3]?'<span class="fullt">⚡ FULL</span>':'')+
      '<div class="det"><b style="color:'+(o[4]<=2?'var(--ok)':'var(--tx2)')+'">'+entrega(o).q+'</b> · '+entrega(o).f+'<br>'+(o[10]?'★ '+o[10]+' na '+mpNome(o[0],o)+' · ':'')+'preço de '+COLETA+'</div></div>'+
      '<div class="pr">'+brl(o[1])+(o[2]?'<div style="font-size:12px;color:var(--mu2);font-weight:600;margin-top:4px"><s>'+brl(o[2])+'</s></div>':'')+'</div>'+
-     '<a class="ver '+o[0]+'" href="'+(o[8]||'#')+'" target="_blank" rel="noopener">Ver '+(/^(am|mg|sh|cb)$/.test(o[0])?'na ':'no ')+mpNome(o[0],o)+' ↗</a></div>'; }).join('')+
+     '<a class="ver '+o[0]+'" href="'+linkAfiliado(o)+'" target="_blank" rel="noopener sponsored">Ver '+(/^(am|mg|sh|cb)$/.test(o[0])?'na ':'no ')+mpNome(o[0],o)+' ↗</a></div>'; }).join('')+
    (Object.keys(p.s).length||p.m?'<h5>Ficha técnica</h5><table class="tabela">'+Object.keys(p.s).map(function(k){ return '<tr><td>'+k+'</td><td>'+p.s[k]+'</td></tr>'; }).join('')+(p.m?'<tr><td>Marca</td><td>'+p.m+'</td></tr>':'')+(p.mod?'<tr><td>Modelo</td><td>'+p.mod+'</td></tr>':'')+'</table>':'')+
    '<h5>Histórico de preço</h5><div class="hist" style="font-size:13px;font-weight:600;color:var(--mu);line-height:1.5">Preço coletado em '+COLETA+'. O histórico começa quando o Scout passar a conferir este anúncio todo dia.</div>'+
-   '<p class="nota">Preço e prazo são do momento da última conferência e podem mudar no portal. O preço riscado é o que a própria Amazon mostra como "De". A compra é feita no site do portal ou da loja oficial.</p></div>';
+   '<p class="nota">Preço e prazo são do momento da última conferência e podem mudar no portal. O preço riscado é o que a própria Amazon mostra como "De". A compra é feita no site do portal ou da loja oficial.'+(o0am(p)?' Como Associado da Amazon, o LiveMarket ganha com compras qualificadas.':'')+'</p></div>';
   el('gav').classList.add('on'); el('veu').classList.add('on'); el('gav').setAttribute('aria-hidden','false'); el('gav').scrollTop=0;
   el('fechaGav').onclick=fechaGav;
   el('bfav').onclick=function(){ S.fav[p.id]=!S.fav[p.id]; this.textContent=S.fav[p.id]?'♥':'♡'; var n=Object.keys(S.fav).filter(function(k){return S.fav[k];}).length; el('nfav').hidden=!n; el('nfav').textContent=n; };
@@ -1196,11 +1203,11 @@ function pnCats(){
   });
 }
 function pnAfil(){
-  var C=[['am','Amazon Associados','Ativo para links. A API só libera com 10 vendas em 30 dias; até lá, as ofertas entram pela coleta manual.',['Tag de afiliado (ex.: livemarket-20)']],
+  var C=[['am','Amazon Associados','Ativo: a tag '+TAG_AMAZON+' entra em todos os links da Amazon. A API para Creators só libera com 10 vendas em 30 dias; até lá, as ofertas entram pela coleta manual.',['Tag de afiliado']],
          ['sh','Shopee Afiliados','Conta ainda não aberta. Com ela, a API entrega catálogos completos (milhares de itens).',['App ID','App Secret']],
          ['ml','Mercado Livre Afiliados','Conta ainda não aberta. Com ela, entra a busca oficial e a etiqueta FULL.',['App ID','Client Secret','Tag de afiliado']],
          ['mg','Parceiro Magalu','Opcional, numa segunda fase.',['ID de parceiro']]];
-  el('pnCorpo').innerHTML='<div class="cfg" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr))">'+C.map(function(c){ return '<div class="caixa"><div style="display:flex;align-items:center;gap:8px">'+fav(c[0])+'<h3 style="margin:0">'+c[1]+'</h3></div><p style="margin:6px 0 12px">'+c[2]+'</p>'+c[3].map(function(f){ return '<div class="campo" style="margin-bottom:8px"><label>'+f+'</label><input type="'+(/Secret/.test(f)?'password':'text')+'" autocomplete="off"></div>'; }).join('')+'<button class="btn cl" data-salva-af="1" style="margin-top:4px">Salvar</button></div>'; }).join('')+'</div>'+
+  el('pnCorpo').innerHTML='<div class="cfg" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr))">'+C.map(function(c){ return '<div class="caixa"><div style="display:flex;align-items:center;gap:8px">'+fav(c[0])+'<h3 style="margin:0">'+c[1]+'</h3></div><p style="margin:6px 0 12px">'+c[2]+'</p>'+c[3].map(function(f){ return '<div class="campo" style="margin-bottom:8px"><label>'+f+'</label><input type="'+(/Secret/.test(f)?'password':'text')+'" autocomplete="off" value="'+(c[0]==='am'&&/Tag/.test(f)?TAG_AMAZON:'')+'"></div>'; }).join('')+'<button class="btn cl" data-salva-af="1" style="margin-top:4px">Salvar</button></div>'; }).join('')+'</div>'+
    '<p class="nota" style="margin-top:14px">Com a tag de afiliado salva, o Scout troca o link original pelo link comissionado em todas as ofertas daquele canal, sem recriar nada.</p>';
 }
 
