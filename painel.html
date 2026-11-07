@@ -1008,7 +1008,7 @@ html.loja-p .cd-dest{display:none!important}
 
       <!-- CARDÁPIO (1A): produtos, categorias e adicionais do restaurante -->
       <section class="page" id="pg-cardapio">
-        <div class="pghd"><div><h1>Cardápio</h1><div class="sub">produtos do seu restaurante <span style="opacity:.6">· GIRO-OS-081</span></div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn sec" onclick="cdFotoCardapio()" title="Só no celular">📷 Cardápio por foto</button><button class="btn sec" onclick="cdAbrirCats()">Categorias</button><button class="btn sec" onclick="cdLinkCardapio()">🔗 Link do cardápio</button><button class="btn sec" onclick="cdEtiquetas()">Etiquetas</button><button class="btn sec" onclick="cdAparencia()">🎨 Marca e cores</button><button class="btn sec" onclick="cdHorario()">🕒 Horário</button><button class="btn sec" onclick="cdFrete()">🛵 Entrega</button><button class="btn sec" onclick="cdGeo()">📍 Mesa</button><button class="btn sec" onclick="cdMesas()" style="display:none" title="(116) oculto: as mesas agora ficam no Hub">🍽️ Mesas <span id="ms-bd" style="display:none;background:#ef4444;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px"></span></button><button class="btn sec" onclick="planoAtendimento()">🧾 Atendimento (garçom/balcão)</button><button class="btn sec" onclick="cdAbrirOfertas()">▶ Ofertas</button><button class="btn sec" onclick="clbAbrir()">💎 Clube de assinatura</button><button class="btn sec" onclick="cdAbrirImport()">Importar planilha</button><button class="btn sec" onclick="cdFotosLote()">📷 Fotos em lote</button><button class="btn sec" onclick="cdFotosIaLote()">✨ Fotos com IA</button><button class="btn pri" onclick="cdNovo()">+ Novo produto</button></div></div>
+        <div class="pghd"><div><h1>Cardápio</h1><div class="sub">produtos do seu restaurante <span style="opacity:.6">· GIRO-OS-081</span></div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn sec" onclick="cdFotoCardapio()" title="Só no celular">📷 Cardápio por foto</button><button class="btn sec" onclick="cdAbrirCats()">Categorias</button><button class="btn sec" onclick="cdLinkCardapio()">🔗 Link do cardápio</button><button class="btn sec" onclick="cdEtiquetas()">Etiquetas</button><button class="btn sec" onclick="cdAparencia()">🎨 Marca e cores</button><button class="btn sec" onclick="cdHorario()">🕒 Horário</button><button class="btn sec" onclick="cdFrete()">🛵 Entrega</button><button class="btn sec" onclick="cdGeo()">📍 Mesa</button><button class="btn sec" onclick="cdMesas()" style="display:none" title="(116) oculto: as mesas agora ficam no Hub">🍽️ Mesas <span id="ms-bd" style="display:none;background:#ef4444;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px"></span></button><button class="btn sec" onclick="planoAtendimento()">🧾 Atendimento (garçom/balcão)</button><button class="btn sec" onclick="cdAbrirOfertas()">▶ Ofertas</button><button class="btn sec" onclick="clbAbrir()">💎 Clube de assinatura</button><button class="btn sec" onclick="cdAbrirImport()">Importar planilha</button><button class="btn sec" onclick="cdFotosLote()">📷 Fotos em lote</button><button class="btn sec" onclick="cdFotosIaLote()">✨ Fotos com IA</button><button class="btn sec" onclick="cimpAbrir()" title="Monta o cardápio para a gráfica e baixa o PDF">🖨 + Cardápio impresso</button><button class="btn pri" onclick="cdNovo()">+ Novo produto</button></div></div>
         <div class="card">
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px"><input class="inp" id="cd-busca" placeholder="Buscar produto" oninput="cdPintar()" style="flex:1;min-width:200px"><select class="inp" id="cd-fcat" onchange="cdPintar()" style="width:210px;max-width:100%"></select></div>
           <div id="cd-selbar" style="display:none;align-items:center;gap:10px;flex-wrap:wrap;background:var(--s2);border-radius:12px;padding:8px 12px;margin-bottom:10px;font-size:13px"><span id="cd-seltxt" style="font-weight:700"></span><button class="btn pri sm" onclick="cdExibirOferta()">▶ Exibir oferta</button><button class="btn sec sm" onclick="cdLimparSel()">Limpar</button></div>
@@ -4217,6 +4217,7 @@ function contaPintar(){
        ctLinha('Pacotes entregues até agora',String(ci.pacotes))+
        (d.franquia>0&&!d.variavel_total?ctLinha('Incluídos no plano',String(d.franquia))+ctLinha('Acima da franquia',String(ci.excedente)):'')+
        ctLinha('Variável até agora',ctMoeda(ci.variavel_centavos))+
+       (ci.cimp_n>0?ctLinha('Cardápio impresso ('+ci.cimp_n+(ci.cimp_n===1?' download':' downloads')+')',ctMoeda(ci.cimp_centavos)):'')+
        ctLinha('Próxima fatura vence em','<b>'+ctData(ci.proxima_fatura)+'</b>')+
        '<div style="font-size:12px;color:var(--muted);margin:2px 0 6px">Ela traz o fixo do próximo ciclo ('+ctMoeda(ci.fixo_centavos)+') + o variável deste ciclo, num Pix só. Estimativa hoje: <b>'+ctMoeda(ci.total_centavos)+'</b>. A fatura é gerada sozinha no dia do vencimento.</div>';
     if(ci.pode_mudar_dia){
@@ -8418,13 +8419,23 @@ function cdApCor(x){ CDAP.cor=x; cdApPintar(); }
 function cdApLogo(f,k){
   if(!f) return; k=k||'logo'; var im=new Image(), u=URL.createObjectURL(f);
   /* até 480 px no lado maior: logo horizontal continua nítida na barra */
-  im.onload=function(){ var m=Math.max(im.width,im.height), q=Math.min(1,480/m), cv=document.createElement('canvas'); cv.width=Math.round(im.width*q); cv.height=Math.round(im.height*q); cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height); URL.revokeObjectURL(u); var d=cv.toDataURL('image/png'); if(d.length>380000) d=cv.toDataURL('image/webp',0.85); CDAP[k]=d; cdApPintar(); };
+  im.onload=function(){ var m=Math.max(im.width,im.height), q=Math.min(1,480/m), cv=document.createElement('canvas'); cv.width=Math.round(im.width*q); cv.height=Math.round(im.height*q); cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height); URL.revokeObjectURL(u); var d=cv.toDataURL('image/png'); if(d.length>380000) d=cv.toDataURL('image/webp',0.85); CDAP[k]=d;
+    /* (237) a tela usa a de 480 px; a original (até 5000 px) fica guardada para o cardápio impresso sair nítido */
+    CDAP_ORIG[k]=m>480?{f:f,w:im.width,h:im.height}:null; cdApPintar(); };
   im.onerror=function(){ aviso('Não consegui ler essa imagem'); };
   im.src=u;
 }
+var CDAP_ORIG={};
+function cdApOrigSobe(){
+  var o=CDAP_ORIG.logoPainel||CDAP_ORIG.logo; CDAP_ORIG={}; if(!o) return Promise.resolve(false);
+  return new Promise(function(ok){ var u=URL.createObjectURL(o.f), im=new Image(); im.onload=function(){ var q=Math.min(1,5000/Math.max(im.width,im.height)), cv=document.createElement('canvas'); cv.width=Math.round(im.width*q); cv.height=Math.round(im.height*q); cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height); URL.revokeObjectURL(u);
+    fetch(DELTADIS_API+'/painel/cimp-foto',{method:'POST',headers:cdHdr(),body:JSON.stringify({tipo:'logo',img:cv.toDataURL('image/png'),w:cv.width,h:cv.height})}).then(function(r){ return r.json(); }).then(function(d){ ok(!!(d&&d.ok)); }).catch(function(){ ok(false); }); };
+    im.onerror=function(){ ok(false); }; im.src=u; });
+}
 function cdApSalvar(){
   fetch(DELTADIS_API+'/painel/cardapio-config',{method:'POST',headers:cdHdr(),body:JSON.stringify({cor:CDAP.cor,cor2:CDAP.cor2||'',logo:CDAP.logo,logoPainel:CDAP.logoPainel})}).then(function(r){return r.json();}).then(function(d){
-    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'não salvou'); aviso('Marca salva'); try{ window.GiroMarca&&GiroMarca.refresh(); }catch(e){} fecharTudo();
+    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'não salvou'); try{ window.GiroMarca&&GiroMarca.refresh(); }catch(e){} fecharTudo();
+    cdApOrigSobe().then(function(alta){ aviso(alta?'Marca salva · a logo em alta ficou guardada para o cardápio impresso':'Marca salva'); });
   }).catch(function(e){ aviso(e.message||'Não salvou'); });
 }
 /* ── horário de atendimento (062) ── */
@@ -9933,6 +9944,14 @@ function cdPgtRemover(){ if(!window.confirm('Remover a conta Asaas deste restaur
 /* ── link público do cardápio do cliente ── */
 /* (092) endereço curto: livefood.tec.br/<loja> e /<loja>/mesa/7 (o slug vem do servidor); sem slug, o formato antigo */
 function cdLinkUrl(){ var b=location.href.split('#')[0].split('?')[0]; b=b.slice(0,b.lastIndexOf('/')+1); return CD.slug?b+encodeURIComponent(CD.slug):b+'livefood.html?c='+encodeURIComponent(CD.cli||''); }
+/* (237) CARDÁPIO IMPRESSO: tela cheia por cima do painel (cardapio-impresso.html num iframe, mesmo login). Fecha no X ou no Esc */
+function cimpAbrir(){
+  var f=el('cimp-fr'); if(f) f.remove();
+  f=document.createElement('iframe'); f.id='cimp-fr'; f.title='Cardápio impresso'; f.src='cardapio-impresso.html?v=237';
+  f.style.cssText='position:fixed;inset:0;width:100%;height:100%;border:0;z-index:2147483000;background:#fff';
+  document.body.appendChild(f); document.documentElement.style.overflow='hidden'; try{ f.focus(); }catch(e){}
+}
+function cimpFechar(){ var f=el('cimp-fr'); if(f) f.remove(); document.documentElement.style.overflow=''; }
 function cdLinkCardapio(){
   var u=cdLinkUrl(), ok=CD.ofs.filter(function(o){ return o.ativo!==false&&o.vid; }).length;
   el('cd-imp-corpo').innerHTML='<p style="margin:0 0 10px;font-size:13px;line-height:1.55;color:var(--muted2)">Este é o link que o seu cliente abre (e pode instalar no celular). Cada restaurante tem o seu.</p>'
@@ -10536,6 +10555,6 @@ function cdNovaCatRapida(){
     .catch(function(e){ el('cd-erro').textContent='Não criou a categoria: '+e.message; });
 }
 </script>
-<script src="live-ajuda.js?v=235"></script>
+<script src="live-ajuda.js?v=237"></script>
 </body>
 </html>
