@@ -124,6 +124,13 @@ h2{margin:6px 0 10px;font-size:19px;font-weight:800}
 .cm{border:1px solid var(--b2);background:#fff;border-radius:16px;padding:13px;margin-bottom:10px}
 .cm .h{display:flex;justify-content:space-between;align-items:center;gap:8px}.cm .h b{font-size:16px}.cm .h .v{font-weight:800;font-size:17px;color:var(--pri)}
 .cm .pd{margin-top:8px}
+/* (239) aba Vendas: filtro de data, resumo e comprovantes */
+.vdF{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}.vdF button{border:1px solid var(--b2);background:#fff;border-radius:999px;padding:8px 14px;font:inherit;font-weight:800;font-size:13.5px;color:var(--mu2)}.vdF button.on{background:var(--pri);border-color:var(--pri);color:#fff}
+.vdD{display:flex;gap:8px;margin-bottom:12px}.vdD label{flex:1;font-size:12px;font-weight:800;color:var(--mu2)}.vdD input,.vdD select{display:block;width:100%;margin-top:4px;border:1px solid var(--b2);border-radius:12px;padding:10px;font:inherit;font-size:15px;background:#fff;color:var(--tx)}
+.vdR{background:#fff;border:1px solid var(--b2);border-radius:16px;padding:14px;margin-bottom:12px}.vdR .tt{font-size:12px;font-weight:800;letter-spacing:.6px;color:var(--mu2);text-transform:uppercase}.vdR .vv{font-size:30px;font-weight:900;color:var(--pri);margin:2px 0}.vdR .ss{font-size:13px;color:var(--mu2)}
+.vdR .ln{display:flex;justify-content:space-between;font-size:14px;padding:7px 0;border-top:1px solid var(--s4)}.vdR .ln:first-of-type{margin-top:10px}.vdR .ln b{font-weight:800}
+.vdDia{font-size:12px;font-weight:800;letter-spacing:.6px;color:var(--mu2);text-transform:uppercase;margin:14px 0 6px}
+.cm.est{opacity:.6}.cm.est .v{text-decoration:line-through}
 .cm .pr{border-top:1px solid var(--b2);padding:8px 0}.cm .ph{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--mu2)}.cm .ph button{border:0;background:var(--s3);border-radius:8px;padding:3px 9px;font-size:14px}.cm .pi{font-size:14px;color:var(--tx,#222);line-height:1.4;margin-top:3px}
 .cm .cn .pill{font-size:.75em;padding:1px 8px}
 .cm .ac{display:flex;gap:8px;margin-top:10px}.cm .ac .bt{margin:0;padding:11px;font-size:14px}
@@ -320,7 +327,7 @@ label.l.big{font-size:14px;margin-top:16px}
   </div>
 
   <!-- COMANDAS -->
-  <div id="v-com" class="main hide"><h2>Comandas abertas</h2><input class="inp" id="bPed" placeholder="🔎 Buscar por nome ou número do cliente…" oninput="achaPed()" autocomplete="off" style="margin-bottom:12px"><div id="lCom"></div></div>
+  <div id="v-com" class="main hide"><h2 id="comH">Comandas abertas</h2><input class="inp" id="bPed" placeholder="🔎 Buscar por nome ou número do cliente…" oninput="achaPed()" autocomplete="off" style="margin-bottom:12px"><div id="lCom"></div><div id="vendas" class="hide"></div></div>
 
   <!-- CLIENTES -->
   <div id="v-soc" class="main hide">
@@ -377,7 +384,7 @@ function inicio(){
     if(d._h===401||d._h===403){ mostraLogin('Entre de novo.'); return; }
     if(!d.ok){ mostraLogin(d.mensagem||'Não consegui abrir agora.'); return; } carregaAbertas();
     D=d; try{ (D.prods||[]).sort(function(a,b){ return String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR',{sensitivity:'base',numeric:true}); }); }catch(e){} CLI=d.cli; try{ window.GiroMarca&&GiroMarca.set(CLI); }catch(e){} GEST=!!d.gestor; CLIS=(d.clientes&&d.clientes.length<5000)?d.clientes:null; tema(d.cor);
-    $('login').classList.add('hide'); $('app').classList.remove('hide');
+    $('login').classList.add('hide'); $('app').classList.remove('hide'); abaComNome();
     $('emp').innerHTML=d.logo?'<img src="'+API+'/food/foto/'+encodeURIComponent(d.cli)+'/_logop" alt="'+esc(d.empresa||'')+'" style="height:30px;border-radius:6px;vertical-align:middle">':esc(d.empresa||'Atendimento'); $('usu').textContent=d.usuario||''; try{ var li=$('emp').querySelector('img'); if(li&&window.GiroMarca&&GiroMarca.ajusta) GiroMarca.ajusta(li,'claro'); }catch(e){}
     [].forEach.call(document.querySelectorAll('.gest'),function(b){ b.classList.toggle('hide',!GEST); });
     /* (230) garçom só lança na Mesa (com ou sem mesa escolhida); Balcão fica para o dono/gerente */
@@ -390,7 +397,7 @@ function inicio(){
 function aba(a){
   ABA=a; ['ped','com','soc'].forEach(function(k){ $('v-'+k).classList.toggle('hide',k!==a); $('n-'+k).classList.toggle('on',k===a); });
   clearInterval(POLL); POLL=null; window.scrollTo(0,0); cartBar();
-  if(a==='com'){ carregaCom(); POLL=setInterval(carregaCom,15000); }
+  if(a==='com'){ carregaCom(); POLL=setInterval(carregaCom,15000); if(cobraHora()) vendasAbre(); }   /* (239) cobrar na hora: a aba vira Vendas (comprovantes do garçom) */
   if(a==='soc') carregaSocios();
 }
 /* ── (154) NFC DA MESA: com o Atendimento aberto no Chrome do Android, encostar na etiqueta já seleciona a mesa (e o celular não abre o cardápio do cliente) ── */
@@ -920,7 +927,7 @@ function carregaCom(){
         +(c.servico>0?'<div style="display:flex;justify-content:space-between;font-size:13px;color:var(--mu2);margin-top:6px"><span>Serviço do garçom</span><b>'+brl(c.servico)+'</b></div>':'')
         +'<div class="ac"><button class="bt s" onclick="ativaComanda(COMS['+i+'])">+ Pedido</button><button class="bt s" onclick="trocaForm('+i+')">Trocar mesa</button><button class="bt g" onclick="fechaForm('+i+')">Fechar conta</button></div></div>';
     });
-    $('lCom').innerHTML=h||'<p style="color:var(--mu2)">Nenhuma comanda aberta agora.</p>'; achaPed();
+    $('lCom').innerHTML=cobraHora()?(h?'<div class="sec" style="margin-top:22px">Comandas ainda abertas</div>'+h:''):(h||'<p style="color:var(--mu2)">Nenhuma comanda aberta agora.</p>'); achaPed();   /* (239) cobrar na hora: só mostra se ainda houver alguma aberta */
   });
 }
 function achaPed(){
@@ -970,6 +977,91 @@ function fechaFazer(i,forma){
       if(window.LiveApp){ LiveApp.comemorar({titulo:forma==='marcar'?'Marcado na conta!':'Conta fechada!',valor:brl(r.total),forma:FP[forma]||'',sub:forma==='marcar'?(c.nome||'Cliente'):(ehSMM(c.mesa)?smTit(c.mesa):c.avulso||ehBalM(c.mesa)?'Cliente Balcão':(c.mesa?'Mesa '+c.mesa:'')),botao:{texto:'NOVO PEDIDO',acao:function(){ if(COM.avulso||COM.mesa||COM.joia) zeraComanda(); aba('ped'); }}}); carregaCom(); return; } else toast(forma==='marcar'?'Marcado na conta de '+(c.nome||'cliente')+' · '+brl(r.total):'Conta fechada · '+brl(r.total)); carregaCom(); return; }
     if(r._h===401){ mostraLogin('Entre de novo.'); return; } $('fcErr').textContent=r.mensagem||'Não consegui fechar.';
   });
+}
+/* ── (239) VENDAS: com "Cobrar na hora" a comanda já fecha no pedido. A aba mostra o que o garçom vendeu (comprovantes), com filtro de data, resumo e PDF para compartilhar ── */
+var VD={ini:'',fim:'',uid:'',r:null,garcons:null,tok:0};
+var VD_FP={credito:'💳 Crédito',debito:'💳 Débito',cartao:'💳 Cartão',pix:'▦ Pix',dinheiro:'💵 Dinheiro',marcar:'📒 Marcado na conta'};
+function diaBR(off){ return new Date(Date.now()-3*3600000-(off||0)*86400000).toISOString().slice(0,10); }
+function diaTxt(s){ var p=String(s).split('-'); return p[2]+'/'+p[1]+'/'+p[0]; }
+function abaComNome(){
+  var v=cobraHora(), b=$('n-com'); if(b&&b.lastChild) b.lastChild.textContent=v?'Vendas':'Comandas';
+  $('comH').textContent=v?(GEST?'Vendas':'Minhas vendas'):'Comandas abertas'; $('bPed').classList.toggle('hide',v); $('vendas').classList.toggle('hide',!v);
+  var lc=$('lCom'), vd=$('vendas'); if(v) lc.parentNode.insertBefore(vd,lc); else lc.parentNode.appendChild(vd);   /* vendas em cima; comanda que ainda estiver aberta fica embaixo */
+}
+function vdAtalhos(){ return [['Hoje',diaBR(0),diaBR(0)],['Ontem',diaBR(1),diaBR(1)],['7 dias',diaBR(6),diaBR(0)],['30 dias',diaBR(29),diaBR(0)]]; }
+function vendasAbre(){
+  abaComNome(); if(!VD.ini){ VD.ini=VD.fim=diaBR(0); }
+  var h='<div class="vdF" id="vdF"></div><div class="vdD"><label>De<input type="date" id="vdIni" max="'+diaBR(0)+'" onchange="vdData()"></label><label>Até<input type="date" id="vdFim" max="'+diaBR(0)+'" onchange="vdData()"></label></div>'
+    +(GEST?'<div class="vdD"><label>Garçom<select id="vdUid" onchange="VD.uid=this.value;carregaVendas()"><option value="">Todos</option></select></label></div>':'')
+    +'<div id="vdBox"><p style="color:var(--mu2)">Carregando…</p></div>';
+  $('vendas').innerHTML=h; vdPintaF(); carregaVendas();
+  if(GEST){ var pr=VD.garcons?Promise.resolve({ok:true,garcons:VD.garcons}):api('/painel/atend-garcons'); pr.then(function(d){ if(!d||!d.ok) return; VD.garcons=d.garcons||[]; var s=$('vdUid'); if(!s) return; s.innerHTML='<option value="">Todos</option>'+VD.garcons.map(function(g){ return '<option value="'+esc(g.id)+'"'+(g.id===VD.uid?' selected':'')+'>'+esc(g.nome)+'</option>'; }).join(''); }); }
+}
+function vdPintaF(){
+  var f=$('vdF'); if(!f) return; f.innerHTML=vdAtalhos().map(function(a,i){ return '<button type="button" class="'+(a[1]===VD.ini&&a[2]===VD.fim?'on':'')+'" onclick="vdAtalho('+i+')">'+a[0]+'</button>'; }).join('');
+  $('vdIni').value=VD.ini; $('vdFim').value=VD.fim;
+}
+function vdAtalho(i){ var a=vdAtalhos()[i]; VD.ini=a[1]; VD.fim=a[2]; vdPintaF(); carregaVendas(); }
+function vdData(){ var a=$('vdIni').value, b=$('vdFim').value; if(!a&&!b) return; if(!a) a=b; if(!b) b=a; if(b<a){ var t=a; a=b; b=t; } VD.ini=a; VD.fim=b; vdPintaF(); carregaVendas(); }
+function carregaVendas(){
+  var box=$('vdBox'); if(!box) return; var tk=++VD.tok;
+  api('/painel/atend-vendas?ini='+VD.ini+'&fim='+VD.fim+(GEST&&VD.uid?'&uid='+encodeURIComponent(VD.uid):'')).then(function(d){
+    if(tk!==VD.tok||!$('vdBox')) return;
+    if(d._h===401){ mostraLogin('Entre de novo.'); return; }
+    if(!d.ok){ $('vdBox').innerHTML='<p class="er">'+esc(d.erro==='rota_nao_encontrada'||d.erro==='rota nao encontrada'||d._h===404||(d.erro==='sem_permissao'&&!GEST)?'Publique o Worker 239 para ver as vendas.':(d.mensagem||'Não consegui carregar as vendas.'))+'</p>'; return; }
+    VD.r=d; vdPinta();
+  });
+}
+function vdLocal(v){ var l=ehBalM(v.mesa)?'Cliente Balcão':ehSMM(v.mesa)?smTit(v.mesa):(v.mesa?'Mesa '+esc(v.mesa):''); var c=v.joia?esc(v.nome||'')+' '+pill(v.joia):''; return [l,c].filter(Boolean).join(' · ')||'Atendimento'; }
+function vdItem(l){ var d=descItem({tam:l.tam||'',sab:l.sab||[],borda:l.borda||'',adds:l.adds||[],obs:l.obs||''},0); return l.qty+'x '+l.nome+(d?' · '+d:''); }
+function vdPinta(){
+  var d=VD.r, rs=d.resumo||{}, per=d.ini===d.fim?diaTxt(d.ini):diaTxt(d.ini)+' a '+diaTxt(d.fim), h='';
+  h+='<div class="vdR"><div class="tt">Total vendido · '+per+'</div><div class="vv">'+brl(rs.total)+'</div><div class="ss">'+rs.n+(rs.n===1?' pedido':' pedidos')+(rs.servico>0?' · serviço do garçom '+brl(rs.servico):'')+'</div>';
+  Object.keys(rs.formas||{}).sort(function(a,b){ return rs.formas[b].total-rs.formas[a].total; }).forEach(function(f){ var x=rs.formas[f]; h+='<div class="ln"><span>'+(VD_FP[f]||esc(f))+' <small style="color:var(--mu2)">('+x.n+')</small></span><b>'+brl(x.total)+'</b></div>'; });
+  if(rs.estornos) h+='<div class="ln" style="color:var(--er)"><span>Estornados ('+rs.estornos+')</span><b>'+brl(rs.estornado)+'</b></div>';
+  h+=(d.vendas.length?'<button class="bt" style="margin:12px 0 0" onclick="vdPdf()" id="vdPdfBt">Compartilhar PDF</button>':'')+'</div>';
+  if(!d.vendas.length) h+='<p style="color:var(--mu2)">Nenhuma venda nesse período.</p>';
+  var dia='', varios=d.ini!==d.fim;
+  d.vendas.forEach(function(v,i){
+    var dd=dtBR(v.criado); if(varios&&dd!==dia){ dia=dd; h+='<div class="vdDia">'+esc(dd)+'</div>'; }
+    var est=v.status==='estornado';
+    h+='<div class="cm'+(est?' est':'')+'"><div class="h"><div><b>#'+plab(v)+'</b> <span style="font-size:12.5px;color:var(--mu2)">'+hrBR(v.criado)+(GEST&&v.atend?' · '+esc(v.atend):'')+'</span><div style="font-size:13px;color:var(--mu2);margin-top:2px">'+vdLocal(v)+'</div></div><span class="v">'+brl(v.total)+'</span></div>'
+      +'<div class="pd">'+(v.l||[]).map(function(l){ return '<div class="pi">'+esc(vdItem(l))+'</div>'; }).join('')+(v.obs?'<div class="pi" style="color:var(--mu2)">Obs.: '+esc(v.obs)+'</div>':'')+'</div>'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:13px"><span>'+(est?'<span class="tag r" style="margin:0">Estornado</span>':'<span class="tag '+(v.forma==='marcar'?'a':'g')+'" style="margin:0">'+(VD_FP[v.forma]||esc(v.forma||''))+'</span>')+(v.servico>0?' <span style="color:var(--mu2)">serviço '+brl(v.servico)+'</span>':'')+'</span><button onclick="vdReimp('+i+')" title="Imprimir de novo" style="border:0;background:var(--s3);border-radius:8px;padding:4px 10px;font-size:14px">🖨</button></div></div>';
+  });
+  if(d.mais) h+='<p style="color:var(--mu2);font-size:13px">Mostrando as 1.500 vendas mais recentes. Escolha um período menor para ver todas.</p>';
+  $('vdBox').innerHTML=h;
+}
+function vdReimp(i){ var v=VD.r&&VD.r.vendas[i]; if(!v) return; imprimeAuto({num:v.num,sub:v.sub,mesa:v.mesa,joia:v.joia,nome:v.nome,atend:v.atend,criado:v.criado,obs:v.obs,modo:ehBalM(v.mesa)?'balcao':'mesa',l:v.l||[],reimp:1}); toast('Comprovante #'+plab(v)+' enviado para imprimir'); }
+/* PDF: jsPDF (+ tabela) carregado só quando o garçom pede */
+function vdScript(u){ return new Promise(function(ok,er){ var s=document.createElement('script'); s.src=u; s.onload=ok; s.onerror=er; document.head.appendChild(s); }); }
+function vdJsPdf(){ if(window.jspdf&&window.jspdf.jsPDF&&window.jspdf.jsPDF.API&&window.jspdf.jsPDF.API.autoTable) return Promise.resolve(); return vdScript('https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js').then(function(){ return vdScript('https://unpkg.com/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js'); }); }
+function vdTxt(t){ return String(t==null?'':t).replace(/[^\x20-\x7E -ÿ]/g,'').replace(/\s+/g,' ').trim(); }   /* a fonte do PDF não tem emoji */
+function vdPdf(){
+  var d=VD.r; if(!d||!d.vendas.length) return; var b=$('vdPdfBt'); if(b){ b.disabled=true; b.textContent='Gerando PDF…'; }
+  var volta=function(){ var x=$('vdPdfBt'); if(x){ x.disabled=false; x.textContent='Compartilhar PDF'; } };
+  vdJsPdf().then(function(){
+    var rs=d.resumo, doc=new window.jspdf.jsPDF({unit:'mm',format:'a4'}), per=d.ini===d.fim?diaTxt(d.ini):diaTxt(d.ini)+' a '+diaTxt(d.fim);
+    var quem=GEST?(VD.uid&&VD.garcons?((VD.garcons.filter(function(g){ return g.id===VD.uid; })[0]||{}).nome||''):'Todos os garçons'):(D.usuario||'');
+    var cor=[255,90,0]; try{ var c=getComputedStyle(document.documentElement).getPropertyValue('--pri').trim(); if(/^#[0-9a-f]{6}$/i.test(c)) cor=[parseInt(c.substr(1,2),16),parseInt(c.substr(3,2),16),parseInt(c.substr(5,2),16)]; }catch(e){}
+    doc.setFont('helvetica','bold'); doc.setFontSize(17); doc.text(vdTxt(D.empresa||'Atendimento'),14,18);
+    doc.setFontSize(12); doc.text('Comprovante de vendas',14,26);
+    doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(90);
+    doc.text(vdTxt('Garçom: '+quem),14,33); doc.text('Período: '+per,14,38); doc.text('Gerado em '+new Date().toLocaleString('pt-BR'),14,43);
+    doc.setTextColor(0); doc.setFont('helvetica','bold'); doc.setFontSize(14); doc.text('Total vendido: '+brl(rs.total),14,53);
+    doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.text(rs.n+(rs.n===1?' pedido':' pedidos')+(rs.servico>0?' · Serviço do garçom: '+brl(rs.servico):''),14,59);
+    var lf=Object.keys(rs.formas||{}).map(function(f){ return [vdTxt(VD_FP[f]||f),String(rs.formas[f].n),brl(rs.formas[f].total)]; });
+    if(rs.estornos) lf.push(['Estornados (fora do total)',String(rs.estornos),brl(rs.estornado)]);
+    doc.autoTable({startY:64,head:[['Forma de pagamento','Pedidos','Valor']],body:lf,theme:'grid',headStyles:{fillColor:cor},styles:{fontSize:10},columnStyles:{1:{halign:'center'},2:{halign:'right'}},margin:{left:14,right:14}});
+    var corpo=d.vendas.slice().reverse().map(function(v){ return ['#'+plab(v),new Date(v.criado).toLocaleDateString('pt-BR')+' '+hrBR(v.criado)+(GEST&&v.atend?'\n'+vdTxt(v.atend):''),vdTxt(vdLocal(v).replace(/<[^>]+>/g,'')),(v.l||[]).map(function(l){ return vdTxt(vdItem(l)); }).join('\n'),v.status==='estornado'?'ESTORNADO':vdTxt(VD_FP[v.forma]||v.forma),brl(v.total)]; });
+    doc.autoTable({startY:doc.lastAutoTable.finalY+8,head:[['Pedido','Data','Local','Itens','Pagamento','Valor']],body:corpo,theme:'striped',headStyles:{fillColor:cor},styles:{fontSize:8.5,cellPadding:1.8,valign:'top'},columnStyles:{0:{cellWidth:16},1:{cellWidth:24},2:{cellWidth:28},4:{cellWidth:24},5:{cellWidth:20,halign:'right'}},margin:{left:14,right:14},
+      didParseCell:function(c){ if(c.section==='body'&&c.column.index===4&&c.cell.raw==='ESTORNADO') c.cell.styles.textColor=[200,30,30]; }});
+    var nome='vendas-'+vdTxt(quem||'garcom').toLowerCase().normalize('NFD').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'-'+d.ini+(d.fim!==d.ini?'_'+d.fim:'')+'.pdf';
+    var blob=doc.output('blob'), f=null; try{ f=new File([blob],nome,{type:'application/pdf'}); }catch(e){}
+    volta();
+    if(f&&navigator.canShare&&navigator.canShare({files:[f]})){ navigator.share({files:[f],title:'Comprovante de vendas',text:'Vendas '+per+(quem?' · '+quem:'')}).catch(function(){}); return; }
+    doc.save(nome); toast('PDF baixado: '+nome);
+  }).catch(function(){ volta(); toast('Não consegui gerar o PDF. Confira a internet e tente de novo.'); });
 }
 /* ── clientes (gestor) ── */
 function carregaSocios(){
