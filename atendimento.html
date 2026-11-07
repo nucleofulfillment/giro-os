@@ -481,7 +481,7 @@ function mzGrade(l){ return '<div class="mlg"><span><i style="background:var(--p
 function abreMapa(segue){
   MZ_SEGUE=segue===true; MZ_TROCA=null; var l=mzLista(), tok=MZ_ABRE=(MZ_ABRE||0)+1; carregaAbertas();
   /* (230) cliente já informado: dá para seguir sem mesa (ex.: na piscina, no bar) */
-  var semM=$('iJoia').value.trim()?'<button class="bt" style="margin:0 0 12px" onclick="semMesa()">Cliente sem mesa · ir para o cardápio</button>':'';
+  var semM=$('iJoia').value.trim()?'<button class="bt" style="margin:0 0 12px" onclick="semMesa()">Cliente sem mesa · ir para o cardápio</button>':(garLivre()?'<button class="bt" style="margin:0 0 12px" onclick="semMesa()">Sem mesa e sem cliente · ir para o cardápio</button>':'');   /* (238) */
   folha('Escolha a mesa',semM+(l.length?'<div id="mzG">'+mzGrade(l)+'</div>':'<div id="mzG" style="padding:20px;color:var(--mu2)">Carregando…</div>'),'');
   mzBusca().then(function(d){
     var g=$('mzG'); if(!g||tok!==MZ_ABRE) return;
@@ -536,11 +536,15 @@ function linkJoia(j){
   /* (236) não preenche mais a mesa sozinho: ao continuar, o garçom escolhe manter a mesa ou trocar (perguntaMesa) */
 }
 function plab(p){ return p.sub?p.num+'-'+p.sub:String(p.num); }
-function modo(m){ COM.modo=m; mostraMapaBtn(); $('sgM').classList.toggle('on',m==='mesa'); $('sgB').classList.toggle('on',m==='balcao'); $('lbMesa').textContent=m==='mesa'?'Número da mesa':'Número da comanda do balcão (opcional)'; var liv=m==='balcao'&&balLivre(); $('lbCli').textContent=liv?'Cliente (opcional)':'Cliente'; $('iJoia').placeholder=liv?'Sem cliente: toque em Continuar':'Digite o número do cliente'; }
+function modo(m){ COM.modo=m; mostraMapaBtn(); $('sgM').classList.toggle('on',m==='mesa'); $('sgB').classList.toggle('on',m==='balcao'); $('lbMesa').textContent=m==='mesa'?'Número da mesa':'Número da comanda do balcão (opcional)'; var liv=m==='balcao'&&balLivre(), gl=m==='mesa'&&garLivre(); $('lbCli').textContent=liv||gl?'Cliente (opcional)':'Cliente'; if(gl) $('lbMesa').textContent='Número da mesa (opcional)'; if(!JOIA_ABC) $('iJoia').placeholder=liv?'Sem cliente: toque em Continuar':'Digite o número do cliente'; }   /* (238) garçom: mesa e cliente opcionais */
 /* (153) balcão sem cliente: ligado no painel, em Configurações clientes */
 function balLivre(){ return !!(D&&D.cfg&&D.cfg.balcao_livre); }
 function ehBalM(m){ return /^BAL\d+$/.test(String(m||'')); }
-function comTit(c){ return ehBalM(c.mesa)?'Cliente Balcão':(c.mesa?'Mesa '+esc(c.mesa):''); }
+/* (238) garçom sem mesa e sem cliente (quem está em pé ou é visitante): ligado no painel, em Configurações clientes. A comanda fica como "Sem mesa #<número>" (mesa SM<número>) */
+function garLivre(){ return !!(D&&D.cfg&&D.cfg.garcom_livre); }
+function ehSMM(m){ return /^SM\d+$/.test(String(m||'')); }
+function smTit(m){ return 'Sem mesa #'+String(m).slice(2); }
+function comTit(c){ return ehBalM(c.mesa)?'Cliente Balcão':ehSMM(c.mesa)?smTit(c.mesa):(c.mesa?'Mesa '+esc(c.mesa):''); }
 var SUGS=[], _dj=0, CLIS=null;
 function digJoia(){
   clearTimeout(_dj); COM.nome=''; COM.bloq=false; COM.liberar=false; $('joiaInfo').innerHTML=''; var q=$('iJoia').value.trim(); if(!q){ $('sugs').innerHTML=''; AUTOJ=''; linkJoia(''); return; }
@@ -579,13 +583,15 @@ function abreComanda(){
   var mesa=$('iMesa').value.trim().toUpperCase().replace(/[^A-Z0-9]/g,''), joia=$('iJoia').value.replace(/\W/g,''), er=$('idErr'); er.textContent='';
   COM.modo=$('sgB').classList.contains('on')?'balcao':'mesa';   /* vale o botão que está marcado na tela */
   var semM=!!(COM.semMesa&&joia&&!mesa);   /* (230) "Cliente sem mesa" escolhido no mapa */
-  if(COM.modo!=='balcao'&&!mesa&&!semM&&joia&&!COM.mesaOk){ var ab=abertaJoia(joia), sg=ab?ab.mesa:OPENH[joia]; if(sg&&!ehBalM(sg)) return perguntaMesa(joia,String(sg),!!ab); }
+  /* (238) sem mesa e sem cliente: com mesas cadastradas o garçom escolhe isso no topo do mapa; sem mesas cadastradas vai direto */
+  var semNada=COM.modo!=='balcao'&&!mesa&&!joia&&garLivre()&&(COM.semMesa||!mzLista().length);
+  if(COM.modo!=='balcao'&&!mesa&&!semM&&joia&&!COM.mesaOk){ var ab=abertaJoia(joia), sg=ab?ab.mesa:OPENH[joia]; if(sg&&!ehBalM(sg)&&!ehSMM(sg)) return perguntaMesa(joia,String(sg),!!ab); }
   COM.mesaOk=false;
-  if(COM.modo!=='balcao'&&!mesa&&!semM){ if(mzLista().length) return abreMapa(true); er.textContent='⚠️ Você não preencheu o número da mesa.'; try{ $('iMesa').focus(); }catch(e){} return; }
-  if(COM.modo!=='balcao'&&mesa&&D.mesas&&D.mesas.length&&D.mesas.indexOf(mesa)<0){ er.textContent='⚠️ A mesa '+mesa+' não está cadastrada. Escolha no mapa de mesas.'; return; }
-  var avulso=!mesa&&!joia&&COM.modo==='balcao'&&balLivre();
+  if(COM.modo!=='balcao'&&!mesa&&!semM&&!semNada){ if(mzLista().length) return abreMapa(true); er.textContent='⚠️ Você não preencheu o número da mesa.'; try{ $('iMesa').focus(); }catch(e){} return; }
+  if(COM.modo!=='balcao'&&mesa&&!ehSMM(mesa)&&D.mesas&&D.mesas.length&&D.mesas.indexOf(mesa)<0){ er.textContent='⚠️ A mesa '+mesa+' não está cadastrada. Escolha no mapa de mesas.'; return; }
+  var avulso=(!mesa&&!joia&&COM.modo==='balcao'&&balLivre())||semNada;
   if(!mesa&&!joia&&!avulso){ er.textContent=COM.modo==='balcao'?'Informe o cliente. Para vender sem cliente, ligue "Vender no balcão sem cliente" no painel, em Configurações clientes, e recarregue esta página.':'Informe a mesa ou a joia do cliente.'; return Promise.resolve(); }
-  var vai=function(){ $('sugs').innerHTML=''; COM.mesa=mesa; COM.joia=joia; COM.avulso=avulso; if(avulso) COM.nome='Cliente Balcão'; CART=[]; mostraComanda(); verCats(); foco('#bProd'); };
+  var vai=function(){ $('sugs').innerHTML=''; COM.mesa=mesa; COM.joia=joia; COM.avulso=avulso; COM.sm=semNada; if(avulso) COM.nome=semNada?'Sem mesa':'Cliente Balcão'; CART=[]; mostraComanda(); verCats(); foco('#bProd'); };
   /* (230) cliente que está na lista guardada no celular: o cardápio abre NA HORA e a situação (bloqueio, conta em aberto) é conferida por trás.
      Se estiver bloqueado, volta para a tela do cliente com o aviso. O servidor confere de novo ao enviar o pedido. */
   var loc=joia&&CLIS?CLIS.filter(function(c){ return String(c[0])===joia; })[0]:null;
@@ -601,8 +607,8 @@ function abreComanda(){
   });
 }
 function mostraComanda(){
-  var t=[]; if(COM.avulso||ehBalM(COM.mesa)) t.push('Balcão'); else if(COM.mesa) t.push((COM.modo==='balcao'?'Balcão ':'Mesa ')+esc(COM.mesa)); if(COM.joia) t.push(pill(COM.joia));
-  $('chipT').innerHTML=t.join(' · '); $('chipS').textContent=COM.nome||'Comanda aberta'; $('chip').classList.remove('hide');
+  var t=[]; if(COM.sm) t.push('Sem mesa'); else if(ehSMM(COM.mesa)) t.push(smTit(COM.mesa)); else if(COM.avulso||ehBalM(COM.mesa)) t.push('Balcão'); else if(COM.mesa) t.push((COM.modo==='balcao'?'Balcão ':'Mesa ')+esc(COM.mesa)); if(COM.joia) t.push(pill(COM.joia));
+  $('chipT').innerHTML=t.join(' · '); $('chipS').textContent=COM.sm||ehSMM(COM.mesa)?'Sem cliente':(COM.nome||'Comanda aberta'); $('chip').classList.remove('hide');
 }
 function trocaComanda(){ if(CART.length&&!confirm('Há itens no pedido que ainda não foram enviados. Trocar de comanda mesmo assim?')) return; zeraComanda(); }
 function zeraComanda(){ _ab=0; AUTOJ=''; AUTOM=''; carregaAbertas(); COM={mesa:'',joia:'',nome:'',modo:COM.modo,dev:0,bloq:false,liberar:false}; modo(COM.modo); CART=[]; $('chip').classList.add('hide'); $('iMesa').value=''; $('iJoia').value=''; $('joiaInfo').innerHTML=''; $('sugs').innerHTML=''; $('idErr').textContent=''; limpaBusca(); ['p-cats','p-prods'].forEach(function(i){ $(i).classList.add('hide'); }); $('p-ident').classList.remove('hide'); cartBar(); window.scrollTo(0,0); if(JOIA_ABC) joiaTeclado(true); foco('#iJoia'); }   /* (228) começa pelo cliente */
@@ -823,7 +829,7 @@ document.addEventListener('keydown',function(e){
 /* ── pedido (carrinho) ── */
 function cartTot(){ var t=0; CART.forEach(function(i){ t+=i.unit*i.qty; }); return Math.round(t*100)/100; }
 /* (219) taxa do garçom: o Worker manda a % só para o garçom; balcão não leva */
-function srvPct(){ var p=Number(D&&D.cfg&&D.cfg.servico)||0; return (p>0&&!(COM.avulso||COM.modo==='balcao'||ehBalM(COM.mesa)))?p:0; }   /* (231) só o Balcão fica sem a taxa; cliente sem mesa leva */
+function srvPct(){ var p=Number(D&&D.cfg&&D.cfg.servico)||0; return (p>0&&!((COM.avulso&&!COM.sm)||COM.modo==='balcao'||ehBalM(COM.mesa)))?p:0; }   /* (231) só o Balcão fica sem a taxa; cliente sem mesa leva · (238) sem mesa e sem cliente também leva */
 function srvVal(t){ return Math.round(t*srvPct())/100; }
 function srvLinha(v,pct){ return v>0?'<div class="opt" style="color:var(--mu2)"><span class="n"><b>Serviço do garçom'+(pct?' ('+String(pct).replace('.',',')+'%)':'')+'</b></span><span class="p">'+brl(v)+'</span></div>':''; }
 function cartBar(){
@@ -836,7 +842,7 @@ function abreCarrinho(){
   h+=srvLinha(srvVal(cartTot()),srvPct());
   h+='<label class="l">Observação do pedido (cozinha)</label><input class="inp" id="pObs" maxlength="300"><div class="er" id="pErr"></div>';
   var totC=Math.round((cartTot()+srvVal(cartTot()))*100)/100, hj=cobraHora();
-  folha('Pedido · '+(COM.avulso||ehBalM(COM.mesa)?'Cliente Balcão':[(COM.mesa?(COM.modo==='balcao'?'Balcão ':'Mesa ')+COM.mesa:''),COM.joia].filter(Boolean).join(' · ')),h,'<button class="bt" id="pBt" style="margin:0" onclick="'+(hj?'fcEscolher()':'enviaPedido()')+'">'+(hj?'Fechar comanda':(COM.avulso?'Finalizar pedido':'Enviar para a cozinha'))+' · '+brl(totC)+'</button>'); foco('#pBt');
+  folha('Pedido · '+(COM.sm?'Sem mesa':ehSMM(COM.mesa)?smTit(COM.mesa):COM.avulso||ehBalM(COM.mesa)?'Cliente Balcão':[(COM.mesa?(COM.modo==='balcao'?'Balcão ':'Mesa ')+COM.mesa:''),COM.joia].filter(Boolean).join(' · ')),h,'<button class="bt" id="pBt" style="margin:0" onclick="'+(hj?'fcEscolher()':'enviaPedido()')+'">'+(hj?'Fechar comanda':(COM.avulso?'Finalizar pedido':'Enviar para a cozinha'))+' · '+brl(totC)+'</button>'); foco('#pBt');
 }
 /* ── (228) COBRAR NA HORA (opção da loja, no painel em Configurações clientes): o garçom fecha a comanda, escolhe a forma de pagamento,
    mostra o resumo para o cliente e só depois do pagamento aprovado o pedido vai para a cozinha. Cancelar não cria pedido nenhum. ── */
@@ -854,7 +860,7 @@ function fcResumo(forma){
   FC.forma=forma; fecha(); fcFechaTela();
   var sub=cartTot(), sv=srvVal(sub), tot=Math.round((sub+sv)*100)/100, x=FC_FORMAS[forma]||['','',''], n=0, li='';
   CART.forEach(function(i){ n+=i.qty; var d=descItem(i,0); li+='<div class="rzi"><b>'+i.qty+'x '+esc(i.nome)+(d?'<small>'+esc(d)+'</small>':'')+'</b><span>'+brl(i.unit*i.qty)+'</span></div>'; });
-  var quem=COM.avulso||ehBalM(COM.mesa)?'Cliente Balcão':[COM.nome?esc(COM.nome):'',COM.joia?pill(COM.joia):'',COM.mesa?'Mesa '+esc(COM.mesa):''].filter(Boolean).join(' · ');
+  var quem=COM.sm?'Sem mesa':ehSMM(COM.mesa)?smTit(COM.mesa):COM.avulso||ehBalM(COM.mesa)?'Cliente Balcão':[COM.nome?esc(COM.nome):'',COM.joia?pill(COM.joia):'',COM.mesa?'Mesa '+esc(COM.mesa):''].filter(Boolean).join(' · ');
   var d=document.createElement('div'); d.id='rz';
   d.innerHTML='<div class="rzc"><div class="rzm" id="rzMasc"></div><h3>Confira o seu pedido</h3><div class="rzs">'+quem+'</div>'
     +'<div class="rzl">'+li+'</div>'
@@ -879,7 +885,7 @@ function fcConfirma(){
   var b=$('rzOk'); if(!b||b.disabled) return; b.disabled=true; var tx0=b.textContent; b.textContent='Enviando…'; $('rzErr').textContent='';
   api('/painel/atend-pedido',{modo:COM.modo,mesa:COM.mesa,joia:COM.joia,obs:FC.obs,liberar:COM.liberar,pagar:FC.forma,itens:CART.map(function(i){ return {p:i.p,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs,qty:i.qty}; })}).then(function(r){
     if(r.ok&&r.pago){
-      var ped={num:r.num,sub:r.sub||0,mesa:COM.mesa||r.mesa||'',joia:COM.joia,nome:COM.nome,atend:D.usuario,criado:Date.now(),obs:FC.obs,modo:COM.modo,l:CART.map(function(i){ return {p:i.p,nome:i.nome,qty:i.qty,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs}; })};
+      var ped={num:r.num,sub:r.sub||0,mesa:COM.mesa||(COM.sm?'':r.mesa)||'',joia:COM.joia,nome:COM.nome,atend:D.usuario,criado:Date.now(),obs:FC.obs,modo:COM.modo,l:CART.map(function(i){ return {p:i.p,nome:i.nome,qty:i.qty,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs}; })};
       var x=FC_FORMAS[FC.forma]||['','',''], tot=r.total; fcFechaTela(); CART=[]; cartBar(); if(FC.imp) imprimeAuto(ped);
       zeraComanda();
       if(window.LiveApp) LiveApp.comemorar({titulo:FC.forma==='marcar'?'Marcado na conta!':'Pedido #'+plab(r)+' pago!',valor:brl(tot),forma:x[0]+' '+x[1],sub:'Já foi para a cozinha 🍳',ms:2200}); else toast('Pedido #'+plab(r)+' pago · '+brl(tot));
@@ -894,9 +900,9 @@ function tiraItem(k){ CART.splice(k,1); if(!CART.length){ fecha(); cartBar(); } 
 function enviaPedido(){
   var b=$('pBt'); b.disabled=true; b.textContent='Enviando…'; $('pErr').textContent='';
   api('/painel/atend-pedido',{modo:COM.modo,mesa:COM.mesa,joia:COM.joia,obs:($('pObs')||{value:''}).value,liberar:COM.liberar,itens:CART.map(function(i){ return {p:i.p,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs,qty:i.qty}; })}).then(function(r){
-    if(r.ok){ var ped={num:r.num,sub:r.sub||0,mesa:COM.mesa,joia:COM.joia,nome:COM.nome,atend:D.usuario,criado:Date.now(),obs:($('pObs')||{value:''}).value,modo:COM.modo,l:CART.map(function(i){ return {p:i.p,nome:i.nome,qty:i.qty,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs}; })}; var avulsoP=COM.avulso; CART=[]; fecha(); cartBar();
-      /* venda do balcão sem cliente: já pergunta como o cliente pagou (ou fica em Comandas, se cobrar depois) */
-      if(avulsoP){ toast('Pedido #'+plab(r)+' criado'); zeraComanda(); if(impOn()) imprimeAuto(ped); COMS=[{mesa:r.mesa,joia:'',nome:'Cliente Balcão',total:r.total,pedidos:[],avulso:1}]; fechaForm(0); return; }
+    if(r.ok){ var ped={num:r.num,sub:r.sub||0,mesa:COM.mesa,joia:COM.joia,nome:COM.nome,atend:D.usuario,criado:Date.now(),obs:($('pObs')||{value:''}).value,modo:COM.modo,l:CART.map(function(i){ return {p:i.p,nome:i.nome,qty:i.qty,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs}; })}; var avulsoP=COM.avulso, smP=COM.sm; CART=[]; fecha(); cartBar();
+      /* venda do balcão sem cliente: já pergunta como o cliente pagou (ou fica em Comandas, se cobrar depois) · (238) garçom sem mesa e sem cliente: igual, com a taxa do garçom */
+      if(avulsoP){ toast('Pedido #'+plab(r)+' '+(smP?'enviado para a cozinha':'criado')); zeraComanda(); if(impOn()) imprimeAuto(ped); COMS=[{mesa:r.mesa,joia:'',nome:smP?'Sem mesa':'Cliente Balcão',total:r.total,servico:r.servico||0,pedidos:[],avulso:1}]; fechaForm(0); return; }
       if(window.LiveApp) LiveApp.comemorar({titulo:'Pedido #'+plab(r)+' enviado!',sub:'Já está na cozinha 🍳',ms:1700}); else toast('Pedido #'+plab(r)+' enviado para a cozinha'); zeraComanda(); if(impOn()) imprimeAuto(ped); return; }
     if(r._h===401){ mostraLogin('Entre de novo.'); return; }
     b.disabled=false; b.textContent='Enviar para a cozinha'; $('pErr').innerHTML=esc(r.mensagem||'Não consegui enviar.')+(r.erro==='bloqueado'&&r.pode_liberar?'<br><button class="bt mini r" style="margin-top:8px" onclick="COM.liberar=true;enviaPedido()">Liberar mesmo assim</button>':'');
@@ -950,7 +956,7 @@ function trocaFaz(para,juntar){
 /* (159) mesmo desenho das opções de pagamento do cliente na mesa: cartão com ícone, claro que dá para tocar */
 function fechaOpc(i,forma,ic,tit,sub){ return '<button type="button" class="pgop" onclick="fechaFazer('+i+',\''+forma+'\')"><span class="ic">'+ic+'</span><span class="n"><b>'+tit+'</b><small>'+sub+'</small></span><span class="ch">›</span></button>'; }
 function fechaForm(i){
-  var c=COMS[i], h='<div style="font-size:15px;margin:6px 0 10px"><b>'+comTit(c)+(c.joia?' '+pill(c.joia):'')+'</b>'+(ehBalM(c.mesa)?'':' · '+esc(c.nome||''))+(c.servico>0?'<div style="font-size:13.5px;color:var(--mu2);margin-top:6px">Consumo '+brl(Math.round((c.total-c.servico)*100)/100)+' + Serviço do garçom '+brl(c.servico)+'</div>':'<br>')+'<span style="font-size:22px;font-weight:800;color:var(--pri)">'+brl(c.total)+'</span></div><div class="sec">Forma de pagamento</div>';
+  var c=COMS[i], h='<div style="font-size:15px;margin:6px 0 10px"><b>'+comTit(c)+(c.joia?' '+pill(c.joia):'')+'</b>'+(ehBalM(c.mesa)||ehSMM(c.mesa)?'':' · '+esc(c.nome||''))+(c.servico>0?'<div style="font-size:13.5px;color:var(--mu2);margin-top:6px">Consumo '+brl(Math.round((c.total-c.servico)*100)/100)+' + Serviço do garçom '+brl(c.servico)+'</div>':'<br>')+'<span style="font-size:22px;font-weight:800;color:var(--pri)">'+brl(c.total)+'</span></div><div class="sec">Forma de pagamento</div>';
   [['pix','Pix','▦'],['cartao','Cartão','💳'],['dinheiro','Dinheiro','💵']].forEach(function(f){ h+=fechaOpc(i,f[0],f[2],f[1],'Pagou agora'); });
   if(c.joia&&marcarOk()) h+=fechaOpc(i,'marcar','📒','Marcar (pendurar)','Fica na conta do cliente para cobrar no fechamento');
   h+='<div class="er" id="fcErr"></div>'; folha('Fechar conta',h,c.avulso?'<button class="bt s" style="margin:0" onclick="fecha()">Cobrar depois (fica em Comandas)</button>':'');
@@ -961,7 +967,7 @@ function fechaFazer(i,forma){
     if(r.ok){ _ab=0; fecha();
       /* conta fechada: valor grande + forma de pagamento; a tela fica até tocar em NOVO PEDIDO */
       var FP={pix:'▦ Pix',cartao:'💳 Cartão',dinheiro:'💵 Dinheiro',marcar:'📒 Marcado na conta'};
-      if(window.LiveApp){ LiveApp.comemorar({titulo:forma==='marcar'?'Marcado na conta!':'Conta fechada!',valor:brl(r.total),forma:FP[forma]||'',sub:forma==='marcar'?(c.nome||'Cliente'):(c.avulso||ehBalM(c.mesa)?'Cliente Balcão':(c.mesa?'Mesa '+c.mesa:'')),botao:{texto:'NOVO PEDIDO',acao:function(){ if(COM.avulso||COM.mesa||COM.joia) zeraComanda(); aba('ped'); }}}); carregaCom(); return; } else toast(forma==='marcar'?'Marcado na conta de '+(c.nome||'cliente')+' · '+brl(r.total):'Conta fechada · '+brl(r.total)); carregaCom(); return; }
+      if(window.LiveApp){ LiveApp.comemorar({titulo:forma==='marcar'?'Marcado na conta!':'Conta fechada!',valor:brl(r.total),forma:FP[forma]||'',sub:forma==='marcar'?(c.nome||'Cliente'):(ehSMM(c.mesa)?smTit(c.mesa):c.avulso||ehBalM(c.mesa)?'Cliente Balcão':(c.mesa?'Mesa '+c.mesa:'')),botao:{texto:'NOVO PEDIDO',acao:function(){ if(COM.avulso||COM.mesa||COM.joia) zeraComanda(); aba('ped'); }}}); carregaCom(); return; } else toast(forma==='marcar'?'Marcado na conta de '+(c.nome||'cliente')+' · '+brl(r.total):'Conta fechada · '+brl(r.total)); carregaCom(); return; }
     if(r._h===401){ mostraLogin('Entre de novo.'); return; } $('fcErr').textContent=r.mensagem||'Não consegui fechar.';
   });
 }
@@ -1052,7 +1058,7 @@ function imprime(p){ imprimeFila(p,filaSetor(p)); }
 /* (ATEND-37) impressão automática: manda para a fila do Worker (o programa do restaurante imprime em cada impressora); se o programa não está ligado, imprime pelo navegador como antes */
 function imprimeAuto(p){
   var fila=filaSetor(p);
-  api('/painel/atend-imprimir',{lab:plab(p),mesa:p.mesa,modo:p.modo,joia:p.joia,nome:p.nome,atend:p.atend,criado:p.criado,obs:p.obs,reimp:p.reimp?1:0,empresa:D.empresa||'',fila:fila.map(function(x){ return {setor:x[0],l:x[1]}; })}).then(function(r){
+  api('/painel/atend-imprimir',{lab:plab(p),mesa:ehSMM(p.mesa)?'':p.mesa,modo:p.modo,joia:p.joia,nome:p.nome,atend:p.atend,criado:p.criado,obs:p.obs,reimp:p.reimp?1:0,empresa:D.empresa||'',fila:fila.map(function(x){ return {setor:x[0],l:x[1]}; })}).then(function(r){
     if(!(r&&r.ok&&r.agente)) imprimeFila(p,fila);
   });
 }
@@ -1068,7 +1074,7 @@ function slipSetor(p,setor,linhas){
   var eh=esc, it='';
   (linhas||[]).forEach(function(l){ var n=(l.sab||[]).length, sub=[]; if(l.tam) sub.push(eh(l.tam)); (l.sab||[]).forEach(function(x){ sub.push((n>1?'1/'+n+' ':'')+eh(x)); }); if(l.borda) sub.push('Borda: '+eh(l.borda)); (l.adds||[]).forEach(function(a){ sub.push('+ '+eh(a)); });
     it+='<div class="it"><div class="q">'+l.qty+'x</div><div class="d"><b>'+eh(l.nome)+'</b>'+sub.map(function(x){ return '<div>'+x+'</div>'; }).join('')+(l.obs?'<div class="ob">! '+eh(l.obs)+'</div>':'')+'</div></div>'; });
-  var local=ehBalM(p.mesa)?'BALCÃO':p.mesa?((p.modo==='balcao'?'BALCÃO ':'MESA ')+eh(p.mesa)):(p.modo==='balcao'?'BALCÃO':'CLIENTE '+eh(p.joia));
+  var local=ehBalM(p.mesa)?'BALCÃO':(ehSMM(p.mesa)||(!p.mesa&&!p.joia&&p.modo!=='balcao'))?'SEM MESA':p.mesa?((p.modo==='balcao'?'BALCÃO ':'MESA ')+eh(p.mesa)):(p.modo==='balcao'?'BALCÃO':'CLIENTE '+eh(p.joia));
   var html=''
    +'<div class="c emp">'+eh(D.empresa||'')+'</div><div class="c sub">'+(setor==='bar'?'BAR':'COZINHA')+(p.reimp?' · 2ª VIA':'')+'</div><div class="sp"></div>'
    +'<div class="mesa"'+(p.mesa?'':' style="font-size:20px"')+'>'+local+'</div>'
