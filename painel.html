@@ -10415,7 +10415,14 @@ function cdImportar(){
 /* categorias */
 /* (231) mudanças da lista (ordem arrastando e Cozinha/Bar) ficam pendentes até tocar em Salvar; fechar sem salvar descarta */
 var CD_CATS_ORIG=null, CD_CAT_SUJO=false;
-function cdAbrirCats(){ if(CD_CAT_SUJO&&CD_CATS_ORIG) CD.cats=CD_CATS_ORIG; CD.cats.forEach(function(c){ delete c._mudou; if(c._dest0!==undefined){ c.dest=c._dest0; c.man=c._man0; delete c._dest0; delete c._man0; } }); CD_CATS_ORIG=CD.cats.slice(); CD_CAT_SUJO=false; el('cd-cats-erro').textContent=''; cdPintarCats(); abrir('sh-cats'); }
+function cdAbrirCats(){
+  /* (231c) o cardápio ainda estava carregando: o modal abria vazio. Agora mostra "Carregando…" e preenche sozinho quando os dados chegam */
+  el('cd-cats-erro').textContent=''; abrir('sh-cats');
+  if(!CD.carregou){ el('cd-cats-lista').innerHTML='<div style="color:var(--muted);font-size:13px;padding:10px 0">Carregando…</div>'; var b=el('cd-cats-ord'); if(b) b.style.display='none';
+    (CD.pCarga||cdCarregar()).then(function(){ if(el('sh-cats').classList.contains('on')) cdAbrirCatsLista(); }); return; }
+  cdAbrirCatsLista();
+}
+function cdAbrirCatsLista(){ CD.cats=CD.cats||[]; if(CD_CAT_SUJO&&CD_CATS_ORIG) CD.cats=CD_CATS_ORIG; CD.cats.forEach(function(c){ delete c._mudou; if(c._dest0!==undefined){ c.dest=c._dest0; c.man=c._man0; delete c._dest0; delete c._man0; } }); CD_CATS_ORIG=CD.cats.slice(); CD_CAT_SUJO=false; cdPintarCats(); }
 function cdCatSujo(){ CD_CAT_SUJO=true; var b=el('cd-cats-ord'); if(b) b.style.display='flex'; }
 function cdPintarCats(){
   var h='', i, b=el('cd-cats-ord'); if(b) b.style.display=CD_CAT_SUJO?'flex':'none';

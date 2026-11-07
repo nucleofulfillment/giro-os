@@ -6,6 +6,9 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/site/img/icone-32.png">
 <link rel="apple-touch-icon" href="/site/img/icone-180.png">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
+<!-- (231) já entrou (veio do Hub): a tela de login não pisca enquanto a sessão é conferida; se a sessão não valer, mostraLogin tira a classe -->
+<script>try{ if(localStorage.getItem('dd_jwt')) document.documentElement.classList.add('dd-ret'); }catch(e){}</script>
+<style>html.dd-ret #login{display:none!important}</style>
 <meta name="theme-color" content="#F97316">
 <title>Atendimento · GIRO-OS-ATEND-37</title>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -352,7 +355,7 @@ function api(rota,corpo){
   return fetch(API+rota,o).then(function(r){ return r.json().catch(function(){ return {ok:false,mensagem:'Erro de conexão.'}; }).then(function(d){ d._h=r.status; return d; }); }).catch(function(){ return {ok:false,_h:0,mensagem:'Sem conexão. Tente de novo.'}; });
 }
 /* ── entrada ── */
-function mostraLogin(m){ TK=''; try{ localStorage.removeItem('dd_jwt'); localStorage.removeItem('dd_user'); }catch(e){} $('login').classList.remove('hide'); $('app').classList.add('hide'); $('lgM').textContent=m||''; }
+function mostraLogin(m){ TK=''; try{ localStorage.removeItem('dd_jwt'); localStorage.removeItem('dd_user'); }catch(e){} try{ document.documentElement.classList.remove('dd-ret'); }catch(e){} $('login').classList.remove('hide'); $('app').classList.add('hide'); $('lgM').textContent=m||''; }
 function entrar(){
   var e=$('lgE').value.trim(), s=$('lgS').value; if(!e||!s){ $('lgM').textContent='Digite o e-mail e a senha.'; return; }
   var b=$('lgB'); b.disabled=true; b.textContent='Entrando…'; $('lgM').textContent='';

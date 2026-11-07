@@ -7,6 +7,9 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/site/img/icone-32.png">
 <link rel="apple-touch-icon" href="/site/img/icone-180.png">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!-- (231) já entrou (veio do Hub): a tela de login não pisca; se a sessão não valer, mostraLogin tira a classe -->
+<script>try{ if(localStorage.getItem('dd_jwt')) document.documentElement.classList.add('dd-ret'); }catch(e){}</script>
+<style>html.dd-ret #login{display:none!important}</style>
 <title>LiveFood — Cozinha · GIRO-OS-COZINHA-17</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -252,7 +255,7 @@ try{ TK=localStorage.getItem('dd_jwt')||''; }catch(e){}
 function $(i){ return document.getElementById(i); }
 function esc(x){ return String(x==null?'':x).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 function hdr(){ return {'Content-Type':'application/json','Authorization':'Bearer '+TK}; }
-function mostraLogin(m){ TK=''; try{ localStorage.removeItem('dd_jwt'); localStorage.removeItem('dd_user'); }catch(e){} $('login').classList.add('on'); document.body.classList.add('lgon'); $('lgM').textContent=m||''; }
+function mostraLogin(m){ TK=''; try{ localStorage.removeItem('dd_jwt'); localStorage.removeItem('dd_user'); }catch(e){} try{ document.documentElement.classList.remove('dd-ret'); }catch(e){} $('login').classList.add('on'); document.body.classList.add('lgon'); $('lgM').textContent=m||''; }
 function entrar(){
   var e=$('lgE').value.trim(), s=$('lgS').value; if(!e||!s){ $('lgM').textContent='Digite o e-mail e a senha.'; return; }
   var b=$('lgB'); b.disabled=true; b.textContent='Entrando…'; $('lgM').textContent='';
