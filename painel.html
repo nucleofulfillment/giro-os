@@ -1166,7 +1166,7 @@ html.loja-p .cd-dest{display:none!important}
           <h3><span class="lft">Vendas por garçom</span></h3>
           <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
             <input type="date" class="inp" id="ga-ini" onchange="gaDatas()" style="width:150px"><span style="color:var(--muted);font-size:12px">até</span><input type="date" class="inp" id="ga-fim" onchange="gaDatas()" style="width:150px">
-            <span class="vertodos" onclick="gaPeriodo('hoje')">Hoje</span><span class="vertodos" onclick="gaPeriodo('7')">7 dias</span><span class="vertodos" onclick="gaPeriodo('mes')">Mês</span><span class="vertodos" onclick="gaCarregar()" title="Atualizar">↻</span>
+            <span class="vertodos" onclick="gaPeriodo('hoje')">Hoje</span><span class="vertodos" onclick="gaPeriodo('7')">7 dias</span><span class="vertodos" onclick="gaPeriodo('mes')">Mês</span><span class="vertodos" onclick="gaCarregar()" title="Atualizar">↻</span><button class="btn sec sm" style="margin-left:auto" onclick="gaExcel('')" title="Vendas de todos os garçons no período, com itens, valor, data e hora">⬇ Excel das vendas</button>
           </div>
           <div class="tb-wrap"><table class="tb" id="ga-tabela">
             <thead><tr><th>Garçom</th><th>Vendas fechadas</th><th>Em aberto</th><th>Regra</th><th>A fechar</th><th></th></tr></thead>
@@ -9050,6 +9050,45 @@ function gaPintaCfg(d){
     :'Ligada, o pedido que o garçom lança leva essa porcentagem a mais, numa linha separada na conta (ex.: 10% — produto de '+moeda(10)+' fica '+moeda(11)+'), e esse valor vira a comissão dele. O preço no cardápio não muda.';
   el('ga-regra-txt').innerHTML=(sv.on?'<b style="color:#B45309">Com a taxa do garçom ligada, a regra abaixo só vale para pedidos sem a taxa</b> (lançados antes de ligar). ':'')+'Regra atual da loja: <b>'+esc(gaRegraTxt(rl))+'</b>. Vale para todos os garçons; para um garçom ter regra diferente, toque em <b>Regra</b> na linha dele.'+(rl.tipo==='dia'?' Na diária, conta cada dia em que ele lançou pelo menos um pedido de conta fechada.':'');
 }
+/* EXCEL das vendas dos garçons no período da tela: abas Itens (uma linha por item), Pedidos e Resumo. Usa a rota de vendas do Atendimento (até 62 dias) */
+var GA_FPX={pix:'Pix',cartao:'Cartão',credito:'Cartão crédito',debito:'Cartão débito',dinheiro:'Dinheiro',marcar:'Fiado (na conta)',maquina:'Maquininha',racha:'Racha pelo app',caixa:'Caixa',conta:'Conta'};
+function gaXlsLocal(v){ var m=String(v.mesa||''); if(/^BAL\d+$/.test(m)) return 'Balcão'; if(/^SM\d+$/.test(m)) return 'Sem mesa #'+m.slice(2); if(/^TK\d+$/.test(m)) return 'Tickets lote '+m.slice(2); if(m) return 'Mesa '+m; return v.joia?'Cliente '+v.joia:'Sem mesa'; }
+function gaXlsItem(l){ var d=[], n=(l.sab||[]).length; if(l.tam) d.push(l.tam); (l.sab||[]).forEach(function(s){ d.push((n>1?'1/'+n+' ':'')+s); }); if(l.borda) d.push('Borda: '+l.borda); (l.adds||[]).forEach(function(a){ d.push('+ '+a); }); if(l.obs) d.push('Obs: '+l.obs); return l.nome+(d.length?' ('+d.join(' · ')+')':''); }
+function gaExcel(uid){
+  if(typeof XLSX==='undefined'){ aviso('O gerador de Excel não carregou. Confira a internet e recarregue a página.'); return; }
+  var ini=GA.ini, fim=GA.fim; if(!ini||!fim){ aviso('Escolha o período primeiro.'); return; }
+  if((Date.parse(fim)-Date.parse(ini))/86400000>61){ aviso('Para o Excel, escolha no máximo 62 dias.'); return; }
+  var g=uid?gaG(uid):null; aviso('Gerando o Excel…');
+  mzApi('/painel/atend-vendas?ini='+ini+'&fim='+fim+(uid?'&uid='+encodeURIComponent(uid):'')).then(function(d){
+    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'Não consegui buscar as vendas.');
+    var vs=(d.vendas||[]).slice().sort(function(a,b){ return (a.atend||'').localeCompare(b.atend||'','pt-BR')||a.criado-b.criado; });
+    if(!vs.length){ aviso('Nenhuma venda '+(g?'de '+esc(g.nome)+' ':'')+'nesse período.'); return; }
+    var dt=function(ms){ var x=new Date(ms); return x.toLocaleDateString('pt-BR'); }, hr=function(ms){ var x=new Date(ms); return x.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); };
+    var sit=function(v){ return v.status==='estornado'?'Estornado':v.status==='marcado'?'Fiado (não pago)':'Pago'; };
+    var ped=function(v){ return v.num+(v.sub>1?'-'+v.sub:''); };
+    var itens=[], peds=[], res={}, r2=function(x){ return Math.round(x*100)/100; };
+    vs.forEach(function(v){
+      var forma=GA_FPX[v.forma]||v.forma||'', quem=v.atend||'Sem nome', loc=gaXlsLocal(v), cli=v.nome&&!/^(Mesa |Sem mesa|Cliente Balcão|Tickets)/.test(v.nome)?v.nome:'';
+      (v.l||[]).forEach(function(l){ itens.push([quem,dt(v.criado),hr(v.criado),ped(v),loc,cli,gaXlsItem(l),Number(l.qty)||1,r2(Number(l.unit)||0),r2((Number(l.unit)||0)*(Number(l.qty)||1)),forma,sit(v)]); });
+      if(v.servico>0) itens.push([quem,dt(v.criado),hr(v.criado),ped(v),loc,cli,'Taxa do garçom',1,r2(v.servico),r2(v.servico),forma,sit(v)]);
+      peds.push([quem,dt(v.criado),hr(v.criado),v.pago_em?dt(v.pago_em)+' '+hr(v.pago_em):'',ped(v),loc,cli,(v.l||[]).map(function(l){ return (Number(l.qty)||1)+'x '+gaXlsItem(l); }).join('; '),r2((Number(v.total)||0)-(Number(v.servico)||0)),r2(Number(v.servico)||0),r2(Number(v.total)||0),forma,sit(v)]);
+      var s=res[quem]||(res[quem]={n:0,cons:0,tx:0,tot:0,est:0,fm:{}}); if(v.status==='estornado'){ s.est=r2(s.est+(Number(v.total)||0)); return; }
+      s.n++; s.tot=r2(s.tot+(Number(v.total)||0)); s.tx=r2(s.tx+(Number(v.servico)||0)); s.cons=r2(s.tot-s.tx); s.fm[forma]=r2((s.fm[forma]||0)+(Number(v.total)||0));
+    });
+    var fms=[]; Object.keys(res).forEach(function(k){ Object.keys(res[k].fm).forEach(function(f){ if(fms.indexOf(f)<0) fms.push(f); }); });
+    var resL=Object.keys(res).sort().map(function(k){ var s=res[k]; return [k,s.n,s.cons,s.tx,s.tot].concat(fms.map(function(f){ return s.fm[f]||0; })).concat([s.est]); });
+    var aba=function(cols,ls,moedas,larg){ var ws=XLSX.utils.aoa_to_sheet([cols].concat(ls)), r, k; ws['!cols']=larg.map(function(w){ return {wch:w}; }); ws['!autofilter']={ref:XLSX.utils.encode_range({s:{r:0,c:0},e:{r:ls.length,c:cols.length-1}})};
+      for(r=1;r<=ls.length;r++) for(k=0;k<moedas.length;k++){ var c=ws[XLSX.utils.encode_cell({r:r,c:moedas[k]})]; if(c&&typeof c.v==='number') c.z='"R$" #,##0.00'; } return ws; };
+    var wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,aba(['Garçom','Data','Hora','Pedido','Local','Cliente','Item','Qtd','Valor unitário','Total do item','Forma de pagamento','Situação'],itens,[8,9],[18,11,7,9,14,20,44,6,13,13,18,15]),'Itens');
+    XLSX.utils.book_append_sheet(wb,aba(['Garçom','Data','Hora','Pago em','Pedido','Local','Cliente','Itens','Consumo','Taxa do garçom','Total','Forma de pagamento','Situação'],peds,[8,9,10],[18,11,7,16,9,14,20,60,12,13,12,18,15]),'Pedidos');
+    var colsR=['Garçom','Pedidos','Consumo','Taxa do garçom','Total'].concat(fms).concat(['Estornado']), mR=[]; for(var q=2;q<colsR.length;q++) mR.push(q);
+    XLSX.utils.book_append_sheet(wb,aba(colsR,resL,mR,colsR.map(function(c,i){ return i===0?20:14; })),'Resumo');
+    var nm=(g?g.nome:'garcons').toLowerCase().normalize('NFD').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+    XLSX.writeFile(wb,'vendas-'+nm+'-'+ini+(fim!==ini?'_a_'+fim:'')+'.xlsx');
+    aviso('Excel baixado: '+peds.length+(peds.length===1?' pedido':' pedidos')+(d.mais?' (limite de 1.500 pedidos: escolha um período menor para ver tudo)':''));
+  }).catch(function(e){ aviso(esc(e.message||'Não consegui gerar o Excel.')); });
+}
 /* (245) resumo por forma de pagamento do garçom (valor pago pelo cliente, já com a taxa do garçom). Exige Worker 245 */
 var GA_FP=[['dinheiro','Dinheiro','💵'],['pix','Pix','⚡'],['credito','Crédito','💳'],['debito','Débito','💳'],['cartao','Cartão s/ tipo','💳'],['outros','Outros','•'],['marcado','Fiado','📒']];
 function gaFormasChips(fm){ if(!fm) return ''; var h=''; GA_FP.forEach(function(x){ var v=fm[x[0]]; if(v&&v.qtd) h+='<span class="ga-fp'+(x[0]==='marcado'?' fi':'')+'" title="'+x[1]+': '+v.qtd+(v.qtd===1?' pedido':' pedidos')+'">'+x[1]+' <b>'+moeda(v.valor)+'</b></span>'; }); return h?'<div class="ga-fps">'+h+'</div>':''; }
@@ -9073,6 +9112,7 @@ function gaPintaLista(d){
       '<td><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">'+
         '<button class="btn pri sm" data-id="'+esc(g.id)+'" onclick="gaFechar(this.getAttribute(\'data-id\'))"'+(af.n?'':' disabled title="Nada a fechar no período" style="opacity:.4;cursor:default"')+'>Fechar</button>'+
         '<button class="btn sec sm" data-id="'+esc(g.id)+'" onclick="gaConciliar(this.getAttribute(\'data-id\'))" title="Conferir com o relatório da maquininha">📷 Conciliar</button>'+
+        '<button class="btn sec sm" data-id="'+esc(g.id)+'" onclick="gaExcel(this.getAttribute(\'data-id\'))" title="Vendas deste garçom no período, com itens">⬇ Excel</button>'+
         '<button class="btn sec sm" data-id="'+esc(g.id)+'" onclick="gaRegra(this.getAttribute(\'data-id\'))">Regra</button>'+
         '<button class="btn sec sm" data-id="'+esc(g.id)+'" onclick="gaEditar(this.getAttribute(\'data-id\'))">Editar</button>'+
         '<button class="btn sec sm" data-id="'+esc(g.id)+'" onclick="usuNovaSenha(this.getAttribute(\'data-id\'))">Nova senha</button>'+
