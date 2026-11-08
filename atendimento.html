@@ -414,8 +414,10 @@ function montaApp(d){
     [].forEach.call(document.querySelectorAll('.gest'),function(b){ b.classList.toggle('hide',!GEST); });
     /* (230) garçom só lança na Mesa (com ou sem mesa escolhida); Balcão fica para o dono/gerente */
     if(!GEST){ $('sgB').classList.add('hide'); COM.modo='mesa'; }
+    /* (242) acesso Atendimento (perfil atendente): é o caixa do balcão, então só o card Balcão */
+    if(d.perfil==='atendente'){ $('sgM').classList.add('hide'); $('sgB').classList.remove('hide'); COM.modo='balcao'; }
     aba('ped'); pintaCats(); mostraMapaBtn(); mzBusca(); chamInicia(); bpBotoes(); modo(COM.modo); nfcMesaInicia();
-    try{ var qm=new URLSearchParams(location.search).get('mesa'); if(qm&&!COM.mesa&&!$('iMesa').value){ modo('mesa'); $('iMesa').value=String(qm).replace(/[^A-Za-z0-9]/g,'').slice(0,8).toUpperCase(); } }catch(e){}
+    try{ var qm=new URLSearchParams(location.search).get('mesa'); if(qm&&d.perfil!=='atendente'&&!COM.mesa&&!$('iMesa').value){ modo('mesa'); $('iMesa').value=String(qm).replace(/[^A-Za-z0-9]/g,'').slice(0,8).toUpperCase(); } }catch(e){}
 }
 /* ── abas ── */
 function aba(a){
