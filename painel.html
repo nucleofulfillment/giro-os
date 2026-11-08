@@ -1334,7 +1334,7 @@ html.loja-p .cd-dest{display:none!important}
     <p style="margin:0 0 10px;font-size:12.5px;color:var(--muted)">Quem você cadastra aqui entra no painel com o próprio e-mail e senha. Os entregadores continuam na aba Entregadores e os garçons ficam no menu <a href="#" onclick="fecharTudo();ir('garcons');return false" style="color:var(--roxo);font-weight:700">Garçons</a>.</p>
     <div id="us-lista" style="margin-bottom:14px"><div style="color:var(--muted);font-size:13px">Carregando...</div></div>
     <div id="us-tit" style="font-weight:800;font-size:12px;letter-spacing:.5px;color:var(--muted);margin-bottom:6px">NOVO USUÁRIO</div>
-    <div class="field"><label>Acesso</label><select class="inp" id="us-perfil"><option value="gerente">Operacional — todo o painel, menos Financeiro e Configurações</option><option value="mesa">Mesa — só a Mesa</option></select></div>
+    <div class="field"><label>Acesso</label><select class="inp" id="us-perfil"><option value="gerente">Operacional — todo o painel, menos Financeiro e Configurações</option><option value="mesa">Mesa — só a Mesa</option><option value="atendente">Atendimento — só o Atendimento (pedidos no balcão)</option></select></div>
     <div class="field"><label>Nome</label><input class="inp" id="us-nome" autocomplete="off"></div>
     <div class="field"><label>E-mail</label><input class="inp" id="us-email" type="email" autocomplete="off"></div>
     <div class="field"><label>Celular com DDD (opcional)</label><input class="inp" id="us-fone" inputmode="tel" autocomplete="off" placeholder="(47) 99999-9999"></div>
@@ -4161,7 +4161,7 @@ function entrarCodigo(){
       b.disabled=false;
       if(!d||!d.ok){ m.textContent=(d&&d.mensagem)||'Código inválido. Tente de novo.'; return; }
       if(d.usuario.perfil==='master'){ m.textContent='Este acesso é do administrador. Use a página admin.'; return; }
-      if(d.usuario.perfil==='garcom'){ ddGuardar(d.token,d.usuario); location.href='atendimento.html'; return; }
+      if(d.usuario.perfil==='garcom'||d.usuario.perfil==='atendente'){ ddGuardar(d.token,d.usuario); location.href='atendimento.html'; return; }
       LG.modo='senha'; LG.etapa=1; lgPintar(); ddGuardar(d.token,d.usuario); el('lg-senha').value=''; abrirApp();
     }).catch(function(){ b.disabled=false; m.textContent='Sem conexão com o servidor. Tente de novo.'; });
 }
@@ -4177,7 +4177,7 @@ function entrar(){
       b.disabled=false; b.textContent='Entrar';
       if(!d||!d.ok){ m.textContent=(d&&d.mensagem)||'Não foi possível entrar. Tente de novo.'; return; }
       if(d.usuario.perfil==='master'){ m.textContent='Este acesso é do administrador. Use a página admin.'; return; }
-      if(d.usuario.perfil==='garcom'){ ddGuardar(d.token,d.usuario); location.href='atendimento.html'; return; }
+      if(d.usuario.perfil==='garcom'||d.usuario.perfil==='atendente'){ ddGuardar(d.token,d.usuario); location.href='atendimento.html'; return; }
       ddGuardar(d.token,d.usuario); el('lg-senha').value=''; abrirApp();
     }).catch(function(){ b.disabled=false; b.textContent='Entrar'; m.textContent='Sem conexão com o servidor. Tente de novo.'; });
 }
@@ -4292,7 +4292,7 @@ var US={lista:[],edit:''};
 function usuModoNovo(){ US.edit=''; ['us-nome','us-email','us-fone','us-senha'].forEach(function(i){ el(i).value=''; }); el('us-perfil').value='gerente'; el('us-msg').textContent=''; el('us-tit').textContent='NOVO USUÁRIO'; el('us-senha-lb').textContent='Senha (mínimo 8 caracteres)'; el('us-btn').textContent='Cadastrar usuário'; el('us-cancel').style.display='none'; }
 function usuEditar(id){
   var u=null, i; for(i=0;i<US.lista.length;i++) if(US.lista[i].id===id) u=US.lista[i]; if(!u) return;
-  US.edit=id; el('us-perfil').value=(u.perfil==='mesa'||u.perfil==='garcom'?u.perfil:'gerente'); el('us-nome').value=u.nome||''; el('us-email').value=u.email||''; el('us-fone').value=u.telefone||''; el('us-senha').value=''; el('us-msg').textContent='';
+  US.edit=id; el('us-perfil').value=(u.perfil==='mesa'||u.perfil==='garcom'||u.perfil==='atendente'?u.perfil:'gerente'); el('us-nome').value=u.nome||''; el('us-email').value=u.email||''; el('us-fone').value=u.telefone||''; el('us-senha').value=''; el('us-msg').textContent='';
   el('us-tit').textContent='EDITAR USUÁRIO'; el('us-senha-lb').textContent='Nova senha (deixe em branco para manter a atual)'; el('us-btn').textContent='Salvar alterações'; el('us-cancel').style.display='';
   try{ el('us-tit').scrollIntoView({behavior:'smooth',block:'start'}); }catch(e){}
 }
@@ -4308,7 +4308,7 @@ function usuCarregar(){
     var l=(d.usuarios||[]).filter(function(u){ return u.perfil!=='motorista'&&u.perfil!=='garcom'; }), h='', i, u; US.lista=l;   /* (218) garçons ficam no menu Garçons */
     for(i=0;i<l.length;i++){ u=l[i]; var dono=u.perfil==='dono';
       h+='<div style="border:1px solid var(--border2);border-radius:12px;padding:10px 12px;margin-bottom:8px;background:var(--s2)">'+
-        '<div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><b>'+esc(u.nome)+'</b><span style="font-size:11.5px;font-weight:700;color:'+(u.ativo?'#2e7d32':'#c0392b')+'">'+(dono?'Dono':(u.perfil==='mesa'?'Mesa':(u.perfil==='garcom'?'Garçom':'Operacional')))+(u.ativo?'':' · inativo')+'</span></div>'+
+        '<div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><b>'+esc(u.nome)+'</b><span style="font-size:11.5px;font-weight:700;color:'+(u.ativo?'#2e7d32':'#c0392b')+'">'+(dono?'Dono':(u.perfil==='mesa'?'Mesa':(u.perfil==='garcom'?'Garçom':(u.perfil==='atendente'?'Atendimento':'Operacional'))))+(u.ativo?'':' · inativo')+'</span></div>'+
         '<div style="font-size:12.5px;color:var(--muted);margin:2px 0 6px;word-break:break-all">'+esc(u.email)+'</div>'+
         (dono?'':'<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sec" data-id="'+esc(u.id)+'" onclick="usuEditar(this.getAttribute(\'data-id\'))">Editar</button><button class="btn sec" data-id="'+esc(u.id)+'" onclick="usuNovaSenha(this.getAttribute(\'data-id\'))">Nova senha</button><button class="btn sec" data-id="'+esc(u.id)+'" data-at="'+(u.ativo?0:1)+'" onclick="usuAtivo(this.getAttribute(\'data-id\'),this.getAttribute(\'data-at\'))">'+(u.ativo?'Desativar':'Ativar')+'</button></div>')+'</div>'; }
     box.innerHTML=h||'<div style="color:var(--muted);font-size:13px">Nenhum usuário.</div>';
@@ -4377,7 +4377,7 @@ function sair(){
 function retomarSessao(){
   if(!DD_TOKEN){ ddMostrarLogin(); return; }
   fetch(DELTADIS_API+'/auth/me').then(function(r){return r.json().catch(function(){return null;});}).then(function(d){
-    if(d&&d.ok&&d.usuario&&d.usuario.perfil==='garcom'){ location.href='atendimento.html'; return; }
+    if(d&&d.ok&&d.usuario&&(d.usuario.perfil==='garcom'||d.usuario.perfil==='atendente')){ location.href='atendimento.html'; return; }
     if(d&&d.ok&&d.usuario&&(d.usuario.perfil==='dono'||d.usuario.perfil==='gerente')){ DD_USER=d.usuario; try{localStorage.setItem('dd_user',JSON.stringify(d.usuario));}catch(e){} abrirApp(); }
     ddMostrarLogin();
   }).catch(function(){ ddMostrarLogin(); });
