@@ -261,6 +261,19 @@ a{color:inherit}
 .kpi .dl{font-size:12px;color:var(--muted);margin-top:4px;font-weight:600}
 
 .grid2{display:grid;grid-template-columns:1.05fr .95fr;gap:16px}
+/* ── (245) formas de pagamento do garçom ── */
+.ga-fps{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;max-width:340px}
+.ga-fp{font-size:11px;font-weight:600;color:var(--muted2);background:var(--s3);border-radius:99px;padding:2px 8px;white-space:nowrap}
+.ga-fp b{color:var(--text);font-weight:800}
+.ga-fp.fi{background:#FFF3D6;color:#9A6400}
+.ga-ft{border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin:12px 0 4px;background:var(--s2)}
+.ga-ft-t{font-size:11.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.ga-fl{display:grid;grid-template-columns:1fr auto 110px;gap:10px;align-items:center;font-size:13px;padding:4px 0}
+.ga-fl span:nth-child(2){font-size:12px;color:var(--muted)}
+.ga-fl b{text-align:right}
+.ga-fl small{font-size:11px;color:#9A6400;font-weight:600}
+.ga-fl.tot{border-top:1px solid var(--border);margin-top:4px;padding-top:7px;font-weight:800}
+.ga-ft-n{font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.4}
 /* ── (244) tickets em lote ── */
 .tk-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}
 .tk-imp{font-size:12px;font-weight:700;color:var(--muted);background:var(--s3);border-radius:99px;padding:5px 10px}
@@ -9037,13 +9050,23 @@ function gaPintaCfg(d){
     :'Ligada, o pedido que o garçom lança leva essa porcentagem a mais, numa linha separada na conta (ex.: 10% — produto de '+moeda(10)+' fica '+moeda(11)+'), e esse valor vira a comissão dele. O preço no cardápio não muda.';
   el('ga-regra-txt').innerHTML=(sv.on?'<b style="color:#B45309">Com a taxa do garçom ligada, a regra abaixo só vale para pedidos sem a taxa</b> (lançados antes de ligar). ':'')+'Regra atual da loja: <b>'+esc(gaRegraTxt(rl))+'</b>. Vale para todos os garçons; para um garçom ter regra diferente, toque em <b>Regra</b> na linha dele.'+(rl.tipo==='dia'?' Na diária, conta cada dia em que ele lançou pelo menos um pedido de conta fechada.':'');
 }
+/* (245) resumo por forma de pagamento do garçom (valor pago pelo cliente, já com a taxa do garçom). Exige Worker 245 */
+var GA_FP=[['dinheiro','Dinheiro','💵'],['pix','Pix','⚡'],['credito','Crédito','💳'],['debito','Débito','💳'],['cartao','Cartão s/ tipo','💳'],['outros','Outros','•'],['marcado','Fiado','📒']];
+function gaFormasChips(fm){ if(!fm) return ''; var h=''; GA_FP.forEach(function(x){ var v=fm[x[0]]; if(v&&v.qtd) h+='<span class="ga-fp'+(x[0]==='marcado'?' fi':'')+'" title="'+x[1]+': '+v.qtd+(v.qtd===1?' pedido':' pedidos')+'">'+x[1]+' <b>'+moeda(v.valor)+'</b></span>'; }); return h?'<div class="ga-fps">'+h+'</div>':''; }
+function gaFormasTabela(fm){
+  if(!fm) return ''; var h='', tot=0, n=0, rec=0;
+  GA_FP.forEach(function(x){ var v=fm[x[0]]; if(!(v&&v.qtd)) return; tot+=v.valor; n+=v.qtd; if(x[0]!=='marcado') rec+=v.valor;
+    h+='<div class="ga-fl"><span>'+x[2]+' '+x[1]+(x[0]==='marcado'?' <small>(ainda não entrou)</small>':'')+'</span><span>'+v.qtd+(v.qtd===1?' pedido':' pedidos')+'</span><b>'+moeda(v.valor)+'</b></div>'; });
+  if(!h) return '';
+  return '<div class="ga-ft"><div class="ga-ft-t">Formas de pagamento</div>'+h+'<div class="ga-fl tot"><span>Entrou no caixa</span><span></span><b>'+moeda(Math.round(rec*100)/100)+'</b></div><div class="ga-ft-n">Valor pago pelos clientes, com a taxa do garçom. Confira com a maquininha e o dinheiro do garçom.</div></div>';
+}
 function gaPintaLista(d){
   var rl=d.regra_loja||{tipo:'nada',valor:0};
   var gs=d.garcons||[], h='', at=0;
   gs.forEach(function(g){ if(g.ativo) at++;
     var af=g.a_fechar||{}, r=g.regra||rl;
     h+='<tr'+(g.ativo?'':' style="opacity:.6"')+'><td><b>'+esc(g.nome)+'</b>'+(g.ativo?'':' <span class="badge b-no">Inativo</span>')+'<br><span style="font-size:11.5px;color:var(--muted);word-break:break-all">'+esc(g.email||'')+'</span></td>'+
-      '<td><b>'+moeda(g.vendas)+'</b><br><span style="font-size:11.5px;color:var(--muted)">'+g.n+(g.n===1?' pedido':' pedidos')+' · '+g.dias+(g.dias===1?' dia':' dias')+'</span>'+(g.servico>0?'<br><span style="font-size:11.5px;color:var(--muted)">+ '+moeda(g.servico)+' de taxa do garçom</span>':'')+'</td>'+
+      '<td><b>'+moeda(g.vendas)+'</b><br><span style="font-size:11.5px;color:var(--muted)">'+g.n+(g.n===1?' pedido':' pedidos')+' · '+g.dias+(g.dias===1?' dia':' dias')+'</span>'+(g.servico>0?'<br><span style="font-size:11.5px;color:var(--muted)">+ '+moeda(g.servico)+' de taxa do garçom</span>':'')+gaFormasChips(g.formas)+'</td>'+
       '<td>'+(g.n_aberto?moeda(g.aberto)+'<br><span style="font-size:11.5px;color:var(--muted)">'+g.n_aberto+(g.n_aberto===1?' pedido':' pedidos')+'</span>':'<span style="color:var(--muted)">—</span>')+'</td>'+
       '<td>'+esc(gaRegraTxt(r))+'<br><span style="font-size:11.5px;color:var(--muted)">'+(r.propria?'regra própria':'regra da loja')+'</span></td>'+
       '<td><b style="color:'+(af.n?'var(--text)':'var(--muted)')+'">'+moeda(af.comissao)+'</b><br><span style="font-size:11.5px;color:var(--muted)">'+(af.n?(moeda(af.vendas)+' em '+af.n+(af.n===1?' pedido':' pedidos')+(af.servico>0?' · taxa '+moeda(af.servico):'')+(r.tipo==='dia'?' · '+(af.dias||[]).length+((af.dias||[]).length===1?' dia novo':' dias novos'):'')):'nada a fechar')+'</span></td>'+
@@ -9065,7 +9088,7 @@ function gaPintaLista(d){
     var l=gaLanc(f.id), st=!f.liquido?'zero':(l?(l.status==='pago'?'pago':(l.status==='recusado'?'recusado':'pendente')):'sem');
     var bd=st==='pago'?'<span class="badge b-ok">Pago</span>':(st==='zero'?'<span class="badge b-nu">Nada a pagar</span>':(st==='sem'?'<span class="badge b-no">Fora do Fluxo</span>':(st==='recusado'?'<span class="badge b-no">Não pagar</span>':'<span class="badge b-wt">Pendente</span>')));
     var pode=st!=='pago'&&!(l&&travadoPix(l));
-    fh+='<tr><td>'+dataBR(f.ini)+(f.fim!==f.ini?' a '+dataBR(f.fim):'')+'</td><td><b>'+esc(f.nome)+'</b></td><td>'+moeda(f.vendas)+'<br><span style="font-size:11.5px;color:var(--muted)">'+f.n+(f.n===1?' pedido':' pedidos')+'</span></td>'+
+    fh+='<tr><td>'+dataBR(f.ini)+(f.fim!==f.ini?' a '+dataBR(f.fim):'')+'</td><td><b>'+esc(f.nome)+'</b></td><td>'+moeda(f.vendas)+'<br><span style="font-size:11.5px;color:var(--muted)">'+f.n+(f.n===1?' pedido':' pedidos')+'</span>'+gaFormasChips(f.formas)+'</td>'+
       '<td>'+moeda(f.comissao)+'<br><span style="font-size:11.5px;color:var(--muted)">'+(f.servico>0?(f.servico>=f.comissao-0.005?'taxa do garçom':'taxa '+moeda(f.servico)+' + '+esc(gaRegraTxt(f.regra))):esc(gaRegraTxt(f.regra))+(f.regra&&f.regra.tipo==='dia'?' · '+f.dias+(f.dias===1?' dia':' dias'):''))+'</span></td>'+
       '<td><b>'+moeda(f.liquido)+'</b>'+(f.ajuste?'<br><span style="font-size:11.5px;color:'+(f.ajuste<0?'var(--red)':'var(--green)')+'">'+(f.ajuste<0?'− ':'+ ')+moeda(Math.abs(f.ajuste))+(f.ajuste_obs?' '+esc(f.ajuste_obs):'')+'</span>':'')+'</td>'+
       '<td>'+bd+(l&&l.data?'<br><span style="font-size:11.5px;color:var(--muted)">pagar em '+dataBR(l.data)+'</span>':'')+'</td>'+
@@ -9222,6 +9245,7 @@ function gaFechar(id){
     (r.tipo==='dia'?lin('Dias trabalhados novos',(af.dias||[]).length+((af.dias||[]).length?' ('+(af.dias||[]).map(function(x){ return dataBR(x).slice(0,5); }).join(', ')+')':'')):'')+
     (af.servico>0?lin('Taxa do garçom paga pelos clientes',moeda(af.servico)):'')+
     (af.servico>0&&af.comissao-af.servico<0.005?'':lin(af.servico>0?'Regra (pedidos sem a taxa)':'Regra',esc(gaRegraTxt(r))))+lin('<b>Comissão</b>','<b>'+moeda(af.comissao)+'</b>')+
+    gaFormasTabela(af.formas)+
     (g.n_aberto?'<p style="margin:8px 0 0;font-size:12.5px;color:#B45309">'+g.n_aberto+(g.n_aberto===1?' pedido ainda está':' pedidos ainda estão')+' com a conta aberta ('+moeda(g.aberto)+'). Eles entram num próximo fechamento, depois que a conta fechar.</p>':'')+
     '<div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-top:14px"><div class="field" style="margin:0"><label>Ajuste (opcional)</label><select class="inp" id="gf-ajt" onchange="gaFechConta()" style="width:170px"><option value="-">− Vale / desconto</option><option value="+">+ Prêmio / extra</option></select></div><div class="field" style="margin:0"><label>Valor</label><input class="inp" id="gf-ajv" inputmode="decimal" placeholder="0,00" oninput="gaFechConta()" style="width:110px"></div><div class="field" style="margin:0;flex:1;min-width:140px"><label>Motivo</label><input class="inp" id="gf-ajo" maxlength="120" placeholder="ex.: vale do dia 03"></div></div>'+
     '<div class="field" style="margin-top:10px"><label>Data do pagamento</label><input type="date" class="inp" id="gf-data" value="'+gaHoje()+'" style="width:170px"></div>'+
