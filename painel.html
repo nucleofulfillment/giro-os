@@ -2129,6 +2129,8 @@ function aplicarSalvo(d){
     if(d.pc){ PEDIDOS=d.pc.map(function(a){ return {cod:a[0], tr:a[1], mt:a[2], cliente:a[9]||'', bairro:a[10]||'', vl:(a[11]==null?null:a[11]), cep:a[12]||'', area:a[13]||'', fechId:a[14]||null, tel:a[15]||'', canal:a[16]||'', vend:a[17]||'', rua:a[18]||'', num:a[19]||'', comp:a[20]||'', bai:a[21]||'', cid:a[22]||'', endOrig:a[23]||'', tam:a[24]||'', hp:a[25]||0, pg:a[26]||'', pgp:a[27]?1:0, pgr:a[28]||'', tx:(a[29]==null?null:a[29]), itens:a[30]||'', atend:a[31]||'', lat:(a[32]==null?null:a[32]), lng:(a[33]==null?null:a[33]), gq:a[34]||0, ga:a[35]||'', com:(a[36]&&a[36].com)||'', atn:(a[36]&&a[36].atn)||'', tpe:(a[36]&&a[36].tpe)||'', prz:(a[36]&&a[36].prz)||'', prt:(a[36]&&a[36].prt)||'', ref:(a[36]&&a[36].ref)||'', tpg:(a[36]&&a[36].tpg!=null)?a[36].tpg:null, apg:(a[36]&&a[36].apg!=null)?a[36].apg:null, op:(a[36]&&a[36].op)||'', cmid:(a[36]&&a[36].cmid)||'', urg:(a[36]&&a[36].urg)?1:0, estorno:(a[36]&&a[36].est)||null, st:a[3], t1:'', t2:'', scan:a[7]||a[0], dia:a[4], hora:a[5], obs:a[6], ent:a[8]}; }); }
     else PEDIDOS=d.pedidos;
     PEDIDOS.forEach(garantirEndereco);
+    /* pedidos de cliente sem mesa que já entraram como "Mesa J<joia>": só o texto vira "Sem mesa" */
+    PEDIDOS.forEach(function(p){ if(p.tpe!=='Mesa') return; ['cliente','bairro','bai'].forEach(function(k){ if(/^Mesa J\d+(?= · |$)/.test(p[k]||'')) p[k]=String(p[k]).replace(/^Mesa J\d+/,'Sem mesa'); }); });
     MOTORISTAS=d.motoristas; EXTRATO=d.extrato||[];
     /* dados salvos antes: nome que era só o login "arrumado" volta a ser o login de verdade */
     MOTORISTAS.forEach(function(m){ var lg=m.logins&&m.logins.anj; if(lg && m.n===nomeAntigoDeLogin(lg)){ m.n=String(lg).trim(); m.ini=iniciaisNome(m.n); } });
@@ -5062,7 +5064,7 @@ function pintarPedidos(){
 }
 /* (153) balcão sem cliente: o pedido vem com a "mesa" BAL<número> */
 function msBal(m){ return /^BAL\d+$/.test(String(m||'')); }
-function msLocal(m){ return msBal(m)?'Cliente Balcão':/^SM\d+$/.test(String(m||''))?'Sem mesa #'+esc(String(m).slice(2)):'Mesa '+esc(m); }   /* (238) garçom sem mesa e sem cliente */
+function msLocal(m){ return msBal(m)?'Cliente Balcão':/^SM\d+$/.test(String(m||''))?'Sem mesa #'+esc(String(m).slice(2)):/^J\d+$/.test(String(m||''))?'Sem mesa':'Mesa '+esc(m); }   /* (238) garçom sem mesa e sem cliente · cliente sem mesa: o Worker guarda "J"+joia no lugar da mesa; mostra "Sem mesa" (o nome do cliente vem ao lado) */
 function msOrigem(m){ return msBal(m)?'Balcão':'LOCAL'; }
 /* (166) o pedido de uma mesa com conta aberta aparece dentro da linha da mesa, para não parecer que são dois pedidos */
 function msDentroConta(x,comConta){ return x.status==='novo'&&x.pagto==='conta'&&!!comConta[x.mesa]; }
