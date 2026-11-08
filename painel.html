@@ -2132,6 +2132,7 @@ function aplicarSalvo(d){
     /* pedidos de cliente sem mesa que já entraram como "Mesa J<joia>": só o texto vira "Sem mesa" */
     PEDIDOS.forEach(function(p){ if(p.tpe!=='Mesa') return; ['cliente','bairro','bai'].forEach(function(k){ if(/^Mesa J\d+(?= · |$)/.test(p[k]||'')) p[k]=String(p[k]).replace(/^Mesa J\d+/,'Sem mesa'); }); });
     MOTORISTAS=d.motoristas; EXTRATO=d.extrato||[];
+    EXTRATO.forEach(function(x){ if(x&&x.fdid&&/^Mesa J\d+ · pedido #/.test(x.tt||'')) x.tt=String(x.tt).replace(/^Mesa J\d+/,'Sem mesa'); });   /* mesmo ajuste no Fluxo de caixa */
     /* dados salvos antes: nome que era só o login "arrumado" volta a ser o login de verdade */
     MOTORISTAS.forEach(function(m){ var lg=m.logins&&m.logins.anj; if(lg && m.n===nomeAntigoDeLogin(lg)){ m.n=String(lg).trim(); m.ini=iniciaisNome(m.n); } });
     recalcularReal();
@@ -7502,8 +7503,8 @@ function ccSaidas(){   /* saídas do Fluxo de Caixa no período (e do motorista,
   return r;
 }
 function ccTotais(){
-  var t={ent:0,n:0,dinheiro:0,debito:0,credito:0,pix:0,online:0,pix_whats:0,cartao_sem_tipo:0,outro:0,cupom:0,frete:0}, i, l;
-  for(i=0;i<CC.linhas.length;i++){ l=CC.linhas[i]; t.n++; t.ent+=l.vl; t.cupom+=l.cupom||0; t.frete+=l.tx||0; if(t[l.tipo]!=null) t[l.tipo]+=l.vl; else t.outro+=l.vl; }
+  var t={ent:0,n:0,sal:0,dinheiro:0,debito:0,credito:0,pix:0,online:0,pix_whats:0,cartao_sem_tipo:0,outro:0,cupom:0,frete:0}, i, l;
+  for(i=0;i<CC.linhas.length;i++){ l=CC.linhas[i]; t.n++; if(l.salao) t.sal++; t.ent+=l.vl; t.cupom+=l.cupom||0; t.frete+=l.tx||0; if(t[l.tipo]!=null) t[l.tipo]+=l.vl; else t.outro+=l.vl; }
   return t;
 }
 function ccPintar(){
@@ -7515,28 +7516,28 @@ function ccPintar(){
     var v=Math.abs(Number(l.vl)||0); if(l.status==='pago') mot+=v; else motAb+=v; }
   var saldo=Math.round((t.ent-sd.tot)*100)/100;
   var k=function(rot,v,sub,cor,pos,cls){ return '<div class="kpi '+cls+'" style="'+pos+'"><div class="lb '+(cor||'')+'">'+rot+'</div><div class="vl '+(cor?('v'+cor.slice(1)):'')+'">'+moeda(v)+'</div><div class="dl">'+sub+'</div></div>'; };
-  var qtd=function(tp){ var n=0,j; for(j=0;j<CC.linhas.length;j++) if(CC.linhas[j].tipo===tp) n++; return n+' entrega(s)'; };
+  var qtd=function(tp){ var n=0,j; for(j=0;j<CC.linhas.length;j++) if(CC.linhas[j].tipo===tp) n++; return n+' venda(s)'; };   /* (243) entregas + vendas do salão */
   var semTipo=t.cartao_sem_tipo+t.outro;
   c.innerHTML=
-    k('Entrada Total',t.ent,t.n+' entrega(s)','cg','grid-column:1/3;grid-row:1','cc-w')+
+    k('Entrada Total',t.ent,t.n+' venda(s)'+(t.sal?' · '+t.sal+' no salão':''),'cg','grid-column:1/3;grid-row:1','cc-w')+
     k('Dinheiro',t.dinheiro,qtd('dinheiro'),'','grid-column:1;grid-row:2','cc-s')+
     k('Cartão crédito',t.credito,qtd('credito'),'','grid-column:2;grid-row:2','cc-s')+
     k('Cartão débito',t.debito,qtd('debito'),'','grid-column:1;grid-row:3','cc-s')+
-    k('PIX',t.pix,qtd('pix')+' · recebido pelo entregador','','grid-column:2;grid-row:3','cc-s')+
+    k('PIX',t.pix,qtd('pix')+' · no salão ou com o entregador','','grid-column:2;grid-row:3','cc-s')+
     k('Saídas Total',sd.tot,sd.n+' lançamento(s) · pagas '+moeda(sd.pago)+' · a pagar '+moeda(sd.aberto),'cr','grid-column:1/3;grid-row:4','cc-w')+
-    k('Recebido no APP',t.online,qtd('online')+' · pago direto no Pedidos10','','grid-column:3/5;grid-row:1','cc-w')+
+    k('Recebido no APP',t.online,qtd('online')+' · pago pelo app (cardápio, mesa, Pedidos10)','','grid-column:3/5;grid-row:1','cc-w')+
     k('Recebido no Whats',t.pix_whats,qtd('pix_whats')+' · Pix de compra pelo WhatsApp','','grid-column:3/5;grid-row:2','cc-w')+
     k('Pago Fretes/Entregadores',mot,'repasse pago · a pagar '+moeda(motAb)+' · fretes cobrados '+moeda(t.frete),'cr','grid-column:3/5;grid-row:3','cc-w')+
     k('Saldo',saldo,'Entrada Total − Saídas Total',saldo>=0?'cg':'cr','grid-column:3/5;grid-row:4','cc-w');
   var soma=t.dinheiro+t.debito+t.credito+t.pix+t.online+t.pix_whats+t.cartao_sem_tipo+t.outro, dif=Math.round((t.ent-soma)*100)/100;
-  el('cc-aviso').textContent=CC.erro||('Conferência: formas de pagamento somam '+moeda(soma)+(dif===0?' ✓ bate com a Entrada Total':' · diferença '+moeda(dif))+(semTipo>0?(' · inclui '+moeda(semTipo)+' de cartão antigo sem tipo (débito/crédito)'):'')+'. Período: '+dataBR(CC.ini||hojeISO())+' a '+dataBR(CC.fim||hojeISO())+(CC.mt?' · um entregador':'')+'. Só entram entregas concluídas.');
+  el('cc-aviso').textContent=CC.erro||('Conferência: formas de pagamento somam '+moeda(soma)+(dif===0?' ✓ bate com a Entrada Total':' · diferença '+moeda(dif))+(semTipo>0?(' · inclui '+moeda(semTipo)+' de cartão antigo sem tipo (débito/crédito)'):'')+'. Período: '+dataBR(CC.ini||hojeISO())+' a '+dataBR(CC.fim||hojeISO())+(CC.mt?' · um entregador':'')+(CC.mt?'. Só entram entregas concluídas.':'. Entram entregas concluídas e vendas pagas no salão (mesa, garçom, balcão) e retiradas; fiado entra quando é pago.'));
 }
 function ccExcel(){
   if(typeof XLSX==='undefined'){ aviso('O gerador de Excel não carregou. Confira a internet e recarregue a página.'); return; }
   var t=ccTotais(), sd=ccSaidas(), nomes={dinheiro:'Dinheiro',debito:'Cartão débito',credito:'Cartão crédito',cartao_sem_tipo:'Cartão (sem tipo)',pix:'PIX (entregador)',online:'Pago no app Pedidos10',pix_whats:'Pix WhatsApp',outro:'Outro'}, i, l, dt, ln=[];
   var mtn=''; if(CC.mt){ for(i=0;i<MOTORISTAS.length;i++) if(String(MOTORISTAS[i].id)===CC.mt) mtn=MOTORISTAS[i].n; }
   var res=[['Conciliação financeira'],['Período',dataBR(CC.ini||hojeISO())+' a '+dataBR(CC.fim||hojeISO())],['Entregador',mtn||'Todos'],[],['Item','Valor (R$)'],
-    ['Entrada Total',t.ent],['Dinheiro',t.dinheiro],['Cartão débito',t.debito],['Cartão crédito',t.credito],['Cartão (sem tipo)',t.cartao_sem_tipo],['PIX (recebido pelo entregador)',t.pix],['Pago no app Pedidos10',t.online],['Pix de compra no WhatsApp',t.pix_whats],['Cupom',t.cupom],['Fretes (já nas entradas)',t.frete],['Saídas Total',sd.tot],['  saídas pagas',sd.pago],['  saídas a pagar',sd.aberto],['Saldo (Entrada − Saídas)',Math.round((t.ent-sd.tot)*100)/100]];
+    ['Entrada Total',t.ent],['Dinheiro',t.dinheiro],['Cartão débito',t.debito],['Cartão crédito',t.credito],['Cartão (sem tipo)',t.cartao_sem_tipo],['PIX (no salão ou com o entregador)',t.pix],['Pago no app Pedidos10',t.online],['Pix de compra no WhatsApp',t.pix_whats],['Cupom',t.cupom],['Fretes (já nas entradas)',t.frete],['Saídas Total',sd.tot],['  saídas pagas',sd.pago],['  saídas a pagar',sd.aberto],['Saldo (Entrada − Saídas)',Math.round((t.ent-sd.tot)*100)/100]];
   for(i=0;i<CC.linhas.length;i++){ l=CC.linhas[i]; dt=new Date(l.q);
     ln.push([dataBR(ymdLocal(dt)),('0'+dt.getHours()).slice(-2)+':'+('0'+dt.getMinutes()).slice(-2),l.num||l.cod,l.cliente||'',l.canal||'',l.mtn||'',nomes[l.tipo]||l.tipo,l.vl,l.tx,l.cupom||0]); }
   try{
