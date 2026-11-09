@@ -1186,8 +1186,7 @@ function imprimeAuto(p){
     if(r&&r.ok&&r.agente) return;
     if(r&&r.ok){ imprimeFila(p,fila); return; }   /* o programa de impressão do restaurante está desligado: imprime pelo navegador, como antes */
     /* (246) sem rede ou erro: o pedido já está no servidor e a fila imprime sozinha em até 1 minuto (Worker 246). Reimpressão pedida à mão precisa ser repetida. */
-    if(p.reimp) toast(r&&r._h===0?'Sem rede: não deu para reimprimir. Tente de novo.':'Não consegui reimprimir agora. Tente de novo.');
-    else toast('Sem rede agora: o pedido #'+plab(p)+' sai na impressora sozinho em até 1 minuto.');
+    if(p.reimp) toast(r&&r._h===0?'Sem rede: não deu para reimprimir. Tente de novo.':'Não consegui reimprimir agora. Tente de novo.');   /* pedido novo: sem aviso, a fila imprime sozinha (decisão do usuário 09/11) */
   });
 }
 function imprimeFila(p,fila){
