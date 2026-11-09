@@ -9299,7 +9299,7 @@ function gaForm(g){
     '<div class="field"><label>Nome</label><input class="inp" id="gn-nome" autocomplete="off"></div>'+
     '<div class="field"><label>E-mail (é o login dele)</label><input class="inp" id="gn-email" type="email" autocomplete="off"></div>'+
     '<div class="field"><label>Celular com DDD (opcional)</label><input class="inp" id="gn-fone" inputmode="tel" autocomplete="off" placeholder="(47) 99999-9999"></div>'+
-    '<div class="field"><label>'+(g?'Nova senha (deixe em branco para manter)':'Senha (em branco = 12345678)')+'</label><input class="inp" id="gn-senha" type="password" autocomplete="new-password"'+(g?'':' placeholder="12345678"')+'></div>'+
+    '<div class="field"><label>'+(g?'Nova senha (deixe em branco para manter)':'Senha (em branco = o sistema cria uma)')+'</label><input class="inp" id="gn-senha" type="password" autocomplete="new-password"'+(g?'':' placeholder="Em branco: senha criada pelo sistema"')+'></div>'+
     '<div id="gn-msg" style="font-size:13px;font-weight:700;color:var(--red);min-height:18px;margin-bottom:6px"></div><button class="btn pri wide" id="gn-bt" type="button" onclick="gaSalvarGarcom()">'+(g?'Salvar alterações':'Cadastrar garçom')+'</button>');
   if(g){ el('gn-nome').value=g.nome||''; el('gn-email').value=g.email||''; el('gn-fone').value=g.telefone||''; }
   setTimeout(function(){ try{ el('gn-nome').focus(); }catch(e){} },80);
@@ -9308,7 +9308,9 @@ function gaNovo(){ gaForm(null); }
 function gaEditar(id){ var g=gaG(id); if(g) gaForm(g); }
 function gaSalvarGarcom(){
   var m=el('gn-msg'), b=el('gn-bt'), nome=el('gn-nome').value.trim(), email=el('gn-email').value.trim(), fone=el('gn-fone').value.trim(), senha=el('gn-senha').value; m.textContent='';
-  if(!GA.edit&&!senha) senha='12345678';   /* (234b) garçom novo sem senha digitada: senha padrão da loja */
+  /* (247) segurança: garçom novo sem senha digitada recebe uma senha aleatória de 8 números (antes era 12345678 para todos, e isso está no código público) */
+  var senhaGerada='';
+  if(!GA.edit&&!senha){ var rg=new Uint32Array(1); crypto.getRandomValues(rg); senha=senhaGerada=String(10000000+(rg[0]%90000000)); }
   if(!nome){ m.textContent='Informe o nome.'; return; } if(!email){ m.textContent='Informe o e-mail.'; return; }
   if((!GA.edit||senha)&&senha.length<8){ m.textContent='A senha precisa ter pelo menos 8 caracteres.'; return; }
   var o={nome:nome,email:email,telefone:fone}; if(senha) o.senha=senha; if(!GA.edit) o.perfil='garcom';
@@ -9316,7 +9318,8 @@ function gaSalvarGarcom(){
   fetch(DELTADIS_API+'/usuarios'+(GA.edit?'/'+encodeURIComponent(GA.edit):''),{method:GA.edit?'PATCH':'POST',headers:cdHdr(),body:JSON.stringify(o)})
   .then(function(r){ return r.json().catch(function(){ return {ok:false}; }); }).then(function(d){
     b.disabled=false; if(!d||!d.ok){ m.textContent=(d&&d.mensagem)||'Não foi possível salvar.'; return; }
-    fecharTudo(); aviso(GA.edit?'Garçom atualizado ✅':'Garçom cadastrado ✅ Ele já pode entrar no Atendimento'+(senha==='12345678'?' com a senha 12345678':'')); gaCarregar();
+    fecharTudo(); aviso(GA.edit?'Garçom atualizado ✅':'Garçom cadastrado ✅ Ele já pode entrar no Atendimento'); gaCarregar();
+    if(senhaGerada) setTimeout(function(){ alert('Garçom cadastrado.\n\nLogin: '+email+'\nSenha: '+senhaGerada+'\n\nAnote e passe para ele. Esta senha não aparece de novo (dá para trocar depois em Editar).'); },50);
   }).catch(function(){ b.disabled=false; m.textContent='Sem conexão com o servidor.'; });
 }
 /* (235) excluir garçom: some o login e as mesas dele; vendas e fechamentos ficam no histórico. Com vendas não fechadas, pergunta de novo */

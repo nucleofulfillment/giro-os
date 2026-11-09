@@ -115,7 +115,7 @@
     c.appendChild(b); return c;
   }
   /* (233) o Live montou a lista de garçons: nada é criado até tocar em Cadastrar. Cada um ganha uma senha inicial, que aparece aqui para repassar */
-  function senhaNova(){ return '12345678'; }   /* (234b) senha padrão de todo garçom novo, escolha do dono; ele pode trocar depois em Garçons > Nova senha */
+  function senhaNova(){ var r=new Uint32Array(1); crypto.getRandomValues(r); return String(10000000+(r[0]%90000000)); }   /* (247) segurança: senha aleatória de 8 números para cada garçom (antes 12345678 para todos); aparece no cartão para repassar */
   function cartaoGarcons(m){
     var c=document.createElement('div'); c.style.cssText='margin-top:9px;border:1px solid var(--border,#e3e3e7);border-radius:12px;padding:8px 10px;background:var(--bg,#f6f6f7)';
     var l=m.acao.garcons, h='';

@@ -2377,7 +2377,8 @@ function r3LiveTira(o){ try{ if(RSV.live) RSV.live.destruir(); }catch(e){} RSV.l
 var PREV3D=Q.get('prev3d')==='1';
 function r3LugPadrao(p){ if(p.forma==='quadrada'){ var m2=(p.w/25)*((p.h||p.w)/25); return m2<=0.55?2:m2<=1?4:m2<=1.6?6:8; } var d=p.w/25; return d<=0.75?2:d<=1.1?4:d<=1.5?6:8; }
 if(PREV3D){
-  window.addEventListener('message',function(e){ var m=e.data; if(m&&m.tipo==='salao3d-pausa'){ r3Solta(); return; }   /* (124) painel voltou ao 2D: desliga o 3D */
+  window.addEventListener('message',function(e){ if(e.origin!==location.origin||e.source!==window.parent) return;   /* (247) segurança: só aceita o painel do próprio LiveFood */
+    var m=e.data; if(m&&m.tipo==='salao3d-pausa'){ r3Solta(); return; }   /* (124) painel voltou ao 2D: desliga o 3D */
     if(!m||m.tipo!=='salao3d') return;
     RSV.d={cfg:{dur:0,maxPessoas:99},dias:[],areas:m.areas,salao:(m.pecas||[]).map(function(p){ if(p.t==='mesa'&&!(p.lug>0)) p.lug=r3LugPadrao(p); return p; })};
     RSV.pes=1; RSV.oc=(m.ocupadas||[]).map(String); RSV.area=m.area; RSV.mesa=null; var ab=$('lf-abertura'); if(ab) ab.remove();
@@ -2469,7 +2470,7 @@ function r3AreaInicial(){ var as=r3Areas(), a0=as[0].id; for(var i=0;i<as.length
 function r3AreaIco(a){ if(a.tema==='praia') return '🏖️'; return (a.tipo==='externo'?'🌳':'🏠')+(a.andar==='superior'?' ⬆':''); }
 function r3AreasBarra(){ var b=$('r3as'), as=r3Areas(); if(!b) return; if(as.length<2){ b.style.display='none'; return; } b.style.display='';
   b.innerHTML=as.map(function(a){ var a0=as[0].id, liv=(RSV.d.salao||[]).filter(function(p){ return p.t==='mesa'&&(p.area||a0)===a.id&&p.lug>=RSV.pes&&RSV.oc.indexOf(String(p.n))<0; }).length;
-    return '<button type="button" class="'+(a.id===RSV.area?'on':'')+'" onclick="r3AreaVai(\''+a.id+'\')">'+r3AreaIco(a)+' '+esc(a.nome)+'<small>'+liv+(liv===1?' livre':' livres')+'</small></button>'; }).join(''); }
+    return '<button type="button" class="'+(a.id===RSV.area?'on':'')+'" onclick="r3AreaVai(\''+String(a.id).replace(/[^A-Za-z0-9_-]/g,'')+'\')">'+r3AreaIco(a)+' '+esc(a.nome)+'<small>'+liv+(liv===1?' livre':' livres')+'</small></button>'; }).join(''); }
 function r3AreaVai(id){ if(id===RSV.area) return; RSV.area=id; RSV.mesa=null; var p=$('r3p'); if(p){ p.classList.remove('on'); } r3AreasBarra(); r3Monta(); }
 /* piso de pedra (área externa) e gramado em volta */
 function r3Pedra(){
