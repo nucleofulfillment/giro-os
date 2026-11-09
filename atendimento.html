@@ -914,10 +914,16 @@ function fcCancela(){
   if(!confirm('Cancelar este pedido? Os itens saem do carrinho e nada vai para a cozinha.')) return;
   fcFechaTela(); CART=[]; cartBar(); zeraComanda(); toast('Pedido cancelado');
 }
+/* (246) rede ruim: cada envio leva um número (env). Se a resposta não chegar e o garçom tocar de novo com o mesmo pedido, o servidor devolve o pedido
+   que já criou em vez de duplicar. Mudou o carrinho, a mesa ou o cliente = número novo. Deu certo = zera. */
+var ENVIO={id:'',sig:''};
+function comEnvio(corpo){ var c={},k; for(k in corpo) if(k!=='liberar') c[k]=corpo[k]; var sig=JSON.stringify(c); if(sig!==ENVIO.sig){ ENVIO.sig=sig; ENVIO.id=Date.now().toString(36)+Math.random().toString(36).slice(2,10); } corpo.env=ENVIO.id; return corpo; }
+function envioOk(){ ENVIO.id=''; ENVIO.sig=''; }
+var SEM_REDE='Sem rede agora. Quando a rede voltar, toque de novo: se o pedido já tinha chegado, ele não duplica.';
 function fcConfirma(){
   var b=$('rzOk'); if(!b||b.disabled) return; b.disabled=true; var tx0=b.textContent; b.textContent='Enviando…'; $('rzErr').textContent='';
-  api('/painel/atend-pedido',{modo:COM.modo,mesa:COM.mesa,joia:COM.joia,obs:FC.obs,liberar:COM.liberar,pagar:FC.forma,itens:CART.map(function(i){ return {p:i.p,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs,qty:i.qty}; })}).then(function(r){
-    if(r.ok&&r.pago){
+  api('/painel/atend-pedido',comEnvio({modo:COM.modo,mesa:COM.mesa,joia:COM.joia,obs:FC.obs,liberar:COM.liberar,pagar:FC.forma,itens:CART.map(function(i){ return {p:i.p,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs,qty:i.qty}; })})).then(function(r){
+    if(r.ok&&r.pago){ envioOk();
       var ped={num:r.num,sub:r.sub||0,mesa:COM.mesa||(COM.sm?'':r.mesa)||'',joia:COM.joia,nome:COM.nome,atend:D.usuario,criado:Date.now(),obs:FC.obs,modo:COM.modo,l:CART.map(function(i){ return {p:i.p,nome:i.nome,qty:i.qty,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs}; })};
       var x=FC_FORMAS[FC.forma]||['','',''], tot=r.total; fcFechaTela(); CART=[]; cartBar(); if(FC.imp) imprimeAuto(ped);
       zeraComanda();
@@ -926,19 +932,19 @@ function fcConfirma(){
     }
     if(r._h===401){ mostraLogin('Entre de novo.'); return; }
     b.disabled=false; b.textContent=tx0;
-    $('rzErr').innerHTML=r.ok?'O servidor ainda não tem o "cobrar na hora". Publique o Worker 228.':esc(r.mensagem||'Não consegui enviar.')+(r.erro==='bloqueado'&&r.pode_liberar?'<br><button class="bt mini r" style="margin-top:8px" onclick="COM.liberar=true;fcConfirma()">Liberar mesmo assim</button>':'');
+    $('rzErr').innerHTML=r.ok?'O servidor ainda não tem o "cobrar na hora". Publique o Worker 228.':esc(r._h===0?SEM_REDE:(r.mensagem||'Não consegui enviar.'))+(r.erro==='bloqueado'&&r.pode_liberar?'<br><button class="bt mini r" style="margin-top:8px" onclick="COM.liberar=true;fcConfirma()">Liberar mesmo assim</button>':'');
   });
 }
 function tiraItem(k){ CART.splice(k,1); if(!CART.length){ fecha(); cartBar(); } else { abreCarrinho(); cartBar(); } }
 function enviaPedido(){
   var b=$('pBt'); b.disabled=true; b.textContent='Enviando…'; $('pErr').textContent='';
-  api('/painel/atend-pedido',{modo:COM.modo,mesa:COM.mesa,joia:COM.joia,obs:($('pObs')||{value:''}).value,liberar:COM.liberar,itens:CART.map(function(i){ return {p:i.p,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs,qty:i.qty}; })}).then(function(r){
-    if(r.ok){ var ped={num:r.num,sub:r.sub||0,mesa:COM.mesa,joia:COM.joia,nome:COM.nome,atend:D.usuario,criado:Date.now(),obs:($('pObs')||{value:''}).value,modo:COM.modo,l:CART.map(function(i){ return {p:i.p,nome:i.nome,qty:i.qty,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs}; })}; var avulsoP=COM.avulso, smP=COM.sm; CART=[]; fecha(); cartBar();
+  api('/painel/atend-pedido',comEnvio({modo:COM.modo,mesa:COM.mesa,joia:COM.joia,obs:($('pObs')||{value:''}).value,liberar:COM.liberar,itens:CART.map(function(i){ return {p:i.p,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs,qty:i.qty}; })})).then(function(r){
+    if(r.ok){ envioOk(); var ped={num:r.num,sub:r.sub||0,mesa:COM.mesa,joia:COM.joia,nome:COM.nome,atend:D.usuario,criado:Date.now(),obs:($('pObs')||{value:''}).value,modo:COM.modo,l:CART.map(function(i){ return {p:i.p,nome:i.nome,qty:i.qty,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs}; })}; var avulsoP=COM.avulso, smP=COM.sm; CART=[]; fecha(); cartBar();
       /* venda do balcão sem cliente: já pergunta como o cliente pagou (ou fica em Comandas, se cobrar depois) · (238) garçom sem mesa e sem cliente: igual, com a taxa do garçom */
       if(avulsoP){ toast('Pedido #'+plab(r)+' '+(smP?'enviado para a cozinha':'criado')); zeraComanda(); if(impOn()) imprimeAuto(ped); COMS=[{mesa:r.mesa,joia:'',nome:smP?'Sem mesa':'Cliente Balcão',total:r.total,servico:r.servico||0,pedidos:[],avulso:1}]; fechaForm(0); return; }
       if(window.LiveApp) LiveApp.comemorar({titulo:'Pedido #'+plab(r)+' enviado!',sub:'Já está na cozinha 🍳',ms:1700}); else toast('Pedido #'+plab(r)+' enviado para a cozinha'); zeraComanda(); if(impOn()) imprimeAuto(ped); return; }
     if(r._h===401){ mostraLogin('Entre de novo.'); return; }
-    b.disabled=false; b.textContent='Enviar para a cozinha'; $('pErr').innerHTML=esc(r.mensagem||'Não consegui enviar.')+(r.erro==='bloqueado'&&r.pode_liberar?'<br><button class="bt mini r" style="margin-top:8px" onclick="COM.liberar=true;enviaPedido()">Liberar mesmo assim</button>':'');
+    b.disabled=false; b.textContent='Enviar para a cozinha'; $('pErr').innerHTML=esc(r._h===0?SEM_REDE:(r.mensagem||'Não consegui enviar.'))+(r.erro==='bloqueado'&&r.pode_liberar?'<br><button class="bt mini r" style="margin-top:8px" onclick="COM.liberar=true;enviaPedido()">Liberar mesmo assim</button>':'');
   });
 }
 /* ── comandas em aberto + fechamento ── */
@@ -1177,7 +1183,11 @@ function imprime(p){ imprimeFila(p,filaSetor(p)); }
 function imprimeAuto(p){
   var fila=filaSetor(p);
   api('/painel/atend-imprimir',{lab:plab(p),mesa:ehSMM(p.mesa)?'':p.mesa,modo:p.modo,joia:p.joia,nome:p.nome,atend:p.atend,criado:p.criado,obs:p.obs,reimp:p.reimp?1:0,empresa:D.empresa||'',fila:fila.map(function(x){ return {setor:x[0],l:x[1]}; })}).then(function(r){
-    if(!(r&&r.ok&&r.agente)) imprimeFila(p,fila);
+    if(r&&r.ok&&r.agente) return;
+    if(r&&r.ok){ imprimeFila(p,fila); return; }   /* o programa de impressão do restaurante está desligado: imprime pelo navegador, como antes */
+    /* (246) sem rede ou erro: o pedido já está no servidor e a fila imprime sozinha em até 1 minuto (Worker 246). Reimpressão pedida à mão precisa ser repetida. */
+    if(p.reimp) toast(r&&r._h===0?'Sem rede: não deu para reimprimir. Tente de novo.':'Não consegui reimprimir agora. Tente de novo.');
+    else toast('Sem rede agora: o pedido #'+plab(p)+' sai na impressora sozinho em até 1 minuto.');
   });
 }
 function imprimeFila(p,fila){
