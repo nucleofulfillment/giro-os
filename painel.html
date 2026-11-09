@@ -891,7 +891,7 @@ html.loja-p .cd-dest{display:none!important}
   #sl-m{min-height:0!important}
 }
 </style>
-<style>html.dd-ret #login{visibility:hidden}</style><script>try{if(localStorage.getItem('dd_jwt'))document.documentElement.classList.add('dd-ret');}catch(e){}</script>
+<style>html.dd-ret #login{visibility:hidden} #pg-dashboard{transition:opacity .25s} html.db-wait #pg-dashboard{opacity:0}</style><script>try{if(localStorage.getItem('dd_jwt'))document.documentElement.classList.add('dd-ret','db-wait');}catch(e){}</script>
 <script src="marca.js?v=9"></script>
 </head>
 <body>
@@ -4708,7 +4708,17 @@ function pintarDashboard(){
   pintarFiltrosGrafico();
   pintarGraficoEvolucao();
   try{ pintarTopProdutos(); }catch(e){}
+  dbLiberar();
 }
+/* o Dashboard só aparece quando os pedidos (deste navegador e do servidor) e as mesas já chegaram: antes pintava zerado,
+   depois com os números certos, e os cartões de Mesa entravam 6 s depois empurrando a tela ("piscadinha"). No máximo 5 s de espera. */
+var DB_T0=Date.now();
+function dbLiberar(){
+  var h=document.documentElement; if(!h.classList.contains('db-wait')) return;
+  var ok=(typeof LOCAL_OK!=='undefined'&&LOCAL_OK) && (typeof SRV!=='undefined'&&SRV.pronto) && (typeof MS!=='undefined'&&MS.init);
+  if(ok||Date.now()-DB_T0>5000) h.classList.remove('db-wait');
+}
+setTimeout(function(){ document.documentElement.classList.remove('db-wait'); },5000);
 
 /* ── MAIS VENDIDOS: top 3 do período do gráfico, contado nos itens dos pedidos (não cancelados), com a foto do Cardápio ── */
 var RK_ASSIN='';
@@ -8914,9 +8924,10 @@ function msPoll(){
     if(av.length){ aviso(av.join(' · ')); msBeep(); }
     msBadge(); if(MS.aberto) msPintar();
     var sg=JSON.stringify([MS.ped.map(function(x){ return x.id+x.fase+x.status; }),MS.con,MS.feito.length,MS.feito[0]&&MS.feito[0].id]); if(sg!==MS.sig){ MS.sig=sg; try{ if(typeof PAG!=='undefined'&&PAG==='pedidos') pintarPedidos(); if(typeof PAG!=='undefined'&&PAG==='dashboard') pintarDashboard(); }catch(e){} }
+    try{ dbLiberar(); }catch(e){}
   }).catch(function(){ MS.busy=0; });
 }
-setInterval(msPoll,8000); setTimeout(msPoll,6000);
+setInterval(msPoll,8000); setTimeout(msPoll,800); setTimeout(msPoll,2000); setTimeout(msPoll,3500); setTimeout(msPoll,6000);   /* as mesas chegam logo ao abrir (antes só depois de 6 s); msPoll sai sozinho se ainda não tem login ou se já está buscando */
 function cdMesas(){
   el('sh-import').querySelector('h3').textContent='Mesas e garçom'; MS.aberto=1; abrir('sh-import'); msPintar();
   var ft=fecharTudo; if(!ft._ms){ var nf=function(){ MS.aberto=0; return ft.apply(this,arguments); }; nf._ms=1; fecharTudo=nf; }
