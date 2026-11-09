@@ -103,6 +103,13 @@ h2{margin:6px 0 10px;font-size:19px;font-weight:800}
 .pgop{display:flex;align-items:center;gap:12px;width:100%;min-height:64px;margin-top:8px;padding:10px 12px;background:var(--s1);border:1.5px solid var(--b2);border-radius:14px;cursor:pointer;font:inherit;color:inherit;text-align:left;transition:border-color .12s,background .12s,transform .08s}
 .pgop:hover{border-color:var(--pri)}.pgop:active{transform:scale(.985);background:var(--s3)}
 .pgop .ic{flex:none;width:30px;text-align:center;font-size:23px;line-height:1}.pgop .n{flex:1;min-width:0}.pgop .n b{display:block;font-size:15px}.pgop .n small{display:block;margin-top:1px;color:var(--mu);font-size:12.5px;line-height:1.3}.pgop .ch{flex:none;color:var(--mu);font-size:20px;line-height:1}
+/* (250) copos e pagamento dividido */
+.cps{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 4px}.cpb{min-width:46px;height:46px;padding:0 12px;border-radius:12px;border:1.5px solid var(--b2);background:var(--s1);font:inherit;font-weight:800;font-size:16px;color:inherit;cursor:pointer}.cpb.on{background:var(--pri);border-color:var(--pri);color:#fff}
+#cpsL.falta{color:var(--er)}#cpsL.falta+.cps .cpb{border-color:var(--er)}
+.dvp{border:1.5px solid var(--b2);border-radius:14px;padding:10px;margin-top:10px;background:var(--s1)}.dvh{display:flex;align-items:center;justify-content:space-between;font-size:12.5px;font-weight:800;color:var(--mu2);margin-bottom:6px}.dvh button{border:0;background:var(--s3);border-radius:8px;width:30px;height:30px;font-weight:800;cursor:pointer}
+.dvf{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}.dvf button{flex:1;min-width:70px;height:40px;border-radius:10px;border:1.5px solid var(--b2);background:#fff;font:inherit;font-weight:700;font-size:13.5px;color:inherit;cursor:pointer}.dvf button.on{background:var(--pri);border-color:var(--pri);color:#fff}
+.dvv{display:flex;gap:8px;align-items:center}.dvv .inp{margin:0;font-size:20px;font-weight:800}.dvtr{font-size:13px;color:var(--mu2);margin-top:6px}.dvtr .inp{font-size:15px;font-weight:700;padding:8px 10px;width:120px;display:inline-block;margin:0 6px}
+.dvs{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding:10px 12px;border-radius:12px;font-weight:800;background:var(--s3)}.dvs.ok{background:#DCFCE7;color:#166534}.dvs.er{background:#FEE2E2;color:#991B1B}
 .opt .n{flex:1;min-width:0}.opt .n b{font-size:15px;display:block}.opt .n small{color:var(--mu);font-size:12px}.opt .p{font-weight:800;color:var(--pri);font-size:13.5px}
 .mrow{display:flex;gap:10px;align-items:stretch}.mrow .inp{flex:1;min-width:0}.mpick{flex:none;width:62px;border-radius:14px;border:2px solid var(--b2);background:#fff;display:flex;align-items:center;justify-content:center;color:var(--pri)}.mpick svg{width:28px;height:28px;stroke:currentColor;fill:none;stroke-width:1.8}
 .mz{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;padding:6px 0 4px}.mb{aspect-ratio:1;border-radius:50%;border:0;background:var(--pri);color:#fff;font-weight:800;font-size:17px;padding:0}.mb.oc{background:#16A34A}.mlg{display:flex;gap:16px;font-size:12.5px;color:var(--mu2);margin:4px 0 8px}.mlg i{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:5px;vertical-align:-1px}
@@ -644,7 +651,7 @@ function mostraComanda(){
   $('chipT').innerHTML=t.join(' · '); $('chipS').textContent=COM.sm||ehSMM(COM.mesa)?'Sem cliente':(COM.nome||'Comanda aberta'); $('chip').classList.remove('hide');
 }
 function trocaComanda(){ if(CART.length&&!confirm('Há itens no pedido que ainda não foram enviados. Trocar de comanda mesmo assim?')) return; zeraComanda(); }
-function zeraComanda(){ _ab=0; AUTOJ=''; AUTOM=''; carregaAbertas(); COM={mesa:'',joia:'',nome:'',modo:COM.modo,dev:0,bloq:false,liberar:false}; modo(COM.modo); CART=[]; $('chip').classList.add('hide'); $('iMesa').value=''; $('iJoia').value=''; $('joiaInfo').innerHTML=''; $('sugs').innerHTML=''; $('idErr').textContent=''; limpaBusca(); ['p-cats','p-prods'].forEach(function(i){ $(i).classList.add('hide'); }); $('p-ident').classList.remove('hide'); cartBar(); window.scrollTo(0,0); if(JOIA_ABC) joiaTeclado(true); foco('#iJoia'); }   /* (228) começa pelo cliente */
+function zeraComanda(){ COPOS=null;   /* (250) */ _ab=0; AUTOJ=''; AUTOM=''; carregaAbertas(); COM={mesa:'',joia:'',nome:'',modo:COM.modo,dev:0,bloq:false,liberar:false}; modo(COM.modo); CART=[]; $('chip').classList.add('hide'); $('iMesa').value=''; $('iJoia').value=''; $('joiaInfo').innerHTML=''; $('sugs').innerHTML=''; $('idErr').textContent=''; limpaBusca(); ['p-cats','p-prods'].forEach(function(i){ $(i).classList.add('hide'); }); $('p-ident').classList.remove('hide'); cartBar(); window.scrollTo(0,0); if(JOIA_ABC) joiaTeclado(true); foco('#iJoia'); }   /* (228) começa pelo cliente */
 function ativaComanda(c){ COM={mesa:c.mesa||'',joia:c.joia||'',nome:c.nome||'',modo:(c.joia&&!c.mesa)||ehBalM(c.mesa)?'balcao':'mesa',dev:0,bloq:false,liberar:false}; modo(COM.modo); CART=[]; mostraComanda(); $('p-ident').classList.add('hide'); aba('ped'); verCats(); }
 /* ── cardápio: categorias em cards ── */
 function fotoProd(p){ return p.foto?API+'/food/foto/'+encodeURIComponent(CLI)+'/'+encodeURIComponent(p.id):''; }
@@ -870,25 +877,47 @@ function cartBar(){
   if(on){ var n=0; CART.forEach(function(i){ n+=i.qty; }); $('cbN').textContent='Ver pedido · '+n+' ite'+(n==1?'m':'ns'); $('cbV').textContent=brl(cartTot()); }
 }
 function descItem(i,br){ var d=[]; if(i.tam) d.push(i.tam); var n=i.sab.length; i.sab.forEach(function(s){ d.push((n>1?'1/'+n+' ':'')+s); }); if(i.borda) d.push('Borda: '+i.borda); i.adds.forEach(function(a){ d.push('+ '+a); }); if(i.obs) d.push('Obs: '+i.obs); return br?d.map(esc).join('<br>'):d.join(' · '); }
+/* ── (250) COPOS: opção da loja (Configurações clientes > "Perguntar quantos copos"). Pedido com bebida do bar só sai depois de o garçom tocar no número de copos (ou Sem copo).
+   O número vai em destaque na ficha do bar. ── */
+var COPOS=null;
+function coposPede(){ return !!(D&&D.cfg&&D.cfg.copos)&&CART.some(function(i){ return destLinha(i)==='bar'; }); }
+function coposHtml(){
+  if(!coposPede()) return '';
+  var b=function(n,t){ return '<button type="button" class="cpb'+(COPOS===n?' on':'')+'" onclick="coposSel('+n+')">'+t+'</button>'; }, h='<label class="l" id="cpsL">Quantos copos? <small style="font-weight:600;color:var(--mu2)">sai na ficha do bar</small></label><div class="cps" id="cps">'+b(0,'Sem copo');
+  for(var n=1;n<=8;n++) h+=b(n,String(n));
+  h+=(COPOS>8?b(COPOS,String(COPOS)):'')+'<button type="button" class="cpb" onclick="coposMais()">+</button></div>';
+  return h;
+}
+function coposSel(n){ COPOS=n; var c=$('cps'); if(c) c.outerHTML=coposHtml().replace(/^[\s\S]*?(<div class="cps")/,'$1'); var l=$('cpsL'); if(l) l.classList.remove('falta'); var e=$('pErr'); if(e&&/copos/.test(e.textContent)) e.textContent=''; }
+function coposMais(){ var v=parseInt(prompt('Quantos copos?',COPOS>8?COPOS:9),10); if(v>=0&&v<=99) coposSel(v); }
+function coposVal(){ return coposPede()&&COPOS>0?COPOS:0; }
+function copoOk(fn){
+  if(coposPede()&&COPOS==null){ var e=$('pErr'); if(e) e.textContent='Informe quantos copos (ou Sem copo).'; var l=$('cpsL'); if(l){ l.classList.add('falta'); l.scrollIntoView({block:'center',behavior:'smooth'}); } try{ navigator.vibrate&&navigator.vibrate(120); }catch(x){} return; }
+  fn();
+}
 function abreCarrinho(){
   var h=''; CART.forEach(function(i,k){ h+='<div class="opt"><span class="n"><b>'+i.qty+'x '+esc(i.nome)+'</b><small>'+descItem(i,1)+'</small></span><span class="p">'+brl(i.unit*i.qty)+'</span><button onclick="tiraItem('+k+')" style="border:0;background:var(--s3);border-radius:8px;width:32px;height:32px;font-weight:800">×</button></div>'; });
   h+=srvLinha(srvVal(cartTot()),srvPct());
+  h+=coposHtml();
   h+='<label class="l">Observação do pedido (cozinha)</label><input class="inp" id="pObs" maxlength="300"><div class="er" id="pErr"></div>';
   var totC=Math.round((cartTot()+srvVal(cartTot()))*100)/100, hj=cobraHora();
-  folha('Pedido · '+(COM.sm?'Sem mesa':ehSMM(COM.mesa)?smTit(COM.mesa):COM.avulso||ehBalM(COM.mesa)?'Cliente Balcão':[(COM.mesa?(COM.modo==='balcao'?'Balcão ':'Mesa ')+COM.mesa:''),COM.joia].filter(Boolean).join(' · ')),h,'<button class="bt" id="pBt" style="margin:0" onclick="'+(hj?'fcEscolher()':'enviaPedido()')+'">'+(hj?'Fechar comanda':(COM.avulso?'Finalizar pedido':'Enviar para a cozinha'))+' · '+brl(totC)+'</button>'); foco('#pBt');
+  folha('Pedido · '+(COM.sm?'Sem mesa':ehSMM(COM.mesa)?smTit(COM.mesa):COM.avulso||ehBalM(COM.mesa)?'Cliente Balcão':[(COM.mesa?(COM.modo==='balcao'?'Balcão ':'Mesa ')+COM.mesa:''),COM.joia].filter(Boolean).join(' · ')),h,'<button class="bt" id="pBt" style="margin:0" onclick="'+(hj?'copoOk(fcEscolher)':'copoOk(enviaPedido)')+'">'+(hj?'Fechar comanda':(COM.avulso?'Finalizar pedido':'Enviar para a cozinha'))+' · '+brl(totC)+'</button>'); foco('#pBt');
 }
 /* ── (228) COBRAR NA HORA (opção da loja, no painel em Configurações clientes): o garçom fecha a comanda, escolhe a forma de pagamento,
    mostra o resumo para o cliente e só depois do pagamento aprovado o pedido vai para a cozinha. Cancelar não cria pedido nenhum. ── */
 function cobraHora(){ return !!(D&&D.cfg&&D.cfg.cobra_hora); }
 function marcarOk(){ return !(D&&D.cfg&&D.cfg.marcar===0); }   /* (232) opção da loja: deixar ou não o garçom Marcar na conta do cliente */
-var FC={forma:'',obs:'',imp:false,m:null};
-var FC_FORMAS={credito:['💳','Crédito','Cartão de crédito na maquininha'],debito:['💳','Débito','Cartão de débito na maquininha'],cartao:['💳','Cartão','Passe na maquininha'],pix:['▦','Pix','Pix na maquininha ou na chave da loja'],dinheiro:['💵','Dinheiro','Pago em dinheiro'],marcar:['📒','Marcar na conta','Fica na conta do cliente']};   /* (229) crédito e débito separados: a conciliação com a maquininha bate por tipo */
+var FC={forma:'',obs:'',imp:false,m:null,partes:null,copos:0};
+var FC_FORMAS={credito:['💳','Crédito','Cartão de crédito na maquininha'],debito:['💳','Débito','Cartão de débito na maquininha'],cartao:['💳','Cartão','Passe na maquininha'],pix:['▦','Pix','Pix na maquininha ou na chave da loja'],dinheiro:['💵','Dinheiro','Pago em dinheiro'],marcar:['📒','Marcar na conta','Fica na conta do cliente'],misto:['🔀','Dividir o pagamento','Parte no cartão, parte no Pix ou em dinheiro']};   /* (229) crédito e débito separados: a conciliação com a maquininha bate por tipo · (250) misto = dividido */
 function fcEscolher(){
-  FC.obs=($('pObs')||{value:''}).value; FC.imp=true;
+  if($('pObs')){ FC.obs=$('pObs').value; FC.copos=coposVal(); }   /* (250) voltando de outra tela, a observação e os copos ficam */
+  FC.imp=true;
   var tot=Math.round((cartTot()+srvVal(cartTot()))*100)/100, h='<div style="font-size:15px;margin:4px 0 10px">Total <b style="font-size:22px;color:var(--pri)">'+brl(tot)+'</b></div><div class="sec">Forma de pagamento</div>';
   (D.cfg.cartao_tipo?['credito','debito']:['cartao']).concat(['pix','dinheiro'],COM.joia&&marcarOk()?['marcar']:[]).forEach(function(f){ var x=FC_FORMAS[f]; h+='<button type="button" class="pgop" onclick="fcResumo(\''+f+'\')"><span class="ic">'+x[0]+'</span><span class="n"><b>'+x[1]+'</b><small>'+x[2]+'</small></span><span class="ch">›</span></button>'; });
+  if(D.cfg.dividir){ var xm=FC_FORMAS.misto; h+='<button type="button" class="pgop" onclick="fcDividir()"><span class="ic">'+xm[0]+'</span><span class="n"><b>'+xm[1]+'</b><small>'+xm[2]+'</small></span><span class="ch">›</span></button>'; }
   folha('Fechar comanda',h,'<button class="bt s" style="margin:0" onclick="abreCarrinho()">Voltar ao pedido</button>');
 }
+function fcDividir(){ var tot=Math.round((cartTot()+srvVal(cartTot()))*100)/100; dvAbrir(tot,'Dividir o pagamento',function(ps){ FC.partes=ps; fcResumo('misto'); },fcEscolher,FC.partes); }
 function fcResumo(forma){
   FC.forma=forma; fecha(); fcFechaTela();
   var sub=cartTot(), sv=srvVal(sub), tot=Math.round((sub+sv)*100)/100, x=FC_FORMAS[forma]||['','',''], n=0, li='';
@@ -900,7 +929,8 @@ function fcResumo(forma){
     +'<div class="rzt"><span>'+n+(n===1?' item':' itens')+'</span><span>'+brl(sub)+'</span></div>'
     +(sv>0?'<div class="rzt"><span>Serviço do garçom ('+String(srvPct()).replace('.',',')+'%)</span><span>'+brl(sv)+'</span></div>':'')
     +'<div class="rzT"><span>Total</span><b>'+brl(tot)+'</b></div>'
-    +'<div class="rzf"><span style="font-size:22px">'+x[0]+'</span>'+x[1]+'</div>'
+    +(forma==='misto'&&FC.partes?FC.partes.map(function(pt){ var y=FC_FORMAS[pt.f]||['','',''], tr=pt.f==='dinheiro'&&pt.rec>pt.v?' <small style="font-weight:600">(recebeu '+brl(pt.rec)+' · troco '+brl(Math.round((pt.rec-pt.v)*100)/100)+')</small>':''; return '<div class="rzf" style="justify-content:space-between"><span><span style="font-size:20px">'+y[0]+'</span> '+y[1]+tr+'</span><b>'+brl(pt.v)+'</b></div>'; }).join(''):'<div class="rzf"><span style="font-size:22px">'+x[0]+'</span>'+x[1]+'</div>')
+    +(FC.copos>0?'<div class="rzs" style="text-align:left;margin-top:8px">Copos: '+FC.copos+'</div>':'')
     +(FC.obs?'<div class="rzs" style="text-align:left;margin-top:8px">Obs.: '+esc(FC.obs)+'</div>':'')
     +'<div class="er" id="rzErr" style="margin-top:8px"></div></div>'
     +'<div class="rzb"><button class="bt big" id="rzOk" onclick="fcConfirma()">'+(forma==='marcar'?'Confirmar e marcar na conta':'Pagamento aprovado ✓')+'</button>'
@@ -912,7 +942,7 @@ function fcResumo(forma){
 function fcFechaTela(){ var d=$('rz'); if(FC.m){ try{ FC.m.destruir(); }catch(e){} FC.m=null; } if(d) d.remove(); }
 function fcCancela(){
   if(!confirm('Cancelar este pedido? Os itens saem do carrinho e nada vai para a cozinha.')) return;
-  fcFechaTela(); CART=[]; cartBar(); zeraComanda(); toast('Pedido cancelado');
+  fcFechaTela(); CART=[]; COPOS=null; FC.partes=null; cartBar(); zeraComanda(); toast('Pedido cancelado');
 }
 /* (246) rede ruim: cada envio leva um número (env). Se a resposta não chegar e o garçom tocar de novo com o mesmo pedido, o servidor devolve o pedido
    que já criou em vez de duplicar. Mudou o carrinho, a mesa ou o cliente = número novo. Deu certo = zera. */
@@ -922,10 +952,10 @@ function envioOk(){ ENVIO.id=''; ENVIO.sig=''; }
 var SEM_REDE='Sem rede agora. Quando a rede voltar, toque de novo: se o pedido já tinha chegado, ele não duplica.';
 function fcConfirma(){
   var b=$('rzOk'); if(!b||b.disabled) return; b.disabled=true; var tx0=b.textContent; b.textContent='Enviando…'; $('rzErr').textContent='';
-  api('/painel/atend-pedido',comEnvio({modo:COM.modo,mesa:COM.mesa,joia:COM.joia,obs:FC.obs,liberar:COM.liberar,pagar:FC.forma,itens:CART.map(function(i){ return {p:i.p,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs,qty:i.qty}; })})).then(function(r){
+  api('/painel/atend-pedido',comEnvio({modo:COM.modo,mesa:COM.mesa,joia:COM.joia,obs:FC.obs,liberar:COM.liberar,pagar:FC.forma,partes:FC.forma==='misto'?(FC.partes||[]).map(function(pt){ return {f:pt.f,v:pt.v}; }):undefined,copos:FC.copos||undefined,itens:CART.map(function(i){ return {p:i.p,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs,qty:i.qty}; })})).then(function(r){
     if(r.ok&&r.pago){ envioOk();
-      var ped={num:r.num,sub:r.sub||0,mesa:COM.mesa||(COM.sm?'':r.mesa)||'',joia:COM.joia,nome:COM.nome,atend:D.usuario,criado:Date.now(),obs:FC.obs,modo:COM.modo,l:CART.map(function(i){ return {p:i.p,nome:i.nome,qty:i.qty,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs}; })};
-      var x=FC_FORMAS[FC.forma]||['','',''], tot=r.total; fcFechaTela(); CART=[]; cartBar(); if(FC.imp) imprimeAuto(ped);
+      var ped={num:r.num,sub:r.sub||0,mesa:COM.mesa||(COM.sm?'':r.mesa)||'',joia:COM.joia,nome:COM.nome,atend:D.usuario,criado:Date.now(),obs:FC.obs,modo:COM.modo,copos:FC.copos,l:CART.map(function(i){ return {p:i.p,nome:i.nome,qty:i.qty,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs}; })};
+      var x=FC_FORMAS[FC.forma]||['','',''], tot=r.total; if(FC.forma==='misto') x=['🔀',(FC.partes||[]).map(function(pt){ return (FC_FORMAS[pt.f]||['',pt.f])[1]+' '+brl(pt.v); }).join(' + ')]; fcFechaTela(); CART=[]; COPOS=null; FC.partes=null; FC.copos=0; cartBar(); if(FC.imp) imprimeAuto(ped);
       zeraComanda();
       if(window.LiveApp) LiveApp.comemorar({titulo:FC.forma==='marcar'?'Marcado na conta!':'Pedido #'+plab(r)+' pago!',valor:brl(tot),forma:x[0]+' '+x[1],sub:'Já foi para a cozinha 🍳',ms:2200}); else toast('Pedido #'+plab(r)+' pago · '+brl(tot));
       return;
@@ -937,9 +967,9 @@ function fcConfirma(){
 }
 function tiraItem(k){ CART.splice(k,1); if(!CART.length){ fecha(); cartBar(); } else { abreCarrinho(); cartBar(); } }
 function enviaPedido(){
-  var b=$('pBt'); b.disabled=true; b.textContent='Enviando…'; $('pErr').textContent='';
-  api('/painel/atend-pedido',comEnvio({modo:COM.modo,mesa:COM.mesa,joia:COM.joia,obs:($('pObs')||{value:''}).value,liberar:COM.liberar,itens:CART.map(function(i){ return {p:i.p,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs,qty:i.qty}; })})).then(function(r){
-    if(r.ok){ envioOk(); var ped={num:r.num,sub:r.sub||0,mesa:COM.mesa,joia:COM.joia,nome:COM.nome,atend:D.usuario,criado:Date.now(),obs:($('pObs')||{value:''}).value,modo:COM.modo,l:CART.map(function(i){ return {p:i.p,nome:i.nome,qty:i.qty,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs}; })}; var avulsoP=COM.avulso, smP=COM.sm; CART=[]; fecha(); cartBar();
+  var b=$('pBt'); b.disabled=true; b.textContent='Enviando…'; $('pErr').textContent=''; var cpE=coposVal();   /* (250) copos */
+  api('/painel/atend-pedido',comEnvio({modo:COM.modo,mesa:COM.mesa,joia:COM.joia,obs:($('pObs')||{value:''}).value,liberar:COM.liberar,copos:cpE||undefined,itens:CART.map(function(i){ return {p:i.p,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs,qty:i.qty}; })})).then(function(r){
+    if(r.ok){ envioOk(); var ped={num:r.num,sub:r.sub||0,mesa:COM.mesa,joia:COM.joia,nome:COM.nome,atend:D.usuario,criado:Date.now(),obs:($('pObs')||{value:''}).value,modo:COM.modo,copos:cpE,l:CART.map(function(i){ return {p:i.p,nome:i.nome,qty:i.qty,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs}; })}; var avulsoP=COM.avulso, smP=COM.sm; CART=[]; COPOS=null; fecha(); cartBar();
       /* venda do balcão sem cliente: já pergunta como o cliente pagou (ou fica em Comandas, se cobrar depois) · (238) garçom sem mesa e sem cliente: igual, com a taxa do garçom */
       if(avulsoP){ toast('Pedido #'+plab(r)+' '+(smP?'enviado para a cozinha':'criado')); zeraComanda(); if(impOn()) imprimeAuto(ped); COMS=[{mesa:r.mesa,joia:'',nome:smP?'Sem mesa':'Cliente Balcão',total:r.total,servico:r.servico||0,pedidos:[],avulso:1}]; fechaForm(0); return; }
       if(window.LiveApp) LiveApp.comemorar({titulo:'Pedido #'+plab(r)+' enviado!',sub:'Já está na cozinha 🍳',ms:1700}); else toast('Pedido #'+plab(r)+' enviado para a cozinha'); zeraComanda(); if(impOn()) imprimeAuto(ped); return; }
@@ -996,23 +1026,75 @@ function trocaFaz(para,juntar){
 function fechaOpc(i,forma,ic,tit,sub){ return '<button type="button" class="pgop" onclick="fechaFazer('+i+',\''+forma+'\')"><span class="ic">'+ic+'</span><span class="n"><b>'+tit+'</b><small>'+sub+'</small></span><span class="ch">›</span></button>'; }
 function fechaForm(i){
   var c=COMS[i], h='<div style="font-size:15px;margin:6px 0 10px"><b>'+comTit(c)+(c.joia?' '+pill(c.joia):'')+'</b>'+(ehBalM(c.mesa)||ehSMM(c.mesa)?'':' · '+esc(c.nome||''))+(c.servico>0?'<div style="font-size:13.5px;color:var(--mu2);margin-top:6px">Consumo '+brl(Math.round((c.total-c.servico)*100)/100)+' + Serviço do garçom '+brl(c.servico)+'</div>':'<br>')+'<span style="font-size:22px;font-weight:800;color:var(--pri)">'+brl(c.total)+'</span></div><div class="sec">Forma de pagamento</div>';
-  [['pix','Pix','▦'],['cartao','Cartão','💳'],['dinheiro','Dinheiro','💵']].forEach(function(f){ h+=fechaOpc(i,f[0],f[2],f[1],'Pagou agora'); });
+  ((D.cfg.cartao_tipo&&D.cfg.dividir)?[['credito','Crédito','💳'],['debito','Débito','💳']]:[['cartao','Cartão','💳']]).concat([['pix','Pix','▦'],['dinheiro','Dinheiro','💵']]).forEach(function(f){ h+=fechaOpc(i,f[0],f[2],f[1],'Pagou agora'); });   /* (250) crédito e débito separados também aqui (exige Worker 250) */
+  if(D.cfg.dividir) h+='<button type="button" class="pgop" onclick="fechaDividir('+i+')"><span class="ic">🔀</span><span class="n"><b>Dividir o pagamento</b><small>Parte no cartão, parte no Pix ou em dinheiro</small></span><span class="ch">›</span></button>';
   if(c.joia&&marcarOk()) h+=fechaOpc(i,'marcar','📒','Marcar (pendurar)','Fica na conta do cliente para cobrar no fechamento');
   h+='<div class="er" id="fcErr"></div>'; folha('Fechar conta',h,c.avulso?'<button class="bt s" style="margin:0" onclick="fecha()">Cobrar depois (fica em Comandas)</button>':'');
 }
-function fechaFazer(i,forma){
-  var c=COMS[i]; $('fcErr').textContent='';
-  api('/painel/atend-fechar',{mesa:c.mesa,joia:c.joia,forma:forma}).then(function(r){
+function fechaDividir(i){ var c=COMS[i]; if(!c) return; dvAbrir(c.total,'Dividir o pagamento · '+(comTit(c)||'Comanda'),function(ps){ fechaFazer(i,'misto',ps); },function(){ fechaForm(i); },c._partes); }
+function fechaFazer(i,forma,partes){
+  var c=COMS[i]; $('fcErr').textContent=''; if(partes) c._partes=partes;
+  var bOk=$('dvOk'); if(bOk){ bOk.disabled=true; bOk.textContent='Fechando…'; }
+  api('/painel/atend-fechar',{mesa:c.mesa,joia:c.joia,forma:forma,partes:partes?partes.map(function(pt){ return {f:pt.f,v:pt.v}; }):undefined}).then(function(r){
     if(r.ok){ _ab=0; fecha();
       /* conta fechada: valor grande + forma de pagamento; a tela fica até tocar em NOVO PEDIDO */
-      var FP={pix:'▦ Pix',cartao:'💳 Cartão',dinheiro:'💵 Dinheiro',marcar:'📒 Marcado na conta'};
+      var FP={pix:'▦ Pix',cartao:'💳 Cartão',credito:'💳 Crédito',debito:'💳 Débito',dinheiro:'💵 Dinheiro',marcar:'📒 Marcado na conta'};
+      if(forma==='misto') FP.misto='🔀 '+(partes||[]).map(function(pt){ return FP[pt.f].replace(/^\S+ /,'')+' '+brl(pt.v); }).join(' + ');
       if(window.LiveApp){ LiveApp.comemorar({titulo:forma==='marcar'?'Marcado na conta!':'Conta fechada!',valor:brl(r.total),forma:FP[forma]||'',sub:forma==='marcar'?(c.nome||'Cliente'):(ehSMM(c.mesa)?smTit(c.mesa):c.avulso||ehBalM(c.mesa)?'Cliente Balcão':(c.mesa?'Mesa '+c.mesa:'')),botao:{texto:'NOVO PEDIDO',acao:function(){ if(COM.avulso||COM.mesa||COM.joia) zeraComanda(); aba('ped'); }}}); carregaCom(); return; } else toast(forma==='marcar'?'Marcado na conta de '+(c.nome||'cliente')+' · '+brl(r.total):'Conta fechada · '+brl(r.total)); carregaCom(); return; }
-    if(r._h===401){ mostraLogin('Entre de novo.'); return; } $('fcErr').textContent=r.mensagem||'Não consegui fechar.';
+    if(r._h===401){ mostraLogin('Entre de novo.'); return; } if(bOk){ bOk.disabled=false; bOk.textContent='Confirmar'; dvConta(); }
+    $('fcErr').textContent=(r.erro==='dados'&&forma==='misto')?'O servidor ainda não aceita pagamento dividido. Publique o Worker 250.':(r.mensagem||'Não consegui fechar.');
   });
+}
+/* ── (250) DIVIDIR O PAGAMENTO: o atendente lança à mão as partes (crédito, débito, Pix, dinheiro). Só confirma quando as partes fecham o total.
+   Na parte em dinheiro dá para digitar quanto o cliente deu e ver o troco (o troco não entra no caixa: vale o valor da parte). ── */
+var DV=null;
+function dvNum(s){ s=String(s==null?'':s).replace(/[^\d,.]/g,''); if(s.indexOf(',')>=0) s=s.replace(/\./g,'').replace(',','.'); var v=parseFloat(s); return v>0?Math.round(v*100)/100:0; }
+function dvFmt(v){ return v>0?v.toFixed(2).replace('.',','):''; }
+function dvFormas(){ return (D.cfg.cartao_tipo?[['credito','Crédito'],['debito','Débito']]:[['cartao','Cartão']]).concat([['pix','Pix'],['dinheiro','Dinheiro']]); }
+function dvFalta(){ var s=0; DV.ps.forEach(function(p){ s+=p.v; }); return Math.round((DV.tot-s)*100)/100; }
+function dvAbrir(tot,tit,ok,voltar,ant){
+  DV={tot:Math.round(Number(tot)*100)/100,ok:ok,voltar:voltar,tit:tit,ps:(ant&&ant.length)?ant.map(function(p){ return {f:p.f,v:p.v,rec:p.rec||0,auto:false}; }):[{f:'',v:0,rec:0,auto:false},{f:'',v:0,rec:0,auto:true}]};
+  dvPinta();
+}
+function dvPinta(){
+  var fs=dvFormas(), h='<div style="font-size:15px;margin:4px 0 4px">Total <b style="font-size:22px;color:var(--pri)">'+brl(DV.tot)+'</b></div>';
+  DV.ps.forEach(function(p,k){
+    h+='<div class="dvp"><div class="dvh"><span>PARTE '+(k+1)+'</span>'+(DV.ps.length>1?'<button type="button" onclick="dvTira('+k+')" title="Tirar esta parte">×</button>':'')+'</div>'
+      +'<div class="dvf">'+fs.map(function(f){ return '<button type="button" class="'+(p.f===f[0]?'on':'')+'" onclick="dvForma('+k+',\''+f[0]+'\')">'+f[1]+'</button>'; }).join('')+'</div>'
+      +'<div class="dvv"><span style="font-weight:800;color:var(--mu2)">R$</span><input class="inp" id="dvV'+k+'" inputmode="decimal" placeholder="0,00" value="'+dvFmt(p.v)+'" oninput="dvDig('+k+',this.value)" onfocus="this.select()"></div>'
+      +(p.f==='dinheiro'?'<div class="dvtr">Cliente deu R$<input class="inp" id="dvR'+k+'" inputmode="decimal" placeholder="opcional" value="'+dvFmt(p.rec)+'" oninput="dvRec('+k+',this.value)"><span id="dvT'+k+'"></span></div>':'')
+      +'</div>';
+  });
+  h+='<button type="button" class="bt s" style="margin:10px 0 0" onclick="dvMais()">+ Outra parte</button><div class="dvs" id="dvS"></div><div class="er" id="fcErr"></div>';
+  folha(DV.tit,h,'<button class="bt" id="dvOk" style="margin:0" onclick="dvConfirma()">Confirmar</button><button class="bt s" style="margin:8px 0 0" onclick="DV.voltar()">Voltar</button>');
+  dvConta();
+}
+function dvConta(){
+  /* a parte "automática" (a última, que ninguém digitou) acompanha o que falta */
+  var fixo=0; DV.ps.forEach(function(p){ if(!p.auto) fixo+=p.v; }); var au=DV.ps.filter(function(p){ return p.auto; })[0];
+  if(au){ au.v=Math.max(0,Math.round((DV.tot-fixo)*100)/100); var k=DV.ps.indexOf(au), e=$('dvV'+k); if(e&&document.activeElement!==e) e.value=dvFmt(au.v); }
+  DV.ps.forEach(function(p,k){ var t=$('dvT'+k); if(t) t.textContent=p.rec>0?(p.rec>=p.v?' · troco '+brl(Math.round((p.rec-p.v)*100)/100):' · falta '+brl(Math.round((p.v-p.rec)*100)/100)):''; });
+  var f=dvFalta(), s=$('dvS'), semF=DV.ps.some(function(p){ return p.v>0&&!p.f; }), b=$('dvOk');
+  if(s){ s.className='dvs'+(Math.abs(f)<0.005?' ok':f<0?' er':''); s.innerHTML=Math.abs(f)<0.005?'<span>Fechou o total</span><span>✓</span>':f>0?'<span>Falta</span><span>'+brl(f)+'</span>':'<span>Passou do total</span><span>'+brl(-f)+'</span>'; }
+  if(b&&b.textContent==='Confirmar') b.disabled=!(Math.abs(f)<0.005)||semF||!DV.ps.some(function(p){ return p.v>0; });
+  if(b&&semF&&Math.abs(f)<0.005) b.title='Escolha a forma de cada parte';
+}
+function dvDig(k,v){ var p=DV.ps[k]; if(!p) return; p.v=dvNum(v); p.auto=false; dvConta(); }
+function dvRec(k,v){ var p=DV.ps[k]; if(!p) return; p.rec=dvNum(v); dvConta(); }
+function dvForma(k,f){ var p=DV.ps[k]; if(!p) return; p.f=f; if(f!=='dinheiro') p.rec=0; dvGuarda(); dvPinta(); }
+function dvGuarda(){ DV.ps.forEach(function(p,k){ var e=$('dvV'+k); if(e&&!p.auto) p.v=dvNum(e.value); }); }
+function dvTira(k){ dvGuarda(); DV.ps.splice(k,1); if(!DV.ps.some(function(p){ return p.auto; })&&DV.ps.length) { var u=DV.ps[DV.ps.length-1]; if(!u.v) u.auto=true; } dvPinta(); }
+function dvMais(){ dvGuarda(); DV.ps.forEach(function(p){ p.auto=false; }); var f=dvFalta(); DV.ps.push({f:'',v:f>0?f:0,rec:0,auto:true}); dvPinta(); var e=$('dvV'+(DV.ps.length-1)); if(e) e.scrollIntoView({block:'center'}); }
+function dvConfirma(){
+  var ps=DV.ps.filter(function(p){ return p.v>0; });
+  if(ps.some(function(p){ return !p.f; })){ $('fcErr').textContent='Escolha a forma de cada parte.'; return; }
+  if(Math.abs(dvFalta())>=0.005){ $('fcErr').textContent='As partes precisam fechar '+brl(DV.tot)+'.'; return; }
+  DV.ok(ps.map(function(p){ return {f:p.f,v:p.v,rec:p.f==='dinheiro'?p.rec:0}; }));
 }
 /* ── (239) VENDAS: com "Cobrar na hora" a comanda já fecha no pedido. A aba mostra o que o garçom vendeu (comprovantes), com filtro de data, resumo e PDF para compartilhar ── */
 var VD={ini:'',fim:'',uid:'',r:null,garcons:null,tok:0};
-var VD_FP={credito:'💳 Crédito',debito:'💳 Débito',cartao:'💳 Cartão',pix:'▦ Pix',dinheiro:'💵 Dinheiro',marcar:'📒 Marcado na conta'};
+var VD_FP={credito:'💳 Crédito',debito:'💳 Débito',cartao:'💳 Cartão',pix:'▦ Pix',dinheiro:'💵 Dinheiro',marcar:'📒 Marcado na conta',misto:'🔀 Dividido'};
+function vdForma(v){ if(v.forma==='misto'&&v.partes&&v.partes.length) return v.partes.map(function(pt){ return (VD_FP[pt.f]||pt.f)+' '+brl(pt.v); }).join(' + '); return VD_FP[v.forma]||v.forma||''; }   /* (250) pagamento dividido: mostra cada parte */
 function diaBR(off){ return new Date(Date.now()-3*3600000-(off||0)*86400000).toISOString().slice(0,10); }
 function diaTxt(s){ var p=String(s).split('-'); return p[2]+'/'+p[1]+'/'+p[0]; }
 function abaComNome(){
@@ -1059,7 +1141,7 @@ function vdPinta(){
     var est=v.status==='estornado';
     h+='<div class="cm'+(est?' est':'')+'"><div class="h"><div><b>#'+plab(v)+'</b> <span style="font-size:12.5px;color:var(--mu2)">'+hrBR(v.criado)+(GEST&&v.atend?' · '+esc(v.atend):'')+'</span><div style="font-size:13px;color:var(--mu2);margin-top:2px">'+vdLocal(v)+'</div></div><span class="v">'+brl(v.total)+'</span></div>'
       +'<div class="pd">'+(v.l||[]).map(function(l){ return '<div class="pi">'+esc(vdItem(l))+'</div>'; }).join('')+(v.obs?'<div class="pi" style="color:var(--mu2)">Obs.: '+esc(v.obs)+'</div>':'')+'</div>'
-      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:13px"><span>'+(est?'<span class="tag r" style="margin:0">Estornado</span>':'<span class="tag '+(v.forma==='marcar'?'a':'g')+'" style="margin:0">'+(VD_FP[v.forma]||esc(v.forma||''))+'</span>')+(v.servico>0?' <span style="color:var(--mu2)">serviço '+brl(v.servico)+'</span>':'')+'</span><button onclick="vdReimp('+i+')" title="Imprimir de novo" style="border:0;background:var(--s3);border-radius:8px;padding:4px 10px;font-size:14px">🖨</button></div></div>';
+      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:13px"><span>'+(est?'<span class="tag r" style="margin:0">Estornado</span>':'<span class="tag '+(v.forma==='marcar'?'a':'g')+'" style="margin:0">'+esc(vdForma(v))+'</span>')+(v.servico>0?' <span style="color:var(--mu2)">serviço '+brl(v.servico)+'</span>':'')+'</span><button onclick="vdReimp('+i+')" title="Imprimir de novo" style="border:0;background:var(--s3);border-radius:8px;padding:4px 10px;font-size:14px">🖨</button></div></div>';
   });
   if(d.mais) h+='<p style="color:var(--mu2);font-size:13px">Mostrando as 1.500 vendas mais recentes. Escolha um período menor para ver todas.</p>';
   $('vdBox').innerHTML=h;
@@ -1085,7 +1167,7 @@ function vdPdf(){
     var lf=Object.keys(rs.formas||{}).map(function(f){ return [vdTxt(VD_FP[f]||f),String(rs.formas[f].n),brl(rs.formas[f].total)]; });
     if(rs.estornos) lf.push(['Estornados (fora do total)',String(rs.estornos),brl(rs.estornado)]);
     doc.autoTable({startY:64,head:[['Forma de pagamento','Pedidos','Valor']],body:lf,theme:'grid',headStyles:{fillColor:cor},styles:{fontSize:10},columnStyles:{1:{halign:'center'},2:{halign:'right'}},margin:{left:14,right:14}});
-    var corpo=d.vendas.slice().reverse().map(function(v){ return ['#'+plab(v),new Date(v.criado).toLocaleDateString('pt-BR')+' '+hrBR(v.criado)+(GEST&&v.atend?'\n'+vdTxt(v.atend):''),vdTxt(vdLocal(v).replace(/<[^>]+>/g,'')),(v.l||[]).map(function(l){ return vdTxt(vdItem(l)); }).join('\n'),v.status==='estornado'?'ESTORNADO':vdTxt(VD_FP[v.forma]||v.forma),brl(v.total)]; });
+    var corpo=d.vendas.slice().reverse().map(function(v){ return ['#'+plab(v),new Date(v.criado).toLocaleDateString('pt-BR')+' '+hrBR(v.criado)+(GEST&&v.atend?'\n'+vdTxt(v.atend):''),vdTxt(vdLocal(v).replace(/<[^>]+>/g,'')),(v.l||[]).map(function(l){ return vdTxt(vdItem(l)); }).join('\n'),v.status==='estornado'?'ESTORNADO':vdTxt(vdForma(v)),brl(v.total)]; });
     doc.autoTable({startY:doc.lastAutoTable.finalY+8,head:[['Pedido','Data','Local','Itens','Pagamento','Valor']],body:corpo,theme:'striped',headStyles:{fillColor:cor},styles:{fontSize:8.5,cellPadding:1.8,valign:'top'},columnStyles:{0:{cellWidth:16},1:{cellWidth:24},2:{cellWidth:28},4:{cellWidth:24},5:{cellWidth:20,halign:'right'}},margin:{left:14,right:14},
       didParseCell:function(c){ if(c.section==='body'&&c.column.index===4&&c.cell.raw==='ESTORNADO') c.cell.styles.textColor=[200,30,30]; }});
     var nome='vendas-'+vdTxt(quem||'garcom').toLowerCase().normalize('NFD').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'-'+d.ini+(d.fim!==d.ini?'_'+d.fim:'')+'.pdf';
@@ -1170,19 +1252,25 @@ function code128Svg(txt){
 }
 function impOn(){ return true; }   /* (230) imprimir é obrigatório: o garçom não escolhe (a opção saiu da tela) */
 function impSet(v){ try{ localStorage.setItem('at_imp',v?'1':'0'); }catch(e){} }
-function reimp(i,k){ var c=COMS[i], p=c.pedidos[k]; imprimeAuto({num:p.num,sub:p.sub||0,mesa:p.mesa||c.mesa,joia:c.joia,nome:c.nome,atend:p.atend,criado:p.criado,obs:p.obs,l:p.l||[],reimp:1}); }
-var CSS_SLIP='.c{text-align:center}.emp{font-size:17px;font-weight:900;letter-spacing:.5px}.sub{font-size:12px;letter-spacing:3px;font-weight:700;margin-top:2px}.sp{border-top:2px dashed #000;margin:7px 0}.mesa{background:#000;color:#fff;text-align:center;font-size:34px;font-weight:900;padding:6px 4px;border-radius:6px;letter-spacing:1px;-webkit-print-color-adjust:exact;print-color-adjust:exact}.row{display:flex;justify-content:space-between;font-size:12.5px;margin:3px 0}.cli{font-size:16px;font-weight:900;margin-top:6px}.jo{display:inline-block;border:2px solid #000;border-radius:5px;padding:0 6px;font-weight:900;margin-left:4px}.it{display:flex;gap:8px;margin:7px 0;font-size:14px}.q{font-weight:900;font-size:17px;min-width:30px}.d b{font-size:15px;text-transform:uppercase}.d div{font-size:13px;margin-top:1px}.d .ob{font-weight:900;border:1.5px solid #000;border-radius:4px;padding:1px 4px;margin-top:3px}.po{font-size:13px;font-weight:700;border:2px solid #000;border-radius:5px;padding:4px 6px;margin-top:4px}.bc{text-align:center;margin-top:8px}.bc svg{max-width:100%;height:46px}.num{font-size:15px;font-weight:900;letter-spacing:2px;text-align:center}';
-function destLinha(l){ var pp=null,i; for(i=0;i<(D.prods||[]).length;i++){ if((l.p&&D.prods[i].id===l.p)||(!l.p&&D.prods[i].nome===l.nome)){ pp=D.prods[i]; break; } } var c=null; if(pp&&pp.cat){ for(i=0;i<(D.cats||[]).length;i++) if(D.cats[i].id===pp.cat) c=D.cats[i]; } return (c&&c.dest==='bar')?'bar':'cozinha'; }
+function reimp(i,k){ var c=COMS[i], p=c.pedidos[k]; imprimeAuto({num:p.num,sub:p.sub||0,mesa:p.mesa||c.mesa,joia:c.joia,nome:c.nome,atend:p.atend,criado:p.criado,obs:p.obs,copos:p.copos||0,l:p.l||[],reimp:1}); }
+var CSS_SLIP='.c{text-align:center}.emp{font-size:17px;font-weight:900;letter-spacing:.5px}.sub{font-size:12px;letter-spacing:3px;font-weight:700;margin-top:2px}.sp{border-top:2px dashed #000;margin:7px 0}.mesa{background:#000;color:#fff;text-align:center;font-size:34px;font-weight:900;padding:6px 4px;border-radius:6px;letter-spacing:1px;-webkit-print-color-adjust:exact;print-color-adjust:exact}.row{display:flex;justify-content:space-between;font-size:12.5px;margin:3px 0}.cli{font-size:16px;font-weight:900;margin-top:6px}.jo{display:inline-block;border:2px solid #000;border-radius:5px;padding:0 6px;font-weight:900;margin-left:4px}.it{display:flex;gap:8px;margin:7px 0;font-size:14px}.q{font-weight:900;font-size:17px;min-width:30px}.d b{font-size:15px;text-transform:uppercase}.d div{font-size:13px;margin-top:1px}.d .ob{font-weight:900;border:1.5px solid #000;border-radius:4px;padding:1px 4px;margin-top:3px}.po{font-size:13px;font-weight:700;border:2px solid #000;border-radius:5px;padding:4px 6px;margin-top:4px}.bc{text-align:center;margin-top:8px}.bc svg{max-width:100%;height:46px}.num{font-size:15px;font-weight:900;letter-spacing:2px;text-align:center}.grp{text-align:center;font-size:15px;font-weight:900;border:2px solid #000;border-radius:5px;padding:3px;margin-top:5px}.cop{text-align:center;font-size:24px;font-weight:900;border:3px solid #000;border-radius:6px;padding:4px;margin-top:6px}';   /* (250) ficha do bar dividida e copos */
+function catLinha(l){ var pp=null,i; for(i=0;i<(D.prods||[]).length;i++){ if((l.p&&D.prods[i].id===l.p)||(!l.p&&D.prods[i].nome===l.nome)){ pp=D.prods[i]; break; } } var c=null; if(pp&&pp.cat){ for(i=0;i<(D.cats||[]).length;i++) if(D.cats[i].id===pp.cat) c=D.cats[i]; } return c; }
+function destLinha(l){ var c=catLinha(l); return (c&&c.dest==='bar')?'bar':'cozinha'; }
+/* (250) fichas: cozinha; bar numa ficha só ou, com "Dividir a impressão do bar", BEBIDA PRONTA e BEBIDA DE PREPARO. Os copos vão na primeira ficha do bar. [setor, linhas, grupo, copos] */
 function filaSetor(p){
-  var g={cozinha:[],bar:[]}; (p.l||[]).forEach(function(l){ g[destLinha(l)].push(l); });
-  var fila=[]; ['cozinha','bar'].forEach(function(s){ if(g[s].length) fila.push([s,g[s]]); }); if(!fila.length) fila.push(['cozinha',p.l||[]]);
+  var g={cozinha:[],bar:[]}, pr=[], pp=[], dv=!!(D.cfg&&D.cfg.bar_divide); (p.l||[]).forEach(function(l){ g[destLinha(l)].push(l); });
+  g.bar.forEach(function(l){ var c=catLinha(l); (dv&&c&&c.prep?pp:pr).push(l); });
+  var fila=[]; if(g.cozinha.length) fila.push(['cozinha',g.cozinha,'',0]);
+  if(pr.length) fila.push(['bar',pr,pp.length?'pronta':'',0]); if(pp.length) fila.push(['bar',pp,'preparo',0]);
+  for(var k=0;k<fila.length;k++) if(fila[k][0]==='bar'){ fila[k][3]=Number(p.copos)||0; break; }
+  if(!fila.length) fila.push(['cozinha',p.l||[],'',0]);
   return fila;
 }
 function imprime(p){ imprimeFila(p,filaSetor(p)); }
 /* (ATEND-37) impressão automática: manda para a fila do Worker (o programa do restaurante imprime em cada impressora); se o programa não está ligado, imprime pelo navegador como antes */
 function imprimeAuto(p){
   var fila=filaSetor(p);
-  api('/painel/atend-imprimir',{lab:plab(p),mesa:ehSMM(p.mesa)?'':p.mesa,modo:p.modo,joia:p.joia,nome:p.nome,atend:p.atend,criado:p.criado,obs:p.obs,reimp:p.reimp?1:0,empresa:D.empresa||'',fila:fila.map(function(x){ return {setor:x[0],l:x[1]}; })}).then(function(r){
+  api('/painel/atend-imprimir',{lab:plab(p),mesa:ehSMM(p.mesa)?'':p.mesa,modo:p.modo,joia:p.joia,nome:p.nome,atend:p.atend,criado:p.criado,obs:p.obs,reimp:p.reimp?1:0,empresa:D.empresa||'',fila:fila.map(function(x){ return {setor:x[0],l:x[1],grupo:x[2]||undefined,copos:x[3]||undefined}; })}).then(function(r){
     if(r&&r.ok&&r.agente) return;
     if(r&&r.ok){ imprimeFila(p,fila); return; }   /* o programa de impressão do restaurante está desligado: imprime pelo navegador, como antes */
     /* (246) sem rede ou erro: o pedido já está no servidor e a fila imprime sozinha em até 1 minuto (Worker 246). Reimpressão pedida à mão precisa ser repetida. */
@@ -1191,20 +1279,20 @@ function imprimeAuto(p){
 }
 function imprimeFila(p,fila){
   var pags=[];
-  fila.forEach(function(x){ pags.push(slipSetor(p,x[0],x[1])); });
+  fila.forEach(function(x){ pags.push(slipSetor(p,x[0],x[1],x[2],x[3])); });
   var html='<!doctype html><html><head><meta charset="utf-8"><title>Pedido '+plab(p)+'</title><style>@page{size:80mm auto;margin:4mm}*{box-sizing:border-box}body{margin:0;width:70mm;font-family:Arial,Helvetica,sans-serif;color:#000}.slip{break-after:page;page-break-after:always}.slip:last-child{break-after:auto;page-break-after:auto}'+CSS_SLIP+'</style></head><body>'+pags.map(function(s){ return '<div class="slip">'+s+'</div>'; }).join('')+'</body></html>';
   var f=document.createElement('iframe'); f.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0'; document.body.appendChild(f);
   var d=f.contentWindow.document; d.open(); d.write(html); d.close();
   setTimeout(function(){ try{ f.contentWindow.focus(); f.contentWindow.print(); }catch(e){ toast('Não consegui abrir a impressão.'); } setTimeout(function(){ try{ f.remove(); }catch(e){} },60000); },350);
 }
-function slipSetor(p,setor,linhas){
+function slipSetor(p,setor,linhas,grupo,copos){
   var eh=esc, it='';
   (linhas||[]).forEach(function(l){ var n=(l.sab||[]).length, sub=[]; if(l.tam) sub.push(eh(l.tam)); (l.sab||[]).forEach(function(x){ sub.push((n>1?'1/'+n+' ':'')+eh(x)); }); if(l.borda) sub.push('Borda: '+eh(l.borda)); (l.adds||[]).forEach(function(a){ sub.push('+ '+eh(a)); });
     it+='<div class="it"><div class="q">'+l.qty+'x</div><div class="d"><b>'+eh(l.nome)+'</b>'+sub.map(function(x){ return '<div>'+x+'</div>'; }).join('')+(l.obs?'<div class="ob">! '+eh(l.obs)+'</div>':'')+'</div></div>'; });
   var local=ehBalM(p.mesa)?'BALCÃO':(ehSMM(p.mesa)||(!p.mesa&&!p.joia&&p.modo!=='balcao'))?'SEM MESA':p.mesa?((p.modo==='balcao'?'BALCÃO ':'MESA ')+eh(p.mesa)):(p.modo==='balcao'?'BALCÃO':'CLIENTE '+eh(p.joia));
   var html=''
-   +'<div class="c emp">'+eh(D.empresa||'')+'</div><div class="c sub">'+(setor==='bar'?'BAR':'COZINHA')+(p.reimp?' · 2ª VIA':'')+'</div><div class="sp"></div>'
-   +'<div class="mesa"'+(p.mesa?'':' style="font-size:20px"')+'>'+local+'</div>'
+   +'<div class="c emp">'+eh(D.empresa||'')+'</div><div class="c sub">'+(setor==='bar'?'BAR':'COZINHA')+(p.reimp?' · 2ª VIA':'')+'</div>'+(grupo?'<div class="grp">'+(grupo==='preparo'?'BEBIDA DE PREPARO':'BEBIDA PRONTA')+'</div>':'')+'<div class="sp"></div>'
+   +'<div class="mesa"'+(p.mesa?'':' style="font-size:20px"')+'>'+local+'</div>'+(copos>0?'<div class="cop">COPOS: '+copos+'</div>':'')
    +'<div class="row"><span><b>Pedido #'+plab(p)+'</b></span><span>'+new Date(p.criado).toLocaleDateString('pt-BR')+' '+hrBR(p.criado)+'</span></div>'
    +(p.atend?'<div class="row"><span>Atendente: '+eh(p.atend)+'</span></div>':'')+'<div class="sp"></div>'+it
    +(p.nome&&p.joia?'<div class="sp"></div><div class="cli">'+eh(p.nome)+'<span class="jo">'+eh(p.joia)+'</span></div>':'')

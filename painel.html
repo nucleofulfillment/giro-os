@@ -5310,7 +5310,7 @@ function limparFiltroDash(){ DASH_TR=null; pintarIndicadores(); pintarDashboard(
 function limparFiltroTransportadora(){ FILTRO_TR=null; pintarPedidos(); }
 /* ── (GIRO-OS-009) tempo do pedido: verde até 30 min, amarelo 30–60, vermelho acima de 60 (limites guardados em giro_tempo, prontos pra virar configuração) ── */
 var PD_FIM={entregue:1,devolvido:1,extraviado:1,cancelado:1};
-var PD_FORMA={online:'Pago online',pix:'Pix',dinheiro:'Dinheiro',cartao:'Cartão',cartao_deb:'Cartão débito',cartao_cred:'Cartão crédito'};
+var PD_FORMA={online:'Pago online',pix:'Pix',dinheiro:'Dinheiro',cartao:'Cartão',cartao_deb:'Cartão débito',cartao_cred:'Cartão crédito',misto:'Dividido'};   /* (250) misto = pagamento dividido */
 var PD_ORIGENS=['Pedidos10','WhatsApp','Balcão/telefone','iFood'];
 function pdTempoCfg(){ var c={am:30,ve:60}; try{ var r=JSON.parse(localStorage.getItem('giro_tempo')||'null'); if(r && Number(r.am)>0 && Number(r.ve)>Number(r.am)){ c.am=Number(r.am); c.ve=Number(r.ve); } }catch(e){} return c; }
 function pdHoraMs(p){ if(p.hp) return Number(p.hp); if(p.dia && /^\d{2}:\d{2}/.test(String(p.hora||''))){ var t=new Date(p.dia+'T'+String(p.hora).slice(0,5)+':00').getTime(); return isNaN(t)?0:t; } return 0; }
@@ -5481,7 +5481,9 @@ function msDentroConta(x,comConta){ return x.status==='novo'&&x.pagto==='conta'&
 function msSt(x){ return x.fase==='entregue'?['Servido','#64748b']:x.fase==='preparo'?['Em preparo','#f59e0b']:(x.fase==='rota'?['Pronto','#22c55e']:['Novo','#ef4444']); }
 function msSelo(x){ var s=msSt(x); return '<span class="ms-st" style="background:'+s[1]+'">'+s[0]+'</span>'; }
 function msBt(x,cls){ var nx=x.fase===''?['preparo','Começar preparo']:(x.fase==='preparo'?['rota','Pronto']:null); return nx?'<button class="btn '+(cls||'sec')+' sm" type="button" onclick="event.stopPropagation();msFase(\''+esc(x.id)+'\',\''+nx[0]+'\')">'+nx[1]+'</button>':''; }
-function msReceb(x){ if(x.status==='marcado') return 'Marcado na conta'; if(x.status!=='pago') return 'Conta aberta'; var p=x.pagto; return p==='pix'?'Pago no Pix':p==='dinheiro'?'Pago em dinheiro':p==='cartao'?(x.cartao_tipo==='credito'?'Pago no crédito':x.cartao_tipo==='debito'?'Pago no débito':'Pago no cartão'):p==='racha'?'Conta rachada':'Pago'; }
+var PG_NOME={credito:'crédito',debito:'débito',cartao:'cartão',pix:'Pix',dinheiro:'dinheiro',outros:'outro'};
+function pgPartesTxt(ps){ return (ps||[]).map(function(p){ return (PG_NOME[p.f]||p.f)+' R$ '+Number(p.v||0).toFixed(2).replace('.',','); }).join(' + '); }   /* (250) pagamento dividido */
+function msReceb(x){ if(x.status==='marcado') return 'Marcado na conta'; if(x.status!=='pago') return 'Conta aberta'; if(x.partes&&x.partes.length) return 'Pago dividido: '+pgPartesTxt(x.partes); var p=x.pagto; return p==='pix'?'Pago no Pix':p==='dinheiro'?'Pago em dinheiro':p==='cartao'?(x.cartao_tipo==='credito'?'Pago no crédito':x.cartao_tipo==='debito'?'Pago no débito':'Pago no cartão'):p==='racha'?'Conta rachada':'Pago'; }
 function msInfo(x){ return '<span class="ms-cut ms-it" title="'+esc(x.itens)+'">'+esc(x.itens)+'</span>'+(x.atend?'<span class="ms-cut ms-gc">Garçom: '+esc(x.atend)+(x.cli?' · Cliente: '+esc(x.cli)+' ('+esc(x.joia)+')':'')+'</span>':'')+(x.obs?'<span class="ms-cut ms-ob" title="'+esc(x.obs)+'">Obs: '+esc(x.obs)+'</span>':''); }
 /* pedido dentro de uma conta de mesa: linha própria, larga, embaixo da mesa (antes ficava espremido na 1ª coluna e quebrava a tabela) */
 function msPedLinha(x){
@@ -5646,7 +5648,7 @@ function foodImportar(o,fim){
       var mz=String((e&&e.mesa)||''), dz=new Date(), entz=ymdLocal(dz)+' '+hora, mzT=msLocal(mz).replace(/&amp;/g,'&');   /* (240) "Sem mesa #7" / "Cliente Balcão" em vez de "Mesa SM7" */
       ped.st='entregue'; ped.ent=entz; ped.cliente=mzT+(o.nome&&!/^(Mesa |Sem mesa|Cliente Balcão|Tickets)/.test(o.nome)?' · '+o.nome:''); ped.bairro=mzT; ped.bai=ped.bairro; ped.rua=''; ped.num=''; ped.comp=''; ped.cid=''; ped.cep=''; ped.ref='';
       ped.tpe='Mesa'; ped.canal='Mesa'; ped.fn=String(o.num||''); ped.tx=null; ped.urg=0; ped.prz=''; ped.prt=''; ped.obs=''; ped.t1=hora+' — pago na mesa'; ped.pgp=1; ped.apg=0;
-      ped.pg=(o.pagto==='dinheiro'?'dinheiro':'online'); ped.pgr=({pix:'pix',dinheiro:'dinheiro',cartao:'cartao'})[o.pagto]||'pago'; ped.op=(o.obs||'');
+      ped.pg=(o.pagto==='dinheiro'?'dinheiro':'online'); ped.pgr=({pix:'pix',dinheiro:'dinheiro',cartao:'cartao',misto:'misto'})[o.pagto]||'pago'; ped.op=(o.obs||'')+(o.pagto==='misto'&&o.partes?((o.obs?' | ':'')+'Pago dividido: '+pgPartesTxt(o.partes)):'');   /* (250) */
       if(!EXTRATO.some(function(x){ return x.fdid===o.id; })){
         var mxz=0; EXTRATO.forEach(function(x){ if(Number(x.id)>mxz) mxz=Number(x.id); });
         if(CATEGORIAS_FC.indexOf('Vendas')<0) CATEGORIAS_FC.push('Vendas');
@@ -8944,7 +8946,7 @@ function msPintar(){
   h+='<div style="font-weight:800;font-size:13.5px;margin:12px 0 6px">🍽️ Pedidos das mesas</div>';
   if(!MS.ped.length) h+='<div style="border:1px dashed var(--border);border-radius:12px;padding:14px;font-size:13px;color:var(--muted)">Nenhum pedido de mesa em andamento.</div>';
   MS.ped.forEach(function(x){
-    var st=x.fase==='preparo'?['Em preparo','#f59e0b']:(x.fase==='rota'?['Pronto','#22c55e']:['Novo','#ef4444']), pg=x.status==='pago'?(x.pagto==='pix'?'Pago no Pix':x.pagto==='dinheiro'?'Pago em dinheiro':x.pagto==='cartao'?'Pago no cartão':x.pagto==='racha'?'Conta rachada':'Pago'):(x.status==='marcado'?'Pendurado (conta do cliente)':x.pagto==='conta'?'Na conta da mesa':x.pagto==='caixa'?'Pagar no caixa (cartão ou dinheiro)':'Pago no Pix');
+    var st=x.fase==='preparo'?['Em preparo','#f59e0b']:(x.fase==='rota'?['Pronto','#22c55e']:['Novo','#ef4444']), pg=x.status==='pago'?(x.pagto==='pix'?'Pago no Pix':x.pagto==='dinheiro'?'Pago em dinheiro':x.pagto==='cartao'?'Pago no cartão':x.pagto==='racha'?'Conta rachada':x.pagto==='misto'?'Pago dividido'+(x.partes?': '+pgPartesTxt(x.partes):''):'Pago'):(x.status==='marcado'?'Pendurado (conta do cliente)':x.pagto==='conta'?'Na conta da mesa':x.pagto==='caixa'?'Pagar no caixa (cartão ou dinheiro)':'Pago no Pix');
     var bt=x.fase===''?'<button class="btn pri sm" type="button" onclick="msFase(\''+esc(x.id)+'\',\'preparo\')">Começar preparo</button>':(x.fase==='preparo'?'<button class="btn pri sm" type="button" onclick="msFase(\''+esc(x.id)+'\',\'rota\')">Pronto</button>':'');   /* (240) Pronto não pede mais "Servido" */
     h+='<div style="border:1px solid var(--border);border-radius:12px;padding:10px;margin-bottom:10px"><div style="display:flex;align-items:center;gap:8px"><b style="font-size:15px">'+msLocal(x.mesa)+'</b><span style="font-size:12px;color:var(--muted)">#'+x.num+' · '+msHora(x.criado)+'</span><span style="margin-left:auto;font-size:11.5px;font-weight:800;color:#fff;background:'+st[1]+';border-radius:10px;padding:2px 9px">'+st[0]+'</span></div><div style="font-size:13.5px;margin:6px 0;line-height:1.45">'+esc(x.itens)+'</div>'+(x.atend?'<div style="font-size:12px;font-weight:700;color:var(--muted2);margin-bottom:4px">Garçom: '+esc(x.atend)+(x.cli?' · Cliente: '+esc(x.cli)+' ('+esc(x.joia)+')':'')+'</div>':'')+(x.obs?'<div style="font-size:12.5px;color:#f59e0b;margin-bottom:6px">Obs: '+esc(x.obs)+'</div>':'')+'<div style="display:flex;align-items:center;gap:8px"><span style="font-size:12.5px;color:var(--muted);flex:1">'+pg+' · '+moeda(x.total)+'</span>'+bt+'</div></div>'; });
   el('cd-imp-corpo').innerHTML=h;
@@ -9662,7 +9664,7 @@ function nfcTenta(){
 }
 function msDetalhe(id){
   var x=((typeof MS!=='undefined'&&MS.ped)||[]).filter(function(o){ return o.id===id; })[0]; if(!x) return;
-  var rc=x.status==='pago'?(x.pagto==='pix'?'Pago no Pix':x.pagto==='dinheiro'?'Pago em dinheiro':x.pagto==='cartao'?'Pago no cartão':x.pagto==='racha'?'Conta rachada':'Pago'):(x.status==='marcado'?'Pendurado':'Conta aberta');
+  var rc=x.status==='pago'?(x.pagto==='pix'?'Pago no Pix':x.pagto==='dinheiro'?'Pago em dinheiro':x.pagto==='cartao'?'Pago no cartão':x.pagto==='racha'?'Conta rachada':x.pagto==='misto'?'Pago dividido'+(x.partes?': '+pgPartesTxt(x.partes):''):'Pago'):(x.status==='marcado'?'Pendurado':'Conta aberta');
   var fs=x.fase==='preparo'?'Em preparo':(x.fase==='rota'?'Pronto':'Novo');
   var linha=function(t){ return '<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:14px;line-height:1.4">'+esc(t)+'</div>'; };
   var li=(x.subs&&x.subs.length)?x.subs.map(function(sb,i){ return '<div style="margin-top:10px;font-size:12.5px;font-weight:800;color:var(--muted)">'+x.num+'-'+(sb.sub||i+1)+' · '+msHora(sb.criado)+(sb.atend?' · '+esc(sb.atend):'')+'</div>'+String(sb.itens||'').split('; ').map(linha).join('')+(sb.obs?'<div style="color:var(--amber);font-weight:700;font-size:12.5px">Obs: '+esc(sb.obs)+'</div>':''); }).join(''):String(x.itens||'').split('; ').map(linha).join('');
@@ -9759,6 +9761,8 @@ function cdCfgClientes(){
       +'<label style="display:flex;gap:8px;align-items:flex-start;font-size:13.5px;font-weight:700;margin-bottom:14px;padding:10px 12px;border:1px solid var(--border);border-radius:12px"><input type="checkbox" id="cc-pronto" '+(c.pronto_direto?'checked':'')+' style="width:18px;height:18px;flex:none"><span>Pedido do Atendimento já sai pronto<small style="display:block;font-weight:500;color:var(--muted);margin-top:2px">O pedido lançado pelo garçom entra na Cozinha direto como Pronto, sem passar por Em preparo. Bom para bar e itens entregues na hora. A comanda continua aberta até fechar a conta.</small></span></label>'
       +'<label style="display:flex;gap:8px;align-items:flex-start;font-size:13.5px;font-weight:700;margin-bottom:14px;padding:10px 12px;border:1px solid var(--border);border-radius:12px"><input type="checkbox" id="cc-marcar" '+(c.marcar===false?'':'checked')+' style="width:18px;height:18px;flex:none"><span>Permitir Marcar na conta<small style="display:block;font-weight:500;color:var(--muted);margin-top:2px">Ligado, o garçom pode deixar o pedido na conta do cliente (pendurar) para cobrar no fechamento. Desligado, a opção Marcar some e todo pedido é pago na hora.</small></span></label>'
       +'<label style="display:flex;gap:8px;align-items:flex-start;font-size:13.5px;font-weight:700;margin-bottom:14px;padding:10px 12px;border:1px solid var(--border);border-radius:12px"><input type="checkbox" id="cc-cobra" '+(c.cobra_hora?'checked':'')+' style="width:18px;height:18px;flex:none"><span>Cobrar na hora do pedido<small style="display:block;font-weight:500;color:var(--muted);margin-top:2px">No Atendimento, o botão do carrinho vira <b>Fechar comanda</b>: o garçom escolhe a forma de pagamento, mostra o resumo para o cliente e, com o pagamento aprovado, o pedido vai para a cozinha. Se o cliente desistir, cancela sem criar pedido.</small></span></label>'
+      +'<label style="display:flex;gap:8px;align-items:flex-start;font-size:13.5px;font-weight:700;margin-bottom:14px;padding:10px 12px;border:1px solid var(--border);border-radius:12px"><input type="checkbox" id="cc-copos" '+(c.copos?'checked':'')+' style="width:18px;height:18px;flex:none"><span>Perguntar quantos copos<small style="display:block;font-weight:500;color:var(--muted);margin-top:2px">No Atendimento, pedido com bebida do Bar só sai depois de o garçom tocar no número de copos (ou Sem copo). O número sai em destaque na ficha do bar.</small></span></label>'
+      +'<label style="display:flex;gap:8px;align-items:flex-start;font-size:13.5px;font-weight:700;margin-bottom:14px;padding:10px 12px;border:1px solid var(--border);border-radius:12px"><input type="checkbox" id="cc-bardiv" '+(c.bar_divide?'checked':'')+' style="width:18px;height:18px;flex:none"><span>Dividir a impressão do bar<small style="display:block;font-weight:500;color:var(--muted);margin-top:2px">O pedido sai em duas fichas no bar: <b>bebida pronta</b> (cerveja, água, refri: pegar e levar) e <b>bebida de preparo</b> (caipirinha, chope, drinks). Marque as categorias de preparo como <b>Bar · preparo</b> em Cardápio &gt; Categorias.</small></span></label>'
       +'<label style="font-size:12px;font-weight:700;color:var(--muted2)">Bloquear cliente com cobrança vencida há mais de (dias)</label>'
       +'<input class="inp" id="cc-bloq" inputmode="numeric" pattern="[0-9]*" placeholder="0 = não bloquear" value="'+(c.bloq_dias||'')+'" style="margin:6px 0 14px">'
       +'<label style="display:flex;gap:8px;align-items:center;font-size:13.5px;font-weight:700;margin-bottom:6px"><input type="checkbox" id="cc-auto" '+(c.fecha_auto?'checked':'')+' style="width:18px;height:18px"> Fechar a conta e gerar a cobrança automaticamente</label>'
@@ -9770,7 +9774,7 @@ function cdCfgClientes(){
   }).catch(function(e){ el('cd-imp-corpo').innerHTML='<div style="color:#f87171;font-size:13px">'+esc(e.message||'Não consegui abrir.')+'</div>'; });
 }
 function cdCfgClientesSalvar(){
-  fetch(DELTADIS_API+'/painel/atend-cfg',{method:'POST',headers:cdHdr(),body:JSON.stringify({balcao_livre:el('cc-bal').checked,garcom_livre:el('cc-garliv').checked,pronto_direto:el('cc-pronto').checked,cobra_hora:el('cc-cobra').checked,marcar:el('cc-marcar').checked,bloq_dias:el('cc-bloq').value,fecha_auto:el('cc-auto').checked,fecha_dias:el('cc-dias').value,msg:el('cc-msg').value})}).then(function(r){return r.json();}).then(function(d){
+  fetch(DELTADIS_API+'/painel/atend-cfg',{method:'POST',headers:cdHdr(),body:JSON.stringify({balcao_livre:el('cc-bal').checked,garcom_livre:el('cc-garliv').checked,pronto_direto:el('cc-pronto').checked,cobra_hora:el('cc-cobra').checked,marcar:el('cc-marcar').checked,copos:el('cc-copos').checked,bar_divide:el('cc-bardiv').checked,bloq_dias:el('cc-bloq').value,fecha_auto:el('cc-auto').checked,fecha_dias:el('cc-dias').value,msg:el('cc-msg').value})}).then(function(r){return r.json();}).then(function(d){
     if(!d||!d.ok) throw new Error((d&&d.mensagem)||'não salvou');
     /* servidor antigo descarta a opção sem avisar: mostra em vez de dizer que salvou */
     if(el('cc-bal').checked&&!(d.cfg&&d.cfg.balcao_livre)) throw new Error('O servidor ainda não aceita esta opção. Publique o Worker 153 e salve de novo.');
@@ -9778,6 +9782,7 @@ function cdCfgClientesSalvar(){
     if(el('cc-pronto').checked&&!(d.cfg&&d.cfg.pronto_direto)) throw new Error('O servidor ainda não aceita esta opção. Publique o Worker 216 e salve de novo.');
     if(el('cc-cobra').checked&&!(d.cfg&&d.cfg.cobra_hora)) throw new Error('O servidor ainda não aceita "Cobrar na hora do pedido". Publique o Worker 228 e salve de novo.');
     if(!el('cc-marcar').checked&&!(d.cfg&&d.cfg.marcar===false)) throw new Error('O servidor ainda não aceita desligar "Marcar na conta". Publique o Worker 232 e salve de novo.');
+    if((el('cc-copos').checked&&!(d.cfg&&d.cfg.copos))||(el('cc-bardiv').checked&&!(d.cfg&&d.cfg.bar_divide))) throw new Error('O servidor ainda não aceita copos e dividir a impressão do bar. Publique o Worker 250 e salve de novo.');
     aviso('Configurações salvas'); fecharTudo();
   }).catch(function(e){ var m=el('cc-m'); if(m){ m.style.color='#f87171'; m.textContent=e.message||'Não salvou'; } });
 }
@@ -10967,14 +10972,14 @@ function cdAbrirCats(){
     (CD.pCarga||cdCarregar()).then(function(){ if(el('sh-cats').classList.contains('on')) cdAbrirCatsLista(); }); return; }
   cdAbrirCatsLista();
 }
-function cdAbrirCatsLista(){ CD.cats=CD.cats||[]; if(CD_CAT_SUJO&&CD_CATS_ORIG) CD.cats=CD_CATS_ORIG; CD.cats.forEach(function(c){ delete c._mudou; if(c._dest0!==undefined){ c.dest=c._dest0; c.man=c._man0; delete c._dest0; delete c._man0; } }); CD_CATS_ORIG=CD.cats.slice(); CD_CAT_SUJO=false; cdPintarCats(); }
+function cdAbrirCatsLista(){ CD.cats=CD.cats||[]; if(CD_CAT_SUJO&&CD_CATS_ORIG) CD.cats=CD_CATS_ORIG; CD.cats.forEach(function(c){ delete c._mudou; if(c._dest0!==undefined){ c.dest=c._dest0; c.man=c._man0; c.prep=c._prep0; delete c._dest0; delete c._man0; delete c._prep0; } }); CD_CATS_ORIG=CD.cats.slice(); CD_CAT_SUJO=false; cdPintarCats(); }
 function cdCatSujo(){ CD_CAT_SUJO=true; var b=el('cd-cats-ord'); if(b) b.style.display='flex'; }
 function cdPintarCats(){
   var h='', i, b=el('cd-cats-ord'); if(b) b.style.display=CD_CAT_SUJO?'flex':'none';
   for(i=0;i<CD.cats.length;i++){
     var c=CD.cats[i], n=0, j; for(j=0;j<CD.prods.length;j++) if(CD.prods[j].cat===c.id) n++;
     h+='<div class="cd-cat-row" data-id="'+esc(c.id)+'" onpointerdown="cdCatLinhaDown(event,this)" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--border);background:var(--s1);user-select:none;-webkit-user-select:none;cursor:grab"><span onpointerdown="event.stopPropagation();cdCatArrasta(event,this)" title="Arraste para mudar a ordem" style="flex:none;cursor:grab;touch-action:none;user-select:none;font-size:20px;color:var(--muted);padding:6px 2px;line-height:1">⠿</span><div onclick="cdCatFotoEsc(\''+c.id+'\')" title="Foto da categoria" style="width:46px;height:46px;border-radius:10px;flex:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;background:var(--border) center/cover'+(c.foto?' url('+c.foto+')':'')+'">'+(c.foto?'':'📷')+'</div><div style="flex:1;font-weight:700;font-size:13.5px">'+esc(c.nome)+' <span style="font-weight:500;color:var(--muted);font-size:12px">· '+n+' produto'+(n===1?'':'s')+'</span></div>'
-      +'<select class="inp cd-dest" onchange="cdCatDest(\''+c.id+'\',this.value)" title="Para onde vai o pedido desta categoria" style="width:auto;padding:6px 8px;font-size:12.5px"><option value="cozinha"'+(cdDestDe(c)==='bar'?'':' selected')+'>🍳 Cozinha</option><option value="bar"'+(cdDestDe(c)==='bar'?' selected':'')+'>🍺 Bar</option></select><button class="btn sec sm" onclick="cdRenCat(\''+c.id+'\')">Renomear</button><button class="btn sec sm" onclick="cdDelCat(\''+c.id+'\')" style="color:var(--red)">Apagar</button></div>';
+      +'<select class="inp cd-dest" onchange="cdCatDest(\''+c.id+'\',this.value)" title="Para onde vai o pedido desta categoria" style="width:auto;padding:6px 8px;font-size:12.5px"><option value="cozinha"'+(cdDestDe(c)==='bar'?'':' selected')+'>🍳 Cozinha</option><option value="bar"'+(cdDestDe(c)==='bar'&&!c.prep?' selected':'')+'>🍺 Bar · pronta</option><option value="bar_prep"'+(cdDestDe(c)==='bar'&&c.prep?' selected':'')+'>🍹 Bar · preparo</option></select><button class="btn sec sm" onclick="cdRenCat(\''+c.id+'\')">Renomear</button><button class="btn sec sm" onclick="cdDelCat(\''+c.id+'\')" style="color:var(--red)">Apagar</button></div>';
   }
   el('cd-cats-lista').innerHTML=h||'<div style="color:var(--muted);font-size:13px">Nenhuma categoria ainda.</div>';
 }
@@ -10988,7 +10993,7 @@ function cdCatFoto(inp){
       cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);
       var q=0.8, out=cv.toDataURL('image/jpeg',q); while(out.length>300000&&q>0.35){ q-=0.1; out=cv.toDataURL('image/jpeg',q); }
       el('cd-cats-erro').textContent='Salvando foto...';
-      cdSalvarApi('cat',{id:c.id,ordem:c.ordem,nome:c.nome,foto:out,dest:cdDestDe(c),man:c.man?1:0}).then(cdRecarregarCats).then(function(){ el('cd-cats-erro').textContent=''; }).catch(function(e){ el('cd-cats-erro').textContent='Não salvou: '+e.message; });
+      cdSalvarApi('cat',{id:c.id,ordem:c.ordem,nome:c.nome,foto:out,dest:cdDestDe(c),man:c.man?1:0,prep:(cdDestDe(c)==='bar'&&c.prep)?1:0}).then(cdRecarregarCats).then(function(){ el('cd-cats-erro').textContent=''; }).catch(function(e){ el('cd-cats-erro').textContent='Não salvou: '+e.message; });
     }; im.onerror=function(){ el('cd-cats-erro').textContent='Não consegui ler essa imagem.'; }; im.src=rd.result; };
   rd.readAsDataURL(f); inp.value='';
 }
@@ -11019,25 +11024,25 @@ function cdCatArrasta(ev,h){
   document.addEventListener('pointermove',mv,{capture:true,passive:false}); document.addEventListener('pointerup',fim,true); document.addEventListener('pointercancel',fim,true);
   if(sb) rolar=setInterval(function(){ var bb=sb.getBoundingClientRect(); if(ultY<bb.top+50){ sb.scrollTop-=10; move(ultY); } else if(ultY>bb.bottom-50){ sb.scrollTop+=10; move(ultY); } },30);   /* perto da borda, a lista rola */
 }
-function cdCatDesfazer(){ CD.cats=CD_CATS_ORIG.slice(); CD.cats.forEach(function(c){ if(c._dest0!==undefined){ c.dest=c._dest0; c.man=c._man0; delete c._dest0; delete c._man0; } }); CD_CAT_SUJO=false; el('cd-cats-erro').textContent=''; cdPintarCats(); }
+function cdCatDesfazer(){ CD.cats=CD_CATS_ORIG.slice(); CD.cats.forEach(function(c){ if(c._dest0!==undefined){ c.dest=c._dest0; c.man=c._man0; c.prep=c._prep0; delete c._dest0; delete c._man0; delete c._prep0; } }); CD_CAT_SUJO=false; el('cd-cats-erro').textContent=''; cdPintarCats(); }
 /* salva a ordem (10, 20, 30… em quem mudou de lugar) e o Cozinha/Bar que foi trocado */
 function cdCatSalvar(){
   var b=el('cd-cats-ok'), er=el('cd-cats-erro');
   CD.cats.forEach(function(c,n){ var o=(n+1)*10; if(Number(c.ordem)!==o){ c.ordem=o; c._mudou=1; } if(c._dest0!==undefined) c._mudou=1; });
   var l=CD.cats.filter(function(c){ return c._mudou; }); if(!l.length){ CD_CAT_SUJO=false; cdPintarCats(); return; }
   b.disabled=true; b.textContent='Salvando…'; er.textContent='';
-  Promise.all(l.map(function(c){ return cdSalvarApi('cat',{id:c.id,ordem:c.ordem,nome:c.nome,foto:c.foto||'',dest:cdDestDe(c),man:c.man?1:0}); }))
+  Promise.all(l.map(function(c){ return cdSalvarApi('cat',{id:c.id,ordem:c.ordem,nome:c.nome,foto:c.foto||'',dest:cdDestDe(c),man:c.man?1:0,prep:(cdDestDe(c)==='bar'&&c.prep)?1:0}); }))
     .then(function(){ CD_CAT_SUJO=false; b.disabled=false; b.textContent='Salvar'; aviso('Categorias salvas'); return cdRecarregarCats().then(function(){ CD_CATS_ORIG=CD.cats.slice(); }); })
     .catch(function(e){ b.disabled=false; b.textContent='Salvar'; er.textContent='Não salvou: '+e.message; });
 }
 function cdCatDest(id,v){
   var i, c=null; for(i=0;i<CD.cats.length;i++) if(CD.cats[i].id===id) c=CD.cats[i]; if(!c) return;
-  if(c._dest0===undefined){ c._dest0=c.dest; c._man0=c.man; } c.dest=v; c.man=1; cdCatSujo();   /* (231) só grava no Salvar */
+  if(c._dest0===undefined){ c._dest0=c.dest; c._man0=c.man; c._prep0=c.prep; } c.dest=v==='bar_prep'?'bar':v; c.prep=v==='bar_prep'?1:0; c.man=1; cdCatSujo();   /* (231) só grava no Salvar · (250) Bar · preparo = bar + prep */
 }
 function cdRenCat(id){
   var i, c=null; for(i=0;i<CD.cats.length;i++) if(CD.cats[i].id===id) c=CD.cats[i];
   if(!c) return; var nm=window.prompt('Novo nome da categoria:',c.nome); if(!nm||!nm.trim()) return;
-  cdSalvarApi('cat',{id:c.id,ordem:c.ordem,nome:nm.trim(),foto:c.foto||'',dest:cdDestDe(c),man:c.man?1:0}).then(cdRecarregarCats).catch(function(e){ el('cd-cats-erro').textContent='Não salvou: '+e.message; });
+  cdSalvarApi('cat',{id:c.id,ordem:c.ordem,nome:nm.trim(),foto:c.foto||'',dest:cdDestDe(c),man:c.man?1:0,prep:(cdDestDe(c)==='bar'&&c.prep)?1:0}).then(cdRecarregarCats).catch(function(e){ el('cd-cats-erro').textContent='Não salvou: '+e.message; });
 }
 function cdDelCat(id){
   var i, c=null, n=0; for(i=0;i<CD.cats.length;i++) if(CD.cats[i].id===id) c=CD.cats[i];

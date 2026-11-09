@@ -43,9 +43,13 @@ function etiqueta(p, cfg) {
   const b = new Buf(cfg), tr = '-'.repeat(COLS), setor = p.setor === 'bar' ? 'BAR' : (p.setor === 'caixa' ? 'CAIXA' : 'COZINHA');
   b.raw(0x1B, 0x40, 0x1B, 0x74, cfg.codepage == null ? 3 : cfg.codepage);   /* inicia + tabela de caracteres */
   b.align(1).bold(true).size(1, 2); quebra(p.empresa || '', COLS).forEach(l => b.ln(l)); b.size(1, 1);
-  b.ln(setor.split('').join(' ') + (p.reimp ? '  -  2a VIA' : '')).bold(false).align(0).ln(tr);
+  b.ln(setor.split('').join(' ') + (p.reimp ? '  -  2a VIA' : ''));
+  /* (250) ficha do bar dividida: BEBIDA PRONTA / BEBIDA DE PREPARO logo abaixo do setor */
+  if (p.grupo === 'pronta' || p.grupo === 'preparo') b.size(1, 2).ln(p.grupo === 'preparo' ? 'BEBIDA DE PREPARO' : 'BEBIDA PRONTA').size(1, 1);
+  b.bold(false).align(0).ln(tr);
   const local = p.mesa ? ((p.modo === 'balcao' ? 'BALCAO ' : 'MESA ') + p.mesa) : (p.modo === 'balcao' ? 'BALCAO' : 'CLIENTE ' + (p.joia || ''));
   b.align(1).inv(true).bold(true).size(2, 3).ln(' ' + local + ' ').size(1, 1).inv(false).bold(false).align(0);
+  if (p.copos > 0) b.align(1).bold(true).size(2, 2).ln('COPOS: ' + p.copos).size(1, 1).bold(false).align(0);   /* (250) copos que o garçom pediu */
   const esq = 'Pedido #' + p.lab, dir = dataHora(p.criado); b.bold(true).txt(esq).bold(false).ln(' '.repeat(Math.max(1, COLS - esq.length - dir.length)) + dir);
   if (p.nome && p.joia) { b.raw(10).bold(true).size(1, 2); quebra(p.nome + ' [' + p.joia + ']', COLS).forEach(l => b.ln(l)); b.size(1, 1).bold(false); }
   if (p.atend) b.ln('Atendente: ' + p.atend);
@@ -146,7 +150,7 @@ async function rodar() {
   const feitos = new Set(); let semNet = false;
   for (;;) {
     try {
-      const r = await http(cfg.api + '/imp/fila?cli=' + encodeURIComponent(cfg.cli) + '&key=' + encodeURIComponent(cfg.chave));
+      const r = await http(cfg.api + '/imp/fila?cli=' + encodeURIComponent(cfg.cli) + '&key=' + encodeURIComponent(cfg.chave) + '&v=250');   /* (250) versão: o servidor manda grupo e copos em campos próprios */
       if (!r.ok) { log('Fila recusou: ' + (r.mensagem || r._h)); }
       else {
         if (semNet) { log('Conexão voltou.'); semNet = false; }
