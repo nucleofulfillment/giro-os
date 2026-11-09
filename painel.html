@@ -5389,11 +5389,12 @@ function pintarPedidos(){
     if(busca){ var okB=alvo.indexOf(busca)>=0; if(!okB && buscaDig.length>=3 && String(p.tel||'').replace(/\D/g,'').indexOf(buscaDig)>=0) okB=true; if(!okB) continue; }
     achados.push({p:p,i:i});
   }
-  /* os mais antigos primeiro (quem espera há mais tempo fica no topo); entregues/devolvidos por último */
+  /* o pedido mais novo entra no topo (pedido do usuário 09/11); urgentes continuam em cima; entregues/devolvidos por último, também do mais novo ao mais antigo */
   achados.sort(function(a,b){
     var fa=PD_FIM[a.p.st]?1:0, fb=PD_FIM[b.p.st]?1:0; if(fa!==fb) return fa-fb;
-    if(!fa){ var ua=a.p.urg?1:0, ub=b.p.urg?1:0; if(ua!==ub) return ub-ua; var ma=pdHoraMs(a.p)||9e15, mb=pdHoraMs(b.p)||9e15; if(ma!==mb) return ma-mb; }
-    return a.i-b.i;
+    if(!fa){ var ua=a.p.urg?1:0, ub=b.p.urg?1:0; if(ua!==ub) return ub-ua; }
+    var ma=pdHoraMs(a.p)||0, mb=pdHoraMs(b.p)||0; if(ma!==mb) return mb-ma;
+    return b.i-a.i;
   });
   var h='', n=achados.length, k;
   for(k=0;k<achados.length && k<LIM;k++){ var p3=achados[k].p, m3=motorista(p3.mt), ender=[(p3.bai||p3.bairro||''),(p3.cid||'')].filter(Boolean).join(' · ');
@@ -5435,8 +5436,9 @@ function msPedidosHtml(busca,partes){
     h+='<tr class="ms-conta"><td><b>'+msLocal(k.mesa)+'</b><br><span style="color:var(--muted);font-size:11.5px">conta aberta · '+k.n+(k.n>1?' pedidos':' pedido')+'</span>'+msRachaHtml(k.pessoas)+'</td><td>'+msLocal(k.mesa)+'</td><td>'+msOrigem(k.mesa)+'</td><td>—</td><td>—</td><td><div class="ms-selos">'+(k.pessoas&&k.pessoas.length?'<span style="font-size:11.5px;font-weight:800;color:#fff;background:#2563eb;border-radius:10px;padding:2px 9px">'+(k.pessoas.length>1?'Rachada entre '+k.pessoas.length:'Parte paga')+'</span>':'')+(k.pedir?'<span style="font-size:11.5px;font-weight:800;color:#fff;background:#ef4444;border-radius:10px;padding:2px 9px">Quer fechar · '+(k.pedir==='dinheiro'?'dinheiro':'cartão')+'</span>':(k.pix?'<span style="font-size:12px;color:var(--muted)">Pix em andamento</span>':((k.pessoas&&k.pessoas.length)?'':'<span style="font-size:12px;color:var(--muted)">Consumindo</span>')))+'</div></td><td>'+moeda(k.total)+'</td><td>'+(k.pago?'Falta receber '+moeda(Math.max(0,Math.round((k.total-k.pago)*100)/100)):'Conta aberta')+'</td><td style="white-space:nowrap"><button class="btn pri sm" type="button" onclick="msFechaMesa(\''+esc(k.mesa)+'\')">'+(k.pago?'Recebi o restante · fechar':'Recebi · fechar mesa')+'</button></td></tr>'+dela.map(msPedLinha).join(''); });
   var linha=function(x,fim){ return '<tr class="ms-ped'+(fim?' ms-feito':'')+'" style="cursor:pointer" onclick="msDetalhe(\''+esc(x.id)+'\')"><td><b>#'+x.num+'</b>'+msInfo(x)+msRachaHtml(x.racha)+'</td><td>'+msLocal(x.mesa)+'</td><td>'+msOrigem(x.mesa)+'</td><td>'+msHora(x.criado)+'</td><td>—</td><td>'+msSelo(x)+'</td><td>'+moeda(x.total)+'</td><td>'+msReceb(x)+'</td><td style="white-space:nowrap">'+(fim?'':msBt(x,'pri'))+'</td></tr>'; };
   var achou=function(x){ return !busca||(((msBal(x.mesa)?'cliente balcão':'mesa '+x.mesa)+' '+x.num+' '+x.itens+' '+(x.atend||'')+' '+(x.cli||'')).toLowerCase().indexOf(busca)>=0); };
-  ped.forEach(function(x){ if(msDentroConta(x,comConta)||!achou(x)) return; if(partes&&x.status==='pago') return; h+=linha(x,false); });   /* em Todos, o pago já aparece pela cópia "Entregue" */
-  var hf=''; feito.forEach(function(x){ if(achou(x)) hf+=linha(x,true); });
+  var novo1=function(l){ var t=function(x){ var c=x.criado, n=Number(c); return isFinite(n)&&n>0?n:(Date.parse(c)||0); }; return l.slice().sort(function(a,b){ return t(b)-t(a); }); };   /* o mais novo no topo */
+  novo1(ped).forEach(function(x){ if(msDentroConta(x,comConta)||!achou(x)) return; if(partes&&x.status==='pago') return; h+=linha(x,false); });   /* em Todos, o pago já aparece pela cópia "Entregue" */
+  var hf=''; novo1(feito).forEach(function(x){ if(achou(x)) hf+=linha(x,true); });
   if(partes) return {ativos:h, feitos:hf};
   if(hf) h+='<tr class="ms-sec"><td colspan="9">Concluídos hoje · pagos e servidos</td></tr>'+hf;
   return h||'<tr><td colspan="9"><div class="empty">Nenhum pedido de mesa hoje</div></td></tr>';
