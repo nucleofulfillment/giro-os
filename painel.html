@@ -2203,6 +2203,34 @@ function pedExtra(p){ if(!(p.com||p.atn||p.tpe||p.prz||p.ref||p.op||p.cmid||p.tp
    Antes a entrada só nascia na tela que importava o pedido; com mais de uma tela aberta, outra tela salvava o Fluxo por cima e a entrada sumia (o pedido ficava).
    Agora o Fluxo é conferido com Pedidos: venda sem entrada ganha a entrada de novo (a partir de 01/11/2026). */
 var FC_REPOR_DESDE='2026-11-01';
+/* Fluxo de caixa entre várias telas: EX_BASE = o Fluxo como estava no servidor na última vez que esta tela sincronizou.
+   Quando outra tela salvou antes, em vez de trocar o Fluxo desta tela pelo do servidor, junta: parte do servidor e reaplica
+   o que ESTA tela mudou desde EX_BASE (lançou, editou, excluiu). Nada lançado à mão some. */
+var EX_BASE=null;
+function exSnap(a){ try{ return JSON.parse(JSON.stringify(a||[])); }catch(e){ return []; } }
+function exJuntar(srv,loc,base){
+  var out=exSnap(srv), pos={}, fds={}, mx=0, i, x, k, bmap={}, lmap={}, novos=[];
+  function idx(){ pos={}; fds={}; for(var j=0;j<out.length;j++){ pos[String(out[j].id)]=j; if(out[j].fdid!=null) fds[String(out[j].fdid)]=1; if(Number(out[j].id)>mx) mx=Number(out[j].id); } }
+  idx();
+  for(i=0;i<(loc||[]).length;i++){ x=loc[i]; if(x&&x.id!=null) lmap[String(x.id)]=x; }
+  if(base){
+    for(i=0;i<base.length;i++){ x=base[i]; if(x&&x.id!=null) bmap[String(x.id)]=JSON.stringify(x); }
+    for(k in bmap){ if(!lmap[k] && pos[k]!=null){ out.splice(pos[k],1); idx(); } }   /* excluído aqui */
+    for(k in lmap){ if(bmap[k]!=null){ var lj=JSON.stringify(lmap[k]); if(lj!==bmap[k] && pos[k]!=null) out[pos[k]]=exSnap([lmap[k]])[0]; } else novos.push(lmap[k]); }   /* editado aqui · novo aqui */
+  } else {
+    for(k in lmap){ if(pos[k]==null || JSON.stringify(out[pos[k]])!==JSON.stringify(lmap[k])) novos.push(lmap[k]); }   /* sem base conhecida: só acrescenta o que o servidor não tem (não apaga nada) */
+  }
+  for(i=0;i<novos.length;i++){ x=exSnap([novos[i]])[0];
+    if(x.fdid!=null && fds[String(x.fdid)]) continue;   /* a mesma venda já foi lançada por outra tela */
+    if(pos[String(x.id)]!=null){
+      if(JSON.stringify(out[pos[String(x.id)]])===JSON.stringify(x)) continue;
+      var velho=x.id; x.id=++mx;   /* outra tela usou o mesmo número: este ganha um número novo */
+      try{ MOTORISTAS.forEach(function(m){ (m.fechamentos||[]).forEach(function(f){ if(f.lancId===velho) f.lancId=x.id; }); }); }catch(e){}
+    }
+    out.push(x); idx();
+  }
+  return out;
+}
 function fcVendasRepor(){
   if(typeof EXTRATO==='undefined'||!EXTRATO||!PEDIDOS||!PEDIDOS.length) return 0;
   var tem={}, mx=0, n=0, i, p, id;
@@ -2223,7 +2251,7 @@ function salvarLocal(cb){
   var o; try{ sincStatusFech(); }catch(eSf){}
   if(REAL){
     var pc=packPed();
-    o={real:true, v:2, cli:cliAtual(), pc:pc, motoristas:MOTORISTAS, extrato:EXTRATO, precos:PRECOS, transps:packTransp(), areas:AREAS, grupos:GRUPOS, ciclos:CICLOS, rast:Object.keys(RASTREADOS), fila:FILA};
+    o={real:true, v:2, cli:cliAtual(), pc:pc, motoristas:MOTORISTAS, extrato:EXTRATO, exBase:EX_BASE, precos:PRECOS, transps:packTransp(), areas:AREAS, grupos:GRUPOS, ciclos:CICLOS, rast:Object.keys(RASTREADOS), fila:FILA};
   } else o={real:false, precos:PRECOS};
   try{ localStorage.setItem(LS_KEY, JSON.stringify({real:false, precos:PRECOS, idb:true})); }catch(e){}
   idbGravar(o,function(ok){ if(cb) cb(ok); });
@@ -2245,7 +2273,7 @@ function aplicarSalvo(d){
     PEDIDOS.forEach(garantirEndereco);
     /* pedidos de cliente sem mesa que já entraram como "Mesa J<joia>": só o texto vira "Sem mesa" */
     PEDIDOS.forEach(function(p){ if(p.tpe!=='Mesa') return; ['cliente','bairro','bai'].forEach(function(k){ if(/^Mesa J\d+(?= · |$)/.test(p[k]||'')) p[k]=String(p[k]).replace(/^Mesa J\d+/,'Sem mesa'); }); });
-    MOTORISTAS=d.motoristas; EXTRATO=d.extrato||[];
+    MOTORISTAS=d.motoristas; EXTRATO=d.extrato||[]; if(d.exBase!==undefined) EX_BASE=d.exBase||null;
     EXTRATO.forEach(function(x){ if(x&&x.fdid&&/^Mesa J\d+ · pedido #/.test(x.tt||'')) x.tt=String(x.tt).replace(/^Mesa J\d+/,'Sem mesa'); });   /* mesmo ajuste no Fluxo de caixa */
     try{ fcVendasRepor(); }catch(eFr){}
     /* dados salvos antes: nome que era só o login "arrumado" volta a ser o login de verdade */
@@ -2319,7 +2347,7 @@ function srvAgendar(){
 function srvEnviarDireto(cb){
   if(!SRV.pronto){ if(cb) cb(false); return; }
   if(SRV.env){ if(SRV.timer) clearTimeout(SRV.timer); SRV.timer=setTimeout(function(){ SRV.timer=null; srvEnviar(cb); },1500); return; }
-  var b=srvBlocos(), ver=SRV.ver, lotes=[], cur={est:{},ped:{}}, tam=0, mudou={}, k, it, apagar=[], hk;
+  var b=srvBlocos(), ver=SRV.ver, lotes=[], cur={est:{},ped:{}}, tam=0, mudou={}, k, it, apagar=[], hk, exEnv=exSnap(EXTRATO);   /* o Fluxo que vai para o servidor vira a nova base quando tudo gravar */
   function fecha(){ if(tam>0){ lotes.push(cur); cur={est:{},ped:{}}; tam=0; } }
   ['est','ped'].forEach(function(tp){
     for(k in b[tp]){ it=b[tp][k]; hk=(tp==='est'?'e:':'p:')+k;
@@ -2330,13 +2358,13 @@ function srvEnviarDireto(cb){
   fecha();
   var temPed=false; for(k in SRV.hashes){ if(k.indexOf('p:')===0){ temPed=true; break; } }
   for(k in SRV.hashes){ var nome=k.slice(2), tp2=k.charAt(0)==='e'?'est':'ped'; if(!b[tp2][nome]){ if(tp2==='ped' && !PEDIDOS.length && temPed) continue; apagar.push(tp2+':'+nome); } }
-  if(!lotes.length && !apagar.length){ srvStatus('☁ salvo'); if(ver===SRV.ver) srvPend(false); if(cb) cb(true); return; }
+  if(!lotes.length && !apagar.length){ EX_BASE=exEnv; srvStatus('☁ salvo'); if(ver===SRV.ver) srvPend(false); if(cb) cb(true); return; }
   if(apagar.length) lotes.push({apagar:apagar});
   SRV.env=true; srvStatus('☁ salvando…');
   var pos=0;
   (function prox(){
     if(pos>=lotes.length){
-      SRV.env=false; SRV.tent=0; SRV.juntou=false; SRV.forcaJuntar=false; SRV.forcarProx=false; srvStatus('☁ salvo'); if(ver===SRV.ver) srvPend(false); else srvAgendar();
+      SRV.env=false; SRV.tent=0; SRV.juntou=false; SRV.forcaJuntar=false; SRV.forcarProx=false; EX_BASE=exEnv; srvStatus('☁ salvo'); if(ver===SRV.ver) srvPend(false); else srvAgendar();
       if(cb) cb(true); return;
     }
     var lote=lotes[pos];
@@ -2393,7 +2421,7 @@ function srvAplicarEst(d,bases){
   var e=d.est||{}, mud=0;
   bases.forEach(function(b){
     if(b==='motoristas'){ MOTORISTAS=srvJuntar(e,'motoristas'); MOTORISTAS.forEach(function(m){ var lg=m.logins&&m.logins.anj; if(lg && m.n===nomeAntigoDeLogin(lg)){ m.n=String(lg).trim(); m.ini=iniciaisNome(m.n); } }); mud++; }
-    else if(b==='extrato'){ EXTRATO=srvJuntar(e,'extrato'); mud++; }
+    else if(b==='extrato'){ var exSrv=srvJuntar(e,'extrato'); EXTRATO=exJuntar(exSrv,EXTRATO,EX_BASE); EX_BASE=exSnap(exSrv); mud++; }   /* junta com o que esta tela lançou (antes trocava e sumia) */
     else if(b==='areas'){ AREAS=srvJuntar(e,'areas'); mud++; }
     else if(b==='grupos'){ GRUPOS=srvJuntar(e,'grupos'); mud++; }
     else if(b==='ciclos'){ CICLOS=srvJuntar(e,'ciclos'); mud++; }
@@ -2500,6 +2528,7 @@ function srvCarregar(){
     for(k in d.ped) bases[k.split('~')[0]]=1;
     Object.keys(bases).sort().forEach(function(b){ pc=pc.concat(srvJuntar(d.ped,b)); });
     var e=d.est, prec=(e.precos&&e.precos.d)||null;
+    EX_BASE=exSnap(srvJuntar(e,'extrato'));
     srvLimparMemoria();
     aplicarSalvo({real:true,v:2,pc:pc,motoristas:srvJuntar(e,'motoristas'),extrato:srvJuntar(e,'extrato'),precos:prec,transps:(e.transps&&e.transps.d)||null,areas:srvJuntar(e,'areas'),grupos:srvJuntar(e,'grupos'),ciclos:srvJuntar(e,'ciclos'),rast:srvJuntar(e,'rast'),fila:(e.fila&&e.fila.d)||null});
     LOCAL_CLI=cli; SRV.pronto=true; srvPend(false);
