@@ -2198,7 +2198,26 @@ function enviarPedidosServidor(forcar){
     setTimeout(agendarEnvioPedidos,60000);
   });
 }
-function pedExtra(p){ if(!(p.com||p.atn||p.tpe||p.prz||p.ref||p.op||p.cmid||p.tpg!=null||p.apg!=null||p.urg||p.estorno)) return 0; var x={com:p.com||'',atn:p.atn||'',tpe:p.tpe||'',prz:p.prz||'',prt:p.prt||'',ref:p.ref||'',tpg:(p.tpg==null?null:p.tpg),apg:(p.apg==null?null:p.apg),op:p.op||'',cmid:p.cmid||'',urg:p.urg?1:0}; if(p.estorno) x.est=p.estorno; return x; }   /* (228) est = estorno */
+function pedExtra(p){ if(!(p.com||p.atn||p.tpe||p.prz||p.ref||p.op||p.cmid||p.tpg!=null||p.apg!=null||p.urg||p.estorno)) return 0; var x={com:p.com||'',atn:p.atn||'',tpe:p.tpe||'',prz:p.prz||'',prt:p.prt||'',ref:p.ref||'',tpg:(p.tpg==null?null:p.tpg),apg:(p.apg==null?null:p.apg),op:p.op||'',cmid:p.cmid||'',urg:p.urg?1:0}; if(p.estorno) x.est=p.estorno; if(p.fn) x.fn=p.fn; if(p.sfc) x.sfc=1; return x; }   /* (228) est = estorno · fn = número do pedido do cardápio/mesa · sfc = lançamento do Fluxo excluído à mão (não repor) */
+/* Fluxo de caixa: toda venda de mesa paga (vinda do cardápio, garçom, balcão, tickets) tem a sua entrada "Vendas".
+   Antes a entrada só nascia na tela que importava o pedido; com mais de uma tela aberta, outra tela salvava o Fluxo por cima e a entrada sumia (o pedido ficava).
+   Agora o Fluxo é conferido com Pedidos: venda sem entrada ganha a entrada de novo (a partir de 01/11/2026). */
+var FC_REPOR_DESDE='2026-11-01';
+function fcVendasRepor(){
+  if(typeof EXTRATO==='undefined'||!EXTRATO||!PEDIDOS||!PEDIDOS.length) return 0;
+  var tem={}, mx=0, n=0, i, p, id;
+  for(i=0;i<EXTRATO.length;i++){ var x=EXTRATO[i]; if(x&&x.fdid!=null) tem[String(x.fdid)]=1; if(x&&Number(x.id)>mx) mx=Number(x.id); }
+  for(i=0;i<PEDIDOS.length;i++){ p=PEDIDOS[i];
+    if(!p||!p.cmid||String(p.cmid).indexOf('fd')!==0||p.tpe!=='Mesa'||p.sfc) continue;
+    if(!(p.st==='entregue'||p.estorno)) continue;   /* estornado: a entrada fica e a saída "Estorno" já existe */
+    if(!p.dia||p.dia<FC_REPOR_DESDE) continue;
+    id=String(p.cmid).slice(2); if(tem[id]) continue;
+    if(typeof CATEGORIAS_FC!=='undefined'&&CATEGORIAS_FC.indexOf('Vendas')<0) CATEGORIAS_FC.push('Vendas');
+    EXTRATO.push({id:++mx, tp:'in', tt:(p.bairro||'Mesa')+(p.fn?' · pedido #'+p.fn:(p.hora?' · venda '+p.hora:'')), categoria:'Vendas', data:p.dia, vl:(p.vl==null?0:Number(p.vl)), status:'recebido', fdid:id});
+    tem[id]=1; n++;
+  }
+  return n;
+}
 function packPed(){ var pc=[],i,p; for(i=0;i<PEDIDOS.length;i++){ p=PEDIDOS[i]; pc.push([p.cod,p.tr,p.mt,p.st,p.dia||'',p.hora||'',p.obs||'',(p.scan&&p.scan!==p.cod)?p.scan:'',p.ent||'',p.cliente||'',p.bairro||'',(p.vl==null?null:p.vl),p.cep||'',p.area||'',p.fechId||null,p.tel||'',p.canal||'',p.vend||'',p.rua||'',p.num||'',p.comp||'',p.bai||'',p.cid||'',p.endOrig||'',p.tam||'',p.hp||0,p.pg||'',p.pgp?1:0,p.pgr||'',(p.tx==null?null:p.tx),p.itens||'',p.atend||'',(p.lat==null?null:p.lat),(p.lng==null?null:p.lng),p.gq||0,p.ga||'',pedExtra(p)]); } return pc; }
 function salvarLocal(cb){
   var o; try{ sincStatusFech(); }catch(eSf){}
@@ -2221,13 +2240,14 @@ function aplicarSalvo(d){
   if(d.rast){ RASTREADOS={}; d.rast.forEach(function(c){ RASTREADOS[c]=1; }); }
   if(d.ciclos) CICLOS=d.ciclos; else if(d.ciclo && d.ciclo.modo) CICLOS=[{id:'c0',grupo:'todos',modo:d.ciclo.modo,tipo:d.ciclo.tipo,dia:d.ciclo.dia,prazo:d.ciclo.prazo}];
   if((d.pedidos||d.pc) && d.motoristas){
-    if(d.pc){ PEDIDOS=d.pc.map(function(a){ return {cod:a[0], tr:a[1], mt:a[2], cliente:a[9]||'', bairro:a[10]||'', vl:(a[11]==null?null:a[11]), cep:a[12]||'', area:a[13]||'', fechId:a[14]||null, tel:a[15]||'', canal:a[16]||'', vend:a[17]||'', rua:a[18]||'', num:a[19]||'', comp:a[20]||'', bai:a[21]||'', cid:a[22]||'', endOrig:a[23]||'', tam:a[24]||'', hp:a[25]||0, pg:a[26]||'', pgp:a[27]?1:0, pgr:a[28]||'', tx:(a[29]==null?null:a[29]), itens:a[30]||'', atend:a[31]||'', lat:(a[32]==null?null:a[32]), lng:(a[33]==null?null:a[33]), gq:a[34]||0, ga:a[35]||'', com:(a[36]&&a[36].com)||'', atn:(a[36]&&a[36].atn)||'', tpe:(a[36]&&a[36].tpe)||'', prz:(a[36]&&a[36].prz)||'', prt:(a[36]&&a[36].prt)||'', ref:(a[36]&&a[36].ref)||'', tpg:(a[36]&&a[36].tpg!=null)?a[36].tpg:null, apg:(a[36]&&a[36].apg!=null)?a[36].apg:null, op:(a[36]&&a[36].op)||'', cmid:(a[36]&&a[36].cmid)||'', urg:(a[36]&&a[36].urg)?1:0, estorno:(a[36]&&a[36].est)||null, st:a[3], t1:'', t2:'', scan:a[7]||a[0], dia:a[4], hora:a[5], obs:a[6], ent:a[8]}; }); }
+    if(d.pc){ PEDIDOS=d.pc.map(function(a){ return {cod:a[0], tr:a[1], mt:a[2], cliente:a[9]||'', bairro:a[10]||'', vl:(a[11]==null?null:a[11]), cep:a[12]||'', area:a[13]||'', fechId:a[14]||null, tel:a[15]||'', canal:a[16]||'', vend:a[17]||'', rua:a[18]||'', num:a[19]||'', comp:a[20]||'', bai:a[21]||'', cid:a[22]||'', endOrig:a[23]||'', tam:a[24]||'', hp:a[25]||0, pg:a[26]||'', pgp:a[27]?1:0, pgr:a[28]||'', tx:(a[29]==null?null:a[29]), itens:a[30]||'', atend:a[31]||'', lat:(a[32]==null?null:a[32]), lng:(a[33]==null?null:a[33]), gq:a[34]||0, ga:a[35]||'', com:(a[36]&&a[36].com)||'', atn:(a[36]&&a[36].atn)||'', tpe:(a[36]&&a[36].tpe)||'', prz:(a[36]&&a[36].prz)||'', prt:(a[36]&&a[36].prt)||'', ref:(a[36]&&a[36].ref)||'', tpg:(a[36]&&a[36].tpg!=null)?a[36].tpg:null, apg:(a[36]&&a[36].apg!=null)?a[36].apg:null, op:(a[36]&&a[36].op)||'', cmid:(a[36]&&a[36].cmid)||'', urg:(a[36]&&a[36].urg)?1:0, estorno:(a[36]&&a[36].est)||null, fn:(a[36]&&a[36].fn)||'', sfc:(a[36]&&a[36].sfc)?1:0, st:a[3], t1:'', t2:'', scan:a[7]||a[0], dia:a[4], hora:a[5], obs:a[6], ent:a[8]}; }); }
     else PEDIDOS=d.pedidos;
     PEDIDOS.forEach(garantirEndereco);
     /* pedidos de cliente sem mesa que já entraram como "Mesa J<joia>": só o texto vira "Sem mesa" */
     PEDIDOS.forEach(function(p){ if(p.tpe!=='Mesa') return; ['cliente','bairro','bai'].forEach(function(k){ if(/^Mesa J\d+(?= · |$)/.test(p[k]||'')) p[k]=String(p[k]).replace(/^Mesa J\d+/,'Sem mesa'); }); });
     MOTORISTAS=d.motoristas; EXTRATO=d.extrato||[];
     EXTRATO.forEach(function(x){ if(x&&x.fdid&&/^Mesa J\d+ · pedido #/.test(x.tt||'')) x.tt=String(x.tt).replace(/^Mesa J\d+/,'Sem mesa'); });   /* mesmo ajuste no Fluxo de caixa */
+    try{ fcVendasRepor(); }catch(eFr){}
     /* dados salvos antes: nome que era só o login "arrumado" volta a ser o login de verdade */
     MOTORISTAS.forEach(function(m){ var lg=m.logins&&m.logins.anj; if(lg && m.n===nomeAntigoDeLogin(lg)){ m.n=String(lg).trim(); m.ini=iniciaisNome(m.n); } });
     recalcularReal();
@@ -2347,7 +2367,7 @@ function srvEnviarDireto(cb){
 /* ══ (70) VÁRIAS TELAS, MESMO LOGIN: antes cada tela guardava a própria cópia e a última a salvar apagava o que as outras tinham feito. Agora:
    • a cada 15 s (aba visível e nada pendente de envio) a tela pergunta ao servidor se algum bloco de pedidos mudou e traz o que mudou;
    • antes de enviar, se outra tela mexeu no mesmo bloco, junta os pedidos (nenhum some) e só então envia. ══ */
-function srvLinhaPed(a){ var p={cod:a[0], tr:a[1], mt:a[2], cliente:a[9]||'', bairro:a[10]||'', vl:(a[11]==null?null:a[11]), cep:a[12]||'', area:a[13]||'', fechId:a[14]||null, tel:a[15]||'', canal:a[16]||'', vend:a[17]||'', rua:a[18]||'', num:a[19]||'', comp:a[20]||'', bai:a[21]||'', cid:a[22]||'', endOrig:a[23]||'', tam:a[24]||'', hp:a[25]||0, pg:a[26]||'', pgp:a[27]?1:0, pgr:a[28]||'', tx:(a[29]==null?null:a[29]), itens:a[30]||'', atend:a[31]||'', lat:(a[32]==null?null:a[32]), lng:(a[33]==null?null:a[33]), gq:a[34]||0, ga:a[35]||'', com:(a[36]&&a[36].com)||'', atn:(a[36]&&a[36].atn)||'', tpe:(a[36]&&a[36].tpe)||'', prz:(a[36]&&a[36].prz)||'', prt:(a[36]&&a[36].prt)||'', ref:(a[36]&&a[36].ref)||'', tpg:(a[36]&&a[36].tpg!=null)?a[36].tpg:null, apg:(a[36]&&a[36].apg!=null)?a[36].apg:null, op:(a[36]&&a[36].op)||'', cmid:(a[36]&&a[36].cmid)||'', urg:(a[36]&&a[36].urg)?1:0, estorno:(a[36]&&a[36].est)||null, st:a[3], t1:'', t2:'', scan:a[7]||a[0], dia:a[4], hora:a[5], obs:a[6], ent:a[8]}; try{ garantirEndereco(p); }catch(e){} return p; }
+function srvLinhaPed(a){ var p={cod:a[0], tr:a[1], mt:a[2], cliente:a[9]||'', bairro:a[10]||'', vl:(a[11]==null?null:a[11]), cep:a[12]||'', area:a[13]||'', fechId:a[14]||null, tel:a[15]||'', canal:a[16]||'', vend:a[17]||'', rua:a[18]||'', num:a[19]||'', comp:a[20]||'', bai:a[21]||'', cid:a[22]||'', endOrig:a[23]||'', tam:a[24]||'', hp:a[25]||0, pg:a[26]||'', pgp:a[27]?1:0, pgr:a[28]||'', tx:(a[29]==null?null:a[29]), itens:a[30]||'', atend:a[31]||'', lat:(a[32]==null?null:a[32]), lng:(a[33]==null?null:a[33]), gq:a[34]||0, ga:a[35]||'', com:(a[36]&&a[36].com)||'', atn:(a[36]&&a[36].atn)||'', tpe:(a[36]&&a[36].tpe)||'', prz:(a[36]&&a[36].prz)||'', prt:(a[36]&&a[36].prt)||'', ref:(a[36]&&a[36].ref)||'', tpg:(a[36]&&a[36].tpg!=null)?a[36].tpg:null, apg:(a[36]&&a[36].apg!=null)?a[36].apg:null, op:(a[36]&&a[36].op)||'', cmid:(a[36]&&a[36].cmid)||'', urg:(a[36]&&a[36].urg)?1:0, estorno:(a[36]&&a[36].est)||null, fn:(a[36]&&a[36].fn)||'', sfc:(a[36]&&a[36].sfc)?1:0, st:a[3], t1:'', t2:'', scan:a[7]||a[0], dia:a[4], hora:a[5], obs:a[6], ent:a[8]}; try{ garantirEndereco(p); }catch(e){} return p; }
 function srvChaveDia(p){ return String(p.dia||'_').replace(/[^0-9A-Za-z_-]/g,'_').slice(0,40); }
 var SRV_FINAL={entregue:1,devolvido:1,extraviado:1};
 /* modo 'servidor': o servidor manda (tela sem nada pendente). modo 'juntar': une local + servidor (local vence, exceto status final vindo do servidor). */
@@ -2415,6 +2435,7 @@ function srvPuxar(){
       if(be.length) n+=srvAplicarEst(d,be);
       for(k in d.ped) SRV.hashes['p:'+k]=d.ped[k].h;
       for(k in d.est) SRV.hashes['e:'+k]=d.est[k].h;
+      try{ fcVendasRepor(); }catch(eFr){}   /* o Fluxo veio do servidor: venda que outra tela perdeu ganha a entrada de volta */
       try{ recalcularReal(); }catch(e){} salvarLocal(); repintarTudo();
     });
   }).catch(function(){ SYNC_P.rodando=false; });
@@ -2434,6 +2455,7 @@ function srvEnviar(cb){
       if(bp2.length) srvMesclar(d,bp2,'juntar');
       if(be2.length) srvAplicarEst(d,be2);
       var k; for(k in d.ped) SRV.hashes['p:'+k]=d.ped[k].h; for(k in d.est) SRV.hashes['e:'+k]=d.est[k].h;   /* a partir de agora partimos da versão do servidor (já juntada) */
+      try{ fcVendasRepor(); }catch(eFr){}   /* o Fluxo do servidor substituiu o desta tela: as vendas que esta tela acabou de lançar voltam */
       try{ recalcularReal(); }catch(e){} salvarLocal(); repintarTudo(); return true;
     });
   }).catch(function(){ return false; }).then(function(){ if(window.__epocaAcao){ if(cb) cb(false); return; } srvEnviarDireto(cb); });
@@ -5584,7 +5606,7 @@ function foodImportar(o,fim){
     if(o.modo==='mesa'){   /* (079) pedido de mesa pago: entra em Pedidos/Dashboard como ENTREGUE (não vai pra fila do motoboy) e lança a entrada no Fluxo de Caixa */
       var mz=String((e&&e.mesa)||''), dz=new Date(), entz=ymdLocal(dz)+' '+hora, mzT=msLocal(mz).replace(/&amp;/g,'&');   /* (240) "Sem mesa #7" / "Cliente Balcão" em vez de "Mesa SM7" */
       ped.st='entregue'; ped.ent=entz; ped.cliente=mzT+(o.nome&&!/^(Mesa |Sem mesa|Cliente Balcão|Tickets)/.test(o.nome)?' · '+o.nome:''); ped.bairro=mzT; ped.bai=ped.bairro; ped.rua=''; ped.num=''; ped.comp=''; ped.cid=''; ped.cep=''; ped.ref='';
-      ped.tpe='Mesa'; ped.canal='Mesa'; ped.tx=null; ped.urg=0; ped.prz=''; ped.prt=''; ped.obs=''; ped.t1=hora+' — pago na mesa'; ped.pgp=1; ped.apg=0;
+      ped.tpe='Mesa'; ped.canal='Mesa'; ped.fn=String(o.num||''); ped.tx=null; ped.urg=0; ped.prz=''; ped.prt=''; ped.obs=''; ped.t1=hora+' — pago na mesa'; ped.pgp=1; ped.apg=0;
       ped.pg=(o.pagto==='dinheiro'?'dinheiro':'online'); ped.pgr=({pix:'pix',dinheiro:'dinheiro',cartao:'cartao'})[o.pagto]||'pago'; ped.op=(o.obs||'');
       if(!EXTRATO.some(function(x){ return x.fdid===o.id; })){
         var mxz=0; EXTRATO.forEach(function(x){ if(Number(x.id)>mxz) mxz=Number(x.id); });
@@ -8210,6 +8232,7 @@ function duplicarLancamento(id){
 }
 function excluirLancamento(id){
   var ex=achaLanc(id); if(travadoPix(ex)){ aviso('Pix já efetivado: não pode ser excluído'); return; }
+  if(ex&&ex.fdid!=null){ for(var j=0;j<PEDIDOS.length;j++) if(PEDIDOS[j].cmid==='fd'+ex.fdid) PEDIDOS[j].sfc=1; }   /* venda excluída à mão não volta sozinha (fcVendasRepor) */
   for(var i=0;i<EXTRATO.length;i++) if(EXTRATO[i].id===id){ EXTRATO.splice(i,1); break; }
   if(REAL) salvarLocal();
   pintarFinanceiro();
