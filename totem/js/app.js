@@ -27,6 +27,14 @@
     if (salvo.versaoVoz !== VERSAO_VOZ) { delete salvo.voz; delete salvo.tom; delete salvo.velocidade; }
     return { ...PADRAO, ...salvo, versaoVoz: VERSAO_VOZ };
   })();
+  // (261) a voz da ElevenLabs configurada NESTE aparelho vale só para ESTA loja.
+  // Antes ficava em 'live-config' (uma só para o navegador) e a voz de uma loja passava para todas as outras abertas no mesmo aparelho.
+  // A voz certa de cada loja é a do painel (Assistente Live > Voz do Live), que vem pelo servidor; esta é só para quem configura no próprio totem.
+  const chaveVozLoja = 'live-voz-' + (M.codigo || 'exemplo');
+  (() => {
+    let vl = null; try { vl = JSON.parse(localStorage.getItem(chaveVozLoja) || 'null'); } catch (e) { /* sem armazenamento */ }
+    cfg.elevenChave = (vl && vl.elevenChave) || ''; cfg.elevenVoz = (vl && vl.elevenVoz) || ''; cfg.elevenModelo = (vl && vl.elevenModelo) || PADRAO.elevenModelo;
+  })();
   // cada loja tem o seu treinamento (o mesmo totem pode ser trocado de loja)
   const chaveTreino = 'live-treino-' + (M.codigo || 'exemplo');
   const treinoDaLoja = () => { try { const t = localStorage.getItem(chaveTreino); return t != null ? t : cfg.treino; } catch (e) { return cfg.treino; } };
@@ -42,7 +50,11 @@
     })
     : null;
   function salvarConfig() {
-    try { localStorage.setItem('live-config', JSON.stringify(cfg)); } catch (e) { /* navegador sem armazenamento */ }
+    try {
+      const { elevenChave, elevenVoz, elevenModelo, ...geral } = cfg;   /* (261) a voz vai para a chave desta loja; o resto continua valendo para o aparelho */
+      localStorage.setItem('live-config', JSON.stringify(geral));
+      localStorage.setItem(chaveVozLoja, JSON.stringify({ elevenChave, elevenVoz, elevenModelo }));
+    } catch (e) { /* navegador sem armazenamento */ }
     Cerebro.configurar(configCerebro());
     atualizarStatus();
   }
