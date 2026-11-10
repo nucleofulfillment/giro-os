@@ -30,6 +30,7 @@ var CSS=[
 '.oq-nf b{font-size:13px;font-weight:800;display:block}',
 '.oq-nf small{font-size:11.5px;color:var(--muted);font-weight:600;display:block;margin-top:2px}',
 '.wa-tag svg,.wa-doc svg{fill:none;stroke:currentColor;stroke-width:2}',
+'@media (max-width:1100px){.oq-hm,.oq-tb td small.mono{display:none!important}}',
 '.tela-ordens .grid>.card+.card,.tela-ordens .grid>div>.card:first-child{margin-top:0}'
 ].join('\n');
 function css(){ if(document.getElementById('css-ordens')) return; var s=document.createElement('style'); s.id='css-ordens'; s.textContent=CSS; document.head.appendChild(s); }
@@ -92,12 +93,12 @@ function lista(el){
   var feitos={}, linhas='';
   ls.forEach(function(o){
     if(o.grupo){ if(feitos[o.grupo]) return; feitos[o.grupo]=1; var g=grupos[o.grupo], tot=0, ag=0; g.forEach(function(x){ tot+=LFI.totalOrdem(x); if(x.status==='aguardando_aprovacao') ag++; }); var c=o.cot?LFI.cotacao(o.cot):null;
-      linhas+='<tr class="grp"><td colspan="10"><div class="gh">'+UI.ic('compras')+'<b>Compra consolidada '+esc(o.grupo)+'</b><span>'+plural(g.length,'fornecedor','fornecedores')+' · '+F.moeda(tot)+'</span>'+(c?'<a class="vertodos" data-act="_ir" data-id="compras/'+c.id+'">'+esc(c.num)+'</a>':'')+'<span style="flex:1"></span>'+(ag?'<button class="btn ok xs" data-act="aprovGrupo" data-id="'+esc(o.grupo)+'">'+UI.ic('check')+'Aprovar '+plural(ag,'OC','OCs')+' da compra</button>':'')+'</div></td></tr>';
+      linhas+='<tr class="grp"><td colspan="8"><div class="gh">'+UI.ic('compras')+'<b>Compra consolidada '+esc(o.grupo)+'</b><span>'+plural(g.length,'fornecedor','fornecedores')+' · '+F.moeda(tot)+'</span>'+(c?'<a class="vertodos" data-act="_ir" data-id="compras/'+c.id+'">'+esc(c.num)+'</a>':'')+'<span style="flex:1"></span>'+(ag?'<button class="btn ok xs" data-act="aprovGrupo" data-id="'+esc(o.grupo)+'">'+UI.ic('check')+'Aprovar '+plural(ag,'OC','OCs')+' da compra</button>':'')+'</div></td></tr>';
       g.forEach(function(x){ linhas+=linha(x,true); });
     } else linhas+=linha(o,false);
   });
-  h+='<div class="card pad0"><div class="tb-wrap"><table class="tb oq-tb"><thead><tr><th>Número</th><th>Fornecedor</th><th>Empresa</th><th>Emissão</th><th>Produtos</th><th class="r">Itens</th><th class="r">Valor</th><th>Pagamento</th><th>Previsão</th><th>Status</th></tr></thead><tbody>'+
-    (linhas||'<tr><td colspan="10">'+UI.vazio('Nenhuma ordem de compra neste filtro.','📄')+'</td></tr>')+'</tbody></table></div></div>';
+  h+='<div class="card pad0"><div class="tb-wrap"><table class="tb oq-tb"><thead><tr><th>Número</th><th>Fornecedor</th><th>Empresa (CNPJ)</th><th class="oq-hm">Emissão</th><th>Produtos e quantidades</th><th class="r">Valor · pagamento</th><th>Previsão</th><th>Status</th></tr></thead><tbody>'+
+    (linhas||'<tr><td colspan="8">'+UI.vazio('Nenhuma ordem de compra neste filtro.','📄')+'</td></tr>')+'</tbody></table></div></div>';
 
   /* painéis */
   var prox=todas.filter(function(o){ return ['aprovada','enviada','aguardando_entrega','parcial'].indexOf(o.status)>=0; }).sort(function(a,b){ return a.previsao<b.previsao?-1:1; });
@@ -116,22 +117,22 @@ function lista(el){
   }));
 }
 function linha(o, emGrupo){
-  var f=LFI.forn(o.forn), a=atrasada(o), fr=fracRec(o);
+  var f=LFI.forn(o.forn), a=atrasada(o), fr=fracRec(o), e=LFI.emp(o.empresa);
   return '<tr class="cl'+(emGrupo?' gm':'')+(a?' alerta':'')+'" data-act="abrir" data-id="'+o.id+'"><td class="nw"><b>'+esc(o.num)+'</b>'+(o.cot&&!emGrupo&&LFI.cotacao(o.cot)?'<small>'+esc(LFI.cotacao(o.cot).num)+'</small>':'')+'</td>'+
-    '<td><b>'+esc(f.nome)+'</b><small>'+f.whats+'</small></td><td>'+UI.empTag(o.empresa)+'<small class="mono">'+LFI.emp(o.empresa).cnpj+'</small></td><td class="nw">'+F.data(o.emissao)+'</td>'+
-    '<td><div class="oq-prods">'+resumoProd(o)+'</div></td><td class="r">'+o.itens.length+(o.status==='parcial'?'<small>'+Math.round(fr*100)+'% recebido</small>':'')+'</td><td class="r"><b>'+F.moeda(LFI.totalOrdem(o))+'</b></td><td class="nw">'+esc(o.cond)+'</td>'+
-    '<td class="nw'+(a?' oq-atr':'')+'">'+F.data(o.previsao)+'<small'+(a?' style="color:var(--red)"':'')+'>'+(a?'atrasada · ':'')+F.relativo(o.previsao)+'</small></td><td>'+UI.status('oc',o.status)+'</td></tr>';
+    '<td style="min-width:150px"><b>'+esc(f.nome)+'</b><small>'+esc(f.contato)+'</small></td><td title="'+esc(e.razao+' · CNPJ '+e.cnpj)+'">'+UI.empTag(o.empresa)+'<small class="mono" style="font-size:10.5px">'+e.cnpj+'</small></td><td class="nw oq-hm">'+F.data(o.emissao)+'</td>'+
+    '<td style="min-width:200px"><div class="oq-prods">'+resumoProd(o,2)+'</div><small>'+plural(o.itens.length,'item','itens')+(o.status==='parcial'?' · '+Math.round(fr*100)+'% recebido':'')+'</small></td><td class="r"><b>'+F.moeda(LFI.totalOrdem(o))+'</b><small>'+esc(o.cond)+'</small></td>'+
+    '<td class="nw'+(a?' oq-atr':'')+'">'+F.data(o.previsao)+'<small'+(a?' style="color:var(--red)"':'')+'>'+(a?'atrasada · ':'')+F.relativo(o.previsao)+'</small></td><td class="nw">'+UI.status('oc',o.status)+'</td></tr>';
 }
 
 /* =================== DETALHE =================== */
 function detalhe(el, oc){
   var f=LFI.forn(oc.forn), emp=LFI.emp(oc.empresa), dep=LFI.dep(oc.dep), tot=LFI.totalOrdem(oc), a=atrasada(oc), cot=oc.cot?LFI.cotacao(oc.cot):null;
   var ac='<button class="btn sec sm" data-act="pdf">'+UI.ic('imprimir')+'Imprimir OC</button>';
-  var cancelar='<button class="btn no sm" data-act="cancelar">Cancelar</button>';
-  if(oc.status==='aguardando_aprovacao') ac+=cancelar+'<button class="btn ok sm" data-act="aprovar">'+UI.ic('check')+'Aprovar</button>';
-  else if(oc.status==='aprovada') ac+=cancelar+'<button class="btn pri sm" data-act="enviar">'+UI.ic('enviar')+'Enviar ao fornecedor</button>';
-  else if(oc.status==='enviada') ac+=cancelar+'<button class="btn sec sm" data-act="aguardar">'+UI.ic('caminhao')+'Marcar aguardando entrega</button><button class="btn pri sm" data-act="receber">'+UI.ic('estoque')+'Registrar recebimento</button>';
-  else if(oc.status==='aguardando_entrega') ac+=cancelar+'<button class="btn pri sm" data-act="receber">'+UI.ic('estoque')+'Registrar recebimento</button>';
+  var btCanc='<button class="btn no sm" data-act="cancelar">Cancelar</button>';
+  if(oc.status==='aguardando_aprovacao') ac+=btCanc+'<button class="btn ok sm" data-act="aprovar">'+UI.ic('check')+'Aprovar</button>';
+  else if(oc.status==='aprovada') ac+=btCanc+'<button class="btn pri sm" data-act="enviar">'+UI.ic('enviar')+'Enviar ao fornecedor</button>';
+  else if(oc.status==='enviada') ac+=btCanc+'<button class="btn sec sm" data-act="aguardar">'+UI.ic('caminhao')+'Marcar aguardando entrega</button><button class="btn pri sm" data-act="receber">'+UI.ic('estoque')+'Registrar recebimento</button>';
+  else if(oc.status==='aguardando_entrega') ac+=btCanc+'<button class="btn pri sm" data-act="receber">'+UI.ic('estoque')+'Registrar recebimento</button>';
   else if(oc.status==='parcial') ac+='<button class="btn pri sm" data-act="receber">'+UI.ic('estoque')+'Registrar restante</button>';
 
   var h=UI.cabecalho({migalha:[{t:'Ordens de Compra',ir:'ordens'},{t:oc.num}], titulo:esc(oc.num)+' '+UI.status('oc',oc.status), sub:esc(f.nome)+' · '+esc(emp.fantasia)+' (CNPJ '+emp.cnpj+') · '+esc(dep?dep.nome:'')+' · emitida em '+F.data(oc.emissao), acoes:ac});

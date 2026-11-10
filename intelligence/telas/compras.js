@@ -171,6 +171,8 @@ var CSS=[
 '.cq-mini{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:14px}',
 '.cq-mini div{font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}',
 '.cq-mini b{display:block;font-size:18px;color:var(--text);letter-spacing:0;text-transform:none;margin-top:2px}',
+'.cq-dg{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}',
+'@media (max-width:1100px){.cq-dg{grid-template-columns:minmax(0,1fr)}.cq-dica{display:none}}',
 '.cq-wa-ft{display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:11.5px;font-weight:700;color:var(--muted)}',
 '@media (max-width:1100px){.cq-env{grid-template-columns:minmax(0,1fr)}.tela-compras .grid.g12{grid-template-columns:minmax(0,1fr)!important}}',
 '@media (max-width:900px){.cq-rx,.cq-modos{grid-template-columns:minmax(0,1fr)}.cq-fi{grid-template-columns:minmax(0,1fr)}}',
@@ -204,7 +206,7 @@ function prodN(id){ var p=LFI.prod(id); return p?p.nome:'Produto removido'; }
 function unP(id){ var p=LFI.prod(id); return p?p.un:''; }
 function qtdP(id,q){ return F.qtd(q,unP(id)); }
 function ini(nome){ var w=String(nome||'?').split(/\s+/).filter(function(x){ return x.length>2; }); if(!w.length) w=[String(nome||'?')]; return (w[0][0]+((w[1]||'')[0]||'')).toUpperCase(); }
-function primeiro(n){ return String(n||'').split(/[\s(]/)[0]; }
+function primeiro(n){ var w=String(n||'').split(/[\s(]+/).filter(Boolean); if(w.length>1&&/^(chef|seu|dona|sr|sra)\.?$/i.test(w[0])) return w[0]+' '+w[1]; return w[0]||''; }
 function hash(s){ var h=2166136261; s=String(s); for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); } return h>>>0; }
 function slug(s){ return String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9]+/g,''); }
 function norm(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''); }
@@ -443,7 +445,7 @@ function renderLista(el){
   h+='</div></div>';
   el.innerHTML=h;
 
-  UI.grafRosca(el.querySelector('#cq-canal'),{itens:[{nome:'WhatsApp', valor:porCanal.whatsapp, cor:'#25D366'},{nome:'PDF', valor:porCanal.pdf, cor:'#DC2626'},{nome:'Excel', valor:porCanal.excel, cor:'#107C41'}], fmt:function(v){ return plural(v,'proposta','propostas'); }, centro:{valor:String(porCanal.whatsapp+porCanal.pdf+porCanal.excel), rotulo:'propostas'}});
+  UI.grafRosca(el.querySelector('#cq-canal'),{itens:[{nome:'WhatsApp', valor:porCanal.whatsapp, cor:'#25D366'},{nome:'PDF', valor:porCanal.pdf, cor:'#DC2626'},{nome:'Excel', valor:porCanal.excel, cor:'#107C41'}], fmt:function(v){ return String(v); }, centro:{valor:String(porCanal.whatsapp+porCanal.pdf+porCanal.excel), rotulo:'propostas'}});
 
   UI.liga(el, UI.navHandlers({
     filtro:function(id){ s.filtro=id; LFI.recarregar(); },
@@ -509,9 +511,9 @@ function passoEntrada(n){
         '<label class="drop"><input type="file" accept="image/*" capture="environment" data-chg="arquivo"><div class="ic">'+UI.ic('foto')+'</div><b>Tirar foto ou escolher imagem</b><small>No celular abre a câmera · JPG, PNG ou HEIC</small></label>'+
         '<div style="text-align:center;margin:14px 0 4px;font-size:12px;font-weight:700;color:var(--muted)">ou</div><button class="btn esc wide" data-act="fotoEx">'+UI.ic('play')+'Usar foto de exemplo (lista do Chef Hiro)</button>'+
         UI.nota('Protótipo: a leitura da imagem é simulada. O resultado passa sempre pela sua conferência antes de virar cotação.','in')+'</div>'+
-        '<div class="card"><h3><span class="lft">'+UI.ic('info')+' Dicas para uma boa leitura</span></h3><div class="grid" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:center"><div class="cq-pass">'+
+        '<div class="card"><h3><span class="lft">'+UI.ic('info')+' Dicas para uma boa leitura</span></h3><div class="grid cq-dg" style="gap:18px;align-items:center"><div class="cq-pass">'+
         [['Um item por linha','Quantidade, unidade e produto: "20 kg de salmão".'],['Unidades livres','kg, g, litros, ml, un, cx, dúzias, folhas…'],['Apelidos aprendidos','"Arroz p/ sushi" e "nori" já são reconhecidos.'],['Confiança por item','Itens com baixa confiança ficam destacados.']].map(function(x,i){ return '<div class="it"><span class="bo">'+(i+1)+'</span><div><b>'+x[0]+'</b>'+x[1]+'</div></div>'; }).join('')+
-        '</div><div class="cq-sm" style="opacity:.92">'+papel(EXEMPLO_FOTO.slice(0,4),'Pedido do sushi','cq-sm')+'</div></div></div></div>';
+        '</div><div class="cq-sm cq-dica" style="opacity:.92">'+papel(EXEMPLO_FOTO.slice(0,4),'Pedido do sushi','cq-sm')+'</div></div></div></div>';
     }
   } else if(n.modo==='texto'){
     h+='<div class="grid g21"><div class="card"><h3><span class="lft">'+UI.ic('lista')+' Lista em texto livre</span><button class="vertodos" data-act="txtEx">Usar exemplo</button></h3>'+
@@ -739,7 +741,7 @@ function renderDetalhe(el, c){
   if(c.status==='cancelada') h+=UI.nota('<b>Cotação cancelada</b>'+(c.canceladaEm?' em '+F.dataHora(c.canceladaEm):'')+'. '+esc(c.motivo||c.obs||''),'wt','x');
   else {
     var idx=c.status==='convertida'?LFI.COT_FLUXO.length:LFI.COT_FLUXO.indexOf(c.status), env=enviadaEm(c), venc=['enviada','aguardando_propostas','aguardando_envio','preparacao'].indexOf(c.status)>=0&&c.prazoRetorno<LFI.agoraISO();
-    h+='<div class="card mb" style="padding:16px 20px 14px">'+UI.passos(['Preparação','Envio','Enviada','Aguardando propostas','Recebidas','Comparação','Aprovada','Convertida em OC'], idx)+
+    h+='<div class="card mb" style="padding:16px 20px 14px">'+UI.passos(['Preparação','Envio','Enviada','Aguardando','Recebidas','Comparação','Aprovada','Convertida'], idx)+
       '<div class="cq-step"><span>'+UI.ic('relogio')+'Retorno até <b'+(venc?' style="color:var(--red)"':'')+'>'+F.dataHora(c.prazoRetorno)+'</b>'+(venc?' (vencido)':'')+'</span><span>'+UI.ic('enviar')+(env?'Enviada <b>'+F.dataHora(env)+'</b>':'Ainda não enviada')+'</span><span>'+UI.ic('whats')+'<b>'+resp+' de '+c.fornecedores.length+'</b> fornecedores responderam</span>'+(c.obs?'<span>'+UI.ic('info')+esc(c.obs)+'</span>':'')+'</div></div>';
   }
 
