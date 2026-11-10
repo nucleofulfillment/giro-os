@@ -8731,7 +8731,7 @@ function cdAparaBorda(src){ return new Promise(function(ok){ var im=new Image();
     var sx=x0/k, sy=y0/k, sw=(x1-x0+1)/k, sh=(y1-y0+1)/k, o=document.createElement('canvas'); o.width=Math.round(sw); o.height=Math.round(sh);
     var ox=o.getContext('2d'); ox.fillStyle='#fff'; ox.fillRect(0,0,o.width,o.height); ox.drawImage(im,sx,sy,sw,sh,0,0,o.width,o.height); ok(o.toDataURL('image/jpeg',0.92));
   }catch(e){ ok(src); } }; im.onerror=function(){ ok(src); }; im.src=src; }); }
-function cdFotoReal(src){ return cdAparaBorda(src).then(cdRedimUrl); }
+function cdFotoReal(src){ return cdAparaBorda(src).then(cdPadroniza); }   /* (258) recorta a borda e põe no padrão quadrado da loja */
 function cdIaRot(estado){ var lj=cdLojaModo(); return estado==='feito'?(lj?'↻ Buscar outra':'↻ Outra com IA'):(estado==='rodando'?(lj?'Buscando… ~20 s':'Criando… ~10 s'):(lj?'🔎 Buscar foto real':'✨ Criar com IA')); }
 function cdFotoBuscar(n,cat,b){
   b.disabled=true; b.textContent='Buscando… ~20 s';
@@ -10932,10 +10932,40 @@ function cdFotosLote(){
   CD.fl=null; el('sh-import').querySelector('h3').textContent='Fotos em lote';
   el('cd-imp-corpo').innerHTML='<p style="margin:0 0 12px;font-size:13px;line-height:1.55;color:var(--muted2)">Escolha várias fotos de uma vez. O sistema liga cada foto ao produto de <b>nome igual ou parecido</b> (ex.: <b>Pastel de Carne.png</b> vai pro "Pastel de Carne"; <b>Coca Cola Lata 350ml.png</b> vai pro "Refri Coca Cola Lata 350ml"). Acento e maiúscula não importam. Antes de gravar você confere o resumo. A foto antiga do produto é trocada.</p>'
     +'<div style="margin-bottom:12px"><button class="btn pri" type="button" onclick="el(\'cd-fl-file\').click()">Escolher fotos</button></div>'
-    +'<input type="file" id="cd-fl-file" accept="image/*" multiple style="display:none" onchange="cdFlLer(this)"><div id="cd-fl-res"></div>';
+    +'<input type="file" id="cd-fl-file" accept="image/*" multiple style="display:none" onchange="cdFlLer(this)"><div id="cd-fl-res"></div>'
+    +(cdLojaModo()?'<div style="border-top:1px solid var(--border);margin-top:14px;padding-top:12px"><div style="font-weight:800;font-size:13.5px;margin-bottom:4px">Padrão das fotos</div><div style="font-size:12.5px;line-height:1.5;color:var(--muted2);margin-bottom:8px">Nas lojas, toda foto nova entra quadrada, com fundo branco e o produto inteiro no círculo da vitrine. Use o botão para ajustar as fotos que já estão no cadastro e saíram cortadas.</div><button class="btn sec" type="button" id="cd-fl-pad" onclick="cdPadronizarTodas()">Padronizar as fotos já cadastradas</button><div id="cd-fl-padr" style="font-size:12.5px;margin-top:8px"></div></div>':'');
   abrir('sh-import');
 }
+/* (258) PADRÃO DA FOTO DE PRODUTO nas lojas: quadrado 700×700, fundo branco, produto no meio e do tamanho que cabe INTEIRO
+   no círculo da vitrine (a diagonal do produto = 88% do lado). Foto recortada rente (busca, catálogo) não fica mais cortada na vitrine */
+function cdPadroniza(src){ return new Promise(function(ok){ var im=new Image(); im.onload=function(){ try{
+    var L=700, w=im.naturalWidth, h=im.naturalHeight, k=Math.min(L*0.88/Math.sqrt(w*w+h*h),L*0.92/Math.max(w,h)), dw=Math.round(w*k), dh=Math.round(h*k), cv=document.createElement('canvas'); cv.width=L; cv.height=L;
+    var cx=cv.getContext('2d'); cx.fillStyle='#fff'; cx.fillRect(0,0,L,L); cx.imageSmoothingQuality='high'; cx.drawImage(im,Math.round((L-dw)/2),Math.round((L-dh)/2),dw,dh);
+    var q=0.9, out=cv.toDataURL('image/jpeg',q); while(out.length>420000&&q>0.4){ q-=0.08; out=cv.toDataURL('image/jpeg',q); } ok(out);
+  }catch(e){ ok(src); } }; im.onerror=function(){ ok(src); }; im.src=src; }); }
+/* a foto já está no padrão? (quadrada e com margem branca em volta do produto) */
+function cdFotoNoPadrao(src){ return new Promise(function(ok){ var im=new Image(); im.onload=function(){ try{
+    var w=im.naturalWidth, h=im.naturalHeight; if(Math.abs(w-h)>Math.max(w,h)*0.02){ ok(false); return; }
+    var s=Math.min(1,200/w), cw=Math.round(w*s), ch=Math.round(h*s), cv=document.createElement('canvas'); cv.width=cw; cv.height=ch; var cx=cv.getContext('2d'); cx.drawImage(im,0,0,cw,ch);
+    var d=cx.getImageData(0,0,cw,ch).data, x0=cw, y0=ch, x1=-1, y1=-1, x, y; for(y=0;y<ch;y++) for(x=0;x<cw;x++){ var i=(y*cw+x)*4; if(d[i]<238||d[i+1]<238||d[i+2]<238){ if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; } }
+    if(x1<0){ ok(true); return; } var m=Math.min(x0,y0,cw-1-x1,ch-1-y1)/cw; ok(m>=0.03);
+  }catch(e){ ok(true); } }; im.onerror=function(){ ok(true); }; im.src=src; }); }
+/* deixa no padrão as fotos que já estão no cadastro (só as que estão fora: recortadas rente ou não quadradas) */
+function cdPadronizarTodas(){
+  var b=el('cd-fl-pad'), r=el('cd-fl-padr'), lista=(CD.prods||[]).filter(function(p){ return p.foto&&/^data:image\//.test(p.foto); }), i=0, feitas=0, falhas=0; if(!lista.length){ r.textContent='Nenhuma foto no cadastro.'; return; }
+  b.disabled=true;
+  var passo=function(){
+    if(i>=lista.length){ b.disabled=false; b.textContent='Padronizar de novo'; r.innerHTML='<b>'+feitas+' foto'+(feitas==1?'':'s')+' ajustada'+(feitas==1?'':'s')+'.</b> As outras já estavam no padrão.'+(falhas?' '+falhas+' não salvaram: tente de novo.':''); cdPintar(); return; }
+    var p=lista[i++]; b.textContent='Conferindo '+i+' de '+lista.length+'…';
+    cdFotoNoPadrao(p.foto).then(function(okP){ if(okP) return;
+      return cdFotoReal(p.foto).then(function(u){ var c=JSON.parse(JSON.stringify(p)); c.foto=u; return cdSalvarApi('prod',c).then(function(){ p.foto=u; feitas++; }); }).catch(function(){ falhas++; });
+    }).then(passo);
+  };
+  passo();
+}
 function cdFlRedim(f){
+  /* (258) nas lojas, a foto do lote entra no padrão (quadrada, fundo branco, produto inteiro no círculo) */
+  if(cdLojaModo()) return new Promise(function(ok,no){ var rd=new FileReader(); rd.onload=function(){ cdFotoReal(rd.result).then(ok,no); }; rd.onerror=function(){ no(new Error('não li o arquivo')); }; rd.readAsDataURL(f); });
   return new Promise(function(ok,no){
     var rd=new FileReader();
     rd.onload=function(){ var im=new Image(); im.onload=function(){
