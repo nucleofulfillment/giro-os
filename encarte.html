@@ -208,8 +208,8 @@ input[type=range]{width:100%;accent-color:var(--lf)}
     <div class="bl">
       <h3>Logo</h3><div class="logo-pv" id="logoPv"></div>
       <div class="row"><label class="btn sec" style="text-align:center;cursor:pointer">Enviar outra logo<input type="file" accept="image/png,image/jpeg,image/webp" hidden onchange="logoEnvia(this)"></label><button class="btn sec" onclick="logoPadrao()">Usar a da loja</button></div>
-      <label class="chk"><input type="checkbox" id="logoCx" checked onchange="mudou()"> Logo numa caixa branca</label>
-      <div class="mini">Logo colorida fica melhor na caixa branca; logo branca, sem a caixa.</div>
+      <label class="chk"><input type="checkbox" id="logoCx" onchange="ctl();mudou()"> Logo numa caixa branca</label>
+      <div class="mini">Sem caixa, o encarte usa sozinho a logo da loja que aparece melhor na cor do topo (a branca no topo escuro).</div>
     </div>
     <div class="bl" id="blClube">
       <h3>Clube de assinatura</h3>
@@ -318,14 +318,18 @@ function ctl(){
   logoPv();
   $('vSim').classList.toggle('on',ST.vista==='sim'); $('vImp').classList.toggle('on',ST.vista==='imp');
 }
-function logoPv(){ $('logoPv').style.background=tema().top; $('logoPv').innerHTML=LOGO?'<img src="'+LOGO+'" alt=""'+($('logoCx').checked?' style="background:#fff;border-radius:8px;padding:3px 6px"':'')+'>':'<span style="color:#fff;font-weight:800">sem logo</span>'; }
+/* (260) logo SEM moldura: entre as logos da loja (alta, do painel e do app), usa a que contrasta com a cor do topo (branca no topo escuro) */
+var LOGOS=[];
+function logoMede(src){ return new Promise(function(ok){ if(!src){ ok(null); return; } var im=new Image(); if(/^https?:/.test(src)) im.crossOrigin='anonymous'; im.onload=function(){ try{ var w=Math.min(160,im.naturalWidth), h=Math.max(1,Math.round(im.naturalHeight*w/im.naturalWidth)), cv=document.createElement('canvas'); cv.width=w; cv.height=h; var cx=cv.getContext('2d'); cx.drawImage(im,0,0,w,h); var d=cx.getImageData(0,0,w,h).data, s=0, n=0; for(var i=0;i<d.length;i+=4){ if(d[i+3]>60){ s+=(.2126*d[i]+.7152*d[i+1]+.0722*d[i+2])/255; n++; } } ok(n?{src:src,lum:s/n}:null); }catch(e){ ok({src:src,lum:null}); } }; im.onerror=function(){ ok(null); }; im.src=src; }); }
+function logoAtual(){ if(ST.logo) return ST.logo; if(!LOGOS.length) return LOGO; var esc=lum(tema().top)<.55, ok=LOGOS.filter(function(l){ return l.lum!=null; }); if(!ok.length) return LOGOS[0].src; ok.sort(function(a,b){ return esc?b.lum-a.lum:a.lum-b.lum; }); return ok[0].src; }
+function logoPv(){ var LOGO=logoAtual(); $('logoPv').style.background=tema().top; $('logoPv').innerHTML=LOGO?'<img src="'+LOGO+'" alt=""'+($('logoCx').checked?' style="background:#fff;border-radius:8px;padding:3px 6px"':'')+'>':'<span style="color:#fff;font-weight:800">sem logo</span>'; }
 function ctlTemas(){ var b=document.querySelector('.tm.on i'); if(b) b.innerHTML='<b style="background:'+PERSO.top+'"></b><b style="background:'+PERSO.pr+'"></b><b style="background:'+PERSO.bg+'"></b>'; logoPv(); }
 function ajDens(){ var o=densOpc(); if(o.indexOf(ST.dens)<0&&!ST.densLivre) ST.dens=o[Math.min(o.length-1,2)]; }
 function escDens(v){ v=Math.max(1,Math.min(40,parseInt(v,10)||ST.dens)); ST.dens=v; ST.densLivre=densOpc().indexOf(v)<0; ctl(); mudou(); }
 function escFmt(k){ ST.fmt=k; ST.tam=0; ST.densLivre=false; ajDens(); ctl(); mudou(); }
 function vista(v){ ST.vista=v; ctl(); pinta(); }
-function logoEnvia(inp){ var f=inp.files&&inp.files[0]; if(!f) return; var rd=new FileReader(); rd.onload=function(){ LOGO=rd.result; ST.logo=LOGO.length<700000?LOGO:''; ctl(); mudou(); }; rd.readAsDataURL(f); }
-function logoPadrao(){ LOGO=LOGO_LOJA; ST.logo=''; ctl(); mudou(); }
+function logoEnvia(inp){ var f=inp.files&&inp.files[0]; if(!f) return; var rd=new FileReader(); rd.onload=function(){ ST.logo=rd.result.length<700000?rd.result:''; if(!ST.logo) toast('Logo grande demais: use uma de até 500 KB.'); ctl(); mudou(); }; rd.readAsDataURL(f); }
+function logoPadrao(){ ST.logo=''; ctl(); mudou(); }
 
 /* ── lista ── */
 function lista(){
@@ -406,7 +410,7 @@ function cardHtml(p,tipo,arrasta){
     :(of?'<div class="de">De '+ris(brl(p.d))+'</div>':'')+'<div class="preco"><span class="rs">R$</span><span class="in">'+s[0]+'</span><span class="ct">,'+s[1]+'</span></div>';
   return h+tag+'<div class="cp"><div class="ft">'+fotoHtml(p)+'</div><div class="pz"'+(ST.est==='etq'&&temOff?' style="padding-top:calc(12.5*var(--u))"':'')+'>'+preco+clbHtml(p)+'</div></div>'+nm+'</div>';
 }
-function logoHtml(){ return LOGO?'<div class="lg'+($('logoCx').checked?' cx':'')+'"><img src="'+LOGO+'" alt=""></div>':'<div class="lg"><b style="font-size:calc(7*var(--mm));font-weight:800">'+esc(LOJA.nome)+'</b></div>'; }
+function logoHtml(){ var LOGO=logoAtual(); return LOGO?'<div class="lg'+($('logoCx').checked?' cx':'')+'"><img src="'+LOGO+'" alt=""></div>':'<div class="lg"><b style="font-size:calc(7*var(--mm));font-weight:800">'+esc(LOJA.nome)+'</b></div>'; }
 function topoHtml(slim){ var tit=$('tit').value.trim()||'Ofertas', v1=$('v1').value, v2=$('v2').value;
   var qr=(!slim&&$('qrCapa').checked)?'<div class="qrw"><div class="q">'+qrImg()+'</div><small>Aponte e peça<br>pelo WhatsApp</small></div>':'';
   return '<div class="topo'+(slim?' slim':'')+'">'+logoHtml()+'<div class="tt"><b title="Dois cliques para editar">'+esc(tit)+'</b>'+(v1&&v2?'<small>Válido de '+dt(v1)+' a '+dt(v2)+'</small>':'')+'</div>'+qr+'</div>'; }
@@ -507,15 +511,15 @@ function pintaPreco(){ $('preco').innerHTML='<b>'+brl(PRECO/100)+' por download<
 /* ── rascunho (fica neste navegador) ── */
 function rascK(){ return 'livefood-encarte:'+LOJA.cli; }
 function estado(){ return {v:1,ST:{fmt:ST.fmt,tam:ST.tam,modo:ST.modo,pags:ST.pags,est:ST.est,tema:ST.tema,dens:ST.dens,densLivre:ST.densLivre,heroOn:ST.heroOn,sel:ST.sel,hero:ST.hero,ord:ST.ord,nomes:ST.nomes,logo:ST.logo||''},PERSO:PERSO,
-  tx:{tit:$('tit').value,ttk:$('ttk').value,v1:$('v1').value,v2:$('v2').value,fx:$('fx').value,wpp:$('wpp').value,qrCapa:$('qrCapa').checked,logoCx:$('logoCx').checked,clbOn:$('clbOn').checked}}; }
+  tx:{tit:$('tit').value,ttk:$('ttk').value,v1:$('v1').value,v2:$('v2').value,fx:$('fx').value,wpp:$('wpp').value,qrCapa:$('qrCapa').checked,logoCx2:$('logoCx').checked,clbOn:$('clbOn').checked}}; }
 function guardaRasc(){ if(!PRONTO) return; try{ localStorage.setItem(rascK(),JSON.stringify(estado())); }catch(e){ try{ var s=estado(); s.ST.logo=''; localStorage.setItem(rascK(),JSON.stringify(s)); }catch(e2){} } }
 function voltaRasc(){ var r=null; try{ r=JSON.parse(localStorage.getItem(rascK())||'null'); }catch(e){} if(!r||!r.ST) return false;
   var s=r.ST; ['fmt','tam','modo','pags','est','tema','dens','densLivre','heroOn','hero','nomes'].forEach(function(k){ if(s[k]!=null) ST[k]=s[k]; });
   if(!TAMS[ST.fmt]) ST.fmt='unica'; if(!TAMS[ST.fmt][ST.tam]) ST.tam=0; if(!TEMAS[ST.tema]) ST.tema='loja';
   var ids={}; PRODS.forEach(function(p){ ids[p.id]=1; }); ST.sel={}; Object.keys(s.sel||{}).forEach(function(id){ if(ids[id]) ST.sel[id]=1; });
   if(Array.isArray(s.ord)){ var o=s.ord.filter(function(id){ return ids[id]; }); PRODS.forEach(function(p){ if(o.indexOf(p.id)<0) o.push(p.id); }); ST.ord=o; }
-  if(!ids[ST.hero]) ST.hero=''; if(s.logo){ LOGO=s.logo; ST.logo=s.logo; } if(r.PERSO) PERSO=r.PERSO;
-  var t=r.tx||{}; ['tit','ttk','v1','v2','fx','wpp'].forEach(function(k){ if(t[k]!=null) $(k).value=t[k]; }); ['qrCapa','logoCx','clbOn'].forEach(function(k){ if(t[k]!=null) $(k).checked=!!t[k]; });
+  if(!ids[ST.hero]) ST.hero=''; if(s.logo){ ST.logo=s.logo; } if(r.PERSO) PERSO=r.PERSO;
+  var t=r.tx||{}; ['tit','ttk','v1','v2','fx','wpp'].forEach(function(k){ if(t[k]!=null) $(k).value=t[k]; }); ['qrCapa','clbOn'].forEach(function(k){ if(t[k]!=null) $(k).checked=!!t[k]; }); if(t.logoCx2!=null) $('logoCx').checked=!!t.logoCx2;
   $('ttkV').textContent=$('ttk').value+'%'; return true; }
 var MUD=0; function mudou(){ pinta(); clearTimeout(MUD); MUD=setTimeout(guardaRasc,600); }
 
@@ -694,7 +698,8 @@ function erroCarga(msg){ $('palco').innerHTML='<div class="carrega">Não consegu
 function monta(cd,cfg,ci,clb){
   LOJA={cli:ci.cli||cd.cli||'',nome:ci.nome||'',slug:ci.slug||cd.slug||''};
   CLB=clb&&clb.ok?clb.clube:null; COR_LOJA={cor:cfg.cor||'',cor2:cfg.cor2||''}; MES=ci.mes||MES; if(ci.preco_centavos) PRECO=ci.preco_centavos;
-  var la=ci.logo_alta; LOGO_LOJA=la&&la.url?la.url:(cfg.logoPainel||cfg.logo?blobDe(cfg.logoPainel||cfg.logo):''); LOGO=LOGO_LOJA;
+  var la=ci.logo_alta, cands=[la&&la.url?la.url:'',cfg.logoPainel?blobDe(cfg.logoPainel):'',cfg.logo?blobDe(cfg.logo):''].filter(Boolean); LOGO_LOJA=cands[0]||''; LOGO=LOGO_LOJA;
+  Promise.all(cands.map(logoMede)).then(function(rs){ LOGOS=rs.filter(Boolean); if(PRONTO){ ctl(); pinta(); } });
   var cats={}; (cd.cats||[]).forEach(function(c){ cats[c.id]=c.nome||''; });
   PRODS=(cd.prods||[]).filter(function(p){ return p&&p.ativo!==false&&String(p.nome||'').trim()&&Number(p.preco)>0; }).map(function(p){
     var promo=precoPromo(p), por=promo||Number(p.preco), o={id:String(p.id),n:String(p.nome).trim(),p:por,d:promo?Number(p.preco):0,c:cats[p.cat]||'',cat:p.cat,f:'',f0:p.foto||'',dest:!!p.destaque};
