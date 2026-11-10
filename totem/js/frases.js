@@ -177,7 +177,9 @@ window.Frase = (function () {
     if (k === 'aoLoja') {
       if (window.IDIOMA_ATUAL === 'en') return 'to ' + M.loja.trim();
       if (window.IDIOMA_ATUAL === 'es') return 'a ' + M.loja.trim();
-      const fem = /^(a |pizzaria|lanchonete|hamburgueria|churrascaria|padaria|confeitaria|doceria|sorveteria|pastelaria|cantina|casa|cervejaria|choperia|cafeteria|creperia|esfiharia|tapiocaria|taberna|tasca|adega|cozinha|livefood|cia|companhia|vila|praça|estação|toca|barraca|peixaria|petiscaria|temakeria|sushiteria)\b/i;
+      /* (263) também farmácia, mercado de bairro e lojas em geral ("à Farmácia Padoan"). O fim da palavra é espaço ou fim do nome
+         (o \b não funcionava depois de ç/ão: "Praça" e "Estação" saíam com "ao") */
+      const fem = /^(?:a\s|(?:pizzaria|lanchonete|hamburgueria|churrascaria|padaria|panificadora|confeitaria|doceria|sorveteria|pastelaria|cantina|casa|cervejaria|choperia|cafeteria|creperia|esfiharia|tapiocaria|taberna|tasca|adega|cozinha|livefood|cia|companhia|vila|praça|praca|estação|estacao|toca|barraca|peixaria|petiscaria|temakeria|sushiteria|rotisseria|galeteria|farmácia|farmacia|drogaria|loja|lojas|mercearia|quitanda|distribuidora|perfumaria|conveniência|conveniencia|ótica|otica|papelaria|floricultura|barbearia|boutique|feira|academia|clínica|clinica|lavanderia|tabacaria|livraria|joalheria|relojoaria|serralheria|marcenaria|vidraçaria|vidracaria|agropecuária|agropecuaria|estrela|fazenda|granja|chácara|chacara|cabana|villa)(?=\s|$|[,.!-]))/i;
       return (fem.test(M.loja.trim()) ? 'à ' : 'ao ') + M.loja.trim().replace(/^(o|a) /i, '');
     }
     if (k === 'destaque') return d.nome;
