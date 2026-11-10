@@ -337,12 +337,23 @@ function lista(){
       +'<input type="checkbox" '+(ST.sel[p.id]?'checked':'')+' onchange="tg('+a+',this.checked)">'+(p.f?'<img src="'+p.f+'" alt="" loading="lazy">':'<span class="sf"></span>')+'<span>'+(ed?'✎ ':'')+esc(nome(p))+'</span><div style="text-align:right"><em>'+brl(p.p)+'</em>'+(fora[p.id]?'<div class="fx">não coube</div>':(of?'<div class="pr">-'+pct(p)+'%</div>':''))+'</div>'
       +'<button type="button" class="st" title="Destaque" onclick="hero('+a+')" style="color:'+(ST.hero===p.id?'#FF5A00':'#C7C7CC')+'">★</button></div>';
   }
-  var ord=ST.ord.map(prodId).filter(function(p){ return p&&(!q||semAc(nome(p)).indexOf(q)>=0); });
-  var m=ord.filter(function(p){ return ST.sel[p.id]; }), o=ord.filter(function(p){ return !ST.sel[p.id]; });
-  $('lst').innerHTML=(m.length?'<div class="sep">No encarte, nesta ordem</div>'+m.map(function(p){ return linha(p,true); }).join(''):'')+(o.length?'<div class="sep">Fora do encarte</div>'+o.map(function(p){ return linha(p,false); }).join(''):'')||'<div class="mini">Nenhum produto ativo com preço.</div>';
+  var bate=function(p){ return p&&(!q||semAc(nome(p)).indexOf(q)>=0); };
+  /* (259) a lista mostra a esteira: em que página cada produto entrou, na ordem em que aparece */
+  var h='', P=PRONTO?plano():null;
+  if(P&&P.cartaz){ if(P.pc&&bate(P.pc)) h+='<div class="sep">Cartaz</div>'+linha(P.pc,false); var fc=P.fora.filter(bate); if(fc.length) h+='<div class="sep">Fora do cartaz</div>'+fc.map(function(p){ return linha(p,true); }).join(''); }
+  else if(P){ P.faces.forEach(function(f){
+      var nm=P.nF===1?'Folha única':(f.tp==='capa'?'Capa · página 1':(f.tp==='contra'?'Contracapa · página '+(f.ix+1):'Página '+(f.ix+1))), its=(f.hero?[f.hero]:[]).concat(f.ps), tot=f.cap+(f.hero?1:0);
+      var vis=its.filter(bate); if(!vis.length&&q) return;
+      h+='<div class="sep">'+nm+' · '+its.length+' de '+tot+(its.length<tot?' <span style="color:#16a34a">('+(tot-its.length)+' vaga'+(tot-its.length>1?'s':'')+')</span>':'')+'</div>'+vis.map(function(p){ return linha(p,p!==f.hero); }).join('');
+    });
+    var fr=P.fora.filter(bate); if(fr.length) h+='<div class="sep" style="color:#C62828">Não couberam</div>'+fr.map(function(p){ return linha(p,true); }).join(''); }
+  var o=ST.ord.map(prodId).filter(function(p){ return p&&!ST.sel[p.id]&&bate(p); });
+  if(o.length) h+='<div class="sep">Fora do encarte · marque para entrar no fim da fila</div>'+o.map(function(p){ return linha(p,false); }).join('');
+  $('lst').innerHTML=h||'<div class="mini">Nenhum produto ativo com preço.</div>';
   $('cont').textContent=Object.keys(ST.sel).length+' marcados';
 }
-function tg(id,v){ if(v) ST.sel[id]=1; else { delete ST.sel[id]; if(ST.hero===id) ST.hero=''; } mudou(); lista(); }
+/* marcar um produto põe ele no FIM da fila (entra na última página, sem mexer no resto) */
+function tg(id,v){ if(v){ ST.sel[id]=1; var i=ST.ord.indexOf(id); if(i>=0){ ST.ord.splice(i,1); ST.ord.push(id); } } else { delete ST.sel[id]; if(ST.hero===id) ST.hero=''; } mudou(); lista(); }
 function hero(id){ ST.sel[id]=1; ST.hero=ST.hero===id?'':id; ST.heroOn=true; ctl(); mudou(); lista(); }
 function marca(m){ ST.sel={}; if(m==='of') PRODS.forEach(function(p){ if(p.d>p.p) ST.sel[p.id]=1; }); if(!ST.sel[ST.hero]) ST.hero=''; mudou(); lista(); }
 function mover(i,j){ if(i===j||!i) return; var a=ST.ord, f=a.indexOf(i), t=a.indexOf(j); if(f<0||t<0) return; a.splice(f,1); var nt=a.indexOf(j); a.splice(f<t?nt+1:nt,0,i); }
@@ -412,17 +423,26 @@ function plano(){
   var h=sel.filter(function(p){ return p.id===ST.hero; })[0]||null, temMed=sel.some(ehMed);
   if(ST.fmt==='unica'&&ST.modo==='cartaz'){ var pc=h||sel[0]||null; return {cartaz:1,W:W,H:H,sz:sz,pc:pc,temMed:pc&&ehMed(pc),fora:sel.filter(function(p){ return p!==pc; }),n:pc?1:0}; }
   var cap=ST.dens, g0=grid(cap,W,H), usaH=ST.heroOn!==false&&h&&sel.length>4&&g0[0]>=2&&g0[1]>=2&&cap>=5, resto=sel.filter(function(p){ return !(usaH&&p===h); });
+  /* (259) ESTEIRA: os produtos enchem a capa, depois a página 2, a 3... na ordem da lista, e cada página usa TODAS as vagas da grade.
+     A grade é a menor (até o máximo escolhido) que leva todos: páginas cheias e nenhuma página vazia no livreto */
+  function tiposDe(nF){ var t=[]; for(var i=0;i<nF;i++) t.push(nF===1?'unica':(i===0?'capa':(i===nF-1?'contra':'miolo'))); return t; }
+  function gradeDe(tp,d){ var heroAqui=usaH&&(tp==='capa'||tp==='unica'), util=tp==='miolo'?H-24:(tp==='contra'?H-50:(tp==='capa'?H-66:H-92)), g=grid(heroAqui?Math.max(d,5):d,W,util/.66);
+    if(heroAqui){ g=[Math.max(2,g[0]),Math.max(2,g[1])]; } return {g:g,cap:Math.max(0,g[0]*g[1]-(heroAqui?4:0)),heroAqui:heroAqui,util:util}; }
+  function capsDe(nF,d){ return tiposDe(nF).map(function(tp){ return gradeDe(tp,d); }); }
+  function soma(cs){ return cs.reduce(function(a,c){ return a+c.cap; },0); }
   var nF=1; if(ST.fmt==='dobrado') nF=4;
-  if(ST.fmt==='paginado'){ if(ST.pags) nF=ST.pags; else { nF=4; while(nF<24&&(usaH?cap-4:cap)+cap*(nF-1)<resto.length) nF+=4; } }
-  var tipos=[], i; for(i=0;i<nF;i++) tipos.push(nF===1?'unica':(i===0?'capa':(i===nF-1?'contra':'miolo')));
-  var caps=tipos.map(function(tp){ return (usaH&&(tp==='capa'||tp==='unica'))?cap-4:cap; }), qtd=[], resta=resto.length;
-  caps.forEach(function(c,ix){ var q=Math.max(0,Math.min(c,Math.ceil(resta/(nF-ix)))); qtd.push(q); resta-=q; });
-  var maxM=1; qtd.forEach(function(q,ix){ if(!(usaH&&(tipos[ix]==='capa'||tipos[ix]==='unica'))&&q>maxM) maxM=q; });
+  if(ST.fmt==='paginado'){ if(ST.pags) nF=ST.pags; else { nF=4; while(nF<24&&soma(capsDe(nF,cap))<resto.length) nF+=4; } }
+  var d=cap; if(nF>1){ for(var dd=1; dd<=cap; dd++){ if(soma(capsDe(nF,dd))>=resto.length){ d=dd; break; } } }
+  var cs=capsDe(nF,d), tps=tiposDe(nF), sobraVazia=0, pr0=0;
+  tps.forEach(function(tp,ix){ var t=Math.min(cs[ix].cap,resto.length-pr0); pr0+=t; if(t<=0&&!cs[ix].heroAqui) sobraVazia++; });
+  /* livreto com mais páginas do que os produtos pedem: em vez de deixar páginas vazias no fim, cada página leva a sua parte, sempre na ordem da lista */
+  if(nF>1&&sobraVazia>0){ var resta=resto.length;
+    cs=tps.map(function(tp,ix){ var heroAqui=usaH&&(tp==='capa'||tp==='unica'), falta=nF-ix, q=Math.max(heroAqui?0:1,Math.ceil(resta/falta)); q=Math.min(q,resta); resta-=q; var g=gradeDe(tp,heroAqui?q+4:q); return {g:g.g,cap:q,heroAqui:heroAqui,util:g.util}; }); }
   var faces=[], pr=0, vaz=0, n=usaH?1:0;
-  tipos.forEach(function(tp,ix){
-    var heroAqui=usaH&&(tp==='capa'||tp==='unica'), ps=resto.slice(pr,pr+qtd[ix]); pr+=ps.length; n+=ps.length; if(!ps.length&&!heroAqui) vaz++;
-    var util=tp==='miolo'?H-24:(tp==='contra'?H-50:(tp==='capa'?H-66:H-92)), g=grid(heroAqui?Math.max(qtd[ix]+4,5):maxM,W,util/.66), dm=escala(g[0],g[1],W,H,util);
-    faces.push({tp:tp,ix:ix,hero:heroAqui?h:null,ps:ps,g:g,k:dm.k,vert:dm.vert});
+  tps.forEach(function(tp,ix){
+    var c=cs[ix], ps=resto.slice(pr,pr+c.cap); pr+=ps.length; n+=ps.length; if(!ps.length&&!c.heroAqui) vaz++;
+    var dm=escala(c.g[0],c.g[1],W,H,c.util);
+    faces.push({tp:tp,ix:ix,hero:c.heroAqui?h:null,ps:ps,g:c.g,k:dm.k,vert:dm.vert,cap:c.cap});
   });
   return {W:W,H:H,sz:sz,nF:nF,faces:faces,fora:resto.slice(pr),vazias:nF>1?vaz:0,temMed:temMed,n:n};
 }
