@@ -77,7 +77,15 @@
   async function configDoPainel() {
     if (!chaveTotem) return null;
     const copia = ler(kConfig);
-    if (copia && copia.ok) { vigiar(kConfig, urlConfig(), copia); return { ...copia, k: chaveTotem }; }
+    if (copia && copia.ok) {
+      /* (262) ao abrir, tenta a configuração ATUAL do painel por até 2,5 s (ex.: voz nova da ElevenLabs vale já na primeira fala).
+         Sem resposta a tempo, segue com a cópia guardada e confere depois, como antes */
+      try {
+        const { d } = await buscarJson(urlConfig(), 2500);
+        if (d && d.ok) { gravar(kConfig, d); vigiar(kConfig, urlConfig(), d); return { ...d, k: chaveTotem }; }
+      } catch (e) { /* rede lenta: usa a cópia */ }
+      vigiar(kConfig, urlConfig(), copia); return { ...copia, k: chaveTotem };
+    }
     try {
       const { d } = await buscarJson(urlConfig(), 8000);
       if (!d.ok) return { erro: d.mensagem || 'Link do totem inválido.' };
