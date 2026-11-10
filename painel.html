@@ -1478,7 +1478,7 @@ html.loja-p .cd-dest{display:none!important}
   <div class="sh-bd">
     <div class="field"><label>Hora do pedido</label><input class="inp" type="time" id="np-hora"></div>
     <div class="field"><label>Origem</label><select class="inp" id="np-origem"><option>WhatsApp</option><option>Balcão/telefone</option><option>Pedidos10</option><option>iFood</option><option>Outro</option></select></div>
-    <div class="field"><label>Nome do cliente</label><input class="inp" id="np-cli" autocomplete="off"></div>
+    <div class="field" style="position:relative"><label>Nome do cliente</label><input class="inp" id="np-cli" autocomplete="off" placeholder="Digite o nome, o celular ou o número do cliente" oninput="npSugBusca()" onfocus="npSugBusca()" onblur="setTimeout(npSugFecha,180)" onkeydown="npSugTecla(event)"><div id="np-sug" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:30;margin-top:4px;background:var(--s1);border:1px solid var(--border);border-radius:12px;box-shadow:0 10px 28px rgba(0,0,0,.14);max-height:280px;overflow:auto"></div></div>
     <div class="field"><label>Telefone</label><input class="inp" id="np-tel" inputmode="tel" placeholder="47 99999-9999"></div>
     <div style="display:flex;gap:10px;flex-wrap:wrap">
       <div class="field" style="flex:3;min-width:180px"><label>Rua</label><input class="inp" id="np-rua"></div>
@@ -5553,7 +5553,46 @@ function abrirNovoPedido(){
   el('np-hora').value=('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
   ['np-cli','np-tel','np-rua','np-numero','np-comp','np-bairro','np-itens','np-total','np-taxa','np-atend'].forEach(function(id){ el(id).value=''; });
   el('np-cid').value=cid; el('np-origem').value='WhatsApp'; el('np-forma').value='online'; el('np-pago').value='1';
-  abrir('sh-novo-pedido');
+  npSugFecha(); abrir('sh-novo-pedido');
+  if(!CL.lista.length) clApi('/painel/atend-socios').then(function(d){ if(d&&d.ok&&!CL.lista.length) CL.lista=d.socios||[]; }).catch(function(){});
+}
+/* (251) busca de cliente no Novo pedido: clientes cadastrados (menu Clientes) + quem já pediu antes (traz o endereço do último pedido) */
+var NP_SUG=[], NP_SUG_I=-1;
+function npSemAc(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''); }
+function npFoneD(f){ f=String(f||'').replace(/\D/g,''); if(f.length>=12&&f.slice(0,2)==='55') f=f.slice(2); return f; }
+function npSugBusca(){
+  var q=npSemAc(el('np-cli').value).trim(), qd=q.replace(/\D/g,''), ws=q.split(/\s+/).filter(Boolean), porFone={}, lista=[], i, p, f, k;
+  if(q.length<2){ npSugFecha(); return; }
+  function bate(nome,joia,fone){ var n=npSemAc(nome); if(qd.length>=3&&String(fone||'').indexOf(qd)>=0) return true; if(qd&&String(joia||'')===qd) return true; return ws.length&&ws.every(function(w){ return n.indexOf(w)>=0; }); }
+  for(i=PEDIDOS.length-1;i>=0;i--){ p=PEDIDOS[i]; if(!p||!p.cliente||!p.rua) continue; f=npFoneD(p.tel); k=f||('n:'+npSemAc(p.cliente)); if(porFone[k]) continue; porFone[k]={nome:p.cliente,fone:f,tel:p.tel,rua:p.rua,num:p.num||'',comp:p.comp||'',bai:p.bai||p.bairro||'',cid:p.cid||'',hp:p.hp||0}; }
+  (CL.lista||[]).forEach(function(s){ if(s.ativo===0) return; f=npFoneD(s.fone); var e=f&&porFone[f]; if(!bate(s.nome,s.joia,f)&&!(e&&bate(e.nome,'',f))) return; lista.push({nome:s.nome,joia:s.joia,fone:f,tel:clFone(f),rua:e?e.rua:'',num:e?e.num:'',comp:e?e.comp:'',bai:e?e.bai:'',cid:e?e.cid:'',bloq:s.bloqueado?1:0}); if(e) e.usado=1; });
+  Object.keys(porFone).forEach(function(k){ var e=porFone[k]; if(e.usado||!bate(e.nome,'',e.fone)) return; lista.push(e); });
+  NP_SUG=lista.slice(0,8); NP_SUG_I=-1; npSugPinta();
+}
+function npSugPinta(){
+  var b=el('np-sug'); if(!b) return;
+  if(!NP_SUG.length){ b.style.display='none'; b.innerHTML=''; return; }
+  b.innerHTML=NP_SUG.map(function(s,i){
+    var end=s.rua?esc(s.rua+(s.num?', '+s.num:'')+(s.bai?' · '+s.bai:'')):'<i>sem endereço salvo</i>';
+    return '<div onmousedown="event.preventDefault();npSugEscolhe('+i+')" style="padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--border);'+(i===NP_SUG_I?'background:rgba(255,90,0,.08)':'')+'"><div style="font-weight:700;font-size:14px">'+esc(s.nome)+(s.joia?' <span style="font-size:11.5px;font-weight:700;color:var(--muted)">nº '+esc(s.joia)+'</span>':'')+(s.bloq?' <span style="font-size:11px;font-weight:800;color:#fff;background:#ef4444;border-radius:8px;padding:1px 7px">Bloqueado</span>':'')+'</div><div style="font-size:12.5px;color:var(--muted)">'+esc(s.tel||clFone(s.fone)||'sem celular')+' · '+end+'</div></div>';
+  }).join('');
+  b.style.display='block';
+}
+function npSugFecha(){ NP_SUG=[]; NP_SUG_I=-1; var b=el('np-sug'); if(b){ b.style.display='none'; b.innerHTML=''; } }
+function npSugTecla(e){
+  if(!NP_SUG.length) return;
+  if(e.key==='ArrowDown'){ e.preventDefault(); NP_SUG_I=(NP_SUG_I+1)%NP_SUG.length; npSugPinta(); }
+  else if(e.key==='ArrowUp'){ e.preventDefault(); NP_SUG_I=(NP_SUG_I-1+NP_SUG.length)%NP_SUG.length; npSugPinta(); }
+  else if(e.key==='Enter'&&NP_SUG_I>=0){ e.preventDefault(); npSugEscolhe(NP_SUG_I); }
+  else if(e.key==='Escape'){ npSugFecha(); }
+}
+function npSugEscolhe(i){
+  var s=NP_SUG[i]; if(!s) return;
+  el('np-cli').value=s.nome||''; el('np-tel').value=s.tel||clFone(s.fone)||'';
+  if(s.rua){ el('np-rua').value=s.rua; el('np-numero').value=s.num||''; el('np-comp').value=s.comp||''; el('np-bairro').value=s.bai||''; if(s.cid) el('np-cid').value=s.cid; }
+  npSugFecha();
+  var nx=s.rua?el('np-itens'):el('np-rua'); if(nx) nx.focus();
+  if(s.bloq) aviso('Atenção: cliente bloqueado por cobrança vencida');
 }
 function salvarNovoPedido(){
   var cli=el('np-cli').value.trim(), tel=el('np-tel').value.trim(), rua=el('np-rua').value.trim(), nr=el('np-numero').value.trim(), bai=el('np-bairro').value.trim(), cid=el('np-cid').value.trim();
