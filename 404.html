@@ -41,7 +41,8 @@
   }
   var loja = /^[A-Za-z0-9_-]{2,40}$/.test(p[0] || '') ? p[0] : '';
   /* (109) livefood.tec.br/<loja>/cardapio → versão do WhatsApp: monta a sacola e envia o pedido pelo WhatsApp da loja */
-  var wa = p.length === 2 && p[1].toLowerCase() === 'cardapio';
+  /* (254) /whats é o endereço padrão (vale para restaurante, farmácia e mercado); /cardapio continua abrindo para os links já enviados */
+  var wa = p.length === 2 && (p[1].toLowerCase() === 'whats' || p[1].toLowerCase() === 'cardapio');
   /* (159) livefood.tec.br/<loja>/r/<código> → pagar a parte de uma conta rachada */
   var parte = p.length === 3 && p[1].toLowerCase() === 'r' && /^[a-f0-9]{8,32}$/.test(p[2]) ? p[2] : '';
   var ok = loja && (p.length === 1 || wa || parte || (p.length === 3 && p[1].toLowerCase() === 'mesa' && /^\d{1,3}$/.test(p[2])));

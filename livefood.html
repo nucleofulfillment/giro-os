@@ -556,9 +556,9 @@ html.claro #sheet .rsq1 .av{color:#000}   /* tema claro inverte a folha: a inici
 var API='https://giro-os-api.nucleofull.workers.dev';
 /* (092) a loja vem do link: livefood.tec.br/<loja>/mesa/7 (LF_ROTA, montado pelo 404.html) ou o formato antigo livefood.html?c=<código>&mesa=7 */
 var Q=new URLSearchParams(location.search), ROTA=window.LF_ROTA||{}, CLI=(ROTA.c||Q.get('c')||Q.get('loja')||'').replace(/[^A-Za-z0-9_-]/g,''), MESA=(ROTA.mesa||Q.get('mesa')||'').replace(/\D/g,'').slice(0,3);
-/* (109) versão do WhatsApp: livefood.tec.br/<loja>/cardapio — o cliente monta a sacola e envia o pedido pelo WhatsApp da loja */
+/* (109) versão do WhatsApp: livefood.tec.br/<loja>/whats (antes /cardapio, que continua abrindo) — o cliente monta a sacola e envia o pedido pelo WhatsApp da loja */
 var WA=!MESA&&!!(ROTA.wa||Q.get('wa')==='1');
-function lfLink(mesa){ var s=(D&&D.slug)||CLI; return location.origin+'/'+encodeURIComponent(s)+(mesa?'/mesa/'+mesa:(WA?'/cardapio':'')); }
+function lfLink(mesa){ var s=(D&&D.slug)||CLI; return location.origin+'/'+encodeURIComponent(s)+(mesa?'/mesa/'+mesa:(WA?'/whats':'')); }
 function waOn(){ return WA&&!!(D&&D.cfg&&D.cfg.wa); }
 var SAC=[], LT=0, D={ofertas:[],produtos:{},empresa:''}, ordem=[], idx=-1, cur=0, vs=[document.getElementById('v0'),document.getElementById('v1')], somOn=true, somTrava=false, tick=null, novoD=null;
 function $(i){return document.getElementById(i);}

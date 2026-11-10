@@ -248,6 +248,18 @@ function mostraHub(){
   $('ola').textContent=nome?'Olá, '+nome+'! Para onde vamos?':'Para onde vamos agora?';
   $('loja').textContent=US&&US.cliente_nome?US.cliente_nome:''; $('loja').hidden=!(US&&US.cliente_nome);
   document.body.classList.remove('em-login'); $('etLogin').hidden=true; $('tag').hidden=true; $('bSair').hidden=false; $('etHub').hidden=false;
+  hubModo();
+}
+/* (252) modalidade do negócio (mesmo botão do catálogo do painel): fora de restaurante, o Atendimento é do atendente */
+function hubModoAplica(loja){ var a=document.querySelector('a.card[href="atendimento.html"]'); if(!a) return; var p=a.querySelector('p');
+  if(p) p.textContent=loja?'App do atendente: pedidos, vendas e fechamento de conta.':'App do garçom: comandas, pedidos e fechamento de conta.';
+  a.setAttribute('data-fala',loja?'Atendente com superpoderes 😎':'Garçom com superpoderes 😎'); }
+function hubModo(){
+  try{ var m=localStorage.getItem('lf_modo_loja'); if(m!==null) hubModoAplica(m==='1'); }catch(e){}
+  if(!TK) return;
+  fetch(API+'/painel/menu-config',{headers:{'Authorization':'Bearer '+TK}}).then(function(r){ return r.json(); }).then(function(d){ var c=d&&d.ok&&d.menu&&d.menu.catalogo; if(!c) return;
+    var n=String(c.nome||'Cardápio').toLowerCase(), loja=!(n==='cardápio'||n==='cardapio'||!c.icone||c.icone==='cardapio');
+    try{ localStorage.setItem('lf_modo_loja',loja?'1':'0'); }catch(e){} hubModoAplica(loja); }).catch(function(){});
 }
 function entrar(){
   var e=$('lgE').value.trim(), s=$('lgS').value; if(!e||!s){ $('lgM').textContent='Digite o e-mail e a senha.'; return; }

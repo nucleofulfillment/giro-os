@@ -1516,5 +1516,33 @@ if(TK) inicio(); else mostraLogin('');
   };
 })();
 </script>
-</body>
+<script>
+/* (252) modalidade do negócio: fora de restaurante (farmácia, mercado...), o app fala "atendente" no lugar de "garçom".
+   Só rótulos da tela; nomes de produto e de cliente não mudam. O tipo vem do botão do catálogo (painel > Configurações > Modalidade do negócio) */
+(function(){
+  'use strict';
+  var TROCAS=[[/\bGARÇONS\b/g,'ATENDENTES'],[/\bGARÇOM\b/g,'ATENDENTE'],[/\bGarçons\b/g,'Atendentes'],[/\bgarçons\b/g,'atendentes'],[/\bGarçom\b/g,'Atendente'],[/\bgarçom\b/g,'atendente'],
+    [/\bCardápio\b/g,'Catálogo'],[/\bcardápio\b/g,'catálogo'],[/\b([Dd])o restaurante\b/g,function(m,a){ return (a==='D'?'D':'d')+'a loja'; }],[/\bo restaurante\b/g,'a loja'],[/\brestaurante\b/g,'loja'],
+    [/\b([Nn])a cozinha\b/g,function(m,a){ return (a==='N'?'N':'n')+'o preparo'; }],[/\b([Dd])a cozinha\b/g,function(m,a){ return (a==='D'?'D':'d')+'o preparo'; }],[/\b([Aa]) cozinha\b/g,function(m,a){ return (a==='A'?'O':'o')+' preparo'; }]];
+  var TESTE=/GARÇ|[Gg]arço|ard[áa]pio|estaurante|ozinha/, NAO='option,select,textarea,input,[contenteditable],.no-modo,#aj-chat,#aj-bal,#aj-dica';
+  function txt(s){ if(!s||!TESTE.test(s)) return s; TROCAS.forEach(function(t){ s=s.replace(t[0],t[1]); }); return s; }
+  function no(r){
+    if(!r) return;
+    if(r.nodeType===3){ var pe=r.parentElement; if(pe&&!pe.closest(NAO)){ var v=txt(r.nodeValue); if(v!==r.nodeValue) r.nodeValue=v; } return; }
+    if(r.nodeType!==1||r.closest(NAO)||r.tagName==='SCRIPT'||r.tagName==='STYLE') return;
+    var w=document.createTreeWalker(r,NodeFilter.SHOW_TEXT,null), t, l=[]; while((t=w.nextNode())) if(TESTE.test(t.nodeValue)) l.push(t);
+    l.forEach(function(x){ var p=x.parentElement; if(p&&!p.closest(NAO)&&p.tagName!=='SCRIPT'&&p.tagName!=='STYLE'){ var v=txt(x.nodeValue); if(v!==x.nodeValue) x.nodeValue=v; } });
+    var a=r.querySelectorAll('[placeholder],[title],[aria-label]'); for(var i=0;i<a.length;i++) ['placeholder','title','aria-label'].forEach(function(k){ var v=a[i].getAttribute(k); if(v&&TESTE.test(v)) a[i].setAttribute(k,txt(v)); });
+  }
+  var obs=null, fila=[], raf=0;
+  function liga(){ if(obs||typeof MutationObserver==='undefined') return; no(document.body); try{ document.title=txt(document.title); }catch(e){}
+    obs=new MutationObserver(function(ms){ ms.forEach(function(m){ for(var i=0;i<m.addedNodes.length;i++) fila.push(m.addedNodes[i]); }); if(!raf) raf=requestAnimationFrame(function(){ raf=0; var f=fila; fila=[]; f.forEach(function(n){ if(n.isConnected) no(n); }); }); });
+    obs.observe(document.body,{childList:true,subtree:true}); }
+  try{ if(localStorage.getItem('lf_modo_loja')==='1') liga(); }catch(e){}
+  var tk=''; try{ tk=localStorage.getItem('dd_jwt')||''; }catch(e){} if(!tk) return;
+  fetch('https://giro-os-api.nucleofull.workers.dev/painel/menu-config',{headers:{'Authorization':'Bearer '+tk}}).then(function(r){ return r.json(); }).then(function(d){ var c=d&&d.ok&&d.menu&&d.menu.catalogo; if(!c) return;
+    var n=String(c.nome||'Cardápio').toLowerCase(), loja=!(n==='cardápio'||n==='cardapio'||!c.icone||c.icone==='cardapio');
+    try{ localStorage.setItem('lf_modo_loja',loja?'1':'0'); }catch(e){} if(loja) liga(); }).catch(function(){});
+})();
+</script></body>
 </html>

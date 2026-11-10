@@ -1232,6 +1232,7 @@ html.loja-p .cd-dest{display:none!important}
       <section class="page" id="pg-config">
         <div class="pghd"><div><h1>Configurações</h1><div class="sub">integrações e estrutura do ponto</div></div></div>
         <div class="cfgcards">
+          <div class="cfgcard" style="cursor:pointer" onclick="modAbrir()"><div class="ic">🏪</div><h4>Modalidade do negócio</h4><p>Restaurante, padaria, farmácia, mercado, pet shop ou outra loja. Ajusta os nomes e os textos do sistema para o seu tipo de negócio.</p><span class="badge b-in" id="mod-badge">escolher</span></div>
           <div class="cfgcard" style="cursor:pointer" onclick="abrirPonto()"><div class="ic">📍</div><h4>Pontos de coleta</h4><p>Cadastre as bases onde os entregadores coletam e saem para entregar. Pode ter mais de um; o principal é a saída da rota no app e o centro do Mapeamento.</p><span class="badge b-in" id="pt-badge">configurar</span></div>
           <div class="cfgcard" style="cursor:pointer;display:none" onclick="abrirCiclo()"><div class="ic">🔁</div><h4>Ciclo de repasse</h4><p>Define como o fechamento dos entregadores é feito: automático (semanal, quinzenal ou mensal) ou manual.</p><span class="badge b-in">configurar</span></div>
           <div class="cfgcard" style="cursor:pointer" onclick="abrirAreas()"><div class="ic">🗺️</div><h4>Áreas de entrega (regiões)</h4><p>Valor pago ao entregador por região (nome) ou por faixa de CEP. As regiões da planilha aparecem sozinhas.</p><span class="badge b-in">configurar</span></div>
@@ -1470,6 +1471,12 @@ html.loja-p .cd-dest{display:none!important}
     <button class="btn pri wide" onclick="enviarPlanilha()">Enviar</button>
     <button class="btn sec wide" id="up-limpar" style="display:none;margin-top:10px" onclick="limparImportados()">Apagar dados importados</button>
   </div>
+</div>
+
+<!-- ══ (252) MODAL: modalidade do negócio (usa o mesmo botão do catálogo do /painel/menu-config) ══ -->
+<div class="sheet" id="sh-modalidade">
+  <div class="sh-hd"><h3>Modalidade do negócio</h3><button onclick="fecharTudo()">✕</button></div>
+  <div class="sh-bd no-modo" id="mod-bd"><div style="color:var(--muted);font-size:13px">Carregando…</div></div>
 </div>
 
 <!-- ══ MODAL: novo pedido de entrega (manual) ══ -->
@@ -1717,7 +1724,7 @@ html.loja-p .cd-dest{display:none!important}
 <div class="sheet wide" id="sh-ofertas">
   <div class="sh-hd"><h3>Ofertas com vídeo</h3><button onclick="fecharTudo()">✕</button></div>
   <div class="sh-bd">
-    <div id="mc-cat" style="margin-bottom:12px"></div>
+    <div id="mc-cat" class="no-modo" style="margin-bottom:12px"></div>
     <div id="mc-promo" style="margin-bottom:12px"></div>
     <p style="margin:0 0 6px;font-size:12.5px;color:var(--muted);line-height:1.5">Cada oferta é um vídeo com os produtos que aparecem enquanto ele toca. Use ↑ ↓ para escolher a ordem em que rodam.</p>
     <div style="border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:12px">
@@ -4013,6 +4020,70 @@ function catPainelAplica(c){
   var nm=c.nome||'Cardápio', svg=(typeof MC_CAT_SVG!=='undefined'&&c.icone&&c.icone!=='cardapio')?MC_CAT_SVG[c.icone]:null;
   NAV_DESKTOP.forEach(function(n){ if(n.id==='cardapio'){ n.lb=nm; if(!n.ic0) n.ic0=n.ic; n.ic=svg||n.ic0; } });
   var h1=document.querySelector('#pg-cardapio .pghd h1'); if(h1) h1.textContent=nm;
+  /* (252) modalidade: fora de restaurante, Garçons vira Atendentes e os textos de restaurante se ajustam */
+  var loja=document.documentElement.classList.contains('loja-p');
+  [NAV_DESKTOP,NAV_MOBILE].forEach(function(a){ (a||[]).forEach(function(n){ if(n.id==='garcons') n.lb=loja?'Atendentes':'Garçons'; }); });
+  var mb=el('mod-badge'); if(mb&&typeof MOD_OPC!=='undefined'&&MOD_OPC){ var mo=MOD_OPC.filter(function(x){ return x[0]===(c.icone||'cardapio'); })[0]; mb.textContent=mo?mo[2]:'escolher'; }
+  try{ localStorage.setItem('lf_modo_loja',loja?'1':'0'); }catch(eM){}
+  if(loja&&typeof modoLigar==='function'&&typeof MODO_TROCAS!=='undefined'&&MODO_TROCAS) modoLigar();
+}
+/* (252) MODALIDADE DO NEGÓCIO: é o mesmo tipo do botão do catálogo (cardapio = restaurante; os outros = loja) */
+var MOD_OPC=[['cardapio','🍽️','Restaurante','Bar, lanchonete, pizzaria, quiosque','Cardápio'],['padaria','🥖','Padaria','Padaria, confeitaria, cafeteria de balcão','Padaria'],['medicamentos','💊','Farmácia','Farmácia e drogaria','Medicamentos'],['mercado','🛒','Mercado','Mercado, supermercado, mercearia, conveniência','Produtos'],['pet','🐾','Pet shop','Pet shop e agropecuária','Pet shop'],['catalogo','🏪','Outra loja','Qualquer outro comércio','Catálogo']];
+var MOD_SEL='';
+function modAbrir(){
+  abrir('sh-modalidade'); el('mod-bd').innerHTML='<div style="color:var(--muted);font-size:13px">Carregando…</div>';
+  fetch(DELTADIS_API+'/painel/menu-config',{headers:cdHdr()}).then(function(r){ return r.json(); }).then(function(d){ var c=(d&&d.ok&&d.menu&&d.menu.catalogo)||CAT_PAINEL||{nome:'Cardápio',icone:'cardapio'}; CAT_PAINEL=c; MOD_SEL=c.icone||'cardapio'; modPinta(c.nome||'Cardápio'); })
+  .catch(function(){ var c=CAT_PAINEL||{nome:'Cardápio',icone:'cardapio'}; MOD_SEL=c.icone||'cardapio'; modPinta(c.nome||'Cardápio'); });
+}
+function modPinta(nome){
+  var h='<p style="margin:0 0 12px;font-size:13px;color:var(--muted);line-height:1.5">Escolha o tipo do seu negócio. Fora de restaurante, o painel troca os textos: <b>Garçons</b> vira <b>Atendentes</b>, <b>Cardápio</b> vira <b>Catálogo</b>, a tela de <b>Preparo</b> vira <b>Separação</b> e a categoria deixa de ter Cozinha e Bar.</p><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px;margin-bottom:14px">';
+  MOD_OPC.forEach(function(x){ var on=x[0]===MOD_SEL; h+='<button type="button" onclick="modEsc(\''+x[0]+'\')" style="text-align:left;cursor:pointer;border-radius:12px;padding:11px 12px;font:inherit;color:inherit;background:'+(on?'var(--s2)':'transparent')+';border:'+(on?'2px solid var(--grad,#FF5A00)':'1px solid var(--border)')+'"><div style="font-size:20px;line-height:1">'+x[1]+'</div><div style="font-weight:800;font-size:14px;margin-top:6px">'+x[2]+'</div><div style="font-size:11.5px;color:var(--muted);line-height:1.4;margin-top:2px">'+x[3]+'</div></button>'; });
+  h+='</div><label style="font-size:12px;color:var(--muted)">Nome do botão dos produtos (como o cliente vê)<input class="inp" id="mod-nm" maxlength="20" value="'+esc(nome)+'" style="margin-top:4px"></label>'
+   +'<button class="btn pri wide" id="mod-bt" style="margin-top:14px" onclick="modSalvar()">Salvar modalidade</button>';
+  el('mod-bd').innerHTML=h;
+}
+function modEsc(k){ var nm=el('mod-nm'), atual=nm?nm.value.trim():'', x=MOD_OPC.filter(function(y){ return y[0]===k; })[0]; if(!x) return; MOD_SEL=k;
+  if(!atual||MOD_OPC.some(function(y){ return y[4]===atual; })||MC_CAT.some(function(y){ return y[2]===atual; })) atual=x[4]; modPinta(atual); }
+function modSalvar(){
+  var b=el('mod-bt'), nm=(el('mod-nm').value||'').trim()||(MOD_OPC.filter(function(y){ return y[0]===MOD_SEL; })[0]||[])[4]||'Cardápio';
+  b.disabled=true; b.textContent='Salvando…';
+  fetch(DELTADIS_API+'/painel/menu-config',{method:'POST',headers:cdHdr(),body:JSON.stringify({catalogo:{nome:nm,icone:MOD_SEL||'cardapio'}})}).then(function(r){ return r.json(); }).then(function(d){
+    if(!d||!d.ok||!d.menu||!d.menu.catalogo) throw new Error((d&&d.mensagem)||'Não salvou');
+    fecharTudo(); aviso('Modalidade salva: '+((MOD_OPC.filter(function(y){ return y[0]===d.menu.catalogo.icone; })[0]||[])[2]||'')); setTimeout(function(){ location.reload(); },900);
+  }).catch(function(e){ b.disabled=false; b.textContent='Salvar modalidade'; aviso(e.message||'Não salvou'); });
+}
+/* troca de textos de restaurante → loja, só em rótulos da tela (botões, títulos, legendas); nomes de produto, cliente e categoria não mudam */
+var MODO_TROCAS=[
+  [/\bGARÇONS\b/g,'ATENDENTES'],[/\bGARÇOM\b/g,'ATENDENTE'],[/\bGarçons\b/g,'Atendentes'],[/\bgarçons\b/g,'atendentes'],[/\bGarçom\b/g,'Atendente'],[/\bgarçom\b/g,'atendente'],
+  [/\bCardápio por foto\b/g,'Produtos por foto'],
+  [/\bCardápios\b/g,'Catálogos'],[/\bcardápios\b/g,'catálogos'],[/\bCardápio\b/g,'Catálogo'],[/\bcardápio\b/g,'catálogo'],
+  [/\b([Dd])o seu restaurante\b/g,function(m,a){ return (a==='D'?'D':'d')+'a sua loja'; }],[/\b([Nn])o seu restaurante\b/g,function(m,a){ return (a==='N'?'N':'n')+'a sua loja'; }],
+  [/\b([Dd])o restaurante\b/g,function(m,a){ return (a==='D'?'D':'d')+'a loja'; }],[/\b([Nn])o restaurante\b/g,function(m,a){ return (a==='N'?'N':'n')+'a loja'; }],
+  [/\bO seu restaurante\b/g,'A sua loja'],[/\bo seu restaurante\b/g,'a sua loja'],[/\bSeu restaurante\b/g,'Sua loja'],[/\bseu restaurante\b/g,'sua loja'],
+  [/\bO restaurante\b/g,'A loja'],[/\bo restaurante\b/g,'a loja'],[/\bRestaurantes\b/g,'Lojas'],[/\brestaurantes\b/g,'lojas'],[/\bRestaurante\b/g,'Loja'],[/\brestaurante\b/g,'loja'],
+  [/\b([Nn])a cozinha\b/g,function(m,a){ return (a==='N'?'N':'n')+'o preparo'; }],[/\b([Dd])a cozinha\b/g,function(m,a){ return (a==='D'?'D':'d')+'o preparo'; }],[/\b([Aa]) cozinha\b/g,function(m,a){ return (a==='A'?'O':'o')+' preparo'; }],[/\bloja está fechado\b/g,'loja está fechada'],[/\bloja estiver fechado\b/g,'loja estiver fechada']
+];
+var MODO_TESTE=/GARÇ|[Gg]arço|ard[áa]pio|estaurante|ozinha/;
+var MODO_ROT='button,label,h1,h2,h3,h4,th,.sub,.pghd,.sh-hd,.cfgcard,.badge,#side,#tabbar,.field,small,.hint,.empty,legend,summary';
+var MODO_NAO='td,option,select,textarea,input,[contenteditable],.no-modo,#aj-chat,#aj-bal,#aj-dica';
+function modoTxt(s){ if(!s||!MODO_TESTE.test(s)) return s; MODO_TROCAS.forEach(function(t){ s=s.replace(t[0],t[1]); }); return s; }
+function modoNo(raiz){
+  if(!raiz) return;
+  if(raiz.nodeType===3){ var pe=raiz.parentElement; if(pe&&pe.closest(MODO_ROT)&&!pe.closest(MODO_NAO)){ var nv=modoTxt(raiz.nodeValue); if(nv!==raiz.nodeValue) raiz.nodeValue=nv; } return; }
+  if(raiz.nodeType!==1||raiz.closest(MODO_NAO)) return;
+  var w=document.createTreeWalker(raiz,NodeFilter.SHOW_TEXT,null), t, lst=[];
+  while((t=w.nextNode())) if(MODO_TESTE.test(t.nodeValue)) lst.push(t);
+  lst.forEach(function(x){ var p=x.parentElement; if(p&&p.closest(MODO_ROT)&&!p.closest(MODO_NAO)){ var nv=modoTxt(x.nodeValue); if(nv!==x.nodeValue) x.nodeValue=nv; } });
+  var ins=raiz.querySelectorAll?raiz.querySelectorAll('[placeholder],[title]'):[];
+  for(var i=0;i<ins.length;i++){ ['placeholder','title'].forEach(function(a){ var v=ins[i].getAttribute(a); if(v&&MODO_TESTE.test(v)) ins[i].setAttribute(a,modoTxt(v)); }); }
+}
+var MODO_OBS=null, MODO_FILA=[], MODO_RAF=0;
+function modoLigar(){
+  if(MODO_OBS||typeof MutationObserver==='undefined') return;
+  modoNo(document.body);
+  MODO_OBS=new MutationObserver(function(ms){ ms.forEach(function(m){ for(var i=0;i<m.addedNodes.length;i++) MODO_FILA.push(m.addedNodes[i]); });
+    if(!MODO_RAF) MODO_RAF=requestAnimationFrame(function(){ MODO_RAF=0; var f=MODO_FILA; MODO_FILA=[]; f.forEach(function(n){ if(n.isConnected) modoNo(n); }); }); });
+  MODO_OBS.observe(document.body,{childList:true,subtree:true});
 }
 function catPainelCarrega(){
   if(CAT_PAINEL_PEDIU||typeof DD_TOKEN==='undefined'||!DD_TOKEN) return; CAT_PAINEL_PEDIU=true;
