@@ -27,6 +27,7 @@ function css(){
   '.rc-live i{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px rgba(22,163,74,.18);animation:rcpulse 2s infinite}'+
   '@keyframes rcpulse{50%{box-shadow:0 0 0 6px rgba(22,163,74,.05)}}'+
   '.rc-ing a.lk{font-weight:800;cursor:pointer;text-decoration:none;color:var(--text)}.rc-ing a.lk:hover{color:var(--roxo)}'+
+  '.rc-ing td:first-child,#rc-cmp td:first-child{min-width:190px}.rc-ing td small{white-space:nowrap}'+
   '.rc-part{display:flex;align-items:center;gap:8px;justify-content:flex-end}.rc-part .bar{width:70px;min-width:70px}'+
   '.rc-prc .big{font-size:28px;font-weight:800;letter-spacing:-.4px;font-variant-numeric:tabular-nums}'+
   '.rc-sim{display:flex;gap:8px;align-items:center;margin-top:10px}'+

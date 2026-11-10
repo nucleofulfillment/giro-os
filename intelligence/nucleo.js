@@ -5,11 +5,11 @@
 'use strict';
 var LFI = window.LFI;
 var U = LFI.dataUtil, r2 = U.r2, r3 = U.r3;
-var CHAVE = 'lfi_base_v3', CHAVE_CTX = 'lfi_ctx_v1';
+var CHAVE = 'lfi_base_v4', CHAVE_CTX = 'lfi_ctx_v1';
 
 /* ---------- armazenamento ---------- */
 function carrega(){
-  try{ var s=localStorage.getItem(CHAVE); if(s){ var d=JSON.parse(s); if(d&&d.versao===3) return d; } }catch(e){}
+  try{ var s=localStorage.getItem(CHAVE); if(s){ var d=JSON.parse(s); if(d&&d.versao===4) return d; } }catch(e){}
   return null;
 }
 LFI.db = carrega() || LFI.criarBase();
@@ -175,6 +175,7 @@ LFI.sugerirProduto = function(texto, limite){
 LFI.sugerirFator = function(desc, unNF, p){
   var u=String(unNF||'').toUpperCase(), d=String(desc||'').toUpperCase();
   if(p && (u===p.un.toUpperCase() || (u==='KG'&&p.un==='kg') || (u==='LT'&&p.un==='L') || (u==='UN'&&p.un==='un'))) return 1;
+  if(p && p.un==='un'){ var mu=d.match(/(?:FD|CX|C\/|PCT|PC)\s*(\d+)/)||d.match(/(\d+)\s*(FOLHAS|UN|UNID|LATAS|PARES)/); if(mu) return parseInt(mu[1],10); return p.conv?p.conv.fator:1; }
   var m=d.match(/(\d+(?:[,.]\d+)?)\s*(KG|L|LT|G|ML)\b/);
   if(m){ var v=parseFloat(m[1].replace(',','.')); if(m[2]==='G') v/=1000; if(m[2]==='ML') v/=1000; return r3(v); }
   m=d.match(/(\d+)\s*(FOLHAS|UN|UNID|LATAS)/); if(m) return parseInt(m[1],10);
@@ -200,17 +201,25 @@ LFI.lerLista = function(texto){
 
 /* ---------- tributos ---------- */
 /* regra aplicável ao produto: Produto > NCM > Categoria (a mais específica vence) */
-LFI.regraDoProduto = function(p){
-  if(typeof p==='string') p=LFI.prod(p);
-  var rs=LFI.db.regrasTrib, i;
+LFI.regraDoProduto = function(p, ctx){
+  if(typeof p==='string') p=LFI.prod(p); ctx=ctx||{};
+  var emp = ctx.empresa ? (typeof ctx.empresa==='string'?LFI.emp(ctx.empresa):ctx.empresa) : null;
+  /* condições da regra: regime da empresa, UF de origem e tipo de operação (quando informados) */
+  function serve(r){
+    if(emp && r.regime && r.regime!=='Todos' && r.regime!==emp.regime) return false;
+    if(ctx.ufOrig && r.ufOrig && r.ufOrig!==ctx.ufOrig) return false;
+    if(ctx.operacao && r.operacao && r.operacao!==ctx.operacao) return false;
+    return true;
+  }
+  var rs=LFI.db.regrasTrib.filter(serve), i;
   for(i=0;i<rs.length;i++) if(rs[i].escopo==='Produto'&&rs[i].alvo===p.id) return rs[i];
   for(i=0;i<rs.length;i++) if(rs[i].escopo==='NCM'&&rs[i].alvo===p.ncm) return rs[i];
   for(i=0;i<rs.length;i++) if(rs[i].escopo==='Categoria'&&rs[i].alvo===p.cat) return rs[i];
   return null;
 };
 /* carga estimada (% sobre o valor de compra). null = sem regra validada */
-LFI.cargaEstimada = function(p){
-  var r=LFI.regraDoProduto(p); if(!r||r.status==='pendente'||r.icms==null) return {regra:r, pct:null};
+LFI.cargaEstimada = function(p, ctx){
+  var r=LFI.regraDoProduto(p, ctx); if(!r||r.status!=='validada'||r.icms==null) return {regra:r, pct:null, emRevisao:!!(r&&r.status==='em_revisao')};
   var pct=(r.icms||0)+(r.pis||0)+(r.cofins||0)+(r.ipi||0);
   return {regra:r, pct:pct, icms:r.icms||0, pis:r.pis||0, cofins:r.cofins||0, ipi:r.ipi||0, st:!!r.st};
 };
@@ -219,11 +228,17 @@ LFI.impostosDestacados = function(filtro){
   var out={}; LFI.db.notas.forEach(function(n){ if(n.status!=='lancada') return; if(!LFI.empresaVisivel(n.empresa)) return;
     n.itens.forEach(function(it){ if(filtro&&!filtro(it,n)) return; var k=it.prod||'?', o=out[k]=out[k]||{vProd:0,icms:0,ipi:0,pis:0,cofins:0,st:0,cred:0};
       o.vProd+=it.vProd; o.icms+=it.icms.v; o.ipi+=it.ipi.v; o.pis+=it.pis.v; o.cofins+=it.cofins.v; o.st+=it.st.v;
-      var emp=LFI.emp(n.empresa), p=LFI.prod(it.prod), rg=p?LFI.regraDoProduto(p):null;
-      /* crédito potencial: só quando a regra validada diz que é creditável; Simples Nacional não toma crédito de PIS/COFINS */
-      if(rg&&rg.creditavel&&rg.status==='validada'){ o.cred+=it.icms.v + (emp.regime==='Simples Nacional'?0:(it.pis.v+it.cofins.v)); }
+      o.cred+=LFI.creditoItem(it,n).v;
     }); });
   return out;
+};
+
+/* crédito potencial de um item de nota: regra validada e creditável; PIS/COFINS só no regime não cumulativo */
+LFI.creditoItem = function(it, n){
+  if(!it.prod) return {v:0, regra:null};
+  var emp=LFI.emp(n.empresa), f=LFI.forn(n.forn), p=LFI.prod(it.prod), rg=p?LFI.regraDoProduto(p,{empresa:emp, ufOrig:f&&f.uf}):null;
+  if(rg&&rg.creditavel&&rg.status==='validada') return {v:r2(it.icms.v + (emp&&emp.pisCofins==='nao_cumulativo'?(it.pis.v+it.cofins.v):0)), regra:rg};
+  return {v:0, regra:rg};
 };
 
 /* ---------- fluxo: lançar nota fiscal ---------- */
@@ -413,3 +428,6 @@ LFI.notaDaOrdem = function(ocId, recebidos){
   LFI.salvar(); return n;
 };
 })();
+
+/* aplica preço de venda numa receita mantendo o mix de vendas coerente */
+window.LFI.aplicarPreco = function(recId, preco){ var LFI=window.LFI, r=LFI.rec(recId); if(!r) return; r.preco=LFI.dataUtil.r2(preco); LFI.db.mixVendas.forEach(function(m){ if(m.rec===recId) m.preco=r.preco; }); LFI.atividade('receita','Preço de '+r.nome+' atualizado para '+LFI.fmt.moeda(r.preco),{tela:'receitas',id:recId}); LFI.salvar(); };

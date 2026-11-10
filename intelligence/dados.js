@@ -19,14 +19,14 @@ LFI.dataUtil = {iso:iso, hojeD:hojeD, D:D, DH:DH, r2:r2, r3:r3, rng:rng};
 
 LFI.criarBase = function(){
   var R = rng(20261110);
-  var db = {versao:3, criadaEm:new Date().toISOString(), hoje:D(0)};
+  var db = {versao:4, criadaEm:new Date().toISOString(), hoje:D(0)};
 
   /* ===== EMPRESAS (multi-CNPJ) ===== */
   db.grupo = {nome:'Grupo Pão Dourado', cidade:'Campinas/SP'};
   db.empresas = [
-    {id:'e1', sigla:'PD', fantasia:'Pão Dourado Padaria', razao:'Pão Dourado Panificadora Ltda', cnpj:'12.345.678/0001-90', ie:'244.118.902.115', regime:'Simples Nacional', uf:'SP', cidade:'Campinas', endereco:'Av. Orosimbo Maia, 1.420 — Cambuí', tipo:'Matriz', impVenda:8.0, cor:'#E08A1E'},
-    {id:'e2', sigla:'DR', fantasia:'Dourado Restaurante', razao:'Pão Dourado Panificadora Ltda', cnpj:'12.345.678/0002-71', ie:'244.118.903.110', regime:'Simples Nacional', uf:'SP', cidade:'Campinas', endereco:'Av. Orosimbo Maia, 1.420 — Loja 2', tipo:'Filial', impVenda:8.0, cor:'#1D4ED8'},
-    {id:'e3', sigla:'KS', fantasia:'Kaizen Sushi', razao:'Kaizen Sushi Bar Ltda', cnpj:'45.987.321/0001-08', ie:'244.556.781.119', regime:'Lucro Presumido', uf:'SP', cidade:'Campinas', endereco:'Rua Coronel Quirino, 980 — Cambuí', tipo:'Matriz', impVenda:11.33, cor:'#C2185B'}
+    {id:'e1', sigla:'PD', fantasia:'Pão Dourado Padaria', razao:'Pão Dourado Panificadora Ltda', cnpj:'12.345.678/0001-90', ie:'244.118.902.115', regime:'Simples Nacional', uf:'SP', cidade:'Campinas', endereco:'Av. Orosimbo Maia, 1.420 — Cambuí', tipo:'Matriz', impVenda:8.0, pisCofins:'nao_se_aplica', cor:'#E08A1E'},
+    {id:'e2', sigla:'DR', fantasia:'Dourado Restaurante', razao:'Pão Dourado Panificadora Ltda', cnpj:'12.345.678/0002-71', ie:'244.118.903.110', regime:'Simples Nacional', uf:'SP', cidade:'Campinas', endereco:'Av. Orosimbo Maia, 1.420 — Loja 2', tipo:'Filial', impVenda:8.0, pisCofins:'nao_se_aplica', cor:'#1D4ED8'},
+    {id:'e3', sigla:'KS', fantasia:'Kaizen Sushi', razao:'Kaizen Sushi Bar Ltda', cnpj:'45.987.321/0001-08', ie:'244.556.781.119', regime:'Lucro Presumido', uf:'SP', cidade:'Campinas', endereco:'Rua Coronel Quirino, 980 — Cambuí', tipo:'Matriz', impVenda:11.33, pisCofins:'cumulativo', cor:'#C2185B'}
   ];
 
   /* ===== DEPARTAMENTOS / OPERAÇÕES ===== */

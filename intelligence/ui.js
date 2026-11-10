@@ -307,7 +307,7 @@ UI.navHandlers = function(h){ h=h||{}; h._ir=function(id){ var p=String(id).spli
 /* ---------- casca: menu, empresa, busca ---------- */
 function contagens(){
   var db=LFI.db, c={};
-  c.notas = db.notas.filter(function(n){ return n.status!=='lancada'&&LFI.empresaVisivel(n.empresa); }).length;
+  c.notas = db.notas.filter(function(n){ return (n.status==='recebida'||n.status==='conferencia')&&LFI.empresaVisivel(n.empresa); }).length;
   c.estoque = LFI.alertas().filter(function(a){ return a.nivel==='no'; }).length;
   c.compras = db.cotacoes.filter(function(x){ return ['propostas_recebidas','comparacao','aguardando_propostas'].indexOf(x.status)>=0&&LFI.empresaVisivel(x.empresa); }).length;
   c.ordens = db.ordens.filter(function(o){ return o.status==='aguardando_aprovacao'&&LFI.empresaVisivel(o.empresa); }).length;
@@ -371,13 +371,13 @@ UI.editarEmpresa = function(id, depois){
     '<div class="field"><label>Tipo</label><select class="inp" id="ee-t"><option'+(e.tipo==='Matriz'?' selected':'')+'>Matriz</option><option'+(e.tipo==='Filial'?' selected':'')+'>Filial</option></select></div>'+
     '<div class="field"><label>Regime tributário</label><select class="inp" id="ee-rg">'+['Simples Nacional','Lucro Presumido','Lucro Real','MEI'].map(function(x){ return '<option'+(x===e.regime?' selected':'')+'>'+x+'</option>'; }).join('')+'</select></div>'+
     '<div class="field"><label>Impostos sobre a venda (%)</label><input class="inp num" id="ee-iv" value="'+UI.numBR(e.impVenda,2)+'"><div class="hint">Informe a alíquota efetiva indicada pela contabilidade. Usada na margem de contribuição.</div></div>'+
-    '<div class="field"><label>Sigla (2 letras)</label><input class="inp" id="ee-s" maxlength="2" value="'+esc(e.sigla)+'"></div>'+
+    '<div class="field"><label>PIS/COFINS</label><select class="inp" id="ee-pc">'+[['nao_se_aplica','Não se aplica (Simples Nacional)'],['cumulativo','Cumulativo (sem crédito)'],['nao_cumulativo','Não cumulativo (com crédito)']].map(function(x){ return '<option value="'+x[0]+'"'+(x[0]===e.pisCofins?' selected':'')+'>'+x[1]+'</option>'; }).join('')+'</select><div class="hint">Define se as compras geram crédito de PIS/COFINS. Confirme com a contabilidade.</div></div>'+'<div class="field"><label>Sigla (2 letras)</label><input class="inp" id="ee-s" maxlength="2" value="'+esc(e.sigla)+'"></div>'+
     '<div class="field full"><label>Operações vinculadas a este CNPJ</label><div style="display:flex;gap:14px;flex-wrap:wrap">'+deps.map(function(d){ return '<label class="chk"><input type="checkbox" data-dep="'+d.id+'"'+(d.empresa===e.id?' checked':'')+'> '+esc(d.nome)+' <small style="color:var(--muted)">(hoje: '+esc(LFI.emp(d.empresa).fantasia)+')</small></label>'; }).join('')+'</div></div></div>',
     botoes:'<button class="btn sec" data-act="_fechar">Cancelar</button><button class="btn pri" data-act="ok">Salvar</button>',
     acoes:{ok:function(){
       var v=function(s){ return m.el.querySelector(s).value.trim(); };
       if(!v('#ee-f')||!/^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/.test(v('#ee-c'))){ UI.toast('Preencha o nome e um CNPJ no formato 00.000.000/0000-00','','wt'); return; }
-      e.fantasia=v('#ee-f'); e.razao=v('#ee-r')||e.fantasia; e.cnpj=v('#ee-c'); e.ie=v('#ee-ie'); e.tipo=v('#ee-t'); e.regime=v('#ee-rg'); e.impVenda=UI.num(v('#ee-iv')); e.sigla=(v('#ee-s')||e.fantasia.slice(0,2)).toUpperCase();
+      e.fantasia=v('#ee-f'); e.razao=v('#ee-r')||e.fantasia; e.cnpj=v('#ee-c'); e.ie=v('#ee-ie'); e.tipo=v('#ee-t'); e.regime=v('#ee-rg'); e.impVenda=UI.num(v('#ee-iv')); e.pisCofins=v('#ee-pc'); e.sigla=(v('#ee-s')||e.fantasia.slice(0,2)).toUpperCase();
       if(!id) LFI.db.empresas.push(e);
       UI.els('[data-dep]',m.el).forEach(function(c){ if(c.checked) LFI.dep(c.getAttribute('data-dep')).empresa=e.id; });
       LFI.salvar(); m.fechar(); UI.toast(id?'Empresa atualizada':'CNPJ adicionado ao grupo', e.cnpj); if(depois) depois(); LFI.recarregar();

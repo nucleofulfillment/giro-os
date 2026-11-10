@@ -453,7 +453,7 @@ function abaInsumos(el, H){
   h+='<div class="card"><h3><span class="lft">Custos dos insumos <small>custo médio ponderado × último custo de aquisição</small></span><span style="display:flex;gap:8px;flex-wrap:wrap"><div class="search">'+UI.ic('busca')+'<input placeholder="Buscar insumo ou NCM" data-inp="iQ" value="'+esc(f.q)+'"></div>'+
     '<select class="inp sm" style="width:auto" data-chg="iCat"><option value="">Todas as categorias</option>'+LFI.db.categorias.filter(function(c){ return c.id!=='aca'&&c.id!=='sob'; }).map(function(c){ return '<option value="'+c.id+'"'+(f.cat===c.id?' selected':'')+'>'+esc(c.nome)+'</option>'; }).join('')+'</select></span></h3><div id="ins-t"></div></div>';
   el.innerHTML=h;
-  UI.tabela(el.querySelector('#ins-t'),{linhas:ps, linhaAct:'insDet', cls:'cp', ordem:5, vazio:'Nenhum insumo encontrado', colunas:[
+  UI.tabela(el.querySelector('#ins-t'),{linhas:ps, linhaAct:'insDet', cls:'cp', ordem:5, dir:-1, vazio:'Nenhum insumo encontrado', colunas:[
     {t:'Insumo', v:function(p){ return '<b>'+esc(p.nome)+'</b><small>'+esc(LFI.cat(p.cat).nome)+' · NCM '+esc(p.ncm)+'</small>'; }, ord:function(p){ return p.nome; }},
     {t:'Un', k:'un', c:true},
     {t:'Custo médio', r:true, v:function(p){ return '<b>'+F.moeda(p.custoMedio)+'</b>'; }, ord:function(p){ return p.custoMedio; }},
