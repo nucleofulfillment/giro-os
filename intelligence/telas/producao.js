@@ -1,0 +1,1 @@
+(function(){ LFI.registrar('producao',{titulo:'Produção', render:function(el){ el.innerHTML=LFI.ui.cabecalho({titulo:'Produção'})+'<div class="card">'+LFI.ui.vazio('Em construção')+'</div>'; }}); })();

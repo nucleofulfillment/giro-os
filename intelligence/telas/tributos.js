@@ -1,0 +1,1 @@
+(function(){ LFI.registrar('tributos',{titulo:'Tributos', render:function(el){ el.innerHTML=LFI.ui.cabecalho({titulo:'Tributos'})+'<div class="card">'+LFI.ui.vazio('Em construção')+'</div>'; }}); })();

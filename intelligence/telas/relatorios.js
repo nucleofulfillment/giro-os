@@ -1,0 +1,1 @@
+(function(){ LFI.registrar('relatorios',{titulo:'Relatórios', render:function(el){ el.innerHTML=LFI.ui.cabecalho({titulo:'Relatórios'})+'<div class="card">'+LFI.ui.vazio('Em construção')+'</div>'; }}); })();

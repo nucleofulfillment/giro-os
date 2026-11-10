@@ -1,0 +1,1 @@
+(function(){ LFI.registrar('fornecedores',{titulo:'Fornecedores', render:function(el){ el.innerHTML=LFI.ui.cabecalho({titulo:'Fornecedores'})+'<div class="card">'+LFI.ui.vazio('Em construção')+'</div>'; }}); })();

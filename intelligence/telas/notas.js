@@ -1,0 +1,1 @@
+(function(){ LFI.registrar('notas',{titulo:'Notas Fiscais', render:function(el){ el.innerHTML=LFI.ui.cabecalho({titulo:'Notas Fiscais'})+'<div class="card">'+LFI.ui.vazio('Em construção')+'</div>'; }}); })();
