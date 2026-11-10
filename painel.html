@@ -4054,6 +4054,7 @@ function modSalvar(){
 }
 /* troca de textos de restaurante → loja, só em rótulos da tela (botões, títulos, legendas); nomes de produto, cliente e categoria não mudam */
 var MODO_TROCAS=[
+  [/✨ Fotos com IA/g,'🔎 Buscar fotos'],[/✨ Criar com IA/g,'🔎 Buscar foto real'],[/↻ Outra com IA/g,'↻ Buscar outra'],
   [/\bGARÇONS\b/g,'ATENDENTES'],[/\bGARÇOM\b/g,'ATENDENTE'],[/\bGarçons\b/g,'Atendentes'],[/\bgarçons\b/g,'atendentes'],[/\bGarçom\b/g,'Atendente'],[/\bgarçom\b/g,'atendente'],
   [/\bCardápio por foto\b/g,'Produtos por foto'],
   [/\bCardápios\b/g,'Catálogos'],[/\bcardápios\b/g,'catálogos'],[/\bCardápio\b/g,'Catálogo'],[/\bcardápio\b/g,'catálogo'],
@@ -4063,7 +4064,7 @@ var MODO_TROCAS=[
   [/\bO restaurante\b/g,'A loja'],[/\bo restaurante\b/g,'a loja'],[/\bRestaurantes\b/g,'Lojas'],[/\brestaurantes\b/g,'lojas'],[/\bRestaurante\b/g,'Loja'],[/\brestaurante\b/g,'loja'],
   [/\b([Nn])a cozinha\b/g,function(m,a){ return (a==='N'?'N':'n')+'o preparo'; }],[/\b([Dd])a cozinha\b/g,function(m,a){ return (a==='D'?'D':'d')+'o preparo'; }],[/\b([Aa]) cozinha\b/g,function(m,a){ return (a==='A'?'O':'o')+' preparo'; }],[/\bloja está fechado\b/g,'loja está fechada'],[/\bloja estiver fechado\b/g,'loja estiver fechada']
 ];
-var MODO_TESTE=/GARÇ|[Gg]arço|ard[áa]pio|estaurante|ozinha/;
+var MODO_TESTE=/GARÇ|[Gg]arço|ard[áa]pio|estaurante|ozinha|com IA/;
 var MODO_ROT='button,label,h1,h2,h3,h4,th,.sub,.pghd,.sh-hd,.cfgcard,.badge,#side,#tabbar,.field,small,.hint,.empty,legend,summary';
 var MODO_NAO='td,option,select,textarea,input,[contenteditable],.no-modo,#aj-chat,#aj-bal,#aj-dica';
 function modoTxt(s){ if(!s||!MODO_TESTE.test(s)) return s; MODO_TROCAS.forEach(function(t){ s=s.replace(t[0],t[1]); }); return s; }
@@ -8715,32 +8716,70 @@ function cdPVideo(inp){
 function cdRedimUrl(src){ return new Promise(function(ok,no){ var im=new Image(); im.onload=function(){ var m=700,k=Math.min(1,m/Math.max(im.width,im.height)),cv=document.createElement('canvas'); cv.width=Math.round(im.width*k); cv.height=Math.round(im.height*k); cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height); var q=0.82,out=cv.toDataURL('image/jpeg',q); while(out.length>420000&&q>0.35){ q-=0.1; out=cv.toDataURL('image/jpeg',q); } ok(out); }; im.onerror=no; im.src=src; }); }
 function cdFotoIaPedir(nome,desc,cat,forcar){ return fetch(DELTADIS_API+'/painel/foto-ia',{method:'POST',headers:cdHdr(),body:JSON.stringify({nome:nome,desc:desc||'',cat:cat||'',forcar:forcar?1:0})}).then(function(r){ return r.json(); }); }
 function cdCatNome(id){ var c=(CD.cats||[]).filter(function(x){ return x.id===id; })[0]; return c?c.nome:''; }
+/* (255) FOTO REAL: farmácia e mercado (modalidade loja) buscam a foto real do produto; no restaurante, produto de marca também busca em vez de desenhar */
+function cdLojaModo(){ return document.documentElement.classList.contains('loja-p'); }
+function cdFotoBuscaPedir(nome,barras,cat){ return fetch(DELTADIS_API+'/painel/foto-busca',{method:'POST',headers:cdHdr(),body:JSON.stringify({nome:nome,barras:barras||'',cat:cat||''})}).then(function(r){ return r.json().catch(function(){ return {ok:false,mensagem:'Atualize o Worker para a versão 255 (busca de fotos).'}; }); }); }
+/* tira a borda branca da foto (catálogos vêm com muita margem) e deixa 4% de respiro; depois reduz como as outras */
+function cdAparaBorda(src){ return new Promise(function(ok){ var im=new Image(); im.onload=function(){ try{
+    var w=im.naturalWidth, h=im.naturalHeight, k=Math.min(1,500/Math.max(w,h)), cw=Math.max(1,Math.round(w*k)), ch=Math.max(1,Math.round(h*k)), cv=document.createElement('canvas'); cv.width=cw; cv.height=ch;
+    var cx=cv.getContext('2d'); cx.drawImage(im,0,0,cw,ch); var d=cx.getImageData(0,0,cw,ch).data, x0=cw, y0=ch, x1=-1, y1=-1, x, y;
+    for(y=0;y<ch;y++) for(x=0;x<cw;x++){ var i=(y*cw+x)*4; if(d[i+3]>20&&(d[i]<238||d[i+1]<238||d[i+2]<238)){ if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; } }
+    if(x1<0){ ok(src); return; }
+    var m=Math.round(Math.max(x1-x0,y1-y0)*0.04); x0=Math.max(0,x0-m); y0=Math.max(0,y0-m); x1=Math.min(cw-1,x1+m); y1=Math.min(ch-1,y1+m);
+    if((x1-x0+1)*(y1-y0+1)>cw*ch*0.92){ ok(src); return; }
+    var sx=x0/k, sy=y0/k, sw=(x1-x0+1)/k, sh=(y1-y0+1)/k, o=document.createElement('canvas'); o.width=Math.round(sw); o.height=Math.round(sh);
+    var ox=o.getContext('2d'); ox.fillStyle='#fff'; ox.fillRect(0,0,o.width,o.height); ox.drawImage(im,sx,sy,sw,sh,0,0,o.width,o.height); ok(o.toDataURL('image/jpeg',0.92));
+  }catch(e){ ok(src); } }; im.onerror=function(){ ok(src); }; im.src=src; }); }
+function cdFotoReal(src){ return cdAparaBorda(src).then(cdRedimUrl); }
+function cdIaRot(estado){ var lj=cdLojaModo(); return estado==='feito'?(lj?'↻ Buscar outra':'↻ Outra com IA'):(estado==='rodando'?(lj?'Buscando… ~20 s':'Criando… ~10 s'):(lj?'🔎 Buscar foto real':'✨ Criar com IA')); }
+function cdFotoBuscar(n,cat,b){
+  b.disabled=true; b.textContent='Buscando… ~20 s';
+  return cdFotoBuscaPedir(n,el('cd-barras').value,cat).then(function(d){
+    if(!d||!d.ok){ b.disabled=false; b.textContent=cdIaRot(); el('cd-erro').textContent=(d&&d.mensagem)||'Não achei a foto deste produto.'; return false; }
+    return cdFotoReal(d.foto).then(function(u){ CD.foto=u; cdFotoBox(); b.disabled=false; b.textContent=cdIaRot('feito'); aviso('Foto encontrada'+(d.origem==='ean'?' pelo código de barras':'')+'. Confira e salve o produto.'+(d.restantes!=null?' ('+d.restantes+' buscas restantes hoje)':'')); return true; });
+  }).catch(function(){ b.disabled=false; b.textContent=cdIaRot(); el('cd-erro').textContent='Sem conexão. Tente de novo.'; return false; });
+}
 function cdFotoIa(forcar){
-  var n=el('cd-nome').value.trim(); if(!n){ el('cd-erro').textContent='Escreva o nome do produto antes de criar a foto.'; return; }
+  var n=el('cd-nome').value.trim(); if(!n){ el('cd-erro').textContent='Escreva o nome do produto antes de buscar a foto.'; return; }
   var b=el('cd-ia-btn'), cs=el('cd-cat'), cat=(cs&&cs.selectedOptions&&cs.selectedOptions[0])?cs.selectedOptions[0].textContent:''; el('cd-erro').textContent='';
+  if(cdLojaModo()&&!forcar){ cdFotoBuscar(n,cat,b); return; }
   b.disabled=true; b.textContent='Criando… ~10 s';
   cdFotoIaPedir(n,el('cd-desc').value,cat,forcar).then(function(d){
-    if(!d||!d.ok){ b.disabled=false; b.textContent='✨ Criar com IA'; if(d&&d.erro==='marca'){ if(confirm(d.mensagem+'\n\nCriar mesmo assim?')) cdFotoIa(true); return; } el('cd-erro').textContent=(d&&d.mensagem)||'Não deu para criar a foto.'; return; }
+    if(!d||!d.ok){ b.disabled=false; b.textContent=cdIaRot();
+      /* produto de marca: busca a foto real; se não achar, aí sim pergunta se quer desenhar mesmo assim */
+      if(d&&d.erro==='marca'){ cdFotoBuscar(n,cat,b).then(function(ok){ if(!ok&&confirm('Não achei a foto real deste produto de marca.\n\nCriar uma foto com IA mesmo assim? (o rótulo pode sair diferente)')) cdFotoIa(true); }); return; }
+      el('cd-erro').textContent=(d&&d.mensagem)||'Não deu para criar a foto.'; return; }
     return cdRedimUrl(d.foto).then(function(u){ CD.foto=u; cdFotoBox(); b.disabled=false; b.textContent='↻ Outra com IA'; aviso('Foto criada. Salve o produto para publicar.'+(d.restantes!=null?' ('+d.restantes+' restantes hoje)':'')); });
-  }).catch(function(){ b.disabled=false; b.textContent='✨ Criar com IA'; el('cd-erro').textContent='Sem conexão. Tente de novo.'; });
+  }).catch(function(){ b.disabled=false; b.textContent=cdIaRot(); el('cd-erro').textContent='Sem conexão. Tente de novo.'; });
 }
 function cdFotosIaLote(){
-  var sem=(CD.prods||[]).filter(function(p){ return !p.foto&&p.ativo!==false; });
-  el('sh-import').querySelector('h3').textContent='Fotos com IA';
-  el('cd-imp-corpo').innerHTML=sem.length?'<p style="margin:0 0 12px;font-size:13px;line-height:1.55;color:var(--muted2)"><b>'+sem.length+' produto'+(sem.length==1?'':'s')+' sem foto.</b> A IA cria uma foto para cada um pelo nome e pela descrição, no estilo de foto de cardápio. Produtos de marca (refrigerante, cerveja, água…) ficam de fora: para esses, use a foto real. Cada foto leva uns 10 segundos e há um limite de fotos por dia.</p><div id="cd-ia-res" style="font-size:12.5px;margin-bottom:10px"></div><button class="btn pri wide" id="cd-ia-go" onclick="cdFotosIaRoda()">Criar as fotos</button>'
+  var sem=(CD.prods||[]).filter(function(p){ return !p.foto&&p.ativo!==false; }), lj=cdLojaModo();
+  el('sh-import').querySelector('h3').textContent=lj?'Buscar fotos reais':'Fotos com IA';
+  var txt=lj?' O sistema procura a foto real de cada um: primeiro pelo código de barras, depois pelo nome no site da marca. Cada busca leva uns 20 segundos e há um limite por dia. Confira as fotos depois: se alguma vier errada, troque no produto.'
+    :' A IA cria uma foto para cada um pelo nome e pela descrição, no estilo de foto de cardápio. Produtos de marca (refrigerante, cerveja, água…) recebem a foto real buscada no site da marca. Cada foto leva de 10 a 20 segundos e há um limite por dia.';
+  el('cd-imp-corpo').innerHTML=sem.length?'<p style="margin:0 0 12px;font-size:13px;line-height:1.55;color:var(--muted2)"><b>'+sem.length+' produto'+(sem.length==1?'':'s')+' sem foto.</b>'+txt+'</p><div id="cd-ia-res" style="font-size:12.5px;margin-bottom:10px"></div><button class="btn pri wide" id="cd-ia-go" onclick="cdFotosIaRoda()">'+(lj?'Buscar as fotos':'Criar as fotos')+'</button>'
     :'<p style="margin:0;font-size:13px;color:var(--muted2)">Todos os produtos ativos já têm foto. 👍</p>';
   abrir('sh-import');
 }
 function cdFotosIaRoda(){
-  var sem=(CD.prods||[]).filter(function(p){ return !p.foto&&p.ativo!==false; }), i=0, feitas=0, marca=[], falha=[], b=el('cd-ia-go'), r=el('cd-ia-res'); b.disabled=true;
-  var fim=function(msg){ b.disabled=false; b.textContent='Fechar'; b.onclick=fecharTudo; cdPintar(); r.innerHTML='<b>'+feitas+' foto'+(feitas==1?'':'s')+' criada'+(feitas==1?'':'s')+'.</b>'+(marca.length?'<br>De marca (use a foto real): '+marca.map(esc).join(', '):'')+(falha.length?'<br>Não deu: '+falha.map(esc).join(', '):'')+(msg?'<br>'+esc(msg):''); };
+  var sem=(CD.prods||[]).filter(function(p){ return !p.foto&&p.ativo!==false; }), lj=cdLojaModo(), i=0, feitas=0, achadas=0, nao=[], falha=[], b=el('cd-ia-go'), r=el('cd-ia-res'); b.disabled=true;
+  var fim=function(msg){ b.disabled=false; b.textContent='Fechar'; b.onclick=fecharTudo; cdPintar();
+    r.innerHTML=(achadas?'<b>'+achadas+' foto'+(achadas==1?'':'s')+' real'+(achadas==1?'':'is')+' encontrada'+(achadas==1?'':'s')+'.</b> ':'')+(feitas?'<b>'+feitas+' criada'+(feitas==1?'':'s')+' com IA.</b>':'')+(!achadas&&!feitas?'<b>Nenhuma foto nova.</b>':'')
+      +(nao.length?'<br>Não achei a foto real (envie pelo celular ou pelo Fotos em lote): '+nao.map(esc).join(', '):'')+(falha.length?'<br>Não deu: '+falha.map(esc).join(', '):'')+(msg?'<br>'+esc(msg):''); };
+  var salva=function(p,src,real){ return (real?cdFotoReal(src):cdRedimUrl(src)).then(function(u){ var c=JSON.parse(JSON.stringify(p)); c.foto=u; return cdSalvarApi('prod',c).then(function(){ p.foto=u; if(real) achadas++; else feitas++; }); }); };
+  var busca=function(p){ return cdFotoBuscaPedir(p.nome,p.barras,cdCatNome(p.cat)).then(function(d){
+      if(d&&d.ok) return salva(p,d.foto,true);
+      if(d&&d.erro==='limite') throw {limite:d.mensagem};
+      nao.push(p.nome); }); };
   var passo=function(){
     if(i>=sem.length) return fim();
-    var p=sem[i++]; b.textContent='Criando '+i+' de '+sem.length+'…'; r.textContent='✨ '+p.nome;
-    cdFotoIaPedir(p.nome,p.desc,cdCatNome(p.cat),false).then(function(d){
-      if(!d||!d.ok){ if(d&&d.erro==='marca') marca.push(p.nome); else if(d&&d.erro==='limite') return fim(d.mensagem); else falha.push(p.nome); return passo(); }
-      return cdRedimUrl(d.foto).then(function(u){ var c=JSON.parse(JSON.stringify(p)); c.foto=u; return cdSalvarApi('prod',c).then(function(){ p.foto=u; feitas++; }); }).catch(function(){ falha.push(p.nome); }).then(passo);
-    }).catch(function(){ falha.push(p.nome); passo(); });
+    var p=sem[i++]; b.textContent=(lj?'Buscando ':'Criando ')+i+' de '+sem.length+'…'; r.textContent=(lj?'🔎 ':'✨ ')+p.nome;
+    var t=lj?busca(p):cdFotoIaPedir(p.nome,p.desc,cdCatNome(p.cat),false).then(function(d){
+      if(d&&d.ok) return salva(p,d.foto,false);
+      if(d&&d.erro==='marca') return busca(p);   /* restaurante: refrigerante, cerveja... recebe a foto real */
+      if(d&&d.erro==='limite') throw {limite:d.mensagem};
+      falha.push(p.nome); });
+    t.then(passo,function(e){ if(e&&e.limite) return fim(e.limite); falha.push(p.nome); passo(); });
   };
   passo();
 }
