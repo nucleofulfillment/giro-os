@@ -367,7 +367,7 @@ function pill(j){ return '<span class="pill">'+esc(j)+'</span>'; }
 function brl(v){ return 'R$ '+Number(v||0).toFixed(2).replace('.',','); }
 function toast(t){ var e=$('toast'); e.textContent=t; e.style.display='block'; clearTimeout(toast._t); toast._t=setTimeout(function(){ e.style.display='none'; },2600); }
 /* LivePro: itens com código de barras vendidos aqui dão baixa no estoque do LivePro (o servidor ignora se a conta não usa o LivePro) */
-function lpBaixa(num){ try{ var its=[]; CART.forEach(function(i){ var p=(D.prods||[]).filter(function(x){ return x.id===i.p; })[0]; if(p&&p.barras) its.push({barras:p.barras, qtd:i.qty, nome:p.nome}); });
+function lpBaixa(num){ try{ var its=[]; CART.forEach(function(i){ var p=(D.prods||[]).filter(function(x){ return x.id===i.p; })[0]; if(p&&(p.barras||/^lp_/.test(p.id))) its.push({barras:p.barras||'', lp:/^lp_/.test(p.id)?p.id.slice(3):'', qtd:i.qty, nome:p.nome}); });
   if(its.length) api('/painel/atend-livepro-baixa',{itens:its, ref:num?'pedido #'+num:''}); }catch(e){} }
 function api(rota,corpo){
   var o={method:corpo===undefined?'GET':'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+TK}}; if(corpo!==undefined) o.body=JSON.stringify(corpo);

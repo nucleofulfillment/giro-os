@@ -103,7 +103,7 @@ S.fila=function(){
     if(!j||!j.ok||!(j.itens||[]).length) return;
     var ids=[], n=0;
     j.itens.forEach(function(f){ ids.push(f.id); (f.itens||[]).forEach(function(it){
-      var p=LFI.prodPorCodigo?LFI.prodPorCodigo(it.barras):null, q=Number(it.qtd)||0; if(!p||!(q>0)) return;
+      var p=(it.lp?LFI.prod(it.lp):null)||(it.barras&&LFI.prodPorCodigo?LFI.prodPorCodigo(it.barras):null), q=Number(it.qtd)||0; if(!p||!(q>0)) return;
       var dep=p.dep&&p.est&&(p.dep in p.est)?p.dep:'res'; if(!(dep in p.est)) dep=Object.keys(p.est)[0];
       LFI.movimentar({prod:p.id, dep:dep, tipo:'venda', qtd:-q, origem:{tipo:'livefood', id:f.id}, obs:'Venda no LiveFood'+(f.ref?' · '+f.ref:''), usuario:f.por||'LiveFood'}); n++; }); });
     if(n){ LFI.atividade('estoque', n+(n===1?' item vendido':' itens vendidos')+' no LiveFood baixado(s) do estoque',{tela:'estoque'}); LFI.salvar(); LFI.recarregar(); }
