@@ -427,7 +427,7 @@ function editar(orig, duplicar){
 
 /* ================= IMPORTAR PLANILHA (simulação) ================= */
 var PLANILHA=[
-  {nome:'Yakimeshi de salmão', dep:'sus', cat:'Pratos quentes', foto:'🍳', rend:4, rendUn:'porções', pesoFinal:1400, perda:4, tempo:20, preco:39.90, modo:'Saltear o gohan do dia anterior com salmão em cubos, ovos, cebola e shoyu em fogo alto.',
+  {nome:'Yakimeshi de salmão', dep:'res', cat:'Pratos quentes', foto:'🍳', rend:4, rendUn:'porções', pesoFinal:1400, perda:4, tempo:20, preco:39.90, modo:'Saltear o gohan do dia anterior com salmão em cubos, ovos, cebola e shoyu em fogo alto.',
     linhas:[['ARROZ JAPONES GRAO CURTO','600','g'],['SALMAO FRESCO FILE','280','g'],['OVOS BRANCOS','3','un'],['MOLHO SHOYU','40','ml'],['CEBOLA','80','g'],['OLEO DE SOJA','30','ml']]},
   {nome:'Quiche de queijo e presunto', dep:'pad', cat:'Salgados', foto:'🥧', rend:8, rendUn:'fatias', pesoFinal:1300, perda:3, tempo:75, preco:14.90, modo:'Massa podre com manteiga gelada; recheio de creme, ovos, presunto e muçarela. Assar 35 min a 180 °C.',
     linhas:[['FARINHA DE TRIGO TIPO 1','250','g'],['MANTEIGA S/SAL','125','g'],['OVOS','4','un'],['CREME DE LEITE','300','g'],['PRESUNTO COZIDO','150','g'],['QUEIJO MUSSARELA','150','g'],['SAL REFINADO','5','g']]},

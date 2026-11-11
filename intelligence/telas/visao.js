@@ -26,7 +26,7 @@ function tarefas(){
   if(venc.length) out.push({ic:'relogio', cor:'wt', t:venc.length+' produtos perto do vencimento', d:venc.slice(0,3).map(function(a){ return LFI.prod(a.prod).nome; }).join(', '), b:'Ver', ir:'estoque'});
   var bf=db.buffets.filter(function(x){ return x.status!=='encerrado'&&LFI.empresaVisivel(x.empresa); });
   if(bf.length) out.push({ic:'buffet', cor:'lf', t:'Buffet em andamento', d:bf[0].num+' · '+bf[0].turno, b:'Acompanhar', ir:'buffet/'+bf[0].id});
-  else if(LFI.depVisivel('sus')) out.push({ic:'buffet', cor:'nu', t:'Buffet do sushi ainda não foi aberto hoje', d:'Abra o buffet e registre o peso de cada item', b:'Abrir buffet', ir:'buffet/novo'});
+  else if(LFI.depVisivel('res')) out.push({ic:'buffet', cor:'nu', t:'Buffet do sushi ainda não foi aberto hoje', d:'Abra o buffet e registre o peso de cada item', b:'Abrir buffet', ir:'buffet/novo'});
   return out;
 }
 
@@ -60,9 +60,8 @@ function render(el){
   var ds=dias(p), serie={}; deps.forEach(function(d){ serie[d]=ds.map(function(){ return 0; }); });
   LFI.vendas(p,deps).forEach(function(v){ var i=ds.indexOf(v.d); if(i>=0) serie[v.dep][i]+=v.valor; });
   var g=el.querySelector('#g-dia');
-  if(ds.length===1) g.innerHTML=UI.barrasH(deps.map(function(d){ return {nome:LFI.dep(d).nome, valor:serie[d][0], cor:CORES_OP[d]}; }));
-  else UI.grafBarras(g,{cats:ds.map(F.dataC), titulosTip:ds.map(function(d){ return F.diaSemana(d)+', '+F.data(d); }), empilhado:true, altura:260,
-    series:deps.map(function(d){ return {nome:LFI.dep(d).curto, cor:CORES_OP[d], valores:serie[d]}; }), onClick:function(i){ detalheDia(ds[i], deps); }});
+  UI.grafLinhas(g,{cats:ds.map(F.dataC), titulosTip:ds.map(function(d){ return F.diaSemana(d)+', '+F.data(d); }), altura:260, area:false,
+    series:deps.map(function(d){ return {nome:LFI.dep(d).nome, cor:CORES_OP[d], valores:serie[d]}; }), onClick:function(i){ detalheDia(ds[i], deps); }});
 
   UI.liga(el, UI.navHandlers({
     per:function(id){ s.per=id; LFI.recarregar(); },

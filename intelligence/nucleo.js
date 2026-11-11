@@ -5,11 +5,11 @@
 'use strict';
 var LFI = window.LFI;
 var U = LFI.dataUtil, r2 = U.r2, r3 = U.r3;
-var CHAVE = 'lfi_base_v4', CHAVE_CTX = 'lfi_ctx_v1';
+var CHAVE = 'lfi_base_v5', CHAVE_CTX = 'lfi_ctx_v1';
 
 /* ---------- armazenamento ---------- */
 function carrega(){
-  try{ var s=localStorage.getItem(CHAVE); if(s){ var d=JSON.parse(s); if(d&&d.versao===4) return d; } }catch(e){}
+  try{ var s=localStorage.getItem(CHAVE); if(s){ var d=JSON.parse(s); if(d&&d.versao===5) return d; } }catch(e){}
   return null;
 }
 LFI.db = carrega() || LFI.criarBase();
@@ -58,7 +58,7 @@ LFI.estoque = function(p, deps){
   if(typeof p==='string') p=LFI.prod(p); if(!p) return 0;
   deps = deps || LFI.depIds(); var t=0; deps.forEach(function(d){ t+=p.est[d]||0; }); return r3(t);
 };
-LFI.estoqueGeral = function(p){ return LFI.estoque(p, ['cen','pad','res','sus']); };
+LFI.estoqueGeral = function(p){ return LFI.estoque(p, LFI.db.departamentos.map(function(d){ return d.id; })); };
 LFI.valorEstoque = function(p, deps){ if(typeof p==='string') p=LFI.prod(p); return r2(LFI.estoque(p,deps)*(p.custoMedio||0)); };
 /* situação considera o estoque total do grupo contra o mínimo cadastrado */
 LFI.situacao = function(p){

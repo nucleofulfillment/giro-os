@@ -120,7 +120,7 @@ function principal(el){
   var abertos=ls.filter(function(b){ return b.status!=='encerrado'; }), enc=ls.filter(function(b){ return b.status==='encerrado'; });
   var mes=LFI.hoje().slice(0,7), doMes=ls.filter(function(b){ return b.data.slice(0,7)===mes; }), encMes=doMes.filter(function(b){ return b.status==='encerrado'; });
   var A={disp:0, cons:0, cli:0, perdas:0, reap:0}; encMes.forEach(function(b){ var r=LFI.resumoBuffet(b); A.disp+=r.disp; A.cons+=r.consumo; A.cli+=b.clientes||0; A.perdas+=r.vDesc+r.vPerda; A.reap+=r.vReap; });
-  var turno=new Date().getHours()<16?'almoço':'jantar', susOk=LFI.depVisivel('sus');
+  var turno=new Date().getHours()<16?'almoço':'jantar', susOk=LFI.depVisivel('res');
   var h=UI.cabecalho({titulo:'Buffet e Pesagem Inteligente', sub:'Buffet por quilo · '+F.moeda(LFI.db.buffetPrecoKg)+'/kg · balança integrada (simulação) e controle de sobras com regras de segurança alimentar',
     acoes:'<button class="btn sec" data-act="aba" data-id="relatorio">'+UI.ic('relatorio')+'Relatório de perdas</button>'+(susOk?'<button class="btn pri" data-act="novo">'+UI.ic('mais')+'Abrir buffet</button>':'')});
   h+='<div class="tabs"><button class="'+(s.aba==='operacao'?'on':'')+'" data-act="aba" data-id="operacao">Operação'+(abertos.length?' <span class="n">'+abertos.length+' aberto</span>':'')+'</button><button class="'+(s.aba==='relatorio'?'on':'')+'" data-act="aba" data-id="relatorio">Relatório de perdas e aproveitamento</button><button class="'+(s.aba==='regras'?'on':'')+'" data-act="aba" data-id="regras">Regras de conservação <span class="n">'+LFI.db.regrasSobra.length+'</span></button></div>';
@@ -133,7 +133,7 @@ function principal(el){
   if(s.aba==='relatorio'){ el.innerHTML=h+relatorioGeralHTML(enc); relatorioGeral(el, enc); ligaPrincipal(el); return; }
   if(s.aba==='regras'){ el.innerHTML=h+regrasHTML(); ligaPrincipal(el); return; }
 
-  if(!susOk) h+=UI.nota('O buffet por quilo é operado no <b>Kaizen Sushi</b>. Selecione essa empresa ou a visão consolidada no topo para abrir um buffet.','wt');
+  if(!susOk) h+=UI.nota('O buffet de sushi por quilo é operado no <b>Dourado Restaurante</b>. Selecione essa empresa ou a visão consolidada no topo para abrir um buffet.','wt');
   abertos.forEach(function(b){ var t=totais(b), al=b.itens.filter(function(it){ return b.status==='aberto'&&restKg(it)<it.pesoIni*0.25; }).length;
     h+='<div class="card mb"><div class="bf-open"><div><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:6px"><b style="font-size:18px">'+esc(b.num)+' · '+esc(b.turno)+'</b>'+UI.status('bf',b.status)+UI.dep(b.dep)+(al?UI.badge(al+' alerta(s) de reposição','no'):'')+'</div>'+
       '<div style="font-size:13px;color:var(--muted);font-weight:700">Aberto às '+esc(b.abertura)+' por '+esc(b.resp)+' · '+b.itens.length+' itens · '+F.num(b.clientes||0,0)+' clientes</div>'+
@@ -177,9 +177,9 @@ function regrasHTML(){
 /* ================= ETAPA 1 — ABERTURA ================= */
 function abertura(el){
   var s=st();
-  if(!LFI.depVisivel('sus')){ el.innerHTML=UI.cabecalho({migalha:[{t:'Buffet',ir:'buffet'},{t:'Abertura'}], titulo:'Abertura de buffet'})+UI.nota('O buffet é operado no Kaizen Sushi. Selecione essa empresa ou a visão consolidada no topo.','wt'); UI.liga(el,UI.navHandlers({})); return; }
+  if(!LFI.depVisivel('res')){ el.innerHTML=UI.cabecalho({migalha:[{t:'Buffet',ir:'buffet'},{t:'Abertura'}], titulo:'Abertura de buffet'})+UI.nota('O buffet é operado no Kaizen Sushi. Selecione essa empresa ou a visão consolidada no topo.','wt'); UI.liga(el,UI.navHandlers({})); return; }
   if(!s.ab){ var itens={}; CATS.forEach(function(c){ c.recs.forEach(function(r){ itens[r]={sel:true, peso:null}; }); });
-    s.ab={dep:'sus', turno:new Date().getHours()<16?'Almoço':'Jantar', resp:'Chef Hiro', itens:itens}; }
+    s.ab={dep:'res', turno:new Date().getHours()<16?'Almoço':'Jantar', resp:'Chef Hiro', itens:itens}; }
   var a=s.ab, prox='BF-'+new Date().getFullYear()+'-'+String(LFI.db.seq.bf+1).padStart(3,'0');
   var h=UI.cabecalho({migalha:[{t:'Buffet',ir:'buffet'},{t:'Abertura'}], titulo:'Abertura do buffet', sub:'Ordem de abertura '+prox+' · pesagem inicial de cada cuba', acoes:'<span class="bf-scale"><i></i>Balança conectada (simulação) · BL-30 · USB</span>'});
   h+='<div class="card mb" style="padding:16px 20px 2px">'+UI.passos(ETAPAS,0)+'</div>';

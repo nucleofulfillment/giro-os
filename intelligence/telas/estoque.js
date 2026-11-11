@@ -108,7 +108,7 @@ function principal(el){
   var vEst=0, comSaldo=0; lista.forEach(function(p){ vEst+=LFI.valorEstoque(p,deps); if(LFI.estoque(p,deps)>0) comSaldo++; });
   var cnt=function(t){ return alr.filter(function(a){ return t.indexOf(a.tipo)>=0; }); };
   var baixos=cnt(['baixo','critico']), crit=cnt(['critico']), venc=cnt(['validade']), par=cnt(['parado']), div=cnt(['divergencia']);
-  var vPar=0; par.forEach(function(a){ vPar+=LFI.valorEstoque(a.prod,['cen','pad','res','sus']); });
+  var vPar=0; par.forEach(function(a){ vPar+=LFI.valorEstoque(a.prod,['cen','pad','res']); });
   var v7=lista.filter(function(p){ var d=LFI.diasParaVencer(p); return d!=null&&d<=7&&LFI.estoque(p,deps)>0&&p.tipo==='insumo'; }).length;
   var vDiv=0; div.forEach(function(a){ var p=LFI.prod(a.prod); vDiv+=(p.contado.qtd-(p.est[p.contado.dep]||0))*p.custoMedio; });
   var nSug=LFI.db.produtos.filter(function(p){ return p.tipo==='insumo'&&['baixo','critico'].indexOf(LFI.situacao(p))>=0&&lista.indexOf(p)>=0; }).length;

@@ -19,7 +19,7 @@ LFI.dataUtil = {iso:iso, hojeD:hojeD, D:D, DH:DH, r2:r2, r3:r3, rng:rng};
 
 LFI.criarBase = function(){
   var R = rng(20261110);
-  var db = {versao:4, criadaEm:new Date().toISOString(), hoje:D(0)};
+  var db = {versao:5, criadaEm:new Date().toISOString(), hoje:D(0)};
 
   /* ===== EMPRESAS (multi-CNPJ) ===== */
   db.grupo = {nome:'Grupo Pão Dourado', cidade:'Campinas/SP'};
@@ -432,6 +432,38 @@ LFI.criarBase = function(){
     {d:DH(-2,'23:10'), tipo:'buffet', txt:'Buffet BF-2026-088 encerrado: 43,3 kg consumidos', ref:{tela:'buffet', id:'bf088'}},
     {d:DH(-2,'09:05'), tipo:'nf', txt:'NF 000.017.552 lançada (Laticínios Serra Verde) — entrega parcial', ref:{tela:'notas', id:'nf04'}}
   ];
+
+
+  /* ===== OPERAÇÕES: Padaria e Restaurante =====
+     O sushi é uma categoria de produto dentro do Restaurante (mesmo CNPJ).
+     Os dados acima ainda separam o sushi em 'sus'; aqui tudo é unificado no Restaurante. */
+  (function unificarSushi(){
+    var SUS_REC={r09:1,r10:1,r11:1,r12:1,r13:1,r14:1,r15:1,r16:1};
+    db.empresas = db.empresas.filter(function(e){ return e.id!=='e3'; });
+    var e2=db.empresas[1];
+    e2.razao='Dourado Restaurante Ltda'; e2.fantasia='Dourado Restaurante'; e2.cnpj='45.987.321/0001-08'; e2.ie='244.556.781.119'; e2.tipo='Matriz';
+    e2.regime='Lucro Presumido'; e2.impVenda=11.33; e2.pisCofins='cumulativo'; e2.sigla='DR'; e2.endereco='Av. Orosimbo Maia, 1.420 — Loja 2';
+    db.departamentos = db.departamentos.filter(function(x){ return x.id!=='sus'; });
+    function fix(o){ if(!o) return; if(o.empresa==='e3') o.empresa='e2'; if(o.dep==='sus') o.dep='res'; }
+    db.produtos.forEach(function(p){ p.est.res=r3((p.est.res||0)+(p.est.sus||0)); delete p.est.sus; if(p.contado) fix(p.contado); });
+    db.receitas.forEach(function(r){ fix(r); if(SUS_REC[r.id]) r.cat='Sushi'; });
+    db.markup.res.cats['Sushi']=3.2; delete db.markup.sus;
+    [db.notas, db.ordens, db.cotacoes, db.producao, db.buffets, db.contasPagar, db.movs].forEach(function(l){ l.forEach(fix); });
+    db.movs.forEach(function(m){ if(m.origem){ if(m.origem.para==='sus') m.origem.para='res'; if(m.origem.de==='sus') m.origem.de='res'; } if(m.obs==='Para sus') m.obs='Para res'; });
+    /* transferências internas do restaurante para o próprio restaurante deixam de existir */
+    /* vendas: o sushi entra no Restaurante como categorias próprias */
+    var porDia={};
+    db.vendas.forEach(function(v){ var k=v.d+'|'+(v.dep==='sus'?'res':v.dep), o=porDia[k];
+      if(!o){ o=porDia[k]={d:v.d, dep:v.dep==='sus'?'res':v.dep, valor:0, cats:{}, tickets:0}; }
+      o.valor=r2(o.valor+v.valor); o.tickets+=v.tickets;
+      for(var c in v.cats){ var nome = v.dep==='sus' ? ({'Buffet por quilo':'Sushi · buffet por quilo','Combinados':'Sushi · combinados'}[c]||c) : c; o.cats[nome]=r2((o.cats[nome]||0)+v.cats[c]); } });
+    db.vendas = Object.keys(porDia).sort().map(function(k){ return porDia[k]; });
+    /* mix: pesa cada parte pela participação de cada antiga operação no faturamento do restaurante */
+    var tr=0, ts=0; db.vendas.forEach(function(){}); 
+    var resBase=5600, susBase=7400, fr=resBase/(resBase+susBase), fs=susBase/(resBase+susBase);
+    db.mixVendas.forEach(function(m){ if(m.dep==='res') m.part=r3(m.part*fr); else if(m.dep==='sus'){ m.part=r3(m.part*fs); m.dep='res'; } });
+    db.atividades.forEach(function(a){ a.txt=a.txt.replace('Kaizen Sushi','Dourado Restaurante'); });
+  })();
 
   db.seq = {nf:0, oc:122, cot:33, op:453, bf:88, cp:0, mov:db.movs.length+1};
   db.usuario = {nome:'Roberto Amaral', papel:'Proprietário', ini:'RA'};
