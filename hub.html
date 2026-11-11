@@ -153,6 +153,15 @@ body.em-login footer{display:none}
 .ir{display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:800;color:var(--lf)}
 .ir i{font-style:normal;transition:transform .25s}
 .card:hover .ir i{transform:translateX(4px)}
+/* LivePro: card de destaque (fundo escuro) */
+.card.card-pro[hidden]{display:none}
+.card.card-pro{background:linear-gradient(135deg,#1C1C1E 0%,#2A2A2E 60%,#3A2416 100%);color:#fff;overflow:hidden}
+.card.card-pro::after{content:'';position:absolute;right:-60px;top:-60px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(255,90,0,.45),rgba(255,90,0,0) 70%);pointer-events:none}
+.card.card-pro .ic{background:var(--lf)}
+.card.card-pro:hover .ic{background:#fff;color:var(--lf)}
+.card.card-pro p{color:#C9C9CF}
+.card.card-pro .ir{color:#FF8A33}
+.pro-selo{position:absolute;top:18px;right:18px;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;background:var(--lf);color:#fff;padding:5px 11px;border-radius:99px;z-index:1}
 footer{margin-top:40px;font-size:12.5px;font-weight:700;opacity:.75;text-align:center}
 #espiao{position:fixed;left:0;top:0;z-index:30;width:clamp(100px,12vw,140px);transform:translate(-300px,40vh);cursor:pointer}
 #balao{position:fixed;left:0;top:0;z-index:31;max-width:min(280px,80vw);padding:11px 16px;border-radius:18px;background:#fff;color:var(--tx);font-weight:800;font-size:16px;box-shadow:0 16px 40px -12px rgba(0,0,0,.45);pointer-events:none;opacity:0;transform:translate(var(--bx,0),var(--by,0)) scale(.5);transform-origin:var(--bo,50% 100%);transition:opacity .2s,transform .35s cubic-bezier(.34,1.56,.64,1)}
@@ -227,6 +236,7 @@ footer{margin-top:40px;font-size:12.5px;font-weight:700;opacity:.75;text-align:c
     <a class="card" href="liveface.html" data-fala="O rosto é o ingresso! 🙂"><span class="ic"><svg viewBox="0 0 24 24"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 10v1M15 10v1M9 15.5c1.8 1.4 4.2 1.4 6 0"/></svg></span><h2>LiveFace</h2><p>Eventos com o rosto como ingresso: tablets da entrada e da saída, eventos e ingressos.</p><span class="ir">Abrir <i>→</i></span></a>
     <a class="card" href="livefest-painel.html" data-fala="Bora vender ingresso! 🎉"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 9V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4z"/><path d="M13 5v2M13 11v2M13 17v2"/></svg></span><h2>LiveFest</h2><p>Venda de ingressos: eventos, salões, setores, lotes e vendas.</p><span class="ir">Abrir <i>→</i></span></a>
     <a class="card" href="app.html" data-fala="Pé na estrada! 🛵"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="6" cy="17" r="3"/><circle cx="18" cy="17" r="3"/><path d="M9 17h6l-3-7H9M15 7h3l2 5"/></svg></span><h2>App do motorista</h2><p>Rotas, entregas e caixa do motoboy no celular.</p><span class="ir">Abrir <i>→</i></span></a>
+    <a class="card card-pro" id="cardPro" hidden href="livepro.html" data-fala="LivePro: gestão da operação! 🚀"><span class="pro-selo">Novo</span><span class="ic"><svg viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg></span><h2>LivePro</h2><p>Gestão da operação.</p><span class="ir">Abrir <i>→</i></span></a>
   </nav>
   </section>
   <footer>LiveFood · tecnologia para restaurantes</footer>
@@ -248,7 +258,12 @@ function mostraHub(){
   $('ola').textContent=nome?'Olá, '+nome+'! Para onde vamos?':'Para onde vamos agora?';
   $('loja').textContent=US&&US.cliente_nome?US.cliente_nome:''; $('loja').hidden=!(US&&US.cliente_nome);
   document.body.classList.remove('em-login'); $('etLogin').hidden=true; $('tag').hidden=true; $('bSair').hidden=false; $('etHub').hidden=false;
-  hubModo();
+  hubModo(); hubPro();
+}
+/* LivePro: o card só aparece para a conta cujo plano inclui o recurso 'livepro' (Admin master → Planos) */
+function hubPro(){ var c=$('cardPro'); if(!c) return; try{ if(localStorage.getItem('lf_livepro')==='1') c.hidden=false; }catch(e){}
+  if(!TK) return;
+  fetch(API+'/painel/acesso',{headers:{'Authorization':'Bearer '+TK}}).then(function(r){ return r.json(); }).then(function(d){ var ok=!!(d&&d.ok&&d.recursos&&d.recursos.indexOf('livepro')>=0); c.hidden=!ok; try{ localStorage.setItem('lf_livepro',ok?'1':'0'); }catch(e){} }).catch(function(){});
 }
 /* (252) modalidade do negócio (mesmo botão do catálogo do painel): fora de restaurante, o Atendimento é do atendente */
 function hubModoAplica(loja){ var a=document.querySelector('a.card[href="atendimento.html"]'); if(!a) return; var p=a.querySelector('p');
