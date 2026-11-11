@@ -33,7 +33,7 @@ function corMargem(m, preco){ if(!preco) return 'nu'; return m>=0.5?'ok':m>=0.3?
 function css(){ if(document.getElementById('css-produtos')) return; var c=document.createElement('style'); c.id='css-produtos'; c.textContent=
   '.pr{max-width:1180px;margin:0 auto;padding-bottom:40px}'+
   '.pr-hd{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}.pr-hd>div{flex:1;min-width:200px}.pr-hd h1{font-size:24px;margin:0}.pr-hd small{display:block;color:var(--muted);font-weight:700;font-size:13.5px;margin-top:2px}'+
-  '.pr-novo{min-height:50px;border-radius:14px;padding:0 18px;font-size:15px}'+
+  '.pr-novo{min-height:50px;border-radius:14px;padding:0 18px;font-size:15px}.pr-acs{display:flex;gap:8px}'+
   '.pr-grp{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:10px;scrollbar-width:none}.pr-grp::-webkit-scrollbar{display:none}.pr-grp button{flex:none;display:flex;align-items:center;gap:6px;min-height:46px;padding:0 16px;border-radius:14px;border:1.5px solid var(--border2);background:#fff;font:inherit;font-size:14.5px;font-weight:800;cursor:pointer;white-space:nowrap}.pr-grp button.on{background:var(--text);border-color:var(--text);color:#fff}.pr-grp button i{font-style:normal;font-size:12px;font-weight:800;color:var(--muted)}.pr-grp button.on i{color:#C9C9CF}'+
   '.pr-busca{display:flex;align-items:center;gap:10px;border:2px solid var(--border2);border-radius:16px;background:#fff;padding:0 14px;min-height:56px;margin-bottom:12px}.pr-busca:focus-within{border-color:var(--roxo)}.pr-busca svg{width:20px;height:20px;stroke:var(--muted);fill:none;stroke-width:2}.pr-busca input{flex:1;border:0;outline:none;font:inherit;font-size:17px;font-weight:700;background:transparent;min-width:0}'+
   '.pr-lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}.pr-it{min-width:0}'+
@@ -59,7 +59,7 @@ function css(){ if(document.getElementById('css-produtos')) return; var c=docume
   '.pp-pac{display:grid;grid-template-columns:1fr 1fr;gap:10px}.pp-pac label{display:flex;flex-direction:column;gap:6px;font-size:12.5px;font-weight:800;color:var(--muted2)}.pp-pac input{min-height:52px;border-radius:14px;border:2px solid var(--border2);font:inherit;font-size:18px;font-weight:800;padding:0 12px;outline:none}.pp-pac input:focus{border-color:var(--roxo)}'+
   '.pp-bar{position:fixed;left:0;right:0;bottom:0;z-index:60;background:#fff;border-top:1px solid var(--border);box-shadow:0 -8px 24px rgba(0,0,0,.08);padding:10px 16px calc(10px + env(safe-area-inset-bottom));transform:translateY(110%);transition:transform .25s}.pp-bar.on{transform:none}.pp-bar>div{max-width:760px;margin:0 auto;display:flex;gap:10px}.pp-bar .btn{min-height:56px;font-size:16px;border-radius:16px;justify-content:center}.pp-bar .btn.pri{flex:1}'+
   '.pp-tipo{display:flex;flex-direction:column;gap:10px}.pp-tipo button{display:flex;align-items:center;gap:14px;text-align:left;min-height:76px;border-radius:16px;border:1.5px solid var(--border2);background:#fff;padding:12px 16px;font:inherit;cursor:pointer}.pp-tipo button.on{border-color:var(--roxo);background:var(--lf-soft)}.pp-tipo em{font-style:normal;font-size:30px}.pp-tipo b{display:block;font-size:16px}.pp-tipo small{font-size:13px;color:var(--muted);font-weight:700}'+
-  '@media (max-width:700px){.pp-top h1{font-size:20px}.pp-top .fprod{display:none}.pp-dd{width:48px;height:48px;padding:0;justify-content:center;flex:none}.pp-dd span{display:none}.pp-ing{display:grid;grid-template-columns:minmax(0,1fr) auto auto;column-gap:8px;row-gap:6px}.pp-ing .nm{grid-column:1/-1}.pp-ing .nm b{white-space:normal}.pp-q{width:auto}.pp-c{width:auto;min-width:70px}.pr-hd h1{font-size:21px}.pr-novo{width:100%}.pr-lista{grid-template-columns:minmax(0,1fr)}.pp-res{grid-template-columns:1fr 1fr}.pp-res>div:first-child{grid-column:1/-1}.pp-ing .fprod{display:none}.pp-pac{grid-template-columns:1fr}}';
+  '@media (max-width:700px){.pp-top h1{font-size:20px}.pp-top .fprod{display:none}.pp-dd{width:48px;height:48px;padding:0;justify-content:center;flex:none}.pp-dd span{display:none}.pp-ing{display:grid;grid-template-columns:minmax(0,1fr) auto auto;column-gap:8px;row-gap:6px}.pp-ing .nm{grid-column:1/-1}.pp-ing .nm b{white-space:normal}.pp-q{width:auto}.pp-c{width:auto;min-width:70px}.pr-hd h1{font-size:21px}.pr-acs{width:100%}.pr-acs .pr-novo{flex:1;justify-content:center}.pr-lista{grid-template-columns:minmax(0,1fr)}.pp-res{grid-template-columns:1fr 1fr}.pp-res>div:first-child{grid-column:1/-1}.pp-ing .fprod{display:none}.pp-pac{grid-template-columns:1fr}}';
   document.head.appendChild(c); }
 
 /* ---------- lista ---------- */
@@ -79,7 +79,7 @@ function render(el, arg){
   if(arg){ var p=LFI.prod(arg); if(p) return pagina(el, p); }
   document.body.classList.add('foco');
   var s=st(), fl=filtro(s.grupo), todos=LFI.db.produtos;
-  var h='<div class="pr"><div class="pr-hd"><div><div class="pghd-t">'+UI.setaVoltar()+'<h1>Produtos</h1></div><small>Tudo o que a casa vende e produz. A receita fica dentro de cada produto.</small></div><button class="btn pri pr-novo" data-act="novo">'+UI.ic('mais')+'Novo produto</button></div>';
+  var h='<div class="pr"><div class="pr-hd"><div><div class="pghd-t">'+UI.setaVoltar()+'<h1>Produtos</h1></div><small>Tudo o que a casa vende e produz. A receita fica dentro de cada produto.</small></div><div class="pr-acs"><button class="btn sec pr-novo" data-act="bipar">▮▯▮▮ Bipar</button><button class="btn pri pr-novo" data-act="novo">'+UI.ic('mais')+'Novo produto</button></div></div>';
   h+='<div class="pr-grp">'+FILTROS.map(function(x){ var n=todos.filter(x.f).length; if(!n&&x.id!=='venda') return ''; var g=x.id.indexOf('g:')===0?LFI.grupoInfo(x.nome).emoji+' ':''; return '<button class="'+(x.id===s.grupo?'on':'')+'" data-act="grp" data-id="'+esc(x.id)+'">'+g+esc(x.nome)+' <i>'+n+'</i></button>'; }).join('')+'</div>';
   h+='<div class="pr-busca">'+UI.ic('busca')+'<input id="pr-q" placeholder="Buscar pelo nome ou código" value="'+esc(s.q)+'" autocomplete="off"></div><div id="pr-ls"></div></div>';
   el.innerHTML=h;
@@ -95,7 +95,7 @@ function render(el, arg){
     return '<button class="pr-it" data-act="_ir" data-id="produtos/'+p.id+'">'+UI.fotoProd(p,48)+'<span><b>'+esc(p.nome)+'</b><small>'+sub+'</small>'+(a.semPreco.length&&p.tipo!=='insumo'?'<small style="color:var(--red)">⚠ '+a.semPreco.length+' ingrediente(s) sem preço</small>':'')+'</span><span class="pv">'+dir+'</span></button>'; }
   function desenha(){
     var ls=todos.filter(fl.f), q=s.q.trim();
-    if(q){ ls=UI.filtrarBusca(q, todos.filter(function(p){ return p.tipo!=='sobra'&&!p.exemplo; }), function(p){ return p.nome+' '+(p.cod||'')+' '+(p.grupo||''); }); }
+    if(q){ ls=UI.filtrarBusca(q, todos.filter(function(p){ return p.tipo!=='sobra'&&!p.exemplo; }), function(p){ return p.nome+' '+(p.cod||'')+' '+(p.grupo||'')+' '+(p.ean||''); }); }
     else ls=ls.slice().sort(function(a,b){ return a.nome.localeCompare(b.nome); });
     var mostra=ls.slice(0,s.lim);
     el.querySelector('#pr-ls').innerHTML=(mostra.length?'<div class="pr-lista">'+mostra.map(cartao).join('')+'</div>':'<div class="card">'+UI.vazio('Nenhum produto encontrado.','🔎')+'</div>')+(ls.length>mostra.length?'<button class="btn sec pr-mais" data-act="mais">Mostrar mais ('+(ls.length-mostra.length)+')</button>':'');
@@ -105,7 +105,8 @@ function render(el, arg){
   UI.liga(el, UI.navHandlers({
     grp:function(id){ s.grupo=id; s.q=''; s.lim=60; LFI.recarregar(); },
     mais:function(){ s.lim+=120; desenha(); },
-    novo:function(){ novoProduto(); }
+    novo:function(){ novoProduto(); },
+    bipar:function(){ LFI.biparProduto(); }
   }));
 }
 
@@ -230,9 +231,12 @@ function editarDados(p){
   var grupos=LFI.GRUPOS.filter(function(g){ return g.nome!=='Inativos'; });
   var m=UI.modal({titulo:'Dados do produto', corpo:'<div class="field"><label>Nome</label><input class="inp" id="dd-n" value="'+esc(p.nome)+'"></div>'+
     (p.tipo==='acabado'||p.tipo==='revenda'||p.tipo==='base'?'<div class="field"><label>Grupo</label><select class="inp" id="dd-g">'+grupos.map(function(g){ return '<option'+(p.grupo===g.nome?' selected':'')+'>'+esc(g.nome)+'</option>'; }).join('')+'</select></div><div class="field"><label>Código</label><input class="inp" id="dd-c" value="'+esc(p.cod||'')+'"></div>':'')+
+    '<div class="field"><label>Código de barras</label><div style="display:flex;gap:8px"><input class="inp" id="dd-ean" inputmode="numeric" value="'+esc(p.ean||'')+'" placeholder="Bipe ou digite"><button type="button" class="btn sec" data-act="bipEan">📷</button></div></div>'+
     (p.tipo==='acabado'?'<label style="display:flex;gap:10px;align-items:center;font-weight:700"><input type="checkbox" id="dd-a"'+(p.ativo!==false?' checked':'')+' style="width:20px;height:20px;accent-color:var(--roxo)"> Produto ativo (aparece para vender)</label>':''),
     botoes:'<button class="btn sec" data-act="_fechar">Cancelar</button><button class="btn pri" data-act="ok">Salvar</button>',
-    acoes:{ok:function(){ var n=m.el.querySelector('#dd-n').value.trim(); if(!n){ UI.toast('Informe o nome','','wt'); return; } p.nome=n;
+    acoes:{bipEan:function(){ window.Bipador&&Bipador.abrir({titulo:'Código de barras do produto', aoLer:function(c){ m.el.querySelector('#dd-ean').value=c; return true; }}); },
+      ok:function(){ var n=m.el.querySelector('#dd-n').value.trim(); if(!n){ UI.toast('Informe o nome','','wt'); return; }
+      var ev=m.el.querySelector('#dd-ean').value.replace(/[^0-9A-Za-z-]/g,''); if(ev){ var dup=LFI.prodPorCodigo(ev); if(dup&&dup!==p){ UI.toast('Esse código já está em '+dup.nome,'','no'); return; } } p.ean=ev||null; p.nome=n;
       var g=m.el.querySelector('#dd-g'); if(g){ p.grupo=g.value; var gi=LFI.grupoInfo(p.grupo); p.emoji=gi.emoji; p.dep=gi.dep; }
       var c=m.el.querySelector('#dd-c'); if(c) p.cod=c.value.trim()||null;
       var a=m.el.querySelector('#dd-a'); if(a) p.ativo=a.checked;
@@ -241,22 +245,25 @@ function editarDados(p){
 }
 
 /* ---------- novo produto ---------- */
-function novoProduto(){
+function novoProduto(eanIni){
   var tipo='acabado';
   var TIPOS=[['acabado','🥖','Produto que fazemos','Tem receita: pão, bolo, lanche, café…'],['base','🥣','Base','Massa, recheio ou preparo usado em outras receitas'],['revenda','🥤','Revenda','Compramos pronto e vendemos: refrigerante, água…'],['insumo','🌾','Ingrediente','Matéria-prima comprada: farinha, ovos, embalagem…']];
   var m=UI.modal({titulo:'Novo produto', corpo:'<div class="pp-tipo">'+TIPOS.map(function(t){ return '<button class="'+(t[0]===tipo?'on':'')+'" data-act="tp" data-id="'+t[0]+'"><em>'+t[1]+'</em><span><b>'+t[2]+'</b><small>'+t[3]+'</small></span></button>'; }).join('')+'</div>'+
     '<div class="field" style="margin-top:14px"><label>Nome</label><input class="inp" id="np-n" placeholder="Ex.: Pão de batata"></div>'+
     '<div class="field" id="np-gw"><label>Grupo</label><select class="inp" id="np-g">'+LFI.GRUPOS.filter(function(g){ return g.nome!=='Inativos'&&g.nome!=='Bases'; }).map(function(g){ return '<option>'+esc(g.nome)+'</option>'; }).join('')+'</select></div>'+
+    '<div class="field"><label>Código de barras <span style="font-weight:600;color:var(--muted)">(opcional)</span></label><div style="display:flex;gap:8px"><input class="inp" id="np-ean" inputmode="numeric" value="'+esc(eanIni||'')+'" placeholder="Bipe ou digite"><button type="button" class="btn sec" data-act="bipEan">📷</button></div></div>'+
     '<div class="field" id="np-uw"><label>Vende / usa por</label><select class="inp" id="np-u"><option value="un">Unidade</option><option value="kg">Quilo (kg)</option><option value="L">Litro</option></select></div>',
     botoes:'<button class="btn sec" data-act="_fechar">Cancelar</button><button class="btn pri" data-act="ok">Criar e abrir</button>',
     acoes:{
+      bipEan:function(){ window.Bipador&&Bipador.abrir({titulo:'Código de barras do produto', aoLer:function(c){ m.el.querySelector('#np-ean').value=c; return true; }}); },
       tp:function(id){ tipo=id; UI.els('.pp-tipo button', m.el).forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-id')===id); }); m.el.querySelector('#np-gw').style.display=(id==='acabado'||id==='revenda')?'':'none'; },
       ok:function(){
         var n=m.el.querySelector('#np-n').value.trim(); if(!n){ UI.toast('Informe o nome','','wt'); return; }
         var un=m.el.querySelector('#np-u').value, grupo=tipo==='base'?'Bases':tipo==='insumo'?null:m.el.querySelector('#np-g').value, gi=grupo?LFI.grupoInfo(grupo):null;
         var id=LFI.novoId(tipo==='insumo'?'i':tipo==='base'?'b':tipo==='revenda'?'rv':'v');
         var p={id:id, nome:n, un:un, cat:tipo==='insumo'?'mer':tipo==='revenda'?'beb':'aca', tipo:tipo, grupo:grupo, dep:gi?gi.dep:'cen', emoji:gi?gi.emoji:null, ativo:true, preco:0, custoMedio:0, ultimoCusto:0, estMin:0, ncm:'', cest:'', forn:null, fornAlt:[], local:'', validade:null,
-          conv:{un:un==='un'?'Unidade':un, fator:1}, est:{cen:0,pad:0,res:0}, apelidos:[n.toUpperCase()], ultMov:LFI.hoje(), contado:null, hist:[], ean:null, end:null};
+          conv:{un:un==='un'?'Unidade':un, fator:1}, est:{cen:0,pad:0,res:0}, apelidos:[n.toUpperCase()], ultMov:LFI.hoje(), contado:null, hist:[], ean:(m.el.querySelector('#np-ean').value.replace(/[^0-9A-Za-z-]/g,'')||null), end:null};
+        if(p.ean&&LFI.prodPorCodigo(p.ean)){ UI.toast('Esse código já está em '+LFI.prodPorCodigo(p.ean).nome,'','no'); return; }
         if(tipo==='insumo'){ p.pacote={qtd:1, preco:0}; p.semPreco=true; }
         LFI.db.produtos.push(p);
         if(tipo==='acabado'||tipo==='base'){ var r={id:LFI.novoId('rc'), nome:n, dep:p.dep, cat:grupo, foto:p.emoji, cor:'#F6E3C5', rend:1, rendUn:un==='un'?'unidade':un, pesoFinal:un==='kg'?1000:null, perda:0, tempo:0, preco:0, vendaUn:un, acabado:id, ing:[], modo:'', real:true, base:tipo==='base', ativo:true}; LFI.db.receitas.push(r); p.receita=r.id; }
@@ -264,5 +271,13 @@ function novoProduto(){
       }}});
 }
 
+/* ---------- bipagem: achar produto pelo código ---------- */
+LFI.prodPorCodigo=function(c){ var n=window.Bipador?Bipador.norm(c):String(c||''); if(!n) return null; var r=null; LFI.db.produtos.forEach(function(p){ if(!r&&p.ean&&(window.Bipador?Bipador.norm(p.ean):p.ean)===n) r=p; }); return r; };
+LFI.biparProduto=function(){
+  if(!window.Bipador){ UI.toast('Leitor indisponível','','no'); return; }
+  Bipador.abrir({titulo:'Bipar produto', aoLer:function(c){ var p=LFI.prodPorCodigo(c);
+    if(p){ setTimeout(function(){ LFI.ir('produtos', p.id); },0); return true; }
+    setTimeout(function(){ UI.confirmar('Produto não existe','O código <b>'+esc(c)+'</b> não está cadastrado. Quer cadastrar um produto novo com ele?','Cadastrar produto',function(){ novoProduto(c); }); },0); return true; }});
+};
 LFI.registrar('produtos',{titulo:'Produtos', render:render});
 })();

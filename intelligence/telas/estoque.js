@@ -116,7 +116,7 @@ function principal(el){
   var nSug=LFI.db.produtos.filter(function(p){ return LFI.compravel(p)&&['baixo','critico'].indexOf(LFI.situacao(p))>=0&&lista.indexOf(p)>=0; }).length;
 
   var h=UI.cabecalho({titulo:'Estoque Inteligente', sub:(emp?esc(emp.fantasia)+' · CNPJ '+emp.cnpj:esc(LFI.db.grupo.nome)+' · estoque centralizado de '+LFI.db.empresas.length+' CNPJs')+' · custo médio ponderado atualizado pelas notas fiscais',
-    acoes:'<button class="btn sec sm" data-act="ajuste">'+UI.ic('editar')+'Ajuste de inventário</button><button class="btn sec sm" data-act="transf">'+UI.ic('seta')+'Transferência</button><button class="btn sec sm" data-act="saida">'+UI.ic('lixo')+'Saída / perda</button><button class="btn pri sm" data-act="novoP">'+UI.ic('mais')+'Novo produto</button>'});
+    acoes:'<button class="btn pri sm" data-act="bipar">▮▯▮▮ Bipar entrada / saída</button><button class="btn sec sm" data-act="ajuste">'+UI.ic('editar')+'Ajuste de inventário</button><button class="btn sec sm" data-act="transf">'+UI.ic('seta')+'Transferência</button><button class="btn sec sm" data-act="saida">'+UI.ic('lixo')+'Saída / perda</button><button class="btn pri sm" data-act="novoP">'+UI.ic('mais')+'Novo produto</button>'});
   var vTot=LFI.valorEstoqueTotal(LFI.depIds()), qTot=LFI.db.produtos.filter(function(p){ return LFI.estoque(p,LFI.depIds())>0; }).length;
   h+='<div class="kpis es-deps">'+UI.kpi({lb:'Valor em estoque', vl:F.moeda(vTot), dl:qTot+' itens · todos os departamentos', act:'dep', id:'todos', hl:s.dep==='todos'})+
     depsOrd().map(function(d){ var dd=LFI.dep(d), v=LFI.valorEstoqueTotal([d]), n=lista.filter(function(p){ return (p.est[d]||0)>0; }).length;
@@ -129,7 +129,7 @@ function principal(el){
     dep:function(id){ s.dep=id; LFI.recarregar(); },
     aba:function(id){ s.aba=id; LFI.recarregar(); },
     kAlr:function(id){ s.aba='pos'; s.alr=id; s.alrTodos=true; LFI.recarregar(); setTimeout(function(){ var a=document.getElementById('es-alertas'); if(a) a.scrollIntoView({behavior:'smooth', block:'start'}); },60); },
-    ajuste:function(){ modalMov('ajuste'); }, transf:function(){ modalMov('transf'); }, saida:function(){ modalMov('saida'); },
+    ajuste:function(){ modalMov('ajuste'); }, transf:function(){ modalMov('transf'); }, saida:function(){ modalMov('saida'); }, bipar:function(){ biparMov(); },
     novoP:function(){ LFI.formProduto({}, function(p){ LFI.ir('estoque', p.id); }); },
     abrir:function(id){ LFI.ir('estoque', id); }
   });
@@ -392,6 +392,28 @@ function aceitarContagem(id){
     LFI.movimentar({prod:p.id, dep:c.dep, tipo:'ajuste', qtd:dif, origem:{tipo:'inventario'}, obs:'Contagem física aceita ('+c.por+', '+F.data(c.data)+')'});
     p.contado=null; LFI.atividade('estoque','Divergência de '+p.nome+' resolvida: ajuste de '+F.qtd(dif,p.un),{tela:'estoque',id:p.id}); LFI.salvar();
     UI.toast('Inventário ajustado', p.nome+' · '+(dif>0?'+':'')+F.qtd(dif,p.un)); LFI.recarregar(); });
+}
+/* bipar o código: escolhe Entrada ou Saída, quantidade e setor, e confirma. Pode seguir bipando. */
+function biparMov(){
+  if(!window.Bipador){ UI.toast('Leitor indisponível','','no'); return; }
+  Bipador.abrir({titulo:'Bipar entrada / saída', dica:'Bipe o produto para dar entrada ou baixa no estoque.', aoLer:function(c){ var p=LFI.prodPorCodigo&&LFI.prodPorCodigo(c); if(!p) return false; setTimeout(function(){ movBipado(p); },0); return true; }});
+}
+function movBipado(p){
+  var deps=LFI.depsVisiveis(), o={tp:'entrada', dep:(p.dep&&deps.some(function(d){ return d.id===p.dep; }))?p.dep:(deps.some(function(d){ return d.id==='cen'; })?'cen':deps[0].id), q:1};
+  var m=UI.modal({titulo:p.nome, sub:'Estoque atual: '+F.qtd(LFI.estoqueGeral(p),p.un), corpo:'<div id="bm-c"></div>',
+    botoes:'<button class="btn sec" data-act="_fechar">Cancelar</button><button class="btn sec" data-act="ok" data-id="1">Confirmar e bipar outro</button><button class="btn pri" data-act="ok">Confirmar</button>',
+    acoes:{ tp:function(v){ o.q=UI.num(m.el.querySelector('#bm-q').value)||o.q; o.tp=v; des(); }, dep:function(v){ o.q=UI.num(m.el.querySelector('#bm-q').value)||o.q; o.dep=v; des(); },
+      mais:function(){ o.q=Math.round((UI.num(m.el.querySelector('#bm-q').value)+1)*1000)/1000; des(); }, menos:function(){ o.q=Math.max(0,Math.round((UI.num(m.el.querySelector('#bm-q').value)-1)*1000)/1000); des(); },
+      ok:function(outro){ o.q=UI.num(m.el.querySelector('#bm-q').value); if(!(o.q>0)){ UI.toast('Informe a quantidade','','wt'); return; }
+        var tem=p.est[o.dep]||0; if(o.tp==='saida'&&o.q>tem+1e-9){ UI.toast('Mais do que tem no setor','Tem '+F.qtd(tem,p.un),'no'); return; }
+        LFI.movimentar({prod:p.id, dep:o.dep, tipo:o.tp==='entrada'?'entrada':'saida', qtd:o.tp==='entrada'?o.q:-o.q, custo:o.tp==='entrada'?p.custoMedio:null, origem:{tipo:'bipe'}, obs:(o.tp==='entrada'?'Entrada':'Saída')+' pelo leitor'});
+        LFI.atividade('estoque',(o.tp==='entrada'?'Entrada':'Saída')+' pelo leitor: '+F.qtd(o.q,p.un)+' de '+p.nome,{tela:'estoque',id:p.id});
+        LFI.salvar(); m.fechar(); UI.toast((o.tp==='entrada'?'Entrada':'Saída')+' registrada', F.qtd(o.q,p.un)+' de '+p.nome); LFI.recarregar(); if(outro) setTimeout(biparMov,150); } }});
+  function des(){ m.el.querySelector('#bm-c').innerHTML=
+    '<div class="seg" style="display:flex;margin-bottom:12px"><button style="flex:1;min-height:48px" class="'+(o.tp==='entrada'?'on':'')+'" data-act="tp" data-id="entrada">+ Entrada</button><button style="flex:1;min-height:48px" class="'+(o.tp==='saida'?'on':'')+'" data-act="tp" data-id="saida">− Saída</button></div>'+
+    '<div class="field"><label>Quantidade ('+esc(p.un)+')</label><div style="display:flex;gap:8px"><button class="btn sec" style="min-width:56px;font-size:22px" data-act="menos">−</button><input class="inp num" id="bm-q" inputmode="decimal" value="'+UI.numBR(o.q)+'" style="font-size:20px;font-weight:800;text-align:center"><button class="btn sec" style="min-width:56px;font-size:22px" data-act="mais">+</button></div></div>'+
+    '<div class="field"><label>Setor</label><div style="display:flex;gap:8px;flex-wrap:wrap">'+deps.map(function(d){ return '<button class="btn '+(o.dep===d.id?'pri':'sec')+'" data-act="dep" data-id="'+d.id+'">'+esc(d.curto)+' · '+F.qtd(p.est[d.id]||0,p.un)+'</button>'; }).join('')+'</div></div>'; }
+  des();
 }
 function modalMov(tipo, prodId){
   var tit={ajuste:'Ajuste de inventário', transf:'Transferência entre departamentos', saida:'Registrar saída ou perda'}[tipo];
