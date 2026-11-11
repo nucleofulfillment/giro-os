@@ -43,7 +43,37 @@ function enviar(todos){
     if(S.pendente){ S.pendente=false; enviar(); }
   }).catch(function(){ S.enviando=false; estado('offline'); });
 }
-S.agendar=function(){ if(!S.ativo||!S.pronto) return; clearTimeout(S.timer); S.timer=setTimeout(function(){ enviar(); }, 1200); };
+S.req=req;
+/* ---------- fotos no servidor ----------
+   Fotos (notas, avarias, balança do buffet) ficam no armazenamento do servidor; no banco fica só 'lpf:<chave>'.
+   Assim o banco fica leve e o celular e o computador veem as mesmas fotos. */
+function ehFoto(s){ return typeof s==='string' && s.length>2500 && /^data:image\/(jpeg|png|webp);base64,/.test(s); }
+var subindo={};
+function subir(img){ if(subindo[img]) return subindo[img];
+  subindo[img]=req('POST','/painel/livepro-foto',{img:img}).then(function(j){ delete subindo[img]; return j&&j.ok?('lpf:'+j.k):null; }).catch(function(){ delete subindo[img]; return null; });
+  return subindo[img]; }
+/* troca as fotos do banco por chaves do servidor (no máximo 8 por vez, para não travar) */
+function trocarFotos(){
+  if(!S.ativo||!S.pronto) return Promise.resolve(0);
+  var achou=[];
+  (function anda(o, pai, k, prof){ if(prof>9||achou.length>=8) return; if(ehFoto(o)){ achou.push([pai,k,o]); return; } if(o&&typeof o==='object'){ for(var c in o){ if(Object.prototype.hasOwnProperty.call(o,c)) anda(o[c], o, c, prof+1); } } })(LFI.db, null, null, 0);
+  if(!achou.length) return Promise.resolve(0);
+  return Promise.all(achou.map(function(a){ return subir(a[2]).then(function(ch){ if(ch&&a[0][a[1]]===a[2]) a[0][a[1]]=ch; return !!ch; }); })).then(function(r){ var n=r.filter(Boolean).length; if(n){ salvarLocal.call(LFI); } return n; });
+}
+S.trocarFotos=trocarFotos;
+/* para mandar ao fornecedor: devolve as chaves das fotos (sobe as que ainda estão no aparelho) */
+S.fotosParaChaves=function(lista){ return Promise.all((lista||[]).filter(Boolean).map(function(x){ if(typeof x==='string'&&x.indexOf('lpf:')===0) return Promise.resolve(x.slice(4)); if(ehFoto(x)) return subir(x).then(function(ch){ return ch?ch.slice(4):null; }); return Promise.resolve(null); })).then(function(r){ return r.filter(Boolean); }); };
+/* mostra as fotos guardadas no servidor: <img src="lpf:..."> e fundos com url(lpf:...) */
+var cacheFoto={};
+function urlFoto(ch){ if(cacheFoto[ch]) return cacheFoto[ch];
+  cacheFoto[ch]=fetch(API+'/painel/livepro-foto?k='+encodeURIComponent(ch),{headers:{'Authorization':'Bearer '+token()}}).then(function(r){ return r.ok?r.blob():null; }).then(function(b){ return b?URL.createObjectURL(b):''; }).catch(function(){ delete cacheFoto[ch]; return ''; });
+  return cacheFoto[ch]; }
+function mostrarFotos(raiz){
+  (raiz||document).querySelectorAll('img[src^="lpf:"]').forEach(function(im){ var ch=im.getAttribute('src').slice(4); im.setAttribute('src','data:image/gif;base64,R0lGODlhAQABAAAAACw='); urlFoto(ch).then(function(u){ if(u) im.src=u; }); });
+  (raiz||document).querySelectorAll('[style*="lpf:"]').forEach(function(el){ var st=el.getAttribute('style'), m=/url\(['"]?lpf:([a-z0-9]+)['"]?\)/.exec(st); if(!m) return; el.setAttribute('style', st.replace(m[0],'url()')); urlFoto(m[1]).then(function(u){ if(u) el.style.backgroundImage='url("'+u+'")'; }); });
+}
+var _mfT=null; new MutationObserver(function(){ clearTimeout(_mfT); _mfT=setTimeout(function(){ mostrarFotos(document); },20); }).observe(document.documentElement,{childList:true, subtree:true});
+S.agendar=function(){ if(!S.ativo||!S.pronto) return; clearTimeout(S.timer); S.timer=setTimeout(function(){ trocarFotos().then(function(){ enviar(); }); }, 1200); };
 
 /* toda gravação local também agenda o envio ao servidor */
 var salvarLocal=LFI.salvar;
@@ -81,6 +111,7 @@ S.fila=function(){
   }).catch(function(){});
 };
 setInterval(function(){ S.fila(); }, 120000);
+setInterval(function(){ trocarFotos().then(function(n){ if(n) enviar(); }); }, 60000);   /* fotos antigas sobem aos poucos */
 /* quando a internet volta, manda o que ficou pendente */
 window.addEventListener('online', function(){ if(!S.ativo) return; if(S.pronto) enviar(); else S.carregar(); });
 /* se a primeira leitura falhou, tenta de novo a cada 30 segundos */

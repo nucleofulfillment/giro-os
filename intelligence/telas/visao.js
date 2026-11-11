@@ -66,7 +66,8 @@ function detalheDia(d, deps){
 }
 
 /* ---------- compartilhar resumo do dia por WhatsApp (envio manual agora; automático diário previsto) ---------- */
-function cfgShare(){ var c=LFI.db.compartilhar; if(!c){ c=LFI.db.compartilhar={contatos:[{nome:LFI.usuario().nome, fone:'(19) 99700-1122'}], auto:true, hora:'07:00', dia:'ontem'}; } return c; }
+function cfgShare(){ var c=LFI.db.compartilhar; if(!c){ c=LFI.db.compartilhar={contatos:[{nome:LFI.usuario().nome, fone:''}], auto:false, hora:'07:00', dia:'ontem'}; } return c; }
+function srvOn(){ return !!(LFI.servidor&&LFI.servidor.ativo&&LFI.servidor.pronto); }
 function resumoDia(d){
   var deps=LFI.depIds().filter(function(x){ return x!=='cen'; }), vs=LFI.db.vendas.filter(function(v){ return v.d===d&&deps.indexOf(v.dep)>=0; });
   var tot=0, tk=0; vs.forEach(function(v){ tot+=v.valor; tk+=v.tickets; });
@@ -88,7 +89,7 @@ function compartilhar(){
       '<div class="sh-hora"><input type="time" class="inp" data-chg="hora" value="'+esc(c.hora)+'"'+(c.auto?'':' disabled')+'><span>com o resumo do dia anterior</span></div></div>'+
       '<div class="sh-sec"><div class="sh-tit">Mensagem <span class="seg" style="margin-left:8px"><button class="'+(c.dia==='ontem'?'on':'')+'" data-act="dia" data-id="ontem">Ontem</button><button class="'+(c.dia==='hoje'?'on':'')+'" data-act="dia" data-id="hoje">Hoje até agora</button></span></div>'+
       '<div class="wa"><div class="wa-hd"><span class="av">'+UI.ic('whats')+'</span><div><b>LivePro</b><small>resumo diário</small></div></div><div class="wa-b out">'+esc(resumoDia(d))+'<span class="h">'+(c.auto?c.hora:LFI.agoraHM())+'</span></div></div></div>'+
-      '<p class="cf-obs">Nesta demonstração o envio é simulado. O envio automático fica configurado e passa a funcionar quando o WhatsApp for integrado.</p>');
+      '<p class="cf-obs">'+(srvOn()?'Sai pelo WhatsApp do LiveFood. O envio automático usa o horário de Brasília.':'Entre pelo Hub para o envio sair de verdade pelo WhatsApp. Aqui fora ele é só simulado.')+'</p>');
     m.rodapeHTML('<button class="btn sec esq" data-act="salvar">Salvar configuração</button><button class="btn sec" data-act="_fechar">Fechar</button><button class="btn pri" data-act="env">'+UI.ic('enviar')+'Enviar agora</button>');
   }
   function valido(){ var ok=c.contatos.filter(function(x){ return x.nome.trim()&&x.fone.replace(/\D/g,'').length>=10; }); if(!ok.length){ UI.toast('Cadastre ao menos um contato com nome e telefone','','wt'); return null; } return ok; }
@@ -98,7 +99,11 @@ function compartilhar(){
     auto:function(_,ev){ c.auto=ev.target.checked; des(); }, hora:function(_,ev){ c.hora=ev.target.value||'07:00'; des(); }, dia:function(id){ c.dia=id; des(); },
     salvar:function(){ var ok=valido(); if(!ok) return; c.contatos=ok; LFI.db.compartilhar=c; LFI.salvar(); UI.toast('Configuração salva', c.auto?'Envio automático todos os dias às '+c.hora:'Envio automático desligado'); m.fechar(); },
     env:function(){ var ok=valido(); if(!ok) return; c.contatos=ok; LFI.db.compartilhar=c; (c.envios=c.envios||[]).unshift({em:LFI.agoraISO(), para:ok.map(function(x){ return x.nome; }), dia:c.dia}); LFI.salvar();
-      UI.toast('Resumo enviado por WhatsApp', ok.map(function(x){ return x.nome; }).join(', ')); m.fechar(); }
+      if(!srvOn()){ UI.toast('Resumo enviado (simulado)', ok.map(function(x){ return x.nome; }).join(', ')); m.fechar(); return; }
+      var b=m.el.querySelector('[data-act=env]'); if(b){ b.disabled=true; b.textContent='Enviando…'; }
+      LFI.servidor.req('POST','/painel/livepro-resumo',{contatos:ok, dia:c.dia}).then(function(j){
+        if(j&&j.ok){ UI.toast('Resumo enviado pelo WhatsApp', j.enviados+(j.enviados===1?' contato':' contatos')+(j.erros&&j.erros.length?' · '+j.erros.length+' com erro':'')); m.fechar(); }
+        else { UI.toast('Não foi possível enviar', (j&&j.mensagem)||'Tente de novo em instantes','no'); if(b){ b.disabled=false; b.textContent='Enviar agora'; } } }); }
   });
   des();
 }
