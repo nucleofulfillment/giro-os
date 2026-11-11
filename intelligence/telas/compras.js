@@ -806,9 +806,8 @@ function secComparador(c, A){
   h+=lin('Valor total da proposta', function(p){ return F.moeda(totalProposta(c,p).total); }, 'tt');
   h+='</tfoot></table></div></div>';
 
-  h+='<div class="grid g21"><div><div class="card"><h3><span class="lft">'+UI.ic('relatorio')+' Preço por produto e fornecedor</span><small>R$ por unidade</small></h3><div id="cq-g1"></div></div>'+
-     '<div class="card"><h3><span class="lft">'+UI.ic('custos')+' Valor total por fornecedor</span><small>itens disponíveis + frete</small></h3><div id="cq-g2"></div></div></div><div>';
-  h+=cestaCard(c,A,ro);
+  h+='<div class="grid g2" style="align-items:start"><div>';
+  h+=cestaCard(c,A,ro)+'</div><div>';
   h+='<div class="card"><h3><span class="lft">'+UI.ic('filtro')+' Pesos da análise</span><button class="vertodos" data-act="pesosPad">Restaurar padrão</button></h3>';
   var W=s.pesos, tw=(W.preco+W.disp+W.prazo+W.cond+W.qual)||1;
   h+=Object.keys(ROT_PESO).map(function(k){ return '<div class="cq-peso"><label>'+ROT_PESO[k][0]+'<small>'+ROT_PESO[k][1]+'</small></label><b id="cq-pw-'+k+'">'+Math.round(W[k]/tw*100)+'%</b><input type="range" min="0" max="60" step="5" value="'+W[k]+'" data-inp="pesoV" data-chg="pesoOk" data-id="'+k+'" aria-label="Peso de '+ROT_PESO[k][0]+'"></div>'; }).join('');
@@ -831,7 +830,7 @@ function cestaCard(c, A, ro){
   if(c.status==='convertida'){
     h+='<div style="margin-top:12px;display:flex;flex-direction:column;gap:6px">'+(c.ordens||[]).map(function(id){ var oc=LFI.ordem(id); if(!oc) return ''; return '<button class="btn sec sm wide" data-act="_ir" data-id="ordens/'+oc.id+'" style="justify-content:space-between"><span>'+esc(oc.num)+' · '+esc(LFI.forn(oc.forn).nome)+'</span>'+UI.status('oc',oc.status)+'</button>'; }).join('')+'</div>';
   } else if(!ro){
-    h+=temEsc?'<button class="btn pri wide" style="margin-top:14px" data-act="aprovar">'+UI.ic('check')+'Aprovar e gerar ordem de compra</button><div style="font-size:11px;color:#B9B9C0;font-weight:600;margin-top:8px;text-align:center">Uma OC por fornecedor, agrupadas numa compra consolidada</div>'
+    h+=temEsc?'<button class="btn pri wide" style="margin-top:14px" data-act="aprovar">'+UI.ic('check')+'Criar pedido</button><div style="font-size:11px;color:#B9B9C0;font-weight:600;margin-top:8px;text-align:center">Um pedido por fornecedor</div>'
              :'<button class="btn pri wide" style="margin-top:14px" data-act="aplRec">'+UI.ic('ia')+'Aplicar recomendação</button><div style="font-size:11px;color:#B9B9C0;font-weight:600;margin-top:8px;text-align:center">ou clique nas células do mapa para escolher</div>';
   }
   return h+'</div>';
