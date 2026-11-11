@@ -4346,7 +4346,7 @@ function aviso(t){var e=el('toast'); e.innerHTML=t; e.classList.add('on');
 function abrirApp(){
   el('login').style.display='none';
   el('app').style.display='block'; try{ window.GiroMarca&&GiroMarca.deUsuario(DD_USER); }catch(e){}
-  var t=el('tb-tenant'); if(t) t.textContent=(DD_USER&&DD_USER.cliente_nome)||'';
+  var t=el('tb-tenant'); if(t){ t.textContent=(DD_USER&&DD_USER.cliente_nome)||''; if(window.LojaTroca) LojaTroca.ligar(t); }   /* (269) trocar de loja */
   var av=document.querySelector('.tb-av'); if(av&&DD_USER&&DD_USER.nome) av.textContent=DD_USER.nome.charAt(0).toUpperCase();
   try{ montarTudo(); carregarPonto(); ptCarregarLista(); waCarregar(); contaRapido(); planoCarrega(); }finally{ srvCarregar(); }
   /* (180) a página do LiveFace abre o Painel já nas configurações do LiveFace (painel.html#liveface) */
@@ -4537,7 +4537,26 @@ function usuCarregar(){
         '<div style="font-size:12.5px;color:var(--muted);margin:2px 0 6px;word-break:break-all">'+esc(u.email)+'</div>'+
         (dono?'':'<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sec" data-id="'+esc(u.id)+'" onclick="usuEditar(this.getAttribute(\'data-id\'))">Editar</button><button class="btn sec" data-id="'+esc(u.id)+'" onclick="usuNovaSenha(this.getAttribute(\'data-id\'))">Nova senha</button><button class="btn sec" data-id="'+esc(u.id)+'" data-at="'+(u.ativo?0:1)+'" onclick="usuAtivo(this.getAttribute(\'data-id\'),this.getAttribute(\'data-at\'))">'+(u.ativo?'Desativar':'Ativar')+'</button></div>')+'</div>'; }
     box.innerHTML=h||'<div style="color:var(--muted);font-size:13px">Nenhum usuário.</div>';
+    usuLojas();
   }).catch(function(){ var b=el('us-lista'); if(b) b.innerHTML='<div style="color:#c0392b;font-size:13px">Sem conexão com o servidor.</div>'; });
+}
+/* (269) GRUPO DE LOJAS: o dono escolhe em quais lojas do grupo cada usuário pode entrar (só aparece quando há mais de uma loja) */
+function usuLojas(){
+  if(!DD_USER||DD_USER.perfil!=='dono') return;
+  fetch(DELTADIS_API+'/painel/usuario-lojas',{cache:'no-store'}).then(function(r){ return r.json(); }).then(function(d){
+    if(!d||!d.ok||(d.lojas||[]).length<2) return;
+    var atual=cliAtual();
+    document.querySelectorAll('#us-lista button[onclick^="usuEditar"]').forEach(function(b){
+      var uid=b.getAttribute('data-id'); if(!d.usuarios||!(uid in d.usuarios)) return; var tem=d.usuarios[uid]||[];
+      b.parentNode.insertAdjacentHTML('afterend','<div class="us-lj" style="margin-top:8px;font-size:13.5px"><b style="display:block;margin-bottom:2px">Lojas que acessa</b>'+d.lojas.map(function(l){ var pr=l.id===atual;
+        return '<label style="display:flex;align-items:center;gap:8px;min-height:40px;font-weight:600"><input type="checkbox" style="width:22px;height:22px"'+(pr||tem.indexOf(l.id)>=0?' checked':'')+(pr?' disabled':'')+' data-uid="'+esc(uid)+'" data-loja="'+esc(l.id)+'" onchange="usuLojaMarca(this)"> '+esc(l.nome)+(pr?' <span style="color:var(--muted)">(esta loja)</span>':'')+'</label>'; }).join('')+'</div>');
+    });
+  }).catch(function(){});
+}
+function usuLojaMarca(cb){
+  var uid=cb.getAttribute('data-uid'), ls=[]; document.querySelectorAll('#us-lista input[data-uid]').forEach(function(x){ if(x.getAttribute('data-uid')===uid&&x.checked&&!x.disabled) ls.push(x.getAttribute('data-loja')); });
+  fetch(DELTADIS_API+'/painel/usuario-lojas',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({uid:uid,lojas:ls})}).then(function(r){ return r.json(); })
+    .then(function(d){ aviso(d&&d.ok?'Lojas do usuário salvas ✅':((d&&d.mensagem)||'Não foi possível salvar.')); }).catch(function(){ aviso('Sem conexão com o servidor.'); });
 }
 function usuCriar(){
   var m=el('us-msg'), b=el('us-btn'); m.textContent='';
@@ -11245,6 +11264,7 @@ function cdNovaCatRapida(){
 </script>
 <script src="live-ajuda.js?v=237"></script>
 <script src="bipador.js?v=1"></script>
+<script src="lojas.js"></script>
 <script>/* câmera no cadastro do cardápio (mesmo leitor da Mesa) */
 function cdBiparBarras(){ if(!window.Bipador) return; Bipador.abrir({titulo:"Código de barras do produto", aoLer:function(c){ var i=document.getElementById("cd-barras"); if(i){ i.value=c; i.dispatchEvent(new Event("input",{bubbles:true})); } return true; }}); }
 </script>

@@ -233,6 +233,7 @@ function editarDados(p){
   var m=UI.modal({titulo:'Dados do produto', corpo:'<div class="field"><label>Nome</label><input class="inp" id="dd-n" value="'+esc(p.nome)+'"></div>'+
     (p.tipo==='acabado'||p.tipo==='revenda'||p.tipo==='base'?'<div class="field"><label>Grupo</label><select class="inp" id="dd-g">'+grupos.map(function(g){ return '<option'+(p.grupo===g.nome?' selected':'')+'>'+esc(g.nome)+'</option>'; }).join('')+'</select></div><div class="field"><label>Código</label><input class="inp" id="dd-c" value="'+esc(p.cod||'')+'"></div>':'')+
     '<div class="field"><label>Código de barras</label><div style="display:flex;gap:8px"><input class="inp" id="dd-ean" inputmode="numeric" value="'+esc(p.ean||'')+'" placeholder="Bipe ou digite"><button type="button" class="btn sec" data-act="bipEan">📷</button></div></div>'+
+    LFI.campoCardapios(p)+
     (p.tipo==='acabado'?'<label style="display:flex;gap:10px;align-items:center;font-weight:700"><input type="checkbox" id="dd-a"'+(p.ativo!==false?' checked':'')+' style="width:20px;height:20px;accent-color:var(--roxo)"> Produto ativo (aparece para vender)</label>':''),
     botoes:'<button class="btn sec" data-act="_fechar">Cancelar</button><button class="btn pri" data-act="ok">Salvar</button>',
     acoes:{bipEan:function(){ window.Bipador&&Bipador.abrir({titulo:'Código de barras do produto', aoLer:function(c){ m.el.querySelector('#dd-ean').value=c; return true; }}); },
@@ -240,7 +241,7 @@ function editarDados(p){
       var ev=m.el.querySelector('#dd-ean').value.replace(/[^0-9A-Za-z-]/g,''); if(ev){ var dup=LFI.prodPorCodigo(ev); if(dup&&dup!==p){ UI.toast('Esse código já está em '+dup.nome,'','no'); return; } } p.ean=ev||null; p.nome=n;
       var g=m.el.querySelector('#dd-g'); if(g){ p.grupo=g.value; var gi=LFI.grupoInfo(p.grupo); p.emoji=gi.emoji; p.dep=gi.dep; }
       var c=m.el.querySelector('#dd-c'); if(c) p.cod=c.value.trim()||null;
-      var a=m.el.querySelector('#dd-a'); if(a) p.ativo=a.checked;
+      var a=m.el.querySelector('#dd-a'); if(a) p.ativo=a.checked; LFI.lerCardapios(m.el, p);
       var r=LFI.receitaDe(p); if(r){ r.nome=p.nome; if(p.grupo){ r.cat=p.grupo; r.dep=p.dep; r.foto=p.emoji; } r.ativo=p.ativo!==false; }
       LFI.salvar(); m.fechar(); UI.toast('Dados salvos', p.nome); LFI.recarregar(); }}});
 }
@@ -286,60 +287,110 @@ LFI.registrar('produtos',{titulo:'Produtos', render:render});
 (function(){
 'use strict';
 var UI=LFI.ui;
+/* ---------- LOJAS DO GRUPO (269) ----------
+   Uma empresa pode ter várias lojas no LiveFood (ex.: Padaria e Restaurante) e um LivePro só.
+   Cada loja vende do estoque de um departamento daqui, e cada produto escolhe em quais cardápios aparece.
+   Com uma loja só, tudo continua como antes. */
+function semAc(s){ return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase(); }
+LFI.lojasLP=function(){
+  var S=LFI.servidor, L=S&&S.lojas; if(!L) return [];
+  var deps=LFI.depIds().filter(function(d){ return d!=='cen'; }), cfg=LFI.db.lojasCfg||{};
+  return (L.lojas||[]).filter(function(l){ return (L.permitidas||[]).indexOf(l.id)>=0; }).map(function(l, n){
+    var dep=cfg[l.id]&&deps.indexOf(cfg[l.id])>=0?cfg[l.id]:null;
+    if(!dep) deps.forEach(function(d){ if(!dep&&semAc(l.nome).indexOf(semAc(LFI.dep(d).nome))>=0) dep=d; });
+    if(!dep) dep=deps[Math.min(n, deps.length-1)]||deps[0];
+    return {id:l.id, nome:l.nome, dep:dep, principal:!!l.principal}; });
+};
+LFI.depDaLoja=function(id){ var l=LFI.lojasLP().filter(function(x){ return x.id===id; })[0]; return l?l.dep:null; };
+function ehBebida(p){ return /bebida/i.test(p.grupo||'')||p.cat==='beb'; }
+/* em quais cardápios o produto aparece: o que foi escolhido; sem escolha, a loja do departamento dele (bebidas em todas) */
+LFI.cardapiosDe=function(p){
+  var ls=LFI.lojasLP(), ids=ls.map(function(l){ return l.id; });
+  if(Array.isArray(p.cardapios)) return p.cardapios.filter(function(x){ return ids.indexOf(x)>=0; });
+  if(ehBebida(p)) return ids;
+  var r=ls.filter(function(l){ return l.dep===p.dep; }).map(function(l){ return l.id; });
+  return r.length?r:ids.slice(0,1);
+};
+/* campo "Aparece no cardápio" da ficha do produto (só com mais de uma loja) */
+LFI.campoCardapios=function(p){
+  var ls=LFI.lojasLP(); if(ls.length<2||!(p.tipo==='acabado'||p.tipo==='revenda')) return '';
+  var tem=LFI.cardapiosDe(p);
+  return '<div class="field"><label>Aparece no cardápio</label>'+ls.map(function(l){ return '<label style="display:flex;gap:10px;align-items:center;font-weight:700;min-height:44px"><input type="checkbox" class="dd-cdp" value="'+UI.esc(l.id)+'"'+(tem.indexOf(l.id)>=0?' checked':'')+' style="width:22px;height:22px;accent-color:var(--roxo)"> 🏪 '+UI.esc(l.nome)+'</label>'; }).join('')+'</div>';
+};
+LFI.lerCardapios=function(raiz, p){ var cx=raiz.querySelectorAll('.dd-cdp'); if(!cx.length) return; p.cardapios=[].slice.call(cx).filter(function(c){ return c.checked; }).map(function(c){ return c.value; }); };
+
 /* ---------- ENVIAR AO CARDÁPIO DO LIVEFOOD ----------
    Os produtos de venda (feitos aqui e revenda, com preço) viram produtos do cardápio do Painel do LiveFood.
    Cada um fica ligado ao produto daqui (código lp_<id>): a venda no LiveFood dá baixa neste estoque.
-   Quem já está no cardápio só tem nome, preço, categoria e código de barras atualizados (foto e descrição ficam). */
+   Quem já está no cardápio só tem nome, preço, categoria e código de barras atualizados (foto e descrição ficam).
+   Com várias lojas: cada produto vai para os cardápios escolhidos; o que foi tirado de uma loja fica desativado lá. */
 LFI.enviarCardapio=function(){
   var S=LFI.servidor;
   if(!S||!S.ativo||!S.pronto){ UI.toast('Entre pelo Hub do LiveFood','O envio ao cardápio precisa do login do LiveFood.','wt'); return; }
-  var esc=UI.esc||function(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); };
-  var moeda=function(v){ return (Number(v)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); };
-  var slug=function(s){ return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,30)||'outros'; };
+  var esc=UI.esc, moeda=function(v){ return (Number(v)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); };
+  var slug=function(s){ return semAc(s).replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,30)||'outros'; };
   var vende=LFI.db.produtos.filter(function(p){ return (p.tipo==='acabado'||p.tipo==='revenda')&&Number(p.preco)>0&&p.ativo!==false; })
     .sort(function(a,b){ return String(a.grupo||'').localeCompare(String(b.grupo||''))||a.nome.localeCompare(b.nome); });
-  var m=UI.modal({titulo:'Enviar ao cardápio do LiveFood', sub:'Os produtos escolhidos aparecem no Cardápio do Painel, ligados ao estoque daqui', tam:'lg', corpo:'<p class="cf-obs">Consultando o cardápio…</p>', botoes:''});
-  var marc={}, cdp=null;
-  vende.forEach(function(p){ marc[p.id]=true; });
+  var m=UI.modal({titulo:'Enviar ao cardápio do LiveFood', sub:'Os produtos escolhidos aparecem no Cardápio do Painel, ligados ao estoque daqui', tam:'lg', corpo:'<p class="cf-obs">Consultando…</p>', botoes:''});
+  var lojas=[], multi=false, marc={}, cds={};   /* cds[loja] = cardápio atual da loja */
+  function sel(p, l){ return multi ? LFI.cardapiosDe(p).indexOf(l)>=0 : !!marc[p.id]; }
+  function contar(){ var n=0; vende.forEach(function(p){ lojas.forEach(function(l){ if(sel(p,l.id)) n++; }); }); return n; }
   function des(){
-    var ja={}; (cdp.prods||[]).forEach(function(x){ ja[x.id]=x; });
     var grupos={}; vende.forEach(function(p){ var g=p.grupo||'Outros'; (grupos[g]=grupos[g]||[]).push(p); });
-    var n=vende.filter(function(p){ return marc[p.id]; }).length;
-    m.corpoHTML('<p class="cf-obs" style="margin-top:0">Marcados: <b>'+n+'</b> de '+vende.length+'. Os que já estão no cardápio só têm nome, preço e categoria atualizados; a foto e a descrição de lá continuam.</p>'+
-      '<div style="display:flex;gap:8px;margin:6px 0 10px"><button class="btn sec sm" data-act="todos">Marcar todos</button><button class="btn sec sm" data-act="nenhum">Desmarcar todos</button></div>'+
+    var n=contar(), deps=LFI.depIds().filter(function(d){ return d!=='cen'; });
+    m.corpoHTML((multi?'<div class="sh-sec"><div class="sh-tit">Lojas</div>'+lojas.map(function(l){ return '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-height:48px"><b style="flex:1;min-width:140px">🏪 '+esc(l.nome)+'</b><span style="font-size:13px;color:var(--muted);font-weight:700">vende do estoque</span><select class="inp" style="width:auto;min-width:150px" data-chg="dep" data-id="'+esc(l.id)+'">'+deps.map(function(d){ return '<option value="'+esc(d)+'"'+(d===l.dep?' selected':'')+'>'+esc(LFI.dep(d).nome)+'</option>'; }).join('')+'</select></div>'; }).join('')+'</div>'+
+        '<p class="cf-obs" style="margin-top:0">Toque na loja para colocar ou tirar o produto do cardápio dela. A escolha fica guardada no produto.</p>'
+      : '<p class="cf-obs" style="margin-top:0">Marcados: <b>'+n+'</b> de '+vende.length+'. Os que já estão no cardápio só têm nome, preço e categoria atualizados; a foto e a descrição de lá continuam.</p>'+
+        '<div style="display:flex;gap:8px;margin:6px 0 10px"><button class="btn sec sm" data-act="todos">Marcar todos</button><button class="btn sec sm" data-act="nenhum">Desmarcar todos</button></div>')+
       Object.keys(grupos).map(function(g){ return '<div class="sh-sec"><div class="sh-tit">'+esc(g)+'</div>'+grupos[g].map(function(p){
-        return '<label class="chk" style="display:flex;align-items:center;gap:10px;min-height:44px"><input type="checkbox" data-chg="mk" data-id="'+esc(p.id)+'"'+(marc[p.id]?' checked':'')+'><span style="flex:1">'+esc(p.nome)+(ja['lp_'+p.id]?' <small style="color:#16A34A;font-weight:700">· já no cardápio</small>':'')+'</span><b>'+moeda(p.preco)+'</b></label>'; }).join('')+'</div>'; }).join('')||'<p>Nenhum produto com preço de venda.</p>');
-    m.rodapeHTML('<button class="btn sec" data-act="_fechar">Cancelar</button><button class="btn pri" data-act="env"'+(n?'':' disabled')+'>🍽️ Enviar '+n+(n===1?' produto':' produtos')+'</button>');
+        if(!multi){ var ja=(cds[lojas[0].id].prods||[]).some(function(x){ return x.id==='lp_'+p.id; });
+          return '<label class="chk" style="display:flex;align-items:center;gap:10px;min-height:44px"><input type="checkbox" data-chg="mk" data-id="'+esc(p.id)+'"'+(marc[p.id]?' checked':'')+'><span style="flex:1">'+esc(p.nome)+(ja?' <small style="color:#16A34A;font-weight:700">· já no cardápio</small>':'')+'</span><b>'+moeda(p.preco)+'</b></label>'; }
+        return '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-height:50px;border-bottom:1px solid var(--linha,#eee);padding:4px 0"><span style="flex:1;min-width:140px;font-weight:700">'+esc(p.nome)+' <b style="color:var(--muted);font-weight:700">'+moeda(p.preco)+'</b></span>'+
+          lojas.map(function(l){ var on=sel(p,l.id); return '<button type="button" data-act="tg" data-id="'+esc(p.id+'|'+l.id)+'" style="min-height:40px;border-radius:999px;padding:0 12px;font:inherit;font-weight:800;font-size:13px;cursor:pointer;border:2px solid '+(on?'#FF5A00':'#DDD')+';background:'+(on?'#FFF4EC':'#fff')+';color:'+(on?'#C2410C':'#999')+'">'+(on?'✓ ':'')+esc(l.curto||l.nome)+'</button>'; }).join('')+'</div>'; }).join('')+'</div>'; }).join('')||'<p>Nenhum produto com preço de venda.</p>');
+    m.rodapeHTML('<button class="btn sec" data-act="_fechar">Cancelar</button><button class="btn pri" data-act="env"'+(vende.length?'':' disabled')+'>🍽️ Enviar'+(multi?' às '+lojas.length+' lojas':' '+n+(n===1?' produto':' produtos'))+'</button>');
   }
-  S.req('GET','/painel/cardapio').then(function(j){
-    if(!j||!j.ok){ m.corpoHTML('<p class="cf-obs">Não consegui abrir o cardápio do LiveFood'+(j&&j.mensagem?': '+esc(j.mensagem):'')+'.</p>'); return; }
-    cdp=j; des();
-  }).catch(function(){ m.corpoHTML('<p class="cf-obs">Sem internet agora. Tente de novo em instantes.</p>'); });
+  function erroAbrir(msg){ m.corpoHTML('<p class="cf-obs">'+esc(msg)+'</p>'); }
+  S.carregarLojas().then(function(){
+    var ls=LFI.lojasLP(); multi=ls.length>1;
+    lojas=multi?ls:[{id:(S.lojas&&S.lojas.atual)||'_', nome:'Cardápio'}];
+    /* nome curto no botão: o que sobra depois do nome comum (Casa do Pão Restaurante → Restaurante); sem sobra, o departamento */
+    if(multi){ var pri=(lojas.filter(function(l){ return l.principal; })[0]||lojas[0]).nome;
+      lojas.forEach(function(l){ var r=l.nome.indexOf(pri)===0?l.nome.slice(pri.length).replace(/^[\s\-–·]+/,''):l.nome; l.curto=r||LFI.dep(l.dep).nome; }); }
+    if(!multi) vende.forEach(function(p){ marc[p.id]=true; });
+    return lojas.reduce(function(pr,l){ return pr.then(function(){ return (multi?S.tokenLoja(l.id):Promise.resolve(null)).then(function(tk){ l.tk=tk;
+      return (tk?S.reqTk(tk,'GET','/painel/cardapio'):S.req('GET','/painel/cardapio')).then(function(j){ if(!j||!j.ok) throw new Error((j&&j.mensagem)||'não consegui abrir o cardápio de '+l.nome); cds[l.id]=j; }); }); }); }, Promise.resolve());
+  }).then(des).catch(function(e){ erroAbrir('Não consegui abrir o cardápio do LiveFood: '+((e&&e.message)||'sem internet')+'.'); });
   UI.liga(m.el,{
     mk:function(id,ev){ marc[id]=ev.target.checked; des(); },
     todos:function(){ vende.forEach(function(p){ marc[p.id]=true; }); des(); },
     nenhum:function(){ marc={}; des(); },
+    tg:function(v){ var a=String(v).split('|'), p=LFI.prod(a[0]), l=a[1]; if(!p) return; var c=LFI.cardapiosDe(p).slice(), i=c.indexOf(l); if(i>=0) c.splice(i,1); else c.push(l); p.cardapios=c; LFI.salvar(); des(); },
+    dep:function(id,ev){ var c=LFI.db.lojasCfg=LFI.db.lojasCfg||{}; c[id]=ev.target.value; LFI.salvar(); lojas.forEach(function(l){ if(l.id===id) l.dep=ev.target.value; }); },
     env:function(){
-      var lista=vende.filter(function(p){ return marc[p.id]; }); if(!lista.length) return;
-      var ja={}, barrasDe={}, cats={}; (cdp.prods||[]).forEach(function(x){ ja[x.id]=x; if(x.barras) barrasDe[x.barras]=x.id; }); (cdp.cats||[]).forEach(function(c){ cats[c.id]=c; });
-      var feitos=0, erros=[], ordem=Date.now();
-      var pinta=function(){ m.corpoHTML('<div style="text-align:center;padding:24px 6px"><div style="font-size:40px">🍽️</div><p style="font-weight:800;font-size:18px">Enviando ao cardápio…</p><p class="cf-obs">'+feitos+' de '+lista.length+'</p><div style="height:10px;border-radius:9px;background:#EEE;overflow:hidden"><div style="height:100%;width:'+Math.round(feitos/lista.length*100)+'%;background:#FF5A00"></div></div></div>'); m.rodapeHTML(''); };
+      var trabalho=[], erros=[], feitos=0, tirados=0, ordem=Date.now();
+      lojas.forEach(function(l){
+        var cd=cds[l.id]||{}, ja={}, barrasDe={}, cats={}; (cd.prods||[]).forEach(function(x){ ja[x.id]=x; if(x.barras) barrasDe[x.barras]=x.id; }); (cd.cats||[]).forEach(function(c){ cats[c.id]=c; });
+        var call=function(corpo){ return l.tk?S.reqTk(l.tk,'POST','/painel/cardapio-salvar',corpo):S.req('POST','/painel/cardapio-salvar',corpo); };
+        var lista=vende.filter(function(p){ return sel(p,l.id); }), novas=[];
+        lista.forEach(function(p){ var g=p.grupo||'Outros', id='lpk_'+slug(g); if(!cats[id]&&novas.every(function(c){ return c.id!==id; })) novas.push({id:id, nome:g, dest:/bebida/i.test(g)?'bar':'cozinha', ordem:ordem+novas.length}); });
+        novas.forEach(function(c){ trabalho.push(function(){ return call({tipo:'cat', item:c}).then(function(r){ if(!r||!r.ok) erros.push(l.nome+' · categoria '+c.nome); }); }); });
+        lista.forEach(function(p,i){ trabalho.push(function(){
+          var id='lp_'+p.id, velho=ja[id]||{}, it=JSON.parse(JSON.stringify(velho));
+          delete it.ordem; it.id=id; it.nome=String(p.nome).slice(0,80); it.preco=Math.round(Number(p.preco)*100)/100; it.cat='lpk_'+slug(p.grupo||'Outros');
+          var ean=String(p.ean||'').replace(/[^0-9A-Za-z-]/g,''); if(ean&&(!barrasDe[ean]||barrasDe[ean]===id)) it.barras=ean;
+          if(!ja[id]){ it.ativo=true; it.ordem=ordem+100+i; } else { it.ordem=velho.ordem; if(multi) it.ativo=true; }
+          return call({tipo:'prod', item:it}).then(function(r){ if(r&&r.ok) feitos++; else erros.push((multi?l.nome+' · ':'')+p.nome+(r&&r.mensagem?': '+r.mensagem:'')); }).catch(function(){ erros.push(p.nome+': sem internet'); });
+        }); });
+        /* com várias lojas: o que saiu do cardápio desta loja fica desativado lá (não apaga foto nem descrição) */
+        if(multi) vende.forEach(function(p){ var x=ja['lp_'+p.id]; if(x&&x.ativo!==false&&!sel(p,l.id)) trabalho.push(function(){ var it=JSON.parse(JSON.stringify(x)); it.ativo=false; return call({tipo:'prod', item:it}).then(function(r){ if(r&&r.ok) tirados++; }); }); });
+      });
+      var total=trabalho.length||1, n=0;
+      var pinta=function(){ m.corpoHTML('<div style="text-align:center;padding:24px 6px"><div style="font-size:40px">🍽️</div><p style="font-weight:800;font-size:18px">Enviando ao cardápio…</p><p class="cf-obs">'+n+' de '+total+'</p><div style="height:10px;border-radius:9px;background:#EEE;overflow:hidden"><div style="height:100%;width:'+Math.round(n/total*100)+'%;background:#FF5A00"></div></div></div>'); m.rodapeHTML(''); };
       pinta();
-      /* 1) categorias que faltam, com o nome do grupo daqui */
-      var novasCats=[]; lista.forEach(function(p){ var g=p.grupo||'Outros', id='lpk_'+slug(g); if(!cats[id]&&novasCats.every(function(c){ return c.id!==id; })) novasCats.push({id:id, nome:g, dest:/bebida/i.test(g)?'bar':'cozinha', ordem:ordem+novasCats.length}); });
-      var fila=novasCats.map(function(c){ return function(){ return S.req('POST','/painel/cardapio-salvar',{tipo:'cat', item:c}).then(function(r){ if(!r||!r.ok) erros.push('Categoria '+c.nome); }); }; });
-      /* 2) produtos (um por vez, para não sobrecarregar) */
-      lista.forEach(function(p,i){ fila.push(function(){
-        var id='lp_'+p.id, velho=ja[id]||{}, it=JSON.parse(JSON.stringify(velho));
-        delete it.ordem; it.id=id; it.nome=String(p.nome).slice(0,80); it.preco=Math.round(Number(p.preco)*100)/100; it.cat='lpk_'+slug(p.grupo||'Outros');
-        var ean=String(p.ean||'').replace(/[^0-9A-Za-z-]/g,''); if(ean&&(!barrasDe[ean]||barrasDe[ean]===id)) it.barras=ean;
-        if(!ja[id]){ it.ativo=true; it.ordem=ordem+100+i; } else it.ordem=velho.ordem;
-        return S.req('POST','/painel/cardapio-salvar',{tipo:'prod', item:it}).then(function(r){ if(r&&r.ok){ feitos++; p.cardapio=id; } else erros.push(p.nome+(r&&r.mensagem?': '+r.mensagem:'')); pinta(); })
-          .catch(function(){ erros.push(p.nome+': sem internet'); });
-      }); });
-      fila.reduce(function(pr,f){ return pr.then(f); }, Promise.resolve()).then(function(){
-        LFI.atividade&&LFI.atividade('produtos', feitos+' produto(s) enviados ao cardápio do LiveFood',{tela:'produtos'}); LFI.salvar();
-        m.corpoHTML('<div style="text-align:center;padding:20px 6px"><div style="font-size:44px">'+(erros.length?'⚠️':'✅')+'</div><p style="font-weight:800;font-size:18px">'+feitos+(feitos===1?' produto está':' produtos estão')+' no cardápio do LiveFood</p>'+
+      trabalho.reduce(function(pr,f){ return pr.then(f).then(function(){ n++; pinta(); }); }, Promise.resolve()).then(function(){
+        if(LFI.atividade) LFI.atividade('produtos', feitos+' produto(s) enviados ao cardápio do LiveFood',{tela:'produtos'}); LFI.salvar();
+        m.corpoHTML('<div style="text-align:center;padding:20px 6px"><div style="font-size:44px">'+(erros.length?'⚠️':'✅')+'</div><p style="font-weight:800;font-size:18px">'+(multi?'Cardápios atualizados: '+lojas.map(function(l){ return esc(l.nome); }).join(' e '):feitos+(feitos===1?' produto está':' produtos estão')+' no cardápio do LiveFood')+'</p>'+
+          (multi?'<p class="cf-obs">'+feitos+' produto(s) enviados'+(tirados?' · '+tirados+' tirado(s) do cardápio':'')+'.</p>':'')+
           '<p class="cf-obs">Abra o Painel do LiveFood, em Cardápio, para colocar fotos e descrições. As vendas desses produtos no Atendimento dão baixa no estoque daqui.</p>'+
           (erros.length?'<p class="cf-obs" style="color:#B91C1C;text-align:left"><b>Não foram:</b><br>'+erros.slice(0,12).map(esc).join('<br>')+'</p>':'')+'</div>');
         m.rodapeHTML('<button class="btn pri" data-act="_fechar">Pronto</button>');
