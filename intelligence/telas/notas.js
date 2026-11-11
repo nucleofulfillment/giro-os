@@ -10,7 +10,7 @@ var r2=LFI.dataUtil.r2, r3=LFI.dataUtil.r3;
 function st(){ return LFI.estado.notas = LFI.estado.notas || {q:'', forn:'', status:'', per:'90d', dep:''}; }
 
 /* ---------- estilos próprios da tela (injetados uma vez) ---------- */
-function css2(){ if(document.getElementById('css-notas2')) return; var c=document.createElement('style'); c.id='css-notas2'; c.textContent='.nf-drop1{display:flex!important;align-items:center;justify-content:center;gap:16px;text-align:left;padding:26px 20px}.nf-drop1 .ic{margin:0}.nf-perg{margin:0 0 14px;font-weight:700;color:var(--muted2)}.nf-emps{display:grid;gap:10px}.nf-emp{display:flex;gap:12px;align-items:center;text-align:left;border:1.5px solid var(--border2);background:var(--s1);border-radius:14px;padding:14px;cursor:pointer;font:inherit;color:inherit}.nf-emp:hover{border-color:var(--muted)}.nf-emp.on{border-color:var(--roxo);background:var(--lf-soft)}.nf-emp b{display:block;font-size:14.5px}.nf-emp small{display:block;color:var(--muted);font-weight:600;font-size:12px}.nf-emp em{display:inline-block;margin-top:4px;font-style:normal;font-size:11px;font-weight:800;color:var(--roxo-esc)}.nf-emp .emp-ic{width:36px;height:36px;font-size:12px;border-radius:9px}'; document.head.appendChild(c); }
+function css2(){ if(document.getElementById('css-notas2')) return; var c=document.createElement('style'); c.id='css-notas2'; c.textContent='body.foco .side.fixo{display:none}body.foco .main{padding-top:0}.cf-top{position:sticky;top:var(--navh);z-index:20;display:flex;align-items:center;gap:16px;flex-wrap:wrap;background:rgba(244,244,245,.94);backdrop-filter:blur(8px);margin:0 -26px 14px;padding:12px 26px;border-bottom:1px solid var(--border)}.cf-x{width:38px;height:38px;border-radius:50%;border:1px solid var(--border2);background:#fff;cursor:pointer;font-size:15px;color:var(--muted2);flex:none}.cf-tit{min-width:0;flex:1 1 260px}.cf-tit b{display:block;font-size:17px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cf-tit small{font-size:12.5px;color:var(--muted);font-weight:600}.cf-prog{flex:1 1 240px;max-width:360px}.cf-prog .bar{height:9px}.cf-prog small{display:block;margin-top:5px;font-size:12px;font-weight:700;color:var(--muted2)}.cf-acs{display:flex;gap:8px;flex-wrap:wrap}.cf-info{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:14px 18px;margin-bottom:14px}.cf-info span{display:block;font-size:10.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}.cf-info b{font-size:14px;font-weight:800}.cf-itens{display:flex;flex-direction:column;gap:12px;margin-bottom:16px}.cf-it{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;box-shadow:var(--sh1)}.cf-it.ok{border-color:#BBE5C8;background:#FAFEFB}.cf-it.rev{border-color:#F3DD9B;background:#FFFDF5}.cf-l1{display:grid;grid-template-columns:32px minmax(0,1.5fr) minmax(0,1.3fr) minmax(0,.9fr) minmax(0,.9fr);gap:18px;align-items:start}.cf-n{width:28px;height:28px;border-radius:8px;background:var(--s3);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--muted2)}.cf-it.ok .cf-n{background:var(--green);color:#fff}.cf-it.rev .cf-n{background:#E9A80B;color:#fff}.cf-it .lb{display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px}.cf-it small{display:block;font-size:12px;color:var(--muted);font-weight:600;margin-top:4px;line-height:1.4}.cf-a .ds{display:block;font-size:14px;font-weight:800}.cf-a .qv{font-size:13px;font-weight:600;margin:4px 0 6px}.cf-c .fx{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700}.cf-c .fx input{width:74px}.cf-d .cu{font-size:17px;font-weight:800;display:flex;align-items:center;gap:6px;flex-wrap:wrap}.cf-d .cu small{display:inline;margin:0;font-size:12px}.cf-l2{display:grid;grid-template-columns:150px minmax(0,1.1fr) minmax(0,1.2fr) auto;gap:18px;align-items:start;margin:14px 0 0 50px;padding-top:14px;border-top:1px dashed var(--border2)}.cf-rp{display:grid;grid-template-columns:1fr 1fr;gap:6px}.cf-bt{display:flex;gap:8px;align-items:center;align-self:center;flex-wrap:wrap;justify-content:flex-end}.cf-bt .btn{min-height:42px}.btn.wtb{background:#FEF3C7;color:#7A5A00;border:1px solid #F3DD9B}.cf-th{width:42px;height:42px;border-radius:10px;border:1px solid var(--border2);background-size:cover;background-position:center;cursor:pointer;flex:none}.cf-ok{color:var(--green)!important;font-weight:700!important}.cf-wt{color:#946C00!important;font-weight:700!important}.cf-in{color:var(--blue)!important;font-weight:700!important}.cf-revtx{display:flex;gap:10px;margin:12px 0 0 50px;padding:10px 12px;border-radius:10px;background:#FEF3C7;color:#5C4300;font-size:13px}.cf-revtx svg{width:16px;height:16px;flex:none;stroke:currentColor;fill:none;stroke-width:2;margin-top:2px}.cf-revtx small{color:#7A5A00!important}.cf-falta{margin:10px 0 0 50px;font-size:12px;color:var(--muted2);font-weight:600}.cf-impg{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}.cf-impg div{background:var(--s2);border-radius:10px;padding:10px 12px}.cf-impg span{display:block;font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase}.cf-impg b{font-size:15px;font-weight:800}.cf-impg .tt{background:var(--text);color:#fff}.cf-impg .tt span{color:#B9B9C0}.cf-obs{font-size:12px;color:var(--muted);font-weight:600;margin:10px 0 0}.cf-rod{display:flex;justify-content:flex-end;margin:12px 0 40px}.cf-ftres{display:grid;grid-template-columns:200px 1fr;gap:16px;align-items:start}.cf-ftres img{width:100%;border-radius:12px;display:block}@media (max-width:1180px){.cf-l1{grid-template-columns:32px minmax(0,1fr) minmax(0,1fr)}.cf-c{grid-column:2}.cf-l2{grid-template-columns:150px minmax(0,1fr) minmax(0,1fr)}.cf-bt{grid-column:1/-1;justify-content:flex-start}}@media (max-width:959px){.cf-top{margin:0 -16px 12px;padding:10px 16px}}@media (max-width:700px){ .cf-top{position:static;backdrop-filter:none;-webkit-backdrop-filter:none}.cf-prog{flex:1 1 100%;max-width:none}.cf-acs{position:fixed;left:0;right:0;bottom:0;z-index:60;background:#fff;border-top:1px solid var(--border);padding:10px 12px calc(10px + env(safe-area-inset-bottom));box-shadow:0 -8px 24px rgba(0,0,0,.08)}.cf-acs .btn{flex:1} .cf-info{grid-template-columns:1fr 1fr}.cf-l1{grid-template-columns:28px minmax(0,1fr)}.cf-b,.cf-c,.cf-d{grid-column:2} .cf-l2{grid-template-columns:1fr;margin-left:0}.cf-bt{display:grid;grid-template-columns:1fr 1fr 1fr}.cf-bt .cf-th{display:none}.cf-bt .btn{min-height:50px;font-size:14px} .cf-revtx,.cf-falta{margin-left:0}.cf-impg{grid-template-columns:1fr 1fr}.cf-rod{margin-bottom:110px}.cf-ftres{grid-template-columns:1fr}}'+'.nf-drop1{display:flex!important;align-items:center;justify-content:center;gap:16px;text-align:left;padding:26px 20px}.nf-drop1 .ic{margin:0}.nf-perg{margin:0 0 14px;font-weight:700;color:var(--muted2)}.nf-emps{display:grid;gap:10px}.nf-emp{display:flex;gap:12px;align-items:center;text-align:left;border:1.5px solid var(--border2);background:var(--s1);border-radius:14px;padding:14px;cursor:pointer;font:inherit;color:inherit}.nf-emp:hover{border-color:var(--muted)}.nf-emp.on{border-color:var(--roxo);background:var(--lf-soft)}.nf-emp b{display:block;font-size:14.5px}.nf-emp small{display:block;color:var(--muted);font-weight:600;font-size:12px}.nf-emp em{display:inline-block;margin-top:4px;font-style:normal;font-size:11px;font-weight:800;color:var(--roxo-esc)}.nf-emp .emp-ic{width:36px;height:36px;font-size:12px;border-radius:9px}'; document.head.appendChild(c); }
 function css(){ css2();
   if(document.getElementById('css-notas')) return;
   var s=document.createElement('style'); s.id='css-notas';
@@ -50,9 +50,9 @@ function css(){ css2();
     '.nfi small{display:block;font-size:11.5px;color:var(--muted);font-weight:600;margin-top:3px;line-height:1.4}',
     '.nfi small b{color:var(--text)}',
     '.nfi .qv{font-size:12.5px;font-weight:700;margin-top:6px;font-variant-numeric:tabular-nums}',
-    '.nfi .tx{display:flex;gap:4px;flex-wrap:wrap;margin-top:7px}',
-    '.nfi .tx span{font-size:10.5px;font-weight:800;border-radius:6px;padding:2px 6px;background:var(--s3);color:var(--muted2);font-variant-numeric:tabular-nums}',
-    '.nfi .tx span.on{background:#EEF3FF;color:var(--blue)}',
+    '.nfi .tx,.cf-a .tx{display:flex;gap:4px;flex-wrap:wrap;margin-top:7px}',
+    '.nfi .tx span,.cf-a .tx span{font-size:10.5px;font-weight:800;border-radius:6px;padding:2px 6px;background:var(--s3);color:var(--muted2);font-variant-numeric:tabular-nums}',
+    '.nfi .tx span.on,.cf-a .tx span.on{background:#EEF3FF;color:var(--blue)}',
     '.nfi .sta{color:var(--muted);padding-top:22px;font-size:14px;font-weight:800}',
     '.nfi .fx{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;white-space:nowrap}',
     '.nfi .fx input{width:78px}',
@@ -132,7 +132,7 @@ function preparar(n){
   });
   if(mudou) LFI.salvar();
 }
-function itemOk(it){ return it.ignorar || (it.prod && it.conf); }
+function itemOk(it){ return it.ignorar || it.revisao || (it.prod && it.conf); }
 
 /* ---------- roteador ---------- */
 function render(el, arg){
@@ -321,46 +321,35 @@ function itemNovo(desc, f, ncm, un, qtd, vUn, p, inter){
 /* =====================================================================
    CONFERÊNCIA
    ===================================================================== */
+/* =====================================================================
+   CONFERÊNCIA (nota ocupando a tela, item a item: foto, revisão, confirmar)
+   ===================================================================== */
+function itemFeito(it){ return it.ignorar || it.revisao || (it.prod && it.conf); }
+/* o que falta para liberar o CONFIRMAR */
+function faltas(it){ var f=[]; if(it.ignorar) return f; if(!it.prod) f.push('produto'); if(!it.foto) f.push('foto'); if(!it.validade) f.push('validade'); if(!it.rua||!it.pos) f.push('rua e posição'); return f; }
+
 function conferencia(el, id){
   var n=LFI.nota(id); preparar(n); n=LFI.nota(id);
-  var f=LFI.forn(n.forn), e=LFI.emp(n.empresa), oc=n.oc&&LFI.ordem(n.oc), t=impNota(n);
-  var ok=n.itens.filter(itemOk).length, tot=n.itens.length, altas=n.itens.filter(function(i){ return i.prod&&!i.conf&&!i.ignorar&&i.score>=85; }).length;
-  var etapa = ok===tot ? 4 : n.itens.some(function(i){ return i.conf; }) ? 2 : 1;
-  var cred=0; n.itens.forEach(function(it){ if(!it.ignorar) cred+=credItem(it,n).v; });
+  document.body.classList.add('foco');
+  var f=LFI.forn(n.forn), e=LFI.emp(n.empresa), t=impNota(n);
+  var tot=n.itens.length, conf=n.itens.filter(function(i){ return i.conf||i.ignorar; }).length, rev=n.itens.filter(function(i){ return i.revisao; }).length, feitos=conf+rev, pronto=feitos===tot;
 
-  var h=UI.cabecalho({titulo:'Conferência da NF '+esc(n.numero), migalha:[{t:'Notas Fiscais', ir:'notas'},{t:'NF '+n.numero}],
-    sub:esc(f.nome)+' · '+F.moeda(n.valor)+' · '+UI.status('nf', n.status),
-    acoes:'<button class="btn gh sm" data-act="cancelar">'+UI.ic('x')+'Recusar nota</button><button class="btn sec sm" data-act="xml">'+UI.ic('baixar')+'XML</button><button class="btn pri sm" data-act="prev">'+UI.ic('check')+'Pré-visualizar lançamento</button>'});
-  h+=UI.passos(['Leitura do arquivo','Correspondência de produtos','Conversão e custos','Impostos e OC','Aprovação e lançamento'], etapa);
-  if(!notaVisivel(n)) h+=UI.nota('Esta nota é destinada a <b>'+esc(e.fantasia)+'</b>, fora da empresa selecionada no topo. Você pode conferi-la normalmente.','wt');
+  var h='<div class="cf-top"><button class="cf-x" data-act="_ir" data-id="notas" title="Fechar" aria-label="Fechar">✕</button>'+
+    '<div class="cf-tit"><b>NF '+esc(n.numero)+' · '+esc(f.nome)+'</b><small>'+F.data(n.emissao)+' · '+F.moeda(n.valor)+' · '+esc(e.fantasia)+'</small></div>'+
+    '<div class="cf-prog">'+UI.bar(feitos/tot, pronto?'ok':'')+'<small><b>'+conf+' de '+tot+'</b> conferidos'+(rev?' · <span style="color:#946C00">'+rev+' em revisão</span>':'')+'</small></div>'+
+    '<div class="cf-acs"><button class="btn sec sm" data-act="det">Ver detalhes da nota</button><button class="btn '+(pronto?'ok':'sec')+'" data-act="prev"'+(pronto?'':' disabled')+'>'+UI.ic('check')+'Aprovar nota'+(rev&&pronto?' ('+rev+' em revisão)':'')+'</button></div></div>';
 
-  /* cabeçalho da nota */
-  var depOpts=LFI.depsVisiveis().slice(); if(!depOpts.some(function(d){ return d.id===n.dep; })) depOpts.push(LFI.dep(n.dep));
-  h+='<div class="card mb"><h3><span class="lft">'+UI.ic('nota')+' Dados da nota</span><small>'+(n.origem==='pdf'?'Lida do DANFE (PDF)':'Lida do XML')+' · '+esc(n.arquivo||'')+'</small></h3>'+
-    '<div class="kv c4">'+
-      '<div><span>Fornecedor (emitente)</span><b><a class="vertodos" style="color:var(--text)" data-act="_ir" data-id="fornecedores/'+f.id+'">'+esc(f.nome)+'</a></b><small class="mono">CNPJ '+f.cnpj+'</small><small>'+esc(f.cidade)+'/'+f.uf+' · '+esc(f.cond)+'</small></div>'+
-      '<div><span>Número / série</span><b>'+esc(n.numero)+' / '+esc(n.serie)+'</b><small>Modelo 55 · NF-e</small></div>'+
-      '<div><span>Emissão</span><b>'+F.data(n.emissao)+'</b><small>'+F.relativo(n.emissao)+'</small></div>'+
-      '<div><span>Natureza da operação</span><b style="white-space:normal;font-size:13px">'+esc(n.natOp)+'</b></div>'+
-      '<div style="grid-column:span 2"><span>Chave de acesso (44 dígitos)</span><b class="nf-chave" style="white-space:normal">'+fmtChave(n.chave)+'</b><small>'+UI.badge('Assinatura digital válida','ok')+' '+UI.badge('Autorizada na SEFAZ (simulado)','in')+'</small></div>'+
-      '<div><span>Destino (empresa / departamento)</span><select class="inp sm" data-chg="dep">'+depOpts.map(function(d){ return '<option value="'+d.id+'"'+(d.id===n.dep?' selected':'')+'>'+esc(d.nome)+' — '+esc(LFI.emp(d.empresa).fantasia)+'</option>'; }).join('')+'</select><small class="mono">CNPJ '+e.cnpj+' · '+esc(e.regime)+'</small></div>'+
-      '<div><span>Valor total da nota</span><b style="font-size:19px">'+F.moeda(n.valor)+'</b><small>Produtos '+F.moeda(t.prod)+(n.frete?' · frete '+F.moeda(n.frete):'')+(t.st?' · ST '+F.moeda(t.st):'')+(t.ipi?' · IPI '+F.moeda(t.ipi):'')+'</small></div>'+
-      '<div><span>Ordem de compra</span>'+(oc?'<b><a class="vertodos" data-act="_ir" data-id="ordens/'+oc.id+'">'+esc(oc.num)+'</a></b><small>'+UI.status('oc',oc.status)+'</small>':'<b>Sem OC vinculada</b><small><a class="vertodos" data-act="vincOc">Vincular a uma OC</a></small>')+'</div>'+
-    '</div></div>';
+  var depOpts=LFI.db.departamentos.filter(function(d){ return d.empresa===n.empresa; });
+  h+='<div class="cf-info"><div><span>Fornecedor</span><b>'+esc(f.nome)+'</b></div><div><span>Data</span><b>'+F.data(n.emissao)+'</b></div><div><span>Empresa</span><b>'+esc(e.fantasia)+'</b></div>'+
+    '<div><span>Destino no estoque</span><select class="inp sm" data-chg="dep">'+depOpts.map(function(d){ return '<option value="'+d.id+'"'+(d.id===n.dep?' selected':'')+'>'+esc(d.nome)+'</option>'; }).join('')+'</select></div>'+
+    '<div><span>Valor da nota</span><b>'+F.moeda(n.valor)+'</b></div></div>';
 
-  /* progresso + itens */
-  h+='<div class="card pad0 mb"><h3 style="padding-bottom:12px"><span class="lft">'+UI.ic('ia')+' Itens e correspondência inteligente <span class="n">'+tot+'</span></span>'+
-      '<span class="acoes" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sec sm" data-act="altas"'+(altas?'':' disabled')+'>'+UI.ic('check')+'Confirmar todas com alta confiança'+(altas?' ('+altas+')':'')+'</button></span></h3>'+
-    '<div style="padding:0 20px 14px"><div class="nf-prog">'+UI.bar(ok/tot, ok===tot?'ok':'')+'<small style="font-size:12px;font-weight:800;color:'+(ok===tot?'var(--green)':'var(--muted2)')+'">'+ok+' de '+tot+' itens conferidos</small></div></div>'+
-    '<div style="border-top:1px solid var(--border)">'+n.itens.map(function(it,i){ return linhaItem(n,it,i); }).join('')+'</div></div>';
+  h+='<div class="cf-itens">'+n.itens.map(function(it,i){ return itemConf(n,it,i); }).join('')+'</div>';
 
-  /* impostos + OC */
-  h+='<div class="mb"><div class="card"><h3><span class="lft">'+UI.ic('tributo')+' Impostos da nota</span><small>destacado ≠ crédito</small></h3>'+painelTributos(n)+'</div>'+
-     (oc?'<div class="card"><h3><span class="lft">'+UI.ic('ordem')+' Comparação com a '+esc(oc.num)+'</span><small>pedido × faturado</small></h3>'+comparaOC(n, oc)+'</div>':'')+'</div>';
-
-  /* rodapé de ações */
-  h+='<div class="card" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:space-between"><div style="min-width:0"><b style="font-size:14px;font-weight:800">'+(ok===tot?'Conferência concluída':'Faltam '+(tot-ok)+' '+(tot-ok===1?'item':'itens')+' para conferir')+'</b><div style="font-size:12px;color:var(--muted);font-weight:600;margin-top:2px">Ao aprovar: entrada no '+esc(LFI.dep(n.dep).nome)+', novo custo médio, receitas recalculadas e conta a pagar para '+esc(f.cond)+'.</div></div>'+
-     '<div style="display:flex;gap:8px"><button class="btn sec" data-act="_ir" data-id="notas">Salvar e sair</button><button class="btn pri" data-act="prev">'+UI.ic('check')+'Pré-visualizar e aprovar</button></div></div>';
+  h+='<div class="card cf-imp"><h3><span class="lft">'+UI.ic('tributo')+' Impostos da nota</span><button class="btn sec sm" data-act="cred">Ver crédito tributário</button></h3>'+
+    '<div class="cf-impg">'+[['ICMS',t.icms],['IPI',t.ipi],['PIS',t.pis],['COFINS',t.cofins],['ICMS-ST',t.st]].map(function(x){ return '<div><span>'+x[0]+'</span><b>'+F.moeda(x[1])+'</b></div>'; }).join('')+'<div class="tt"><span>Total destacado</span><b>'+F.moeda(t.total)+'</b></div></div>'+
+    '<p class="cf-obs">Valores informados pelo fornecedor na nota.</p></div>';
+  h+='<div class="cf-rod"><button class="btn gh sm" data-act="cancelar">'+UI.ic('x')+'Recusar nota</button></div>';
   el.innerHTML=h;
 
   function N(){ return LFI.nota(id); }
@@ -369,91 +358,163 @@ function conferencia(el, id){
   UI.liga(el, UI.navHandlers({
     prod:function(iid,ev){ var it=IT(iid), v=ev.target.value;
       if(v==='__novo'){ ev.target.value=it.prod||''; return novoProduto(N(), it); }
-      if(v==='__ign'){ it.prod=null; it.ignorar=true; it.conf=true; it.manual=true; return toca(); }
-      it.ignorar=false;
-      if(!v){ it.prod=null; it.conf=false; return toca(); }
+      if(v==='__ign'){ it.prod=null; it.ignorar=true; it.conf=true; it.revisao=null; return toca(); }
+      it.ignorar=false; it.conf=false;
+      if(!v){ it.prod=null; return toca(); }
       var p=LFI.prod(v), sg=(it.sugs||[]).filter(function(s){ return s.prod===v; })[0];
-      it.prod=v; it.score=sg?sg.score:Math.round(LFI.similaridade(it.desc,p.nome)*100); it.manual=true; it.conf=true; it.fator=fatorSugerido(it,p);
-      UI.toast('Correspondência corrigida', it.desc+' → '+p.nome); toca(); },
-    fator:function(iid,ev){ var it=IT(iid), v=UI.num(ev.target.value); if(!(v>0)){ UI.toast('Informe um fator maior que zero','','wt'); LFI.recarregar(); return; } it.fator=r3(v); toca(); },
-    conf:function(iid,ev){ var it=IT(iid); if(!it.prod&&!it.ignorar){ ev.target.checked=false; UI.toast('Vincule o item a um produto antes de confirmar','Ou cadastre um novo produto','wt'); return; } it.conf=ev.target.checked; if(!it.conf) it.ignorar=false; toca(); },
-    novo:function(iid){ novoProduto(N(), IT(iid)); },
-    usarSug:function(iid,ev,t){ var it=IT(iid), p=LFI.prod(t.getAttribute('data-p')); it.prod=p.id; it.score=+t.getAttribute('data-s'); it.fator=fatorSugerido(it,p); it.conf=true; it.manual=true; it.ignorar=false; toca(); },
-    altas:function(){ var c=0; N().itens.forEach(function(it){ if(it.prod&&!it.conf&&!it.ignorar&&it.score>=85){ it.conf=true; c++; } }); UI.toast(c+' itens confirmados','Correspondência com confiança ≥ 85%'); toca(); },
-    dep:function(_,ev){ var x=N(), d=LFI.dep(ev.target.value); x.dep=d.id; x.empresa=d.empresa; UI.toast('Destino alterado', d.nome+' · '+LFI.emp(d.empresa).fantasia+' (CNPJ '+LFI.emp(d.empresa).cnpj+')','in'); toca(); },
-    vincOc:function(){ vincularOC(N()); },
-    xml:function(){ baixarXML(N()); },
+      it.prod=v; it.score=sg?sg.score:Math.round(LFI.similaridade(it.desc,p.nome)*100); it.manual=true; it.fator=fatorSugerido(it,p); it.eanAtualizar=false; toca(); },
+    fator:function(iid,ev){ var it=IT(iid), v=UI.num(ev.target.value); if(!(v>0)){ UI.toast('Informe um número maior que zero','','wt'); LFI.recarregar(); return; } it.fator=r3(v); toca(); },
+    val:function(iid,ev){ IT(iid).validade=ev.target.value||null; toca(); },
+    ean:function(iid,ev){ var it=IT(iid); it.ean=ev.target.value.replace(/\D/g,'')||null; it.eanAtualizar=false; toca(); },
+    eanAtu:function(iid){ var it=IT(iid); it.eanAtualizar=true; UI.toast('Código será atualizado no cadastro','Ao aprovar a nota','in'); toca(); },
+    rua:function(iid,ev){ local(IT(iid),'rua',ev.target.value); },
+    pos:function(iid,ev){ local(IT(iid),'pos',ev.target.value); },
+    manter:function(iid){ var it=IT(iid), p=LFI.prod(it.prod); it.rua=p.end.rua; it.pos=p.end.pos; it.realocar=false; toca(); },
+    realocar:function(iid){ var it=IT(iid); it.realocar=true; it.rua=''; it.pos=''; toca(); setTimeout(function(){ var i=document.querySelector('[data-chg=rua][data-id="'+iid+'"]'); if(i) i.focus(); },60); },
+    foto:function(iid){ fotoItem(N(), IT(iid), toca); },
+    verFoto:function(iid){ var it=IT(iid); UI.modal({titulo:'Foto do recebimento', sub:esc(it.desc), corpo:'<img src="'+it.foto.img+'" style="width:100%;border-radius:12px;display:block" alt="Foto do item"><p class="cf-obs">Registrada em '+F.dataHora(it.foto.em)+' por '+esc(it.foto.por)+'.</p>'}); },
+    rev:function(iid){ revisaoItem(IT(iid), toca); },
+    conf:function(iid){ var it=IT(iid), fl=faltas(it); if(fl.length){ UI.toast('Falta preencher: '+fl.join(', '),'','wt'); return; } it.conf=!it.conf; if(it.conf) it.revisao=null; toca(); },
+    det:function(){ detalhesNota(N()); },
+    cred:function(){ creditoNota(N()); },
+    dep:function(_,ev){ N().dep=ev.target.value; toca(); },
     prev:function(){ previa(N().id); },
-    cancelar:function(){ UI.confirmar('Recusar nota fiscal','A NF '+esc(n.numero)+' será marcada como <b>cancelada/recusada</b> e não movimentará o estoque. Use quando a mercadoria for devolvida ou a nota estiver incorreta.','Recusar nota',function(){ var x=N(); x.status='cancelada'; LFI.atividade('nf','NF '+x.numero+' recusada na conferência',{tela:'notas',id:x.id}); LFI.salvar(); UI.toast('Nota recusada','NF '+x.numero,'wt'); LFI.ir('notas'); },'no'); }
+    cancelar:function(){ UI.confirmar('Recusar nota fiscal','A NF '+esc(n.numero)+' será marcada como <b>recusada</b> e não movimentará o estoque.','Recusar nota',function(){ var x=N(); x.status='cancelada'; LFI.atividade('nf','NF '+x.numero+' recusada na conferência',{tela:'notas',id:x.id}); LFI.salvar(); UI.toast('Nota recusada','NF '+x.numero,'wt'); LFI.ir('notas'); },'no'); }
   }));
+  /* se o produto já tem lugar no estoque e o operador digita outro, pergunta: manter ou realocar */
+  function local(it, campo, v){
+    it[campo]=String(v||'').trim().toUpperCase(); if(campo==='pos'&&it.pos) it.pos=it.pos.padStart(2,'0');
+    var p=it.prod&&LFI.prod(it.prod);
+    if(p&&p.end&&it.rua&&it.pos&&!it.realocar&&(it.rua!==p.end.rua||it.pos!==p.end.pos)){
+      var m=UI.modal({titulo:'Este produto já tem um lugar no estoque', tam:'sm', corpo:'<p class="cf-obs" style="font-size:14px;margin:0"><b>'+esc(p.nome)+'</b> fica hoje em <b>'+LFI.textoEnd(p.end)+'</b>.<br>Você informou <b>Rua '+esc(it.rua)+' · Posição '+esc(it.pos)+'</b>.</p>',
+        botoes:'<button class="btn sec" data-act="m">Manter no local atual</button><button class="btn pri" data-act="r">Realocar para o novo local</button>',
+        acoes:{m:function(){ it.rua=p.end.rua; it.pos=p.end.pos; it.realocar=false; m.fechar(); toca(); }, r:function(){ it.realocar=true; m.fechar(); toca(); }}});
+      return;
+    }
+    toca();
+  }
+}
+
+function itemConf(n, it, i){
+  var p=it.prod&&LFI.prod(it.prod), fl=faltas(it);
+  var cls=it.revisao?'rev':(it.conf||it.ignorar)?'ok':'';
+  var h='<div class="cf-it '+cls+'"><div class="cf-l1">';
+  h+='<span class="cf-n">'+((it.conf||it.ignorar)?'✓':it.revisao?'!':(i+1))+'</span>';
+  /* na nota */
+  h+='<div class="cf-a"><span class="lb">Na nota</span><b class="ds">'+esc(it.desc)+'</b><div class="qv">'+F.num(it.qtd)+' '+esc(it.un)+' × '+F.moeda(it.vUn)+' = <b>'+F.moeda(it.vProd)+'</b></div>'+chipsImp(it)+'</div>';
+  /* produto do cadastro */
+  var sugs=(it.sugs||[]).filter(function(s){ return LFI.prod(s.prod); });
+  var opts='<option value="">'+(sugs.length?'Selecione o produto…':'Nenhuma correspondência')+'</option>';
+  if(sugs.length) opts+='<optgroup label="Sugestões">'+sugs.map(function(s){ return '<option value="'+s.prod+'"'+(s.prod===it.prod?' selected':'')+'>'+esc(LFI.prod(s.prod).nome)+' — '+s.score+'%</option>'; }).join('')+'</optgroup>';
+  var naSug=sugs.some(function(s){ return s.prod===it.prod; });
+  opts+=UI.selProdutos(naSug?null:it.prod).replace('<option value="">Selecione o produto…</option>','');
+  opts+='<optgroup label="Outras ações"><option value="__novo">+ Cadastrar novo produto…</option><option value="__ign"'+(it.ignorar?' selected':'')+'>Não entra no estoque (uso e consumo)</option></optgroup>';
+  h+='<div class="cf-b"><span class="lb">Produto no cadastro '+(p?(it.manual?UI.badge('Escolhido','in'):UI.match(it.score||0)):it.ignorar?'':UI.badge('Sem vínculo','no'))+'</span><select class="inp sm" data-chg="prod" data-id="'+it.id+'">'+opts+'</select>'+
+    (p?'<small>Estoque atual '+F.qtd(LFI.estoqueGeral(p),p.un)+'</small>':it.ignorar?'<small>Só vai para o financeiro.</small>':'<button class="btn sec xs" style="margin-top:6px" data-act="novo" data-id="'+it.id+'">'+UI.ic('mais')+'Cadastrar produto</button>')+'</div>';
+  /* conversão e custo */
+  if(p){
+    var q=qtdBase(it), cu=custoUnit(it), vr=p.ultimoCusto?cu/p.ultimoCusto-1:0;
+    h+='<div class="cf-c"><span class="lb">Entra no estoque</span><div class="fx">1 '+esc(it.un)+' = <input class="inp sm num" data-chg="fator" data-id="'+it.id+'" value="'+UI.numBR(it.fator||1)+'"> '+esc(p.un)+'</div><small>Total: <b>'+F.qtd(q,p.un)+'</b></small></div>';
+    h+='<div class="cf-d"><span class="lb">Custo</span><div class="cu">'+F.moeda(cu)+'<small>/'+esc(p.un)+'</small> '+(Math.abs(vr)>0.0005?UI.variacao(cu,p.ultimoCusto,true):'')+'</div><small>Antes '+F.moeda(p.ultimoCusto)+'</small>'+(Math.abs(vr)>0.15?'<small style="color:var(--red);font-weight:800">Subiu mais de 15%: confira a conversão</small>':'')+'</div>';
+  } else h+='<div class="cf-c"></div><div class="cf-d"></div>';
+  h+='</div>';
+  if(it.ignorar) return h+'</div>';
+
+  /* linha 2: validade, código de barras, local e botões */
+  var eanSt='';
+  if(p&&it.ean){ eanSt = (!p.ean||it.ean===p.ean) ? '<small class="cf-ok">✓ Código confere com o cadastro</small>'
+      : it.eanAtualizar ? '<small class="cf-in">Será atualizado no cadastro ao aprovar</small>'
+      : '<small class="cf-wt">⚠ Diferente do cadastro ('+esc(p.ean)+') <a class="vertodos" data-act="eanAtu" data-id="'+it.id+'">Atualizar cadastro</a></small>'; }
+  else eanSt='<small>Leia pela foto ou digite</small>';
+  var locSug='';
+  if(p&&p.end&&!it.realocar&&!(it.rua===p.end.rua&&it.pos===p.end.pos)) locSug='<small>Já fica em <b>'+LFI.textoEnd(p.end)+'</b>: <a class="vertodos" data-act="manter" data-id="'+it.id+'">Manter aqui</a> · <a class="vertodos" data-act="realocar" data-id="'+it.id+'">Realocar</a></small>';
+  else if(p&&p.end&&it.realocar) locSug='<small class="cf-in">Realocando (antes: '+LFI.textoEnd(p.end)+')</small>';
+  else if(p&&p.end) locSug='<small class="cf-ok">✓ Mesmo local de sempre</small>';
+  else if(p) locSug='<small>Produto ainda sem lugar definido</small>';
+
+  h+='<div class="cf-l2">'+
+    '<div class="cf-f"><span class="lb">Validade *</span><input type="date" class="inp sm" data-chg="val" data-id="'+it.id+'" value="'+(it.validade||'')+'"></div>'+
+    '<div class="cf-f cf-ean"><span class="lb">Código de barras</span><input class="inp sm mono" inputmode="numeric" data-chg="ean" data-id="'+it.id+'" value="'+esc(it.ean||'')+'" placeholder="0000000000000">'+eanSt+'</div>'+
+    '<div class="cf-f cf-loc"><span class="lb">Local no estoque *</span><div class="cf-rp"><input class="inp sm" data-chg="rua" data-id="'+it.id+'" value="'+esc(it.rua||'')+'" placeholder="Rua"><input class="inp sm" data-chg="pos" data-id="'+it.id+'" value="'+esc(it.pos||'')+'" placeholder="Posição"></div>'+locSug+'</div>'+
+    '<div class="cf-bt">'+
+      (it.foto?'<button class="cf-th" data-act="verFoto" data-id="'+it.id+'" style="background-image:url('+it.foto.img+')" title="Ver foto"></button>':'')+
+      '<button class="btn '+(it.foto?'sec':'esc')+'" data-act="foto" data-id="'+it.id+'"'+(p?'':' disabled')+'>'+UI.ic('foto')+(it.foto?'Refazer':'Foto')+'</button>'+
+      '<button class="btn '+(it.revisao?'wtb':'sec')+'" data-act="rev" data-id="'+it.id+'">'+UI.ic('alerta')+'Revisão</button>'+
+      '<button class="btn '+(it.conf?'ok':'pri')+'" data-act="conf" data-id="'+it.id+'"'+(fl.length&&!it.conf?' disabled title="Falta: '+fl.join(', ')+'"':'')+'>'+UI.ic('check')+(it.conf?'Confirmado':'Confirmar')+'</button>'+
+    '</div></div>';
+  if(it.revisao) h+='<div class="cf-revtx">'+UI.ic('alerta')+'<div><b>Em revisão: '+esc(it.revisao.motivo)+'</b>'+(it.revisao.obs?' · '+esc(it.revisao.obs):'')+'<small>Este item não entra no estoque até ser resolvido. Os outros itens podem ser aprovados normalmente.</small></div></div>';
+  else if(fl.length&&!it.conf) h+='<div class="cf-falta">Para confirmar falta: <b>'+fl.join(', ')+'</b></div>';
+  return h+'</div>';
+}
+
+/* foto do item: guarda a imagem como comprovante e lê validade e código de barras (leitura simulada nesta fase) */
+function fotoItem(n, it, depois){
+  var p=LFI.prod(it.prod);
+  var m=UI.modal({titulo:'Foto do item', sub:esc(p.nome)+' · fotografe a etiqueta com validade e código de barras', corpo:
+    '<label class="drop" id="ft-drop" style="padding:22px"><div class="ic">'+UI.ic('foto')+'</div><b>Tirar foto ou escolher imagem</b><small>No celular abre a câmera</small><input type="file" accept="image/*" capture="environment" id="ft-arq"></label>'+
+    '<div style="text-align:center;margin-top:12px"><button class="btn sec sm" data-act="ex">Usar foto de exemplo</button></div><div id="ft-res"></div>',
+    botoes:'<button class="btn sec" data-act="_fechar">Cancelar</button>'});
+  var inp=m.corpo.querySelector('#ft-arq');
+  inp.addEventListener('change',function(){ var a=inp.files&&inp.files[0]; if(!a) return; var rd=new FileReader(); rd.onload=function(){ reduz(rd.result, lido); }; rd.readAsDataURL(a); });
+  UI.liga(m.corpo,{ex:function(){ lido(etiqueta(p, leitura(p).validade, leitura(p).ean)); }});
+  function lido(img){
+    var r=leitura(p);
+    m.corpoHTML('<div class="cf-ftres"><img src="'+img+'" alt="Foto"><div><div class="leitura"><div class="lt-it ok"><span class="bo">✓</span>Foto guardada como comprovante</div><div class="lt-it ok"><span class="bo">✓</span>Validade lida: <b>'+F.data(r.validade)+'</b></div><div class="lt-it ok"><span class="bo">✓</span>Código de barras: <b class="mono">'+r.ean+'</b></div></div>'+
+      (p.ean&&r.ean!==p.ean?UI.nota('<b>Código diferente do cadastro.</b> No cadastro está '+p.ean+'. Na conferência você escolhe se atualiza.','wt','alerta'):'')+
+      '<p class="cf-obs">Nesta demonstração a leitura da etiqueta é simulada.</p></div></div>');
+    m.rodapeHTML('<button class="btn sec" data-act="_fechar">Cancelar</button><button class="btn pri" data-act="ok">'+UI.ic('check')+'Usar esta foto</button>');
+    UI.liga(m.el,{ok:function(){ it.foto={img:img, em:LFI.agoraISO(), por:LFI.usuario().nome}; if(!it.validade) it.validade=r.validade; if(!it.ean){ it.ean=r.ean; it.eanAtualizar=false; } m.fechar(); UI.toast('Foto registrada', p.nome); depois(); }});
+  }
+}
+/* leitura simulada da etiqueta: validade conforme o tipo de produto; o cream cheese veio com embalagem nova (código mudou) */
+function leitura(p){
+  var dias={pes:4,hor:6,lat:20,car:7,aca:2}[p.cat]||180, d=LFI.dataUtil.D(dias);
+  var ean = p.id==='p14' ? LFI.ean13('789'+String(55120000+7).slice(-9)) : (p.ean||LFI.ean13('789000'+String(Date.now()).slice(-6)));
+  return {validade:d, ean:ean};
+}
+function reduz(src, cb){ var im=new Image(); im.onload=function(){ var k=Math.min(1,640/Math.max(im.width,im.height)), c=document.createElement('canvas'); c.width=Math.round(im.width*k); c.height=Math.round(im.height*k); c.getContext('2d').drawImage(im,0,0,c.width,c.height); cb(c.toDataURL('image/jpeg',0.7)); }; im.onerror=function(){ cb(src); }; im.src=src; }
+/* desenha uma etiqueta de exemplo (nome, validade e código de barras) */
+function etiqueta(p, val, ean){
+  var c=document.createElement('canvas'); c.width=480; c.height=300; var x=c.getContext('2d');
+  x.fillStyle='#8B7355'; x.fillRect(0,0,480,300); x.fillStyle='#FFFDF6'; x.save(); x.translate(240,150); x.rotate(-0.03); x.fillRect(-200,-115,400,230);
+  x.fillStyle='#1C1C1E'; x.font='800 22px Manrope, Arial'; x.fillText(p.nome.toUpperCase().slice(0,26),-180,-78);
+  x.font='700 16px Manrope, Arial'; x.fillText('LOTE '+String(Date.now()).slice(-6),-180,-50); x.fillText('VAL: '+F.data(val),40,-50);
+  var s=String(ean), bx=-170; for(var i=0;i<95;i++){ var on=((+s[i%13]+i)%3===0)||i%7===0||i<3||i>91||(i>45&&i<49); if(on){ x.fillRect(bx+i*3.5,-25,i%5===0?3:2,100); } }
+  x.font='700 17px monospace'; x.fillText(s,-110,98); x.restore();
+  return c.toDataURL('image/jpeg',0.75);
+}
+function revisaoItem(it, depois){
+  var mot=['Produto avariado ou amassado','Quantidade diferente da nota','Produto diferente do pedido','Validade muito curta','Temperatura fora do ideal','Outro motivo'];
+  var atual=it.revisao||{};
+  var m=UI.modal({titulo:'Enviar item para revisão', sub:esc(it.desc), tam:'sm', corpo:
+    '<div class="field"><label>Motivo</label><select class="inp" id="rv-m">'+mot.map(function(x){ return '<option'+(x===atual.motivo?' selected':'')+'>'+x+'</option>'; }).join('')+'</select></div>'+
+    '<div class="field"><label>Observação</label><textarea class="inp" id="rv-o" placeholder="Ex.: faltou 1 saco, embalagem rasgada">'+esc(atual.obs||'')+'</textarea></div>'+
+    UI.nota('O item fica fora do estoque até ser resolvido. Os outros itens podem ser aprovados.','in'),
+    botoes:(it.revisao?'<button class="btn sec esq" data-act="tirar">Tirar da revisão</button>':'')+'<button class="btn sec" data-act="_fechar">Cancelar</button><button class="btn pri" data-act="ok">Marcar para revisão</button>',
+    acoes:{ok:function(){ it.revisao={motivo:m.el.querySelector('#rv-m').value, obs:m.el.querySelector('#rv-o').value.trim(), em:LFI.agoraISO(), por:LFI.usuario().nome}; it.conf=false; m.fechar(); UI.toast('Item enviado para revisão', it.revisao.motivo,'wt'); depois(); },
+      tirar:function(){ it.revisao=null; m.fechar(); depois(); }}});
+}
+function detalhesNota(n){
+  var f=LFI.forn(n.forn), e=LFI.emp(n.empresa), oc=n.oc&&LFI.ordem(n.oc);
+  var m=UI.modal({titulo:'Detalhes da nota', sub:'NF '+esc(n.numero), tam:'lg', corpo:
+    '<div class="kv c3"><div><span>Fornecedor</span><b>'+esc(f.razao)+'</b><small class="mono">CNPJ '+f.cnpj+'</small></div><div><span>Número / série</span><b>'+esc(n.numero)+' / '+esc(n.serie)+'</b></div><div><span>Emissão</span><b>'+F.data(n.emissao)+'</b></div>'+
+    '<div><span>Destinatário</span><b>'+esc(e.razao)+'</b><small class="mono">CNPJ '+e.cnpj+'</small></div><div><span>Natureza da operação</span><b style="white-space:normal">'+esc(n.natOp)+'</b></div><div><span>Ordem de compra</span><b>'+(oc?esc(oc.num):'—')+'</b></div>'+
+    '<div style="grid-column:1/-1"><span>Chave de acesso</span><b class="mono" style="white-space:normal;font-size:12.5px">'+fmtChave(n.chave)+'</b></div><div style="grid-column:1/-1"><span>Arquivo</span><b style="white-space:normal;font-size:12.5px">'+esc(n.arquivo||'')+'</b></div></div>',
+    botoes:'<button class="btn sec" data-act="xml">'+UI.ic('baixar')+'Baixar XML</button><button class="btn pri" data-act="_fechar">Fechar</button>', acoes:{xml:function(){ baixarXML(n); }}});
+}
+function creditoNota(n){
+  var emp=LFI.emp(n.empresa), cred=0, ls=n.itens.map(function(it){ var c=credItem(it,n), p=it.prod&&LFI.prod(it.prod); if(!it.ignorar) cred+=c.v; return {it:it,p:p,c:c}; });
+  UI.modal({titulo:'Crédito tributário', sub:'Parte do imposto da nota que pode ser descontada depois', corpo:
+    '<div class="kpi" style="margin-bottom:12px"><div class="lb">Crédito possível nesta nota</div><div class="vl" style="color:var(--green)">'+F.moeda(cred)+'</div><div class="dl">'+esc(emp.fantasia)+' · '+esc(emp.regime)+'</div></div>'+
+    '<div class="lst">'+ls.map(function(l){ var rg=l.c.regra, b; if(l.it.ignorar) b=UI.badge('Uso e consumo','nu'); else if(!l.p) b=UI.badge('Sem produto','no'); else if(!rg) b=UI.badge('Sem regra','nu'); else if(rg.status!=='validada') b=UI.status('trib',rg.status); else if(!rg.creditavel) b=UI.badge('Não gera crédito','nu'); else b='<b style="color:var(--green)">'+F.moeda(l.c.v)+'</b>';
+      return '<div class="li"><div class="gr"><div class="tt">'+esc(l.p?l.p.nome:l.it.desc)+'</div></div><div class="rt">'+b+'</div></div>'; }).join('')+'</div>'+
+    UI.nota('Só conta crédito quando o contador validou a regra do produto. As regras ficam no módulo Tributário.','in')});
 }
 
 function chipsImp(it){
   function c(rot, v, p){ return '<span class="'+(v?'on':'')+'" title="'+rot+(p?' '+F.pctN(p,2):'')+'">'+rot+(v?' '+F.moeda(v):' —')+'</span>'; }
   return '<div class="tx">'+c('ICMS'+(it.icms.p?' '+F.num(it.icms.p,2)+'%':''), it.icms.v)+c('IPI', it.ipi.v)+c('PIS', it.pis.v)+c('COFINS', it.cofins.v)+c('ST', it.st.v)+'</div>';
 }
-function linhaItem(n, it, i){
-  var p=it.prod&&LFI.prod(it.prod), ok=itemOk(it), cls=ok?'ok':(!p&&!it.ignorar?'sem':'');
-  var h='<div class="nfi '+cls+'">';
-  h+='<span class="ix">'+(ok?'✓':(i+1))+'</span>';
-  /* na nota */
-  h+='<div class="nfi-a"><div class="lb">Na nota</div><div class="ds">'+esc(it.desc)+'</div><small>Cód. '+esc(it.cod||'—')+' · NCM <b class="mono" style="font-size:11px">'+esc(it.ncm)+'</b> · CFOP '+esc(it.cfop)+' · CST '+esc(it.icms.cst)+'</small>'+
-    '<div class="qv">'+F.num(it.qtd)+' '+esc(it.un)+' × '+F.moeda(it.vUn)+' = <b>'+F.moeda(it.vProd)+'</b></div>'+chipsImp(it)+'</div>';
-  h+='<div class="sta">→</div>';
-  /* cadastro */
-  var sugs=(it.sugs||[]).filter(function(s){ return LFI.prod(s.prod); });
-  var opts='<option value="">'+(sugs.length?'Selecione o produto…':'Nenhuma correspondência encontrada')+'</option>';
-  if(sugs.length) opts+='<optgroup label="Sugestões da correspondência">'+sugs.map(function(s){ return '<option value="'+s.prod+'"'+(s.prod===it.prod?' selected':'')+'>'+esc(LFI.prod(s.prod).nome)+' — '+s.score+'%</option>'; }).join('')+'</optgroup>';
-  var naSug=sugs.some(function(s){ return s.prod===it.prod; });
-  opts+=UI.selProdutos(naSug?null:it.prod).replace('<option value="">Selecione o produto…</option>','');
-  opts+='<optgroup label="Outras ações"><option value="__novo">+ Cadastrar novo produto…</option><option value="__ign"'+(it.ignorar?' selected':'')+'>Não movimentar estoque (uso e consumo)</option></optgroup>';
-  h+='<div class="nfi-b"><div class="lb">Produto no cadastro '+(p?(it.manual?UI.badge('Definido manualmente','in'):UI.match(it.score||0)):it.ignorar?'':UI.badge('Sem vínculo','no'))+'</div>'+
-    '<select class="inp sm" data-chg="prod" data-id="'+it.id+'">'+opts+'</select>';
-  if(p) h+='<small>'+esc(LFI.cat(p.cat).nome)+' · estoque '+F.qtd(LFI.estoqueGeral(p),p.un)+(p.ncm&&p.ncm!==it.ncm?' · '+UI.badge('NCM cadastro '+p.ncm,'wt'):'')+'</small>';
-  else if(it.ignorar) h+='<small>Lançado só no financeiro (conta a pagar), sem entrada no estoque.</small>';
-  else {
-    var alt=sugs.slice(0,2);
-    h+='<small>'+(alt.length?'Sugestões fracas: '+alt.map(function(s){ return '<a class="vertodos" data-act="usarSug" data-id="'+it.id+'" data-p="'+s.prod+'" data-s="'+s.score+'">'+esc(LFI.prod(s.prod).nome)+' ('+s.score+'%)</a>'; }).join(' · '):'Produto ainda não existe no cadastro.')+'</small>'+
-      '<button class="btn sec xs" style="margin-top:7px" data-act="novo" data-id="'+it.id+'">'+UI.ic('mais')+'Cadastrar novo produto</button>';
-  }
-  h+='</div>';
-  /* conversão */
-  if(p){
-    var q=qtdBase(it), cu=custoUnit(it);
-    h+='<div class="nfi-c"><div class="lb">Conversão para estoque</div><div class="fx">1 '+esc(it.un)+' = <input class="inp sm num" data-chg="fator" data-id="'+it.id+'" value="'+UI.numBR(it.fator||1)+'"> '+esc(p.un)+'</div>'+
-      '<small>Entrada: <b>'+F.qtd(q,p.un)+'</b></small><small>Custo unitário: <b>'+F.moeda(cu)+'/'+esc(p.un)+'</b>'+((it.ipi.v||it.st.v)?' <span title="Inclui IPI e ICMS-ST, que compõem o custo">(c/ IPI/ST)</span>':'')+'</small></div>';
-    var vr=p.ultimoCusto?cu/p.ultimoCusto-1:0;
-    h+='<div class="nfi-d"><div class="lb">Custo vs. cadastro</div><div class="cu">'+F.moeda(cu)+' '+(Math.abs(vr)>0.0005?UI.variacao(cu, p.ultimoCusto, true):UI.badge('Igual ao último','nu'))+'</div>'+
-      '<small>Último <b>'+F.moeda(p.ultimoCusto)+'</b> · médio <b>'+F.moeda(p.custoMedio)+'</b></small>'+
-      (Math.abs(vr)>0.15?'<small style="color:var(--red);font-weight:700">Variação acima de 15%: confira o fator de conversão.</small>':'')+'</div>';
-  } else h+='<div class="nfi-c"><div class="lb">Conversão para estoque</div><small>—</small></div><div class="nfi-d"><div class="lb">Custo vs. cadastro</div><small>—</small></div>';
-  /* confirmação */
-  var dis=!p&&!it.ignorar;
-  h+='<div class="nfi-e cf"><div class="lb">Conferência</div><label class="tgl'+(it.conf?' on':'')+(dis?' dis':'')+'"><input type="checkbox" data-chg="conf" data-id="'+it.id+'"'+(it.conf?' checked':'')+(dis?' disabled':'')+'> '+(it.conf?'Confirmado':'Confirmar')+'</label></div>';
-  return h+'</div>';
-}
-
-function painelTributos(n){
-  var t=impNota(n), emp=LFI.emp(n.empresa), linhas=[], cred=0;
-  n.itens.forEach(function(it){ var c=credItem(it,n), p=it.prod&&LFI.prod(it.prod); if(!it.ignorar) cred+=c.v; linhas.push({it:it, p:p, c:c}); });
-  var pct=t.prod?t.total/t.prod:0;
-  var h='<div class="nf-trib"><div class="bx"><h4>Imposto destacado na nota '+UI.badge('do XML','nu')+'</h4><div class="vv">'+F.moeda(t.total)+'</div><p>Valores informados pelo emitente. '+F.pct(pct)+' sobre os produtos. IPI e ICMS-ST entram no custo do item.</p>'+
-    [['ICMS próprio',t.icms],['IPI',t.ipi],['PIS',t.pis],['COFINS',t.cofins],['ICMS-ST (retido)',t.st]].map(function(x){ return '<div class="lnr"><span class="k">'+x[0]+'</span><span class="v">'+F.moeda(x[1])+'</span></div>'; }).join('')+
-    '<div class="lnr"><span class="k">Base de cálculo do ICMS</span><span class="v">'+F.moeda(t.bc)+'</span></div></div>'+
-    '<div class="bx cr"><h4>Crédito tributário potencial '+UI.badge('regras validadas','ok')+'</h4><div class="vv" style="color:var(--green)">'+F.moeda(cred)+'</div><p>Somente itens com regra <b>validada</b> e marcada como <b>creditável</b> em Gestão Tributária. '+esc(emp.fantasia)+' · '+esc(emp.regime)+(emp.regime==='Simples Nacional'?': sem crédito de PIS/COFINS.':'.')+'</p>'+
-    linhas.map(function(l){ var rg=l.c.regra, b;
-      if(l.it.ignorar) b=UI.badge('Uso e consumo','nu');
-      else if(!l.p) b=UI.badge('Sem produto','no');
-      else if(!rg) b=UI.badge('Sem regra','nu');
-      else if(rg.status!=='validada') b=UI.status('trib', rg.status);
-      else if(!rg.creditavel) b=UI.badge('Não creditável','nu');
-      else b='<b style="color:var(--green)">'+F.moeda(l.c.v)+'</b>';
-      return '<div class="lnr"><span class="k" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(l.p?l.p.nome:l.it.desc)+(rg?' <small style="color:var(--muted)">· '+esc(rg.escopo)+'</small>':'')+'</span><span class="v">'+b+'</span></div>'; }).join('')+
-    '</div></div>'+
-    UI.nota('<b>Destacado não é crédito.</b> O imposto destacado é o que o fornecedor informou na nota; o crédito potencial é a parcela que a regra tributária validada pelo contador permite aproveitar. Regras pendentes ou em revisão ficam fora da estimativa até a validação. <a class="vertodos" data-act="_ir" data-id="tributos">Abrir Gestão Tributária</a>','in');
-  return h;
-}
-
 function comparaOC(n, oc){
   var rows=[], usados={};
   n.itens.forEach(function(it){ if(!it.prod) return; var x=oc.itens.filter(function(o){ return o.prod===it.prod; })[0], p=LFI.prod(it.prod), q=qtdBase(it), pu=q?r2(it.vProd/q):0;
@@ -524,9 +585,10 @@ function previa(id){
   }
   var s=simular(id); n=LFI.nota(id);
   if(!s){ UI.toast('Não foi possível simular o lançamento','','no'); return; }
-  var f=LFI.forn(n.forn), ign=n.itens.filter(function(i){ return i.ignorar; }).length;
+  var f=LFI.forn(n.forn), ign=n.itens.filter(function(i){ return i.ignorar; }).length, revs=n.itens.filter(function(i){ return i.revisao; });
   var h='<div class="kpis">'+UI.kpi({lb:'Entradas no estoque', vl:String(s.itens.length), dl:esc(LFI.dep(n.dep).nome)+(ign?' · '+ign+' sem estoque':'')})+UI.kpi({lb:'Valor da nota', vl:F.moeda(n.valor), dl:'Impostos '+F.moeda(impNota(n).total)})+
     UI.kpi({lb:'Receitas recalculadas', vl:String(s.receitas.length), dl:'Fichas técnicas afetadas'})+UI.kpi({lb:'Conta a pagar', vl:s.cp?F.moeda(s.cp.valor):'—', dl:s.cp?'Vence '+F.data(s.cp.venc)+' · '+esc(f.cond):''})+'</div>';
+  if(revs.length) h+=UI.nota('<b>'+revs.length+' '+(revs.length===1?'item fica':'itens ficam')+' em revisão</b> e não '+(revs.length===1?'entra':'entram')+' no estoque agora: '+revs.map(function(i){ return esc(LFI.prod(i.prod)?LFI.prod(i.prod).nome:i.desc)+' ('+esc(i.revisao.motivo)+')'; }).join(', ')+'.','wt','alerta');
   h+='<h4 style="margin:4px 0 8px;font-size:13px;font-weight:800">Entradas no estoque e novo custo médio</h4>'+tabEntradas(s.itens, n.dep);
   h+='<h4 style="margin:18px 0 8px;font-size:13px;font-weight:800">Receitas afetadas</h4>'+tabReceitas(s.receitas);
   h+='<div class="grid g2" style="margin-top:16px"><div class="card flat"><h3 style="margin-bottom:8px">Financeiro</h3><div class="lnr"><span class="k">Fornecedor</span><span class="v">'+esc(f.nome)+'</span></div><div class="lnr"><span class="k">Empresa</span><span class="v">'+esc(LFI.emp(n.empresa).fantasia)+'</span></div><div class="lnr"><span class="k">Vencimento</span><span class="v">'+(s.cp?F.data(s.cp.venc):'—')+'</span></div><div class="lnr tot"><span class="k">Conta a pagar</span><span class="v">'+(s.cp?F.moeda(s.cp.valor):'—')+'</span></div></div>'+

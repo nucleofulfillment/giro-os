@@ -5,11 +5,11 @@
 'use strict';
 var LFI = window.LFI;
 var U = LFI.dataUtil, r2 = U.r2, r3 = U.r3;
-var CHAVE = 'lfi_base_v5', CHAVE_CTX = 'lfi_ctx_v1';
+var CHAVE = 'lfi_base_v6', CHAVE_CTX = 'lfi_ctx_v1';
 
 /* ---------- armazenamento ---------- */
 function carrega(){
-  try{ var s=localStorage.getItem(CHAVE); if(s){ var d=JSON.parse(s); if(d&&d.versao===5) return d; } }catch(e){}
+  try{ var s=localStorage.getItem(CHAVE); if(s){ var d=JSON.parse(s); if(d&&d.versao===6) return d; } }catch(e){}
   return null;
 }
 LFI.db = carrega() || LFI.criarBase();
@@ -249,15 +249,19 @@ LFI.lancarNota = function(nfId){
   var precoAntes={}; db.receitas.forEach(function(r){ precoAntes[r.id]=LFI.precificar(r).sugerido; });
   var resumo={nota:n, itens:[], receitas:[], cp:null, oc:null};
   n.itens.forEach(function(it){
-    if(!it.prod) return;
+    if(!it.prod||it.revisao) return;
     var q=r3(it.qtd*it.fator), cu=r2((it.vProd + (it.ipi.v||0) + (it.st.v||0))/q);
     var p=LFI.prod(it.prod), ultimoAnt=p.ultimoCusto;
     var res=LFI.movimentar({prod:it.prod, dep:n.dep, tipo:'entrada', qtd:q, custo:cu, origem:{tipo:'nf', id:n.id}, obs:'NF '+n.numero, usuario:LFI.usuario().nome});
+    /* validade, código de barras e endereço informados na conferência */
+    if(it.validade){ var estAnt=r3(LFI.estoqueGeral(p)-q); p.validade = (p.validade&&estAnt>0&&p.validade<it.validade) ? p.validade : it.validade; }
+    if(it.ean && (!p.ean || it.eanAtualizar)) p.ean=it.ean;
+    if(it.rua && it.pos) p.end={rua:String(it.rua).toUpperCase(), pos:String(it.pos).padStart(2,'0')};
     /* aprende o apelido da nota para a próxima vez */
     if((p.apelidos||[]).indexOf(it.desc)<0) p.apelidos.push(it.desc);
     resumo.itens.push({prod:p, qtd:q, custoUn:cu, custoAnt:res.custoAnt, custoNovo:res.custoNovo, ultimoAnt:ultimoAnt});
   });
-  n.status='lancada'; n.entrada=LFI.hoje(); n.lancadaPor=LFI.usuario().nome; n.lancadaEm=LFI.agoraISO();
+  n.status='lancada'; n.entrada=LFI.hoje(); n.pendencias=n.itens.filter(function(i){ return i.revisao; }).length; n.lancadaPor=LFI.usuario().nome; n.lancadaEm=LFI.agoraISO();
   db.receitas.forEach(function(r){ var novo=LFI.custoReceita(r).porcao; if(Math.abs(novo-recsAntes[r.id])>=0.005) resumo.receitas.push({rec:r, antes:recsAntes[r.id], depois:novo, precoAntes:precoAntes[r.id], precoDepois:LFI.precificar(r).sugerido}); });
   resumo.receitas.sort(function(a,b){ return Math.abs(b.depois/b.antes-1)-Math.abs(a.depois/a.antes-1); });
   /* contas a pagar */
@@ -431,3 +435,6 @@ LFI.notaDaOrdem = function(ocId, recebidos){
 
 /* aplica preço de venda numa receita mantendo o mix de vendas coerente */
 window.LFI.aplicarPreco = function(recId, preco){ var LFI=window.LFI, r=LFI.rec(recId); if(!r) return; r.preco=LFI.dataUtil.r2(preco); LFI.db.mixVendas.forEach(function(m){ if(m.rec===recId) m.preco=r.preco; }); LFI.atividade('receita','Preço de '+r.nome+' atualizado para '+LFI.fmt.moeda(r.preco),{tela:'receitas',id:recId}); LFI.salvar(); };
+
+/* código de barras (EAN-13) e endereço no estoque */
+window.LFI.textoEnd = function(e){ return e&&e.rua?'Rua '+e.rua+' · Posição '+e.pos:''; };

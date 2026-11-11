@@ -283,6 +283,7 @@ LFI.renderizar = function(manterScroll){
   if(!LFI.telas[id]) id='visao';
   var mudouTela = atual.id!==id || atual.arg!==arg;
   atual={id:id, arg:arg};
+  document.body.classList.remove('foco');
   var main=document.getElementById('main'), y=window.scrollY;
   var c=document.createElement('div'); c.className='tela tela-'+id;
   main.innerHTML=''; main.appendChild(c);

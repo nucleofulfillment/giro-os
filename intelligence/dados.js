@@ -15,11 +15,12 @@ function DH(n,h){ return D(n)+'T'+h; }
 function r2(x){ return Math.round(x*100)/100; }
 function r3(x){ return Math.round(x*1000)/1000; }
 
+LFI.ean13 = function(base12){ var s=String(base12).replace(/\D/g,'').padEnd(12,'0').slice(0,12), t=0; for(var i=0;i<12;i++) t+=(+s[i])*(i%2?3:1); return s+((10-t%10)%10); };
 LFI.dataUtil = {iso:iso, hojeD:hojeD, D:D, DH:DH, r2:r2, r3:r3, rng:rng};
 
 LFI.criarBase = function(){
   var R = rng(20261110);
-  var db = {versao:5, criadaEm:new Date().toISOString(), hoje:D(0)};
+  var db = {versao:6, criadaEm:new Date().toISOString(), hoje:D(0)};
 
   /* ===== EMPRESAS (multi-CNPJ) ===== */
   db.grupo = {nome:'Grupo Pão Dourado', cidade:'Campinas/SP'};
@@ -128,6 +129,11 @@ LFI.criarBase = function(){
       forn:a[8], fornAlt:a[9], local:a[10], validade:a[11]==null?null:D(a[11]), conv:{un:a[12][0], fator:a[12][1]},
       est:est, apelidos:a[14], ultMov:D(-a[15]), tipo:'insumo', contado:null, hist:[]};
   });
+
+  /* código de barras (EAN-13) e endereço no estoque (Rua / Posição) */
+  (function(){ var ruas={}, mapa={'Câmara fria 01 (0 a 4 °C)':'CF','Freezer 02 (−18 °C)':'FZ','Despensa seca A':'A','Despensa seca B':'B','Geladeira do sushi bar':'GS','Bar e adega':'BR','Almoxarifado de embalagens':'E','Câmara de resfriados 02':'CR'};
+    db.produtos.forEach(function(p,i){ p.ean=LFI.ean13('789'+String(41203000+i*1373).slice(-9));
+      var r=mapa[p.local]||'A'; ruas[r]=(ruas[r]||0)+1; if(p.id!=='p21'&&p.id!=='p02') p.end={rua:r, pos:String(ruas[r]).padStart(2,'0')}; else p.end=null; }); })();
 
   /* produtos acabados (saem da produção) */
   [['pa1','Pão francês','un',0.21,120,L.vt,1,{pad:180},'r01'],
