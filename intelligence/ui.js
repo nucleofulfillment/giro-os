@@ -59,7 +59,7 @@ UI.fotoProd = function(p, tam){
   var src=(LFI.FOTOS&&LFI.FOTOS[p.id])||p.fotoURL;
   var st='width:'+tam+'px;height:'+tam+'px;border-radius:'+Math.round(tam*0.24)+'px';
   if(src) return '<img class="fprod" src="'+src+'" alt="" loading="lazy" style="'+st+'">';
-  return '<span class="fprod vazio" style="'+st+';font-size:'+Math.round(tam*0.5)+'px">'+(EMOJI_CAT[p.cat]||'📦')+'</span>';
+  return '<span class="fprod fpv" style="'+st+';font-size:'+Math.round(tam*0.5)+'px">'+(EMOJI_CAT[p.cat]||'📦')+'</span>';
 };
 UI.creditosFotos = function(){
   var c=LFI.FOTOS_CRED||{}, ids=Object.keys(c);
@@ -326,7 +326,7 @@ LFI.renderizar = function(manterScroll){
   try{ LFI.telas[id].render(c, arg); }
   catch(e){ console.error(e); c.innerHTML='<div class="card">'+UI.vazio('Não foi possível abrir esta tela: '+e.message,'⚠️')+'</div>'; }
   document.title=(LFI.telas[id].titulo||'LiveFood')+' · LivePro';
-  UI.desenhaMenu();
+  UI.desenhaMenu(); UI.abasAtualizar(id, arg);
   if(mudouTela && !manterScroll) window.scrollTo(0,0); else window.scrollTo(0,y);
   fechaMM();
 };
@@ -340,6 +340,43 @@ UI.cabecalho = function(o){
 };
 /* navegação embutida: data-act="_ir" data-id="tela/arg" */
 UI.navHandlers = function(h){ h=h||{}; h._ir=function(id){ var p=String(id).split('/'); LFI.ir(p[0], p.slice(1).join('/')||null); }; return h; };
+
+
+/* ---------- abas no topo: cada menu aberto vira uma aba (uma por menu, até 8, salvas no navegador) ---------- */
+var ABAS_K='lfi_abas_v1', ABAS_MAX=8;
+function abasLer(){ try{ var a=JSON.parse(localStorage.getItem(ABAS_K)||'null'); if(Array.isArray(a)) return a; }catch(e){} return [{id:'visao', arg:null, t:0}]; }
+function abasSalvar(a){ try{ localStorage.setItem(ABAS_K, JSON.stringify(a)); }catch(e){} }
+function nomeMenu(id){ var n=id; LFI.menu.forEach(function(g){ g.itens.forEach(function(it){ if(it.id===id) n=it.nome; }); }); return n; }
+function icMenu(id){ var n='painel'; LFI.menu.forEach(function(g){ g.itens.forEach(function(it){ if(it.id===id) n=it.ic; }); }); return n; }
+function detalheAba(id, arg){ if(!arg) return '';
+  if(id==='notas'){ var n=LFI.nota(arg); return n?'NF '+n.numero:''; }
+  if(id==='compras'){ if(arg==='nova') return 'nova ordem'; var c=LFI.cotacao(arg); return c?c.num:''; }
+  if(id==='ordens'){ var o=LFI.ordem(arg); return o?o.num:''; }
+  if(id==='estoque'||id==='receitas'){ var p=id==='estoque'?LFI.prod(arg):LFI.rec(arg); return p?p.nome:''; }
+  if(id==='fornecedores'){ var f=LFI.forn(arg); return f?f.nome:''; }
+  if(id==='producao'){ var op=LFI.op(arg); return op?op.num:''; }
+  if(id==='buffet'){ if(arg==='novo') return 'abertura'; var b=LFI.buffet(arg); return b?b.num:''; }
+  return ''; }
+UI.abasAtualizar = function(id, arg){
+  var a=abasLer(); if(!a.some(function(x){ return x.id==='visao'; })) a.unshift({id:'visao', arg:null, t:0});
+  var x=a.filter(function(z){ return z.id===id; })[0];
+  if(x){ x.arg=arg; x.t=Date.now(); } else { a.push({id:id, arg:arg, t:Date.now()}); }
+  while(a.length>ABAS_MAX){ var velha=null; a.forEach(function(z){ if(z.id!=='visao'&&z.id!==id&&(!velha||z.t<velha.t)) velha=z; }); if(!velha) break; a.splice(a.indexOf(velha),1); }
+  abasSalvar(a); UI.desenhaAbas();
+};
+UI.desenhaAbas = function(){
+  var box=document.getElementById('abas'); if(!box) return; var a=abasLer(), c=contagens();
+  box.innerHTML=a.map(function(x){ var d=detalheAba(x.id,x.arg), n=c[x.id], on=atual.id===x.id;
+    return '<div class="ab'+(on?' on':'')+'" data-aba="'+x.id+'" title="'+esc(nomeMenu(x.id)+(d?' · '+d:''))+'">'+UI.ic(icMenu(x.id))+'<span>'+esc(nomeMenu(x.id))+(d?' <small>· '+esc(d)+'</small>':'')+'</span>'+(n?'<span class="dot">'+n+'</span>':'')+(x.id!=='visao'?'<span class="x" data-fecha="'+x.id+'" aria-label="Fechar aba">✕</span>':'')+'</div>'; }).join('')+
+    '<button class="ab-mais" type="button" data-abrir-menu>'+UI.ic('lista')+'Abrir tela</button>';
+  var on=box.querySelector('.ab.on'); if(on&&on.scrollIntoView) { var r=on.getBoundingClientRect(), rb=box.getBoundingClientRect(); if(r.left<rb.left||r.right>rb.right) box.scrollLeft+=r.left-rb.left-40; }
+};
+document.addEventListener('click', function(ev){
+  var f=ev.target.closest('[data-fecha]'); if(f){ ev.stopPropagation(); var id=f.getAttribute('data-fecha'), a=abasLer().filter(function(z){ return z.id!==id; }); abasSalvar(a);
+    if(atual.id===id){ var ult=a.slice().sort(function(p,q){ return q.t-p.t; })[0]||{id:'visao'}; LFI.ir(ult.id, ult.arg); } else UI.desenhaAbas(); return; }
+  var t=ev.target.closest('[data-aba]'); if(t){ var id2=t.getAttribute('data-aba'), x=abasLer().filter(function(z){ return z.id===id2; })[0]; LFI.ir(id2, x&&x.arg); return; }
+  if(ev.target.closest('[data-abrir-menu]')){ UI.abreMM(); }
+});
 
 /* ---------- casca: menu, empresa, busca ---------- */
 function contagens(){
@@ -386,7 +423,7 @@ document.addEventListener('click', function(ev){
   if(!ev.target.closest('.emp-sel')) ls.classList.remove('on');
 });
 LFI.on('empresa', function(){ UI.desenhaEmpresa(); LFI.recarregar(); var e=LFI.empresaAtual(); UI.toast(e?'Visualizando '+e.fantasia:'Visão consolidada do grupo', e?'CNPJ '+e.cnpj:'Todas as empresas', 'in'); });
-LFI.on('mudou', function(){ UI.desenhaMenu(); });
+LFI.on('mudou', function(){ UI.desenhaMenu(); UI.desenhaAbas(); });
 
 /* cadastro de empresas (multi-CNPJ) */
 UI.gerenciarEmpresas = function(){
