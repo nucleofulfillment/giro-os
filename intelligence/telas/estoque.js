@@ -13,7 +13,8 @@ function st(){ return LFI.estado.estoque = LFI.estado.estoque || {aba:'pos', dep
 function depsOrd(){ return ORDEM_DEP.filter(function(d){ return LFI.depVisivel(d); }); }
 function depsSel(){ var s=st(); if(s.dep!=='todos'&&!LFI.depVisivel(s.dep)) s.dep='todos'; return s.dep==='todos'?LFI.depIds():[s.dep]; }
 
-function css(){
+function css2(){ if(document.getElementById('css-estoque2')) return; var c=document.createElement('style'); c.id='css-estoque2'; c.textContent='.es-valor{max-width:420px;margin-bottom:16px}.es-st{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.es-hd{cursor:pointer;user-select:none;margin:0!important}.es-rec.ab .es-hd{margin-bottom:14px!important}.es-seta{font-size:11px;color:var(--muted)}.es-rec:not(.ab) .card{padding-top:14px;padding-bottom:14px}.es-rec:not(.ab){align-items:stretch}'; document.head.appendChild(c); }
+function css(){ css2();
   if(document.getElementById('css-estoque')) return;
   var s=document.createElement('style'); s.id='css-estoque';
   s.textContent=[
@@ -104,6 +105,7 @@ function render(el, arg){
    VISÃO PRINCIPAL
    ===================================================================== */
 function principal(el){
+  document.body.classList.add('foco');
   var s=st(), deps=depsSel(), lista=produtosVis(), alr=alertasVis(lista), emp=LFI.empresaAtual();
   var vEst=0, comSaldo=0; lista.forEach(function(p){ vEst+=LFI.valorEstoque(p,deps); if(LFI.estoque(p,deps)>0) comSaldo++; });
   var cnt=function(t){ return alr.filter(function(a){ return t.indexOf(a.tipo)>=0; }); };
@@ -118,14 +120,7 @@ function principal(el){
   h+='<div class="barra"><div class="pills">'+['todos'].concat(depsOrd()).map(function(d){ var dd=LFI.dep(d), v=d==='todos'?null:LFI.valorEstoqueTotal([d]);
       return '<button class="pill'+(s.dep===d?' on':'')+'" data-act="dep" data-id="'+d+'">'+(dd?'<i style="background:'+dd.cor+'"></i>'+esc(dd.nome)+' <span class="c">'+F.moedaK(v)+'</span>':'Todos os departamentos')+'</button>'; }).join('')+'</div></div>';
 
-  h+='<div class="kpis k6">'+
-    UI.kpi({lb:'Valor em estoque', vl:F.moeda(vEst), dl:'Ao custo médio', hl:true})+
-    UI.kpi({lb:'Itens', vl:String(lista.length), dl:comSaldo+' com saldo'})+
-    UI.kpi({lb:'<span style="color:var(--red)">●</span> Abaixo do mínimo', vl:String(baixos.length), dl:crit.length+' em nível crítico', act:'kAlr', id:'baixo'})+
-    UI.kpi({lb:'<span style="color:#E9A80B">●</span> Vencendo', vl:String(venc.length), dl:v7+' vencem em até 7 dias', act:'kAlr', id:'validade'})+
-    UI.kpi({lb:'Sem movimentação', vl:String(par.length), dl:F.moeda(vPar)+' imobilizado', act:'kAlr', id:'parado'})+
-    UI.kpi({lb:'<span style="color:var(--blue)">●</span> Divergências', vl:String(div.length), dl:'Contagem × sistema '+(vDiv?(vDiv>0?'+':'−')+F.moeda(Math.abs(vDiv)):''), act:'kAlr', id:'divergencia'})+
-  '</div>';
+  h+='<div class="es-valor">'+UI.kpi({lb:'Valor em estoque', vl:F.moeda(vEst), dl:lista.length+' itens · '+comSaldo+' com saldo · ao custo médio', hl:true})+'</div>';
   h+='<div class="tabs">'+[['pos','Posição de estoque',lista.length],['mov','Movimentações',null],['sug','Sugestão de compra',nSug]].map(function(t){ return '<button class="'+(s.aba===t[0]?'on':'')+'" data-act="aba" data-id="'+t[0]+'">'+t[1]+(t[2]!=null?' <span class="n">'+t[2]+'</span>':'')+'</button>'; }).join('')+'</div>';
   h+='<div id="es-aba"></div>';
   el.innerHTML=h;
@@ -149,11 +144,12 @@ function abaPos(box, hand, lista, alr, deps){
   var alrF = s.alr==='todos'?alr : s.alr==='baixo'?alr.filter(function(a){ return a.tipo==='baixo'||a.tipo==='critico'; }) : alr.filter(function(a){ return a.tipo===s.alr; });
   var ics={critico:'alerta', baixo:'estoque', validade:'relogio', parado:'info', divergencia:'filtro'};
   var mostra=s.alrTodos?alrF:alrF.slice(0,10);
-  var h='<div class="grid g21 mb"><div class="card" id="es-alertas"><h3><span class="lft">'+UI.ic('alerta')+' Alertas de estoque <span class="n">'+alr.length+'</span></span><small>clique para abrir o produto</small></h3>'+
-    '<div class="es-chips">'+tipos.map(function(t){ var n=t[0]==='todos'?alr.length:t[0]==='baixo'?alr.filter(function(a){ return a.tipo==='baixo'; }).length:alr.filter(function(a){ return a.tipo===t[0]; }).length; return '<button class="pill'+(s.alr===t[0]?' on':'')+'" data-act="alr" data-id="'+t[0]+'">'+t[1]+' <span class="c">'+n+'</span></button>'; }).join('')+'</div>'+
-    (mostra.length?'<div class="es-alr">'+mostra.map(function(a){ return '<div class="alr '+a.nivel+'" data-act="abrir" data-id="'+a.prod+'"><span class="ic">'+UI.ic(ics[a.tipo])+'</span><div class="gr"><div class="tt">'+esc(a.titulo)+'</div><div class="dd">'+esc(a.txt)+'</div></div></div>'; }).join('')+'</div>':UI.vazio('Nenhum alerta neste filtro','✅'))+
-    (alrF.length>10?'<div style="text-align:center;margin-top:12px"><button class="vertodos" data-act="alrMais">'+(s.alrTodos?'Mostrar menos':'Ver todos os '+alrF.length+' alertas')+'</button></div>':'')+
-    '</div><div class="card"><h3>Valor por departamento <small>ao custo médio</small></h3><div id="es-rosca"></div><div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px"><div style="font-size:10.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Maiores categorias</div><div id="es-cat"></div></div></div></div>';
+  var ab=!!s.exp, seta='<span class="es-seta">'+(ab?'▲':'▼')+'</span>';
+  var h='<div class="es-st">'+tipos.map(function(t){ var n=t[0]==='todos'?alr.length:t[0]==='baixo'?alr.filter(function(a){ return a.tipo==='baixo'; }).length:alr.filter(function(a){ return a.tipo===t[0]; }).length; return '<button class="pill'+(ab&&s.alr===t[0]?' on':'')+'" data-act="alr" data-id="'+t[0]+'">'+t[1]+' <span class="c">'+n+'</span></button>'; }).join('')+'</div>';
+  h+='<div class="grid g21 mb es-rec'+(ab?' ab':'')+'"><div class="card" id="es-alertas"><h3 class="es-hd" data-act="expd"><span class="lft">'+UI.ic('alerta')+' Alertas de estoque <span class="n">'+alr.length+'</span></span>'+seta+'</h3>'+
+    (ab?(mostra.length?'<div class="es-alr">'+mostra.map(function(a){ return '<div class="alr '+a.nivel+'" data-act="abrir" data-id="'+a.prod+'"><span class="ic">'+UI.ic(ics[a.tipo])+'</span><div class="gr"><div class="tt">'+esc(a.titulo)+'</div><div class="dd">'+esc(a.txt)+'</div></div></div>'; }).join('')+'</div>':UI.vazio('Nenhum alerta neste filtro','✅'))+
+    (alrF.length>10?'<div style="text-align:center;margin-top:12px"><button class="vertodos" data-act="alrMais">'+(s.alrTodos?'Mostrar menos':'Ver todos os '+alrF.length+' alertas')+'</button></div>':''):'')+
+    '</div><div class="card"><h3 class="es-hd" data-act="expd"><span class="lft">Valor por departamento</span>'+seta+'</h3>'+(ab?'<div id="es-rosca"></div><div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px"><div style="font-size:10.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Maiores categorias</div><div id="es-cat"></div></div>':'')+'</div></div>';
 
   h+='<div class="card"><h3><span class="lft">'+UI.ic('estoque')+' Produtos em estoque</span><small id="es-cont"></small></h3><div class="barra">'+
     '<div class="search">'+UI.ic('busca')+'<input id="es-q" placeholder="Buscar por nome, NCM ou local…" value="'+esc(s.q)+'"></div>'+
@@ -163,9 +159,9 @@ function abaPos(box, hand, lista, alr, deps){
   box.innerHTML=h;
 
   var dv=depsOrd().filter(function(d){ return deps.indexOf(d)>=0; });
-  UI.grafRosca(box.querySelector('#es-rosca'),{itens:dv.map(function(d){ var x=LFI.dep(d); return {nome:x.curto, valor:LFI.valorEstoqueTotal([d]), cor:x.cor, id:d}; }), centro:{valor:F.moedaK(LFI.valorEstoqueTotal(deps)), rotulo:'em estoque'}, onClick:function(x){ st().dep=x.id; LFI.recarregar(); }});
+  if(ab){ UI.grafRosca(box.querySelector('#es-rosca'),{itens:dv.map(function(d){ var x=LFI.dep(d); return {nome:x.curto, valor:LFI.valorEstoqueTotal([d]), cor:x.cor, id:d}; }), centro:{valor:F.moedaK(LFI.valorEstoqueTotal(deps)), rotulo:'em estoque'}, onClick:function(x){ st().dep=x.id; LFI.recarregar(); }});
   var pc={}; lista.forEach(function(p){ pc[p.cat]=(pc[p.cat]||0)+LFI.valorEstoque(p,deps); });
-  box.querySelector('#es-cat').innerHTML=UI.barrasH(Object.keys(pc).map(function(c){ return {nome:LFI.cat(c).nome, valor:pc[c], id:c, cor:'var(--roxo)'}; }).sort(function(a,b){ return b.valor-a.valor; }).slice(0,5),{act:'catF'});
+  box.querySelector('#es-cat').innerHTML=UI.barrasH(Object.keys(pc).map(function(c){ return {nome:LFI.cat(c).nome, valor:pc[c], id:c, cor:'var(--roxo)'}; }).sort(function(a,b){ return b.valor-a.valor; }).slice(0,5),{act:'catF'}); }
 
   var todos=st().dep==='todos';
   var tab=UI.tabela(box.querySelector('#es-tab'), {linhas:[], ordem:7, dir:-1, linhaAct:'abrir', vazio:'Nenhum produto com estes filtros.',
@@ -195,7 +191,8 @@ function abaPos(box, hand, lista, alr, deps){
   function atualiza(){ var ls=filtra(), v=0; ls.forEach(function(p){ v+=LFI.valorEstoque(p,deps); }); tab.redesenha(ls); box.querySelector('#es-cont').textContent=ls.length+' produtos · '+F.moeda(v); }
   atualiza();
   box.querySelector('#es-q').addEventListener('input', function(ev){ s.q=ev.target.value; atualiza(); });
-  hand.alr=function(id){ s.alr=id; s.alrTodos=false; LFI.recarregar(); };
+  hand.alr=function(id){ if(s.exp&&s.alr===id){ s.exp=false; } else { s.alr=id; s.exp=true; } s.alrTodos=false; LFI.recarregar(); };
+  hand.expd=function(){ s.exp=!s.exp; LFI.recarregar(); };
   hand.alrMais=function(){ s.alrTodos=!s.alrTodos; LFI.recarregar(); };
   hand.cat=function(_,ev){ s.cat=ev.target.value; atualiza(); };
   hand.sit=function(_,ev){ s.sit=ev.target.value; atualiza(); };
