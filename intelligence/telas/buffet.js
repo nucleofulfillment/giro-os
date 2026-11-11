@@ -121,15 +121,8 @@ function principal(el){
   var mes=LFI.hoje().slice(0,7), doMes=ls.filter(function(b){ return b.data.slice(0,7)===mes; }), encMes=doMes.filter(function(b){ return b.status==='encerrado'; });
   var A={disp:0, cons:0, cli:0, perdas:0, reap:0}; encMes.forEach(function(b){ var r=LFI.resumoBuffet(b); A.disp+=r.disp; A.cons+=r.consumo; A.cli+=b.clientes||0; A.perdas+=r.vDesc+r.vPerda; A.reap+=r.vReap; });
   var turno=new Date().getHours()<16?'almoço':'jantar', susOk=LFI.depVisivel('res');
-  var h=UI.cabecalho({titulo:'Buffet e Pesagem Inteligente', sub:'Buffet por quilo · '+F.moeda(LFI.db.buffetPrecoKg)+'/kg · balança integrada (simulação) e controle de sobras com regras de segurança alimentar',
-    acoes:'<button class="btn sec" data-act="aba" data-id="relatorio">'+UI.ic('relatorio')+'Relatório de perdas</button>'+(susOk?'<button class="btn pri" data-act="novo">'+UI.ic('mais')+'Abrir buffet</button>':'')});
-  h+='<div class="tabs"><button class="'+(s.aba==='operacao'?'on':'')+'" data-act="aba" data-id="operacao">Operação'+(abertos.length?' <span class="n">'+abertos.length+' aberto</span>':'')+'</button><button class="'+(s.aba==='relatorio'?'on':'')+'" data-act="aba" data-id="relatorio">Relatório de perdas e aproveitamento</button><button class="'+(s.aba==='regras'?'on':'')+'" data-act="aba" data-id="regras">Regras de conservação <span class="n">'+LFI.db.regrasSobra.length+'</span></button></div>';
-  h+='<div class="kpis">'+
-    UI.kpi({lb:'Buffets no mês', vl:String(doMes.length), dl:encMes.length+' encerrado(s) · '+(doMes.length-encMes.length)+' em andamento'})+
-    UI.kpi({lb:'Consumo médio por cliente', vl:A.cli?F.num(A.cons/A.cli*1000,0)+' <small>g</small>':'—', dl:A.cli?F.num(A.cli,0)+' clientes · '+kg(A.cons):'sem buffets encerrados'})+
-    UI.kpi({lb:'Aproveitamento', vl:A.disp?F.pct(A.cons/A.disp):'—', dl:'consumido ÷ disponível', hl:true})+
-    UI.kpi({lb:'<span style="color:var(--red)">●</span> Perdas do buffet', vl:F.moeda(A.perdas), dl:'descartes e perdas ao custo · reaproveitado '+F.moeda(A.reap)})+
-  '</div>';
+  var h=UI.cabecalho({titulo:'Buffet', sub:'Pesagem das cubas · '+F.moeda(LFI.db.buffetPrecoKg)+'/kg',
+    acoes:(s.aba!=='operacao'?'<button class="btn sec" data-act="aba" data-id="operacao">'+UI.ic('voltar')+'Voltar à pesagem</button>':'')+'<button class="btn sec" data-act="dados">'+UI.ic('relatorio')+'Dados</button>'+(susOk?'<button class="btn pri" data-act="novo">'+UI.ic('balanca')+'Abrir buffet</button>':'')});
   if(s.aba==='relatorio'){ el.innerHTML=h+relatorioGeralHTML(enc); relatorioGeral(el, enc); ligaPrincipal(el); return; }
   if(s.aba==='regras'){ el.innerHTML=h+regrasHTML(); ligaPrincipal(el); return; }
 
@@ -142,8 +135,7 @@ function principal(el){
       '<div><button class="btn pri lg" data-act="_ir" data-id="buffet/'+b.id+'">'+(b.status==='aberto'?UI.ic('balanca')+'Acompanhar buffet':UI.ic('check')+'Continuar encerramento')+'</button></div></div></div>'; });
   if(!abertos.length&&susOk) h+='<div class="bf-cta mb"><div><h2>Abrir buffet do '+turno+'</h2><p>Registre a pesagem inicial de cada cuba com a balança integrada, acompanhe o consumo em tempo real e encerre com controle de sobras, temperatura e destino.</p><div class="bf-emos">'+CATS[0].recs.concat(CATS[1].recs).map(function(id){ return '<span>'+LFI.rec(id).foto+'</span>'; }).join('')+'</div></div>'+
     '<button class="btn pri" data-act="novo">'+UI.ic('balanca')+'Abrir buffet do '+turno+'</button></div>';
-  h+='<div class="grid g21 mb"><div class="card pad0"><h3>Histórico de buffets <small>clique para abrir a ordem</small></h3><div id="bf-hist" style="padding:0 8px 8px"></div></div>'+
-    '<div class="card"><h3>Último buffet encerrado <small>destino do que foi servido</small></h3><div id="bf-ult"></div></div></div>';
+  h+='<div class="card pad0 mb"><h3>Histórico de buffets <small>clique para abrir</small></h3><div id="bf-hist" style="padding:0 8px 8px"></div></div>';
   el.innerHTML=h;
   UI.tabela(el.querySelector('#bf-hist'),{linhas:ls, linhaAct:'abrir', vazio:'Nenhum buffet registrado para a empresa selecionada.', colunas:[
     {t:'Buffet', v:function(b){ return '<b>'+esc(b.num)+'</b><small>'+esc(b.turno)+' · '+esc(b.resp)+'</small>'; }, ord:function(b){ return b.num; }},
@@ -154,14 +146,45 @@ function principal(el){
     {t:'Perdas', r:true, v:function(b){ if(b.status!=='encerrado') return '—'; var r=LFI.resumoBuffet(b); return '<b style="color:var(--red)">'+F.moeda(r.vDesc+r.vPerda)+'</b>'; }, ord:function(b){ if(b.status!=='encerrado') return 0; var r=LFI.resumoBuffet(b); return r.vDesc+r.vPerda; }},
     {t:'Status', v:function(b){ return UI.status('bf',b.status); }, ord:function(b){ return b.status; }}
   ]});
-  if(enc[0]){ var r=LFI.resumoBuffet(enc[0]); UI.grafRosca(el.querySelector('#bf-ult'),{itens:[{nome:'Consumido',valor:r.consumo,cor:'#16A34A'},{nome:'Reaproveitado',valor:r.reaproveitado,cor:'#1D4ED8'},{nome:'Descarte',valor:r.descarte,cor:'#DC2626'},{nome:'Perda',valor:r.perda,cor:'#B08A00'}], fmt:kg, centro:{valor:F.pct(r.aproveitamento,0), rotulo:'aproveitamento'}});
-    el.querySelector('#bf-ult').insertAdjacentHTML('beforeend','<div style="margin-top:12px"><div class="lnr"><span class="k">'+esc(enc[0].num)+' · '+F.data(enc[0].data)+'</span><span class="v"><a class="vertodos" data-act="abrir" data-id="'+enc[0].id+'">Ver relatório</a></span></div><div class="lnr"><span class="k">Perdas ao custo</span><span class="v" style="color:var(--red)">'+F.moeda(r.vDesc+r.vPerda)+'</span></div><div class="lnr"><span class="k">Reaproveitado (estoque de sobras)</span><span class="v">'+F.moeda(r.vReap)+'</span></div></div>'); }
-  else el.querySelector('#bf-ult').innerHTML=UI.vazio('Nenhum buffet encerrado','🍣');
   ligaPrincipal(el);
   iniciaRelogio(el);
 }
-function ligaPrincipal(el){ var s=st(); UI.liga(el, UI.navHandlers({ aba:function(id){ s.aba=id; LFI.recarregar(); }, novo:function(){ LFI.ir('buffet','novo'); }, abrir:function(id){ LFI.ir('buffet',id); },
+function ligaPrincipal(el){ var s=st(); UI.liga(el, UI.navHandlers({ dados:function(){ dadosModal(); }, aba:function(id){ s.aba=id; LFI.recarregar(); }, novo:function(){ LFI.ir('buffet','novo'); }, abrir:function(id){ LFI.ir('buffet',id); },
   pdfGeral:function(){ pdfGeral(); }, xlsGeral:function(){ xlsGeral(); } })); }
+
+/* indicadores e gráficos do buffet: ficam num botão "Dados" para a tela principal ficar só com a pesagem */
+function dadosModal(){
+  var ls=visiveis(), enc=ls.filter(function(b){ return b.status==='encerrado'; }).sort(function(a,b){ return (b.data+b.abertura)>(a.data+a.abertura)?1:-1; });
+  var mes=LFI.hoje().slice(0,7), doMes=ls.filter(function(b){ return b.data.slice(0,7)===mes; }), encMes=doMes.filter(function(b){ return b.status==='encerrado'; });
+  var A={disp:0, cons:0, cli:0, perdas:0, reap:0}; encMes.forEach(function(b){ var r=LFI.resumoBuffet(b); A.disp+=r.disp; A.cons+=r.consumo; A.cli+=b.clientes||0; A.perdas+=r.vDesc+r.vPerda; A.reap+=r.vReap; });
+  var h='<div class="kpis">'+
+    UI.kpi({lb:'Buffets no mês', vl:String(doMes.length), dl:encMes.length+' encerrado(s)'})+
+    UI.kpi({lb:'Consumo por cliente', vl:A.cli?F.num(A.cons/A.cli*1000,0)+' <small>g</small>':'—', dl:A.cli?F.num(A.cli,0)+' clientes · '+kg(A.cons):'sem buffets encerrados'})+
+    UI.kpi({lb:'Aproveitamento', vl:A.disp?F.pct(A.cons/A.disp):'—', dl:'consumido ÷ disponível', hl:true})+
+    UI.kpi({lb:'Perdas do buffet', vl:F.moeda(A.perdas), dl:'reaproveitado '+F.moeda(A.reap)})+'</div>';
+  h+='<div class="card flat"><h3>Último buffet encerrado <small>'+(enc[0]?esc(enc[0].num)+' · '+F.data(enc[0].data):'')+'</small></h3><div id="dm-ult"></div></div>';
+  var m=UI.modal({titulo:'Dados do buffet', sub:'Mês atual', tam:'lg', corpo:h,
+    botoes:'<button class="btn sec esq" data-act="reg">Regras de conservação</button><button class="btn sec" data-act="_fechar">Fechar</button><button class="btn pri" data-act="rel">'+UI.ic('relatorio')+'Relatório de perdas</button>',
+    acoes:{rel:function(){ st().aba='relatorio'; m.fechar(); LFI.ir('buffet'); }, reg:function(){ st().aba='regras'; m.fechar(); LFI.ir('buffet'); }}});
+  var box=m.corpo.querySelector('#dm-ult');
+  if(enc[0]){ var r=LFI.resumoBuffet(enc[0]); UI.grafRosca(box,{itens:[{nome:'Consumido',valor:r.consumo,cor:'#16A34A'},{nome:'Reaproveitado',valor:r.reaproveitado,cor:'#1D4ED8'},{nome:'Descarte',valor:r.descarte,cor:'#DC2626'},{nome:'Perda',valor:r.perda,cor:'#B08A00'}], fmt:kg, centro:{valor:F.pct(r.aproveitamento,0), rotulo:'aproveitamento'}}); }
+  else box.innerHTML=UI.vazio('Nenhum buffet encerrado','🍣');
+}
+function dadosAcomp(b){
+  var t=totais(b), preco=LFI.db.buffetPrecoKg;
+  var m=UI.modal({titulo:'Dados do '+esc(b.num), sub:'Consumo até agora', tam:'xl', corpo:'<div class="kpis">'+UI.kpi({lb:'Consumido', vl:kg(t.cons), dl:F.pct(t.disp?t.cons/t.disp:0)+' do disponível', hl:true})+UI.kpi({lb:'Restante estimado', vl:kg(t.rest)})+UI.kpi({lb:'Receita estimada', vl:F.moeda(t.cons*preco)})+UI.kpi({lb:'Clientes', vl:F.num(b.clientes||0,0), dl:b.clientes?F.num(t.cons/b.clientes*1000,0)+' g por cliente':''})+'</div>'+
+    '<div class="grid g2 mb"><div class="card flat"><h3>Consumo por categoria</h3><div id="g-cat"></div></div><div class="card flat"><h3>Consumo por produto <small>kg</small></h3><div id="g-prod"></div></div></div><div class="card flat"><h3>Curva de consumo <small>acumulado (kg)</small></h3><div id="g-curva"></div></div>'});
+  var el=m.corpo;
+  setTimeout(function(){
+    var porCat={}; b.itens.forEach(function(it){ var c=catDe(it.rec); porCat[c]=(porCat[c]||0)+(it.cons||0); });
+    if(t.cons) UI.grafRosca(el.querySelector('#g-cat'),{itens:Object.keys(porCat).map(function(c,i){ return {nome:c, valor:porCat[c], cor:['#C2185B','#16A34A','#1D4ED8'][i]}; }), fmt:kg, centro:{valor:kg(t.cons), rotulo:'consumidos'}});
+    else el.querySelector('#g-cat').innerHTML=UI.vazio('Aguardando consumo.','⏱️');
+    var pl=b.itens.map(function(it){ var r=LFI.rec(it.rec); return {nome:r.foto+' '+r.nome.replace(/\s*\(.*\)/,''), valor:it.cons||0, cor:catDe(it.rec)==='Sushi'?'#C2185B':'#16A34A', sub:F.moeda((it.cons||0)*preco)}; }).sort(function(a,c){ return c.valor-a.valor; });
+    el.querySelector('#g-prod').innerHTML=UI.barrasH(pl,{fmt:kg});
+    if(b.leituras.length>1) UI.grafLinhas(el.querySelector('#g-curva'),{cats:b.leituras.map(function(l){ return l.h; }), series:[{nome:'Consumo acumulado', cor:'#FF5A00', valores:b.leituras.map(function(l){ return l.kg; })}], fmt:kg, altura:200});
+    else el.querySelector('#g-curva').innerHTML=UI.vazio('A curva aparece com as leituras da balança.','📈');
+  },40);
+}
 function iniciaRelogio(el){
   relogio=setInterval(function(){ if(!el.isConnected){ clearInterval(relogio); relogio=null; return; }
     UI.els('.relogio[data-bf]',el).forEach(function(x){ var b=LFI.buffet(x.getAttribute('data-bf')); if(b) x.textContent=dur(decorrido(b)); }); },1000);
@@ -228,14 +251,12 @@ function acompanhamento(el, b){
   var t=totais(b), preco=LFI.db.buffetPrecoKg;
   var alertas=b.itens.map(function(it){ var rest=restKg(it), f=it.pesoIni?rest/it.pesoIni:1; return {it:it, rest:rest, f:f, nivel:f<0.25?'al':f<0.4?'at':null}; }).filter(function(x){ return x.nivel; }).sort(function(a,b){ return a.f-b.f; });
   var h=UI.cabecalho({migalha:[{t:'Buffet',ir:'buffet'},{t:b.num}], titulo:esc(b.num)+' · buffet do '+esc(b.turno.toLowerCase())+' '+UI.status('bf',b.status), sub:esc(LFI.dep(b.dep).nome)+' · aberto às '+esc(b.abertura)+' por '+esc(b.resp)+' · '+F.moeda(preco)+'/kg',
-    acoes:'<span class="bf-scale"><i></i>Balança conectada (simulação)</span><button class="btn sec md" data-act="simular">'+UI.ic('relogio')+'Simular +30 min de operação</button><button class="btn pri md" data-act="encerrar">'+UI.ic('check')+'Iniciar encerramento</button>'});
+    acoes:'<span class="bf-scale"><i></i>Balança conectada (simulação)</span><button class="btn sec md" data-act="dadosA">'+UI.ic('relatorio')+'Dados</button><button class="btn sec md" data-act="simular">'+UI.ic('relogio')+'Simular +30 min de operação</button><button class="btn pri md" data-act="encerrar">'+UI.ic('check')+'Iniciar encerramento</button>'});
   h+='<div class="card mb" style="padding:16px 20px 2px">'+UI.passos(ETAPAS,1)+'</div>';
-  h+='<div class="kpis k5">'+
-    UI.kpi({lb:'Tempo de operação', vl:'<span class="relogio" data-bf="'+b.id+'">'+dur(decorrido(b))+'</span>', dl:'desde '+esc(b.abertura)+' · agora '+horaOper(b), hl:true})+
+  h+='<div class="kpis k3">'+
+    UI.kpi({lb:'Tempo de operação', vl:'<span class="relogio" data-bf="'+b.id+'">'+dur(decorrido(b))+'</span>', dl:'desde '+esc(b.abertura), hl:true})+
     UI.kpi({lb:'Peso disponível', vl:kg(t.disp), dl:'inicial '+kg(t.ini)+' · reposições '+kg(t.rep)})+
-    UI.kpi({lb:'Consumido', vl:kg(t.cons), dl:F.pct(t.disp?t.cons/t.disp:0)+' do disponível'})+
     UI.kpi({lb:'Restante estimado', vl:kg(t.rest), dl:alertas.length?(function(){ var n=alertas.filter(function(x){ return x.nivel==='al'; }).length; return n?'<span style="color:var(--red)">'+n+' item(ns) para repor</span>':'<span style="color:#946C00">'+alertas.length+' item(ns) em atenção</span>'; })():'níveis adequados'})+
-    UI.kpi({lb:'Receita estimada', vl:F.moeda(t.cons*preco), dl:F.num(b.clientes||0,0)+' clientes · '+(b.clientes?F.num(t.cons/b.clientes*1000,0)+' g/cliente':'—')})+
   '</div>';
   if(alertas.length) h+='<div class="mb">'+alertas.map(function(x){ var r=LFI.rec(x.it.rec); return '<div class="bf-alr '+(x.nivel==='at'?'at':'')+'">'+UI.ic('alerta','')+'<span>'+(x.nivel==='al'?'Repor agora: ':'Atenção: ')+r.foto+' '+esc(r.nome)+' — restam ~'+kg(x.rest)+' ('+F.pct(x.f,0)+' da cuba)</span><span class="sp"></span><button class="btn '+(x.nivel==='al'?'pri':'sec')+' md" data-act="repor" data-id="'+x.it.rec+'">'+UI.ic('mais')+'Registrar reposição</button></div>'; }).join('')+'</div>';
   else h+=UI.nota('Nenhum alerta de reposição. Alertas aparecem quando o restante estimado de uma cuba fica abaixo de 25% do peso inicial.','ok','check');
@@ -245,17 +266,10 @@ function acompanhamento(el, b){
         '<div style="display:flex;justify-content:space-between;font-size:11.5px;font-weight:800;color:var(--muted);margin-bottom:5px"><span>Consumo</span><span>'+F.pct(pc,0)+'</span></div>'+UI.bar(pc,f<0.25?'no':f<0.4?'wt':'')+
         '<div class="pesos"><div>Inicial<b>'+kg(it.pesoIni)+'</b></div><div>Reposições<b>'+kg(reposKg(it))+'</b></div><div>Consumido<b>'+kg(it.cons||0)+'</b></div><div>Restante<b style="color:var('+(f<0.25?'--red':'--text')+')">'+kg(rest)+'</b></div></div>'+
         '<div class="bf-row" style="margin-top:12px"><button class="btn sec md" style="flex:1" data-act="repor" data-id="'+it.rec+'">'+UI.ic('mais')+'Reposição</button><button class="btn sec md" style="flex:1" data-act="pesar" data-id="'+it.rec+'">'+UI.ic('balanca')+'Pesar cuba</button></div></div>'; }).join('')+'</div></div>'; });
-  h+='<div class="grid g2 mb"><div class="card"><h3>Consumo por categoria</h3><div id="g-cat"></div></div><div class="card"><h3>Consumo por produto <small>kg</small></h3><div id="g-prod"></div></div></div><div class="card mb"><h3>Curva de consumo <small>acumulado (kg) · leituras da balança</small></h3><div id="g-curva"></div></div>';
   el.innerHTML=h;
-  var porCat={}; b.itens.forEach(function(it){ var c=catDe(it.rec); porCat[c]=(porCat[c]||0)+(it.cons||0); });
-  UI.grafRosca(el.querySelector('#g-cat'),{itens:Object.keys(porCat).map(function(c,i){ return {nome:c, valor:porCat[c], cor:['#C2185B','#16A34A','#1D4ED8'][i]}; }), fmt:kg, centro:{valor:kg(t.cons), rotulo:'consumidos'}});
-  if(!t.cons) el.querySelector('#g-cat').innerHTML=UI.vazio('Aguardando consumo. Use “Simular +30 min”.','⏱️');
-  var pl=b.itens.map(function(it){ var r=LFI.rec(it.rec); return {nome:r.foto+' '+r.nome.replace(/\s*\(.*\)/,''), valor:it.cons||0, cor:catDe(it.rec)==='Sushi'?'#C2185B':'#16A34A', sub:F.moeda((it.cons||0)*preco)}; }).sort(function(a,b){ return b.valor-a.valor; });
-  el.querySelector('#g-prod').innerHTML=UI.barrasH(pl,{fmt:kg});
-  if(b.leituras.length>1) UI.grafLinhas(el.querySelector('#g-curva'),{cats:b.leituras.map(function(l){ return l.h; }), series:[{nome:'Consumo acumulado', cor:'#FF5A00', valores:b.leituras.map(function(l){ return l.kg; })}], fmt:kg, altura:200});
-  else el.querySelector('#g-curva').innerHTML=UI.vazio('A curva aparece com as leituras da balança ao longo do turno.','📈');
   iniciaRelogio(el);
   UI.liga(el, UI.navHandlers({
+    dadosA:function(){ dadosAcomp(b); },
     simular:function(){ simular(b); LFI.salvar(); UI.toast('+30 min de operação simulados','Consumo total '+kg(totais(b).cons)+' · '+b.clientes+' clientes','in'); LFI.recarregar(); },
     repor:function(id){ reposicao(b, id); },
     pesar:function(id){ pesarCuba(b, id); },
@@ -488,5 +502,5 @@ function pdfGeral(){
   UI.exportarPDF('Relatório de perdas e aproveitamento do buffet', 'Buffets encerrados', h);
 }
 
-LFI.registrar('buffet',{titulo:'Buffet e Pesagem', render:render});
+LFI.registrar('buffet',{titulo:'Buffet', render:render});
 })();
