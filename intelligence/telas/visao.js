@@ -12,23 +12,7 @@ function depsFiltro(){ var s=st(), vis=LFI.depIds().filter(function(d){ return d
 function dias(p){ var out=[], d=new Date(p.de+'T12:00:00'), f=new Date(p.ate+'T12:00:00'); while(d<=f){ out.push(LFI.dataUtil.iso(d)); d.setDate(d.getDate()+1); } return out; }
 
 /* lista de tarefas do dia: cada item leva direto à tela onde se resolve */
-function tarefas(){
-  var db=LFI.db, out=[];
-  var nfs=db.notas.filter(function(n){ return (n.status==='recebida'||n.status==='conferencia')&&LFI.empresaVisivel(n.empresa); });
-  if(nfs.length) out.push({ic:'nota', cor:'lf', t:nfs.length===1?'1 nota fiscal para conferir':nfs.length+' notas fiscais para conferir', d:LFI.forn(nfs[0].forn).nome+' · '+F.moeda(nfs[0].valor), b:'Conferir', ir:'notas/'+nfs[0].id});
-  var falta=LFI.alertas().filter(function(a){ return a.tipo==='critico'||a.tipo==='baixo'; });
-  if(falta.length) out.push({ic:'estoque', cor:'no', t:falta.length+' produtos com estoque baixo', d:falta.slice(0,3).map(function(a){ return LFI.prod(a.prod).nome; }).join(', ')+(falta.length>3?'…':''), b:'Ver estoque', ir:'estoque'});
-  var cmp=db.cotacoes.filter(function(c){ return (c.status==='comparacao'||c.status==='propostas_recebidas')&&LFI.empresaVisivel(c.empresa); });
-  if(cmp.length) out.push({ic:'compras', cor:'lf', t:'Respostas de fornecedores para comparar', d:cmp[0].num+' · '+cmp[0].propostas.length+' propostas recebidas', b:'Comparar', ir:'compras/'+cmp[0].id});
-  var cheg=db.ordens.filter(function(o){ return ['recebida','cancelada'].indexOf(o.status)<0&&o.previsao<=LFI.hoje()&&LFI.empresaVisivel(o.empresa); });
-  if(cheg.length) out.push({ic:'caminhao', cor:'wt', t:cheg.length===1?'1 pedido para receber hoje':cheg.length+' pedidos para receber hoje', d:LFI.forn(cheg[0].forn).nome+' · '+F.moeda(LFI.totalOrdem(cheg[0])), b:'Receber', ir:'ordens'});
-  var venc=LFI.alertas().filter(function(a){ return a.tipo==='validade'; });
-  if(venc.length) out.push({ic:'relogio', cor:'wt', t:venc.length+' produtos perto do vencimento', d:venc.slice(0,3).map(function(a){ return LFI.prod(a.prod).nome; }).join(', '), b:'Ver', ir:'estoque'});
-  var bf=db.buffets.filter(function(x){ return x.status!=='encerrado'&&LFI.empresaVisivel(x.empresa); });
-  if(bf.length) out.push({ic:'buffet', cor:'lf', t:'Buffet em andamento', d:bf[0].num+' · '+bf[0].turno, b:'Acompanhar', ir:'buffet/'+bf[0].id});
-  else if(LFI.depVisivel('res')) out.push({ic:'buffet', cor:'nu', t:'Buffet do sushi ainda não foi aberto hoje', d:'Abra o buffet e registre o peso de cada item', b:'Abrir buffet', ir:'buffet/novo'});
-  return out;
-}
+function tarefas(){ return LFI.tarefas(); }
 
 function render(el){
   var s=st(); if(['hoje','ontem','7d','30d','custom'].indexOf(s.per)<0) s.per='30d';
@@ -54,8 +38,6 @@ function render(el){
     so(1,UI.kpi({lb:'Contas a pagar', vl:F.moeda(cp.total), dl:'Nos próximos 7 dias', act:'kCp'}))+
   '</div>';
   h+='<div class="card mb"><h3>Vendas por dia</h3><div id="g-dia"></div></div>';
-  h+='<div class="card mb"><h3>O que fazer agora <small>'+tf.length+' '+(tf.length===1?'tarefa':'tarefas')+'</small></h3>'+
-     (tf.length?'<div class="vg-tarefas">'+tf.map(function(t){ return '<div class="alr '+t.cor+'" data-act="_ir" data-id="'+t.ir+'"><span class="ic">'+UI.ic(t.ic)+'</span><div class="gr"><div class="tt">'+esc(t.t)+'</div><div class="dd">'+esc(t.d)+'</div></div><span class="btn sec sm">'+esc(t.b)+'</span></div>'; }).join('')+'</div>':UI.vazio('Tudo em dia por aqui.','✅'))+'</div>';
   el.innerHTML=h;
 
   var ds=dias(p), serie={}; deps.forEach(function(d){ serie[d]=ds.map(function(){ return 0; }); });

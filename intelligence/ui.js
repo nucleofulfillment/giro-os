@@ -111,6 +111,7 @@ var IC = {
   copiar:'<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>',
   caminhao:'<path d="M3 6h11v10H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/>',
   enviar:'<path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/>',
+  sino:'<path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 20a2 2 0 0 0 4 0"/>',
   ia:'<path d="M12 3l1.8 4.6L18 9l-4.2 1.4L12 15l-1.8-4.6L6 9l4.2-1.4z"/><path d="M19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9z"/>'
 };
 UI.ic = function(n, cls){ return '<svg viewBox="0 0 24 24" class="'+(cls||'')+'" aria-hidden="true">'+(IC[n]||IC.info)+'</svg>'; };
@@ -326,7 +327,7 @@ LFI.renderizar = function(manterScroll){
   try{ LFI.telas[id].render(c, arg); }
   catch(e){ console.error(e); c.innerHTML='<div class="card">'+UI.vazio('Não foi possível abrir esta tela: '+e.message,'⚠️')+'</div>'; }
   document.title=(LFI.telas[id].titulo||'LiveFood')+' · LivePro';
-  UI.desenhaMenu(); UI.abasAtualizar(id, arg);
+  UI.desenhaMenu(); UI.abasAtualizar(id, arg); UI.desenhaNotif();
   if(mudouTela && !manterScroll) window.scrollTo(0,0); else window.scrollTo(0,y);
   fechaMM();
 };
@@ -378,6 +379,41 @@ document.addEventListener('click', function(ev){
   if(ev.target.closest('[data-abrir-menu]')){ UI.abreMM(); }
 });
 
+LFI.tarefas = function(){
+  var db=LFI.db, out=[];
+  var nfs=db.notas.filter(function(n){ return (n.status==='recebida'||n.status==='conferencia')&&LFI.empresaVisivel(n.empresa); });
+  if(nfs.length) out.push({ic:'nota', cor:'lf', t:nfs.length===1?'1 nota fiscal para conferir':nfs.length+' notas fiscais para conferir', d:LFI.forn(nfs[0].forn).nome+' · '+F.moeda(nfs[0].valor), b:'Conferir', ir:'notas/'+nfs[0].id});
+  var falta=LFI.alertas().filter(function(a){ return a.tipo==='critico'||a.tipo==='baixo'; });
+  if(falta.length) out.push({ic:'estoque', cor:'no', t:falta.length+' produtos com estoque baixo', d:falta.slice(0,3).map(function(a){ return LFI.prod(a.prod).nome; }).join(', ')+(falta.length>3?'…':''), b:'Ver estoque', ir:'estoque'});
+  var cmp=db.cotacoes.filter(function(c){ return (c.status==='comparacao'||c.status==='propostas_recebidas')&&LFI.empresaVisivel(c.empresa); });
+  if(cmp.length) out.push({ic:'compras', cor:'lf', t:'Respostas de fornecedores para comparar', d:cmp[0].num+' · '+cmp[0].propostas.length+' propostas recebidas', b:'Comparar', ir:'compras/'+cmp[0].id});
+  var cheg=db.ordens.filter(function(o){ return ['recebida','cancelada'].indexOf(o.status)<0&&o.previsao<=LFI.hoje()&&LFI.empresaVisivel(o.empresa); });
+  if(cheg.length) out.push({ic:'caminhao', cor:'wt', t:cheg.length===1?'1 pedido para receber hoje':cheg.length+' pedidos para receber hoje', d:LFI.forn(cheg[0].forn).nome+' · '+F.moeda(LFI.totalOrdem(cheg[0])), b:'Receber', ir:'ordens'});
+  var venc=LFI.alertas().filter(function(a){ return a.tipo==='validade'; });
+  if(venc.length) out.push({ic:'relogio', cor:'wt', t:venc.length+' produtos perto do vencimento', d:venc.slice(0,3).map(function(a){ return LFI.prod(a.prod).nome; }).join(', '), b:'Ver', ir:'estoque'});
+  var bf=db.buffets.filter(function(x){ return x.status!=='encerrado'&&LFI.empresaVisivel(x.empresa); });
+  if(bf.length) out.push({ic:'buffet', cor:'lf', t:'Buffet em andamento', d:bf[0].num+' · '+bf[0].turno, b:'Acompanhar', ir:'buffet/'+bf[0].id});
+  else if(LFI.depVisivel('res')) out.push({ic:'buffet', cor:'nu', t:'Buffet do sushi ainda não foi aberto hoje', d:'Abra o buffet e registre o peso de cada item', b:'Abrir buffet', ir:'buffet/novo'});
+  return out;
+};
+
+/* ---------- notificações flutuantes (canto inferior direito, em todas as telas) ---------- */
+UI.desenhaNotif = function(){
+  var b=document.getElementById('notif'); if(!b){ b=document.createElement('div'); b.id='notif'; document.body.appendChild(b); }
+  var t=LFI.tarefas().filter(function(x){ return x.cor!=='nu'; }), aberto=b.classList.contains('on');
+  b.innerHTML='<div class="nt-pn"><div class="nt-hd"><b>Notificações</b><small>'+t.length+' '+(t.length===1?'pendência':'pendências')+'</small><button class="nt-x" data-notif-x aria-label="Fechar">✕</button></div>'+
+    '<div class="nt-ls">'+(t.length?t.map(function(x){ return '<button class="nt-it '+x.cor+'" data-notif-ir="'+x.ir+'"><span class="ic">'+UI.ic(x.ic)+'</span><span class="gr"><b>'+esc(x.t)+'</b><small>'+esc(x.d)+'</small></span><span class="nt-b">'+esc(x.b)+'</span></button>'; }).join(''):UI.vazio('Tudo em dia por aqui.','✅'))+'</div></div>'+
+    '<button class="nt-fab" data-notif-tg aria-label="Notificações">'+UI.ic('sino')+(t.length?'<span class="nt-n">'+t.length+'</span>':'')+'</button>';
+  if(aberto) b.classList.add('on');
+};
+document.addEventListener('click', function(ev){
+  var b=document.getElementById('notif'); if(!b) return;
+  if(ev.target.closest('[data-notif-tg]')){ b.classList.toggle('on'); return; }
+  if(ev.target.closest('[data-notif-x]')){ b.classList.remove('on'); return; }
+  var ir=ev.target.closest('[data-notif-ir]'); if(ir){ b.classList.remove('on'); var p=ir.getAttribute('data-notif-ir').split('/'); LFI.ir(p[0], p.slice(1).join('/')||null); return; }
+  if(b.classList.contains('on')&&!ev.target.closest('#notif')) b.classList.remove('on');
+});
+
 /* ---------- casca: menu, empresa, busca ---------- */
 function contagens(){
   var db=LFI.db, c={};
@@ -423,7 +459,7 @@ document.addEventListener('click', function(ev){
   if(!ev.target.closest('.emp-sel')) ls.classList.remove('on');
 });
 LFI.on('empresa', function(){ UI.desenhaEmpresa(); LFI.recarregar(); var e=LFI.empresaAtual(); UI.toast(e?'Visualizando '+e.fantasia:'Visão consolidada do grupo', e?'CNPJ '+e.cnpj:'Todas as empresas', 'in'); });
-LFI.on('mudou', function(){ UI.desenhaMenu(); UI.desenhaAbas(); });
+LFI.on('mudou', function(){ UI.desenhaMenu(); UI.desenhaAbas(); UI.desenhaNotif(); });
 
 /* cadastro de empresas (multi-CNPJ) */
 UI.gerenciarEmpresas = function(){
