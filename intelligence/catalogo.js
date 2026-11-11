@@ -17,9 +17,9 @@ LFI.grupoInfo=function(n){ for(var i=0;i<GRUPOS.length;i++) if(GRUPOS[i].nome===
 function k(s){ return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/\s+/g,' ').trim(); }
 
 /* produto de exemplo -> equivalente real (mesmo id, para manter notas, pedidos e cotações) */
-var MAP_ING={p01:'Farinha de trigo tipo 1',p02:'Açúcar Cristal',p03:'Sal',p04:'Fermento Mauri',p05:'Emustab',p06:'Margarina 15kg',p07:'Manteiga comum',p08:'Leite',p09:'Creme de leite',p10:'Ovos',p11:'Queijo fatiado',p12:'Queijo Inteiro',p13:'Presunto',p15:'Polvilho azedo',p16:'Chocolate Picado Meio Amargo',p17:'Fermento molhado',p18:'Óleo',p26:'Extrato tomate elefante',p27:'Cogumelos fatiados',p28:'Cebola',p29:'Tomate',p30:'Alface',p31:'Cenoura',p32:'Batata',p36:'Frango',p37:'Coxão Mole',p38:'Carne moida',p44:'Gergelim',p53:'Embalagem P 750',p55:'Embalagem Sacola M',p57:'Papel manteiga 50x70',pa3:'Pão de queijo'};
-var MAP_REV={p48:'Coca cola lata 350ml',p49:'Agua sem gás 500ml',p50:'Cerveja Heineken long neck',p51:'Suco del valle 1lt'};
-var MAP_REC={pa1:'Pão frances'};
+var MAP_ING={p01:'Farinha de trigo tipo 1',p02:'Açúcar cristal',p03:'Sal',p04:'Fermento biológico',p05:'Melhorador de farinha',p06:'Margarina',p07:'Manteiga',p08:'Leite',p09:'Creme de leite',p10:'Ovos',p11:'Queijo muçarela fatiado',p12:'Queijo minas',p13:'Presunto',p15:'Polvilho azedo',p16:'Chocolate meio amargo',p17:'Fermento químico',p18:'Óleo de soja',p26:'Extrato de tomate',p27:'Champignon fatiado',p28:'Cebola',p29:'Tomate',p30:'Alface',p31:'Cenoura',p32:'Batata',p36:'Peito de frango',p37:'Carne bovina (patinho)',p38:'Carne moída',p44:'Gergelim',p53:'Embalagem marmitex 750 ml',p55:'Sacola média',p57:'Papel manteiga',pa3:'Pão de queijo congelado (un)'};
+var MAP_REV={p48:'Refrigerante cola lata 350ml',p49:'Água mineral 500ml',p50:'Cerveja long neck',p51:'Suco de uva 1L'};
+var MAP_REC={pa1:'Pão francês'};
 var SUSHI={p14:1,p21:1,p25:1,p33:1,p34:1,p35:1,p39:1,p40:1,p41:1,p42:1,p43:1,p45:1,p46:1,p47:1,p54:1,p56:1};
 var LOCAL={far:'Despensa seca A',mer:'Despensa seca B',lat:'Câmara fria 01 (0 a 4 °C)',car:'Câmara de resfriados 02',pes:'Câmara de resfriados 02',hor:'Câmara fria 01 (0 a 4 °C)',ole:'Despensa seca A',beb:'Bar e adega',emb:'Almoxarifado de embalagens',tem:''};
 var RUA={'Câmara fria 01 (0 a 4 °C)':'CF','Freezer 02 (−18 °C)':'FZ','Despensa seca A':'A','Despensa seca B':'B','Bar e adega':'BR','Almoxarifado de embalagens':'E','Câmara de resfriados 02':'CR','Vitrine da padaria':'VT'};
@@ -140,11 +140,11 @@ LFI._aplicarCatalogo=function(db, h){
 
   /* ---- 8. produção de exemplo com receitas reais ---- */
   function recDe(nome){ var kk=k(nome); for(var i=0;i<db.receitas.length;i++) if(k(db.receitas[i].nome)===kk) return db.receitas[i]; return null; }
-  var ops=[['op451','OP-2026-0451','Pão frances',1,0,'04:30','07:40','Seu Antônio (padeiro)','concluida','Fornada da manhã.'],
-           ['op452','OP-2026-0452','Cuca crescida brigadeiro mole farofa',1,0,'06:10',null,'Larissa (confeitaria)','producao','Cucas para a vitrine da tarde.'],
+  var ops=[['op451','OP-2026-0451','Pão francês',1,0,'04:30','07:40','Seu Antônio (padeiro)','concluida','Fornada da manhã.'],
+           ['op452','OP-2026-0452','Cuca de brigadeiro',1,0,'06:10',null,'Larissa (confeitaria)','producao','Cucas para a vitrine da tarde.'],
            ['op453','OP-2026-0453','Recheio de frango',1,0,null,null,'Seu Antônio (padeiro)','planejada','Recheio para pastéis e calzones.'],
-           ['op450','OP-2026-0450','Rosca de polvilho',1,-1,'14:00','15:30','Larissa (confeitaria)','concluida',''],
-           ['op449','OP-2026-0449','Bolo morango com chocolate',2,-1,'09:00','10:20','Larissa (confeitaria)','concluida','']];
+           ['op450','OP-2026-0450','Biscoito de polvilho',1,-1,'14:00','15:30','Larissa (confeitaria)','concluida',''],
+           ['op449','OP-2026-0449','Bolo de morango com chocolate',2,-1,'09:00','10:20','Larissa (confeitaria)','concluida','']];
   db.producao=[];
   ops.forEach(function(o){ var r=recDe(o[2]); if(!r) return;
     var qtd=r3((r.rend||1)*o[3]);
@@ -161,8 +161,8 @@ LFI._aplicarCatalogo=function(db, h){
   db.atividades.forEach(function(a){ if(a.ref&&a.ref.id==='op451') a.txt='OP-2026-0451 concluída: '+String(db.producao[0]?db.producao[0].qtd:'').replace('.',',')+' kg de pão francês'; });
 
   /* ---- 9. mix de vendas com produtos reais (o buffet de sushi continua de exemplo) ---- */
-  var mix=[['Pão frances','pad',0.22],['Cafezinho 80ml','pad',0.12],['Cuca crescida brigadeiro mole farofa','pad',0.1],['Sonho Creme 202g','pad',0.08],['Pastel frango','pad',0.08],['Bolo morango com chocolate','pad',0.06],
-           ['X- salada','res',0.12],['X-burguer','res',0.09],['Prato de picanha 350g','res',0.06],['Porção alcatra 400g','res',0.04]];
+  var mix=[['Pão francês','pad',0.22],['Cafezinho','pad',0.12],['Cuca de brigadeiro','pad',0.1],['Sonho de creme','pad',0.08],['Pastel de frango','pad',0.08],['Bolo de morango com chocolate','pad',0.06],
+           ['X-salada','res',0.12],['X-burguer','res',0.09],['Prato de carne acebolada','res',0.06],['Porção de batata frita','res',0.04]];
   var novoMix=[];
   mix.forEach(function(m){ var r=recDe(m[0]); if(r) novoMix.push({nome:r.nome, dep:m[1], rec:r.id, part:m[2], preco:r.preco||0}); });
   var coca=null; db.produtos.forEach(function(p){ if(p.id==='p48') coca=p; });
@@ -173,10 +173,12 @@ LFI._aplicarCatalogo=function(db, h){
   var REN={'Pães':'Pães','Confeitaria':'Bolos e tortas','Salgados':'Pastel','Bebidas':'Bebidas','Revenda':'Cucas e bolos secos','Almoço buffet/executivo':'Lanches e porções','À la carte':'Pratos e porções','Delivery':'Delivery'};
   db.vendas.forEach(function(v){ var c2={}; Object.keys(v.cats).forEach(function(c){ var n=REN[c]||c; c2[n]=r2((c2[n]||0)+v.cats[c]); }); v.cats=c2; });
   /* ---- 10. regimes do cliente: Padaria no Lucro Real, Restaurante no Simples Nacional; faturamento realista do restaurante ---- */
-  db.grupo.nome='Casa do Pão';
+  var nomeConta=''; try{ var us=JSON.parse(localStorage.getItem('dd_user')||'null'); nomeConta=us&&us.cliente_nome?String(us.cliente_nome).trim():''; }catch(e){}
+  if(!nomeConta) nomeConta='Padaria Exemplo';
+  db.grupo.nome=nomeConta;
   db.empresas.forEach(function(e){
-    if(e.id==='e1'){ e.fantasia='Casa do Pão Padaria'; e.razao='Casa do Pão Panificadora Ltda'; e.sigla='CP'; }
-    if(e.id==='e2'){ e.fantasia='Casa do Pão Restaurante'; e.razao='Casa do Pão Restaurante Ltda'; e.sigla='CR'; }
+    if(e.id==='e1'){ e.fantasia=nomeConta+' Padaria'; e.razao=nomeConta+' Panificadora Ltda'; }
+    if(e.id==='e2'){ e.fantasia=nomeConta+' Restaurante'; e.razao=nomeConta+' Restaurante Ltda'; }
     if(e.id==='e1'){ e.regime='Lucro Real'; e.pisCofins='nao_cumulativo'; e.impVenda=13; }
     if(e.id==='e2'){ e.regime='Simples Nacional'; e.pisCofins='nao_se_aplica'; e.anexo='I'; e.impVenda=9; }
   });
@@ -187,7 +189,7 @@ LFI._aplicarCatalogo=function(db, h){
     e1:{pis:1.65, cofins:7.6, icmsVenda:7, icmsCompra:5, cmv:35, lucro:8, irpj:15, adicional:10, limAdicional:20000, csll:9},
     e2:{anexo:'I'}
   };
-  db.atividades.forEach(function(a){ a.txt=a.txt.replace(/Dourado Restaurante/g,'Casa do Pão Restaurante').replace(/Pão Dourado Padaria/g,'Casa do Pão Padaria'); });
+  db.atividades.forEach(function(a){ a.txt=a.txt.replace(/Dourado Restaurante/g,nomeConta+' Restaurante').replace(/Pão Dourado Padaria/g,nomeConta+' Padaria'); });
   db.categorias.forEach(function(c){ if(c.id==='ori') c.nome='Insumos do sushi (buffet de exemplo)'; if(c.id==='aca') c.nome='Produtos feitos aqui'; }); db.categorias.push({id:'tem', nome:'Tempo e mão de obra'});
 };
 

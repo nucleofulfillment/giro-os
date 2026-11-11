@@ -354,6 +354,7 @@ LFI.recarregar = function(){ LFI.renderizar(true); };
 UI.selBusca = function(sel){
   if(!sel||sel._busca||sel.multiple) return; sel._busca=true;
   var box=document.createElement('div'); box.className='selb';
+  var larg=sel.offsetWidth, pai=sel.parentNode; if(larg>0 && pai && larg < pai.clientWidth-8){ box.style.width=Math.max(larg,220)+'px'; box.style.display='inline-block'; box.style.verticalAlign='middle'; }   /* em barras de filtro mantém a largura original */
   sel.parentNode.insertBefore(box, sel); box.appendChild(sel); sel.classList.add('selb-orig');
   var inp=document.createElement('input'); inp.type='text'; inp.className=(sel.className.replace('selb-orig','')+' selb-in').trim(); inp.autocomplete='off'; inp.setAttribute('role','combobox');
   var ls=document.createElement('div'); ls.className='selb-l'; ls.hidden=true;
@@ -416,7 +417,7 @@ window.addEventListener('hashchange', function(){ UI.fecharTodos(); LFI.renderiz
 UI.setaVoltar = function(){ return '<button type="button" class="pghd-v" data-voltar aria-label="Voltar para a tela anterior"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button>'; };
 UI.cabecalho = function(o){
   return (o.migalha?'<div class="migalha">'+o.migalha.map(function(m,i){ return m.ir?'<a data-act="_ir" data-id="'+esc(m.ir)+'">'+esc(m.t)+'</a>':'<span>'+esc(m.t)+'</span>'; }).join('<span>›</span>')+'</div>':'')+
-    '<div class="pghd"><div>'+(LFI.atual().id!=='visao'?'<div class="pghd-t"><button type="button" class="pghd-v" data-voltar aria-label="Voltar para a tela anterior"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button><h1>'+o.titulo+'</h1></div>':'<h1>'+o.titulo+'</h1>')+(o.sub?'<div class="sub">'+o.sub+'</div>':'')+'</div>'+(o.acoes?'<div class="acoes">'+o.acoes+'</div>':'')+'</div>';
+    '<div class="pghd"><div>'+(LFI.atual().id!=='visao'?'<div class="pghd-t"><button type="button" class="pghd-v" data-voltar="'+esc((o.migalha||[]).filter(function(m){ return m.ir; }).map(function(m){ return m.ir; }).pop()||'')+'" aria-label="Voltar"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button><h1>'+o.titulo+'</h1></div>':'<h1>'+o.titulo+'</h1>')+(o.sub?'<div class="sub">'+o.sub+'</div>':'')+'</div>'+(o.acoes?'<div class="acoes">'+o.acoes+'</div>':'')+'</div>';
 };
 /* navegação embutida: data-act="_ir" data-id="tela/arg" */
 UI.navHandlers = function(h){ h=h||{}; h._ir=function(id){ var p=String(id).split('/'); LFI.ir(p[0], p.slice(1).join('/')||null); }; return h; };
@@ -606,7 +607,12 @@ UI.iniciar = function(){
   document.getElementById('tb-menu').addEventListener('click', UI.abreMM);
   var tv=document.getElementById('tb-voltar'); if(tv) tv.addEventListener('click', function(){ LFI.voltar(); });
   /* setinha ao lado do título de cada tela */
-  document.addEventListener('click', function(ev){ if(ev.target.closest('[data-voltar]')){ ev.preventDefault(); LFI.voltar(); } });
+  document.addEventListener('click', function(ev){ var b=ev.target.closest('[data-voltar]'); if(!b) return; ev.preventDefault();
+    /* volta para a seção de cima: detalhe → lista do módulo; lista → tela anterior */
+    var alvo=b.getAttribute('data-voltar'), a=LFI.atual();
+    if(alvo){ var i=alvo.indexOf('/'); LFI.ir(i<0?alvo:alvo.slice(0,i), i<0?null:alvo.slice(i+1)); }
+    else if(a.arg) LFI.ir(a.id);
+    else LFI.voltar(); });
   /* listas longas ganham busca, inclusive as que aparecem depois (janelas, telas novas) */
   UI.selBuscaEm(document); var _sbT=null; new MutationObserver(function(){ clearTimeout(_sbT); _sbT=setTimeout(function(){ UI.selBuscaEm(document); },30); }).observe(document.body,{childList:true, subtree:true});
   document.querySelector('#mm .fd').addEventListener('click', fechaMM);
