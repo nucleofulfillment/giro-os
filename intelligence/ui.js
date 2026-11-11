@@ -259,8 +259,8 @@ UI.exportarPDF = function(titulo, subtitulo, htmlCorpo){
   var emp=LFI.empresaAtual(), w=window.open('','_blank');
   var cab = emp ? emp.razao+' · CNPJ '+emp.cnpj : LFI.db.grupo.nome+' · consolidado ('+LFI.db.empresas.length+' CNPJs)';
   var html='<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>'+esc(titulo)+'</title><style>@page{size:A4;margin:12mm}body{font-family:Manrope,Arial,sans-serif;color:#1C1C1E;font-size:11px;margin:0}h1{font-size:18px;margin:0}h2{font-size:13px;margin:16px 0 6px}.cab{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #FF5A00;padding-bottom:10px;margin-bottom:14px}.cab small{color:#5E5E66;font-size:10.5px}.cab img{height:22px}table{width:100%;border-collapse:collapse;margin-top:6px}th{background:#F3F3F5;text-align:left;font-size:9.5px;text-transform:uppercase;letter-spacing:.3px;color:#5E5E66;padding:6px 7px;border-bottom:1px solid #DFDFE4}td{padding:6px 7px;border-bottom:1px solid #ECECEF;font-size:10.5px}td.r,th.r{text-align:right}tfoot td{font-weight:800;background:#FAFAFA}.kp{display:flex;gap:10px;margin:8px 0 4px}.kp div{flex:1;border:1px solid #ECECEF;border-radius:8px;padding:8px 10px}.kp span{display:block;font-size:9px;text-transform:uppercase;color:#8E8E93;font-weight:800}.kp b{font-size:14px}.rod{margin-top:18px;font-size:9.5px;color:#8E8E93;border-top:1px solid #ECECEF;padding-top:8px}.demo{background:#FFF1E8;color:#8A3A0A;padding:6px 9px;border-radius:6px;font-size:10px;margin-bottom:10px}</style></head><body>'+
-    '<div class="cab"><div><h1>'+esc(titulo)+'</h1><small>'+esc(subtitulo||'')+'<br>'+esc(cab)+'</small></div><div style="text-align:right"><img src="'+location.href.replace(/[^\/]*$/,'')+'livefood-logo.png" alt="LiveFood"><br><small>LiveFood Intelligence · emitido em '+F.dataHora(LFI.agoraISO())+'</small></div></div>'+
-    '<div class="demo">Relatório de demonstração gerado com dados fictícios.</div>'+htmlCorpo+'<div class="rod">Gerado por '+esc(LFI.usuario().nome)+' · LiveFood Intelligence</div><script>setTimeout(function(){print()},400)<\/script></body></html>';
+    '<div class="cab"><div><h1>'+esc(titulo)+'</h1><small>'+esc(subtitulo||'')+'<br>'+esc(cab)+'</small></div><div style="text-align:right"><img src="'+location.href.replace(/[^\/]*$/,'')+'livefood-logo.png" alt="LiveFood"><br><small>LivePro · emitido em '+F.dataHora(LFI.agoraISO())+'</small></div></div>'+
+    '<div class="demo">Relatório de demonstração gerado com dados fictícios.</div>'+htmlCorpo+'<div class="rod">Gerado por '+esc(LFI.usuario().nome)+' · LivePro</div><script>setTimeout(function(){print()},400)<\/script></body></html>';
   if(!w){ UI.toast('Libere a abertura de janelas para gerar o PDF','','wt'); return; }
   w.document.open(); w.document.write(html); w.document.close();
 };
@@ -269,9 +269,9 @@ UI.exportarPDF = function(titulo, subtitulo, htmlCorpo){
 LFI.telas = {};
 LFI.menu = [
   {grupo:'Gestão', itens:[{id:'visao', nome:'Visão Geral', ic:'painel'}]},
-  {grupo:'Suprimentos', itens:[{id:'notas', nome:'Notas Fiscais', ic:'nota'},{id:'estoque', nome:'Estoque Inteligente', ic:'estoque'},{id:'compras', nome:'Compras Inteligentes', ic:'compras'},{id:'ordens', nome:'Ordens de Compra', ic:'ordem'},{id:'fornecedores', nome:'Fornecedores', ic:'fornecedor'}]},
-  {grupo:'Operação', itens:[{id:'receitas', nome:'Receitas e Fichas Técnicas', ic:'receita'},{id:'producao', nome:'Produção', ic:'producao'},{id:'buffet', nome:'Buffet e Pesagem', ic:'buffet'}]},
-  {grupo:'Inteligência', itens:[{id:'custos', nome:'Custos e Precificação', ic:'custos'},{id:'tributos', nome:'Gestão Tributária', ic:'tributo'},{id:'relatorios', nome:'Indicadores e Relatórios', ic:'relatorio'}]}
+  {grupo:'Suprimentos', itens:[{id:'notas', nome:'Fiscal', ic:'nota'},{id:'estoque', nome:'Estoque', ic:'estoque'},{id:'compras', nome:'Compras', ic:'compras'},{id:'ordens', nome:'Ordens', ic:'ordem'},{id:'fornecedores', nome:'Fornecedores', ic:'fornecedor'}]},
+  {grupo:'Operação', itens:[{id:'receitas', nome:'Receitas', ic:'receita'},{id:'producao', nome:'Produção', ic:'producao'},{id:'buffet', nome:'Buffet', ic:'buffet'}]},
+  {grupo:'Inteligência', itens:[{id:'custos', nome:'Precificação', ic:'custos'},{id:'tributos', nome:'Tributário', ic:'tributo'},{id:'relatorios', nome:'Relatórios', ic:'relatorio'}]}
 ];
 LFI.estado = {}; /* estado de cada tela (filtros, abas) enquanto a página estiver aberta */
 LFI.registrar = function(id, def){ LFI.telas[id]=def; };
@@ -288,7 +288,7 @@ LFI.renderizar = function(manterScroll){
   main.innerHTML=''; main.appendChild(c);
   try{ LFI.telas[id].render(c, arg); }
   catch(e){ console.error(e); c.innerHTML='<div class="card">'+UI.vazio('Não foi possível abrir esta tela: '+e.message,'⚠️')+'</div>'; }
-  document.title=(LFI.telas[id].titulo||'LiveFood')+' · LiveFood Intelligence';
+  document.title=(LFI.telas[id].titulo||'LiveFood')+' · LivePro';
   UI.desenhaMenu();
   if(mudouTela && !manterScroll) window.scrollTo(0,0); else window.scrollTo(0,y);
   fechaMM();
