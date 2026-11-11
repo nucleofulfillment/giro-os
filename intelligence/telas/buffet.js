@@ -109,8 +109,8 @@ function alvoLeitura(base){ return Math.max(0, Math.round((base+(Math.random()*0
 function render(el, arg){
   css(); if(relogio){ clearInterval(relogio); relogio=null; }
   el.classList.add('bf-x');
-  if(arg==='novo') return abertura(el);
-  if(arg){ var b=LFI.buffet(arg); if(b){ if(b.status==='aberto') return acompanhamento(el,b); if(b.status==='encerramento') return b.etapa==='aprovacao'?aprovacao(el,b):encerramento(el,b); return relatorioBuffet(el,b); } }
+  if(arg==='novo') return abertura2(el);
+  if(arg){ var b=LFI.buffet(arg); if(b){ if(b.status==='aberto') return acompanhamento(el,b); if(b.status==='encerramento') return b.etapa==='aprovacao'?aprovacao(el,b):encerramento2(el,b); return relatorioBuffet(el,b); } }
   principal(el);
 }
 
@@ -122,7 +122,7 @@ function principal(el){
   var A={disp:0, cons:0, cli:0, perdas:0, reap:0}; encMes.forEach(function(b){ var r=LFI.resumoBuffet(b); A.disp+=r.disp; A.cons+=r.consumo; A.cli+=b.clientes||0; A.perdas+=r.vDesc+r.vPerda; A.reap+=r.vReap; });
   var turno=new Date().getHours()<16?'almoço':'jantar', susOk=LFI.depVisivel('res');
   var h=UI.cabecalho({titulo:'Buffet', sub:'Pesagem das cubas · '+F.moeda(LFI.db.buffetPrecoKg)+'/kg',
-    acoes:(s.aba!=='operacao'?'<button class="btn sec" data-act="aba" data-id="operacao">'+UI.ic('voltar')+'Voltar à pesagem</button>':'')+'<button class="btn sec" data-act="dados">'+UI.ic('relatorio')+'Dados</button>'+(susOk?'<button class="btn pri" data-act="novo">'+UI.ic('balanca')+'Abrir buffet</button>':'')});
+    acoes:(s.aba!=='operacao'?'<button class="btn sec" data-act="aba" data-id="operacao">'+UI.ic('voltar')+'Voltar à pesagem</button>':'')+'<button class="btn sec" data-act="qr">'+UI.ic('raio')+'Gravar QR Code</button>'+'<button class="btn sec" data-act="dados">'+UI.ic('relatorio')+'Dados</button>'+(susOk?'<button class="btn pri" data-act="novo">'+UI.ic('balanca')+'Abrir buffet</button>':'')});
   if(s.aba==='relatorio'){ el.innerHTML=h+relatorioGeralHTML(enc); relatorioGeral(el, enc); ligaPrincipal(el); return; }
   if(s.aba==='regras'){ el.innerHTML=h+regrasHTML(); ligaPrincipal(el); return; }
 
@@ -149,7 +149,7 @@ function principal(el){
   ligaPrincipal(el);
   iniciaRelogio(el);
 }
-function ligaPrincipal(el){ var s=st(); UI.liga(el, UI.navHandlers({ dados:function(){ dadosModal(); }, aba:function(id){ s.aba=id; LFI.recarregar(); }, novo:function(){ LFI.ir('buffet','novo'); }, abrir:function(id){ LFI.ir('buffet',id); },
+function ligaPrincipal(el){ var s=st(); UI.liga(el, UI.navHandlers({ qr:function(){ gravarQR(); }, dados:function(){ dadosModal(); }, aba:function(id){ s.aba=id; LFI.recarregar(); }, novo:function(){ LFI.ir('buffet','novo'); }, abrir:function(id){ LFI.ir('buffet',id); },
   pdfGeral:function(){ pdfGeral(); }, xlsGeral:function(){ xlsGeral(); } })); }
 
 /* indicadores e gráficos do buffet: ficam num botão "Dados" para a tela principal ficar só com a pesagem */
@@ -311,8 +311,7 @@ function avaliar(b, it){
   var g=regraDe(it.rec);
   if(!g) return {g:null, pode:false, motivo:'Sem regra de conservação cadastrada para este item: reaproveitamento não permitido.'};
   if(!g.reaproveita) return {g:g, pode:false, motivo:'Grupo “'+g.grupo+'” não permite reaproveitamento. '+g.obs};
-  if(it.temp==null||it.temp==='') return {g:g, pode:false, pend:true, motivo:'Informe a temperatura para liberar o reaproveitamento (máx. '+g.tempMax+' °C).'};
-  if(+it.temp>g.tempMax) return {g:g, pode:false, motivo:'Temperatura de '+F.num(+it.temp,1)+' °C acima do limite de '+g.tempMax+' °C.'};
+  if(it.temp!=null&&it.temp!==''&&+it.temp>g.tempMax) return {g:g, pode:false, motivo:'Temperatura de '+F.num(+it.temp,1)+' °C acima do limite de '+g.tempMax+' °C.'};
   if(it.cond==='Ambiente') return {g:g, pode:false, motivo:'Armazenamento em temperatura ambiente não permite reaproveitamento.'};
   if(it.hora&&b.encInicio){ var dm=minutos(it.hora)-minutos(b.encInicio); if(dm<0) dm+=1440; if(g.horasMax&&dm>g.horasMax*60) return {g:g, pode:false, motivo:'Fora do prazo: registro '+F.num(dm/60,1)+' h após a saída do buffet (máximo '+g.horasMax+' h para resfriamento).'}; }
   return {g:g, pode:true, motivo:'Atende à regra: até '+g.tempMax+' °C, resfriamento em até '+g.horasMax+' h, uso em até '+g.validadeH+' h.'};
@@ -500,6 +499,165 @@ function pdfGeral(){
     '<h2>Por produto</h2><table><thead><tr><th>Produto</th><th class="r">Disponível</th><th class="r">Consumido</th><th class="r">Reaproveitado</th><th class="r">Descarte</th><th class="r">Perda</th><th class="r">Valor perdido</th></tr></thead><tbody>'+ag.map(function(a){ return '<tr><td>'+esc(a.rec.nome)+'</td><td class="r">'+kg(a.disp)+'</td><td class="r">'+kg(a.cons)+'</td><td class="r">'+kg(a.reap)+'</td><td class="r">'+kg(a.desc)+'</td><td class="r">'+kg(a.perda)+'</td><td class="r">'+F.moeda(a.v)+'</td></tr>'; }).join('')+'</tbody></table>'+
     '<h2>Buffets</h2><table><thead><tr><th>Buffet</th><th>Data</th><th class="r">Clientes</th><th class="r">Consumo</th><th class="r">Aproveitamento</th><th class="r">Perdas</th></tr></thead><tbody>'+enc.map(function(b){ var r=LFI.resumoBuffet(b); return '<tr><td>'+esc(b.num)+' · '+esc(b.turno)+'</td><td>'+F.data(b.data)+'</td><td class="r">'+(b.clientes||0)+'</td><td class="r">'+kg(r.consumo)+'</td><td class="r">'+F.pct(r.aproveitamento)+'</td><td class="r">'+F.moeda(r.vDesc+r.vPerda)+'</td></tr>'; }).join('')+'</tbody></table>';
   UI.exportarPDF('Relatório de perdas e aproveitamento do buffet', 'Buffets encerrados', h);
+}
+
+
+/* =====================================================================
+   BUFFET PELO CELULAR: bandeja com QR Code + foto única (QR + visor da balança)
+   Abertura: produto → foto na balança → confirmar → outro item / finalizar
+   Encerramento: foto na balança → sobra → destino → próxima / finalizar
+   ===================================================================== */
+function bandejas(){ var db=LFI.db; if(!db.bandejas){ db.bandejas=[]; for(var i=1;i<=10;i++) db.bandejas.push({id:'B'+String(i).padStart(2,'0'), codigo:'LP-BDJ-'+String(i).padStart(3,'0'), tara:r3(0.38+((i*37)%17)/100), criada:LFI.hoje()}); LFI.salvar(); } return db.bandejas; }
+function bandeja(id){ return bandejas().filter(function(x){ return x.id===id; })[0]; }
+function hashS(s){ var h=2166136261; for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); } return h>>>0; }
+/* QR Code ilustrativo (padrão visual com os 3 marcadores de canto) */
+function qrSVG(codigo, tam){
+  var n=21, h=hashS(codigo), s='', bit=function(x,y){ h=(Math.imul(h^(x*73856093)^(y*19349663),2654435761))>>>0; return h%100<47; };
+  function fin(x,y){ return '<rect x="'+x+'" y="'+y+'" width="7" height="7" fill="#111"/><rect x="'+(x+1)+'" y="'+(y+1)+'" width="5" height="5" fill="#fff"/><rect x="'+(x+2)+'" y="'+(y+2)+'" width="3" height="3" fill="#111"/>'; }
+  for(var y=0;y<n;y++) for(var x=0;x<n;x++){ var f=(x<8&&y<8)||(x>12&&y<8)||(x<8&&y>12); if(!f&&bit(x,y)) s+='<rect x="'+x+'" y="'+y+'" width="1" height="1" fill="#111"/>'; }
+  return '<svg viewBox="-1 -1 23 23" width="'+(tam||96)+'" height="'+(tam||96)+'" style="background:#fff;display:block" aria-label="QR Code '+esc(codigo)+'">'+s+fin(0,0)+fin(14,0)+fin(0,14)+'</svg>';
+}
+/* foto de exemplo: bandeja com adesivo QR sobre a balança, visor mostrando o peso */
+function fotoBalanca(rec, band, bruto){
+  var c=document.createElement('canvas'); c.width=520; c.height=390; var x=c.getContext('2d');
+  x.fillStyle='#3B3530'; x.fillRect(0,0,520,390);
+  x.fillStyle='#C9CDD2'; x.fillRect(60,250,400,110); x.fillStyle='#9AA0A6'; x.fillRect(60,250,400,10);
+  x.fillStyle='#111'; x.fillRect(300,280,140,60); x.fillStyle='#7CFC9A'; x.font='bold 30px monospace'; x.fillText(Number(bruto).toFixed(3),312,322); x.font='bold 11px Arial'; x.fillText('kg',418,334);
+  x.fillStyle='#F3F3F0'; x.fillRect(90,120,340,130); x.fillStyle='#E2E2DD'; x.fillRect(100,130,320,110);
+  var r=LFI.rec(rec); x.font='54px serif'; x.fillText(r?r.foto:'🍱',200,205);
+  x.fillStyle='#fff'; x.fillRect(110,140,60,72); x.fillStyle='#111'; var h=hashS(band.codigo);
+  for(var yy=0;yy<14;yy++) for(var xx=0;xx<14;xx++){ h=(Math.imul(h^(xx*31+yy*7),2654435761))>>>0; if(h%100<46||(xx<4&&yy<4)||(xx>9&&yy<4)||(xx<4&&yy>9)) x.fillRect(113+xx*3.9,143+yy*3.9,3.9,3.9); }
+  x.font='bold 10px Arial'; x.fillText(band.id,128,208);
+  return c.toDataURL('image/jpeg',0.72);
+}
+function fotoInput(acao){ return '<label class="bm-cam"><input type="file" accept="image/*" capture="environment" data-chg="'+acao+'">'+UI.ic('foto')+'<b>Tirar foto</b><small>bandeja na balança, com o QR Code e o visor aparecendo</small></label><button class="bm-btn sec" data-act="'+acao+'Ex">Usar foto de exemplo</button>'; }
+function lerArquivo(ev, cb){ var a=ev.target.files&&ev.target.files[0]; if(!a) return; var rd=new FileReader(); rd.onload=function(){ var im=new Image(); im.onload=function(){ var k=Math.min(1,520/Math.max(im.width,im.height)), c=document.createElement('canvas'); c.width=im.width*k; c.height=im.height*k; c.getContext('2d').drawImage(im,0,0,c.width,c.height); cb(c.toDataURL('image/jpeg',0.7)); }; im.src=rd.result; }; rd.readAsDataURL(a); }
+function telaMobile(el, titulo, sub, corpo, voltar){
+  el.innerHTML='<div class="bm"><div class="bm-hd"><button class="bm-x" data-act="'+(voltar||'_ir')+'" data-id="buffet" aria-label="Voltar">'+UI.ic('voltar')+'</button><div><b>'+titulo+'</b><small>'+sub+'</small></div></div>'+corpo+'</div>';
+}
+function css3(){ if(document.getElementById('css-buffet3')) return; var c=document.createElement('style'); c.id='css-buffet3'; c.textContent=
+  '.bm{max-width:560px;margin:0 auto;padding-bottom:40px}.bm-hd{display:flex;align-items:center;gap:12px;margin-bottom:16px}.bm-hd b{display:block;font-size:20px;font-weight:800}.bm-hd small{font-size:13px;color:var(--muted);font-weight:700}'+
+  '.bm-x{width:48px;height:48px;border-radius:14px;border:1px solid var(--border2);background:#fff;display:flex;align-items:center;justify-content:center;flex:none;cursor:pointer}.bm-x svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2}'+
+  '.bm-pass{display:flex;gap:6px;margin-bottom:16px}.bm-pass i{flex:1;height:6px;border-radius:99px;background:var(--s4)}.bm-pass i.on{background:var(--roxo)}'+
+  '.bm-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.bm-prod{display:flex;flex-direction:column;align-items:center;gap:6px;padding:16px 10px;border:2px solid var(--border2);border-radius:18px;background:#fff;cursor:pointer;font:inherit;color:inherit;min-height:128px;justify-content:center}.bm-prod .em{font-size:44px;line-height:1}.bm-prod b{font-size:15px;text-align:center}.bm-prod small{font-size:12px;color:var(--green);font-weight:800}.bm-prod.feito{border-color:#BBE5C8;background:#F3FBF5}'+
+  '.bm-cat{font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:16px 2px 8px}'+
+  '.bm-cam{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:220px;border:3px dashed var(--roxo);border-radius:22px;background:var(--lf-soft);color:var(--roxo-esc);cursor:pointer;text-align:center;padding:20px;margin-bottom:10px}.bm-cam input{display:none}.bm-cam svg{width:54px;height:54px;stroke:currentColor;fill:none;stroke-width:1.8}.bm-cam b{font-size:22px}.bm-cam small{font-size:14px;font-weight:700;color:#8A3A0A}'+
+  '.bm-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:64px;border-radius:18px;border:0;font:inherit;font-size:18px;font-weight:800;cursor:pointer;margin-top:10px}.bm-btn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2.2}.bm-btn.pri{background:var(--roxo);color:#fff}.bm-btn.ok{background:var(--green);color:#fff}.bm-btn.sec{background:#fff;border:1.5px solid var(--border2);color:var(--text)}.bm-btn.esc{background:var(--text);color:#fff}.bm-btn.no{background:#fff;border:2px solid #F5C2C2;color:var(--red)}.bm-btn:disabled{opacity:.4}'+
+  '.bm-foto{width:100%;border-radius:18px;display:block;margin-bottom:12px}.bm-lido{background:#fff;border:1px solid var(--border);border-radius:18px;padding:16px;margin-bottom:6px}.bm-lido .ln{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:15px;font-weight:700}.bm-lido .ln:last-child{border:0}.bm-lido .ln span{color:var(--muted2)}.bm-peso{font-size:40px;font-weight:800;text-align:center;margin:6px 0 2px;font-variant-numeric:tabular-nums}.bm-peso small{font-size:18px;color:var(--muted)}'+
+  '.bm-ok{display:flex;align-items:center;gap:8px;color:var(--green);font-weight:800;font-size:14px;justify-content:center}.bm-ok svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2.4;flex:none}.bm-dest button>span{display:block;text-align:left}.bm-in{width:100%;min-height:56px;font:inherit;font-size:22px;font-weight:800;text-align:center;border:2px solid var(--border2);border-radius:14px}'+
+  '.bm-sel{display:flex;gap:8px;align-items:center;justify-content:space-between}.bm-sel select{min-height:44px;font:inherit;font-size:15px;font-weight:800;border-radius:12px;border:1.5px solid var(--border2);padding:0 10px}'+
+  '.bm-dest{display:grid;gap:10px}.bm-dest button{min-height:72px;border-radius:18px;border:2px solid var(--border2);background:#fff;font:inherit;font-size:19px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:12px;padding:0 18px}.bm-dest button small{display:block;font-size:12.5px;color:var(--muted);font-weight:700;text-align:left}.bm-dest button.on{border-color:var(--roxo);background:var(--lf-soft)}.bm-dest button:disabled{opacity:.4;cursor:not-allowed}'+
+  '.bm-lista{display:flex;flex-direction:column;gap:8px;margin:14px 0}.bm-li{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--border);border-radius:14px;padding:10px 12px}.bm-li .em{font-size:28px}.bm-li .gr{flex:1;min-width:0}.bm-li b{display:block;font-size:14.5px}.bm-li small{font-size:12.5px;color:var(--muted);font-weight:700}.bm-li .v{font-weight:800;font-size:16px}'+
+  '.bq-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}.bq{border:1px solid var(--border2);border-radius:14px;padding:12px;display:flex;flex-direction:column;align-items:center;gap:6px;background:#fff}.bq b{font-size:16px}.bq small{font-size:11.5px;color:var(--muted);font-weight:700}';
+  document.head.appendChild(c); }
+
+/* ---------- abertura pelo celular ---------- */
+function abertura2(el){
+  css3(); var s=st(), turnoP=new Date().getHours()<16?'Almoço':'Jantar';
+  var a=s.ab2=s.ab2||{passo:'produto', rec:null, lido:null, itens:[], turno:turnoP, resp:LFI.usuario().nome};
+  var feitos={}; a.itens.forEach(function(it){ feitos[it.rec]=it; });
+  var pass='<div class="bm-pass">'+['produto','foto','conf'].map(function(p,i){ var at=['produto','foto','conf'].indexOf(a.passo); return '<i class="'+(i<=at?'on':'')+'"></i>'; }).join('')+'</div>';
+  if(a.passo==='produto'){
+    var h=pass+(a.itens.length?'<div class="bm-lista">'+a.itens.map(function(it){ var r=LFI.rec(it.rec); return '<div class="bm-li"><span class="em">'+r.foto+'</span><div class="gr"><b>'+esc(r.nome.replace(/\s*\(.*\)/,''))+'</b><small>Bandeja '+esc(it.band)+'</small></div><span class="v">'+kg(it.peso)+'</span></div>'; }).join('')+'</div>':'');
+    CATS.forEach(function(c){ h+='<div class="bm-cat">'+esc(c.nome)+'</div><div class="bm-grid">'+c.recs.map(function(id){ var r=LFI.rec(id), f=feitos[id]; return '<button class="bm-prod'+(f?' feito':'')+'" data-act="esc" data-id="'+id+'"><span class="em">'+r.foto+'</span><b>'+esc(r.nome.replace(/\s*\(.*\)/,''))+'</b>'+(f?'<small>✓ '+kg(f.peso)+' · '+esc(f.band)+'</small>':'')+'</button>'; }).join('')+'</div>'; });
+    if(a.itens.length) h+='<button class="bm-btn ok" data-act="fin">'+UI.ic('check')+'Finalizar abertura ('+a.itens.length+' itens)</button>';
+    telaMobile(el,'Abrir buffet · '+esc(a.turno), a.itens.length?'Escolha o próximo alimento':'1. Escolha o alimento', h);
+  } else if(a.passo==='foto'){
+    var r=LFI.rec(a.rec);
+    telaMobile(el, esc(r.nome.replace(/\s*\(.*\)/,'')), '2. Coloque a bandeja na balança e tire a foto', pass+fotoInput('foto'), 'volta');
+  } else {
+    var L=a.lido, bd=bandeja(L.band);
+    var h2=pass+'<img class="bm-foto" src="'+L.img+'" alt="Foto da bandeja na balança"><div class="bm-lido"><div class="bm-ok">'+UI.ic('check')+'QR Code e peso lidos</div><div class="bm-peso">'+kg(L.liq).replace(' kg','')+' <small>kg</small></div>'+
+      '<div class="ln"><span>Alimento</span><b>'+esc(LFI.rec(a.rec).nome.replace(/\s*\(.*\)/,''))+'</b></div>'+
+      '<div class="ln bm-sel"><span>Bandeja</span><select data-chg="band">'+bandejas().map(function(x){ return '<option value="'+x.id+'"'+(x.id===L.band?' selected':'')+'>'+x.id+'</option>'; }).join('')+'</select></div>'+
+      '<div class="ln"><span>Peso na balança</span><b>'+kg(L.bruto)+'</b></div><div class="ln"><span>Bandeja vazia (desconto)</span><b>− '+kg(bd.tara)+'</b></div></div>'+
+      '<button class="bm-btn sec" data-act="corrigir">'+UI.ic('editar')+'Corrigir peso</button>'+
+      '<button class="bm-btn pri" data-act="outro">'+UI.ic('mais')+'Confirmar e inserir outro item</button><button class="bm-btn ok" data-act="okfin">'+UI.ic('check')+'Confirmar e finalizar abertura</button>';
+    telaMobile(el,'Confirme a pesagem','3. Confira o que foi lido da foto', h2, 'volta');
+  }
+  function leitura(img){ var usados=a.itens.map(function(i){ return i.band; }); var livre=bandejas().filter(function(x){ return usados.indexOf(x.id)<0; })[0]||bandejas()[0];
+    var liq=alvoLeitura(PRESET[a.rec]||3), bruto=r3(liq+livre.tara); a.lido={band:livre.id, bruto:bruto, liq:r3(liq), img:img||fotoBalanca(a.rec, livre, bruto)}; a.passo='conf'; LFI.recarregar(); }
+  function grava(){ var L=a.lido; a.itens=a.itens.filter(function(i){ return i.rec!==a.rec; }); a.itens.push({rec:a.rec, band:L.band, peso:L.liq}); a.rec=null; a.lido=null; }
+  function cria(){
+    var ab=LFI.agoraHM(), b={id:LFI.novoId('bf'), num:LFI.proximo('bf'), dep:'res', empresa:LFI.dep('res').empresa, data:LFI.hoje(), turno:a.turno, abertura:ab, abTs:Date.now(), simMin:0, encerramento:null, resp:a.resp, respEnc:null, status:'aberto', aprovadoPor:null, clientes:0, mobile:true,
+      itens:a.itens.map(function(i){ return {rec:i.rec, bandeja:i.band, pesoIni:r3(i.peso), repos:[], pesoFinal:null, temp:null, hora:null, cond:'Câmara fria', destino:'', motivo:'', aprov:false, cons:0}; }), leituras:[{h:ab, kg:0}]};
+    LFI.db.buffets.unshift(b); LFI.atividade('buffet','Buffet '+b.num+' aberto pelo celular · '+b.itens.length+' bandejas',{tela:'buffet',id:b.id}); s.ab2=null; LFI.salvar(); UI.toast('Buffet '+b.num+' aberto', b.itens.length+' bandejas pesadas'); LFI.ir('buffet', b.id); }
+  UI.liga(el, UI.navHandlers({
+    esc:function(id){ a.rec=id; a.passo='foto'; LFI.recarregar(); },
+    volta:function(){ a.passo=a.passo==='conf'?'foto':'produto'; LFI.recarregar(); },
+    foto:function(_,ev){ lerArquivo(ev, function(img){ leitura(img); }); }, fotoEx:function(){ leitura(null); },
+    band:function(_,ev){ var b2=bandeja(ev.target.value); a.lido.band=b2.id; a.lido.liq=r3(Math.max(0,a.lido.bruto-b2.tara)); LFI.recarregar(); },
+    corrigir:function(){ corrigePeso(a.lido.liq, function(v){ a.lido.liq=v; a.lido.bruto=r3(v+bandeja(a.lido.band).tara); LFI.recarregar(); }); },
+    outro:function(){ grava(); a.passo='produto'; UI.toast('Bandeja registrada'); LFI.recarregar(); },
+    okfin:function(){ grava(); cria(); },
+    fin:function(){ cria(); }
+  }));
+}
+function corrigePeso(v, cb){
+  var m=UI.modal({titulo:'Corrigir peso', tam:'sm', corpo:'<input class="bm-in" id="cp-v" inputmode="decimal" value="'+UI.numBR(v,3)+'"><p style="text-align:center;color:var(--muted);font-weight:700;margin:8px 0 0">kg do alimento (sem a bandeja)</p>',
+    botoes:'<button class="btn sec" data-act="_fechar">Cancelar</button><button class="btn pri" data-act="ok">Salvar</button>', acoes:{ok:function(){ var x=UI.num(m.el.querySelector('#cp-v').value); if(!(x>0)){ UI.toast('Informe um peso válido','','wt'); return; } m.fechar(); cb(r3(x)); }}});
+  setTimeout(function(){ var i=m.el.querySelector('#cp-v'); i.focus(); i.select(); },80);
+}
+
+/* ---------- encerramento pelo celular ---------- */
+function encerramento2(el, b){
+  css3(); var s=st(), E=(s.enc2=s.enc2||{})[b.id]=(s.enc2||{})[b.id]||{passo:'foto', lido:null, dest:null};
+  var pend=b.itens.filter(function(it){ return it.pesoFinal==null; }), tot=b.itens.length, feitos=tot-pend.length;
+  var pass='<div class="bm-pass">'+b.itens.map(function(it){ return '<i class="'+(it.pesoFinal!=null?'on':'')+'"></i>'; }).join('')+'</div>';
+  if(!pend.length&&E.passo!=='dest'){
+    var h=pass+'<div class="bm-lista">'+b.itens.map(function(it){ var r=LFI.rec(it.rec); return '<div class="bm-li"><span class="em">'+r.foto+'</span><div class="gr"><b>'+esc(r.nome.replace(/\s*\(.*\)/,''))+'</b><small>Sobra '+kg(it.pesoFinal)+' · consumo '+kg(r2(dispKg(it)-it.pesoFinal))+'</small></div>'+badgeDest(it.destino)+'</div>'; }).join('')+'</div>'+
+      '<button class="bm-btn ok" data-act="aprov">'+UI.ic('check')+'Finalizar buffet</button>';
+    telaMobile(el,'Todas as bandejas pesadas', b.num+' · confira e finalize', h); 
+  } else if(E.passo==='foto'){
+    telaMobile(el,'Encerrar '+esc(b.num), 'Bandeja '+(feitos+1)+' de '+tot+' · retire a bandeja, coloque na balança e tire a foto', pass+fotoInput('foto')+
+      '<div class="bm-cat">Faltam pesar</div><div class="bm-lista">'+pend.map(function(it){ var r=LFI.rec(it.rec); return '<div class="bm-li"><span class="em">'+r.foto+'</span><div class="gr"><b>'+esc(r.nome.replace(/\s*\(.*\)/,''))+'</b><small>Bandeja '+esc(it.bandeja||'—')+' · entrou '+kg(dispKg(it))+'</small></div></div>'; }).join('')+'</div>');
+  } else {
+    var L=E.lido, it=b.itens.filter(function(x){ return x.rec===L.rec; })[0], r=LFI.rec(it.rec), g=regraDe(it.rec), podeR=!!(g&&g.reaproveita), cons=r2(dispKg(it)-L.liq);
+    var dest=E.dest||(podeR?null:'descarte');
+    var h3=pass+'<img class="bm-foto" src="'+L.img+'" alt="Foto da bandeja na balança"><div class="bm-lido"><div class="bm-ok">'+UI.ic('check')+'Bandeja '+esc(L.band)+' identificada</div>'+
+      '<div class="ln"><span>Alimento</span><b>'+r.foto+' '+esc(r.nome.replace(/\s*\(.*\)/,''))+'</b></div><div class="ln"><span>Entrou no buffet</span><b>'+kg(dispKg(it))+'</b></div><div class="ln"><span>Consumido</span><b>'+kg(cons)+'</b></div>'+
+      '<div class="bm-peso">'+kg(L.liq).replace(' kg','')+' <small>kg de sobra</small></div></div><button class="bm-btn sec" data-act="corrigir">'+UI.ic('editar')+'Corrigir peso</button>'+
+      '<div class="bm-cat">Destino da sobra</div><div class="bm-dest">'+
+        '<button class="'+(dest==='reaproveitar'?'on':'')+'" data-act="dest" data-id="reaproveitar"'+(podeR?'':' disabled')+'>♻️<span>Reaproveitar<small>'+(podeR?'Vai para o estoque de sobras após aprovação':'Não permitido: '+esc(g?g.grupo:'sem regra'))+'</small></span></button>'+
+        '<button class="'+(dest==='descarte'?'on':'')+'" data-act="dest" data-id="descarte">🗑️<span>Descarte<small>'+(podeR?'Jogar fora':'Obrigatório para este alimento')+'</small></span></button>'+
+        '<button class="'+(dest==='perda'?'on':'')+'" data-act="dest" data-id="perda">⚠️<span>Perda<small>Caiu, estragou ou contaminou</small></span></button></div>'+
+      '<button class="bm-btn pri" data-act="salva"'+(dest?'':' disabled')+'>'+UI.ic('check')+(pend.length>1?'Salvar e próxima bandeja':'Salvar última bandeja')+'</button>';
+    telaMobile(el,'Sobra da bandeja','Confira o peso e escolha o destino', h3, 'volta');
+  }
+  function leitura(img){ var it=pend[0], bd=bandeja(it.bandeja)||bandejas()[0], liq=alvoLeitura(Math.max(0.1,restKg(it))), bruto=r3(liq+bd.tara);
+    E.lido={rec:it.rec, band:bd.id, liq:r3(Math.min(liq,dispKg(it))), bruto:bruto, img:img||fotoBalanca(it.rec, bd, bruto)}; E.dest=null; E.passo='dest'; LFI.recarregar(); }
+  UI.liga(el, UI.navHandlers({
+    volta:function(){ E.passo='foto'; E.lido=null; LFI.recarregar(); },
+    foto:function(_,ev){ lerArquivo(ev, leitura); }, fotoEx:function(){ leitura(null); },
+    corrigir:function(){ corrigePeso(E.lido.liq, function(v){ E.lido.liq=v; LFI.recarregar(); }); },
+    dest:function(id){ E.dest=id; LFI.recarregar(); },
+    salva:function(){ var L=E.lido, it=b.itens.filter(function(x){ return x.rec===L.rec; })[0], g=regraDe(it.rec);
+      it.pesoFinal=L.liq; it.hora=LFI.agoraHM(); it.resp=b.resp; it.cond=it.cond||'Câmara fria'; it.destino=E.dest||(g&&g.reaproveita?'reaproveitar':'descarte');
+      it.motivo=it.destino==='descarte'&&!(g&&g.reaproveita)?(g?g.grupo.split(' (')[0]:'Sem regra')+': descarte obrigatório':it.destino==='perda'?'Perda registrada no encerramento':'';
+      it.cons=r2(dispKg(it)-it.pesoFinal); E.passo='foto'; E.lido=null; E.dest=null; LFI.salvar(); UI.toast('Bandeja '+L.band+' registrada', kg(it.pesoFinal)+' de sobra · '+it.destino); LFI.recarregar(); },
+    aprov:function(){ b.etapa='aprovacao'; if(!b.encerramento) b.encerramento=LFI.agoraHM(); LFI.salvar(); LFI.recarregar(); }
+  }));
+}
+
+/* ---------- gravar QR Code das bandejas ---------- */
+function gravarQR(){
+  css3();
+  function corpo(){ return UI.nota('Cole o adesivo com o QR Code em cada bandeja. Na gravação, a bandeja vazia é pesada para o sistema descontar o peso dela nas pesagens.','in')+
+    '<div class="bq-grid">'+bandejas().map(function(x){ return '<div class="bq">'+qrSVG(x.codigo,110)+'<b>'+x.id+'</b><small>'+x.codigo+'</small><small>Bandeja vazia: '+kg(x.tara)+'</small></div>'; }).join('')+'</div>'; }
+  var m=UI.modal({titulo:'QR Code das bandejas', sub:bandejas().length+' bandejas gravadas', tam:'xl', corpo:corpo(),
+    botoes:'<button class="btn sec esq" data-act="imp">'+UI.ic('imprimir')+'Imprimir etiquetas</button><button class="btn sec" data-act="_fechar">Fechar</button><button class="btn pri" data-act="nova">'+UI.ic('mais')+'Gravar nova bandeja</button>',
+    acoes:{nova:function(){ novaBandeja(function(){ m.corpoHTML(corpo()); }); },
+      imp:function(){ UI.exportarPDF('Etiquetas QR Code das bandejas','Recorte e cole uma etiqueta em cada bandeja','<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">'+bandejas().map(function(x){ return '<div style="border:1px dashed #999;border-radius:8px;padding:10px;text-align:center">'+qrSVG(x.codigo,120).replace('display:block','display:inline-block')+'<div style="font-weight:800;font-size:16px">'+x.id+'</div><div style="font-size:10px;color:#666">'+x.codigo+'</div></div>'; }).join('')+'</div>'); }}});
+}
+function novaBandeja(depois){
+  css3();
+  var n=bandejas().length+1, id='B'+String(n).padStart(2,'0'), cod='LP-BDJ-'+String(n).padStart(3,'0'), tara=null;
+  var m=UI.modal({titulo:'Gravar bandeja '+id, sub:'Coloque a bandeja VAZIA na balança', tam:'sm', corpo:'', botoes:''});
+  function des(){ m.corpoHTML(tara==null?fotoInput('tf'):'<div style="display:flex;flex-direction:column;align-items:center;gap:8px">'+qrSVG(cod,150)+'<b style="font-size:20px">'+id+'</b><small style="color:var(--muted);font-weight:700">'+cod+'</small><div class="bm-peso" style="font-size:28px">'+kg(tara)+' <small>bandeja vazia</small></div></div>');
+    m.rodapeHTML('<button class="btn sec" data-act="_fechar">Cancelar</button>'+(tara!=null?'<button class="btn pri" data-act="ok">Gravar bandeja</button>':'')); }
+  UI.liga(m.el,{tf:function(_,ev){ lerArquivo(ev,function(){ tara=r3(0.38+Math.random()*0.15); des(); }); }, tfEx:function(){ tara=r3(0.38+Math.random()*0.15); des(); },
+    ok:function(){ bandejas().push({id:id, codigo:cod, tara:tara, criada:LFI.hoje()}); LFI.salvar(); m.fechar(); UI.toast('Bandeja '+id+' gravada','Imprima a etiqueta e cole na bandeja'); depois(); }});
+  des();
 }
 
 LFI.registrar('buffet',{titulo:'Buffet', render:render});
