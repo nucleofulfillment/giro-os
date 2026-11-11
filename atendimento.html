@@ -282,7 +282,7 @@ label.l.big{font-size:14px;margin-top:16px}
 <!-- abertura com o Live (fundo branco + logo laranja); curta, para não atrasar o garçom -->
 <div id="lf-abertura" data-minimo="350" data-esperar="1" data-rapido="1" style="position:fixed;inset:0;z-index:2147483000;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px"><div class="lfa-live" style="width:140px"></div><img src="livefood-logo.png" alt="LiveFood" style="height:42px;width:auto"><div class="lfa-barra"><i></i></div></div>
 <script>setTimeout(function(){ var a=document.getElementById('lf-abertura'); if(a) a.remove(); },3500);   /* rede de segurança: a abertura nunca passa de 3,5 s */</script>
-<script src="site/js/live-mascote.js"></script><script src="site/js/live-app.js?v=2"></script>
+<script src="site/js/live-mascote.js"></script><script src="site/js/live-app.js?v=2"></script><script src="lojas.js"></script>
 
 <div id="login">
   <div class="c">
@@ -420,7 +420,7 @@ function montaApp(d){
     carregaAbertas();
     D=d; try{ (D.prods||[]).sort(function(a,b){ return String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR',{sensitivity:'base',numeric:true}); }); }catch(e){} CLI=d.cli; try{ window.GiroMarca&&GiroMarca.set(CLI); }catch(e){} GEST=!!d.gestor; CLIS=(d.clientes&&d.clientes.length<5000)?d.clientes:null; tema(d.cor);
     $('login').classList.add('hide'); $('app').classList.remove('hide'); abaComNome();
-    $('emp').innerHTML=d.logo?'<img src="'+API+'/food/foto/'+encodeURIComponent(d.cli)+'/_logop" alt="'+esc(d.empresa||'')+'" style="height:30px;border-radius:6px;vertical-align:middle">':esc(d.empresa||'Atendimento'); $('usu').textContent=d.usuario||''; try{ var li=$('emp').querySelector('img'); if(li&&window.GiroMarca&&GiroMarca.ajusta) GiroMarca.ajusta(li,'claro'); }catch(e){}
+    $('emp').innerHTML=d.logo?'<img src="'+API+'/food/foto/'+encodeURIComponent(d.cli)+'/_logop" alt="'+esc(d.empresa||'')+'" style="height:30px;border-radius:6px;vertical-align:middle">':esc(d.empresa||'Atendimento'); $('usu').textContent=d.usuario||''; try{ var li=$('emp').querySelector('img'); if(li&&window.GiroMarca&&GiroMarca.ajusta) GiroMarca.ajusta(li,'claro'); }catch(e){} if(window.LojaTroca) LojaTroca.ligar($('emp'));   /* (269) trocar de loja */
     [].forEach.call(document.querySelectorAll('.gest'),function(b){ b.classList.toggle('hide',!GEST); });
     /* (230) garçom só lança na Mesa (com ou sem mesa escolhida); Balcão fica para o dono/gerente */
     if(!GEST){ $('sgB').classList.add('hide'); COM.modo='mesa'; }

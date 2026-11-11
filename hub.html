@@ -245,6 +245,7 @@ footer{margin-top:40px;font-size:12.5px;font-weight:700;opacity:.75;text-align:c
 <div id="balao" role="status" aria-live="polite"></div>
 <script src="site/js/live-mascote.js"></script>
 <script src="site/js/live-app.js"></script>
+<script src="lojas.js"></script>
 <script>
 /* acesso: mesmo login (dd_jwt) do painel, cozinha, mesa e atendimento; o motoboy entra pelo app com telefone e PIN */
 var API='https://giro-os-api.nucleofull.workers.dev', TK='', US=null;
@@ -258,7 +259,7 @@ function mostraHub(){
   $('ola').textContent=nome?'Olá, '+nome+'! Para onde vamos?':'Para onde vamos agora?';
   $('loja').textContent=US&&US.cliente_nome?US.cliente_nome:''; $('loja').hidden=!(US&&US.cliente_nome);
   document.body.classList.remove('em-login'); $('etLogin').hidden=true; $('tag').hidden=true; $('bSair').hidden=false; $('etHub').hidden=false;
-  hubModo(); hubPro();
+  hubModo(); hubPro(); if(window.LojaTroca) LojaTroca.ligar($('loja'));   /* (269) grupo de lojas */
 }
 /* LivePro: o card só aparece para a conta cujo plano inclui o recurso 'livepro' (Admin master → Planos) */
 /* contas com o LivePro liberado direto (flag por conta, sem depender do plano): código da conta no Admin master */

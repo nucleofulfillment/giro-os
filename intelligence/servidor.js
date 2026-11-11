@@ -44,6 +44,18 @@ function enviar(todos){
   }).catch(function(){ S.enviando=false; estado('offline'); });
 }
 S.req=req;
+/* (269) GRUPO DE LOJAS: lojas do LiveFood ligadas a este LivePro (ex.: Padaria e Restaurante) */
+S.lojas=null; var tkLoja={};
+S.carregarLojas=function(){ if(!S.ativo) return Promise.resolve(null);
+  return req('GET','/painel/lojas').then(function(j){ S.lojas=(j&&j.ok&&(j.lojas||[]).length>1)?j:null; return S.lojas; }).catch(function(){ return null; }); };
+/* chamada com o acesso de outra loja do grupo (para mexer no cardápio dela) */
+S.reqTk=function(tk, metodo, caminho, corpo){
+  return fetch(API+caminho,{method:metodo, cache:'no-store', headers:{'Content-Type':'application/json','Authorization':'Bearer '+tk}, body:corpo?JSON.stringify(corpo):undefined})
+    .then(function(r){ return r.json().catch(function(){ return {ok:false}; }).then(function(j){ j._s=r.status; return j; }); }); };
+S.tokenLoja=function(id){
+  if(!S.lojas||id===S.lojas.atual) return Promise.resolve(token());
+  if(tkLoja[id]) return Promise.resolve(tkLoja[id]);
+  return req('POST','/painel/trocar-loja',{loja:id}).then(function(j){ if(!j||!j.ok) throw new Error((j&&j.mensagem)||'sem acesso à loja'); tkLoja[id]=j.token; return j.token; }); };
 /* ---------- fotos no servidor ----------
    Fotos (notas, avarias, balança do buffet) ficam no armazenamento do servidor; no banco fica só 'lpf:<chave>'.
    Assim o banco fica leve e o celular e o computador veem as mesmas fotos. */
@@ -88,12 +100,12 @@ S.carregar=function(){
     S.falhou=false;
     var chaves=Object.keys(j.blocos||{});
     S.pronto=true;
-    if(!chaves.length){ enviar(true); return; }   /* primeira vez desta conta: o servidor recebe os dados deste aparelho */
+    if(!chaves.length){ enviar(true); S.carregarLojas(); return; }   /* primeira vez desta conta: o servidor recebe os dados deste aparelho */
     var db=montar(j.blocos);
-    if(!db.produtos||!db.receitas){ enviar(true); return; }
+    if(!db.produtos||!db.receitas){ enviar(true); S.carregarLojas(); return; }
     chaves.forEach(function(k){ S.hashes[k]=j.blocos[k].h; });
     LFI.db=db; salvarLocal.call(LFI);   /* cópia local, sem reenviar */
-    estado('ok'); LFI.recarregar(); S.fila();
+    estado('ok'); LFI.recarregar(); S.carregarLojas().then(function(){ S.fila(); });
   }).catch(function(){ estado('offline'); S.falhou=true; });   /* não envia nada antes de ler o servidor: assim os dados de lá nunca são trocados pelos deste aparelho */
 };
 /* vendas bipadas no Atendimento do LiveFood (garçom e balcão) dão baixa no estoque daqui, pelo código de barras */
@@ -104,7 +116,8 @@ S.fila=function(){
     var ids=[], n=0;
     j.itens.forEach(function(f){ ids.push(f.id); (f.itens||[]).forEach(function(it){
       var p=(it.lp?LFI.prod(it.lp):null)||(it.barras&&LFI.prodPorCodigo?LFI.prodPorCodigo(it.barras):null), q=Number(it.qtd)||0; if(!p||!(q>0)) return;
-      var dep=p.dep&&p.est&&(p.dep in p.est)?p.dep:'res'; if(!(dep in p.est)) dep=Object.keys(p.est)[0];
+      var dl=f.loja&&LFI.depDaLoja?LFI.depDaLoja(f.loja):null;   /* (269) venda de outra loja do grupo: sai do estoque dessa loja */
+      var dep=dl&&p.est&&(dl in p.est)?dl:(p.dep&&p.est&&(p.dep in p.est)?p.dep:'res'); if(!(dep in p.est)) dep=Object.keys(p.est)[0];
       LFI.movimentar({prod:p.id, dep:dep, tipo:'venda', qtd:-q, origem:{tipo:'livefood', id:f.id}, obs:'Venda no LiveFood'+(f.ref?' · '+f.ref:''), usuario:f.por||'LiveFood'}); n++; }); });
     if(n){ LFI.atividade('estoque', n+(n===1?' item vendido':' itens vendidos')+' no LiveFood baixado(s) do estoque',{tela:'estoque'}); LFI.salvar(); LFI.recarregar(); }
     req('POST','/painel/livepro-fila-ok',{ids:ids});
