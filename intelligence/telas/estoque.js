@@ -13,7 +13,7 @@ function st(){ return LFI.estado.estoque = LFI.estado.estoque || {aba:'pos', dep
 function depsOrd(){ return ORDEM_DEP.filter(function(d){ return LFI.depVisivel(d); }); }
 function depsSel(){ var s=st(); if(s.dep!=='todos'&&!LFI.depVisivel(s.dep)) s.dep='todos'; return s.dep==='todos'?LFI.depIds():[s.dep]; }
 
-function css2(){ if(document.getElementById('css-estoque2')) return; var c=document.createElement('style'); c.id='css-estoque2'; c.textContent='.es-valor{max-width:420px;margin-bottom:16px}.es-st{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.es-hd{cursor:pointer;user-select:none;margin:0!important}.es-rec.ab .es-hd{margin-bottom:14px!important}.es-seta{font-size:11px;color:var(--muted)}.es-rec:not(.ab) .card{padding-top:14px;padding-bottom:14px}.es-rec:not(.ab){align-items:stretch}'; document.head.appendChild(c); }
+function css2(){ if(document.getElementById('css-estoque2')) return; var c=document.createElement('style'); c.id='css-estoque2'; c.textContent='.es-deps{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}.es-dot{width:8px;height:8px;border-radius:3px;display:inline-block}.es-deps .kpi.hl .es-dot{box-shadow:0 0 0 2px rgba(255,255,255,.4)}.es-st{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.es-hd{cursor:pointer;user-select:none;margin:0!important}.es-rec.ab .es-hd{margin-bottom:14px!important}.es-seta{font-size:11px;color:var(--muted)}.es-rec:not(.ab) .card{padding-top:14px;padding-bottom:14px}.es-rec:not(.ab){align-items:stretch}'; document.head.appendChild(c); }
 function css(){ css2();
   if(document.getElementById('css-estoque')) return;
   var s=document.createElement('style'); s.id='css-estoque';
@@ -117,10 +117,10 @@ function principal(el){
 
   var h=UI.cabecalho({titulo:'Estoque Inteligente', sub:(emp?esc(emp.fantasia)+' · CNPJ '+emp.cnpj:esc(LFI.db.grupo.nome)+' · estoque centralizado de '+LFI.db.empresas.length+' CNPJs')+' · custo médio ponderado atualizado pelas notas fiscais',
     acoes:'<button class="btn sec sm" data-act="ajuste">'+UI.ic('editar')+'Ajuste de inventário</button><button class="btn sec sm" data-act="transf">'+UI.ic('seta')+'Transferência</button><button class="btn sec sm" data-act="saida">'+UI.ic('lixo')+'Saída / perda</button><button class="btn pri sm" data-act="novoP">'+UI.ic('mais')+'Novo produto</button>'});
-  h+='<div class="barra"><div class="pills">'+['todos'].concat(depsOrd()).map(function(d){ var dd=LFI.dep(d), v=d==='todos'?null:LFI.valorEstoqueTotal([d]);
-      return '<button class="pill'+(s.dep===d?' on':'')+'" data-act="dep" data-id="'+d+'">'+(dd?'<i style="background:'+dd.cor+'"></i>'+esc(dd.nome)+' <span class="c">'+F.moedaK(v)+'</span>':'Todos os departamentos')+'</button>'; }).join('')+'</div></div>';
-
-  h+='<div class="es-valor">'+UI.kpi({lb:'Valor em estoque', vl:F.moeda(vEst), dl:lista.length+' itens · '+comSaldo+' com saldo · ao custo médio', hl:true})+'</div>';
+  var vTot=LFI.valorEstoqueTotal(LFI.depIds()), qTot=LFI.db.produtos.filter(function(p){ return LFI.estoque(p,LFI.depIds())>0; }).length;
+  h+='<div class="kpis es-deps">'+UI.kpi({lb:'Valor em estoque', vl:F.moeda(vTot), dl:qTot+' itens · todos os departamentos', act:'dep', id:'todos', hl:s.dep==='todos'})+
+    depsOrd().map(function(d){ var dd=LFI.dep(d), v=LFI.valorEstoqueTotal([d]), n=lista.filter(function(p){ return (p.est[d]||0)>0; }).length;
+      return UI.kpi({lb:'<i class="es-dot" style="background:'+dd.cor+'"></i>'+esc(dd.nome), vl:F.moeda(v), dl:n+' itens · '+F.pct(vTot?v/vTot:0,0)+' do total', act:'dep', id:d, hl:s.dep===d}); }).join('')+'</div>';
   h+='<div class="tabs">'+[['pos','Posição de estoque',lista.length],['mov','Movimentações',null],['sug','Sugestão de compra',nSug]].map(function(t){ return '<button class="'+(s.aba===t[0]?'on':'')+'" data-act="aba" data-id="'+t[0]+'">'+t[1]+(t[2]!=null?' <span class="n">'+t[2]+'</span>':'')+'</button>'; }).join('')+'</div>';
   h+='<div id="es-aba"></div>';
   el.innerHTML=h;
