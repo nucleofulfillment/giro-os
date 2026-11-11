@@ -1643,7 +1643,7 @@ html.loja-p .cd-dest{display:none!important}
         <label style="font-size:12px;font-weight:700;color:var(--muted2)">Preço (R$)</label>
         <input class="inp" id="cd-preco" inputmode="decimal" placeholder="0,00" style="margin:4px 0 10px">
         <label style="font-size:12px;font-weight:700;color:var(--muted2)">Código de barras <span style="font-weight:500">(opcional)</span></label>
-        <input class="inp" id="cd-barras" maxlength="32" autocomplete="off" placeholder="Bipe ou digite" style="margin-top:4px">
+        <div style="display:flex;gap:8px;margin-top:4px"><input class="inp" id="cd-barras" maxlength="32" autocomplete="off" placeholder="Bipe ou digite" style="flex:1"><button type="button" class="btn sec" title="Bipar pela câmera" onclick="cdBiparBarras()" style="flex:none">📷</button></div>
       </div>
     </div>
     <div style="margin:0 0 14px;padding:10px 12px;border:1px solid var(--border);border-radius:12px">
@@ -11244,5 +11244,9 @@ function cdNovaCatRapida(){
 }
 </script>
 <script src="live-ajuda.js?v=237"></script>
+<script src="bipador.js?v=1"></script>
+<script>/* câmera no cadastro do cardápio (mesmo leitor da Mesa) */
+function cdBiparBarras(){ if(!window.Bipador) return; Bipador.abrir({titulo:"Código de barras do produto", aoLer:function(c){ var i=document.getElementById("cd-barras"); if(i){ i.value=c; i.dispatchEvent(new Event("input",{bubbles:true})); } return true; }}); }
+</script>
 </body>
 </html>

@@ -63,9 +63,24 @@ S.carregar=function(){
     if(!db.produtos||!db.receitas){ enviar(true); return; }
     chaves.forEach(function(k){ S.hashes[k]=j.blocos[k].h; });
     LFI.db=db; salvarLocal.call(LFI);   /* cópia local, sem reenviar */
-    estado('ok'); LFI.recarregar();
+    estado('ok'); LFI.recarregar(); S.fila();
   }).catch(function(){ estado('offline'); S.falhou=true; });   /* não envia nada antes de ler o servidor: assim os dados de lá nunca são trocados pelos deste aparelho */
 };
+/* vendas bipadas no Atendimento do LiveFood (garçom e balcão) dão baixa no estoque daqui, pelo código de barras */
+S.fila=function(){
+  if(!S.ativo||!S.pronto) return;
+  req('GET','/painel/livepro-fila').then(function(j){
+    if(!j||!j.ok||!(j.itens||[]).length) return;
+    var ids=[], n=0;
+    j.itens.forEach(function(f){ ids.push(f.id); (f.itens||[]).forEach(function(it){
+      var p=LFI.prodPorCodigo?LFI.prodPorCodigo(it.barras):null, q=Number(it.qtd)||0; if(!p||!(q>0)) return;
+      var dep=p.dep&&p.est&&(p.dep in p.est)?p.dep:'res'; if(!(dep in p.est)) dep=Object.keys(p.est)[0];
+      LFI.movimentar({prod:p.id, dep:dep, tipo:'venda', qtd:-q, origem:{tipo:'livefood', id:f.id}, obs:'Venda no LiveFood'+(f.ref?' · '+f.ref:''), usuario:f.por||'LiveFood'}); n++; }); });
+    if(n){ LFI.atividade('estoque', n+(n===1?' item vendido':' itens vendidos')+' no LiveFood baixado(s) do estoque',{tela:'estoque'}); LFI.salvar(); LFI.recarregar(); }
+    req('POST','/painel/livepro-fila-ok',{ids:ids});
+  }).catch(function(){});
+};
+setInterval(function(){ S.fila(); }, 120000);
 /* quando a internet volta, manda o que ficou pendente */
 window.addEventListener('online', function(){ if(!S.ativo) return; if(S.pronto) enviar(); else S.carregar(); });
 /* se a primeira leitura falhou, tenta de novo a cada 30 segundos */

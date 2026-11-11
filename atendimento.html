@@ -366,6 +366,9 @@ function esc(x){ return String(x==null?'':x).replace(/[&<>"']/g,function(c){ ret
 function pill(j){ return '<span class="pill">'+esc(j)+'</span>'; }
 function brl(v){ return 'R$ '+Number(v||0).toFixed(2).replace('.',','); }
 function toast(t){ var e=$('toast'); e.textContent=t; e.style.display='block'; clearTimeout(toast._t); toast._t=setTimeout(function(){ e.style.display='none'; },2600); }
+/* LivePro: itens com código de barras vendidos aqui dão baixa no estoque do LivePro (o servidor ignora se a conta não usa o LivePro) */
+function lpBaixa(num){ try{ var its=[]; CART.forEach(function(i){ var p=(D.prods||[]).filter(function(x){ return x.id===i.p; })[0]; if(p&&p.barras) its.push({barras:p.barras, qtd:i.qty, nome:p.nome}); });
+  if(its.length) api('/painel/atend-livepro-baixa',{itens:its, ref:num?'pedido #'+num:''}); }catch(e){} }
 function api(rota,corpo){
   var o={method:corpo===undefined?'GET':'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+TK}}; if(corpo!==undefined) o.body=JSON.stringify(corpo);
   return fetch(API+rota,o).then(function(r){ return r.json().catch(function(){ return {ok:false,mensagem:'Erro de conexão.'}; }).then(function(d){ d._h=r.status; return d; }); }).catch(function(){ return {ok:false,_h:0,mensagem:'Sem conexão. Tente de novo.'}; });
@@ -969,7 +972,7 @@ function tiraItem(k){ CART.splice(k,1); if(!CART.length){ fecha(); cartBar(); } 
 function enviaPedido(){
   var b=$('pBt'); b.disabled=true; b.textContent='Enviando…'; $('pErr').textContent=''; var cpE=coposVal();   /* (250) copos */
   api('/painel/atend-pedido',comEnvio({modo:COM.modo,mesa:COM.mesa,joia:COM.joia,obs:($('pObs')||{value:''}).value,liberar:COM.liberar,copos:cpE||undefined,itens:CART.map(function(i){ return {p:i.p,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs,qty:i.qty}; })})).then(function(r){
-    if(r.ok){ envioOk(); var ped={num:r.num,sub:r.sub||0,mesa:COM.mesa,joia:COM.joia,nome:COM.nome,atend:D.usuario,criado:Date.now(),obs:($('pObs')||{value:''}).value,modo:COM.modo,copos:cpE,l:CART.map(function(i){ return {p:i.p,nome:i.nome,qty:i.qty,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs}; })}; var avulsoP=COM.avulso, smP=COM.sm; CART=[]; COPOS=null; fecha(); cartBar();
+    if(r.ok){ lpBaixa(r.num); envioOk(); var ped={num:r.num,sub:r.sub||0,mesa:COM.mesa,joia:COM.joia,nome:COM.nome,atend:D.usuario,criado:Date.now(),obs:($('pObs')||{value:''}).value,modo:COM.modo,copos:cpE,l:CART.map(function(i){ return {p:i.p,nome:i.nome,qty:i.qty,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs}; })}; var avulsoP=COM.avulso, smP=COM.sm; CART=[]; COPOS=null; fecha(); cartBar();
       /* venda do balcão sem cliente: já pergunta como o cliente pagou (ou fica em Comandas, se cobrar depois) · (238) garçom sem mesa e sem cliente: igual, com a taxa do garçom */
       if(avulsoP){ toast('Pedido #'+plab(r)+' '+(smP?'enviado para a cozinha':'criado')); zeraComanda(); if(impOn()) imprimeAuto(ped); COMS=[{mesa:r.mesa,joia:'',nome:smP?'Sem mesa':'Cliente Balcão',total:r.total,servico:r.servico||0,pedidos:[],avulso:1}]; fechaForm(0); return; }
       if(window.LiveApp) LiveApp.comemorar({titulo:'Pedido #'+plab(r)+' enviado!',sub:'Já está na cozinha 🍳',ms:1700}); else toast('Pedido #'+plab(r)+' enviado para a cozinha'); zeraComanda(); if(impOn()) imprimeAuto(ped); return; }
