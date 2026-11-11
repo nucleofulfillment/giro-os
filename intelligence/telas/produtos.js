@@ -188,7 +188,7 @@ function pagina(el, p){
     var inp=box.querySelector('#pp-bq'), ach=box.querySelector('#pp-ach');
     var base=LFI.db.produtos.filter(function(q){ return q.id!==p.id && (q.tipo==='insumo'||q.tipo==='servico'||q.tipo==='base'||(q.tipo==='acabado'&&q.ativo!==false)) && !q.exemplo; });
     function lista(){ var t=inp.value.trim(); if(!t){ ach.innerHTML='<small style="color:var(--muted);font-weight:700">Comece a digitar o nome.</small>'; return; }
-      var rs=UI.filtrarBusca(t, base, function(q){ return q.nome; }).slice(0,8);
+      var rs=UI.filtrarBusca(t, base, function(q){ return q.nome; }).slice(0,40);
       ach.innerHTML=rs.length?rs.map(function(q){ return '<button data-act="pega" data-id="'+q.id+'">'+UI.fotoProd(q,36)+'<span><b>'+esc(q.nome)+'</b><small>'+(q.tipo==='base'?'Base':q.tipo==='acabado'?'Produto feito aqui':q.tipo==='servico'?'Tempo':'Ingrediente')+' · '+F.moeda(q.custoMedio)+'/'+esc(q.un)+'</small></span>'+UI.ic('mais')+'</button>'; }).join(''):'<small style="color:var(--muted);font-weight:700">Nada encontrado. Cadastre o ingrediente em "Novo produto".</small>'; }
     inp.addEventListener('input', lista); lista(); setTimeout(function(){ try{ inp.focus(); }catch(e){} }, 30);
   }
