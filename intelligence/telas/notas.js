@@ -10,7 +10,8 @@ var r2=LFI.dataUtil.r2, r3=LFI.dataUtil.r3;
 function st(){ return LFI.estado.notas = LFI.estado.notas || {q:'', forn:'', status:'', per:'90d', dep:''}; }
 
 /* ---------- estilos próprios da tela (injetados uma vez) ---------- */
-function css(){
+function css2(){ if(document.getElementById('css-notas2')) return; var c=document.createElement('style'); c.id='css-notas2'; c.textContent='.nf-drop1{display:flex!important;align-items:center;justify-content:center;gap:16px;text-align:left;padding:26px 20px}.nf-drop1 .ic{margin:0}.nf-perg{margin:0 0 14px;font-weight:700;color:var(--muted2)}.nf-emps{display:grid;gap:10px}.nf-emp{display:flex;gap:12px;align-items:center;text-align:left;border:1.5px solid var(--border2);background:var(--s1);border-radius:14px;padding:14px;cursor:pointer;font:inherit;color:inherit}.nf-emp:hover{border-color:var(--muted)}.nf-emp.on{border-color:var(--roxo);background:var(--lf-soft)}.nf-emp b{display:block;font-size:14.5px}.nf-emp small{display:block;color:var(--muted);font-weight:600;font-size:12px}.nf-emp em{display:inline-block;margin-top:4px;font-style:normal;font-size:11px;font-weight:800;color:var(--roxo-esc)}.nf-emp .emp-ic{width:36px;height:36px;font-size:12px;border-radius:9px}'; document.head.appendChild(c); }
+function css(){ css2();
   if(document.getElementById('css-notas')) return;
   var s=document.createElement('style'); s.id='css-notas';
   s.textContent=[
@@ -160,69 +161,39 @@ function lista(el){
   var vCaixa=0; caixa.forEach(function(n){ vCaixa+=n.valor; });
   var emp=LFI.empresaAtual();
 
-  var h=UI.cabecalho({titulo:'Notas Fiscais de Entrada', sub:(emp?esc(emp.fantasia)+' · CNPJ '+emp.cnpj:esc(db.grupo.nome)+' · todos os CNPJs')+' · importação de XML NF-e e DANFE em PDF com conferência inteligente',
-    acoes:'<button class="btn sec sm" data-act="exp">'+UI.ic('excel')+'Exportar histórico</button><button class="btn pri sm" data-act="up">'+UI.ic('upload')+'Importar XML ou PDF</button>'});
+  var h=UI.cabecalho({titulo:'Fiscal', sub:(emp?esc(emp.fantasia)+' · CNPJ '+emp.cnpj:esc(db.grupo.nome)+' · todas as empresas')+' · notas fiscais de entrada'});
 
   h+='<div class="kpis">'+
     UI.kpi({lb:'<span style="color:#E9A80B">●</span> Aguardando conferência', vl:caixa.length+' <small>'+(caixa.length===1?'nota':'notas')+'</small>', dl:F.moeda(vCaixa)+' a lançar', act:caixa.length?'abrir':'', id:caixa[0]?caixa[0].id:'', hl:caixa.length>0})+
-    UI.kpi({lb:'Lançadas no mês', vl:String(lancMes.length), dl:'Entradas com rastreio no estoque'})+
+    UI.kpi({lb:'Lançadas no mês', vl:String(lancMes.length), dl:'Notas que já entraram no estoque'})+
     UI.kpi({lb:'Valor de entradas · mês', vl:F.moeda(vMes), dl:Object.keys(fornMes(lancMes)).length+' fornecedores'})+
-    UI.kpi({lb:'Impostos destacados · mês', vl:F.moeda(impMes.total), dl:'ICMS '+F.moedaK(impMes.icms)+' · ST '+F.moedaK(impMes.st)+' · IPI '+F.moedaK(impMes.ipi)})+
+    UI.kpi({lb:'Impostos destacados · mês', vl:F.moeda(impMes.total), dl:'Informados pelos fornecedores nas notas'})+
   '</div>';
 
-  /* upload + caixa de entrada */
-  h+='<div class="grid g12 mb">'+
-    '<div class="card nf-up"><h3><span class="lft">'+UI.ic('upload')+' Importar nota fiscal</span><small>XML NF-e ou PDF</small></h3>'+
-      '<label class="drop" id="nf-drop">'+
-        '<div class="ic">'+UI.ic('nota')+'</div><b>Arraste o arquivo da nota aqui</b><small>ou clique para selecionar no computador</small>'+
-        '<div class="nf-fmt"><span><i style="background:#16A34A">XML</i>NF-e (modelo 55)</span><span><i style="background:#DC2626">PDF</i>DANFE</span><span><i style="background:#1C1C1E">44</i>Chave de acesso</span></div>'+
-        '<input type="file" id="nf-arq" accept=".xml,.pdf,application/pdf,text/xml,application/xml">'+
-      '</label>'+
-      '<div class="nf-ben"><div><b>Leitura automática</b>Emitente, itens, NCM, CFOP e impostos</div><div><b>Correspondência</b>Produto da nota ↔ cadastro com nota de confiança</div><div><b>Lançamento</b>Estoque, custo médio, receitas e contas a pagar</div></div>'+
-    '</div>'+
-    '<div class="card"><h3><span class="lft">'+UI.ic('relogio')+' Caixa de entrada <span class="n">'+caixa.length+'</span></span><small>notas recebidas aguardando conferência</small></h3>'+
-      (caixa.length? caixa.map(inboxItem).join('') : UI.vazio('Nenhuma nota aguardando conferência. Importe um XML ou PDF para começar.','✅'))+
-      (caixa.length? UI.nota('A nota só movimenta o estoque depois de <b>conferida e aprovada</b>. Até lá ela não altera custo médio, receitas nem contas a pagar.','in'):'')+
-      recentes(vis)+
-    '</div></div>';
+  /* card único de importação */
+  h+='<label class="drop nf-drop1 mb" id="nf-drop"><div class="ic">'+UI.ic('upload')+'</div><div><b>Arraste o XML da nota aqui</b><small>ou clique para escolher o arquivo no computador</small></div>'+
+     '<input type="file" id="nf-arq" accept=".xml,.pdf,application/pdf,text/xml,application/xml"></label>';
 
-  /* análises */
-  h+='<div class="grid g2 mb"><div class="card"><h3>Entradas por fornecedor <small>notas lançadas · 90 dias</small></h3><div id="nf-gf"></div></div>'+
-     '<div class="card"><h3>Impostos destacados nas notas <small>notas lançadas · 90 dias</small></h3><div id="nf-gi"></div></div></div>';
-
-  /* histórico */
+  /* notas importadas */
   var forns={}; vis.forEach(function(n){ forns[n.forn]=1; });
-  h+='<div class="card"><h3><span class="lft">'+UI.ic('lista')+' Histórico de notas importadas</span><small id="nf-cont"></small></h3>'+
+  h+='<div class="card"><h3><span class="lft">Notas importadas</span><small id="nf-cont"></small></h3>'+
     '<div class="barra">'+
-      '<div class="search">'+UI.ic('busca')+'<input id="nf-q" placeholder="Número, fornecedor, chave ou produto…" value="'+esc(s.q)+'"></div>'+
-      '<select class="inp sm" style="width:auto" data-chg="fFor"><option value="">Todos os fornecedores</option>'+Object.keys(forns).map(function(f){ return '<option value="'+f+'"'+(s.forn===f?' selected':'')+'>'+esc(LFI.forn(f).nome)+'</option>'; }).join('')+'</select>'+
-      '<select class="inp sm" style="width:auto" data-chg="fSt"><option value="">Todos os status</option>'+Object.keys(LFI.STATUS.nf).map(function(k){ return '<option value="'+k+'"'+(s.status===k?' selected':'')+'>'+LFI.STATUS.nf[k][0]+'</option>'; }).join('')+'</select>'+
-      '<select class="inp sm" style="width:auto" data-chg="fDep"><option value="">Todos os destinos</option>'+LFI.depsVisiveis().map(function(d){ return '<option value="'+d.id+'"'+(s.dep===d.id?' selected':'')+'>'+esc(d.nome)+'</option>'; }).join('')+'</select>'+
-      '<span class="sp"></span>'+
+      '<div class="search">'+UI.ic('busca')+'<input id="nf-q" placeholder="Buscar por número, fornecedor ou produto" value="'+esc(s.q)+'"></div>'+
       '<div class="seg">'+[['30d','30 dias'],['mes','Mês'],['90d','90 dias'],['todas','Todas']].map(function(x){ return '<button class="'+(s.per===x[0]?'on':'')+'" data-act="per" data-id="'+x[0]+'">'+x[1]+'</button>'; }).join('')+'</div>'+
+      '<select class="inp sm" style="width:auto" data-chg="fFor"><option value="">Todos os fornecedores</option>'+Object.keys(forns).map(function(f){ return '<option value="'+f+'"'+(s.forn===f?' selected':'')+'>'+esc(LFI.forn(f).nome)+'</option>'; }).join('')+'</select>'+
+      '<select class="inp sm" style="width:auto" data-chg="fSt"><option value="">Todas as situações</option>'+['recebida','lancada','cancelada'].map(function(k){ return '<option value="'+k+'"'+(s.status===k?' selected':'')+'>'+LFI.STATUS.nf[k][0]+'</option>'; }).join('')+'</select>'+
+      '<select class="inp sm" style="width:auto" data-chg="fDep"><option value="">Todos os destinos</option>'+LFI.depsVisiveis().map(function(d){ return '<option value="'+d.id+'"'+(s.dep===d.id?' selected':'')+'>'+esc(d.nome)+'</option>'; }).join('')+'</select>'+
     '</div><div id="nf-hist"></div></div>';
   el.innerHTML=h;
 
-  /* gráficos */
-  var p90=periodoFiltro('90d'), l90=vis.filter(function(n){ return n.status==='lancada'&&(n.entrada||n.emissao)>=p90.de; });
-  var fm=fornMes(l90), fl=Object.keys(fm).map(function(f){ return {nome:LFI.forn(f).nome, valor:fm[f].v, sub:fm[f].n+(fm[f].n===1?' nota':' notas'), id:f, cor:'var(--roxo)'}; }).sort(function(a,b){ return b.valor-a.valor; }).slice(0,6);
-  el.querySelector('#nf-gf').innerHTML=fl.length?UI.barrasH(fl,{act:'forn'}):UI.vazio('Nenhuma nota lançada no período');
-  var it={icms:0,ipi:0,pis:0,cofins:0,st:0}; l90.forEach(function(n){ var t=impNota(n); for(var k in it) it[k]+=t[k]; });
-  var tl=[['icms','ICMS próprio','#1D4ED8'],['st','ICMS-ST (retido)','#C2185B'],['ipi','IPI','#B08A00'],['pis','PIS','#16A34A'],['cofins','COFINS','#0891B2']].map(function(x){ return {nome:x[1], valor:r2(it[x[0]]), cor:x[2], id:x[0]}; });
-  var cr=0; var dest=LFI.impostosDestacados(function(i,n){ return (n.entrada||n.emissao)>=p90.de; }); for(var k in dest) cr+=dest[k].cred;
-  el.querySelector('#nf-gi').innerHTML=UI.barrasH(tl)+'<div class="nota ok" style="margin:14px 0 0;font-size:11.5px">'+UI.ic('check')+'<div>Destes impostos, <b>'+F.moeda(cr)+'</b> são <b>crédito tributário potencial</b> — apenas itens com regra <b>validada</b> e marcada como creditável. Destacado na nota ≠ crédito aproveitável.</div></div>';
-
-  /* histórico */
   var tab=UI.tabela(el.querySelector('#nf-hist'), {linhas:filtrar(vis), ordem:3, dir:-1, linhaAct:'abrir', vazio:'Nenhuma nota encontrada com estes filtros.', classeLinha:function(n){ return pendentes(n)?'aviso':''; }, colunas:[
-    {t:'Nota', v:function(n){ return '<b style="white-space:nowrap">NF '+esc(n.numero)+'</b><small>Série '+esc(n.serie)+' · '+(n.origem==='pdf'?'PDF (DANFE)':'XML NF-e')+'</small>'; }, ord:function(n){ return n.numero; }},
-    {t:'Fornecedor', v:function(n){ var f=LFI.forn(n.forn); return '<b>'+esc(f.nome)+'</b><small class="mono">'+f.cnpj+'</small>'; }, ord:function(n){ return LFI.forn(n.forn).nome; }},
+    {t:'Nota', v:function(n){ return '<b style="white-space:nowrap">NF '+esc(n.numero)+'</b>'; }, ord:function(n){ return n.numero; }},
+    {t:'Fornecedor', v:function(n){ return '<b>'+esc(LFI.forn(n.forn).nome)+'</b>'; }, ord:function(n){ return LFI.forn(n.forn).nome; }},
     {t:'Destino', v:function(n){ return UI.dep(n.dep)+'<small>'+esc(LFI.emp(n.empresa).fantasia)+'</small>'; }, ord:function(n){ return n.dep; }},
-    {t:'Emissão', v:function(n){ return F.data(n.emissao)+'<small>'+(n.entrada?'Entrada '+F.dataC(n.entrada):'Sem entrada')+'</small>'; }, ord:function(n){ return n.emissao; }},
-    {t:'Itens', r:true, v:function(n){ return String(n.itens.length); }, ord:function(n){ return n.itens.length; }},
-    {t:'Impostos', r:true, v:function(n){ return F.moeda(impNota(n).total); }, ord:function(n){ return impNota(n).total; }},
-    {t:'Valor total', r:true, v:function(n){ return '<b>'+F.moeda(n.valor)+'</b>'; }, ord:function(n){ return n.valor; }},
-    {t:'OC', v:function(n){ var o=n.oc&&LFI.ordem(n.oc); return o?'<span class="tag">'+esc(o.num)+'</span>':'<small>—</small>'; }, ord:function(n){ return n.oc||''; }},
-    {t:'Status', v:function(n){ return UI.status('nf', n.status); }, ord:function(n){ return n.status; }}
+    {t:'Data', v:function(n){ return F.data(n.emissao); }, ord:function(n){ return n.emissao; }},
+    {t:'Valor', r:true, v:function(n){ return '<b>'+F.moeda(n.valor)+'</b>'; }, ord:function(n){ return n.valor; }},
+    {t:'Situação', v:function(n){ return UI.status('nf', n.status==='conferencia'?'recebida':n.status); }, ord:function(n){ return n.status; }},
+    {t:'', ord:false, r:true, v:function(n){ return pendentes(n)?'<span class="btn pri xs">Conferir</span>':''; }}
   ]});
   function atualiza(){ var ls=filtrar(vis); tab.redesenha(ls); var t=0; ls.forEach(function(n){ t+=n.valor; }); el.querySelector('#nf-cont').textContent=ls.length+(ls.length===1?' nota':' notas')+' · '+F.moeda(t); }
   atualiza();
@@ -240,34 +211,17 @@ function lista(el){
     exp:function(){ exportar(filtrar(vis)); }
   }));
 }
-function recentes(vis){
-  var ls=vis.filter(function(n){ return n.status==='lancada'; }).sort(function(a,b){ return (b.lancadaEm||b.entrada||'')>(a.lancadaEm||a.entrada||'')?1:-1; }).slice(0,4);
-  if(!ls.length) return '';
-  return '<div style="font-size:10.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 4px">Lançadas recentemente</div><div class="lst">'+ls.map(function(n){ var f=LFI.forn(n.forn);
-    return '<div class="li cl" data-act="abrir" data-id="'+n.id+'"><span class="av">'+UI.ic('check')+'</span><div class="gr"><div class="tt">NF '+esc(n.numero)+' · '+esc(f.nome)+'</div><div class="dd">'+n.itens.length+' itens · entrada '+F.relativo(n.lancadaEm||n.entrada).toLowerCase()+' · '+esc(LFI.dep(n.dep).curto)+'</div></div><div class="rt">'+F.moeda(n.valor)+'<small>'+LFI.STATUS.nf[n.status][0]+'</small></div></div>'; }).join('')+'</div>';
-}
 function fornMes(ls){ var o={}; ls.forEach(function(n){ o[n.forn]=o[n.forn]||{v:0,n:0}; o[n.forn].v+=n.valor; o[n.forn].n++; }); return o; }
 function filtrar(ls){
   var s=st(), p=periodoFiltro(s.per), q=String(s.q||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim(), qd=q.replace(/\D/g,'');
   return ls.filter(function(n){
     if(s.forn&&n.forn!==s.forn) return false;
-    if(s.status&&n.status!==s.status) return false;
+    if(s.status&&(s.status==='recebida'?!pendentes(n):n.status!==s.status)) return false;
     if(s.dep&&n.dep!==s.dep) return false;
     if(p&&(n.emissao<p.de||n.emissao>p.ate)&&!pendentes(n)) return false;
     if(q){ var f=LFI.forn(n.forn), txt=(n.numero+' '+f.nome+' '+f.razao+' '+n.itens.map(function(i){ return i.desc; }).join(' ')).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
       if(txt.indexOf(q)<0 && !(qd.length>=3&&(String(n.chave).indexOf(qd)>=0||n.numero.replace(/\D/g,'').indexOf(qd)>=0))) return false; }
     return true; });
-}
-function inboxItem(n){
-  var f=LFI.forn(n.forn), o=n.oc&&LFI.ordem(n.oc), conf=n.itens.filter(itemOk).length;
-  return '<div class="nfin'+(n.id==='nf_demo'?' dm':'')+'" data-act="abrir" data-id="'+n.id+'">'+
-    '<span class="av lf">'+UI.ic('nota')+'</span>'+
-    '<div class="gr"><div class="tt">NF '+esc(n.numero)+' · '+esc(f.nome)+'</div>'+
-      '<div class="dd"><span>'+n.itens.length+' itens</span>·<span>emitida '+F.relativo(n.emissao).toLowerCase()+'</span>·<span>'+(n.origem==='pdf'?'PDF':'XML')+'</span>'+(o?'·<span class="tag">'+esc(o.num)+'</span>':'')+UI.dep(n.dep)+'</div>'+
-      (n.status==='conferencia'?'<div style="margin-top:6px;max-width:220px">'+UI.bar(conf/n.itens.length,'ok')+'<small style="font-size:10.5px;color:var(--muted);font-weight:700">'+conf+' de '+n.itens.length+' itens conferidos</small></div>':'')+
-    '</div>'+
-    '<div class="rt"><b>'+F.moeda(n.valor)+'</b>'+UI.status('nf', n.status)+'</div>'+
-    '<button class="btn pri sm" data-act="abrir" data-id="'+n.id+'">Conferir'+UI.ic('seta')+'</button></div>';
 }
 function exportar(ls){
   UI.exportarExcel('notas_fiscais_entrada', ['Número','Série','Fornecedor','CNPJ fornecedor','Empresa destinatária','CNPJ destinatário','Destino','Emissão','Entrada','Itens','Valor produtos','ICMS','IPI','PIS','COFINS','ICMS-ST','Valor total','OC','Status','Chave de acesso'],
@@ -307,14 +261,17 @@ function ler(arq){
   })();
 }
 function terminou(m, n){
-  var f=LFI.forn(n.forn), alta=n.itens.filter(function(i){ return i.prod&&i.score>=85; }).length, med=n.itens.filter(function(i){ return i.prod&&i.score<85; }).length, sem=n.itens.filter(function(i){ return !i.prod; }).length;
-  m.el.querySelector('.mdl-hd h3').textContent='Leitura concluída';
-  m.corpoHTML('<div class="nf-res-hd"><span class="ok">✓</span><div><b>NF '+esc(n.numero)+' · '+esc(f.nome)+'</b><small>'+n.itens.length+' itens · '+F.moeda(n.valor)+' · emitida em '+F.data(n.emissao)+(n.oc?' · vinculada à '+esc(LFI.ordem(n.oc).num):'')+'</small></div></div>'+
-    '<div class="kpis k3">'+UI.kpi({lb:'<span style="color:var(--green)">●</span> Alta confiança', vl:String(alta), dl:'Correspondência ≥ 85%'})+UI.kpi({lb:'<span style="color:#E9A80B">●</span> Revisar', vl:String(med), dl:'Correspondência parcial'})+UI.kpi({lb:'<span style="color:var(--red)">●</span> Sem correspondência', vl:String(sem), dl:'Cadastrar ou vincular'})+'</div>'+
-    '<div class="kv c3" style="margin-bottom:14px"><div><span>Chave de acesso</span><b class="nf-chave" style="font-size:11px;white-space:normal">'+fmtChave(n.chave)+'</b></div><div><span>Destinatário</span><b>'+esc(LFI.emp(n.empresa).fantasia)+'</b><small class="mono">'+LFI.emp(n.empresa).cnpj+'</small></div><div><span>Impostos destacados</span><b>'+F.moeda(impNota(n).total)+'</b></div></div>'+
-    UI.nota('A nota foi para a <b>caixa de entrada</b> com status “Aguardando conferência”. Nada foi lançado no estoque ainda.','in'));
-  m.rodapeHTML('<button class="btn sec" data-act="_fechar">Conferir depois</button><button class="btn pri" data-act="conf">Iniciar conferência'+UI.ic('seta')+'</button>');
-  UI.liga(m.el, {conf:function(){ m.fechar(); LFI.ir('notas', n.id); }});
+  var f=LFI.forn(n.forn), sel=n.empresa;
+  m.el.querySelector('.mdl-hd h3').textContent='De qual empresa é esta nota?'; var sb=m.el.querySelector('.mdl-hd small'); if(sb) sb.textContent='Os produtos entram no estoque da empresa escolhida';
+  function des(){
+    m.corpoHTML('<p class="nf-perg">NF '+esc(n.numero)+' · '+esc(f.nome)+' · '+F.moeda(n.valor)+'</p><div class="nf-emps">'+LFI.db.empresas.map(function(e){
+      return '<button type="button" class="nf-emp'+(e.id===sel?' on':'')+'" data-act="emp" data-id="'+e.id+'"><span class="emp-ic" style="background:'+e.cor+'">'+e.sigla+'</span><span><b>'+esc(e.fantasia)+'</b><small>CNPJ '+e.cnpj+'</small>'+(e.id===n.empresa?'<em>CNPJ que está na nota</em>':'')+'</span></button>'; }).join('')+'</div>');
+  }
+  des();
+  m.rodapeHTML('<button class="btn sec" data-act="_fechar">Conferir depois</button><button class="btn pri" data-act="conf">Continuar'+UI.ic('seta')+'</button>');
+  UI.liga(m.el, {emp:function(id){ sel=id; des(); }, conf:function(){
+    var x=LFI.nota(n.id); if(x.empresa!==sel){ x.empresa=sel; var d=LFI.db.departamentos.filter(function(dd){ return dd.empresa===sel; }); x.dep=(d.filter(function(dd){ return dd.id==='cen'; })[0]||d[0]).id; }
+    LFI.salvar(); m.fechar(); LFI.ir('notas', n.id); }});
 }
 
 /* gera uma NF plausível de um fornecedor com itens das suas categorias (sem vínculo de produto: a correspondência vem depois) */
