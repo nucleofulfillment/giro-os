@@ -1,6 +1,6 @@
 /* LivePro — tela de entrada no celular.
    Quem abre o sistema pelo celular (operador) vê o Live dando boas-vindas e dois botões grandes:
-   Recebimento e Buffet. Ao tocar, o Live comemora (como quando sai um pedido no LiveFood) e a tela abre.
+   Recebimento, Buffet e Saídas e perdas. Ao tocar, o Live comemora (como quando sai um pedido no LiveFood) e a tela abre.
    Aparece uma vez por sessão; "Ver o sistema completo" fecha e segue para a Visão Geral. */
 (function(){
 'use strict';
@@ -13,8 +13,8 @@ var CSS='.ini{position:fixed;inset:0;z-index:3000;display:flex;align-items:cente
 '.ini p{font-size:16px;font-weight:700;color:var(--muted2);margin:0 0 20px;opacity:0;transform:translateY(10px);transition:all .5s .65s cubic-bezier(.16,1,.3,1)}'+
 '.ini.on h2,.ini.on p{opacity:1;transform:none}'+
 '.ini-bt{display:flex;align-items:center;gap:16px;width:100%;min-height:92px;padding:16px 20px;margin-bottom:12px;border-radius:22px;border:0;font:inherit;text-align:left;cursor:pointer;color:#fff;background:var(--roxo);box-shadow:0 12px 26px rgba(255,90,0,.28);opacity:0;transform:translateY(16px);transition:opacity .5s,transform .5s cubic-bezier(.16,1,.3,1)}'+
-'.ini-bt.b2{background:var(--text);box-shadow:0 12px 26px rgba(0,0,0,.2)}'+
-'.ini.on .ini-bt{opacity:1;transform:none}.ini.on .ini-bt.b1{transition-delay:.8s}.ini.on .ini-bt.b2{transition-delay:.92s}'+
+'.ini-bt.b2{background:var(--text);box-shadow:0 12px 26px rgba(0,0,0,.2)}.ini-bt.b3{background:#fff;color:var(--text);border:1.5px solid var(--border2);box-shadow:0 8px 20px rgba(0,0,0,.06)}.ini-bt.b3 .ic{background:#FEE2E2}.ini-bt.b3 svg{stroke:var(--red)}'+
+'.ini.on .ini-bt{opacity:1;transform:none}.ini.on .ini-bt.b1{transition-delay:.8s}.ini.on .ini-bt.b2{transition-delay:.92s}.ini.on .ini-bt.b3{transition-delay:1.04s}'+
 '.ini-bt:active{transform:scale(.97)!important}'+
 '.ini-bt .ic{width:56px;height:56px;border-radius:16px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;flex:none}'+
 '.ini-bt svg{width:30px;height:30px;stroke:#fff;fill:none;stroke-width:2}'+
@@ -31,6 +31,7 @@ function mostrar(){
     '<h2>Olá, '+UI.esc(nome)+'!</h2><p>O que você vai fazer agora?</p>'+
     '<button class="ini-bt b1" data-ir="notas"><span class="ic">'+UI.ic('caminhao')+'</span><span><b>Recebimento</b><small>Receber o pedido que chegou</small></span></button>'+
     '<button class="ini-bt b2" data-ir="buffet"><span class="ic">'+UI.ic('balanca')+'</span><span><b>Buffet</b><small>Pesar as cubas</small></span></button>'+
+    '<button class="ini-bt b3" data-ir="perdas"><span class="ic">'+UI.ic('lixo')+'</span><span><b>Saídas e perdas</b><small>Dar baixa no que vai para o descarte</small></span></button>'+
     '<button class="ini-ver" data-ir="">Ver o sistema completo</button></div>';
   document.body.appendChild(box);
   var live=window.LiveMascote?LiveMascote.criar(box.querySelector('.ini-live'),{sombra:true, expressao:'surpreso'}):null;
