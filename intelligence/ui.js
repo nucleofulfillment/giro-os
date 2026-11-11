@@ -30,6 +30,27 @@ UI.num = function(v){ if(typeof v==='number') return v; v=String(v||'').trim(); 
 UI.numBR = function(v,c){ if(v==null||v==='') return ''; return Number(v).toLocaleString('pt-BR',{minimumFractionDigits:c==null?0:c, maximumFractionDigits:c==null?3:c, useGrouping:false}); };
 UI.espera = function(ms){ return new Promise(function(r){ setTimeout(r,ms); }); };
 
+
+/* ---------- busca tolerante a erro de digitação ----------
+   aceita letras trocadas de lugar, uma letra a mais/a menos ou errada e ausência de acento.
+   devolve uma nota (0 = não combina; quanto maior, melhor). */
+function semAc(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim(); }
+function damerau(a,b){ var m=a.length, n=b.length, d=[], i, j; for(i=0;i<=m;i++){ d[i]=[i]; } for(j=0;j<=n;j++) d[0][j]=j;
+  for(i=1;i<=m;i++) for(j=1;j<=n;j++){ var c=a[i-1]===b[j-1]?0:1; d[i][j]=Math.min(d[i-1][j]+1, d[i][j-1]+1, d[i-1][j-1]+c); if(i>1&&j>1&&a[i-1]===b[j-2]&&a[i-2]===b[j-1]) d[i][j]=Math.min(d[i][j], d[i-2][j-2]+1); }
+  return d[m][n]; }
+UI.notaBusca = function(digitado, nome){
+  var q=semAc(digitado), t=semAc(nome); if(!q) return 0;
+  if(t.indexOf(q)===0) return 100; if(t.indexOf(q)>=0) return 90;
+  var ws=t.split(' '), qs=q.split(' ').filter(Boolean), tot=0;
+  for(var k=0;k<qs.length;k++){ var w=qs[k], best=0;
+    ws.forEach(function(x,ix){ var bon=ix===0?4:0; if(x.indexOf(w)===0){ best=Math.max(best,95+bon); return; }
+      var tol=w.length<=3?0:w.length<=5?1:2, pre=x.slice(0,Math.max(w.length,1)), dp=damerau(w,pre), dw=damerau(w,x);
+      var dist=Math.min(dp,dw); if(dist<=tol) best=Math.max(best, 80-dist*15+bon); });
+    tot+=best; }
+  var nota=Math.round(tot/qs.length); return nota>=40?nota:0;
+};
+UI.filtrarBusca = function(digitado, lista, nomeDe){ return lista.map(function(x){ return {x:x, s:UI.notaBusca(digitado, nomeDe(x))}; }).filter(function(o){ return o.s>0; }).sort(function(a,b){ return b.s-a.s; }).map(function(o){ return o.x; }); };
+
 /* ---------- ícones (traço, 24x24) ---------- */
 var IC = {
   painel:'<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',

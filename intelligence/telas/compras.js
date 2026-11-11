@@ -1201,8 +1201,7 @@ function renderNova2(el){
   /* busca de produto: digita, lista os cadastrados, Enter escolhe e vai para a quantidade */
   var bi=el.querySelector('#o2-b'), res=el.querySelector('#o2-res'), qb=el.querySelector('#o2-qbox'), qi=el.querySelector('#o2-q'), achados=[], selI=0, escolhido=null;
   function lista(){ var t=norm(bi.value).trim(); if(!t){ res.innerHTML=''; achados=[]; return; }
-    achados=LFI.db.produtos.filter(function(p){ return p.tipo==='insumo'&&norm(p.nome).indexOf(t)>=0; }).slice(0,8);
-    if(!achados.length){ var sg=LFI.sugerirProduto(bi.value,5); achados=sg.map(function(x){ return x.prod; }); }
+    achados=UI.filtrarBusca(bi.value, LFI.db.produtos.filter(function(p){ return p.tipo==='insumo'; }), function(p){ return p.nome; }).slice(0,8);
     if(selI>=achados.length) selI=0;
     res.innerHTML=achados.length?achados.map(function(p,i){ var ja=n.itens.some(function(x){ return x.prod===p.id; }); return '<button class="o2-r'+(i===selI?' on':'')+'" data-i="'+i+'"><b>'+esc(p.nome)+'</b><small>'+esc(LFI.cat(p.cat).nome)+' · estoque '+F.qtd(LFI.estoqueGeral(p),p.un)+' · mín. '+F.qtd(p.estMin,p.un)+(ja?' · já na lista':'')+'</small>'+UI.situacao(p)+'</button>'; }).join(''):'<div class="o2-nada">Nenhum produto com esse nome</div>'; }
   function escolhe(p){ escolhido=p; res.innerHTML=''; bi.value=p.nome; bi.readOnly=true; qb.hidden=false; el.querySelector('#o2-qn').textContent=''; el.querySelector('#o2-qu').textContent=p.un; qi.value=''; qi.placeholder='Quantidade em '+p.un; qi.focus(); }
