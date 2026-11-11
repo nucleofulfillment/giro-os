@@ -1142,7 +1142,7 @@ function sit2(c){
 function novas(c){ return Math.max(0, c.propostas.length-(c.visto||0)); }
 
 function renderLista2(el){
-  css2(); var s=st(); s.f2=s.f2||'andamento';
+  css2(); document.body.classList.add('foco'); var s=st(); s.f2=s.f2||'andamento';
   var todas=cots(), q=norm(s.busca);
   var and=todas.filter(function(c){ return ['convertida','aprovada','cancelada'].indexOf(c.status)<0; });
   var aguard=and.filter(function(c){ return c.status!=='preparacao'&&c.status!=='aguardando_envio'; });
