@@ -144,7 +144,7 @@ function pagina(el, p){
   el.innerHTML=h;
 
   function marca(){ mudou=true; el.querySelector('#pp-bar').classList.add('on'); }
-  LFI._antesDeVoltar=function(){ if(!mudou) return true; UI.confirmar('Sair sem salvar?','As alterações deste produto serão perdidas.','Sair sem salvar',function(){ mudou=false; LFI.voltar(true); }); return false; };
+  LFI._antesDeVoltar=function(){ if(!mudou) return true; UI.confirmar('Sair sem salvar?','As alterações deste produto serão perdidas.','Sair sem salvar',function(){ mudou=false; LFI._antesDeVoltar=null; LFI.ir('produtos'); }); return false; };
   function resumo(){
     var a=ana(), cm=corMargem(a.margem,a.preco), box=el.querySelector('#pp-res'), un=p.un==='un'?'unidade':p.un;
     if(p.tipo==='acabado'||p.tipo==='revenda'){
@@ -212,7 +212,7 @@ function pagina(el, p){
     LFI.salvar(); UI.toast('Alterações salvas', p.nome+(usos.length?' · '+usos.length+' receita(s) recalculada(s)':'')); LFI.recarregar();
   }
   UI.liga(el, UI.navHandlers({
-    volta:function(){ if(LFI.podeVoltar()) LFI.voltar(); else LFI.ir('produtos'); },
+    volta:function(){ if(LFI._antesDeVoltar&&LFI._antesDeVoltar()===false) return; LFI.ir('produtos'); },
     add:function(){ buscando=!buscando; busca(); },
     pega:function(id){ var q=LFI.prod(id); ed.ing.push({prod:q.id, qtd:0, un:unRec(q)}); buscando=false; busca(); ings(); marca(); parcial();
       var ultimo=el.querySelector('input[data-q="'+(ed.ing.length-1)+'"]'); if(ultimo){ ultimo.focus(); ultimo.scrollIntoView({block:'center'}); } },

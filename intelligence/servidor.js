@@ -23,8 +23,10 @@ function req(metodo, caminho, corpo){
     .then(function(r){ return r.json().catch(function(){ return {ok:false}; }).then(function(j){ j._s=r.status; return j; }); });
 }
 function estado(e, txt){ S.estado=e; var c=document.getElementById('tb-nuvem'); if(!c) return;
-  var info={ok:['☁','Salvo no servidor'], salvando:['⟳','Salvando…'], offline:['⚠','Sem internet: salvo neste aparelho'], erro:['⚠','Não foi possível salvar no servidor'], carregando:['⟳','Carregando do servidor…']}[e];
-  if(!info){ c.hidden=true; return; } c.hidden=false; c.className='tb-nuvem '+e; c.innerHTML='<b>'+info[0]+'</b><span>'+(txt||info[1])+'</span>'; c.title=txt||info[1]; }
+  var info={ok:'Salvo no servidor', salvando:'Salvando no servidor…', offline:'Sem internet: salvo neste aparelho', erro:'Não foi possível salvar no servidor', carregando:'Carregando do servidor…'}[e];
+  if(!info){ c.hidden=true; return; }
+  var nuvem='<path d="M7 18a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 9.5a4 4 0 0 1-.5 8.5H7z"/>', marca={ok:'<path class="nv-m" d="M9.5 13.5l2 2 4-4"/>', offline:'<path class="nv-m" d="M12 11v3M12 16.5v.01"/>', erro:'<path class="nv-m" d="M12 11v3M12 16.5v.01"/>'}[e]||'';
+  c.hidden=false; c.className='tb-nuvem '+e; c.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true">'+nuvem+marca+'</svg>'; c.title=txt||info; c.setAttribute('aria-label', txt||info); }
 
 function enviar(todos){
   if(!S.ativo||!S.pronto) return;
@@ -52,7 +54,8 @@ S.carregar=function(){
   estado('carregando');
   req('GET','/painel/livepro').then(function(j){
     if(j._s===403||j._s===404){ S.ativo=false; estado('local'); return; }   /* sem liberação, ou servidor ainda sem o LivePro: segue só neste aparelho */
-    if(!j.ok){ estado('erro', j.mensagem); return; }
+    if(!j.ok){ estado('erro', j.mensagem); S.falhou=true; return; }
+    S.falhou=false;
     var chaves=Object.keys(j.blocos||{});
     S.pronto=true;
     if(!chaves.length){ enviar(true); return; }   /* primeira vez desta conta: o servidor recebe os dados deste aparelho */
@@ -61,8 +64,10 @@ S.carregar=function(){
     chaves.forEach(function(k){ S.hashes[k]=j.blocos[k].h; });
     LFI.db=db; salvarLocal.call(LFI);   /* cópia local, sem reenviar */
     estado('ok'); LFI.recarregar();
-  }).catch(function(){ estado('offline'); S.pronto=true; });
+  }).catch(function(){ estado('offline'); S.falhou=true; });   /* não envia nada antes de ler o servidor: assim os dados de lá nunca são trocados pelos deste aparelho */
 };
 /* quando a internet volta, manda o que ficou pendente */
-window.addEventListener('online', function(){ if(S.ativo&&S.pronto) enviar(); });
+window.addEventListener('online', function(){ if(!S.ativo) return; if(S.pronto) enviar(); else S.carregar(); });
+/* se a primeira leitura falhou, tenta de novo a cada 30 segundos */
+setInterval(function(){ if(S.ativo&&!S.pronto&&S.falhou) S.carregar(); }, 30000);
 })();
