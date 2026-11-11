@@ -137,7 +137,7 @@ function cartao(o){
 /* ================= NOVA OP ================= */
 function novaOP(recId){
   var deps=LFI.depIds().filter(function(d){ return d!=='cen'; });
-  var recs=LFI.db.receitas.filter(function(r){ return deps.indexOf(r.dep)>=0; });
+  var recs=LFI.db.receitas.filter(function(r){ return deps.indexOf(r.dep)>=0 && r.ativo!==false; });
   if(!recs.length){ UI.toast('Nenhuma receita nas operações da empresa selecionada','','wt'); return; }
   var r0=LFI.rec(recId)&&deps.indexOf(LFI.rec(recId).dep)>=0?LFI.rec(recId):recs[0];
   var d={id:LFI.novoId('op'), rec:r0.id, qtd:sugQtd(r0), dep:r0.dep, resp:respPadrao(r0.dep), data:LFI.hoje(), obs:'', cot:null, transf:0};

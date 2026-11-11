@@ -52,7 +52,7 @@ function render(el, arg){
   function preco(p){ return s.novos[p.id]!=null?s.novos[p.id]:(p.preco||0); }
   function calc(p){ var c=LFI.custoProduto(p), pv=preco(p), l=pv-c, m=pv?l/pv:0; return {c:c, pv:pv, l:l, m:m, sit:situacao(m,pv)}; }
   var grupos=['todos'].concat(LFI.GRUPOS.filter(function(g){ return g.nome!=='Bases'&&g.nome!=='Inativos'; }).map(function(g){ return g.nome; }));
-  var h='<div class="pc"><div class="pc-hd"><h1>Precificação</h1><small>O custo vem da receita de cada produto. Digite o preço de venda e veja o lucro na hora.</small></div>';
+  var h='<div class="pc"><div class="pc-hd"><div class="pghd-t">'+UI.setaVoltar()+'<h1>Precificação</h1></div><small>O custo vem da receita de cada produto. Digite o preço de venda e veja o lucro na hora.</small></div>';
   h+='<div class="pc-k" id="pc-k"></div>';
   h+='<div class="pr-grp">'+grupos.map(function(g){ var n=g==='todos'?base.length:base.filter(function(p){ return p.grupo===g; }).length; if(!n) return ''; return '<button class="'+(s.grupo===g?'on':'')+'" data-act="grp" data-id="'+esc(g)+'">'+(g==='todos'?'Todos':LFI.grupoInfo(g).emoji+' '+esc(g))+' <i>'+n+'</i></button>'; }).join('')+'</div>';
   h+='<div class="pc-f"><div class="pr-busca">'+UI.ic('busca')+'<input id="pc-q" placeholder="Buscar produto" value="'+esc(s.q)+'" autocomplete="off"></div>'+

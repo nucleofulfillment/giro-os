@@ -79,7 +79,7 @@ function render(el, arg){
   if(arg){ var p=LFI.prod(arg); if(p) return pagina(el, p); }
   document.body.classList.add('foco');
   var s=st(), fl=filtro(s.grupo), todos=LFI.db.produtos;
-  var h='<div class="pr"><div class="pr-hd"><div><h1>Produtos</h1><small>Tudo o que a casa vende e produz. A receita fica dentro de cada produto.</small></div><button class="btn pri pr-novo" data-act="novo">'+UI.ic('mais')+'Novo produto</button></div>';
+  var h='<div class="pr"><div class="pr-hd"><div><div class="pghd-t">'+UI.setaVoltar()+'<h1>Produtos</h1></div><small>Tudo o que a casa vende e produz. A receita fica dentro de cada produto.</small></div><button class="btn pri pr-novo" data-act="novo">'+UI.ic('mais')+'Novo produto</button></div>';
   h+='<div class="pr-grp">'+FILTROS.map(function(x){ var n=todos.filter(x.f).length; if(!n&&x.id!=='venda') return ''; var g=x.id.indexOf('g:')===0?LFI.grupoInfo(x.nome).emoji+' ':''; return '<button class="'+(x.id===s.grupo?'on':'')+'" data-act="grp" data-id="'+esc(x.id)+'">'+g+esc(x.nome)+' <i>'+n+'</i></button>'; }).join('')+'</div>';
   h+='<div class="pr-busca">'+UI.ic('busca')+'<input id="pr-q" placeholder="Buscar pelo nome ou código" value="'+esc(s.q)+'" autocomplete="off"></div><div id="pr-ls"></div></div>';
   el.innerHTML=h;
