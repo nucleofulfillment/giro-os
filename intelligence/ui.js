@@ -349,6 +349,44 @@ LFI.renderizar = function(manterScroll){
   fechaMM();
 };
 LFI.recarregar = function(){ LFI.renderizar(true); };
+/* ---------- seletor com busca: listas longas (12 opções ou mais) viram um campo para digitar ----------
+   O <select> original continua no lugar (escondido) e recebe o valor e o evento 'change', então as telas não mudam. */
+UI.selBusca = function(sel){
+  if(!sel||sel._busca||sel.multiple) return; sel._busca=true;
+  var box=document.createElement('div'); box.className='selb';
+  sel.parentNode.insertBefore(box, sel); box.appendChild(sel); sel.classList.add('selb-orig');
+  var inp=document.createElement('input'); inp.type='text'; inp.className=(sel.className.replace('selb-orig','')+' selb-in').trim(); inp.autocomplete='off'; inp.setAttribute('role','combobox');
+  var ls=document.createElement('div'); ls.className='selb-l'; ls.hidden=true;
+  box.appendChild(inp); box.appendChild(ls);
+  function itens(){ var out=[]; Array.prototype.forEach.call(sel.options, function(o){ if(o.disabled&&!o.value) return; out.push({v:o.value, t:o.textContent.trim(), g:o.parentNode&&o.parentNode.tagName==='OPTGROUP'?o.parentNode.label:''}); }); return out; }
+  function rotulo(){ var o=sel.options[sel.selectedIndex]; inp.value=o&&o.value?o.textContent.trim():''; inp.placeholder=o&&!o.value?o.textContent.trim():'Digite para buscar…'; }
+  var lista=[], at=0;
+  function desenha(q){
+    var todos=itens(); lista=q?UI.filtrarBusca(q, todos, function(x){ return x.t+' '+x.g; }).slice(0,60):todos;
+    if(at>=lista.length) at=0;
+    var h='', gAnt=null;
+    lista.forEach(function(x,i){ if(!q&&x.g&&x.g!==gAnt){ h+='<div class="selb-g">'+esc(x.g)+'</div>'; gAnt=x.g; }
+      h+='<div class="selb-o'+(i===at?' on':'')+(x.v===sel.value?' sel':'')+'" data-i="'+i+'">'+esc(x.t)+(q&&x.g?'<small>'+esc(x.g)+'</small>':'')+'</div>'; });
+    ls.innerHTML=h||'<div class="selb-v">Nada encontrado</div>'; ls.hidden=false;
+    var on=ls.querySelector('.on'); if(on&&on.scrollIntoView) on.scrollIntoView({block:'nearest'});
+  }
+  function escolhe(i){ var x=lista[i]; if(!x) return; if(sel.value!==x.v){ sel.value=x.v; sel.dispatchEvent(new Event('change',{bubbles:true})); } rotulo(); ls.hidden=true; inp.blur(); }
+  inp.addEventListener('focus', function(){ inp.select(); at=Math.max(0,itens().map(function(x){ return x.v; }).indexOf(sel.value)); desenha(''); });
+  inp.addEventListener('input', function(){ at=0; desenha(inp.value.trim()); });
+  inp.addEventListener('keydown', function(ev){
+    if(ev.key==='ArrowDown'){ ev.preventDefault(); at=Math.min(lista.length-1,at+1); desenha(inp.value===rotuloAtual()?'':inp.value.trim()); }
+    else if(ev.key==='ArrowUp'){ ev.preventDefault(); at=Math.max(0,at-1); desenha(inp.value===rotuloAtual()?'':inp.value.trim()); }
+    else if(ev.key==='Enter'){ ev.preventDefault(); escolhe(at); }
+    else if(ev.key==='Escape'){ rotulo(); ls.hidden=true; inp.blur(); }
+  });
+  function rotuloAtual(){ var o=sel.options[sel.selectedIndex]; return o?o.textContent.trim():''; }
+  ls.addEventListener('mousedown', function(ev){ ev.preventDefault(); var o=ev.target.closest('.selb-o'); if(o) escolhe(+o.getAttribute('data-i')); });
+  inp.addEventListener('blur', function(){ setTimeout(function(){ ls.hidden=true; rotulo(); }, 120); });
+  sel.addEventListener('change', rotulo);
+  rotulo();
+};
+UI.selBuscaEm = function(raiz){ UI.els('select', raiz||document).forEach(function(s){ if(!s._busca && s.options.length>=12) UI.selBusca(s); }); };
+
 /* ---------- voltar à tela anterior (botão no topo, em todas as telas) ---------- */
 var HIST=[];
 function chaveRota(id, arg){ return id+(arg?'/'+arg:''); }
@@ -566,6 +604,8 @@ UI.iniciar = function(){
   document.getElementById('tb-av').textContent=LFI.usuario().ini;
   document.getElementById('tb-menu').addEventListener('click', UI.abreMM);
   var tv=document.getElementById('tb-voltar'); if(tv) tv.addEventListener('click', function(){ LFI.voltar(); });
+  /* listas longas ganham busca, inclusive as que aparecem depois (janelas, telas novas) */
+  UI.selBuscaEm(document); var _sbT=null; new MutationObserver(function(){ clearTimeout(_sbT); _sbT=setTimeout(function(){ UI.selBuscaEm(document); },30); }).observe(document.body,{childList:true, subtree:true});
   document.querySelector('#mm .fd').addEventListener('click', fechaMM);
   var t, larg=innerWidth; window.addEventListener('resize', function(){ clearTimeout(t); t=setTimeout(function(){ if(Math.abs(innerWidth-larg)<60||document.querySelector('.mdl.on')) return; larg=innerWidth; if(!document.activeElement||!/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) LFI.recarregar(); },300); });
   LFI.renderizar();
