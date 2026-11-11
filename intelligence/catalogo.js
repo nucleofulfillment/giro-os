@@ -134,7 +134,7 @@ LFI._aplicarCatalogo=function(db, h){
   db.movs.forEach(function(m){ if(m.custo!=null) m.custo=r2(m.custo*fator(m.prod)); });
 
   /* ---- 7. custo dos produtos com receita (bases dentro de produtos) ---- */
-  db.config=db.config||{}; db.config.despesas=C.despesas||33;
+  db.config=db.config||{}; db.config.despesas=0; db.config.despesasPlanilha=C.despesas||33; db.config.despMig=1; /* por enquanto só o custo do produto */
   db.miro=C.miro;
   LFI.recalcularProduzidos(db);
 

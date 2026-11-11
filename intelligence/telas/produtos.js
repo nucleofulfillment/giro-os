@@ -149,7 +149,7 @@ function pagina(el, p){
     var a=ana(), cm=corMargem(a.margem,a.preco), box=el.querySelector('#pp-res'), un=p.un==='un'?'unidade':p.un;
     if(p.tipo==='acabado'||p.tipo==='revenda'){
       box.innerHTML='<div class="pp-res"><div class="hl"><span>Preço de venda'+(p.un!=='un'?' (por '+esc(p.un)+')':'')+'</span><div class="pp-preco"><em>R$</em><input id="pp-preco" inputmode="decimal" value="'+(preco?preco.toFixed(2).replace('.',','):'')+'" placeholder="0,00"></div>'+(p.promo?'<small>Promoção: '+F.moeda(p.promo)+'</small>':'<small>&nbsp;</small>')+'</div>'+
-        '<div><span>Custo'+(r?' + despesas':'')+'</span><b id="pp-cf">'+F.moeda(a.custoFinal)+'</b><small>por '+un+'</small></div>'+
+        '<div><span>Custo'+(r&&desp()>0?' + despesas':'')+'</span><b id="pp-cf">'+F.moeda(a.custoFinal)+'</b><small>por '+un+'</small></div>'+
         '<div class="'+cm+'"><span>Lucro</span><b id="pp-lu">'+(a.preco?F.pct(a.margem):'—')+'</b><small id="pp-lv">'+(a.preco?F.moeda(a.lucro)+' por '+un:'informe o preço')+'</small></div></div>';
       var pi=box.querySelector('#pp-preco'); pi.addEventListener('input', function(){ preco=numIn(pi.value); marca(); parcial(); });
     } else if(p.tipo==='base'){
@@ -175,7 +175,7 @@ function pagina(el, p){
   }
   function totais(a){ a=a||ana(); var box=el.querySelector('#pp-tot'); if(!box) return; var un=p.un==='un'?'unidade':p.un;
     box.innerHTML='<div><span>Custo da receita inteira</span><b>'+F.moeda(a.custoReceita)+'</b></div><div><span>Custo por '+un+' (÷ '+F.num(ed.rend)+')</span><b>'+F.moeda(a.custoUn)+'</b></div>'+
-      (p.tipo==='acabado'?'<div><span>Despesas da casa ('+F.num(a.despPct)+'%)<a data-act="desp">alterar</a></span><b>+ '+F.moeda(a.despV)+'</b></div><div class="fim"><span>Custo final por '+un+'</span><b>'+F.moeda(a.custoFinal)+'</b></div>':'')+
+      (p.tipo==='acabado'&&a.despPct>0?'<div><span>Despesas da casa ('+F.num(a.despPct)+'%)<a data-act="desp">alterar</a></span><b>+ '+F.moeda(a.despV)+'</b></div><div class="fim"><span>Custo final por '+un+'</span><b>'+F.moeda(a.custoFinal)+'</b></div>':'')+
       (a.semPreco.length?'<div class="pp-aviso">⚠ '+a.semPreco.length+' ingrediente(s) sem preço: '+esc(a.semPreco.slice(0,4).join(', '))+(a.semPreco.length>4?'…':'')+'. O custo pode estar menor do que o real.</div>':'')+
       (p.custoExcel&&r&&r.real?'<div style="font-size:12px"><span>Custo por '+un+' na planilha do cliente (sem despesas)</span><b style="color:var(--muted2)">'+F.moeda(p.custoExcel)+'</b></div>':'');
   }
