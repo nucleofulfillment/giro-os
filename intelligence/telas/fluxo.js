@@ -6,7 +6,7 @@
 'use strict';
 var UI=LFI.ui, F=LFI.fmt, esc=UI.esc;
 var API='https://giro-os-api.nucleofull.workers.dev';
-var CATS_PADRAO={in:['Vendas','Repasses e recebimentos','Outras entradas'], out:['Fornecedores','Folha de pagamento','Aluguel','Energia, água e gás','Impostos','Manutenção','Operacional','Marketing','Outras saídas']};
+var CATS_PADRAO={in:['Vendas','Repasses e recebimentos','Outras entradas'], out:['Fornecedores','Folha de pagamento','Aluguel','Energia, água e gás','Impostos','Manutenção','Operacional','Marketing','Juros e multas','Outras saídas']};
 function r2(v){ return Math.round(v*100)/100; }
 function numIn(s){ var t=String(s==null?'':s).trim(); if(/^\d+\.\d{1,2}$/.test(t)) return parseFloat(t); var v=parseFloat(t.replace(/\./g,'').replace(',','.')); return isFinite(v)?v:0; }
 function st(){ return LFI.estado.fluxo=LFI.estado.fluxo||{per:'mes', de:null, ate:null, tp:'', cat:'', sit:'', q:'', lim:60}; }
@@ -18,10 +18,12 @@ function todos(){
   var d=db(), out=[];
   d.fluxo.forEach(function(x){ if(x.excluido) return; out.push(x); });
   (d.contasPagar||[]).forEach(function(c){ if(!LFI.empresaVisivel(c.empresa)) return; var f=LFI.forn(c.forn);
-    out.push({id:'cp:'+c.id, tp:'out', tt:c.descricao+(f?' · '+f.nome:''), categoria:'Fornecedores', data:c.venc, vl:c.valor, status:c.status==='pago'?'pago':'pendente', auto:'nota', ref:c.id}); });
+    out.push({id:'cp:'+c.id, tp:'out', tt:c.descricao+(f?' · '+f.nome:''), categoria:'Fornecedores', data:c.venc, vl:c.valor, status:c.status==='pago'?'pago':'pendente', auto:'nota', ref:c.id, juros:c.juros||0, pagoEm:c.pagoEm||null, obs:c.obs||''}); });
   var porDia={};
   (d.vendas||[]).forEach(function(v){ var dp=LFI.dep(v.dep); if(!dp||!LFI.empresaVisivel(dp.empresa)) return; var k=v.d+'|'+v.dep; porDia[k]=porDia[k]||{d:v.d, dep:v.dep, v:0}; porDia[k].v+=v.valor; });
   Object.keys(porDia).forEach(function(k){ var x=porDia[k]; out.push({id:'vd:'+k, tp:'in', tt:'Vendas do dia · '+LFI.dep(x.dep).nome, categoria:'Vendas', data:x.d, vl:r2(x.v), status:'recebido', auto:'venda'}); });
+  /* juros e multa de pagamento atrasado: lançamento próprio, na data em que foi pago */
+  out.slice().forEach(function(x){ if(!(x.juros>0)) return; out.push({id:'jr:'+x.id, tp:'out', tt:'Juros/multa · '+x.tt, categoria:'Juros e multas', data:x.pagoEm||x.quitadoEm||x.data, vl:x.juros, status:'pago', auto:'juros', base:x.id}); });
   return out;
 }
 function situacao(x){ if(x.status==='pago'||x.status==='recebido') return x.status; if(x.status==='cancelado') return 'cancelado'; return x.data<hoje()?'vencido':'pendente'; }
@@ -98,43 +100,50 @@ function render(el){
     tp:function(_,ev){ s.tp=ev.target.value; desenha(); }, cat:function(_,ev){ s.cat=ev.target.value; desenha(); }, sit:function(_,ev){ s.sit=ev.target.value; desenha(); },
     mais:function(){ s.lim+=100; desenha(); },
     novo:function(tp){ editar(null, tp); },
-    abre:function(id){ var x=acha(id); if(!x) return; if(x.auto==='venda'){ UI.toast('Lançamento automático','As vendas do dia vêm das vendas registradas.'); return; } editar(x); },
-    quita:function(id, ev){ if(ev) ev.stopPropagation(); quitar(acha(id)); },
+    abre:function(id){ var x=acha(id); if(x&&x.auto==='juros') x=acha(x.base); if(!x) return; if(x.auto==='venda'){ UI.toast('Lançamento automático','As vendas do dia vêm das vendas registradas.'); return; } editar(x); },
+    quita:function(id, ev){ if(ev) ev.stopPropagation(); var x=acha(id); if(x&&x.tp==='out'&&situacao(x)==='vencido'){ editar(x, null, true); return; } quitar(x); },
     importar:importarLivefood
   }));
 }
 function acha(id){ var r=null; todos().forEach(function(x){ if(x.id===id) r=x; }); return r; }
 function quitar(x){ if(!x) return;
   if(x.auto==='nota'){ var c=(LFI.db.contasPagar||[]).filter(function(c){ return c.id===x.ref; })[0]; if(c){ c.status='pago'; c.pagoEm=hoje(); } }
+  else if(x.auto==='juros') return;
   else { x.status=x.tp==='in'?'recebido':'pago'; x.quitadoEm=hoje(); }
   LFI.salvar(); UI.toast(x.tp==='in'?'Marcado como recebido':'Marcado como pago', x.tt+' · '+F.moeda(x.vl)); LFI.recarregar(); }
 
-function editar(x, tp){
-  var d=db(), novo=!x, o=x?{tp:x.tp, tt:x.tt, categoria:x.categoria, data:x.data, vl:x.vl, status:x.status, obs:x.obs||''}:{tp:tp||'out', tt:'', categoria:'', data:hoje(), vl:0, status:'pendente', obs:''};
-  var soVer=x&&x.auto==='nota';
+function editar(x, tp, pagar){
+  var d=db(), novo=!x, o=x?{tp:x.tp, tt:x.tt, categoria:x.categoria, data:x.data, vl:x.vl, status:x.status, obs:x.obs||'', juros:x.juros||0, pagoEm:x.pagoEm||x.quitadoEm||hoje()}:{tp:tp||'out', tt:'', categoria:'', data:hoje(), vl:0, status:'pendente', obs:'', juros:0, pagoEm:hoje()};
+  var soVer=false, nota=x&&x.auto==='nota', cpRef=nota?(LFI.db.contasPagar||[]).filter(function(c){ return c.id===x.ref; })[0]:null;
+  if(nota){ o.tt=cpRef?cpRef.descricao:x.tt; }
+  if(pagar){ o.status='pago'; o.pagoEm=hoje(); }
   function cats(){ return d.fluxoCats[o.tp]||[]; }
-  var m=UI.modal({titulo:novo?(o.tp==='in'?'Nova entrada':'Nova saída'):(soVer?'Conta da nota fiscal':'Editar lançamento'), corpo:'<div id="fx-m"></div>',
-    botoes:(x&&!soVer?'<button class="btn sec esq" data-act="exc">Excluir</button><button class="btn sec" data-act="dup">Duplicar</button>':'')+'<button class="btn sec" data-act="_fechar">Cancelar</button>'+(soVer?'':'<button class="btn pri" data-act="ok">Salvar</button>'),
+  var m=UI.modal({titulo:novo?(o.tp==='in'?'Nova entrada':'Nova saída'):(nota?'Conta da nota fiscal':'Editar lançamento'), corpo:'<div id="fx-m"></div>',
+    botoes:(x&&!nota?'<button class="btn sec esq" data-act="exc">Excluir</button><button class="btn sec" data-act="dup">Duplicar</button>':'')+'<button class="btn sec" data-act="_fechar">Cancelar</button>'+(soVer?'':'<button class="btn pri" data-act="ok">Salvar</button>'),
     acoes:{
+      pg:function(){ ler(); if(o.status!=='pendente'&&o.data<hoje()&&!o.pagoEm) o.pagoEm=hoje(); des(); },
       tp:function(v){ o.tp=v; if(cats().indexOf(o.categoria)<0) o.categoria=''; des(); },
       ok:function(){ ler(); if(!o.tt.trim()){ UI.toast('Informe a descrição','','wt'); return; } if(!(o.vl>0)){ UI.toast('Informe o valor','','wt'); return; } if(!o.categoria){ UI.toast('Escolha a categoria','','wt'); return; }
+        if(nota&&cpRef){ cpRef.descricao=o.tt.trim(); cpRef.valor=r2(o.vl); cpRef.venc=o.data; cpRef.status=o.status==='pago'?'pago':'aberto'; cpRef.pagoEm=o.status==='pago'?o.pagoEm:null; cpRef.juros=o.status==='pago'?r2(o.juros):0; cpRef.obs=o.obs;
+          LFI.salvar(); m.fechar(); UI.toast('Conta salva', o.tt+' · '+F.moeda(o.vl)+(cpRef.juros?' + juros '+F.moeda(cpRef.juros):'')); LFI.recarregar(); return; }
         if(d.fluxoCats[o.tp].indexOf(o.categoria)<0) d.fluxoCats[o.tp].push(o.categoria);
-        if(novo) d.fluxo.push({id:LFI.novoId('fx'), tp:o.tp, tt:o.tt.trim(), categoria:o.categoria, data:o.data, vl:r2(o.vl), status:o.status, obs:o.obs, criado:LFI.agoraISO(), por:LFI.usuario().nome});
-        else { x.tp=o.tp; x.tt=o.tt.trim(); x.categoria=o.categoria; x.data=o.data; x.vl=r2(o.vl); x.status=o.status; x.obs=o.obs; }
+        if(novo) d.fluxo.push({id:LFI.novoId('fx'), tp:o.tp, tt:o.tt.trim(), categoria:o.categoria, data:o.data, vl:r2(o.vl), status:o.status, obs:o.obs, juros:o.status==='pago'?r2(o.juros):0, quitadoEm:o.status!=='pendente'?o.pagoEm:null, criado:LFI.agoraISO(), por:LFI.usuario().nome});
+        else { x.tp=o.tp; x.tt=o.tt.trim(); x.categoria=o.categoria; x.data=o.data; x.vl=r2(o.vl); x.status=o.status; x.obs=o.obs; x.juros=o.status==='pago'?r2(o.juros):0; x.quitadoEm=o.status!=='pendente'?o.pagoEm:null; }
         LFI.salvar(); m.fechar(); UI.toast(novo?'Lançamento criado':'Lançamento salvo', o.tt+' · '+F.moeda(o.vl)); LFI.recarregar(); },
       dup:function(){ d.fluxo.push({id:LFI.novoId('fx'), tp:x.tp, tt:x.tt, categoria:x.categoria, data:hoje(), vl:x.vl, status:'pendente', obs:x.obs||'', criado:LFI.agoraISO(), por:LFI.usuario().nome}); LFI.salvar(); m.fechar(); UI.toast('Lançamento duplicado','Com data de hoje e em aberto'); LFI.recarregar(); },
       exc:function(){ UI.confirmar('Excluir lançamento','<b>'+esc(x.tt)+'</b> · '+F.moeda(x.vl)+' será excluído.','Excluir',function(){ d.fluxo=d.fluxo.filter(function(y){ return y!==x; }); LFI.salvar(); m.fechar(); UI.toast('Lançamento excluído'); LFI.recarregar(); }); }
     }});
-  function ler(){ var q=function(s){ return m.el.querySelector(s); }; if(!q('#fx-tt')) return; o.tt=q('#fx-tt').value; o.vl=numIn(q('#fx-vl').value); o.categoria=q('#fx-cat').value.trim(); o.data=q('#fx-dt').value||hoje(); o.obs=q('#fx-obs').value; o.status=q('#fx-st').checked?(o.tp==='in'?'recebido':'pago'):'pendente'; }
+  function ler(){ var q=function(s){ return m.el.querySelector(s); }; if(!q('#fx-tt')) return; o.tt=q('#fx-tt').value; o.vl=numIn(q('#fx-vl').value); o.categoria=q('#fx-cat').value.trim(); o.data=q('#fx-dt').value||hoje(); o.obs=q('#fx-obs').value; o.status=q('#fx-st').checked?(o.tp==='in'?'recebido':'pago'):'pendente'; var jr=q('#fx-jr'); o.juros=jr?numIn(jr.value):0; var pe=q('#fx-pe'); if(pe&&pe.value) o.pagoEm=pe.value; }
   function des(){ var box=m.el.querySelector('#fx-m'), dis=soVer?' disabled':'';
     box.innerHTML=(novo?'<div class="fx-tp"><button class="in'+(o.tp==='in'?' on':'')+'" data-act="tp" data-id="in">+ Entrada</button><button class="out'+(o.tp==='out'?' on':'')+'" data-act="tp" data-id="out">− Saída</button></div>':'')+
       '<div class="fx-vl"><em>R$</em><input id="fx-vl" inputmode="decimal" placeholder="0,00" value="'+(o.vl?o.vl.toFixed(2).replace('.',','):'')+'"'+dis+'></div>'+
       '<div class="field"><label>Descrição</label><input class="inp" id="fx-tt" value="'+esc(o.tt)+'" placeholder="'+(o.tp==='in'?'Ex.: Venda de encomenda':'Ex.: Aluguel da loja')+'"'+dis+'></div>'+
       '<div class="fgrid c2"><div class="field"><label>Categoria</label><input class="inp" id="fx-cat" list="fx-cats" value="'+esc(o.categoria)+'" placeholder="Escolha ou digite uma nova"'+dis+'><datalist id="fx-cats">'+cats().map(function(c){ return '<option value="'+esc(c)+'">'; }).join('')+'</datalist></div>'+
       '<div class="field"><label>'+(o.tp==='in'?'Data do recebimento':'Vencimento')+'</label><input type="date" class="inp" id="fx-dt" value="'+o.data+'"'+dis+'></div></div>'+
-      '<label style="display:flex;align-items:center;gap:10px;font-weight:800;margin:4px 0 12px"><input type="checkbox" id="fx-st" style="width:22px;height:22px;accent-color:var(--roxo)"'+(o.status==='pago'||o.status==='recebido'?' checked':'')+(soVer?' onclick="return false"':'')+'> '+(o.tp==='in'?'Já recebido':'Já pago')+'</label>'+
+      '<label style="display:flex;align-items:center;gap:10px;font-weight:800;margin:4px 0 12px"><input type="checkbox" id="fx-st" data-chg="pg" style="width:22px;height:22px;accent-color:var(--roxo)"'+(o.status==='pago'||o.status==='recebido'?' checked':'')+'> '+(o.tp==='in'?'Já recebido':'Já pago')+'</label>'+
+      (o.tp==='out'&&o.status==='pago'?'<div class="fgrid c2"><div class="field"><label>Pago em</label><input type="date" class="inp" id="fx-pe" value="'+o.pagoEm+'"></div><div class="field"><label>Juros / multa (atraso)</label><input class="inp" id="fx-jr" inputmode="decimal" placeholder="0,00" value="'+(o.juros?o.juros.toFixed(2).replace('.',','):'')+'"></div></div>'+(o.juros>0?'<p style="margin:-4px 0 10px;font-size:13px;font-weight:700;color:var(--muted2)">Total pago: '+F.moeda(r2((o.vl||0)+o.juros))+' · os juros entram no fluxo como "Juros e multas".</p>':''):'')+
       '<div class="field"><label>Observação</label><input class="inp" id="fx-obs" value="'+esc(o.obs)+'" placeholder="Opcional"'+dis+'></div>'+
-      (soVer?UI.nota('Esta conta vem da nota fiscal lançada no Recebimento. Para quitar, use o ✓ na lista.','in','info'):'');
+      (nota?UI.nota('Esta conta vem da nota fiscal lançada no Recebimento.','in','info'):'');
     var cp=box.querySelector('#fx-cat'); }
   des();
   if(!soVer) setTimeout(function(){ var i=m.el.querySelector('#fx-vl'); if(i&&novo) i.focus(); },60);
