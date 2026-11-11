@@ -76,10 +76,10 @@ function resumoDia(d, nomePessoa){
   var pn=String(nomePessoa||'').trim().split(/\s+/)[0]||''; pn=pn?pn.charAt(0).toUpperCase()+pn.slice(1).toLowerCase():'tudo bem';
   var emp=LFI.empresaAtual(), nome=(LFI.db.grupo&&LFI.db.grupo.nome)||(emp&&emp.fantasia)||'sua empresa';
   var linha=Object.keys(a.dep).map(function(k){ return LFI.dep(k).nome+' '+F.moeda(a.dep[k]); }).join(' · ')||'sem vendas registradas';
-  var comp; if(!b.tot) comp='Ainda não há vendas do dia anterior para comparar.';
+  var comp; if(!b.tot) comp='sem vendas registradas no dia anterior';
   else { var pc=Math.round((a.tot/b.tot-1)*1000)/10, ps=String(Math.abs(pc)).replace('.',',');
-    comp=pc>0.4?'📈 Suas vendas cresceram '+ps+'% comparado ao dia anterior. Parabéns!':pc<-0.4?'📉 Suas vendas ficaram '+ps+'% abaixo do dia anterior.':'➡️ Suas vendas ficaram estáveis em relação ao dia anterior.'; }
-  return 'Olá, '+pn+'! Tudo bem? ☀️\n\nResumo de vendas de '+nome+' ('+F.diaSemana(d)+', '+F.data(d)+'):\n\n💰 Faturamento: '+F.moeda(a.tot)+'\n🧾 Tickets: '+F.num(a.tk,0)+' · Ticket médio: '+F.moeda(a.tk?a.tot/a.tk:0)+'\n🏪 '+linha+'\n\n'+comp+'\n\nQuer mais detalhes? Acesse livefood.tec.br/hub';
+    comp=pc>0.4?'alta de '+ps+'% 📈':pc<-0.4?'queda de '+ps+'% 📉':'estável ➡️'; }
+  return 'Olá, '+pn+'. Segue o resumo de vendas de '+nome+' referente a '+F.diaSemana(d)+', '+F.data(d)+':\n\nFaturamento: '+F.moeda(a.tot)+'\nTickets: '+F.num(a.tk,0)+' · Ticket médio: '+F.moeda(a.tk?a.tot/a.tk:0)+'\nPor setor: '+linha+'\nComparação com o dia anterior: '+comp+'\n\nRelatório completo no seu painel: livefood.tec.br/hub';
 }
 function compartilhar(){
   var c=JSON.parse(JSON.stringify(cfgShare()));
