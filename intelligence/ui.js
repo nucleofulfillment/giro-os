@@ -248,16 +248,32 @@ UI.grafLinhas = function(el, o){
     s+='<path d="'+d+'" fill="none" stroke="'+x.cor+'" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"'+(x.tracejado?' stroke-dasharray="5 4"':'')+'/>';
     if(n<=40) pts.forEach(function(p){ s+='<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="2.6" fill="#fff" stroke="'+x.cor+'" stroke-width="1.8"/>'; });
   });
-  var step=Math.ceil(n/12); o.cats.forEach(function(c,i){ if(i%step===0||i===n-1) s+='<text class="ax" x="'+X(i)+'" y="'+(H-8)+'" text-anchor="middle">'+esc(c)+'</text>'; });
+  var step=Math.ceil(n/Math.max(2,Math.min(12,Math.floor(iw/46)))); o.cats.forEach(function(c,i){ if(i%step===0||i===n-1) s+='<text class="ax" x="'+X(i)+'" y="'+(H-8)+'" text-anchor="middle">'+esc(c)+'</text>'; });
   s+='<line class="cursor" x1="0" x2="0" y1="'+pt+'" y2="'+(pt+ih)+'" stroke="#1C1C1E" stroke-width="1" opacity="0"/>';
   s+='<rect class="hit" x="'+pl+'" y="'+pt+'" width="'+iw+'" height="'+ih+'" fill="transparent" style="cursor:'+(o.onClick?'pointer':'crosshair')+'"/></svg>';
   var leg = o.series.length>1 ? '<div class="ch-leg">'+o.series.map(function(x){ return '<span><i style="background:'+x.cor+'"></i>'+esc(x.nome)+'</span>'; }).join('')+'</div>' : '';
   el.innerHTML='<div class="ch">'+s+'</div>'+leg;
-  var svg=el.querySelector('svg'), hit=el.querySelector('.hit'), cur=el.querySelector('.cursor');
+  var svg=el.querySelector('svg'), hit=el.querySelector('.hit'), cur=el.querySelector('.cursor'), toqueL=o.onClick && (innerWidth<=700 || matchMedia('(pointer:coarse)').matches);
   function idx(ev){ var r=svg.getBoundingClientRect(), x=(ev.clientX-r.left)*(W/r.width); return Math.max(0,Math.min(n-1,Math.round((x-pl)/(iw/(Math.max(1,n-1)))))); }
-  hit.addEventListener('mousemove',function(ev){ var i=idx(ev); cur.setAttribute('x1',X(i)); cur.setAttribute('x2',X(i)); cur.setAttribute('opacity','.25'); var h='<b>'+esc(o.titulosTip?o.titulosTip[i]:o.cats[i])+'</b>'; o.series.forEach(function(x){ h+='<div class="r"><span><i style="background:'+x.cor+'"></i>'+esc(x.nome)+'</span><b style="display:inline;margin:0">'+(x.valores[i]==null?'—':fmt(x.valores[i]))+'</b></div>'; }); tipMostra(ev,h); });
+  hit.addEventListener('mousemove',function(ev){ if(toqueL) return; var i=idx(ev); cur.setAttribute('x1',X(i)); cur.setAttribute('x2',X(i)); cur.setAttribute('opacity','.25'); var h='<b>'+esc(o.titulosTip?o.titulosTip[i]:o.cats[i])+'</b>'; o.series.forEach(function(x){ h+='<div class="r"><span><i style="background:'+x.cor+'"></i>'+esc(x.nome)+'</span><b style="display:inline;margin:0">'+(x.valores[i]==null?'—':fmt(x.valores[i]))+'</b></div>'; }); tipMostra(ev,h); });
   hit.addEventListener('mouseleave',function(){ cur.setAttribute('opacity','0'); tipEsconde(); });
-  if(o.onClick) hit.addEventListener('click',function(ev){ tipEsconde(); o.onClick(idx(ev)); });
+  /* no celular: arrastar o dedo escolhe o dia (linha + bolinhas grandes) e o botão abaixo abre o detalhe */
+  var toque=o.onClick && (innerWidth<=700 || matchMedia('(pointer:coarse)').matches);
+  if(o.onClick && !toque) hit.addEventListener('click',function(ev){ tipEsconde(); o.onClick(idx(ev)); });
+  if(toque){
+    var ns='http://www.w3.org/2000/svg', marc=o.series.map(function(x){ var c=document.createElementNS(ns,'circle'); c.setAttribute('r','6'); c.setAttribute('fill',x.cor); c.setAttribute('stroke','#fff'); c.setAttribute('stroke-width','2.5'); c.style.pointerEvents='none'; svg.insertBefore(c, hit); return c; });
+    hit.style.touchAction='pan-y'; hit.style.cursor='pointer';
+    var sel=document.createElement('div'); sel.className='ch-sel'; el.appendChild(sel);
+    var atualI=n-1;
+    function escolhe(i){ atualI=i; cur.setAttribute('x1',X(i)); cur.setAttribute('x2',X(i)); cur.setAttribute('opacity','.35');
+      o.series.forEach(function(x,j){ var v=x.valores[i]; if(v==null){ marc[j].setAttribute('opacity','0'); return; } marc[j].setAttribute('opacity','1'); marc[j].setAttribute('cx',X(i)); marc[j].setAttribute('cy',Y(v)); });
+      sel.innerHTML='<div class="cs-t"><b>'+esc(o.titulosTip?o.titulosTip[i]:o.cats[i])+'</b>'+o.series.map(function(x){ return '<span><i style="background:'+x.cor+'"></i>'+esc(x.nome)+' <b>'+(x.valores[i]==null?'—':fmt(x.valores[i]))+'</b></span>'; }).join('')+'</div>'+
+        '<button type="button" class="btn pri">Ver o dia</button>'; }
+    function mexe(ev){ escolhe(idx(ev)); }
+    hit.addEventListener('pointerdown', mexe); hit.addEventListener('pointermove', function(ev){ if(ev.buttons||ev.pointerType==='touch') mexe(ev); });
+    sel.addEventListener('click', function(ev){ if(ev.target.closest('button')) o.onClick(atualI); });
+    escolhe(atualI);
+  }
 };
 
 /* rosca com legenda clicável */
