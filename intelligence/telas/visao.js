@@ -19,9 +19,9 @@ function tarefas(){
   var falta=LFI.alertas().filter(function(a){ return a.tipo==='critico'||a.tipo==='baixo'; });
   if(falta.length) out.push({ic:'estoque', cor:'no', t:falta.length+' produtos com estoque baixo', d:falta.slice(0,3).map(function(a){ return LFI.prod(a.prod).nome; }).join(', ')+(falta.length>3?'…':''), b:'Ver estoque', ir:'estoque'});
   var cmp=db.cotacoes.filter(function(c){ return (c.status==='comparacao'||c.status==='propostas_recebidas')&&LFI.empresaVisivel(c.empresa); });
-  if(cmp.length) out.push({ic:'compras', cor:'lf', t:'Propostas de fornecedores para comparar', d:cmp[0].num+' · '+cmp[0].propostas.length+' propostas recebidas', b:'Comparar', ir:'compras/'+cmp[0].id});
-  var apr=db.ordens.filter(function(o){ return o.status==='aguardando_aprovacao'&&LFI.empresaVisivel(o.empresa); });
-  if(apr.length) out.push({ic:'ordem', cor:'wt', t:apr.length===1?'1 ordem de compra para aprovar':apr.length+' ordens de compra para aprovar', d:LFI.forn(apr[0].forn).nome+' · '+F.moeda(LFI.totalOrdem(apr[0])), b:'Aprovar', ir:'ordens/'+apr[0].id});
+  if(cmp.length) out.push({ic:'compras', cor:'lf', t:'Respostas de fornecedores para comparar', d:cmp[0].num+' · '+cmp[0].propostas.length+' propostas recebidas', b:'Comparar', ir:'compras/'+cmp[0].id});
+  var cheg=db.ordens.filter(function(o){ return ['recebida','cancelada'].indexOf(o.status)<0&&o.previsao<=LFI.hoje()&&LFI.empresaVisivel(o.empresa); });
+  if(cheg.length) out.push({ic:'caminhao', cor:'wt', t:cheg.length===1?'1 pedido para receber hoje':cheg.length+' pedidos para receber hoje', d:LFI.forn(cheg[0].forn).nome+' · '+F.moeda(LFI.totalOrdem(cheg[0])), b:'Receber', ir:'ordens'});
   var venc=LFI.alertas().filter(function(a){ return a.tipo==='validade'; });
   if(venc.length) out.push({ic:'relogio', cor:'wt', t:venc.length+' produtos perto do vencimento', d:venc.slice(0,3).map(function(a){ return LFI.prod(a.prod).nome; }).join(', '), b:'Ver', ir:'estoque'});
   var bf=db.buffets.filter(function(x){ return x.status!=='encerrado'&&LFI.empresaVisivel(x.empresa); });

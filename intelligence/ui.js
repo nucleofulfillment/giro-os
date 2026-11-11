@@ -269,7 +269,7 @@ UI.exportarPDF = function(titulo, subtitulo, htmlCorpo){
 LFI.telas = {};
 LFI.menu = [
   {grupo:'Gestão', itens:[{id:'visao', nome:'Visão Geral', ic:'painel'}]},
-  {grupo:'Suprimentos', itens:[{id:'notas', nome:'Fiscal', ic:'nota'},{id:'estoque', nome:'Estoque', ic:'estoque'},{id:'compras', nome:'Compras', ic:'compras'},{id:'ordens', nome:'Ordens', ic:'ordem'},{id:'fornecedores', nome:'Fornecedores', ic:'fornecedor'}]},
+  {grupo:'Suprimentos', itens:[{id:'compras', nome:'Ordens', ic:'compras'},{id:'ordens', nome:'Pedidos', ic:'ordem'},{id:'notas', nome:'Recebimento', ic:'nota'},{id:'estoque', nome:'Estoque', ic:'estoque'},{id:'fornecedores', nome:'Fornecedores', ic:'fornecedor'}]},
   {grupo:'Operação', itens:[{id:'receitas', nome:'Receitas', ic:'receita'},{id:'producao', nome:'Produção', ic:'producao'},{id:'buffet', nome:'Buffet', ic:'buffet'}]},
   {grupo:'Inteligência', itens:[{id:'custos', nome:'Precificação', ic:'custos'},{id:'tributos', nome:'Tributário', ic:'tributo'},{id:'relatorios', nome:'Relatórios', ic:'relatorio'}]}
 ];
@@ -311,7 +311,7 @@ function contagens(){
   c.notas = db.notas.filter(function(n){ return (n.status==='recebida'||n.status==='conferencia')&&LFI.empresaVisivel(n.empresa); }).length;
   c.estoque = LFI.alertas().filter(function(a){ return a.nivel==='no'; }).length;
   c.compras = db.cotacoes.filter(function(x){ return ['propostas_recebidas','comparacao','aguardando_propostas'].indexOf(x.status)>=0&&LFI.empresaVisivel(x.empresa); }).length;
-  c.ordens = db.ordens.filter(function(o){ return o.status==='aguardando_aprovacao'&&LFI.empresaVisivel(o.empresa); }).length;
+  c.ordens = db.ordens.filter(function(o){ return ['recebida','cancelada'].indexOf(o.status)<0&&o.previsao<=LFI.hoje()&&LFI.empresaVisivel(o.empresa); }).length;
   c.buffet = db.buffets.filter(function(b){ return b.status!=='encerrado'&&LFI.empresaVisivel(b.empresa); }).length;
   c.producao = db.producao.filter(function(o){ return o.status!=='concluida'&&o.status!=='cancelada'&&LFI.depVisivel(o.dep); }).length;
   c.tributos = db.regrasTrib.filter(function(r){ return r.status==='pendente'; }).length;

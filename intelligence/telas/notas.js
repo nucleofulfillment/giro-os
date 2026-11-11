@@ -161,7 +161,7 @@ function lista(el){
   var vCaixa=0; caixa.forEach(function(n){ vCaixa+=n.valor; });
   var emp=LFI.empresaAtual();
 
-  var h=UI.cabecalho({titulo:'Fiscal', sub:(emp?esc(emp.fantasia)+' · CNPJ '+emp.cnpj:esc(db.grupo.nome)+' · todas as empresas')+' · notas fiscais de entrada'});
+  var h=UI.cabecalho({titulo:'Recebimento', sub:(emp?esc(emp.fantasia)+' · CNPJ '+emp.cnpj:esc(db.grupo.nome)+' · todas as empresas')+' · conferência das entregas pela nota fiscal'});
 
   h+='<div class="kpis">'+
     UI.kpi({lb:'<span style="color:#E9A80B">●</span> Aguardando conferência', vl:caixa.length+' <small>'+(caixa.length===1?'nota':'notas')+'</small>', dl:F.moeda(vCaixa)+' a lançar', act:caixa.length?'abrir':'', id:caixa[0]?caixa[0].id:'', hl:caixa.length>0})+
@@ -344,7 +344,7 @@ function conferencia(el, id){
   var depOpts=LFI.db.departamentos.filter(function(d){ return d.empresa===n.empresa; });
   h+='<div class="cf-info"><div><span>Fornecedor</span><b>'+esc(f.nome)+'</b></div><div><span>Data</span><b>'+F.data(n.emissao)+'</b></div><div><span>Empresa</span><b>'+esc(e.fantasia)+'</b></div>'+
     '<div><span>Destino no estoque</span><select class="inp sm" data-chg="dep">'+depOpts.map(function(d){ return '<option value="'+d.id+'"'+(d.id===n.dep?' selected':'')+'>'+esc(d.nome)+'</option>'; }).join('')+'</select></div>'+
-    '<div><span>Valor da nota</span><b>'+F.moeda(n.valor)+'</b></div></div>';
+    '<div><span>'+(n.oc&&LFI.ordem(n.oc)?'Pedido':'Valor da nota')+'</span><b>'+(n.oc&&LFI.ordem(n.oc)?esc(LFI.ordem(n.oc).num)+' · ':'')+F.moeda(n.valor)+'</b></div></div>';
 
   h+='<div class="cf-itens">'+n.itens.map(function(it,i){ return itemConf(n,it,i); }).join('')+'</div>';
 
@@ -806,5 +806,5 @@ function pdfDanfe(n){
   UI.exportarPDF('DANFE · NF '+n.numero, f.nome+' → '+e.fantasia+' · '+LFI.STATUS.nf[n.status][0], h);
 }
 
-LFI.registrar('notas',{titulo:'Notas Fiscais', render:render});
+LFI.registrar('notas',{titulo:'Recebimento', render:render});
 })();

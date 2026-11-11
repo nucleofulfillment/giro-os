@@ -5,11 +5,11 @@
 'use strict';
 var LFI = window.LFI;
 var U = LFI.dataUtil, r2 = U.r2, r3 = U.r3;
-var CHAVE = 'lfi_base_v6', CHAVE_CTX = 'lfi_ctx_v1';
+var CHAVE = 'lfi_base_v7', CHAVE_CTX = 'lfi_ctx_v1';
 
 /* ---------- armazenamento ---------- */
 function carrega(){
-  try{ var s=localStorage.getItem(CHAVE); if(s){ var d=JSON.parse(s); if(d&&d.versao===6) return d; } }catch(e){}
+  try{ var s=localStorage.getItem(CHAVE); if(s){ var d=JSON.parse(s); if(d&&d.versao===7) return d; } }catch(e){}
   return null;
 }
 LFI.db = carrega() || LFI.criarBase();
@@ -337,7 +337,7 @@ LFI.fmt = {
 /* ---------- rótulos de status ---------- */
 LFI.STATUS = {
   cot:{preparacao:['Em preparação','nu'], aguardando_envio:['Aguardando envio','wt'], enviada:['Enviada aos fornecedores','in'], aguardando_propostas:['Aguardando propostas','wt'], propostas_recebidas:['Propostas recebidas','lf'], comparacao:['Em comparação','lf'], aprovada:['Aprovada','ok'], convertida:['Convertida em OC','dk'], cancelada:['Cancelada','no']},
-  oc:{aguardando_aprovacao:['Aguardando aprovação','wt'], aprovada:['Aprovada','in'], enviada:['Enviada ao fornecedor','in'], aguardando_entrega:['Aguardando entrega','lf'], parcial:['Entrega parcial','wt'], recebida:['Recebida','ok'], cancelada:['Cancelada','no']},
+  oc:{aguardando_aprovacao:['Aguardando entrega','lf'], aprovada:['Aguardando entrega','lf'], enviada:['Aguardando entrega','lf'], aguardando_entrega:['Aguardando entrega','lf'], parcial:['Entrega parcial','wt'], recebida:['Recebido','ok'], cancelada:['Cancelado','no']},
   nf:{recebida:['Aguardando conferência','wt'], conferencia:['Em conferência','lf'], lancada:['Lançada','ok'], cancelada:['Cancelada','no']},
   op:{planejada:['Planejada','nu'], producao:['Em produção','lf'], concluida:['Concluída','ok'], cancelada:['Cancelada','no']},
   bf:{aberto:['Em operação','lf'], encerramento:['Em encerramento','wt'], encerrado:['Encerrado','ok']},

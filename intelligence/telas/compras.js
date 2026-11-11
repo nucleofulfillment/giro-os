@@ -390,10 +390,10 @@ function linhasFoto(c){ if(c.fotoTexto&&c.fotoTexto.length) return c.fotoTexto; 
    ===================================================================== */
 function render(el, arg){
   css();
-  if(arg==='nova') return renderNova(el);
-  if(arg){ var c=LFI.cotacao(arg); if(c) return renderDetalhe(el, c);
+  if(arg==='nova') return renderNova2(el);
+  if(arg){ var c=LFI.cotacao(arg); if(c) return renderDetalhe2(el, c);
     el.innerHTML=UI.cabecalho({migalha:[{t:'Compras',ir:'compras'},{t:'Não encontrada'}], titulo:'Cotação não encontrada'})+'<div class="card">'+UI.vazio('A cotação solicitada não existe ou foi removida.','🔎')+'</div>'; UI.liga(el,UI.navHandlers()); return; }
-  renderLista(el);
+  renderLista2(el);
 }
 
 function renderLista(el){
@@ -1105,5 +1105,168 @@ function imprimir(c, A){
   UI.exportarPDF('Mapa de cotação '+c.num, F.dataHora(c.data)+' · '+c.resp+' · '+(LFI.dep(c.dep)?LFI.dep(c.dep).nome:''), h);
 }
 
-LFI.registrar('compras',{titulo:'Compras Inteligentes', render:render});
+
+/* =====================================================================
+   FLUXO SIMPLIFICADO: ORDEM → RESPOSTAS → PEDIDO → RECEBIMENTO
+   (as telas "Produtos × fornecedores" e "Mapa comparativo" são reaproveitadas)
+   ===================================================================== */
+function css2(){ if(document.getElementById('css-compras2')) return; var e=document.createElement('style'); e.id='css-compras2'; e.textContent=[
+  '.o2-top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:16px}',
+  '.o2-x{width:38px;height:38px;border-radius:50%;border:1px solid var(--border2);background:#fff;cursor:pointer;font-size:15px;color:var(--muted2);flex:none}',
+  '.o2-tit{flex:1 1 260px;min-width:0}.o2-tit h1{margin:0;font-size:21px;font-weight:800;display:flex;align-items:center;gap:10px;flex-wrap:wrap}.o2-tit small{display:block;font-size:12.5px;color:var(--muted);font-weight:600;margin-top:3px}',
+  '.o2-acs{display:flex;gap:8px;flex-wrap:wrap}',
+  '.o2-flux{display:flex;align-items:center;gap:0;background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:12px 18px;margin-bottom:16px;overflow-x:auto}',
+  '.o2-fi{display:flex;align-items:center;gap:9px;flex:none;font-size:12.5px;font-weight:800;color:var(--muted)}.o2-fi .bo{width:26px;height:26px;border-radius:50%;border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:11.5px;background:#fff}',
+  '.o2-fi.on{color:var(--text)}.o2-fi.on .bo{border-color:var(--roxo);color:var(--roxo)}.o2-fi.ok{color:var(--text)}.o2-fi.ok .bo{background:var(--roxo);border-color:var(--roxo);color:#fff}.o2-fi small{display:block;font-size:11px;font-weight:600;color:var(--muted)}',
+  '.o2-fl{flex:1 1 30px;min-width:30px;height:2px;background:var(--border2);margin:0 12px}.o2-fl.ok{background:var(--roxo)}',
+  '.o2-resp{display:inline-flex;align-items:center;gap:6px;font-weight:800;font-variant-numeric:tabular-nums}',
+  '.o2-novo{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:800;color:#fff;background:var(--roxo);border-radius:99px;padding:3px 8px;animation:o2pul 1.6s ease-in-out infinite}',
+  '@keyframes o2pul{50%{box-shadow:0 0 0 5px rgba(255,90,0,.18)}}',
+  '.o2-chips{display:flex;gap:4px;flex-wrap:wrap;max-width:360px}.o2-chips span{font-size:11.5px;font-weight:700;background:var(--s3);border-radius:6px;padding:2px 7px;white-space:nowrap}',
+  '.o2-add{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.o2-add select{max-width:320px}.o2-add .num{width:100px}',
+  '.o2-rod{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:14px 18px;margin-top:16px}',
+  '.o2-rod label{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:800;color:var(--muted2)}.o2-rod input{width:auto}',
+  '@media(max-width:700px){.o2-acs{width:100%}.o2-acs .btn{flex:1}}'
+].join(''); document.head.appendChild(e); }
+
+/* situação simplificada da ordem */
+function sit2(c){
+  var resp=c.fornecedores.filter(function(f){ return propDe(c,f); }).length, tot=c.fornecedores.length;
+  if(c.status==='cancelada') return ['Cancelada','no'];
+  if(c.status==='aprovada'||c.status==='convertida') return ['Pedido criado','dk'];
+  if(c.status==='preparacao'||c.status==='aguardando_envio') return ['Em preparação','nu'];
+  if(!resp) return ['Aguardando respostas','wt'];
+  if(resp<tot) return ['Respondendo','lf'];
+  return ['Pronta para criar pedido','ok'];
+}
+function novas(c){ return Math.max(0, c.propostas.length-(c.visto||0)); }
+
+function renderLista2(el){
+  css2(); var s=st(); s.f2=s.f2||'andamento';
+  var todas=cots(), q=norm(s.busca);
+  var and=todas.filter(function(c){ return ['convertida','aprovada','cancelada'].indexOf(c.status)<0; });
+  var aguard=and.filter(function(c){ return c.status!=='preparacao'&&c.status!=='aguardando_envio'; });
+  var comNovas=and.filter(function(c){ return novas(c)>0; });
+  var prontas=and.filter(function(c){ return c.propostas.length>0; });
+  var ls=(s.f2==='andamento'?and:s.f2==='pedido'?todas.filter(function(c){ return c.status==='convertida'||c.status==='aprovada'; }):todas).filter(function(c){
+    if(!q) return true; return norm(c.num+' '+c.itens.map(function(i){ return prodN(i.prod); }).join(' ')+' '+c.fornecedores.map(function(f){ var fo=LFI.forn(f); return fo?fo.nome:''; }).join(' ')).indexOf(q)>=0; }).sort(function(a,b){ return a.data<b.data?1:-1; });
+  var h=UI.cabecalho({titulo:'Ordens', sub:'Cotações enviadas aos fornecedores · respostas e escolha do melhor preço', acoes:'<button class="btn pri" data-act="nova2">'+UI.ic('mais')+'Nova ordem</button>'});
+  h+=fluxo(0);
+  h+='<div class="kpis k3">'+UI.kpi({lb:'Aguardando respostas', vl:String(aguard.length), dl:'Cotações enviadas aos fornecedores'})+
+    UI.kpi({lb:'<span style="color:var(--roxo)">●</span> Respostas novas', vl:String(comNovas.length), dl:'Ordens com resposta que você ainda não viu', hl:comNovas.length>0})+
+    UI.kpi({lb:'Prontas para criar pedido', vl:String(prontas.length), dl:'Já têm propostas para comparar'})+'</div>';
+  h+='<div class="card"><div class="barra"><div class="seg">'+[['andamento','Em andamento'],['pedido','Pedido criado'],['todas','Todas']].map(function(x){ return '<button class="'+(s.f2===x[0]?'on':'')+'" data-act="f2" data-id="'+x[0]+'">'+x[1]+'</button>'; }).join('')+'</div>'+
+    '<div class="search">'+UI.ic('busca')+'<input placeholder="Buscar ordem, produto ou fornecedor" value="'+esc(s.busca||'')+'" data-chg="busca2"></div></div><div id="o2-t"></div></div>';
+  el.innerHTML=h;
+  UI.tabela(el.querySelector('#o2-t'),{linhas:ls, linhaAct:'abrir', vazio:'Nenhuma ordem por aqui. Clique em "Nova ordem" para começar.', classeLinha:function(c){ return novas(c)?'aviso':''; }, colunas:[
+    {t:'Ordem', v:function(c){ return '<b>'+esc(c.num)+'</b><small>'+F.dataHora(c.data)+'</small>'; }, ord:function(c){ return c.data; }},
+    {t:'Itens', v:function(c){ return '<div class="o2-chips">'+c.itens.slice(0,4).map(function(i){ return '<span>'+esc(curto(prodN(i.prod)))+' '+esc(qtdP(i.prod,i.qtd))+'</span>'; }).join('')+(c.itens.length>4?'<span>+'+(c.itens.length-4)+'</span>':'')+'</div>'; }, ord:false},
+    {t:'Destino', v:function(c){ return UI.dep(c.dep); }, ord:function(c){ return c.dep; }},
+    {t:'Respostas', v:function(c){ var r=c.fornecedores.filter(function(f){ return propDe(c,f); }).length, n=novas(c); return '<span class="o2-resp">'+r+'/'+c.fornecedores.length+' fornecedores</span>'+(n?' <span class="o2-novo">'+n+(n===1?' nova':' novas')+'</span>':''); }, ord:function(c){ return c.propostas.length; }},
+    {t:'Situação', v:function(c){ var x=sit2(c); return UI.badge(x[0],x[1]); }, ord:function(c){ return sit2(c)[0]; }},
+    {t:'', r:true, ord:false, v:function(c){ var x=sit2(c)[0]; return '<span class="btn '+(x==='Pedido criado'||x==='Cancelada'?'sec':'pri')+' xs">'+(x==='Em preparação'?'Enviar':x==='Pedido criado'?'Ver':x==='Cancelada'?'Ver':'Ver respostas')+'</span>'; }}
+  ]});
+  UI.liga(el, UI.navHandlers({ abrir:function(id){ LFI.ir('compras',id); }, f2:function(id){ s.f2=id; LFI.recarregar(); }, busca2:function(_,ev){ s.busca=ev.target.value; LFI.recarregar(); },
+    nova2:function(){ s.n2=null; LFI.ir('compras','nova'); } }));
+}
+/* faixa do fluxo obrigatório */
+function fluxo(at){
+  var ps=[['Ordem','criar e enviar a cotação','compras'],['Respostas','comparar e escolher','compras'],['Pedido','pedido aprovado','ordens'],['Recebimento','conferir a entrega','notas']];
+  return '<div class="o2-flux">'+ps.map(function(p,i){ return (i?'<div class="o2-fl'+(i<=at?' ok':'')+'"></div>':'')+'<div class="o2-fi'+(i<at?' ok':i===at?' on':'')+'"><span class="bo">'+(i<at?'✓':(i+1))+'</span><span>'+p[0]+'<small>'+p[1]+'</small></span></div>'; }).join('')+'</div>';
+}
+
+/* nova ordem: produtos + fornecedores numa tela só */
+function n2(){ var s=st(); if(!s.n2){ var d=LFI.depIds(); s.n2={itens:[], forn:{}, extra:[], dep:d.indexOf('res')>=0?'res':d[0], prazo:U.D(1)+'T12:00'}; } return s.n2; }
+function renderNova2(el){
+  css2(); document.body.classList.add('foco'); var n=n2();
+  var fs=[]; n.itens.forEach(function(i){ (n.forn[i.prod]||[]).forEach(function(f){ if(fs.indexOf(f)<0) fs.push(f); }); }); n.extra.forEach(function(f){ if(fs.indexOf(f)<0) fs.push(f); });
+  var baixos=LFI.alertas().filter(function(a){ return a.tipo==='critico'||a.tipo==='baixo'; }).map(function(a){ return LFI.prod(a.prod); }).filter(function(p){ return p&&p.tipo==='insumo'&&!n.itens.some(function(i){ return i.prod===p.id; }); });
+  var h='<div class="o2-top"><button class="o2-x" data-act="_ir" data-id="compras" aria-label="Fechar">✕</button><div class="o2-tit"><h1>Nova ordem</h1><small>Escolha os produtos: os fornecedores de cada um entram sozinhos. Depois é só enviar a cotação.</small></div></div>';
+  h+=fluxo(0);
+  h+='<div class="card mb"><h3><span class="lft">1. Produtos <span class="n">'+n.itens.length+'</span></span><span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><small>Entrega em</small><select class="inp sm" style="width:auto" data-chg="dep2">'+LFI.depsVisiveis().map(function(d){ return '<option value="'+d.id+'"'+(d.id===n.dep?' selected':'')+'>'+esc(d.nome)+'</option>'; }).join('')+'</select></span></h3>'+
+    '<div class="o2-add"><select class="inp sm" id="o2-p">'+UI.selProdutos('')+'</select><input class="inp sm num" id="o2-q" placeholder="Quantidade" inputmode="decimal"><button class="btn sec sm" data-act="add2">'+UI.ic('mais')+'Adicionar</button>'+
+    (baixos.length?'<button class="btn gh sm" data-act="baixos2">'+UI.ic('raio')+'Adicionar os '+baixos.length+' itens abaixo do mínimo</button>':'')+'</div></div>';
+  if(n.itens.length){
+    h+='<div class="card pad0 mb"><h3 style="padding:16px 20px 12px;margin:0"><span class="lft">2. Fornecedores de cada produto</span><select class="inp sm" style="width:auto" data-chg="fcol2"><option value="">+ Incluir fornecedor</option>'+LFI.db.fornecedores.filter(function(f){ return fs.indexOf(f.id)<0; }).map(function(f){ return '<option value="'+f.id+'">'+esc(f.nome)+'</option>'; }).join('')+'</select></h3>'+
+      '<div class="tb-wrap"><table class="tb"><thead><tr><th>Produto</th><th class="r">Quantidade</th><th class="r">Estoque · mín.</th>'+fs.map(function(f){ return '<th class="c">'+esc(LFI.forn(f).nome)+'</th>'; }).join('')+'<th></th></tr></thead><tbody>'+
+      n.itens.map(function(i){ var p=LFI.prod(i.prod), lig=fornDoProd(i.prod).map(function(f){ return f.id; }), sel=n.forn[i.prod]||[];
+        return '<tr><td><b>'+esc(p.nome)+'</b><small>'+esc(LFI.cat(p.cat).nome)+'</small></td><td class="r"><input class="inp sm num" style="width:84px;display:inline-block" data-chg="qtd2" data-id="'+p.id+'" value="'+UI.numBR(i.qtd)+'"> <small style="display:inline">'+p.un+'</small></td><td class="r">'+F.qtd(LFI.estoqueGeral(p),p.un)+'<small>mín. '+F.qtd(p.estMin,p.un)+'</small></td>'+
+          fs.map(function(f){ return '<td class="c"><label class="chk" style="justify-content:center"><input type="checkbox" data-chg="tg2" data-id="'+p.id+'|'+f+'"'+(sel.indexOf(f)>=0?' checked':'')+'></label><small>'+(p.forn===f?'principal':lig.indexOf(f)>=0?'alternativo':'')+'</small></td>'; }).join('')+
+          '<td class="r"><button class="btn gh xs" data-act="rem2" data-id="'+p.id+'" title="Remover">'+UI.ic('lixo')+'</button></td></tr>'; }).join('')+'</tbody></table></div></div>';
+  } else h+='<div class="card">'+UI.vazio('Adicione os produtos que precisa comprar. Os fornecedores vinculados aparecem aqui.','🛒')+'</div>';
+  var nf=fs.filter(function(f){ return n.itens.some(function(i){ return (n.forn[i.prod]||[]).indexOf(f)>=0; }); }).length;
+  h+='<div class="o2-rod"><label>Fornecedores respondem até <input type="datetime-local" class="inp sm" data-chg="prazo2" value="'+esc(n.prazo)+'"></label><div class="o2-acs"><button class="btn sec" data-act="_ir" data-id="compras">Cancelar</button><button class="btn pri" data-act="env2"'+(n.itens.length&&nf?'':' disabled')+'>'+UI.ic('whats')+'Enviar cotação'+(nf?' para '+plural(nf,'fornecedor','fornecedores'):'')+'</button></div></div>';
+  el.innerHTML=h;
+  function add(prod, qtd){ var ex=n.itens.filter(function(i){ return i.prod===prod; })[0]; if(ex) ex.qtd=r3(ex.qtd+qtd); else { n.itens.push({prod:prod, qtd:r3(qtd)}); n.forn[prod]=fornDoProd(prod).map(function(f){ return f.id; }); } }
+  UI.liga(el, UI.navHandlers({
+    add2:function(){ var p=el.querySelector('#o2-p').value, q=UI.num(el.querySelector('#o2-q').value); if(!p){ UI.toast('Escolha o produto','','wt'); return; } if(!(q>0)) q=sugQtd(LFI.prod(p)); add(p,q); LFI.recarregar(); },
+    baixos2:function(){ baixos.forEach(function(p){ add(p.id, sugQtd(p)); }); UI.toast(plural(baixos.length,'item adicionado','itens adicionados'),'Quantidade sugerida para voltar ao estoque mínimo','in'); LFI.recarregar(); },
+    qtd2:function(id,ev){ var q=r3(UI.num(ev.target.value)); n.itens.forEach(function(i){ if(i.prod===id&&q>0) i.qtd=q; }); LFI.recarregar(); },
+    rem2:function(id){ n.itens=n.itens.filter(function(i){ return i.prod!==id; }); delete n.forn[id]; LFI.recarregar(); },
+    tg2:function(id,ev){ var x=id.split('|'), a=n.forn[x[0]]=n.forn[x[0]]||[], k=a.indexOf(x[1]); if(ev.target.checked&&k<0) a.push(x[1]); if(!ev.target.checked&&k>=0) a.splice(k,1); LFI.recarregar(); },
+    fcol2:function(_,ev){ var f=ev.target.value; if(!f) return; n.extra.push(f); n.itens.forEach(function(i){ var a=n.forn[i.prod]=n.forn[i.prod]||[]; if(a.indexOf(f)<0) a.push(f); }); LFI.recarregar(); },
+    dep2:function(_,ev){ n.dep=ev.target.value; }, prazo2:function(_,ev){ n.prazo=ev.target.value||n.prazo; },
+    env2:function(){
+      var sem=n.itens.filter(function(i){ return !(n.forn[i.prod]||[]).length; }); if(sem.length){ UI.toast('Marque ao menos um fornecedor para: '+sem.map(function(i){ return prodN(i.prod); }).join(', '),'','wt'); return; }
+      var u=[]; n.itens.forEach(function(i){ n.forn[i.prod].forEach(function(f){ if(u.indexOf(f)<0) u.push(f); }); });
+      var c=LFI.criarCotacao({itens:n.itens, dep:n.dep, origem:'manual', fornecedores:u, status:'aguardando_propostas'});
+      c.prazoRetorno=n.prazo; c.itemForn=JSON.parse(JSON.stringify(n.forn)); var agora=LFI.agoraISO(); c.enviadaEm=agora; c.envios={}; u.forEach(function(f){ c.envios[f]=agora; }); c.visto=0;
+      hist(c,'envio','Cotação enviada a '+plural(u.length,'fornecedor','fornecedores')+' pelo WhatsApp','');
+      st().n2=null; LFI.salvar(); UI.toast('Cotação enviada pelo WhatsApp', c.num+' · '+plural(u.length,'fornecedor','fornecedores')); LFI.ir('compras');
+    }
+  }));
+}
+
+/* ordem aberta: respostas + mapa comparativo + criar pedido */
+function renderDetalhe2(el, c){
+  css2(); document.body.classList.add('foco');
+  if(c.visto!==c.propostas.length){ c.visto=c.propostas.length; LFI.salvar(); }
+  var A=analise(c), resp=c.fornecedores.filter(function(f){ return propDe(c,f); }).length, tot=c.fornecedores.length, x=sit2(c);
+  var prep=c.status==='preparacao'||c.status==='aguardando_envio', feito=c.status==='convertida'||c.status==='aprovada', canc=c.status==='cancelada';
+  var at=prep?0:feito?2:1;
+  var ac='';
+  if(prep) ac='<button class="btn no sm" data-act="cancelar">Cancelar ordem</button><button class="btn pri" data-act="envia2">'+UI.ic('whats')+'Enviar cotação</button>';
+  else if(feito) ac='<button class="btn pri" data-act="verPed">'+UI.ic('ordem')+'Ver pedidos</button>';
+  else if(!canc) ac='<button class="btn gh sm" data-act="simTodas">'+UI.ic('ia')+'Simular respostas</button><button class="btn sec" data-act="aguardar">Aguardar respostas</button><button class="btn pri" data-act="pedido2"'+(propostasOk(c).length?'':' disabled title="Aguarde ao menos uma resposta"')+'>'+UI.ic('check')+'Criar pedido</button>';
+  var h='<div class="o2-top"><button class="o2-x" data-act="_ir" data-id="compras" aria-label="Fechar">✕</button><div class="o2-tit"><h1>Ordem '+esc(c.num)+' '+UI.badge(x[0],x[1])+'</h1><small>'+F.dataHora(c.data)+' · '+esc(c.resp)+' · entrega em '+esc(LFI.dep(c.dep)?LFI.dep(c.dep).nome:'')+' · respostas até '+F.dataHora(c.prazoRetorno)+'</small></div><div class="o2-acs">'+ac+'</div></div>';
+  h+=fluxo(at);
+  if(canc) h+=UI.nota('<b>Ordem cancelada.</b> '+esc(c.motivo||c.obs||''),'wt','x');
+  if(prep){ h+=secItens(c, true); }
+  else {
+    h+='<div class="card mb"><h3><span class="lft">'+UI.ic('whats')+' Respostas dos fornecedores <span class="n">'+resp+'/'+tot+'</span></span></h3><div class="tb-wrap"><table class="tb"><thead><tr><th>Fornecedor</th><th>Situação</th><th class="r">Itens atendidos</th><th class="r">Total da proposta</th><th></th></tr></thead><tbody>'+
+      c.fornecedores.map(function(f){ var fo=LFI.forn(f), p=propDe(c,f), t=p?totalProposta(c,p):null;
+        return '<tr><td><b>'+esc(fo.nome)+'</b><small>'+esc(fo.whats)+'</small></td><td>'+(p?(p.conferida===false?UI.badge('Aguardando conferência','wt'):UI.badge('Respondeu '+F.hora(p.recebida),'ok'))+' '+canalIc(p.canal):UI.badge('Aguardando','wt'))+'</td><td class="r">'+(t?t.n+' de '+itensForn(c,f).length:'—')+'</td><td class="r">'+(t?'<b>'+F.moeda(t.total)+'</b>':'—')+'</td>'+
+          '<td class="r">'+(p?'<button class="btn sec xs" data-act="verOrig" data-id="'+f+'">Ver resposta</button>'+(p.conferida===false?' <button class="btn pri xs" data-act="conferir" data-id="'+f+'">Conferir</button>':''):(!feito&&!canc?'<button class="btn gh xs" data-act="sim" data-id="'+f+'|whatsapp">Simular resposta</button>':''))+'</td></tr>'; }).join('')+'</tbody></table></div></div>';
+    if(c.propostas.length) h+=secComparador(c, A);
+    else h+='<div class="card">'+UI.vazio('Assim que os fornecedores responderem, o mapa comparativo aparece aqui.','⏳')+'</div>';
+  }
+  el.innerHTML=h;
+  if(c.propostas.length) graficosComparador(el,c,A);
+  var H=handlersDetalhe(el,c,A);
+  H.envia2=function(){ garantirItemForn(c); sincForn(c); if(!c.fornecedores.length){ UI.toast('Inclua ao menos um fornecedor','','wt'); return; } var agora=LFI.agoraISO(); c.status='aguardando_propostas'; c.enviadaEm=agora; c.envios=c.envios||{}; c.fornecedores.forEach(function(f){ c.envios[f]=agora; }); c.visto=c.propostas.length; hist(c,'envio','Cotação enviada a '+plural(c.fornecedores.length,'fornecedor','fornecedores')+' pelo WhatsApp',''); LFI.salvar(); UI.toast('Cotação enviada pelo WhatsApp', plural(c.fornecedores.length,'fornecedor','fornecedores')); LFI.ir('compras'); };
+  H.aguardar=function(){ UI.toast('Ordem continua aguardando respostas', 'Você recebe um alerta na lista quando chegar resposta nova','in'); LFI.ir('compras'); };
+  H.verPed=function(){ LFI.ir('ordens'); };
+  H.pedido2=function(){ if(!c.escolhas||!Object.keys(c.escolhas).length) c.escolhas=mapaRec(analise(c)); pedidoModal(c, analise(c)); };
+  H.aprovar=H.pedido2;
+  /* respostas simuladas entram já lidas (sem etapa extra de conferência) */
+  function simula(fs){ var canais=['whatsapp','pdf','excel']; fs.forEach(function(f,i){ var pr=gerarProposta(c,f,canais[(i+c.propostas.length)%3]); pr.recebida=LFI.agoraISO(); pr.conferida=true; c.propostas.push(pr); }); atualizaStatus(c); c.visto=c.propostas.length; LFI.atividade('cotacao',plural(fs.length,'resposta recebida','respostas recebidas')+' na ordem '+c.num,{tela:'compras',id:c.id}); LFI.salvar(); LFI.recarregar(); UI.toast(plural(fs.length,'resposta recebida','respostas recebidas'),'Preços lidos automaticamente','in'); }
+  H.simTodas=function(){ var pend=c.fornecedores.filter(function(f){ return !propDe(c,f); }); if(!pend.length){ UI.toast('Todos os fornecedores já responderam'); return; } simula(pend); };
+  H.sim=function(id){ simula([id.split('|')[0]]); };
+  UI.liga(el, UI.navHandlers(H));
+}
+function pedidoModal(c, A){
+  var K=cesta(A, c.escolhas||{}); if(!K.n){ UI.toast('Escolha os fornecedores no mapa comparativo','','wt'); return; }
+  var corpo=UI.nota('Serão criados <b>'+plural(K.n,'pedido','pedidos')+'</b>, um por fornecedor. Os pedidos vão para o menu <b>Pedidos</b> e esta ordem é concluída.','in','ordem')+
+    '<div class="tb-wrap"><table class="tb"><thead><tr><th>Fornecedor</th><th>Itens</th><th>Entrega</th><th class="r">Valor</th></tr></thead><tbody>'+K.ordem.map(function(f){ var g=K.porF[f]; return '<tr><td><b>'+esc(LFI.forn(f).nome)+'</b><small>'+esc(g.cond)+'</small></td><td>'+g.itens.map(function(i){ return esc(curto(prodN(i.prod)))+' <b>'+esc(qtdP(i.prod,i.qtd))+'</b> × '+F.moeda(i.preco); }).join('<br>')+'</td><td class="nw">'+F.dataC(U.D(g.prazo))+'</td><td class="r"><b>'+F.moeda(g.valor+g.frete)+'</b></td></tr>'; }).join('')+'</tbody><tfoot><tr><td colspan="3">Total</td><td class="r">'+F.moeda(K.total)+'</td></tr></tfoot></table></div>'+
+    (K.sem?UI.nota('<b>'+plural(K.sem,'item fica','itens ficam')+' sem fornecedor</b> e não entra nos pedidos.','wt','alerta'):'');
+  var m=UI.modal({titulo:'Criar pedido', sub:esc(c.num)+' · '+plural(K.n,'fornecedor','fornecedores'), tam:'lg', corpo:corpo,
+    botoes:'<button class="btn sec" data-act="_fechar">Voltar</button><button class="btn pri" data-act="ok">'+UI.ic('check')+'Criar '+plural(K.n,'pedido','pedidos')+'</button>', acoes:{ok:function(){
+      var grupo='GC-'+String(parseInt(c.num.split('-').pop(),10)||0).padStart(4,'0');
+      var ocs=K.ordem.map(function(f){ var g=K.porF[f]; var oc=LFI.criarOrdem({forn:f, dep:c.dep, empresa:c.empresa, itens:g.itens, cond:g.cond, previsao:U.D(g.prazo), cot:c.id, grupo:grupo, status:'aguardando_entrega', obs:'Criado a partir da ordem '+c.num}); oc.hist=[{d:LFI.agoraISO(), s:'aprovada', u:LFI.usuario().nome},{d:LFI.agoraISO(), s:'aguardando_entrega', u:'Sistema'}]; return oc; });
+      c.status='convertida'; c.ordens=ocs.map(function(o){ return o.id; }); c.grupo=grupo; c.convertidaEm=LFI.agoraISO(); hist(c,'convertida','Pedido criado',ocs.map(function(o){ return o.num; }).join(', '));
+      LFI.atividade('oc',plural(ocs.length,'pedido criado','pedidos criados')+' a partir da '+c.num,{tela:'ordens'});
+      LFI.salvar(); m.fechar(); UI.toast(plural(ocs.length,'pedido criado','pedidos criados'), 'Acompanhe em Pedidos'); LFI.ir('ordens'); }}});
+}
+
+LFI.registrar('compras',{titulo:'Ordens', render:render});
 })();

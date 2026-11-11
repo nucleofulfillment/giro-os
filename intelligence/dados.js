@@ -20,7 +20,7 @@ LFI.dataUtil = {iso:iso, hojeD:hojeD, D:D, DH:DH, r2:r2, r3:r3, rng:rng};
 
 LFI.criarBase = function(){
   var R = rng(20261110);
-  var db = {versao:6, criadaEm:new Date().toISOString(), hoje:D(0)};
+  var db = {versao:7, criadaEm:new Date().toISOString(), hoje:D(0)};
 
   /* ===== EMPRESAS (multi-CNPJ) ===== */
   db.grupo = {nome:'Grupo Pão Dourado', cidade:'Campinas/SP'};
@@ -305,7 +305,7 @@ LFI.criarBase = function(){
     {id:'oc119', num:'OC-2026-0119', forn:'f3', empresa:'e1', dep:'cen', cot:null, grupo:null, emissao:D(-4), previsao:D(-2), cond:'14 dias', status:'parcial', nfs:['nf04'], obs:'Faltaram 2 blocos de manteiga e 2 caixas de leite. Fornecedor promete o restante na sexta.', itens:[oi('p07',20,51.00,10),oi('p11',16,39.50,16),oi('p08',72,5.50,48),oi('p09',6.12,21.86,6.12)], hist:[{d:DH(-4,'15:10'),s:'aguardando_aprovacao',u:'Carla (compras)'},{d:DH(-4,'15:40'),s:'aprovada',u:'Roberto (proprietário)'},{d:DH(-4,'15:41'),s:'enviada',u:'Sistema'},{d:DH(-3,'08:00'),s:'aguardando_entrega',u:'Sistema'},{d:DH(-2,'09:05'),s:'parcial',u:'Renata (estoque)'}]},
     {id:'oc120', num:'OC-2026-0120', forn:'f6', empresa:'e2', dep:'res', cot:null, grupo:null, emissao:D(-1), previsao:D(1), cond:'14 dias', status:'aguardando_entrega', nfs:[], obs:'Cortes porcionados para o almoço de quinta.', itens:[oi('p37',20,46.90),oi('p36',40,21.60),oi('p38',10,36.90)], hist:[{d:DH(-1,'11:00'),s:'aguardando_aprovacao',u:'Chef Diego'},{d:DH(-1,'11:30'),s:'aprovada',u:'Roberto (proprietário)'},{d:DH(-1,'11:31'),s:'enviada',u:'Sistema'},{d:DH(-1,'14:00'),s:'aguardando_entrega',u:'Sistema'}]},
     {id:'oc121', num:'OC-2026-0121', forn:'f1', empresa:'e1', dep:'cen', cot:'cot030', grupo:null, emissao:D(-2), previsao:D(0), cond:'28 dias', status:'aguardando_entrega', nfs:[], obs:'Reposição do sushi e padaria. Nota fiscal chega com a entrega.', itens:[oi('p21',50,25.50),oi('p39',20,84.50),oi('p14',15,55.40),oi('p01',100,5.66),oi('p02',30,5.90),oi('p18',20,10.40)], hist:[{d:DH(-2,'16:00'),s:'aguardando_aprovacao',u:'Carla (compras)'},{d:DH(-2,'16:20'),s:'aprovada',u:'Roberto (proprietário)'},{d:DH(-2,'16:21'),s:'enviada',u:'Sistema'},{d:DH(-1,'08:00'),s:'aguardando_entrega',u:'Sistema'}]},
-    {id:'oc122', num:'OC-2026-0122', forn:'f7', empresa:'e2', dep:'res', cot:null, grupo:null, emissao:D(0), previsao:D(1), cond:'Semanal (toda segunda)', status:'aguardando_aprovacao', nfs:[], obs:'Hortifrúti da semana para o restaurante.', itens:[oi('p29',20,7.80),oi('p28',20,4.70),oi('p30',6,9.00),oi('p32',25,5.50),oi('p31',10,4.90)], hist:[{d:DH(0,'07:45'),s:'aguardando_aprovacao',u:'Chef Diego'}]}
+    {id:'oc122', num:'OC-2026-0122', forn:'f7', empresa:'e2', dep:'res', cot:null, grupo:null, emissao:D(0), previsao:D(1), cond:'Semanal (toda segunda)', status:'aguardando_entrega', nfs:[], obs:'Hortifrúti da semana para o restaurante.', itens:[oi('p29',20,7.80),oi('p28',20,4.70),oi('p30',6,9.00),oi('p32',25,5.50),oi('p31',10,4.90)], hist:[{d:DH(0,'07:45'),s:'aprovada',u:'Chef Diego'},{d:DH(0,'07:46'),s:'aguardando_entrega',u:'Sistema'}]}
   ];
 
   /* ===== COTAÇÕES ===== */
@@ -433,7 +433,7 @@ LFI.criarBase = function(){
     {d:DH(0,'10:10'), tipo:'cotacao', txt:'Oriental Foods enviou planilha para a COT-2026-031', ref:{tela:'compras', id:'cot031'}},
     {d:DH(0,'09:35'), tipo:'cotacao', txt:'Distribuidora Central enviou proposta em PDF (COT-2026-031)', ref:{tela:'compras', id:'cot031'}},
     {d:DH(0,'08:20'), tipo:'cotacao', txt:'Cotação COT-2026-031 criada a partir de foto da lista', ref:{tela:'compras', id:'cot031'}},
-    {d:DH(0,'07:45'), tipo:'oc', txt:'OC-2026-0122 aguardando aprovação (Verde Campo Hortifrúti)', ref:{tela:'ordens', id:'oc122'}},
+    {d:DH(0,'07:45'), tipo:'oc', txt:'Pedido OC-2026-0122 aprovado (Verde Campo Hortifrúti)', ref:{tela:'ordens', id:'oc122'}},
     {d:DH(0,'07:40'), tipo:'producao', txt:'OP-2026-0451 concluída: 300 pães franceses', ref:{tela:'producao', id:'op451'}},
     {d:DH(-2,'23:10'), tipo:'buffet', txt:'Buffet BF-2026-088 encerrado: 43,3 kg consumidos', ref:{tela:'buffet', id:'bf088'}},
     {d:DH(-2,'09:05'), tipo:'nf', txt:'NF 000.017.552 lançada (Laticínios Serra Verde) — entrega parcial', ref:{tela:'notas', id:'nf04'}}
