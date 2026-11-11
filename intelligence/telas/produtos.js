@@ -79,7 +79,7 @@ function render(el, arg){
   if(arg){ var p=LFI.prod(arg); if(p) return pagina(el, p); }
   document.body.classList.add('foco');
   var s=st(), fl=filtro(s.grupo), todos=LFI.db.produtos;
-  var h='<div class="pr"><div class="pr-hd"><div><div class="pghd-t">'+UI.setaVoltar()+'<h1>Produtos</h1></div><small>Tudo o que a casa vende e produz. A receita fica dentro de cada produto.</small></div><div class="pr-acs"><button class="btn sec pr-novo" data-act="bipar">▮▯▮▮ Bipar</button><button class="btn pri pr-novo" data-act="novo">'+UI.ic('mais')+'Novo produto</button></div></div>';
+  var h='<div class="pr"><div class="pr-hd"><div><div class="pghd-t">'+UI.setaVoltar()+'<h1>Produtos</h1></div><small>Tudo o que a casa vende e produz. A receita fica dentro de cada produto.</small></div><div class="pr-acs"><button class="btn sec pr-novo" data-act="cardapio">🍽️ Enviar ao cardápio</button><button class="btn sec pr-novo" data-act="bipar">▮▯▮▮ Bipar</button><button class="btn pri pr-novo" data-act="novo">'+UI.ic('mais')+'Novo produto</button></div></div>';
   h+='<div class="pr-grp">'+FILTROS.map(function(x){ var n=todos.filter(x.f).length; if(!n&&x.id!=='venda') return ''; var g=x.id.indexOf('g:')===0?LFI.grupoInfo(x.nome).emoji+' ':''; return '<button class="'+(x.id===s.grupo?'on':'')+'" data-act="grp" data-id="'+esc(x.id)+'">'+g+esc(x.nome)+' <i>'+n+'</i></button>'; }).join('')+'</div>';
   h+='<div class="pr-busca">'+UI.ic('busca')+'<input id="pr-q" placeholder="Buscar pelo nome ou código" value="'+esc(s.q)+'" autocomplete="off"></div><div id="pr-ls"></div></div>';
   el.innerHTML=h;
@@ -106,7 +106,8 @@ function render(el, arg){
     grp:function(id){ s.grupo=id; s.q=''; s.lim=60; LFI.recarregar(); },
     mais:function(){ s.lim+=120; desenha(); },
     novo:function(){ novoProduto(); },
-    bipar:function(){ LFI.biparProduto(); }
+    bipar:function(){ LFI.biparProduto(); },
+    cardapio:function(){ LFI.enviarCardapio(); }
   }));
 }
 
@@ -280,4 +281,70 @@ LFI.biparProduto=function(){
     setTimeout(function(){ UI.confirmar('Produto não existe','O código <b>'+esc(c)+'</b> não está cadastrado. Quer cadastrar um produto novo com ele?','Cadastrar produto',function(){ novoProduto(c); }); },0); return true; }});
 };
 LFI.registrar('produtos',{titulo:'Produtos', render:render});
+})();
+
+(function(){
+'use strict';
+var UI=LFI.ui;
+/* ---------- ENVIAR AO CARDÁPIO DO LIVEFOOD ----------
+   Os produtos de venda (feitos aqui e revenda, com preço) viram produtos do cardápio do Painel do LiveFood.
+   Cada um fica ligado ao produto daqui (código lp_<id>): a venda no LiveFood dá baixa neste estoque.
+   Quem já está no cardápio só tem nome, preço, categoria e código de barras atualizados (foto e descrição ficam). */
+LFI.enviarCardapio=function(){
+  var S=LFI.servidor;
+  if(!S||!S.ativo||!S.pronto){ UI.toast('Entre pelo Hub do LiveFood','O envio ao cardápio precisa do login do LiveFood.','wt'); return; }
+  var esc=UI.esc||function(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); };
+  var moeda=function(v){ return (Number(v)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); };
+  var slug=function(s){ return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,30)||'outros'; };
+  var vende=LFI.db.produtos.filter(function(p){ return (p.tipo==='acabado'||p.tipo==='revenda')&&Number(p.preco)>0&&p.ativo!==false; })
+    .sort(function(a,b){ return String(a.grupo||'').localeCompare(String(b.grupo||''))||a.nome.localeCompare(b.nome); });
+  var m=UI.modal({titulo:'Enviar ao cardápio do LiveFood', sub:'Os produtos escolhidos aparecem no Cardápio do Painel, ligados ao estoque daqui', tam:'lg', corpo:'<p class="cf-obs">Consultando o cardápio…</p>', botoes:''});
+  var marc={}, cdp=null;
+  vende.forEach(function(p){ marc[p.id]=true; });
+  function des(){
+    var ja={}; (cdp.prods||[]).forEach(function(x){ ja[x.id]=x; });
+    var grupos={}; vende.forEach(function(p){ var g=p.grupo||'Outros'; (grupos[g]=grupos[g]||[]).push(p); });
+    var n=vende.filter(function(p){ return marc[p.id]; }).length;
+    m.corpoHTML('<p class="cf-obs" style="margin-top:0">Marcados: <b>'+n+'</b> de '+vende.length+'. Os que já estão no cardápio só têm nome, preço e categoria atualizados; a foto e a descrição de lá continuam.</p>'+
+      '<div style="display:flex;gap:8px;margin:6px 0 10px"><button class="btn sec sm" data-act="todos">Marcar todos</button><button class="btn sec sm" data-act="nenhum">Desmarcar todos</button></div>'+
+      Object.keys(grupos).map(function(g){ return '<div class="sh-sec"><div class="sh-tit">'+esc(g)+'</div>'+grupos[g].map(function(p){
+        return '<label class="chk" style="display:flex;align-items:center;gap:10px;min-height:44px"><input type="checkbox" data-chg="mk" data-id="'+esc(p.id)+'"'+(marc[p.id]?' checked':'')+'><span style="flex:1">'+esc(p.nome)+(ja['lp_'+p.id]?' <small style="color:#16A34A;font-weight:700">· já no cardápio</small>':'')+'</span><b>'+moeda(p.preco)+'</b></label>'; }).join('')+'</div>'; }).join('')||'<p>Nenhum produto com preço de venda.</p>');
+    m.rodapeHTML('<button class="btn sec" data-act="_fechar">Cancelar</button><button class="btn pri" data-act="env"'+(n?'':' disabled')+'>🍽️ Enviar '+n+(n===1?' produto':' produtos')+'</button>');
+  }
+  S.req('GET','/painel/cardapio').then(function(j){
+    if(!j||!j.ok){ m.corpoHTML('<p class="cf-obs">Não consegui abrir o cardápio do LiveFood'+(j&&j.mensagem?': '+esc(j.mensagem):'')+'.</p>'); return; }
+    cdp=j; des();
+  }).catch(function(){ m.corpoHTML('<p class="cf-obs">Sem internet agora. Tente de novo em instantes.</p>'); });
+  UI.liga(m.el,{
+    mk:function(id,ev){ marc[id]=ev.target.checked; des(); },
+    todos:function(){ vende.forEach(function(p){ marc[p.id]=true; }); des(); },
+    nenhum:function(){ marc={}; des(); },
+    env:function(){
+      var lista=vende.filter(function(p){ return marc[p.id]; }); if(!lista.length) return;
+      var ja={}, barrasDe={}, cats={}; (cdp.prods||[]).forEach(function(x){ ja[x.id]=x; if(x.barras) barrasDe[x.barras]=x.id; }); (cdp.cats||[]).forEach(function(c){ cats[c.id]=c; });
+      var feitos=0, erros=[], ordem=Date.now();
+      var pinta=function(){ m.corpoHTML('<div style="text-align:center;padding:24px 6px"><div style="font-size:40px">🍽️</div><p style="font-weight:800;font-size:18px">Enviando ao cardápio…</p><p class="cf-obs">'+feitos+' de '+lista.length+'</p><div style="height:10px;border-radius:9px;background:#EEE;overflow:hidden"><div style="height:100%;width:'+Math.round(feitos/lista.length*100)+'%;background:#FF5A00"></div></div></div>'); m.rodapeHTML(''); };
+      pinta();
+      /* 1) categorias que faltam, com o nome do grupo daqui */
+      var novasCats=[]; lista.forEach(function(p){ var g=p.grupo||'Outros', id='lpk_'+slug(g); if(!cats[id]&&novasCats.every(function(c){ return c.id!==id; })) novasCats.push({id:id, nome:g, dest:/bebida/i.test(g)?'bar':'cozinha', ordem:ordem+novasCats.length}); });
+      var fila=novasCats.map(function(c){ return function(){ return S.req('POST','/painel/cardapio-salvar',{tipo:'cat', item:c}).then(function(r){ if(!r||!r.ok) erros.push('Categoria '+c.nome); }); }; });
+      /* 2) produtos (um por vez, para não sobrecarregar) */
+      lista.forEach(function(p,i){ fila.push(function(){
+        var id='lp_'+p.id, velho=ja[id]||{}, it=JSON.parse(JSON.stringify(velho));
+        delete it.ordem; it.id=id; it.nome=String(p.nome).slice(0,80); it.preco=Math.round(Number(p.preco)*100)/100; it.cat='lpk_'+slug(p.grupo||'Outros');
+        var ean=String(p.ean||'').replace(/[^0-9A-Za-z-]/g,''); if(ean&&(!barrasDe[ean]||barrasDe[ean]===id)) it.barras=ean;
+        if(!ja[id]){ it.ativo=true; it.ordem=ordem+100+i; } else it.ordem=velho.ordem;
+        return S.req('POST','/painel/cardapio-salvar',{tipo:'prod', item:it}).then(function(r){ if(r&&r.ok){ feitos++; p.cardapio=id; } else erros.push(p.nome+(r&&r.mensagem?': '+r.mensagem:'')); pinta(); })
+          .catch(function(){ erros.push(p.nome+': sem internet'); });
+      }); });
+      fila.reduce(function(pr,f){ return pr.then(f); }, Promise.resolve()).then(function(){
+        LFI.atividade&&LFI.atividade('produtos', feitos+' produto(s) enviados ao cardápio do LiveFood',{tela:'produtos'}); LFI.salvar();
+        m.corpoHTML('<div style="text-align:center;padding:20px 6px"><div style="font-size:44px">'+(erros.length?'⚠️':'✅')+'</div><p style="font-weight:800;font-size:18px">'+feitos+(feitos===1?' produto está':' produtos estão')+' no cardápio do LiveFood</p>'+
+          '<p class="cf-obs">Abra o Painel do LiveFood, em Cardápio, para colocar fotos e descrições. As vendas desses produtos no Atendimento dão baixa no estoque daqui.</p>'+
+          (erros.length?'<p class="cf-obs" style="color:#B91C1C;text-align:left"><b>Não foram:</b><br>'+erros.slice(0,12).map(esc).join('<br>')+'</p>':'')+'</div>');
+        m.rodapeHTML('<button class="btn pri" data-act="_fechar">Pronto</button>');
+      });
+    }
+  });
+};
 })();
