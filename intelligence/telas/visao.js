@@ -46,16 +46,16 @@ function render(el){
      (ops.length>2?'<div class="pills vg-ops">'+ops.map(function(d){ var dd=LFI.dep(d); return '<button class="pill'+(s.op===d?' on':'')+'" data-act="op" data-id="'+d+'">'+(dd?'<i style="background:'+dd.cor+'"></i>'+esc(dd.curto):'Todas')+'</button>'; }).join('')+'</div>':'')+'</div>';
   if(s.per==='custom') h+='<div class="vg-datas"><label>De <input type="date" class="inp sm" data-chg="de" value="'+p.de+'"></label><label>Até <input type="date" class="inp sm" data-chg="ate" value="'+p.ate+'"></label></div>';
 
+  function so(dsk, html){ return dsk ? html.replace('<div class="kpi','<div class="vg-dsk kpi') : html; }
   h+='<div class="kpis">'+
     UI.kpi({lb:'Vendas', vl:F.moeda(fat), dl:UI.variacao(fat,fatA)+' em relação ao período anterior', hl:true})+
-    UI.kpi({lb:'Lucro bruto', vl:F.pct(fat?mc/fat:0,0), dl:F.moeda(mc)+' depois de custos e impostos', act:'kMc'})+
-    UI.kpi({lb:'Estoque baixo', vl:baixo+' <small>produtos</small>', dl:'Toque para ver quais', act:'_ir', id:'estoque'})+
-    UI.kpi({lb:'Contas a pagar', vl:F.moeda(cp.total), dl:'Nos próximos 7 dias', act:'kCp'})+
+    so(1,UI.kpi({lb:'Lucro bruto', vl:F.pct(fat?mc/fat:0,0), dl:F.moeda(mc)+' depois de custos e impostos', act:'kMc'}))+
+    so(1,UI.kpi({lb:'Estoque baixo', vl:baixo+' <small>produtos</small>', dl:'Toque para ver quais', act:'_ir', id:'estoque'}))+
+    so(1,UI.kpi({lb:'Contas a pagar', vl:F.moeda(cp.total), dl:'Nos próximos 7 dias', act:'kCp'}))+
   '</div>';
-
-  h+='<div class="grid g12 mb"><div class="card"><h3>O que fazer agora <small>'+tf.length+' '+(tf.length===1?'tarefa':'tarefas')+'</small></h3>'+
-     (tf.length?'<div class="vg-tarefas">'+tf.map(function(t){ return '<div class="alr '+t.cor+'" data-act="_ir" data-id="'+t.ir+'"><span class="ic">'+UI.ic(t.ic)+'</span><div class="gr"><div class="tt">'+esc(t.t)+'</div><div class="dd">'+esc(t.d)+'</div></div><span class="btn sec sm">'+esc(t.b)+'</span></div>'; }).join('')+'</div>':UI.vazio('Tudo em dia por aqui.','✅'))+'</div>'+
-     '<div class="card"><h3>Vendas por dia</h3><div id="g-dia"></div></div></div>';
+  h+='<div class="card mb"><h3>Vendas por dia</h3><div id="g-dia"></div></div>';
+  h+='<div class="card mb"><h3>O que fazer agora <small>'+tf.length+' '+(tf.length===1?'tarefa':'tarefas')+'</small></h3>'+
+     (tf.length?'<div class="vg-tarefas">'+tf.map(function(t){ return '<div class="alr '+t.cor+'" data-act="_ir" data-id="'+t.ir+'"><span class="ic">'+UI.ic(t.ic)+'</span><div class="gr"><div class="tt">'+esc(t.t)+'</div><div class="dd">'+esc(t.d)+'</div></div><span class="btn sec sm">'+esc(t.b)+'</span></div>'; }).join('')+'</div>':UI.vazio('Tudo em dia por aqui.','✅'))+'</div>';
   el.innerHTML=h;
 
   var ds=dias(p), serie={}; deps.forEach(function(d){ serie[d]=ds.map(function(){ return 0; }); });
@@ -101,6 +101,6 @@ function contasPagar(){
   UI.liga(m.corpo,{nf:function(id){ m.fechar(); LFI.ir('notas',id); }});
 }
 
-if(!document.getElementById('css-visao')){ var css=document.createElement('style'); css.id='css-visao'; css.textContent='.vg-filtros{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}.vg-datas{display:flex;gap:12px;flex-wrap:wrap;margin:-4px 0 14px}.vg-datas label{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:800;color:var(--muted2)}.vg-datas input{width:auto}@media(max-width:700px){.vg-filtros{flex-direction:column;align-items:stretch}.vg-per{display:flex;width:100%}.vg-per button{flex:1 1 auto;padding:7px 4px;font-size:12px}.vg-ops{justify-content:center}.vg-datas{display:grid;grid-template-columns:1fr 1fr;gap:10px}.vg-datas label{flex-direction:column;align-items:stretch;gap:4px}.vg-datas input{width:100%}}.vg-tarefas .alr{padding:12px 14px}.vg-tarefas .alr .btn{pointer-events:none;flex:none}.vg-tarefas .alr .tt{font-size:14px}@media(max-width:700px){.vg-tarefas .alr .btn{display:none}}'; document.head.appendChild(css); }
+if(!document.getElementById('css-visao')){ var css=document.createElement('style'); css.id='css-visao'; css.textContent='@media(max-width:700px){.vg-dsk{display:none!important}}.vg-tarefas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.vg-tarefas .alr+.alr{margin-top:0}@media(max-width:1100px){.vg-tarefas{grid-template-columns:minmax(0,1fr)}}.vg-filtros{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}.vg-datas{display:flex;gap:12px;flex-wrap:wrap;margin:-4px 0 14px}.vg-datas label{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:800;color:var(--muted2)}.vg-datas input{width:auto}@media(max-width:700px){.vg-filtros{flex-direction:column;align-items:stretch}.vg-per{display:flex;width:100%}.vg-per button{flex:1 1 auto;padding:7px 4px;font-size:12px}.vg-ops{justify-content:center}.vg-datas{display:grid;grid-template-columns:1fr 1fr;gap:10px}.vg-datas label{flex-direction:column;align-items:stretch;gap:4px}.vg-datas input{width:100%}}.vg-tarefas .alr{padding:12px 14px}.vg-tarefas .alr .btn{pointer-events:none;flex:none}.vg-tarefas .alr .tt{font-size:14px}@media(max-width:700px){.vg-tarefas .alr .btn{display:none}}'; document.head.appendChild(css); }
 LFI.registrar('visao',{titulo:'Visão Geral', render:render});
 })();
