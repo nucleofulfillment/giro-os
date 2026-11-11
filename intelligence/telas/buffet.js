@@ -52,9 +52,10 @@ function css(){
   '.bf-clock{font-size:34px;font-weight:800;letter-spacing:-.5px;font-variant-numeric:tabular-nums}'+
   '.bf-open{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;align-items:center}'+
   '.bf-cta{background:linear-gradient(135deg,#1C1C1E,#33333A);color:#fff;border-radius:var(--r);padding:24px 26px;display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap}'+
+  '@media (max-width:700px){.bf-cta{flex-direction:column;text-align:center;justify-content:center}.bf-cta>div{width:100%}.bf-cta .bf-emos{justify-content:center}.bf-cta>.btn{width:100%;min-height:58px;font-size:17px}}'+
   '.bf-cta h2{margin:0 0 4px;font-size:21px;font-weight:800}.bf-cta p{margin:0;color:#C9C9CF;font-size:13.5px;font-weight:600;max-width:560px;line-height:1.5}'+
   '.bf-cta .btn{min-height:56px;font-size:16px;padding:14px 26px;border-radius:14px}'+
-  '.bf-emos{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}.bf-emos span{width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:18px}'+
+  '.bf-cta-x{}.bf-emos{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}.bf-emos span{width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:18px}'+
   '.bf-enc{background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:16px 18px;display:grid;grid-template-columns:230px minmax(0,1fr);gap:18px}'+
   '.bf-enc+.bf-enc{margin-top:12px}'+
   '.bf-enc.reap{border-color:#BBE5C8}.bf-enc.desc{border-color:#F5C2C2}'+
@@ -121,8 +122,9 @@ function principal(el){
   var mes=LFI.hoje().slice(0,7), doMes=ls.filter(function(b){ return b.data.slice(0,7)===mes; }), encMes=doMes.filter(function(b){ return b.status==='encerrado'; });
   var A={disp:0, cons:0, cli:0, perdas:0, reap:0}; encMes.forEach(function(b){ var r=LFI.resumoBuffet(b); A.disp+=r.disp; A.cons+=r.consumo; A.cli+=b.clientes||0; A.perdas+=r.vDesc+r.vPerda; A.reap+=r.vReap; });
   var turno=new Date().getHours()<16?'almoço':'jantar', susOk=LFI.depVisivel('res');
+  var abertosTopo=false;
   var h=UI.cabecalho({titulo:'Buffet', sub:'Pesagem das cubas · '+F.moeda(LFI.db.buffetPrecoKg)+'/kg',
-    acoes:(s.aba!=='operacao'?'<button class="btn sec" data-act="aba" data-id="operacao">'+UI.ic('voltar')+'Voltar à pesagem</button>':'')+'<button class="btn sec" data-act="qr">'+UI.ic('raio')+'Gravar QR Code</button>'+'<button class="btn sec" data-act="dados">'+UI.ic('relatorio')+'Dados</button>'+(susOk?'<button class="btn pri" data-act="novo">'+UI.ic('balanca')+'Abrir buffet</button>':'')});
+    acoes:(s.aba!=='operacao'?'<button class="btn sec" data-act="aba" data-id="operacao">'+UI.ic('voltar')+'Voltar à pesagem</button>':'')+'<button class="btn sec" data-act="qr">'+UI.ic('raio')+'Gravar QR Code</button>'+'<button class="btn sec" data-act="dados">'+UI.ic('relatorio')+'Dados</button>'+(susOk&&abertosTopo?'<button class="btn pri" data-act="novo">'+UI.ic('balanca')+'Abrir buffet</button>':'')});
   if(s.aba==='relatorio'){ el.innerHTML=h+relatorioGeralHTML(enc); relatorioGeral(el, enc); ligaPrincipal(el); return; }
   if(s.aba==='regras'){ el.innerHTML=h+regrasHTML(); ligaPrincipal(el); return; }
 
