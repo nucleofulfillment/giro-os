@@ -261,9 +261,16 @@ function mostraHub(){
   hubModo(); hubPro();
 }
 /* LivePro: o card só aparece para a conta cujo plano inclui o recurso 'livepro' (Admin master → Planos) */
-function hubPro(){ var c=$('cardPro'); if(!c) return; try{ if(localStorage.getItem('lf_livepro')==='1') c.hidden=false; }catch(e){}
+/* contas com o LivePro liberado direto (flag por conta, sem depender do plano): código da conta no Admin master */
+var LIVEPRO_CONTAS=['cqxylf7'];
+function contaPro(){ if(!US) return false; var ids=[US.cliente_id,US.cliente,US.cli].filter(Boolean).map(String); if(ids.some(function(i){ return LIVEPRO_CONTAS.indexOf(i)>=0; })) return true;
+  var n=String(US.cliente_nome||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim(); return n==='casa do pao'; }
+function hubPro(){ var c=$('cardPro'); if(!c) return; var conta=contaPro();
+  function mostra(ok){ c.hidden=!ok; try{ localStorage.setItem('lf_livepro',ok?'1':'0'); }catch(e){} }
+  if(conta){ mostra(true); return; }
+  try{ if(localStorage.getItem('lf_livepro')==='1') c.hidden=false; }catch(e){}
   if(!TK) return;
-  fetch(API+'/painel/acesso',{headers:{'Authorization':'Bearer '+TK}}).then(function(r){ return r.json(); }).then(function(d){ var ok=!!(d&&d.ok&&d.recursos&&d.recursos.indexOf('livepro')>=0); c.hidden=!ok; try{ localStorage.setItem('lf_livepro',ok?'1':'0'); }catch(e){} }).catch(function(){});
+  fetch(API+'/painel/acesso',{headers:{'Authorization':'Bearer '+TK}}).then(function(r){ return r.json(); }).then(function(d){ mostra(!!(d&&d.ok&&d.recursos&&d.recursos.indexOf('livepro')>=0)); }).catch(function(){});
 }
 /* (252) modalidade do negócio (mesmo botão do catálogo do painel): fora de restaurante, o Atendimento é do atendente */
 function hubModoAplica(loja){ var a=document.querySelector('a.card[href="atendimento.html"]'); if(!a) return; var p=a.querySelector('p');
