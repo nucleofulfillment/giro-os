@@ -66,3 +66,12 @@ LFI.registrar('minha', {titulo:'…', render:render});
 - **Ordens**: aprovação → envio → entrega parcial/total → `LFI.notaDaOrdem` gera a NF para conferência.
 - **Produção**: OP calcula ingredientes pela ficha técnica, aponta faltas (gera cotação), baixa insumos e dá entrada no produto acabado.
 - **Buffet**: abertura com pesagem (balança simulada) → acompanhamento → encerramento com peso, temperatura, horário, responsável, condição e destino; sobra só entra no estoque se atender às regras de conservação (`db.regrasSobra`).
+
+## Pendências para a fase de integrações
+
+Funcionalidades já desenhadas no protótipo (com envio/leitura simulados) que precisam funcionar de verdade:
+
+1. **Resumo diário por WhatsApp (Visão Geral → Compartilhar)**: contatos (nome e telefone), horário e envio automático diário ficam em `db.compartilhar`. Falta o agendador (todo dia no horário escolhido, padrão 7h, com o resumo do dia anterior) e o envio real pelo WhatsApp. Combinado com o cliente para fazer depois da revisão de todas as telas.
+2. **Notificar fornecedor (Fiscal → item em Revisão)**: envio real por WhatsApp e e-mail, com as fotos anexadas.
+3. **Leitura de fotos**: etiqueta do item (código de barras e validade) e nota fiscal fotografada (várias páginas). Hoje a leitura é simulada.
+4. **Armazenamento das fotos no servidor** (hoje ficam no navegador).
