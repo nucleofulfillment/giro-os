@@ -612,5 +612,6 @@ UI.iniciar = function(){
   document.querySelector('#mm .fd').addEventListener('click', fechaMM);
   var t, larg=innerWidth; window.addEventListener('resize', function(){ clearTimeout(t); t=setTimeout(function(){ if(Math.abs(innerWidth-larg)<60||document.querySelector('.mdl.on')) return; larg=innerWidth; if(!document.activeElement||!/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) LFI.recarregar(); },300); });
   LFI.renderizar();
+  if(LFI.servidor) LFI.servidor.carregar();
 };
 })();

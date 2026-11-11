@@ -270,7 +270,7 @@ function hubPro(){ var c=$('cardPro'); if(!c) return; var conta=contaPro();
   if(conta){ mostra(true); return; }
   try{ if(localStorage.getItem('lf_livepro')==='1') c.hidden=false; }catch(e){}
   if(!TK) return;
-  fetch(API+'/painel/acesso',{headers:{'Authorization':'Bearer '+TK}}).then(function(r){ return r.json(); }).then(function(d){ mostra(!!(d&&d.ok&&d.recursos&&d.recursos.indexOf('livepro')>=0)); }).catch(function(){});
+  fetch(API+'/painel/acesso',{headers:{'Authorization':'Bearer '+TK}}).then(function(r){ return r.json(); }).then(function(d){ mostra(!!(d&&d.ok&&(d.livepro===true||(d.recursos&&d.recursos.indexOf('livepro')>=0)))); }).catch(function(){});
 }
 /* (252) modalidade do negócio (mesmo botão do catálogo do painel): fora de restaurante, o Atendimento é do atendente */
 function hubModoAplica(loja){ var a=document.querySelector('a.card[href="atendimento.html"]'); if(!a) return; var p=a.querySelector('p');
