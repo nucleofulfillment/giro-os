@@ -68,14 +68,18 @@ function detalheDia(d, deps){
 /* ---------- compartilhar resumo do dia por WhatsApp (envio manual agora; automático diário previsto) ---------- */
 function cfgShare(){ var c=LFI.db.compartilhar; if(!c){ c=LFI.db.compartilhar={contatos:[{nome:LFI.usuario().nome, fone:''}], auto:false, hora:'07:00', dia:'ontem'}; } return c; }
 function srvOn(){ return !!(LFI.servidor&&LFI.servidor.ativo&&LFI.servidor.pronto); }
-function resumoDia(d){
-  var deps=LFI.depIds().filter(function(x){ return x!=='cen'; }), vs=LFI.db.vendas.filter(function(v){ return v.d===d&&deps.indexOf(v.dep)>=0; });
-  var tot=0, tk=0; vs.forEach(function(v){ tot+=v.valor; tk+=v.tickets; });
-  var emp=LFI.empresaAtual(), t='*Resumo de '+F.diaSemana(d)+', '+F.data(d)+'*\n'+(emp?emp.fantasia:LFI.db.grupo.nome)+'\n\n';
-  t+='💰 Faturamento: *'+F.moeda(tot)+'*\n🧾 Tickets: '+F.num(tk,0)+' · Ticket médio: '+F.moeda(tot/Math.max(1,tk))+'\n';
-  vs.forEach(function(v){ t+='\n*'+LFI.dep(v.dep).nome+'* · '+F.moeda(v.valor)+' ('+v.tickets+' tickets)\n'+Object.keys(v.cats).map(function(c){ return '• '+c+': '+F.moeda(v.cats[c]); }).join('\n')+'\n'; });
-  var al=LFI.alertas().filter(function(a){ return a.tipo==='critico'||a.tipo==='baixo'; }).length; if(al) t+='\n⚠️ '+al+' produtos com estoque baixo';
-  return t+'\n\nEnviado pelo LivePro';
+/* mesmo texto que sai pelo WhatsApp (servidor): nome da pessoa, vendas do dia, comparação com o dia anterior e link do Hub */
+function resumoDia(d, nomePessoa){
+  var deps=LFI.depIds().filter(function(x){ return x!=='cen'; });
+  var soma=function(dia){ var s={tot:0,tk:0,dep:{}}; LFI.db.vendas.forEach(function(v){ if(v.d===dia&&deps.indexOf(v.dep)>=0){ s.tot+=v.valor; s.tk+=v.tickets||0; s.dep[v.dep]=(s.dep[v.dep]||0)+v.valor; } }); return s; };
+  var a=soma(d), b=soma(LFI.dataUtil.add?LFI.dataUtil.add(d,-1):new Date(Date.parse(d+'T12:00:00')-86400000).toISOString().slice(0,10));
+  var pn=String(nomePessoa||'').trim().split(/\s+/)[0]||''; pn=pn?pn.charAt(0).toUpperCase()+pn.slice(1).toLowerCase():'tudo bem';
+  var emp=LFI.empresaAtual(), nome=(LFI.db.grupo&&LFI.db.grupo.nome)||(emp&&emp.fantasia)||'sua empresa';
+  var linha=Object.keys(a.dep).map(function(k){ return LFI.dep(k).nome+' '+F.moeda(a.dep[k]); }).join(' · ')||'sem vendas registradas';
+  var comp; if(!b.tot) comp='Ainda não há vendas do dia anterior para comparar.';
+  else { var pc=Math.round((a.tot/b.tot-1)*1000)/10, ps=String(Math.abs(pc)).replace('.',',');
+    comp=pc>0.4?'📈 Suas vendas cresceram '+ps+'% comparado ao dia anterior. Parabéns!':pc<-0.4?'📉 Suas vendas ficaram '+ps+'% abaixo do dia anterior.':'➡️ Suas vendas ficaram estáveis em relação ao dia anterior.'; }
+  return 'Olá, '+pn+'! Tudo bem? ☀️\n\nResumo de vendas de '+nome+' ('+F.diaSemana(d)+', '+F.data(d)+'):\n\n💰 Faturamento: '+F.moeda(a.tot)+'\n🧾 Tickets: '+F.num(a.tk,0)+' · Ticket médio: '+F.moeda(a.tk?a.tot/a.tk:0)+'\n🏪 '+linha+'\n\n'+comp+'\n\nQuer mais detalhes? Acesse livefood.tec.br/hub';
 }
 function compartilhar(){
   var c=JSON.parse(JSON.stringify(cfgShare()));
@@ -88,7 +92,7 @@ function compartilhar(){
       '<div class="sh-sec"><div class="sh-tit">Envio automático</div><label class="chk"><input type="checkbox" data-chg="auto"'+(c.auto?' checked':'')+'> Enviar todos os dias, no horário</label>'+
       '<div class="sh-hora"><input type="time" class="inp" data-chg="hora" value="'+esc(c.hora)+'"'+(c.auto?'':' disabled')+'><span>com o resumo do dia anterior</span></div></div>'+
       '<div class="sh-sec"><div class="sh-tit">Mensagem <span class="seg" style="margin-left:8px"><button class="'+(c.dia==='ontem'?'on':'')+'" data-act="dia" data-id="ontem">Ontem</button><button class="'+(c.dia==='hoje'?'on':'')+'" data-act="dia" data-id="hoje">Hoje até agora</button></span></div>'+
-      '<div class="wa"><div class="wa-hd"><span class="av">'+UI.ic('whats')+'</span><div><b>LivePro</b><small>resumo diário</small></div></div><div class="wa-b out">'+esc(resumoDia(d))+'<span class="h">'+(c.auto?c.hora:LFI.agoraHM())+'</span></div></div></div>'+
+      '<div class="wa"><div class="wa-hd"><span class="av">'+UI.ic('whats')+'</span><div><b>LivePro</b><small>resumo diário</small></div></div><div class="wa-b out">'+esc(resumoDia(d,(c.contatos[0]||{}).nome))+'<span class="h">'+(c.auto?c.hora:LFI.agoraHM())+'</span></div></div></div>'+
       '<p class="cf-obs">'+(srvOn()?'Sai pelo WhatsApp do LiveFood. O envio automático usa o horário de Brasília.':'Entre pelo Hub para o envio sair de verdade pelo WhatsApp. Aqui fora ele é só simulado.')+'</p>');
     m.rodapeHTML('<button class="btn sec esq" data-act="salvar">Salvar configuração</button><button class="btn sec" data-act="_fechar">Fechar</button><button class="btn pri" data-act="env">'+UI.ic('enviar')+'Enviar agora</button>');
   }
