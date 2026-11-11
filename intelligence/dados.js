@@ -20,7 +20,7 @@ LFI.dataUtil = {iso:iso, hojeD:hojeD, D:D, DH:DH, r2:r2, r3:r3, rng:rng};
 
 LFI.criarBase = function(){
   var R = rng(20261110);
-  var db = {versao:7, criadaEm:new Date().toISOString(), hoje:D(0)};
+  var db = {versao:8, criadaEm:new Date().toISOString(), hoje:D(0)};
 
   /* ===== EMPRESAS (multi-CNPJ) ===== */
   db.grupo = {nome:'Grupo Pão Dourado', cidade:'Campinas/SP'};
@@ -471,6 +471,8 @@ LFI.criarBase = function(){
     db.atividades.forEach(function(a){ a.txt=a.txt.replace('Kaizen Sushi','Dourado Restaurante'); });
   })();
 
+  /* catálogo real do cliente (catalogo.js) */
+  if(LFI._aplicarCatalogo) LFI._aplicarCatalogo(db, {D:D, R:R, r2:r2, r3:r3});
   db.seq = {nf:0, oc:122, cot:33, op:453, bf:88, cp:0, mov:db.movs.length+1};
   db.usuario = {nome:'Roberto Amaral', papel:'Proprietário', ini:'RA'};
   return db;

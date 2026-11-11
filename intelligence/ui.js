@@ -53,13 +53,13 @@ UI.filtrarBusca = function(digitado, lista, nomeDe){ return lista.map(function(x
 
 
 /* ---------- foto do produto (padronizada: quadrada, cantos arredondados) ---------- */
-var EMOJI_CAT={far:'🌾',lat:'🧀',pes:'🐟',car:'🥩',hor:'🥬',mer:'🥫',ole:'🫒',ori:'🍣',beb:'🥤',emb:'📦',aca:'🥐',sob:'🍱'};
+var EMOJI_CAT={far:'🌾',lat:'🧀',pes:'🐟',car:'🥩',hor:'🥬',mer:'🥫',ole:'🫒',ori:'🍣',beb:'🥤',emb:'📦',aca:'🥐',sob:'🍱',tem:'⏱️'};
 UI.fotoProd = function(p, tam){
   if(typeof p==='string') p=LFI.prod(p); tam=tam||36; if(!p) return '';
   var src=(LFI.FOTOS&&LFI.FOTOS[p.id])||p.fotoURL;
   var st='width:'+tam+'px;height:'+tam+'px;border-radius:'+Math.round(tam*0.24)+'px';
   if(src) return '<img class="fprod" src="'+src+'" alt="" loading="lazy" style="'+st+'">';
-  return '<span class="fprod fpv" style="'+st+';font-size:'+Math.round(tam*0.5)+'px">'+(EMOJI_CAT[p.cat]||'📦')+'</span>';
+  return '<span class="fprod fpv" style="'+st+';font-size:'+Math.round(tam*0.5)+'px">'+(p.emoji||EMOJI_CAT[p.cat]||'📦')+'</span>';
 };
 UI.creditosFotos = function(){
   var c=LFI.FOTOS_CRED||{}, ids=Object.keys(c);
@@ -323,7 +323,7 @@ LFI.telas = {};
 LFI.menu = [
   {grupo:'Gestão', itens:[{id:'visao', nome:'Visão Geral', ic:'painel'}]},
   {grupo:'Suprimentos', itens:[{id:'compras', nome:'Ordens', ic:'compras'},{id:'ordens', nome:'Pedidos', ic:'ordem'},{id:'notas', nome:'Recebimento', ic:'nota'},{id:'estoque', nome:'Estoque', ic:'estoque'},{id:'fornecedores', nome:'Fornecedores', ic:'fornecedor'}]},
-  {grupo:'Operação', itens:[{id:'receitas', nome:'Receitas', ic:'receita'},{id:'producao', nome:'Produção', ic:'producao'},{id:'buffet', nome:'Buffet', ic:'buffet'},{id:'perdas', nome:'Saídas e perdas', ic:'lixo'}]},
+  {grupo:'Operação', itens:[{id:'produtos', nome:'Produtos', ic:'receita'},{id:'producao', nome:'Produção', ic:'producao'},{id:'buffet', nome:'Buffet', ic:'buffet'},{id:'perdas', nome:'Saídas e perdas', ic:'lixo'}]},
   {grupo:'Inteligência', itens:[{id:'custos', nome:'Precificação', ic:'custos'},{id:'tributos', nome:'Tributário', ic:'tributo'},{id:'relatorios', nome:'Relatórios', ic:'relatorio'}]}
 ];
 LFI.estado = {}; /* estado de cada tela (filtros, abas) enquanto a página estiver aberta */
@@ -517,8 +517,8 @@ UI.editarEmpresa = function(id, depois){
 function busca(q){
   q=q.trim().toLowerCase(); if(q.length<2) return [];
   var n=function(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''); }, qq=n(q), out=[];
-  LFI.db.produtos.forEach(function(p){ if(n(p.nome).indexOf(qq)>=0||p.ncm.indexOf(q)>=0) out.push({g:'Produtos', t:p.nome, s:F.qtd(LFI.estoqueGeral(p),p.un), ir:'estoque/'+p.id}); });
-  LFI.db.receitas.forEach(function(r){ if(n(r.nome).indexOf(qq)>=0) out.push({g:'Receitas', t:r.nome, s:LFI.dep(r.dep).curto, ir:'receitas/'+r.id}); });
+  LFI.db.produtos.forEach(function(p){ if(n(p.nome).indexOf(qq)>=0||p.ncm.indexOf(q)>=0) out.push({g:'Produtos', t:p.nome, s:p.tipo==='acabado'||p.tipo==='base'||p.tipo==='revenda'?(p.grupo||''):F.qtd(LFI.estoqueGeral(p),p.un), ir:(p.tipo==='insumo'?'estoque/':'produtos/')+p.id}); });
+  LFI.db.receitas.forEach(function(r){ if(!r.acabado&&n(r.nome).indexOf(qq)>=0) out.push({g:'Receitas', t:r.nome, s:LFI.dep(r.dep).curto, ir:'receitas/'+r.id}); });
   LFI.db.fornecedores.forEach(function(f){ if(n(f.nome+' '+f.razao).indexOf(qq)>=0||f.cnpj.replace(/\D/g,'').indexOf(q.replace(/\D/g,'')||'x')>=0) out.push({g:'Fornecedores', t:f.nome, s:f.cidade+'/'+f.uf, ir:'fornecedores/'+f.id}); });
   LFI.db.notas.forEach(function(x){ if((x.numero+' '+LFI.forn(x.forn).nome).toLowerCase().indexOf(q)>=0||n(x.numero).replace(/\D/g,'').indexOf(q.replace(/\D/g,'')||'x')>=0) out.push({g:'Notas fiscais', t:'NF '+x.numero, s:LFI.forn(x.forn).nome, ir:'notas/'+x.id}); });
   LFI.db.ordens.forEach(function(x){ if(n(x.num).indexOf(qq)>=0) out.push({g:'Ordens de compra', t:x.num, s:LFI.forn(x.forn).nome, ir:'ordens/'+x.id}); });

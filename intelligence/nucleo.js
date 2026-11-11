@@ -5,11 +5,11 @@
 'use strict';
 var LFI = window.LFI;
 var U = LFI.dataUtil, r2 = U.r2, r3 = U.r3;
-var CHAVE = 'lfi_base_v7', CHAVE_CTX = 'lfi_ctx_v1';
+var CHAVE = 'lfi_base_v8', CHAVE_CTX = 'lfi_ctx_v1';
 
 /* ---------- armazenamento ---------- */
 function carrega(){
-  try{ var s=localStorage.getItem(CHAVE); if(s){ var d=JSON.parse(s); if(d&&d.versao===7) return d; } }catch(e){}
+  try{ var s=localStorage.getItem(CHAVE); if(s){ var d=JSON.parse(s); if(d&&d.versao===8) return d; } }catch(e){}
   return null;
 }
 LFI.db = carrega() || LFI.criarBase();

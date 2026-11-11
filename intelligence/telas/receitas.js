@@ -92,7 +92,9 @@ function atualizacoesNF(r){
 /* ================= CATÁLOGO ================= */
 function render(el, arg){
   css();
-  if(arg){ var r=LFI.rec(arg); if(r) return detalhe(el, r); }
+  /* a receita agora fica dentro do produto (tela Produtos) */
+  if(arg){ var r=LFI.rec(arg); if(r&&r.acabado&&LFI.prod(r.acabado)){ setTimeout(function(){ LFI.ir('produtos', r.acabado); },0); return; } if(r) return detalhe(el, r); }
+  else { setTimeout(function(){ LFI.ir('produtos'); },0); return; }
   var s=st(), todas=visiveis(), emp=LFI.empresaAtual();
   var cats={}; todas.forEach(function(r){ if(s.op==='todas'||r.dep===s.op) cats[r.cat]=(cats[r.cat]||0)+1; });
   if(s.cat&&!cats[s.cat]) s.cat='';
