@@ -82,7 +82,7 @@ function render(el, arg){
   function barra(pct){ var p=Math.round(pct*1000)/10, w=Math.max(p,12); return '<div class="tx-bar"><div class="im" style="width:'+w+'%">'+String(p).replace('.',',')+'%</div><div class="fi" style="width:'+(100-w)+'%">Fica para a empresa '+String(Math.round((100-p)*10)/10).replace('.',',')+'%</div></div>'; }
   function pc(v){ return F.pctN(v*100,2); }
 
-  var h='<div class="tx"><div class="tx-hd"><div><h1>Tributário</h1><small>Quanto cada empresa paga de imposto, e como esse valor é calculado.</small></div><button class="btn sec tx-cont" data-act="_ir" data-id="tributos/contador">'+UI.ic('empresa')+'Área do contador</button></div>';
+  var h='<div class="tx"><div class="tx-hd"><div><div class="pghd-t">'+UI.setaVoltar()+'<h1>Tributário</h1></div><small>Quanto cada empresa paga de imposto, e como esse valor é calculado.</small></div><button class="btn sec tx-cont" data-act="_ir" data-id="tributos/contador">'+UI.ic('empresa')+'Área do contador</button></div>';
   h+='<div class="tx-ex">'+UI.ic('alerta')+'<span>Cálculo com percentuais de <b>exemplo</b>. O contador confirma as alíquotas; os impostos das compras ficam reais com as notas (XML).</span></div>';
   h+='<div class="tx-per">'+opcoes.map(function(m){ return '<button class="'+(m===ym?'on':'')+'" data-act="mes" data-id="'+m+'">'+nomeMes(m,true).replace(/^./,function(c){ return c.toUpperCase(); })+' '+m.slice(0,4)+(m===ymHoje?'<small>até hoje</small>':'<small>mês fechado</small>')+'</button>'; }).join('')+'</div>';
 

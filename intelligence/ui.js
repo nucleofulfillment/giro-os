@@ -413,9 +413,10 @@ UI.desenhaVoltar = function(){
 window.addEventListener('hashchange', function(){ UI.fecharTodos(); LFI.renderizar(); });
 
 /* cabeçalho de página padrão */
+UI.setaVoltar = function(){ return '<button type="button" class="pghd-v" data-voltar aria-label="Voltar para a tela anterior"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button>'; };
 UI.cabecalho = function(o){
   return (o.migalha?'<div class="migalha">'+o.migalha.map(function(m,i){ return m.ir?'<a data-act="_ir" data-id="'+esc(m.ir)+'">'+esc(m.t)+'</a>':'<span>'+esc(m.t)+'</span>'; }).join('<span>›</span>')+'</div>':'')+
-    '<div class="pghd"><div><h1>'+o.titulo+'</h1>'+(o.sub?'<div class="sub">'+o.sub+'</div>':'')+'</div>'+(o.acoes?'<div class="acoes">'+o.acoes+'</div>':'')+'</div>';
+    '<div class="pghd"><div>'+(LFI.atual().id!=='visao'?'<div class="pghd-t"><button type="button" class="pghd-v" data-voltar aria-label="Voltar para a tela anterior"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button><h1>'+o.titulo+'</h1></div>':'<h1>'+o.titulo+'</h1>')+(o.sub?'<div class="sub">'+o.sub+'</div>':'')+'</div>'+(o.acoes?'<div class="acoes">'+o.acoes+'</div>':'')+'</div>';
 };
 /* navegação embutida: data-act="_ir" data-id="tela/arg" */
 UI.navHandlers = function(h){ h=h||{}; h._ir=function(id){ var p=String(id).split('/'); LFI.ir(p[0], p.slice(1).join('/')||null); }; return h; };
@@ -604,6 +605,8 @@ UI.iniciar = function(){
   document.getElementById('tb-av').textContent=LFI.usuario().ini;
   document.getElementById('tb-menu').addEventListener('click', UI.abreMM);
   var tv=document.getElementById('tb-voltar'); if(tv) tv.addEventListener('click', function(){ LFI.voltar(); });
+  /* setinha ao lado do título de cada tela */
+  document.addEventListener('click', function(ev){ if(ev.target.closest('[data-voltar]')){ ev.preventDefault(); LFI.voltar(); } });
   /* listas longas ganham busca, inclusive as que aparecem depois (janelas, telas novas) */
   UI.selBuscaEm(document); var _sbT=null; new MutationObserver(function(){ clearTimeout(_sbT); _sbT=setTimeout(function(){ UI.selBuscaEm(document); },30); }).observe(document.body,{childList:true, subtree:true});
   document.querySelector('#mm .fd').addEventListener('click', fechaMM);
