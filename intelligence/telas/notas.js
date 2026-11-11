@@ -557,7 +557,7 @@ function notificarForn(n, it, depois){
       '<label class="nt-op"><input type="checkbox" id="nt-e"'+(cfg.email?' checked':'')+'><span>'+UI.ic('enviar')+'<b>E-mail</b><small>'+esc(f.email)+'</small></span></label></div></div>'+
     '<div class="field"><label>Mensagem</label><textarea class="inp" id="nt-t" style="min-height:220px">'+esc(txt)+'</textarea></div>'+
     '<div class="nt-bloco"><div class="nt-tit">Fotos anexadas</div><div class="nt-fotos" id="nt-fotos"></div></div>'+
-    '<p class="cf-obs">Nesta demonstração o envio é simulado: nada sai do sistema.</p>',
+    '<p class="cf-obs">'+(LFI.servidor&&LFI.servidor.ativo&&LFI.servidor.pronto?'O WhatsApp sai pelo número do LiveFood, com um link para o fornecedor ver as fotos. O e-mail ainda não é enviado pelo sistema.':'Entre pelo Hub para o aviso sair de verdade. Aqui fora ele é só simulado.')+'</p>',
     botoes:'<button class="btn sec" data-act="_fechar">Agora não</button><button class="btn pri" data-act="env">'+UI.ic('enviar')+'Enviar</button>',
     acoes:{env:function(){
       var w=m.el.querySelector('#nt-w').checked, em=m.el.querySelector('#nt-e').checked; if(!w&&!em){ UI.toast('Escolha WhatsApp, e-mail ou os dois','','wt'); return; }
@@ -565,7 +565,16 @@ function notificarForn(n, it, depois){
       var x=LFI.nota(n.id), alvo=x.itens.filter(function(y){ return y.id===it.id; })[0]||it;
       alvo.revisao=alvo.revisao||{}; alvo.revisao.fotosAvaria=avarias.slice(); (alvo.revisao.notif=alvo.revisao.notif||[]).push({em:LFI.agoraISO(), canais:can, por:LFI.usuario().nome, msg:m.el.querySelector('#nt-t').value, fotos:fotos.length+avarias.length});
       LFI.atividade('nf','Fornecedor '+f.nome+' notificado ('+can.join(' e ')+'): '+nome+' · NF '+n.numero,{tela:'notas',id:n.id});
-      m.fechar(); UI.toast('Fornecedor notificado', f.nome+' por '+can.join(' e ')); depois(); },
+      var real=LFI.servidor&&LFI.servidor.ativo&&LFI.servidor.pronto;
+      if(!real||!w){ m.fechar(); UI.toast('Fornecedor notificado', f.nome+' por '+can.join(' e ')+(real?'':' (simulado)')); depois(); return; }
+      var bt=m.el.querySelector('[data-act=env]'); if(bt){ bt.disabled=true; bt.textContent='Enviando…'; }
+      var imgs=avarias.map(function(a){ return a.img; }).concat(fotos);
+      LFI.servidor.fotosParaChaves(imgs).then(function(ks){
+        return LFI.servidor.req('POST','/painel/livepro-avisar',{fone:f.whats, texto:m.el.querySelector('#nt-t').value, contato:String(f.contato||'').split(' ')[0], empresa:e.fantasia, nf:n.numero, produto:nome, problema:(r.motivo||'')+(r.obs?' · '+r.obs:''), fotos:ks});
+      }).then(function(j){
+        if(j&&j.ok){ m.fechar(); UI.toast('Fornecedor avisado pelo WhatsApp', f.nome); depois(); }
+        else { UI.toast('O WhatsApp não aceitou o envio', (j&&j.mensagem)||'Confira o número do fornecedor','no'); if(bt){ bt.disabled=false; bt.textContent='Enviar'; } }
+      }); },
       exAv:function(){ avarias.push({img:fotoAvariaEx(nome), em:LFI.agoraISO(), por:LFI.usuario().nome}); desFotos(); },
       tiraAv:function(i){ avarias.splice(+i,1); desFotos(); }}});
   var avarias=((it.revisao&&it.revisao.fotosAvaria)||[]).slice();
