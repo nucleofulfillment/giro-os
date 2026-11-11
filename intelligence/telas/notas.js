@@ -280,9 +280,9 @@ function semAcento(s){ return String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').
 function abrevUn(conv){ var w=semAcento(String(conv||'').split(' ')[0]); return {SACO:'SC',FARDO:'FD',CAIXA:'CX',PACOTE:'PC',BALDE:'BD',GALAO:'GL',LATA:'LT',BLOCO:'BL',PECA:'PC',BARRA:'BR',POTE:'PT',BISNAGA:'BN',BANDEJA:'BJ',ENGRADADO:'EG',GARRAFA:'GF',ROLO:'RL'}[w]||'CX'; }
 function gerarNota(nomeArq, pdf){
   var R=Math.random, db=LFI.db;
-  var forns=db.fornecedores.filter(function(f){ return db.produtos.some(function(p){ return p.tipo==='insumo'&&(p.forn===f.id||(p.fornAlt||[]).indexOf(f.id)>=0); }); });
+  var forns=db.fornecedores.filter(function(f){ return db.produtos.some(function(p){ return LFI.compravel(p)&&(p.forn===f.id||(p.fornAlt||[]).indexOf(f.id)>=0); }); });
   var f=forns[Math.floor(R()*forns.length)];
-  var prods=db.produtos.filter(function(p){ return p.tipo==='insumo'&&(p.forn===f.id||(p.fornAlt||[]).indexOf(f.id)>=0); });
+  var prods=db.produtos.filter(function(p){ return LFI.compravel(p)&&(p.forn===f.id||(p.fornAlt||[]).indexOf(f.id)>=0); });
   prods.sort(function(){ return R()-.5; }); prods=prods.slice(0, Math.min(prods.length, 3+Math.floor(R()*3)));
   var deps=LFI.depIds(), dep=deps.indexOf('cen')>=0?'cen':deps[0], empresa=LFI.dep(dep).empresa, inter=f.uf!=='SP';
   var itens=prods.map(function(p,i){

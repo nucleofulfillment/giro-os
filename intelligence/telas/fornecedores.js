@@ -40,7 +40,7 @@ function curto(n){ return String(n||'').replace(/\s*\([^)]*\)/,'').trim(); }
 function somaMin(s,m){ var d=new Date(s); d.setMinutes(d.getMinutes()+m); return U.iso(d)+'T'+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
 function enviadaEm(c){ if(c.enviadaEm) return c.enviadaEm; if(c.status==='preparacao'||c.status==='aguardando_envio') return null; if(c.status==='cancelada'&&!c.propostas.length) return null; return somaMin(c.data,12); }
 function dur(m){ if(m==null||isNaN(m)||m<0) return '—'; if(m<60) return m+' min'; var h=Math.floor(m/60), x=m%60; if(h<48) return h+'h'+(x?String(x).padStart(2,'0'):''); return Math.round(h/24)+' dias'; }
-function produtosDe(fId){ return LFI.db.produtos.filter(function(p){ return p.tipo==='insumo'&&(p.forn===fId||(p.fornAlt||[]).indexOf(fId)>=0); }); }
+function produtosDe(fId){ return LFI.db.produtos.filter(function(p){ return LFI.compravel(p)&&(p.forn===fId||(p.fornAlt||[]).indexOf(fId)>=0); }); }
 function notasDe(fId, de){ return LFI.db.notas.filter(function(n){ return n.forn===fId&&LFI.empresaVisivel(n.empresa)&&(!de||(n.entrada||n.emissao)>=de); }); }
 function comprado(fId, de){ var t=0, n=0; notasDe(fId,de).forEach(function(x){ if(x.status==='lancada'){ t+=x.valor; n++; } }); return {total:r2(t), n:n}; }
 function ultimoPreco(prod, fId){
@@ -246,10 +246,10 @@ function editar(f){
 }
 function vincular(f){
   var todas=false, busca='';
-  var papel={}; LFI.db.produtos.forEach(function(p){ if(p.tipo!=='insumo') return; papel[p.id]=p.forn===f.id?'p':(p.fornAlt||[]).indexOf(f.id)>=0?'a':''; });
+  var papel={}; LFI.db.produtos.forEach(function(p){ if(!LFI.compravel(p)) return; papel[p.id]=p.forn===f.id?'p':(p.fornAlt||[]).indexOf(f.id)>=0?'a':''; });
   function corpo(){
     var q=norm(busca), h='<div class="barra"><div class="search">'+UI.ic('busca')+'<input id="fv-b" placeholder="Buscar produto" value="'+esc(busca)+'" data-inp="b"></div><label class="chk"><input type="checkbox" data-chg="todas"'+(todas?' checked':'')+'> Mostrar todas as categorias</label></div><div id="fv-l">';
-    LFI.db.categorias.forEach(function(c){ if(!todas&&f.cats.indexOf(c.id)<0) return; var ps=LFI.db.produtos.filter(function(p){ return p.tipo==='insumo'&&p.cat===c.id&&(!q||norm(p.nome).indexOf(q)>=0); }); if(!ps.length) return;
+    LFI.db.categorias.forEach(function(c){ if(!todas&&f.cats.indexOf(c.id)<0) return; var ps=LFI.db.produtos.filter(function(p){ return LFI.compravel(p)&&p.cat===c.id&&(!q||norm(p.nome).indexOf(q)>=0); }); if(!ps.length) return;
       h+='<div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin:12px 0 4px">'+esc(c.nome)+'</div>'+ps.map(function(p){ var pr=p.forn&&p.forn!==f.id?LFI.forn(p.forn):null; return '<div class="fq-vp"><div><b>'+esc(p.nome)+'</b><small>'+(pr?'Principal hoje: '+esc(pr.nome):p.forn===f.id?'Principal: este fornecedor':'Sem fornecedor principal')+'</small></div><select class="inp sm" data-chg="pp" data-id="'+p.id+'"><option value=""'+(papel[p.id]===''?' selected':'')+'>Não fornece</option><option value="p"'+(papel[p.id]==='p'?' selected':'')+'>Principal</option><option value="a"'+(papel[p.id]==='a'?' selected':'')+'>Alternativo</option></select></div>'; }).join(''); });
     return h+'</div>';
   }
@@ -260,7 +260,7 @@ function vincular(f){
       pp:function(id,ev){ papel[id]=ev.target.value; },
       ok:function(){
         var n=0;
-        LFI.db.produtos.forEach(function(p){ if(p.tipo!=='insumo') return; var atual=p.forn===f.id?'p':(p.fornAlt||[]).indexOf(f.id)>=0?'a':'', novo=papel[p.id]; if(atual===novo) return; n++;
+        LFI.db.produtos.forEach(function(p){ if(!LFI.compravel(p)) return; var atual=p.forn===f.id?'p':(p.fornAlt||[]).indexOf(f.id)>=0?'a':'', novo=papel[p.id]; if(atual===novo) return; n++;
           p.fornAlt=(p.fornAlt||[]).filter(function(x){ return x!==f.id; });
           if(atual==='p'){ p.forn=p.fornAlt.length?p.fornAlt.shift():null; }
           if(novo==='p'){ if(p.forn&&p.forn!==f.id&&p.fornAlt.indexOf(p.forn)<0) p.fornAlt.unshift(p.forn); p.forn=f.id; }

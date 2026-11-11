@@ -69,7 +69,7 @@ function produtosVis(){
   return LFI.db.produtos.filter(function(p){
     if(p.tipo==='sobra'&&LFI.estoqueGeral(p)<=0) return false;
     if(s.dep!=='todos') return Math.abs(p.est[s.dep]||0)>0.0001 || (p.contado&&p.contado.dep===s.dep);
-    return deps.some(function(d){ return (p.est[d]||0)>0; }) || p.tipo==='insumo';
+    return deps.some(function(d){ return (p.est[d]||0)>0; }) || LFI.compravel(p);
   });
 }
 function alertasVis(lista){ var ids={}; lista.forEach(function(p){ ids[p.id]=1; }); return LFI.alertas().filter(function(a){ return ids[a.prod]; }); }
@@ -113,7 +113,7 @@ function principal(el){
   var vPar=0; par.forEach(function(a){ vPar+=LFI.valorEstoque(a.prod,['cen','pad','res']); });
   var v7=lista.filter(function(p){ var d=LFI.diasParaVencer(p); return d!=null&&d<=7&&LFI.estoque(p,deps)>0&&p.tipo==='insumo'; }).length;
   var vDiv=0; div.forEach(function(a){ var p=LFI.prod(a.prod); vDiv+=(p.contado.qtd-(p.est[p.contado.dep]||0))*p.custoMedio; });
-  var nSug=LFI.db.produtos.filter(function(p){ return p.tipo==='insumo'&&['baixo','critico'].indexOf(LFI.situacao(p))>=0&&lista.indexOf(p)>=0; }).length;
+  var nSug=LFI.db.produtos.filter(function(p){ return LFI.compravel(p)&&['baixo','critico'].indexOf(LFI.situacao(p))>=0&&lista.indexOf(p)>=0; }).length;
 
   var h=UI.cabecalho({titulo:'Estoque Inteligente', sub:(emp?esc(emp.fantasia)+' · CNPJ '+emp.cnpj:esc(LFI.db.grupo.nome)+' · estoque centralizado de '+LFI.db.empresas.length+' CNPJs')+' · custo médio ponderado atualizado pelas notas fiscais',
     acoes:'<button class="btn sec sm" data-act="ajuste">'+UI.ic('editar')+'Ajuste de inventário</button><button class="btn sec sm" data-act="transf">'+UI.ic('seta')+'Transferência</button><button class="btn sec sm" data-act="saida">'+UI.ic('lixo')+'Saída / perda</button><button class="btn pri sm" data-act="novoP">'+UI.ic('mais')+'Novo produto</button>'});
@@ -237,7 +237,7 @@ function movCols(comProd){
 /* ---------- aba: sugestão de compra ---------- */
 function abaSug(box, hand, lista){
   var s=st(), mult=s.mult||2;
-  var itens=lista.filter(function(p){ return p.tipo==='insumo'&&['baixo','critico'].indexOf(LFI.situacao(p))>=0; }).sort(function(a,b){ return LFI.estoqueGeral(a)/a.estMin-LFI.estoqueGeral(b)/b.estMin; });
+  var itens=lista.filter(function(p){ return LFI.compravel(p)&&['baixo','critico'].indexOf(LFI.situacao(p))>=0; }).sort(function(a,b){ return LFI.estoqueGeral(a)/a.estMin-LFI.estoqueGeral(b)/b.estMin; });
   itens.forEach(function(p){ if(s.sel[p.id]==null) s.sel[p.id]=true; });
   function qtd(p){ return s.sq[p.id]!=null?s.sq[p.id]:sugQtd(p,mult); }
   var tot=0, n=0; itens.forEach(function(p){ if(s.sel[p.id]){ tot+=qtd(p)*p.ultimoCusto; n++; } });

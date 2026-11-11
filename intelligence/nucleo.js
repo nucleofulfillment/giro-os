@@ -142,6 +142,8 @@ LFI.precificar = function(r, opts){
   var mc = r2(preco-custoUn-impV);
   return {custo:custoUn, markup:mk, sugerido:sugerido, preco:preco, impPct:imp, impV:impV, mc:mc, mcPct:preco?mc/preco:0, cmvPct:preco?custoUn/preco:0, markupReal:custoUn?preco/custoUn:0};
 };
+/* pode ser comprado de fornecedor: ingredientes e produtos prontos para revenda (bebidas…) */
+LFI.compravel = function(p){ return !!p && (p.tipo==='insumo'||p.tipo==='revenda'); };
 LFI.receitasComProduto = function(prodId){ return LFI.db.receitas.filter(function(r){ return r.ing.some(function(g){ return g.prod===prodId; }); }); };
 
 /* ---------- correspondência de produtos (nota fiscal / lista) ---------- */
