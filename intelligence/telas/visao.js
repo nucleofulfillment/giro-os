@@ -31,8 +31,8 @@ function tarefas(){
 }
 
 function render(el){
-  var s=st(); if(['hoje','7d','30d'].indexOf(s.per)<0) s.per='30d';
-  var p=LFI.periodo(s.per), pa=LFI.periodoAnterior(p), deps=depsFiltro(), emp=LFI.empresaAtual();
+  var s=st(); if(['hoje','ontem','7d','30d','custom'].indexOf(s.per)<0) s.per='30d';
+  var p=LFI.periodo(s.per, s.de, s.ate), pa=LFI.periodoAnterior(p), deps=depsFiltro(), emp=LFI.empresaAtual();
   var fat=LFI.faturamento(p,deps), fatA=LFI.faturamento(pa,deps);
   var cmv=0, imp=0; deps.forEach(function(d){ var f=LFI.faturamento(p,[d]); cmv+=f*LFI.cmvPct(d); imp+=f*LFI.empresaDoDep(d).impVenda/100; });
   var mc=fat-cmv-imp;
@@ -42,8 +42,9 @@ function render(el){
 
   var ops=['todas'].concat(LFI.depIds().filter(function(d){ return d!=='cen'; }));
   var h=UI.cabecalho({titulo:'Visão Geral', sub:emp?esc(emp.fantasia):esc(LFI.db.grupo.nome)+' · todas as empresas'});
-  h+='<div class="barra"><div class="seg">'+[['hoje','Hoje'],['7d','7 dias'],['30d','30 dias']].map(function(x){ return '<button class="'+(s.per===x[0]?'on':'')+'" data-act="per" data-id="'+x[0]+'">'+x[1]+'</button>'; }).join('')+'</div><span class="sp"></span>'+
-     (ops.length>2?'<div class="pills">'+ops.map(function(d){ var dd=LFI.dep(d); return '<button class="pill'+(s.op===d?' on':'')+'" data-act="op" data-id="'+d+'">'+(dd?'<i style="background:'+dd.cor+'"></i>'+esc(dd.curto):'Todas')+'</button>'; }).join('')+'</div>':'')+'</div>';
+  h+='<div class="vg-filtros"><div class="seg vg-per">'+[['hoje','Hoje'],['ontem','Ontem'],['7d','7 dias'],['30d','30 dias'],['custom','Personalizado']].map(function(x){ return '<button class="'+(s.per===x[0]?'on':'')+'" data-act="per" data-id="'+x[0]+'">'+x[1]+'</button>'; }).join('')+'</div>'+
+     (ops.length>2?'<div class="pills vg-ops">'+ops.map(function(d){ var dd=LFI.dep(d); return '<button class="pill'+(s.op===d?' on':'')+'" data-act="op" data-id="'+d+'">'+(dd?'<i style="background:'+dd.cor+'"></i>'+esc(dd.curto):'Todas')+'</button>'; }).join('')+'</div>':'')+'</div>';
+  if(s.per==='custom') h+='<div class="vg-datas"><label>De <input type="date" class="inp sm" data-chg="de" value="'+p.de+'"></label><label>Até <input type="date" class="inp sm" data-chg="ate" value="'+p.ate+'"></label></div>';
 
   h+='<div class="kpis">'+
     UI.kpi({lb:'Vendas', vl:F.moeda(fat), dl:UI.variacao(fat,fatA)+' em relação ao período anterior', hl:true})+
@@ -65,6 +66,8 @@ function render(el){
 
   UI.liga(el, UI.navHandlers({
     per:function(id){ s.per=id; LFI.recarregar(); },
+    de:function(_,ev){ s.de=ev.target.value; if(s.ate&&s.de>s.ate) s.ate=s.de; LFI.recarregar(); },
+    ate:function(_,ev){ s.ate=ev.target.value; if(s.de&&s.ate<s.de) s.de=s.ate; LFI.recarregar(); },
     op:function(id){ s.op=id; LFI.recarregar(); },
     kMc:function(){ detalheMargem(p, deps); },
     kCp:function(){ contasPagar(); }
@@ -98,6 +101,6 @@ function contasPagar(){
   UI.liga(m.corpo,{nf:function(id){ m.fechar(); LFI.ir('notas',id); }});
 }
 
-if(!document.getElementById('css-visao')){ var css=document.createElement('style'); css.id='css-visao'; css.textContent='.vg-tarefas .alr{padding:12px 14px}.vg-tarefas .alr .btn{pointer-events:none;flex:none}.vg-tarefas .alr .tt{font-size:14px}@media(max-width:700px){.vg-tarefas .alr .btn{display:none}}'; document.head.appendChild(css); }
+if(!document.getElementById('css-visao')){ var css=document.createElement('style'); css.id='css-visao'; css.textContent='.vg-filtros{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}.vg-datas{display:flex;gap:12px;flex-wrap:wrap;margin:-4px 0 14px}.vg-datas label{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:800;color:var(--muted2)}.vg-datas input{width:auto}@media(max-width:700px){.vg-filtros{flex-direction:column;align-items:stretch}.vg-per{display:flex;width:100%}.vg-per button{flex:1 1 auto;padding:7px 4px;font-size:12px}.vg-ops{justify-content:center}.vg-datas{display:grid;grid-template-columns:1fr 1fr;gap:10px}.vg-datas label{flex-direction:column;align-items:stretch;gap:4px}.vg-datas input{width:100%}}.vg-tarefas .alr{padding:12px 14px}.vg-tarefas .alr .btn{pointer-events:none;flex:none}.vg-tarefas .alr .tt{font-size:14px}@media(max-width:700px){.vg-tarefas .alr .btn{display:none}}'; document.head.appendChild(css); }
 LFI.registrar('visao',{titulo:'Visão Geral', render:render});
 })();

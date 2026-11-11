@@ -297,6 +297,7 @@ LFI.novoId = function(p){ return p+Date.now().toString(36)+Math.floor(Math.rando
 LFI.periodo = function(chave, de, ate){
   var h=LFI.hoje(), D=U.D;
   if(chave==='hoje') return {de:h, ate:h, nome:'Hoje'};
+  if(chave==='ontem') return {de:D(-1), ate:D(-1), nome:'Ontem'};
   if(chave==='7d') return {de:D(-6), ate:h, nome:'Últimos 7 dias'};
   if(chave==='30d') return {de:D(-29), ate:h, nome:'Últimos 30 dias'};
   if(chave==='mes'){ var d=U.hojeD(); return {de:U.iso(new Date(d.getFullYear(),d.getMonth(),1,12)), ate:h, nome:'Mês atual'}; }
