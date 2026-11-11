@@ -217,7 +217,7 @@ UI.grafBarras = function(el, o){
       if(emp){ bx=x0+(gw-bw)/2; by=pt+ih-acum-bh; acum+=bh; } else { bx=x0+(gw-bw*ser.length)/2+bw*j; by=pt+ih-bh; }
       var rad=Math.min(5,bw/2.5), cor=(x.cores&&x.cores[i])||x.cor;
       s+='<rect class="bk" data-i="'+i+'" data-j="'+j+'" x="'+bx.toFixed(1)+'" y="'+by.toFixed(1)+'" width="'+Math.max(1,bw-(emp?0:2)).toFixed(1)+'" height="'+Math.max(0,bh).toFixed(1)+'" rx="'+(emp?2:rad)+'" fill="'+cor+'"/>'; });
-    var show = n<=14 || i%Math.ceil(n/14)===0;
+    var mx=Math.max(2,Math.min(14,Math.floor(iw/40))), show = n<=mx || i%Math.ceil(n/mx)===0;
     if(show) s+= o.rotacao ? '<text class="ax" transform="translate('+(x0+gw/2)+','+(pt+ih+12)+') rotate(-32)" text-anchor="end">'+esc(c)+'</text>' : '<text class="ax" x="'+(x0+gw/2)+'" y="'+(H-pb+17)+'" text-anchor="middle">'+esc(c)+'</text>';
   });
   if(o.linhaRef){ var yr=pt+ih-(o.linhaRef.valor/es.max)*ih; s+='<line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+yr+'" y2="'+yr+'" stroke="'+(o.linhaRef.cor||'#DC2626')+'" stroke-dasharray="5 4" stroke-width="1.5"/><text class="ax" x="'+(W-pr)+'" y="'+(yr-5)+'" text-anchor="end" style="fill:'+(o.linhaRef.cor||'#DC2626')+'">'+esc(o.linhaRef.rotulo||'')+'</text>'; }

@@ -45,7 +45,7 @@ function custoEst(op){ if(op.custo!=null) return op.custo; var r=rec(op); return
 /* necessidade de insumos para produzir qtd (no rendimento da receita) no departamento */
 function necessidades(r, qtd, dep){
   var l=lotes(r,qtd);
-  return r.ing.map(function(g){ var p=LFI.prod(g.prod), need=r3(LFI.converte(g.qtd,g.un,p.un)*l), disp=r3(p.est[dep]||0), cen=dep==='cen'?0:r3(p.est.cen||0);
+  return r.ing.filter(function(g){ var p=LFI.prod(g.prod); return p&&p.tipo!=='servico'; }).map(function(g){ var p=LFI.prod(g.prod), need=r3(LFI.converte(g.qtd,g.un,p.un)*l), disp=r3(p.est[dep]||0), cen=dep==='cen'?0:r3(p.est.cen||0);
     var falta=r3(Math.max(0,need-disp)); return {p:p, need:need, disp:disp, cen:cen, falta:falta, transf:r3(Math.min(falta,cen)), compra:r3(Math.max(0,falta-cen)), custo:r2(need*p.custoMedio)}; });
 }
 function faltasDe(op){ if(op.status==='concluida'||op.status==='cancelada') return []; return necessidades(rec(op),op.qtd,op.dep).filter(function(n){ return n.falta>0; }); }
@@ -63,7 +63,7 @@ function subHora(hm, min){ var a=hm.split(':'), t=(+a[0])*60+(+a[1])-min; if(t<0
 
 /* ================= QUADRO ================= */
 function render(el, arg){
-  css();
+  css(); document.body.classList.add('foco');
   if(arg){ var op=LFI.op(arg); if(op) return detalhe(el, op); }
   var s=st(), ls=visiveis(), hoje=LFI.hoje();
   var hojeL=ls.filter(function(o){ return o.data===hoje; }), concH=hojeL.filter(function(o){ return o.status==='concluida'; });

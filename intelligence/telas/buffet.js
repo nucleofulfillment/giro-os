@@ -128,7 +128,7 @@ function principal(el){
   if(s.aba==='relatorio'){ el.innerHTML=h+relatorioGeralHTML(enc); relatorioGeral(el, enc); ligaPrincipal(el); return; }
   if(s.aba==='regras'){ el.innerHTML=h+regrasHTML(); ligaPrincipal(el); return; }
 
-  if(!susOk) h+=UI.nota('O buffet de sushi por quilo é operado no <b>Dourado Restaurante</b>. Selecione essa empresa ou a visão consolidada no topo para abrir um buffet.','wt');
+  if(!susOk) h+=UI.nota('O buffet de sushi por quilo é operado no <b>'+esc((LFI.emp('e2')||{}).fantasia||'Restaurante')+'</b>. Selecione essa empresa ou a visão consolidada no topo para abrir um buffet.','wt');
   abertos.forEach(function(b){ var t=totais(b), al=b.itens.filter(function(it){ return b.status==='aberto'&&restKg(it)<it.pesoIni*0.25; }).length;
     h+='<div class="card mb"><div class="bf-open"><div><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:6px"><b style="font-size:18px">'+esc(b.num)+' · '+esc(b.turno)+'</b>'+UI.status('bf',b.status)+UI.dep(b.dep)+(al?UI.badge(al+' alerta(s) de reposição','no'):'')+'</div>'+
       '<div style="font-size:13px;color:var(--muted);font-weight:700">Aberto às '+esc(b.abertura)+' por '+esc(b.resp)+' · '+b.itens.length+' itens · '+F.num(b.clientes||0,0)+' clientes</div>'+

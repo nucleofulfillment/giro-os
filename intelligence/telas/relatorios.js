@@ -70,8 +70,9 @@ function render(el, arg){
   css();
   if(arg && REL[arg]) return renderPreview(el, arg);
   var s=st();
-  var h=UI.cabecalho({titulo:'Indicadores e Relatórios', sub:(LFI.empresaAtual()?esc(LFI.empresaAtual().fantasia)+' · CNPJ '+LFI.empresaAtual().cnpj:esc(LFI.db.grupo.nome)+' · consolidado de '+LFI.db.empresas.length+' CNPJs')+' · dados compartilhados com todos os módulos',
-    acoes:'<button class="btn sec sm" data-act="aba" data-id="rel">'+UI.ic('pdf')+'Central de relatórios</button><button class="btn pri sm" data-act="_ir" data-id="relatorios/perdas">'+UI.ic('relatorio')+'Sobras e perdas</button>'});
+  document.body.classList.add('foco');
+  var h=UI.cabecalho({titulo:'Relatórios', sub:(LFI.empresaAtual()?esc(LFI.empresaAtual().fantasia):esc(LFI.db.grupo.nome)+' · '+LFI.db.empresas.length+' empresas')+' · os números de todas as telas num lugar só',
+    acoes:'<button class="btn sec sm" data-act="_ir" data-id="relatorios/perdas">'+UI.ic('relatorio')+'Sobras e perdas</button>'});
   h+='<div class="tabs"><button class="'+(s.aba==='ind'?'on':'')+'" data-act="aba" data-id="ind">Indicadores</button><button class="'+(s.aba==='rel'?'on':'')+'" data-act="aba" data-id="rel">Central de relatórios <span class="n">'+LISTA.length+'</span></button></div><div id="rl-corpo"></div>';
   el.innerHTML=h;
   var H={aba:function(id){ s.aba=id; LFI.recarregar(); }};

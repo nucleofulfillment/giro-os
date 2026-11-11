@@ -173,7 +173,10 @@ LFI._aplicarCatalogo=function(db, h){
   var REN={'Pães':'Pães','Confeitaria':'Bolos e tortas','Salgados':'Pastel','Bebidas':'Bebidas','Revenda':'Cucas e bolos secos','Almoço buffet/executivo':'Lanches e porções','À la carte':'Pratos e porções','Delivery':'Delivery'};
   db.vendas.forEach(function(v){ var c2={}; Object.keys(v.cats).forEach(function(c){ var n=REN[c]||c; c2[n]=r2((c2[n]||0)+v.cats[c]); }); v.cats=c2; });
   /* ---- 10. regimes do cliente: Padaria no Lucro Real, Restaurante no Simples Nacional; faturamento realista do restaurante ---- */
+  db.grupo.nome='Casa do Pão';
   db.empresas.forEach(function(e){
+    if(e.id==='e1'){ e.fantasia='Casa do Pão Padaria'; e.razao='Casa do Pão Panificadora Ltda'; e.sigla='CP'; }
+    if(e.id==='e2'){ e.fantasia='Casa do Pão Restaurante'; e.razao='Casa do Pão Restaurante Ltda'; e.sigla='CR'; }
     if(e.id==='e1'){ e.regime='Lucro Real'; e.pisCofins='nao_cumulativo'; e.impVenda=13; }
     if(e.id==='e2'){ e.regime='Simples Nacional'; e.pisCofins='nao_se_aplica'; e.anexo='I'; e.impVenda=9; }
   });
@@ -184,6 +187,7 @@ LFI._aplicarCatalogo=function(db, h){
     e1:{pis:1.65, cofins:7.6, icmsVenda:7, icmsCompra:5, cmv:35, lucro:8, irpj:15, adicional:10, limAdicional:20000, csll:9},
     e2:{anexo:'I'}
   };
+  db.atividades.forEach(function(a){ a.txt=a.txt.replace(/Dourado Restaurante/g,'Casa do Pão Restaurante').replace(/Pão Dourado Padaria/g,'Casa do Pão Padaria'); });
   db.categorias.forEach(function(c){ if(c.id==='ori') c.nome='Insumos do sushi (buffet de exemplo)'; if(c.id==='aca') c.nome='Produtos feitos aqui'; }); db.categorias.push({id:'tem', nome:'Tempo e mão de obra'});
 };
 
