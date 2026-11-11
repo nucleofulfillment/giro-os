@@ -66,7 +66,7 @@ function desempCot(fId){
 }
 
 function render(el, arg){
-  css();
+  css(); document.body.classList.add('foco');
   if(arg){ var f=LFI.forn(arg); if(f) return detalhe(el,f);
     el.innerHTML=UI.cabecalho({migalha:[{t:'Fornecedores',ir:'fornecedores'},{t:'Não encontrado'}], titulo:'Fornecedor não encontrado'})+'<div class="card">'+UI.vazio('O fornecedor solicitado não existe.','🔎')+'</div>'; UI.liga(el,UI.navHandlers()); return; }
   lista(el);
@@ -81,9 +81,9 @@ function lista(el){
     .map(function(f){ var c=comprado(f.id,de); return {f:f, c:c, np:produtosDe(f.id).length, part:totalGeral?c.total/totalGeral:0}; }).sort(function(a,b){ return b.c.total-a.c.total||a.f.nome.localeCompare(b.f.nome,'pt-BR'); });
   var qm=0, pm=0; todos.forEach(function(f){ qm+=f.qualidade; pm+=f.pontualidade; }); qm/=todos.length||1; pm/=todos.length||1;
   var ativos=todos.filter(function(f){ return comprado(f.id,de).n>0||LFI.db.ordens.some(function(o){ return o.forn===f.id&&o.emissao>=de; }); }).length;
-  var catsUsadas=LFI.db.categorias.filter(function(c){ return todos.some(function(f){ return f.cats.indexOf(c.id)>=0; }); });
+  var catsUsadas=LFI.db.categorias.filter(function(c){ return c.id!=='ori' && c.id!=='tem' && todos.some(function(f){ return f.cats.indexOf(c.id)>=0; }); });
 
-  var h=UI.cabecalho({titulo:'Fornecedores', sub:plural(todos.length,'fornecedor cadastrado','fornecedores cadastrados')+' · compras '+(emp?'de '+esc(emp.fantasia):'do grupo')+' nos últimos '+PER[s.per][0],
+  var h=UI.cabecalho({titulo:'Fornecedores', sub:plural(todos.length,'fornecedor','fornecedores')+' · compras dos últimos '+PER[s.per][0],
     acoes:'<div class="seg">'+Object.keys(PER).map(function(k){ return '<button class="'+(s.per===k?'on':'')+'" data-act="per" data-id="'+k+'">'+PER[k][0]+'</button>'; }).join('')+'</div><button class="btn pri sm" data-act="novo">'+UI.ic('mais')+'Novo fornecedor</button>'});
   h+='<div class="kpis">'+UI.kpi({lb:'Fornecedores ativos', vl:ativos+' <small>/ '+todos.length+'</small>', dl:'com compra ou OC no período'})+
     UI.kpi({lb:'Compras no período', vl:F.moeda(totalGeral), dl:'Notas fiscais lançadas', hl:true})+
