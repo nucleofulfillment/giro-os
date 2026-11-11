@@ -573,8 +573,8 @@ function abertura2(el){
       '<div class="ln"><span>Alimento</span><b>'+esc(LFI.rec(a.rec).nome.replace(/\s*\(.*\)/,''))+'</b></div>'+
       '<div class="ln bm-sel"><span>Bandeja</span><select data-chg="band">'+bandejas().map(function(x){ return '<option value="'+x.id+'"'+(x.id===L.band?' selected':'')+'>'+x.id+'</option>'; }).join('')+'</select></div>'+
       '<div class="ln"><span>Peso na balança</span><b>'+kg(L.bruto)+'</b></div><div class="ln"><span>Bandeja vazia (desconto)</span><b>− '+kg(bd.tara)+'</b></div></div>'+
-      '<button class="bm-btn sec" data-act="corrigir">'+UI.ic('editar')+'Corrigir peso</button>'+
-      '<button class="bm-btn pri" data-act="outro">'+UI.ic('mais')+'Confirmar e inserir outro item</button><button class="bm-btn ok" data-act="okfin">'+UI.ic('check')+'Confirmar e finalizar abertura</button>';
+      '<button class="bm-btn pri" data-act="outro">'+UI.ic('mais')+'Confirmar e inserir outro item</button><button class="bm-btn ok" data-act="okfin">'+UI.ic('check')+'Confirmar e finalizar abertura</button>'+
+      '<button class="bm-btn sec" data-act="corrigir">'+UI.ic('editar')+'Corrigir peso</button>';
     telaMobile(el,'Confirme a pesagem','3. Confira o que foi lido da foto', h2, 'volta');
   }
   function leitura(img){ var usados=a.itens.map(function(i){ return i.band; }); var livre=bandejas().filter(function(x){ return usados.indexOf(x.id)<0; })[0]||bandejas()[0];

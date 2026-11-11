@@ -400,6 +400,8 @@ LFI.tarefas = function(){
 /* ---------- notificações flutuantes (canto inferior direito, em todas as telas) ---------- */
 UI.desenhaNotif = function(){
   var b=document.getElementById('notif'); if(!b){ b=document.createElement('div'); b.id='notif'; document.body.appendChild(b); }
+  /* a bolinha de notificações aparece só na tela inicial (Visão Geral) */
+  if(LFI.atual().id!=='visao'){ b.classList.remove('on'); b.style.display='none'; return; } b.style.display='';
   var t=LFI.tarefas().filter(function(x){ return x.cor!=='nu'; }), aberto=b.classList.contains('on');
   b.innerHTML='<div class="nt-pn"><div class="nt-hd"><b>Notificações</b><small>'+t.length+' '+(t.length===1?'pendência':'pendências')+'</small><button class="nt-x" data-notif-x aria-label="Fechar">✕</button></div>'+
     '<div class="nt-ls">'+(t.length?t.map(function(x){ return '<button class="nt-it '+x.cor+'" data-notif-ir="'+x.ir+'"><span class="ic">'+UI.ic(x.ic)+'</span><span class="gr"><b>'+esc(x.t)+'</b><small>'+esc(x.d)+'</small></span><span class="nt-b">'+esc(x.b)+'</span></button>'; }).join(''):UI.vazio('Tudo em dia por aqui.','✅'))+'</div></div>'+
