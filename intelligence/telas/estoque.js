@@ -166,7 +166,7 @@ function abaPos(box, hand, lista, alr, deps){
   var todos=st().dep==='todos';
   var tab=UI.tabela(box.querySelector('#es-tab'), {linhas:[], ordem:7, dir:-1, linhaAct:'abrir', vazio:'Nenhum produto com estes filtros.',
     classeLinha:function(p){ var x=LFI.situacao(p); return x==='critico'?'alerta':x==='baixo'?'aviso':''; }, colunas:[
-    {t:'Produto', v:function(p){ return '<div style="min-width:190px"><b>'+esc(p.nome)+'</b><small>'+esc(LFI.cat(p.cat).nome)+(p.tipo!=='insumo'?' · '+(p.tipo==='acabado'?'produto acabado':'sobra'):'')+'</small></div>'; }, ord:function(p){ return p.nome; }},
+    {t:'Produto', v:function(p){ return '<div class="cp-prod" style="min-width:220px">'+UI.fotoProd(p,40)+'<div><b>'+esc(p.nome)+'</b><small>'+esc(LFI.cat(p.cat).nome)+(p.tipo!=='insumo'?' · '+(p.tipo==='acabado'?'produto acabado':'sobra'):'')+'</small></div></div>'; }, ord:function(p){ return p.nome; }},
     {t:'NCM / CEST', v:function(p){ return '<span class="mono">'+esc(p.ncm||'—')+'</span>'+(p.cest?'<small class="mono">CEST '+esc(p.cest)+'</small>':''); }, ord:function(p){ return p.ncm; }},
     {t:todos?'Estoque por depto. / total':'Estoque', r:true, v:function(p){ var q=LFI.estoque(p,deps);
       return '<b>'+F.qtd(q,p.un)+'</b>'+(todos?segBar(p):''); }, ord:function(p){ return LFI.estoque(p,deps); }},
@@ -281,7 +281,7 @@ function ficha(el, id){
   var p=LFI.prod(id), cat=LFI.cat(p.cat), deps=depsOrd(), tot=LFI.estoqueGeral(p), sit=LFI.situacao(p);
   var cons=consumo30(p), diario=cons/30, cob=diario>0?LFI.estoque(p,LFI.depIds())/diario:null;
   var h30=LFI.custoEm(p, LFI.dataUtil.D(-30));
-  var h=UI.cabecalho({titulo:esc(p.nome), migalha:[{t:'Estoque', ir:'estoque'},{t:cat.nome},{t:p.nome}],
+  var h=UI.cabecalho({titulo:'<span style="display:inline-flex;align-items:center;gap:12px">'+UI.fotoProd(p,52)+esc(p.nome)+'</span>', migalha:[{t:'Estoque', ir:'estoque'},{t:cat.nome},{t:p.nome}],
     sub:esc(cat.nome)+' · NCM '+esc(p.ncm||'—')+(p.cest?' · CEST '+esc(p.cest):'')+' · '+esc(p.local||'')+' · '+UI.situacao(p),
     acoes:'<button class="btn sec sm" data-act="editar">'+UI.ic('editar')+'Editar</button><button class="btn sec sm" data-act="ajuste">Ajustar</button><button class="btn sec sm" data-act="transf">Transferir</button><button class="btn sec sm" data-act="saida">Saída / perda</button>'+(p.tipo==='insumo'?'<button class="btn pri sm" data-act="solic">'+UI.ic('compras')+'Gerar solicitação de compra</button>':'')});
   /* avisos */

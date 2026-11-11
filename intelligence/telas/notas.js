@@ -407,7 +407,7 @@ function itemConf(n, it, i){
   var naSug=sugs.some(function(s){ return s.prod===it.prod; });
   opts+=UI.selProdutos(naSug?null:it.prod).replace('<option value="">Selecione o produto…</option>','');
   opts+='<optgroup label="Outras ações"><option value="__novo">+ Cadastrar novo produto…</option><option value="__ign"'+(it.ignorar?' selected':'')+'>Não entra no estoque (uso e consumo)</option></optgroup>';
-  h+='<div class="cf-b"><span class="lb">Produto no cadastro '+(p?(it.manual?UI.badge('Escolhido','in'):UI.match(it.score||0)):it.ignorar?'':UI.badge('Sem vínculo','no'))+'</span><select class="inp sm" data-chg="prod" data-id="'+it.id+'">'+opts+'</select>'+
+  h+='<div class="cf-b"><span class="lb">'+(p?UI.fotoProd(p,22)+' ':'')+'Produto no cadastro '+(p?(it.manual?UI.badge('Escolhido','in'):UI.match(it.score||0)):it.ignorar?'':UI.badge('Sem vínculo','no'))+'</span><select class="inp sm" data-chg="prod" data-id="'+it.id+'">'+opts+'</select>'+
     (p?'<small>Estoque atual '+F.qtd(LFI.estoqueGeral(p),p.un)+'</small>':it.ignorar?'<small>Só vai para o financeiro.</small>':'<button class="btn sec xs" style="margin-top:6px" data-act="novo" data-id="'+it.id+'">'+UI.ic('mais')+'Cadastrar produto</button>')+'</div>';
   /* conversão e custo */
   if(p){

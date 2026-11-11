@@ -51,6 +51,21 @@ UI.notaBusca = function(digitado, nome){
 };
 UI.filtrarBusca = function(digitado, lista, nomeDe){ return lista.map(function(x){ return {x:x, s:UI.notaBusca(digitado, nomeDe(x))}; }).filter(function(o){ return o.s>0; }).sort(function(a,b){ return b.s-a.s; }).map(function(o){ return o.x; }); };
 
+
+/* ---------- foto do produto (padronizada: quadrada, cantos arredondados) ---------- */
+var EMOJI_CAT={far:'🌾',lat:'🧀',pes:'🐟',car:'🥩',hor:'🥬',mer:'🥫',ole:'🫒',ori:'🍣',beb:'🥤',emb:'📦',aca:'🥐',sob:'🍱'};
+UI.fotoProd = function(p, tam){
+  if(typeof p==='string') p=LFI.prod(p); tam=tam||36; if(!p) return '';
+  var src=(LFI.FOTOS&&LFI.FOTOS[p.id])||p.fotoURL;
+  var st='width:'+tam+'px;height:'+tam+'px;border-radius:'+Math.round(tam*0.24)+'px';
+  if(src) return '<img class="fprod" src="'+src+'" alt="" loading="lazy" style="'+st+'">';
+  return '<span class="fprod vazio" style="'+st+';font-size:'+Math.round(tam*0.5)+'px">'+(EMOJI_CAT[p.cat]||'📦')+'</span>';
+};
+UI.creditosFotos = function(){
+  var c=LFI.FOTOS_CRED||{}, ids=Object.keys(c);
+  UI.modal({titulo:'Créditos das fotos', sub:'Fotos reais de uso livre (Wikimedia Commons)', tam:'lg', corpo:ids.length?'<div class="tb-wrap"><table class="tb cp"><thead><tr><th>Produto</th><th>Foto</th><th>Autor</th><th>Licença</th></tr></thead><tbody>'+ids.map(function(id){ var x=c[id], p=LFI.prod(id); return '<tr><td>'+UI.fotoProd(p,32)+' <b>'+esc(p?p.nome:id)+'</b></td><td><small>'+esc(x.titulo)+'</small></td><td>'+esc(x.autor||'—')+'</td><td>'+esc(x.licenca||'—')+'</td></tr>'; }).join('')+'</tbody></table></div>':UI.vazio('Nenhuma foto cadastrada ainda.','🖼️')});
+};
+
 /* ---------- ícones (traço, 24x24) ---------- */
 var IC = {
   painel:'<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
@@ -341,11 +356,12 @@ function contagens(){
 UI.desenhaMenu = function(){
   var c=contagens(), destaque={notas:1,estoque:1,compras:1,ordens:1,buffet:1};
   var h=''; LFI.menu.forEach(function(g){ h+='<div class="gr">'+esc(g.grupo)+'</div>'; g.itens.forEach(function(it){ var n=c[it.id]; h+='<button type="button" class="'+(atual.id===it.id?'on':'')+'" data-ir="'+it.id+'"><span class="ic">'+UI.ic(it.ic)+'</span><span>'+esc(it.nome)+'</span>'+(n?'<span class="nb'+(destaque[it.id]?' al':'')+'">'+n+'</span>':'')+'</button>'; }); });
-  h+='<div class="side-rod"><div class="demo"><b>Protótipo de demonstração</b>Dados fictícios. As ações ficam salvas neste navegador.<br><button type="button" data-restaurar>Restaurar dados iniciais</button></div><img src="livefood-logo.png" alt="LiveFood"></div>';
+  h+='<div class="side-rod"><div class="demo"><b>Protótipo de demonstração</b>Dados fictícios. As ações ficam salvas neste navegador.<br><button type="button" data-restaurar>Restaurar dados iniciais</button> <button type="button" data-creditos>Créditos das fotos</button></div><img src="livefood-logo.png" alt="LiveFood"></div>';
   UI.els('.side').forEach(function(s){ s.innerHTML=h; });
 };
 document.addEventListener('click', function(ev){
   var b=ev.target.closest('[data-ir]'); if(b){ LFI.ir(b.getAttribute('data-ir')); return; }
+  if(ev.target.closest('[data-creditos]')){ UI.creditosFotos(); return; }
   if(ev.target.closest('[data-restaurar]')){ UI.confirmar('Restaurar dados de demonstração','Todas as notas lançadas, cotações, ordens, produções e buffets criados nesta demonstração serão desfeitos e a base volta ao estado inicial.','Restaurar',function(){ LFI.restaurar(); UI.toast('Base de demonstração restaurada'); LFI.ir('visao'); },'esc'); }
 });
 function fechaMM(){ var m=document.getElementById('mm'); if(m) m.classList.remove('on'); }
