@@ -20,7 +20,7 @@ LFI.dataUtil = {iso:iso, hojeD:hojeD, D:D, DH:DH, r2:r2, r3:r3, rng:rng};
 
 LFI.criarBase = function(){
   var R = rng(20261110);
-  var db = {versao:8, criadaEm:new Date().toISOString(), hoje:D(0)};
+  var db = {versao:9, criadaEm:new Date().toISOString(), hoje:D(0)};
 
   /* ===== EMPRESAS (multi-CNPJ) ===== */
   db.grupo = {nome:'Grupo Pão Dourado', cidade:'Campinas/SP'};
@@ -378,9 +378,9 @@ LFI.criarBase = function(){
     sus:{base:7400, sem:[1.24,0,0.82,0.88,0.98,1.34,1.52], cats:[['Buffet por quilo',0.48],['Combinados',0.2],['Delivery',0.2],['Bebidas',0.12]]}
   };
   var i, k;
-  for(i=119;i>=0;i--){
+  for(i=189;i>=0;i--){
     var dd=new Date(hojeD()); dd.setDate(dd.getDate()-i); var dow=dd.getDay(), dia=iso(dd);
-    var tr = 1+((119-i)/119)*0.09; // leve crescimento
+    var tr = 1+((189-i)/189)*0.12; // leve crescimento
     for(k in ops){
       var o=ops[k], f=o.sem[dow]; if(!f) continue;
       var tot = o.base*f*tr*(0.9+R()*0.2);

@@ -172,6 +172,18 @@ LFI._aplicarCatalogo=function(db, h){
   /* categorias de venda da padaria com os grupos reais */
   var REN={'Pães':'Pães','Confeitaria':'Bolos e tortas','Salgados':'Pastel','Bebidas':'Bebidas','Revenda':'Cucas e bolos secos','Almoço buffet/executivo':'Lanches e porções','À la carte':'Pratos e porções','Delivery':'Delivery'};
   db.vendas.forEach(function(v){ var c2={}; Object.keys(v.cats).forEach(function(c){ var n=REN[c]||c; c2[n]=r2((c2[n]||0)+v.cats[c]); }); v.cats=c2; });
+  /* ---- 10. regimes do cliente: Padaria no Lucro Real, Restaurante no Simples Nacional; faturamento realista do restaurante ---- */
+  db.empresas.forEach(function(e){
+    if(e.id==='e1'){ e.regime='Lucro Real'; e.pisCofins='nao_cumulativo'; e.impVenda=13; }
+    if(e.id==='e2'){ e.regime='Simples Nacional'; e.pisCofins='nao_se_aplica'; e.anexo='I'; e.impVenda=9; }
+  });
+  (function(){ var tot=0, n=0; db.vendas.forEach(function(v){ if(v.dep==='res'){ tot+=v.valor; n++; } }); var alvo=4000, f=n?alvo/(tot/n):1;
+    db.vendas.forEach(function(v){ if(v.dep!=='res') return; v.valor=r2(v.valor*f); v.tickets=Math.max(1,Math.round(v.tickets*f)); Object.keys(v.cats).forEach(function(c){ v.cats[c]=r2(v.cats[c]*f); }); }); })();
+  /* parâmetros fiscais de EXEMPLO (o contador confirma): usados pela tela Tributário */
+  db.config.trib={
+    e1:{pis:1.65, cofins:7.6, icmsVenda:7, icmsCompra:5, cmv:35, lucro:8, irpj:15, adicional:10, limAdicional:20000, csll:9},
+    e2:{anexo:'I'}
+  };
   db.categorias.forEach(function(c){ if(c.id==='ori') c.nome='Insumos do sushi (buffet de exemplo)'; if(c.id==='aca') c.nome='Produtos feitos aqui'; }); db.categorias.push({id:'tem', nome:'Tempo e mão de obra'});
 };
 
