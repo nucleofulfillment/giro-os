@@ -184,6 +184,11 @@ LFI._aplicarCatalogo=function(db, h){
   });
   (function(){ var tot=0, n=0; db.vendas.forEach(function(v){ if(v.dep==='res'){ tot+=v.valor; n++; } }); var alvo=4000, f=n?alvo/(tot/n):1;
     db.vendas.forEach(function(v){ if(v.dep!=='res') return; v.valor=r2(v.valor*f); v.tickets=Math.max(1,Math.round(v.tickets*f)); Object.keys(v.cats).forEach(function(c){ v.cats[c]=r2(v.cats[c]*f); }); }); })();
+  /* fluxo de caixa de EXEMPLO: despesas fixas dos últimos meses e as próximas */
+  db.fluxo=[]; var fxs=[['Aluguel da loja','Aluguel',6500,5],['Folha de pagamento','Folha de pagamento',38000,5],['Conta de energia','Energia, água e gás',4200,10],['Água e esgoto','Energia, água e gás',900,12],['Gás','Energia, água e gás',1800,15],['Contador','Operacional',1200,10],['Manutenção dos fornos','Manutenção',850,18],['Internet e telefone','Operacional',380,20]];
+  [-2,-1,0].forEach(function(mo){ var base=new Date(h.D(0)+'T12:00:00'); base.setDate(1); base.setMonth(base.getMonth()+mo);
+    fxs.forEach(function(f,i){ var dt=new Date(base); dt.setDate(f[3]); var iso=dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
+      db.fluxo.push({id:'fx'+mo+'_'+i, tp:'out', tt:f[0], categoria:f[1], data:iso, vl:r2(f[2]*(0.95+R()*0.1)), status:iso<h.D(0)?'pago':'pendente', obs:''}); }); });
   /* parâmetros fiscais de EXEMPLO (o contador confirma): usados pela tela Tributário */
   db.config.trib={
     e1:{pis:1.65, cofins:7.6, icmsVenda:7, icmsCompra:5, cmv:35, lucro:8, irpj:15, adicional:10, limAdicional:20000, csll:9},

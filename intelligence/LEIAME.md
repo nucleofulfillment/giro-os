@@ -75,3 +75,15 @@ Funcionalidades já desenhadas no protótipo (com envio/leitura simulados) que p
 2. **Notificar fornecedor (Fiscal → item em Revisão)**: envio real por WhatsApp e e-mail, com as fotos anexadas.
 3. **Leitura de fotos**: etiqueta do item (código de barras e validade) e nota fiscal fotografada (várias páginas). Hoje a leitura é simulada.
 4. **Armazenamento das fotos no servidor** (hoje ficam no navegador).
+
+## Tarefa registrada: estoque do LivePro alimenta o LiveFood
+Quando o cliente usa o LivePro, as **quantidades de estoque** do LivePro passam a alimentar o LiveFood
+(o LiveFood não tem estoque próprio). Ideias para a implementação:
+- cada produto vendido no LiveFood (cardápio) ligado ao produto do LivePro;
+- a venda no LiveFood dá baixa no estoque do LivePro (pela receita, quando houver);
+- o LiveFood mostra "esgotado" quando o estoque do LivePro zera.
+
+## Fluxo de caixa no LivePro (flag por conta)
+- Admin master → conta → "Fluxo de caixa no LivePro": o fluxo passa a ser usado no LivePro e some do Financeiro do painel.
+- Na primeira vez, o botão "Trazer lançamentos do LiveFood" copia os lançamentos do painel (bloco `extrato`).
+- Sem Pix/Asaas aqui: só lançamento manual e marcar como pago/recebido.

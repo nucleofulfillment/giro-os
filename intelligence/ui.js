@@ -321,7 +321,7 @@ UI.exportarPDF = function(titulo, subtitulo, htmlCorpo){
 /* ---------- rotas e telas ---------- */
 LFI.telas = {};
 LFI.menu = [
-  {grupo:'Gestão', itens:[{id:'visao', nome:'Visão Geral', ic:'painel'}]},
+  {grupo:'Gestão', itens:[{id:'visao', nome:'Visão Geral', ic:'painel'},{id:'fluxo', nome:'Fluxo de caixa', ic:'custos'}]},
   {grupo:'Suprimentos', itens:[{id:'compras', nome:'Ordens', ic:'compras'},{id:'ordens', nome:'Pedidos', ic:'ordem'},{id:'notas', nome:'Recebimento', ic:'nota'},{id:'estoque', nome:'Estoque', ic:'estoque'},{id:'fornecedores', nome:'Fornecedores', ic:'fornecedor'}]},
   {grupo:'Operação', itens:[{id:'produtos', nome:'Produtos', ic:'receita'},{id:'producao', nome:'Produção', ic:'producao'},{id:'buffet', nome:'Buffet', ic:'buffet'},{id:'perdas', nome:'Saídas e perdas', ic:'lixo'}]},
   {grupo:'Inteligência', itens:[{id:'custos', nome:'Precificação', ic:'custos'},{id:'tributos', nome:'Tributário', ic:'tributo'},{id:'relatorios', nome:'Relatórios', ic:'relatorio'}]}

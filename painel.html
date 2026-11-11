@@ -1215,7 +1215,8 @@ html.loja-p .cd-dest{display:none!important}
           </table></div>
           </div>
         </div>
-        <div class="card">
+        <div class="card" id="fc-livepro" style="display:none"><h3><span class="lft">Fluxo de caixa</span></h3><p style="margin:0;color:var(--muted);font-size:14px;line-height:1.5">O fluxo de caixa desta conta agora fica no <b>LivePro</b> (gestão da operação). <a href="livepro.html#/fluxo" style="color:var(--roxo,#D96D28);font-weight:800">Abrir o Fluxo de caixa no LivePro →</a></p></div>
+        <div class="card" id="fc-card">
           <h3><span class="lft">Fluxo de caixa</span><span style="display:flex;gap:18px"><span class="vertodos" onclick="atualizarFluxoCaixa()" id="fc-atualizar">↻ Atualizar</span><span class="vertodos" onclick="abrirNovoLancamento()">+ Novo lançamento</span></span></h3>
           <div class="fc-filtros" id="fc-filtros"></div>
           <div class="finrow fc4" id="fc-periodo" style="margin-bottom:14px"></div>
@@ -4242,6 +4243,8 @@ function planoEmbrulha(){
   document.addEventListener('click',function(e){ var t=e.target; if(t&&(t.id==='pgt-mesa'||t.id==='pgt-racha')&&!temRec('mesa_pagto')){ e.preventDefault(); planoAviso('mesa_pagto'); } },true);
 }
 function planoAplica(){
+  /* (LP2) cliente Pro: o Fluxo de caixa fica no LivePro e some daqui */
+  var fcC=el('fc-card'), fcL=el('fc-livepro'); if(fcC&&fcL){ fcC.style.display=PLANO.lp_fluxo?'none':''; fcL.style.display=PLANO.lp_fluxo?'':'none'; }
   if(!PLANO.recursos) return;
   Object.keys(PLANO_FN).forEach(function(fn){ if(temRec(PLANO_FN[fn])) return; var nomeFn=fn==='planoAtendimentoAbre'?'planoAtendimento':fn; document.querySelectorAll('[onclick^="'+nomeFn+'("]').forEach(function(b){ if(b.getAttribute('data-cad')) return; b.setAttribute('data-cad','1'); (b.querySelector('h4')||b).insertAdjacentText('afterbegin','🔒 '); }); });
   var ac=el('msg-aba-cli'); if(ac&&!temRec('whats')&&!ac.getAttribute('data-cad')){ ac.setAttribute('data-cad','1'); ac.insertAdjacentText('afterbegin','🔒 '); }
