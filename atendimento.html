@@ -315,7 +315,7 @@ label.l.big{font-size:14px;margin-top:16px}
 </div>
 
 <div id="app" class="hide">
-  <div id="top"><div style="flex:1;min-width:0;display:flex;align-items:center;gap:12px"><b id="emp" style="flex:none">Atendimento</b><small id="usu"></small></div><!-- "Atender via mapa" (mpAbre) fora do ar enquanto evolui; o código do mapa continua abaixo --><span style="font-size:10px;color:#9a8f86;font-weight:700;margin-right:8px;white-space:nowrap">ATEND-45</span><a class="bt-hub" href="hub.html" title="Voltar ao Hub"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Hub</a><button onclick="sair()">Sair</button></div>
+  <div id="top"><div style="flex:1;min-width:0;display:flex;align-items:center;gap:12px"><b id="emp" style="flex:none">Atendimento</b><small id="usu"></small></div><!-- "Atender via mapa" (mpAbre) fora do ar enquanto evolui; o código do mapa continua abaixo --><span style="font-size:10px;color:#9a8f86;font-weight:700;margin-right:8px;white-space:nowrap">ATEND-46</span><a class="bt-hub" href="hub.html" title="Voltar ao Hub"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Hub</a><button onclick="sair()">Sair</button></div>
   <div id="chip" class="hide"><div class="t"><b id="chipT"></b><small id="chipS"></small></div><button onclick="trocaComanda()">Trocar</button></div>
 
   <!-- PEDIDO -->
@@ -934,8 +934,8 @@ function abreCarrinho(){
   var h=''; CART.forEach(function(i,k){ h+='<div class="opt"><span class="n"><b>'+i.qty+'x '+esc(i.nome)+'</b><small>'+descItem(i,1)+'</small></span><span class="p">'+brl(i.unit*i.qty)+'</span><button onclick="tiraItem('+k+')" style="border:0;background:var(--s3);border-radius:8px;width:32px;height:32px;font-weight:800">×</button></div>'; });
   h+=srvLinha(srvVal(cartTot()),srvPct());
   h+=coposHtml();
-  if(PRAIA) h+='<div id="pFotoBx"></div><label class="l">📍 Observação do local (opcional)</label><input class="inp" id="pRef" maxlength="140" placeholder="Ex.: guarda-sol azul, 2ª fileira" value="'+esc(GEO.ref||'')+'" oninput="GEO.ref=this.value">'+praiaGpsTxt();
-  h+='<label class="l">Observação do pedido (cozinha)</label><input class="inp" id="pObs" maxlength="300"><div class="er" id="pErr"></div>';
+  if(PRAIA) h+='<div id="pFotoBx"></div><label class="l">📍 Observação do local (opcional)</label><input class="inp" id="pRef" maxlength="140" placeholder="Ex.: guarda-sol azul, 2ª fileira" value="'+esc(GEO.ref||'')+'" oninput="GEO.ref=this.value">';
+  h+='<label class="l">Observação do pedido (cozinha)</label><input class="inp" id="pObs" maxlength="300">'+(PRAIA?'<div id="pGps" style="margin-top:12px">'+praiaGpsTxt()+'</div>':'')+'<div class="er" id="pErr"></div>';
   var totC=Math.round((cartTot()+srvVal(cartTot()))*100)/100, hj=cobraHora();
   var smP2=PRAIA&&COM.sm, pd=PRAIA&&hj&&(!COM.avulso||COM.sm);   /* entrega na praia: primeiro gera o pedido, cobra depois na comanda */
   folha('Pedido · '+(COM.sm?'Sem mesa':ehSMM(COM.mesa)?smTit(COM.mesa):COM.avulso||ehBalM(COM.mesa)?'Cliente Balcão':[(COM.mesa?(COM.modo==='balcao'?'Balcão ':'Mesa ')+COM.mesa:''),COM.joia].filter(Boolean).join(' · ')),h,'<button class="bt" id="pBt" style="margin:0" onclick="'+(hj&&!pd?'copoOk(fcEscolher)':'copoOk(enviaPedido)')+'">'+(hj&&!pd?'Fechar comanda':(COM.avulso&&!smP2?'Finalizar pedido':'Enviar para a cozinha'))+' · '+brl(totC)+'</button>'+(pd?'<button class="bt s" style="margin:8px 0 0;width:100%" onclick="copoOk(fcEscolher)">Cobrar agora</button>':'')+(PRAIA&&(!COM.avulso||COM.sm)?'<button class="bt s" style="margin:8px 0 0;width:100%" onclick="fotoLocalTirar(\'cart\')">📷 Foto do local</button>':'')); foco('#pBt'); fotoLocalBx();
@@ -1087,12 +1087,23 @@ var PRAIA=false, GEO={pos:null,watch:null,erro:'',ref:'',head:null}, ENT={lista:
 function praiaAplica(d){
   PRAIA=!!(d&&d.praia); [].forEach.call(document.querySelectorAll('.praia'),function(b){ b.classList.toggle('hide',!PRAIA||(b.classList.contains('praiaG')&&!GEST)); }); if(PRAIA) areaCarrega(); try{ abaComNome(); }catch(e){}
   if(PRAIA&&GEO.watch==null&&navigator.geolocation){
-    GEO.watch=navigator.geolocation.watchPosition(function(p){ GEO.pos={lat:p.coords.latitude,lng:p.coords.longitude,acc:p.coords.accuracy,t:Date.now()}; GEO.erro=''; entEu(); entGpsTxt(); },
+    GEO.watch=navigator.geolocation.watchPosition(function(p){ geoAmostra(p.coords.latitude,p.coords.longitude,p.coords.accuracy); GEO.erro=''; entEu(); entGpsTxt(); var g=$('pGps'); if(g) g.innerHTML=praiaGpsTxt(); },
       function(e){ GEO.erro=e&&e.code===1?'Localização bloqueada: libere no cadeado ao lado do endereço.':'Procurando o GPS…'; entGpsTxt(); },{enableHighAccuracy:true,maximumAge:5000,timeout:20000});
   }
 }
+/* (281) o GPS do celular "pula" alguns metros a cada leitura: junta as leituras dos últimos 20 s e faz a média,
+   dando mais peso às mais precisas (peso = 1/precisão²) e descartando as bem piores que a melhor */
+GEO.amostras=[];
+function geoAmostra(la,ln,ac){
+  var ag=Date.now(), A=GEO.amostras; ac=Math.max(1,Number(ac)||50); A.push({la:la,ln:ln,ac:ac,t:ag});
+  while(A.length&&(ag-A[0].t>20000||A.length>30)) A.shift();
+  var melhor=Math.min.apply(null,A.map(function(a){ return a.ac; })), usa=A.filter(function(a){ return a.ac<=Math.max(melhor*2,melhor+5); });
+  var sw=0, sla=0, sln=0; usa.forEach(function(a){ var w=1/(a.ac*a.ac); sw+=w; sla+=a.la*w; sln+=a.ln*w; });
+  var accM=Math.max(1,melhor/Math.sqrt(usa.length));
+  GEO.pos={lat:sla/sw,lng:sln/sw,acc:Math.round(Math.max(accM,Math.min(melhor,3))*10)/10,t:ag,n:usa.length};
+}
 function praiaGeo(){ if(!PRAIA||!GEO.pos||Date.now()-GEO.pos.t>180000) return undefined; return {lat:GEO.pos.lat,lng:GEO.pos.lng,acc:Math.round(GEO.pos.acc||0),ref:(GEO.ref||'').trim()}; }
-function praiaGpsTxt(){ var g=praiaGeo(); return '<div style="font-size:12.5px;font-weight:700;margin:-4px 0 8px;color:'+(g?'#15803D':'#B45309')+'">'+(g?'📍 Localização do cliente será gravada (precisão '+g.acc+' m)':'📍 '+esc(GEO.erro||'Procurando o GPS… o pedido sai mesmo sem localização'))+'</div>'; }
+function praiaGpsTxt(){ var g=praiaGeo(); return '<div style="font-size:13px;font-weight:700;margin:0;color:'+(g?'#15803D':'#B45309')+'">'+(g?'📍 Localização do cliente será gravada (precisão '+g.acc+' m)':'📍 '+esc(GEO.erro||'Procurando o GPS… o pedido sai mesmo sem localização'))+'</div>'; }
 function entGpsTxt(){ var e=$('entGps'); if(!e) return; e.innerHTML=GEO.pos?'📡 Seu GPS: precisão '+Math.round(GEO.pos.acc)+' m':esc(GEO.erro||'📡 Procurando o seu GPS…'); }
 function geoDist(a,b){ var R=6371000,r=Math.PI/180,dLa=(b.lat-a.lat)*r,dLn=(b.lng-a.lng)*r,x=Math.sin(dLa/2)*Math.sin(dLa/2)+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dLn/2)*Math.sin(dLn/2); return 2*R*Math.atan2(Math.sqrt(x),Math.sqrt(1-x)); }
 function geoRumo(a,b){ var r=Math.PI/180,y=Math.sin((b.lng-a.lng)*r)*Math.cos(b.lat*r),x=Math.cos(a.lat*r)*Math.sin(b.lat*r)-Math.sin(a.lat*r)*Math.cos(b.lat*r)*Math.cos((b.lng-a.lng)*r); return (Math.atan2(y,x)/r+360)%360; }
@@ -1116,12 +1127,11 @@ function entLeaflet(){ if(window.L) return Promise.resolve(); return new Promise
 function entAbre(i){
   var c=ENT.lista[i]; if(!c||!(c.geo||(c.foto&&c.foto.k))) return; ENT.c=c; ENT.novo=null;
   var o=document.createElement('div'); o.id='entMap'; o.style.cssText='position:fixed;inset:0;z-index:3000;background:#111;display:flex;flex-direction:column';
-  o.innerHTML='<div style="position:relative;flex:1;min-height:38vh"><div id="entMapa" style="position:absolute;inset:0"></div><div id="entFoto" class="hide" style="position:absolute;inset:0;overflow:auto;background:#1b1b1b;-webkit-overflow-scrolling:touch"></div>'
+  o.innerHTML='<div style="position:relative;flex:1;min-height:34vh"><div id="entMapa" style="position:absolute;inset:0"></div><div id="entFoto" class="hide" style="position:absolute;inset:0;overflow:auto;background:#1b1b1b;-webkit-overflow-scrolling:touch"></div>'
     +'<div id="entVis" style="position:absolute;top:12px;left:12px;z-index:900;display:flex;gap:6px"></div><div id="entZoom" class="hide" style="position:absolute;top:12px;right:12px;z-index:900;display:flex;flex-direction:column;gap:6px"><button class="bt s" style="width:46px;height:46px;padding:0;font-size:22px" onclick="areaZoom(1)">+</button><button class="bt s" style="width:46px;height:46px;padding:0;font-size:22px" onclick="areaZoom(-1)">−</button></div></div><div style="background:#fff;border-radius:20px 20px 0 0;padding:14px 16px 18px;box-shadow:0 -8px 30px rgba(0,0,0,.25)">'
     +'<div style="display:flex;align-items:center;gap:14px"><div id="entSeta" style="width:64px;height:64px;flex:none;border-radius:50%;background:#FF5A00;display:flex;align-items:center;justify-content:center;transition:transform .25s"><svg viewBox="0 0 24 24" width="38" height="38" fill="#fff"><path d="M12 2l6 18-6-4-6 4z"/></svg></div>'
     +'<div style="flex:1;min-width:0"><div id="entDist" style="font-size:28px;font-weight:900;line-height:1.1">…</div><div style="font-size:14px;font-weight:700;color:#555">'+esc(comTit(c)+(c.nome&&c.nome!==comTit(c)?' · '+c.nome:''))+'</div>'+((c.foto&&c.foto.obs)||(c.geo&&c.geo.ref)?'<div style="font-size:14px;margin-top:2px">📍 '+esc((c.foto&&c.foto.obs)||c.geo.ref)+'</div>':'')+'<div id="entBus" style="font-size:12px;color:#888;margin-top:2px"></div></div></div>'
-    +'<div id="entFotoL"></div><div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><button class="bt s" style="flex:1" onclick="entMudouMapa()">📍 Cliente mudou de lugar</button><button class="bt g hide" id="entSalvarB" style="flex:1" onclick="entSalvaArraste()">Salvar novo lugar</button><button class="bt s" onclick="entFecha()">Fechar</button></div>'
-    +'<div style="font-size:12px;color:#888;margin-top:8px">Dica: arraste o ponto laranja no mapa para corrigir o lugar do cliente.</div></div>';
+    +'<div id="entFotoL"></div><button class="bt g hide" id="entSalvarB" style="width:100%;margin:10px 0 0" onclick="entSalvaArraste()">Salvar novo lugar</button><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px"><button class="bt s" style="margin:0" onclick="entMudouMapa()">📍 Mudar de lugar</button><button class="bt s" style="margin:0" onclick="entFecha()">Fechar</button></div></div>';
   document.body.appendChild(o); entBussola(); ENT.vista=null; fotoLocalMostra(c);
   entVista(AREA.url?'foto':'sat');
 }
@@ -1237,7 +1247,7 @@ function comBipar(){
   Bipador.abrir({titulo:'Bipar pedido impresso',dica:'Aponte a câmera para o código de barras do pedido. Leitor USB também funciona.',aoLer:function(cod,fechar){ var c=comPorPedido(cod); if(!c) return false; fechar(); setTimeout(function(){ if(c.geo||(c.foto&&c.foto.k)) entAbreC(c); else toast((comTit(c)||'Comanda')+': sem localização nem foto.'); },120); return true; }});
 }
 /* cliente não está mais onde foi gravado (trocou de guarda-sol, foi para outro lugar): o garçom, ao lado dele, grava o lugar novo */
-function entMudouMapa(){ if(confirm('O cliente mudou de lugar?\n\nUse quando você estiver AO LADO dele agora: o local do pedido passa a ser onde você está.')) entAquiMapa(); }
+function entMudouMapa(){ if(confirm('Mudar o lugar do cliente?\n\nUse quando você estiver AO LADO dele agora: o local do pedido passa a ser onde você está.')) entAquiMapa(); }
 function locMudou(i){ var c=COMS[i]; if(!c) return; if(!confirm('O cliente mudou de lugar?\n\nUse quando você estiver AO LADO dele agora: o local do pedido passa a ser onde você está.')) return; ENT.lista=COMS; entAqui(i); }
 function locHtml(c,i){
   if(!PRAIA) return ''; var g=c.geo, f=c.foto&&c.foto.k?c.foto:null, obs=(c.foto&&c.foto.obs)||(g&&g.ref)||'', dist=g&&GEO.pos?geoM(geoDist(GEO.pos,g)):'';
@@ -1267,7 +1277,7 @@ function fotoLocalSalva(){ var F=ENT.fl; if(!F) return; var b=$('flBt'); b.disab
 var FOTOC={};
 function fotoLocalMostra(c){
   var bx=$('entFotoL'); if(!bx||!c.foto||!c.foto.k) return; var k=c.foto.k;
-  var pinta=function(u){ if(!$('entFotoL')) return; setTimeout(function(){ if(ENT.map){ try{ ENT.map.invalidateSize(); }catch(e){} entEu(true); } else if(ENT.vista==='foto') areaPinta(true); },60); $('entFotoL').innerHTML='<img src="'+u+'" onclick="fotoGrande(this.src)" style="width:100%;max-height:22vh;object-fit:cover;border-radius:14px;margin-top:10px;display:block;cursor:zoom-in" alt="Foto do local">'; };
+  var pinta=function(u){ if(!$('entFotoL')) return; setTimeout(function(){ if(ENT.map){ try{ ENT.map.invalidateSize(); }catch(e){} entEu(true); } else if(ENT.vista==='foto') areaPinta(true); },60); $('entFotoL').innerHTML='<img src="'+u+'" onclick="fotoGrande(this.src)" style="width:100%;max-height:34vh;object-fit:cover;border-radius:14px;margin-top:10px;display:block;cursor:zoom-in" alt="Foto do local">'; };
   if(FOTOC[k]){ pinta(FOTOC[k]); return; }
   bx.innerHTML='<div style="font-size:13px;color:#888;margin-top:10px">Carregando a foto do local…</div>';
   fetch(API+'/painel/atend-local-foto?k='+encodeURIComponent(k),{headers:{'Authorization':'Bearer '+TK}}).then(function(r){ return r.ok?r.blob():null; }).then(function(b){ if(!b){ bx.innerHTML=''; return; } FOTOC[k]=URL.createObjectURL(b); pinta(FOTOC[k]); }).catch(function(){ bx.innerHTML=''; });
