@@ -315,7 +315,7 @@ label.l.big{font-size:14px;margin-top:16px}
 </div>
 
 <div id="app" class="hide">
-  <div id="top"><div style="flex:1;min-width:0;display:flex;align-items:center;gap:12px"><b id="emp" style="flex:none">Atendimento</b><small id="usu"></small></div><!-- "Atender via mapa" (mpAbre) fora do ar enquanto evolui; o código do mapa continua abaixo --><span style="font-size:10px;color:#9a8f86;font-weight:700;margin-right:8px;white-space:nowrap">ATEND-46</span><a class="bt-hub" href="hub.html" title="Voltar ao Hub"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Hub</a><button onclick="sair()">Sair</button></div>
+  <div id="top"><div style="flex:1;min-width:0;display:flex;align-items:center;gap:12px"><b id="emp" style="flex:none">Atendimento</b><small id="usu"></small></div><!-- "Atender via mapa" (mpAbre) fora do ar enquanto evolui; o código do mapa continua abaixo --><span style="font-size:10px;color:#9a8f86;font-weight:700;margin-right:8px;white-space:nowrap">ATEND-47</span><a class="bt-hub" href="hub.html" title="Voltar ao Hub"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Hub</a><button onclick="sair()">Sair</button></div>
   <div id="chip" class="hide"><div class="t"><b id="chipT"></b><small id="chipS"></small></div><button onclick="trocaComanda()">Trocar</button></div>
 
   <!-- PEDIDO -->
@@ -441,7 +441,7 @@ function montaApp(d){
 function aba(a){
   ABA=a; ['ped','com','soc'].forEach(function(k){ $('v-'+k).classList.toggle('hide',k!==a); $('n-'+k).classList.toggle('on',k===a); });
   clearInterval(POLL); POLL=null; window.scrollTo(0,0); cartBar();
-  if(a==='com'){ carregaCom(); POLL=setInterval(carregaCom,15000); if(cobraHora()&&!PRAIA) vendasAbre(); }   /* (239) cobrar na hora: a aba vira Vendas (comprovantes do garçom) */
+  if(a==='com'){ COMSIG=''; if(comGuardada()) comPinta(COMC); carregaCom(); POLL=setInterval(carregaCom,15000); if(cobraHora()&&!PRAIA) vendasAbre(); }   /* (239) cobrar na hora: a aba vira Vendas (comprovantes do garçom) */
   if(a==='soc') carregaSocios();
 }
 /* ── (154) NFC DA MESA: com o Atendimento aberto no Chrome do Android, encostar na etiqueta já seleciona a mesa (e o celular não abre o cardápio do cliente) ── */
@@ -1070,7 +1070,7 @@ function tiraItem(k){ CART.splice(k,1); if(!CART.length){ fecha(); cartBar(); } 
 function enviaPedido(){
   var b=$('pBt'); b.disabled=true; b.textContent='Enviando…'; $('pErr').textContent=''; var cpE=coposVal();   /* (250) copos */
   api('/painel/atend-pedido',comEnvio({geo:praiaGeo(),modo:COM.modo,mesa:COM.mesa,joia:COM.joia,obs:($('pObs')||{value:''}).value,liberar:COM.liberar,copos:cpE||undefined,itens:CART.map(function(i){ return {p:i.p,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs,qty:i.qty}; })})).then(function(r){
-    if(r.ok){ lpBaixa(r.num); envioOk(); if(PRAIA&&(FOTOL.img||(GEO.ref||'').trim())) api('/painel/atend-local-foto',{joia:COM.joia,mesa:(r.mesa||COM.mesa),img:FOTOL.img||undefined,obs:(GEO.ref||'').trim()}); FOTOL.img=''; GEO.ref=''; var ped={num:r.num,sub:r.sub||0,mesa:COM.mesa,joia:COM.joia,nome:COM.nome,atend:D.usuario,criado:Date.now(),obs:($('pObs')||{value:''}).value,modo:COM.modo,copos:cpE,l:CART.map(function(i){ return {p:i.p,nome:i.nome,qty:i.qty,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs}; })}; var avulsoP=COM.avulso, smP=COM.sm; CART=[]; COPOS=null; fecha(); cartBar();
+    if(r.ok){ lpBaixa(r.num); envioOk(); setTimeout(comBusca,600); if(PRAIA&&(FOTOL.img||(GEO.ref||'').trim())) api('/painel/atend-local-foto',{joia:COM.joia,mesa:(r.mesa||COM.mesa),img:FOTOL.img||undefined,obs:(GEO.ref||'').trim()}); FOTOL.img=''; GEO.ref=''; var ped={num:r.num,sub:r.sub||0,mesa:COM.mesa,joia:COM.joia,nome:COM.nome,atend:D.usuario,criado:Date.now(),obs:($('pObs')||{value:''}).value,modo:COM.modo,copos:cpE,l:CART.map(function(i){ return {p:i.p,nome:i.nome,qty:i.qty,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs}; })}; var avulsoP=COM.avulso, smP=COM.sm; CART=[]; COPOS=null; fecha(); cartBar();
       /* venda do balcão sem cliente: já pergunta como o cliente pagou (ou fica em Comandas, se cobrar depois) · (238) garçom sem mesa e sem cliente: igual, com a taxa do garçom */
       if(avulsoP&&smP&&PRAIA){ toast('Pedido #'+plab(r)+' enviado para a cozinha'); zeraComanda(); if(impOn()) imprimeAuto(ped); return; }
       if(avulsoP){ toast('Pedido #'+plab(r)+' '+(smP?'enviado para a cozinha':'criado')); zeraComanda(); if(impOn()) imprimeAuto(ped); COMS=[{mesa:r.mesa,joia:'',nome:smP?'Sem mesa':'Cliente Balcão',total:r.total,servico:r.servico||0,pedidos:[],avulso:1}]; fechaForm(0); return; }
@@ -1292,9 +1292,21 @@ function fotoGrande(src){ var o=document.createElement('div'); o.style.cssText='
 })();
 /* ── comandas em aberto + fechamento ── */
 var COMS=[];
+/* (281) comandas aparecem NA HORA: mostra a última lista guardada e busca a nova por trás (só redesenha se mudou).
+   Enquanto o garçom está no Pedido, a lista é atualizada a cada 20 s e logo depois de enviar um pedido */
+var COMC=null, COMSIG='';
+function comGuardada(){ if(COMC) return COMC; try{ var cc=JSON.parse(localStorage.getItem('at_coms_'+CLI)||'null'); if(cc&&Date.now()-cc.t<6*3600000) COMC=cc.d; }catch(e){} return COMC; }
+function comBusca(){ return api('/painel/atend-comandas?leve=1').then(function(d){ if(d&&d.ok){ COMC=d; try{ localStorage.setItem('at_coms_'+CLI,JSON.stringify({t:Date.now(),d:d})); }catch(e){} } return d; }); }
 function carregaCom(){
-  api('/painel/atend-comandas').then(function(d){
-    if(d._h===401){ mostraLogin('Entre de novo.'); return; } if(!d.ok){ $('lCom').innerHTML='<p>'+esc(d.mensagem||'Erro')+'</p>'; return; }
+  if(ABA==='com'&&!COMSIG&&comGuardada()) comPinta(COMC);
+  comBusca().then(function(d){
+    if(d._h===401){ mostraLogin('Entre de novo.'); return; } if(!d.ok){ if(!COMSIG) $('lCom').innerHTML='<p>'+esc(d.mensagem||'Erro')+'</p>'; return; }
+    if(JSON.stringify(d.comandas||[])===COMSIG) return; comPinta(d);
+  });
+}
+setInterval(function(){ try{ if(TK&&D&&ABA!=='com') comBusca(); }catch(e){} },20000);
+function comPinta(d){
+    COMSIG=JSON.stringify(d.comandas||[]);
     COMS=d.comandas||[]; ENT.lista=COMS; OPENL=COMS.filter(function(c){ return c.mesa&&c.joia; }); OPENH=d.hoje||OPENH; var h='';
     COMS.forEach(function(c,i){
       var t=comTit(c)+(c.joia?(c.mesa?' · ':'')+pill(c.joia):'');
@@ -1305,8 +1317,7 @@ function carregaCom(){
         +'</div><div class="ac1"><button class="bt g" onclick="fechaForm('+i+')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18M7 15h3"/></svg>Fechar conta</button></div></div>';
     });
     $('lCom').innerHTML=(cobraHora()&&!PRAIA)?(h?'<div class="sec" style="margin-top:22px">Comandas ainda abertas</div>'+h:''):(h||'<p style="color:var(--mu2)">Nenhuma comanda aberta agora.</p>'); achaPed();   /* (239) cobrar na hora: só mostra se ainda houver alguma aberta */
-  });
-}
+  }
 function achaPed(){
   var q=($('bPed').value||'').toLowerCase().trim(), num=/^\d+$/.test(q);
   COMS.forEach(function(c,i){ var e=$('cm'+i); if(!e) return;
