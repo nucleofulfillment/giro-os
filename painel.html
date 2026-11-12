@@ -8803,7 +8803,7 @@ function cdFotosRefazer(){
     cdFotoIaPedir(p.nome,p.desc,cdCatNome(p.cat),false).then(function(d){
       if(d&&d.ok) return salva(p,d.foto,false,d.branco);   /* (271) bebida: foto de produto em fundo branco, no padrão das fotos reais */
       if(d&&d.erro==='limite') throw {limite:d.mensagem};
-      if(d&&d.erro==='marca') return cdFotoBuscaPedir(p.nome,p.barras,cdCatNome(p.cat)).then(function(x){ if(x&&x.ok) return salva(p,x.foto,true); if(x&&x.erro==='limite') throw {limite:x.mensagem}; return tira(p, x&&x.erro!=='nao_achei'?(x.mensagem||x.erro):''); });
+      if(d&&d.erro==='marca') return cdFotoBuscaPedir(p.nome,p.barras,cdCatNome(p.cat)).then(function(x){ if(x&&x.ok) return salva(p,x.foto,true); if(x&&x.erro==='limite') throw {limite:x.mensagem}; return tira(p, x&&x.erro!=='nao_achei'?(x.mensagem||x.erro):((x&&x.diag)||'')); });
       falha.push(p.nome);
     }).then(passo).catch(function(e){ if(e&&e.limite) return fim(e.limite); falha.push(p.nome); passo(); });
   };
