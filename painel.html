@@ -1634,7 +1634,7 @@ html.loja-p .cd-dest{display:none!important}
   <div class="sh-bd">
     <div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:14px">
       <div style="display:flex;flex-direction:column;gap:6px;flex:none;width:96px"><div id="cd-foto-box" onclick="el('cd-foto-file').click()" style="width:96px;height:96px;flex:none;border-radius:14px;border:1.5px dashed var(--border2);background:var(--s2) center/cover no-repeat;display:flex;align-items:center;justify-content:center;text-align:center;font-size:11.5px;color:var(--muted);cursor:pointer;line-height:1.3">+ Foto</div>
-        <button class="btn sec sm" type="button" id="cd-ia-btn" onclick="cdFotoIa()" style="padding:6px 4px;font-size:11.5px;white-space:nowrap" title="Cria uma foto do produto pelo nome e pela descrição">✨ Criar com IA</button></div>
+        <button class="btn sec sm" type="button" id="cd-ia-btn" onclick="cdFotoIa()" style="padding:6px 4px;font-size:11.5px;white-space:nowrap" title="Cria uma foto do produto pelo nome e pela descrição">✨ Criar com IA</button><div style="font-size:10.5px;line-height:1.3;color:var(--muted);text-align:center">ou copie uma imagem e aperte <b>Ctrl+V</b></div></div>
       <input type="file" id="cd-foto-file" accept="image/*" style="display:none" onchange="cdFoto(this)">
       <input type="file" id="cd-pv-file" accept="video/mp4,video/webm,video/quicktime" style="display:none" onchange="cdPVideo(this)">
       <div style="flex:1;min-width:0">
@@ -8709,6 +8709,14 @@ function cdAdLinha(a){
   el('cd-ads').appendChild(d);
 }
 function cdAddAd(){ cdAdLinha(null); }
+/* (275) COLAR FOTO: com o produto aberto, Ctrl+V cola a imagem copiada (Google Imagens: botão direito → Copiar imagem).
+   A foto é recortada e posta no fundo branco do padrão da loja, igual à foto buscada. */
+document.addEventListener('paste', function(ev){
+  var sh=el('sh-produto'); if(!sh||!sh.classList.contains('on')) return;
+  var its=(ev.clipboardData&&ev.clipboardData.items)||[], f=null, i; for(i=0;i<its.length;i++){ if(its[i].kind==='file'&&/^image\//.test(its[i].type)){ f=its[i].getAsFile(); break; } }
+  if(!f) return; ev.preventDefault();
+  var rd=new FileReader(); rd.onload=function(){ cdFotoReal(rd.result).then(function(u){ CD.foto=u; cdFotoBox(); aviso('Foto colada. Salve o produto para publicar.'); }); }; rd.readAsDataURL(f);
+});
 function cdAbrirForm(p){
   CD.edit=p?p.id:null; CD.foto=(p&&p.foto)||''; CD.vid=(p&&p.vid)||''; CD.vtipo=(p&&p.vtipo)||'video/mp4'; cdPVPinta();
   el('cd-tit').textContent=p?'Editar produto':'Novo produto';
