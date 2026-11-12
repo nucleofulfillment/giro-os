@@ -1130,7 +1130,7 @@ html.loja-p .cd-dest{display:none!important}
       </section>
 
       <section class="page" id="pg-mesas">
-        <div class="pghd"><div><h1>Mesas</h1><div class="sub">mesas do salão e etiquetas NFC · <span id="mz-total">—</span></div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sec" onclick="rvAbrir()">🪑 Reservas</button><button class="btn sec" onclick="gcAbrir()">🧑‍🍳 Garçons</button><button class="btn sec" onclick="mzQrTodos()">🖨 Imprimir QR de todas</button><button class="btn pri" onclick="mzNova()">+ Nova mesa</button></div></div>
+        <div class="pghd"><div><h1>Mesas</h1><div class="sub">mesas do salão e etiquetas NFC · <span id="mz-total">—</span></div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sec" onclick="rvAbrir()">🪑 Reservas</button><button class="btn sec" onclick="gcAbrir()">🧑‍🍳 Garçons</button><button class="btn sec" id="mz-espaco" style="display:none" onclick="window.EspacoCfg&&EspacoCfg.abrir()">🏖️ Foto do espaço</button><button class="btn sec" onclick="mzQrTodos()">🖨 Imprimir QR de todas</button><button class="btn pri" onclick="mzNova()">+ Nova mesa</button></div></div>
         <div class="card">
           <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px"><div class="search" style="margin:0;max-width:360px;flex:1;min-width:180px"><span>🔎</span><input id="mz-busca" placeholder="buscar mesa" oninput="mzPintar()"></div>
             <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--muted)">📅 Reservas do dia <input type="date" class="inp" id="mz-dia" style="width:auto;padding:7px 9px" onchange="mzDia()"></label>
@@ -4244,6 +4244,7 @@ function planoEmbrulha(){
 }
 function planoAplica(){
   /* (LP2) cliente Pro: o Fluxo de caixa fica no LivePro e some daqui */
+  var mzE=el('mz-espaco'); if(mzE) mzE.style.display=PLANO.praia?'':'none';   /* (280) entrega na praia: a foto do espaço é configuração do dono */
   var fcC=el('fc-card'), fcL=el('fc-livepro'); if(fcC&&fcL){ fcC.style.display=PLANO.lp_fluxo?'none':''; fcL.style.display=PLANO.lp_fluxo?'':'none'; }
   if(!PLANO.recursos) return;
   Object.keys(PLANO_FN).forEach(function(fn){ if(temRec(PLANO_FN[fn])) return; var nomeFn=fn==='planoAtendimentoAbre'?'planoAtendimento':fn; document.querySelectorAll('[onclick^="'+nomeFn+'("]').forEach(function(b){ if(b.getAttribute('data-cad')) return; b.setAttribute('data-cad','1'); (b.querySelector('h4')||b).insertAdjacentText('afterbegin','🔒 '); }); });
@@ -11375,6 +11376,7 @@ function cdNovaCatRapida(){
 <script src="live-ajuda.js?v=237"></script>
 <script src="bipador.js?v=1"></script>
 <script src="lojas.js"></script>
+<script src="espaco.js"></script>
 <script>/* câmera no cadastro do cardápio (mesmo leitor da Mesa) */
 function cdBiparBarras(){ if(!window.Bipador) return; Bipador.abrir({titulo:"Código de barras do produto", aoLer:function(c){ var i=document.getElementById("cd-barras"); if(i){ i.value=c; i.dispatchEvent(new Event("input",{bubbles:true})); } return true; }}); }
 </script>
