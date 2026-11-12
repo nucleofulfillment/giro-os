@@ -8790,20 +8790,20 @@ function cdFotosIaLote(){
 function cdFotosRefazer(){
   var ids=Object.keys(CD.sel||{}), ps=(CD.prods||[]).filter(function(p){ return ids.indexOf(p.id)>=0; }); if(!ps.length) return;
   el('sh-import').querySelector('h3').textContent='Refazer fotos';
-  el('cd-imp-corpo').innerHTML='<p style="margin:0 0 12px;font-size:13px;line-height:1.55;color:var(--muted2)"><b>'+ps.length+' produto'+(ps.length==1?'':'s')+' marcado'+(ps.length==1?'':'s')+'.</b> Para cada um o sistema procura a foto de novo: produto de marca recebe a foto real (a IA confere se é mesmo o produto, e não um logo); os outros ganham foto criada com IA. Se não achar, a foto errada sai e o produto fica sem foto, para você enviar a real.</p><div id="cd-ia-res" style="font-size:12.5px;margin-bottom:10px"></div><button class="btn pri wide" id="cd-ia-go">🔎 Refazer '+ps.length+' foto'+(ps.length==1?'':'s')+'</button>';
+  el('cd-imp-corpo').innerHTML='<p style="margin:0 0 12px;font-size:13px;line-height:1.55;color:var(--muted2)"><b>'+ps.length+' produto'+(ps.length==1?'':'s')+' marcado'+(ps.length==1?'':'s')+'.</b> Para cada um o sistema procura a foto de novo: produto de marca recebe a foto real (a IA confere se é mesmo o produto, e não um logo); os outros ganham foto criada com IA. Se não achar, a foto que já estava continua e o produto aparece na lista do fim, para você enviar a foto real.</p><div id="cd-ia-res" style="font-size:12.5px;margin-bottom:10px"></div><button class="btn pri wide" id="cd-ia-go">🔎 Refazer '+ps.length+' foto'+(ps.length==1?'':'s')+'</button>';
   abrir('sh-import');
   var b=el('cd-ia-go'), r=el('cd-ia-res'), i=0, ok=0, sem=[], falha=[];
   var salva=function(p,src,real,br){ return ((real||br)?cdFotoReal(src):cdRedimUrl(src)).then(function(u){ var c=JSON.parse(JSON.stringify(p)); c.foto=u; return cdSalvarApi('prod',c).then(function(){ p.foto=u; ok++; }); }); };
-  var tira=function(p){ var c=JSON.parse(JSON.stringify(p)); c.foto=''; return cdSalvarApi('prod',c).then(function(){ p.foto=''; sem.push(p.nome); }); };
+  var tira=function(p,mot){ sem.push(p.nome+(mot?' ('+mot+')':'')); return Promise.resolve(); };   /* (273) não achou: mantém a foto que estava */
   var fim=function(msg){ b.disabled=false; b.textContent='Fechar'; b.onclick=fecharTudo; CD.sel={}; cdBarraSel(); cdPintar();
-    r.innerHTML=(ok?'<b>'+ok+' foto'+(ok==1?'':'s')+' nova'+(ok==1?'':'s')+'.</b> ':'<b>Nenhuma foto nova.</b> ')+(sem.length?'<br>Ficaram sem foto (envie a foto real pelo celular ou pelo Fotos em lote): '+sem.map(esc).join(', '):'')+(falha.length?'<br>Não deu: '+falha.map(esc).join(', '):'')+(msg?'<br>'+esc(msg):''); };
+    r.innerHTML=(ok?'<b>'+ok+' foto'+(ok==1?'':'s')+' nova'+(ok==1?'':'s')+'.</b> ':'<b>Nenhuma foto nova.</b> ')+(sem.length?'<br>Não achei a foto real (ficou a foto anterior; envie a real pelo celular ou pelo Fotos em lote): '+sem.map(esc).join(', '):'')+(falha.length?'<br>Não deu: '+falha.map(esc).join(', '):'')+(msg?'<br>'+esc(msg):''); };
   var passo=function(){
     if(i>=ps.length) return fim();
     var p=ps[i++]; b.textContent='Refazendo '+i+' de '+ps.length+'…'; r.textContent='🔎 '+p.nome;
     cdFotoIaPedir(p.nome,p.desc,cdCatNome(p.cat),false).then(function(d){
       if(d&&d.ok) return salva(p,d.foto,false,d.branco);   /* (271) bebida: foto de produto em fundo branco, no padrão das fotos reais */
       if(d&&d.erro==='limite') throw {limite:d.mensagem};
-      if(d&&d.erro==='marca') return cdFotoBuscaPedir(p.nome,p.barras,cdCatNome(p.cat)).then(function(x){ if(x&&x.ok) return salva(p,x.foto,true); if(x&&x.erro==='limite') throw {limite:x.mensagem}; return tira(p); });
+      if(d&&d.erro==='marca') return cdFotoBuscaPedir(p.nome,p.barras,cdCatNome(p.cat)).then(function(x){ if(x&&x.ok) return salva(p,x.foto,true); if(x&&x.erro==='limite') throw {limite:x.mensagem}; return tira(p, x&&x.erro!=='nao_achei'?(x.mensagem||x.erro):''); });
       falha.push(p.nome);
     }).then(passo).catch(function(e){ if(e&&e.limite) return fim(e.limite); falha.push(p.nome); passo(); });
   };
