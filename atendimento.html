@@ -334,7 +334,7 @@ label.l.big{font-size:14px;margin-top:16px}
   </div>
 
   <!-- COMANDAS -->
-  <div id="v-ent" class="main hide"><h2>Entregas na praia</h2><div id="entGps" style="font-size:13px;font-weight:700;color:var(--mu2);margin:-4px 0 10px"></div><input class="inp" id="bEnt" placeholder="🔎 Número do pedido ou nome do cliente…" oninput="entPinta()" autocomplete="off" inputmode="search" style="margin-bottom:12px"><div id="lEnt"></div></div>
+  <div id="v-ent" class="main hide"><div style="display:flex;align-items:center;gap:10px"><h2 style="flex:1">Entregas na praia</h2><button class="bt s mini gest hide" onclick="areaCfgAbre()">🗺️ Foto do espaço</button></div><div id="entGps" style="font-size:13px;font-weight:700;color:var(--mu2);margin:-4px 0 10px"></div><input class="inp" id="bEnt" placeholder="🔎 Número do pedido ou nome do cliente…" oninput="entPinta()" autocomplete="off" inputmode="search" style="margin-bottom:12px"><div id="lEnt"></div></div>
   <div id="v-com" class="main hide"><h2 id="comH">Comandas abertas</h2><input class="inp" id="bPed" placeholder="🔎 Buscar por nome ou número do cliente…" oninput="achaPed()" autocomplete="off" style="margin-bottom:12px"><div id="lCom"></div><div id="vendas" class="hide"></div></div>
 
   <!-- CLIENTES -->
@@ -1067,7 +1067,7 @@ function entGpsTxt(){ var e=$('entGps'); if(!e) return; e.innerHTML=GEO.pos?'�
 function geoDist(a,b){ var R=6371000,r=Math.PI/180,dLa=(b.lat-a.lat)*r,dLn=(b.lng-a.lng)*r,x=Math.sin(dLa/2)*Math.sin(dLa/2)+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dLn/2)*Math.sin(dLn/2); return 2*R*Math.atan2(Math.sqrt(x),Math.sqrt(1-x)); }
 function geoRumo(a,b){ var r=Math.PI/180,y=Math.sin((b.lng-a.lng)*r)*Math.cos(b.lat*r),x=Math.cos(a.lat*r)*Math.sin(b.lat*r)-Math.sin(a.lat*r)*Math.cos(b.lat*r)*Math.cos((b.lng-a.lng)*r); return (Math.atan2(y,x)/r+360)%360; }
 function geoM(m){ return m<1000?Math.round(m)+' m':(m/1000).toFixed(1).replace('.',',')+' km'; }
-function entCarrega(){ api('/painel/atend-comandas').then(function(d){ if(!d||!d.ok) return; ENT.lista=d.comandas||[]; entPinta(); }); }
+function entCarrega(){ areaCarrega(); api('/painel/atend-comandas').then(function(d){ if(!d||!d.ok) return; ENT.lista=d.comandas||[]; entPinta(); }); }
 function entPinta(){
   var q=($('bEnt').value||'').toLowerCase().trim(), h='';
   ENT.lista.forEach(function(c,i){
@@ -1086,12 +1086,21 @@ function entLeaflet(){ if(window.L) return Promise.resolve(); return new Promise
 function entAbre(i){
   var c=ENT.lista[i]; if(!c||!c.geo) return; ENT.c=c; ENT.novo=null;
   var o=document.createElement('div'); o.id='entMap'; o.style.cssText='position:fixed;inset:0;z-index:3000;background:#111;display:flex;flex-direction:column';
-  o.innerHTML='<div id="entMapa" style="flex:1"></div><div style="background:#fff;border-radius:20px 20px 0 0;padding:14px 16px 18px;box-shadow:0 -8px 30px rgba(0,0,0,.25)">'
+  o.innerHTML='<div style="position:relative;flex:1;min-height:0"><div id="entMapa" style="position:absolute;inset:0"></div><div id="entFoto" class="hide" style="position:absolute;inset:0;overflow:auto;background:#1b1b1b;-webkit-overflow-scrolling:touch"></div>'
+    +'<div id="entVis" style="position:absolute;top:12px;left:12px;z-index:900;display:flex;gap:6px"></div><div id="entZoom" class="hide" style="position:absolute;top:12px;right:12px;z-index:900;display:flex;flex-direction:column;gap:6px"><button class="bt s" style="width:46px;height:46px;padding:0;font-size:22px" onclick="areaZoom(1)">+</button><button class="bt s" style="width:46px;height:46px;padding:0;font-size:22px" onclick="areaZoom(-1)">−</button></div></div><div style="background:#fff;border-radius:20px 20px 0 0;padding:14px 16px 18px;box-shadow:0 -8px 30px rgba(0,0,0,.25)">'
     +'<div style="display:flex;align-items:center;gap:14px"><div id="entSeta" style="width:64px;height:64px;flex:none;border-radius:50%;background:#FF5A00;display:flex;align-items:center;justify-content:center;transition:transform .25s"><svg viewBox="0 0 24 24" width="38" height="38" fill="#fff"><path d="M12 2l6 18-6-4-6 4z"/></svg></div>'
     +'<div style="flex:1;min-width:0"><div id="entDist" style="font-size:28px;font-weight:900;line-height:1.1">…</div><div style="font-size:14px;font-weight:700;color:#555">'+esc(comTit(c)+(c.nome&&c.nome!==comTit(c)?' · '+c.nome:''))+'</div>'+(c.geo.ref?'<div style="font-size:14px;margin-top:2px">📍 '+esc(c.geo.ref)+'</div>':'')+'<div id="entBus" style="font-size:12px;color:#888;margin-top:2px"></div></div></div>'
     +'<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><button class="bt s" style="flex:1" onclick="entAquiMapa()">📍 Estou aqui com o cliente</button><button class="bt g hide" id="entSalvarB" style="flex:1" onclick="entSalvaArraste()">Salvar novo lugar</button><button class="bt s" onclick="entFecha()">Fechar</button></div>'
     +'<div style="font-size:12px;color:#888;margin-top:8px">Dica: arraste o ponto laranja no mapa para corrigir o lugar do cliente.</div></div>';
-  document.body.appendChild(o); entBussola();
+  document.body.appendChild(o); entBussola(); ENT.vista=null;
+  entVista(AREA.url?'foto':'sat');
+}
+function entVista(v){
+  ENT.vista=v; var c=ENT.c; if(!c) return;
+  $('entVis').innerHTML=AREA.url?['foto','sat'].map(function(k){ return '<button class="bt '+(k===v?'g':'s')+' mini" onclick="entVista(\''+k+'\')">'+(k==='foto'?'🏖️ Foto do espaço':'🛰️ Satélite')+'</button>'; }).join(''):'';
+  $('entFoto').classList.toggle('hide',v!=='foto'); $('entMapa').classList.toggle('hide',v!=='sat'); $('entZoom').classList.toggle('hide',v!=='foto');
+  if(v==='foto'){ areaPinta(true); entEu(); return; }
+  if(ENT.map){ setTimeout(function(){ try{ ENT.map.invalidateSize(); }catch(e){} },50); return; }
   entLeaflet().then(function(){
     var g=c.geo, m=L.map('entMapa',{zoomControl:false,attributionControl:false}).setView([g.lat,g.lng],19); ENT.map=m;
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:20,maxNativeZoom:19}).addTo(m);
@@ -1102,6 +1111,70 @@ function entAbre(i){
     entEu(true);
   }).catch(function(){ $('entMapa').innerHTML='<div style="color:#fff;padding:20px">Não consegui carregar o mapa (internet fraca). A seta e a distância continuam funcionando.</div>'; entEu(); });
 }
+/* ── (277) FOTO DO ESPAÇO: foto aérea/drone com 2 pontos de referência (lugar na foto + coordenada).
+   Com 2 pontos dá para converter qualquer lugar da foto em coordenada e vice-versa, mesmo se a foto estiver girada. */
+var AREA={cfg:null,url:'',carregou:false,z:1};
+function areaCarrega(forca){
+  if(AREA.carregou&&!forca) return Promise.resolve(); AREA.carregou=true;
+  return api('/painel/atend-area').then(function(d){ if(!d||!d.ok||!d.area){ AREA.cfg=null; AREA.url=''; return; } var mud=!AREA.cfg||AREA.cfg.v!==d.area.v; AREA.cfg=d.area; if(!mud&&AREA.url) return;
+    return fetch(API+'/painel/atend-area-img?v='+encodeURIComponent(d.area.v),{headers:{'Authorization':'Bearer '+TK}}).then(function(r){ return r.ok?r.blob():null; }).then(function(b){ if(b) AREA.url=URL.createObjectURL(b); }); }).catch(function(){ AREA.carregou=false; });
+}
+function cxM(a,b){ return [a[0]*b[0]-a[1]*b[1],a[0]*b[1]+a[1]*b[0]]; }
+function cxD(a,b){ var q=b[0]*b[0]+b[1]*b[1]; return [(a[0]*b[0]+a[1]*b[1])/q,(a[1]*b[0]-a[0]*b[1])/q]; }
+function areaT(cfg){ cfg=cfg||AREA.cfg; if(!cfg||!cfg.pts||cfg.pts.length<2) return null; var A=cfg.pts[0], B=cfg.pts[1], an=cfg.an||1, k=Math.cos(A.lat*Math.PI/180)*111320;
+  var zf=function(la,ln){ return [(ln-A.lng)*k,(la-A.lat)*110540]; }, pf=function(u,v){ return [u,-v*an]; };
+  var pA=pf(A.u,A.v), pB=pf(B.u,B.v), zA=zf(A.lat,A.lng), zB=zf(B.lat,B.lng), dp=[pB[0]-pA[0],pB[1]-pA[1]]; if(!dp[0]&&!dp[1]) return null;
+  var a=cxD([zB[0]-zA[0],zB[1]-zA[1]],dp), b=[zA[0]-cxM(a,pA)[0],zA[1]-cxM(a,pA)[1]];
+  return { ll:function(u,v){ var z=cxM(a,pf(u,v)); return {lat:A.lat+(z[1]+b[1])/110540,lng:A.lng+(z[0]+b[0])/k}; },
+           uv:function(la,ln){ var z=zf(la,ln), p=cxD([z[0]-b[0],z[1]-b[1]],a); return {u:p[0],v:-p[1]/an}; } };
+}
+function areaZoom(d){ var f=$('entFoto'); if(!f) return; var cx=(f.scrollLeft+f.clientWidth/2)/f.scrollWidth, cy=(f.scrollTop+f.clientHeight/2)/f.scrollHeight; AREA.z=Math.max(1,Math.min(5,AREA.z+(d>0?0.75:-0.75))); areaPinta(false); f.scrollLeft=cx*f.scrollWidth-f.clientWidth/2; f.scrollTop=cy*f.scrollHeight-f.clientHeight/2; }
+function areaPinta(centra){
+  var f=$('entFoto'), T=areaT(); if(!f||!T||!AREA.url) return;
+  if(!$('entFotoIn')){ f.innerHTML='<div id="entFotoIn" style="position:relative;margin:0 auto"><img id="entFotoImg" src="'+AREA.url+'" style="width:100%;display:block;user-select:none;-webkit-user-drag:none" draggable="false"><div id="mkEu" class="hide" style="position:absolute;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;background:#2563EB;border:3px solid #fff;box-shadow:0 0 0 6px rgba(37,99,235,.25)"></div><div id="mkCli" style="position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;background:#FF5A00;border:4px solid #fff;box-shadow:0 0 0 4px rgba(255,90,0,.45),0 4px 10px rgba(0,0,0,.5);touch-action:none;cursor:grab"></div></div>';
+    $('entFotoImg').onload=function(){ areaPinta(true); }; areaArrasta(); }
+  $('entFotoIn').style.width=(AREA.z*100)+'%';
+  var a=entAlvo(); if(a){ var q=T.uv(a.lat,a.lng), m=$('mkCli'), dentro=q.u>=-0.02&&q.u<=1.02&&q.v>=-0.02&&q.v<=1.02; m.style.left=(q.u*100)+'%'; m.style.top=(q.v*100)+'%'; m.classList.toggle('hide',!dentro);
+    if(centra&&dentro){ f.scrollLeft=q.u*f.scrollWidth-f.clientWidth/2; f.scrollTop=q.v*f.scrollHeight-f.clientHeight/2; } }
+  var e=$('mkEu'); if(GEO.pos){ var w=T.uv(GEO.pos.lat,GEO.pos.lng); e.style.left=(w.u*100)+'%'; e.style.top=(w.v*100)+'%'; e.classList.toggle('hide',w.u<-0.02||w.u>1.02||w.v<-0.02||w.v>1.02); }
+}
+function areaArrasta(){
+  var m=$('mkCli'), on=false;
+  m.addEventListener('pointerdown',function(ev){ on=true; m.setPointerCapture(ev.pointerId); ev.preventDefault(); });
+  m.addEventListener('pointermove',function(ev){ if(!on) return; var r=$('entFotoImg').getBoundingClientRect(), u=(ev.clientX-r.left)/r.width, v=(ev.clientY-r.top)/r.height; m.style.left=(u*100)+'%'; m.style.top=(v*100)+'%'; var ll=areaT().ll(u,v); ENT.novo={lat:ll.lat,lng:ll.lng}; });
+  m.addEventListener('pointerup',function(){ if(!on) return; on=false; if(ENT.novo){ $('entSalvarB').classList.remove('hide'); entEu(); } });
+}
+/* configuração (dono/gerente): foto + 2 pontos */
+var ACF=null;
+function areaCfgAbre(){
+  ACF={img:'',w:0,h:0,pts:[],passo:0,nova:false};
+  var o=document.createElement('div'); o.id='areaCfg'; o.style.cssText='position:fixed;inset:0;z-index:3100;background:#fff;display:flex;flex-direction:column';
+  o.innerHTML='<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid #eee"><b style="flex:1;font-size:17px">🗺️ Foto do espaço</b><button class="bt s mini" onclick="areaCfgFecha()">Fechar</button></div>'
+    +'<div id="acfFoto" style="flex:1;min-height:0;overflow:auto;background:#1b1b1b;position:relative"></div><div id="acfPainel" style="padding:12px 14px 16px;box-shadow:0 -6px 20px rgba(0,0,0,.12)"></div><input type="file" id="acfArq" accept="image/*" class="hide" onchange="areaCfgArq(this.files[0])">';
+  document.body.appendChild(o);
+  areaCarrega(true).then(function(){ if(AREA.url&&AREA.cfg){ ACF.img=AREA.url; ACF.pts=AREA.cfg.pts.slice(); ACF.passo=2; } areaCfgPinta(); });
+}
+function areaCfgFecha(){ var o=$('areaCfg'); if(o) o.remove(); ACF=null; }
+function areaCfgArq(f){ if(!f) return; var u=URL.createObjectURL(f), im=new Image(); im.onload=function(){ var m=Math.max(im.width,im.height), k=Math.min(1,2400/m), cv=document.createElement('canvas'); cv.width=Math.round(im.width*k); cv.height=Math.round(im.height*k); cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height); URL.revokeObjectURL(u);
+  ACF.img=cv.toDataURL('image/jpeg',0.85); ACF.w=cv.width; ACF.h=cv.height; ACF.nova=true; ACF.pts=[]; ACF.passo=0; areaCfgPinta(); }; im.onerror=function(){ toast('Não consegui abrir essa foto.'); }; im.src=u; }
+function areaCfgPinta(){
+  if(!ACF) return; var F=$('acfFoto'), P=$('acfPainel');
+  if(!ACF.img){ F.innerHTML='<div style="color:#ddd;padding:30px;text-align:center;font-size:15px;line-height:1.5">Envie uma foto aérea do espaço (print do satélite do Google Maps ou foto de drone).<br><br>Depois você marca 2 pontos fáceis de achar, como a porta do quiosque e o guarda-sol mais perto do mar.</div>'; P.innerHTML='<button class="bt g big" style="width:100%" onclick="$(\'acfArq\').click()">📷 Escolher a foto</button>'; return; }
+  F.innerHTML='<div style="position:relative"><img id="acfImg" src="'+ACF.img+'" style="width:100%;display:block" onload="if(!ACF.w){ ACF.w=this.naturalWidth; ACF.h=this.naturalHeight; }">'+ACF.pts.map(function(q,i){ return '<div style="position:absolute;left:'+(q.u*100)+'%;top:'+(q.v*100)+'%;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;background:'+(i?'#2563EB':'#FF5A00')+';border:3px solid #fff;color:#fff;font-weight:900;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,.5)">'+(i+1)+'</div>'; }).join('')+'</div>';
+  $('acfImg').onclick=function(ev){ if(ACF.passo>1) return; var r=this.getBoundingClientRect(); ACF.alvo={u:(ev.clientX-r.left)/r.width,v:(ev.clientY-r.top)/r.height}; ACF.pts[ACF.passo]={u:ACF.alvo.u,v:ACF.alvo.v}; areaCfgPinta(); };
+  var n=ACF.passo, q=ACF.pts[n];
+  if(n<2){ P.innerHTML='<b style="font-size:16px">Ponto '+(n+1)+' de 2</b><div style="font-size:14px;color:#555;margin:4px 0 10px">'+(q?'Agora diga onde fica esse ponto:':(n?'Toque num ponto longe do primeiro (ex.: guarda-sol perto do mar).':'Toque na foto num ponto fácil de achar (ex.: a porta do quiosque).'))+'</div>'
+      +(q?'<button class="bt g" style="width:100%;margin-bottom:8px" onclick="areaCfgGps()">📡 Estou nesse ponto agora (usar meu GPS)</button><div style="display:flex;gap:8px"><input class="inp" id="acfCoord" placeholder="ou cole do Google Maps: -26.9512, -48.6321" style="flex:1;min-width:0"><button class="bt s" onclick="areaCfgCoord()">OK</button></div>':'')
+      +'<div style="display:flex;gap:8px;margin-top:10px"><button class="bt s mini" onclick="$(\'acfArq\').click()">Trocar foto</button>'+(n?'<button class="bt s mini" onclick="ACF.passo=0;ACF.pts=[];areaCfgPinta()">Recomeçar</button>':'')+'</div>'; return; }
+  var T=areaT({pts:ACF.pts,an:ACF.h&&ACF.w?ACF.h/ACF.w:1}), d=geoDist(ACF.pts[0],ACF.pts[1]), lg=T?geoDist(T.ll(0,0),T.ll(1,0)):0;
+  P.innerHTML='<b style="font-size:16px">✅ Pontos marcados</b><div style="font-size:14px;color:#555;margin:4px 0 10px">Distância entre os pontos: <b>'+geoM(d)+'</b> · largura da foto: <b>'+geoM(lg)+'</b>. Se esses números parecerem certos, salve.</div>'
+    +'<div style="display:flex;gap:8px"><button class="bt g" style="flex:1" id="acfSalva" onclick="areaCfgSalva()">Salvar</button><button class="bt s" onclick="ACF.passo=0;ACF.pts=[];areaCfgPinta()">Remarcar</button><button class="bt s" onclick="$(\'acfArq\').click()">Trocar foto</button></div>';
+}
+function areaCfgPonto(lat,lng){ var q=ACF.pts[ACF.passo]; q.lat=lat; q.lng=lng; ACF.passo++; areaCfgPinta(); }
+function areaCfgGps(){ if(!GEO.pos||Date.now()-GEO.pos.t>60000){ toast(GEO.erro||'Ainda sem GPS. Espere uns segundos ao ar livre.'); return; } if(GEO.pos.acc>25) toast('GPS com precisão de '+Math.round(GEO.pos.acc)+' m: espere ele melhorar para ficar mais certo.'); areaCfgPonto(GEO.pos.lat,GEO.pos.lng); }
+function areaCfgCoord(){ var m=/(-?\d{1,2}[.,]\d+)\s*[,; ]\s*(-?\d{1,3}[.,]\d+)/.exec(($('acfCoord').value||'').trim()); if(!m){ toast('Cole a coordenada como no Google Maps: -26.9512, -48.6321'); return; } var la=Number(m[1].replace(',','.')), ln=Number(m[2].replace(',','.')); if(!(la>=-90&&la<=90&&ln>=-180&&ln<=180)){ toast('Coordenada inválida.'); return; } areaCfgPonto(la,ln); }
+function areaCfgSalva(){ var b=$('acfSalva'); b.disabled=true; b.textContent='Salvando…';
+  api('/painel/atend-area',{img:ACF.nova?ACF.img:undefined,w:ACF.w,h:ACF.h,pts:ACF.pts}).then(function(r){ if(r&&r.ok){ toast('Foto do espaço salva ✅'); AREA.carregou=false; if(ACF.nova){ AREA.url=''; } areaCfgFecha(); areaCarrega(true); return; } b.disabled=false; b.textContent='Salvar'; toast((r&&r.mensagem)||'Não consegui salvar.'); }); }
 function entAlvo(){ if(!ENT.c||!ENT.c.geo) return null; return ENT.novo||ENT.c.geo; }
 function entEu(enquadra){
   if(!$('entMap')) return; var a=entAlvo(); if(!a) return;
@@ -1114,6 +1187,7 @@ function entEu(enquadra){
       else { ENT.eu.setLatLng(ll); ENT.euC.setLatLng(ll).setRadius(GEO.pos.acc); }
       if(enquadra){ try{ ENT.map.fitBounds(L.latLngBounds([ll,[a.lat,a.lng]]).pad(.35),{maxZoom:19}); }catch(e){} } }
   } else { $('entDist').textContent='Procurando seu GPS…'; }
+  if(ENT.vista==='foto') areaPinta(false);
 }
 function entBussola(){
   var liga=function(){ var f=function(e){ var h=e.webkitCompassHeading!=null?e.webkitCompassHeading:(e.absolute&&e.alpha!=null?360-e.alpha:null); if(h!=null){ GEO.head=h; entEu(); } }; window.addEventListener('deviceorientationabsolute',f,true); window.addEventListener('deviceorientation',f,true); ENT.bf=f; };
@@ -1122,7 +1196,7 @@ function entBussola(){
 }
 function entAquiMapa(){ var g=praiaGeo(); if(!g){ toast(GEO.erro||'Ainda sem GPS.'); return; } entSalva(ENT.c,{lat:g.lat,lng:g.lng,acc:g.acc,ref:''},'Lugar do cliente atualizado ✅').then(function(ok){ if(ok) entFecha(); }); }
 function entSalvaArraste(){ if(!ENT.novo) return; entSalva(ENT.c,{lat:ENT.novo.lat,lng:ENT.novo.lng,acc:5,ref:''},'Novo lugar salvo ✅').then(function(ok){ if(ok){ ENT.novo=null; $('entSalvarB').classList.add('hide'); } }); }
-function entFecha(){ if(ENT.bf){ window.removeEventListener('deviceorientationabsolute',ENT.bf,true); window.removeEventListener('deviceorientation',ENT.bf,true); ENT.bf=null; } GEO.head=null; if(ENT.map){ try{ ENT.map.remove(); }catch(e){} } ENT.map=null; ENT.eu=null; ENT.euC=null; ENT.cli=null; var o=$('entMap'); if(o) o.remove(); }
+function entFecha(){ if(ENT.bf){ window.removeEventListener('deviceorientationabsolute',ENT.bf,true); window.removeEventListener('deviceorientation',ENT.bf,true); ENT.bf=null; } GEO.head=null; if(ENT.map){ try{ ENT.map.remove(); }catch(e){} } ENT.map=null; ENT.eu=null; ENT.euC=null; ENT.cli=null; ENT.vista=null; var o=$('entMap'); if(o) o.remove(); }
 /* ── comandas em aberto + fechamento ── */
 var COMS=[];
 function carregaCom(){
