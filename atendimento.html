@@ -447,7 +447,7 @@ function nfcMesaInicia(){
 function nfcMesaLiga(manual){
   if(NFM.on||!('NDEFReader' in window)) return; var rd, ctl;
   try{ rd=new NDEFReader(); ctl=new AbortController(); }catch(e){ return; }
-  rd.onreading=function(ev){ if(CCP.on){ ccpLeu(ev.serialNumber); return; } nfcMesaLeu(ev.message); };   /* (276) com a tela "Cliente Crédito" aberta, o toque é o cartão do cliente, não a etiqueta da mesa */
+  rd.onreading=function(ev){ if(CCP.on){ ccpLeu(ev.serialNumber); return; } if(ccpLigado()&&!nfcTemMesa(ev.message)){ ccpIdentifica(ev.serialNumber); return; } nfcMesaLeu(ev.message); };   /* (276) com a tela "Cliente Crédito" aberta, o toque é o cartão do cliente, não a etiqueta da mesa */
   rd.onreadingerror=function(){ toast('Não consegui ler a etiqueta. Encoste de novo e segure parado.'); };
   rd.scan({signal:ctl.signal}).then(function(){ NFM.on=true; NFM.ctl=ctl; nfcMesaBx('on'); }).catch(function(e){
     NFM.on=false; var n=e&&e.name;
@@ -956,7 +956,7 @@ function ccpLigado(){ var k=D&&D.cfg&&D.cfg.cartao_cli; return !!(k&&(k.pre||k.p
 function ccpFalta(c,tot){ return !!(c&&c.modo==='pre'&&c.saldo+0.004<tot); }
 function ccpLinha(c,tot){
   var pre=c.modo==='pre', falta=ccpFalta(c,tot);
-  return '<div class="rzs" style="text-align:left;margin-top:8px"><b>'+esc(c.nome||'Cliente')+'</b> · '+(pre?'saldo '+brl(c.saldo)+(falta?'':' → fica '+brl(Math.round((c.saldo-tot)*100)/100)):'paga no final · já consumiu '+brl(c.devendo||0)+(c.limite>0?' · limite '+brl(c.limite):''))+'</div>'+(falta?'<div class="er" style="margin-top:6px">Saldo insuficiente: faltam '+brl(Math.round((tot-c.saldo)*100)/100)+'. Peça uma recarga ou troque a forma de pagamento.</div>':'');
+  return '<div class="rzs" style="text-align:left;margin-top:8px"><b>'+esc(c.nome||'Cliente')+'</b> · '+(pre?'saldo '+brl(c.saldo)+(falta?'':' → fica '+brl(Math.round((c.saldo-tot)*100)/100)):'paga no final · já consumiu '+brl(c.devendo||0)+(c.aberto>0?' · comanda aberta '+brl(c.aberto):'')+(c.limite>0?' · limite '+brl(c.limite):''))+'</div>'+(falta?'<div class="er" style="margin-top:6px">Saldo insuficiente: faltam '+brl(Math.round((tot-c.saldo)*100)/100)+'. Peça uma recarga ou troque a forma de pagamento.</div>':'');
 }
 function ccpAbrir(cb,voltar,tot){
   CCP.cb=cb; CCP.v=voltar; CCP.tot=tot||0; CCP.on=1; CCP.busy=0; CCP.c=null; var tem=('NDEFReader' in window);
@@ -984,6 +984,23 @@ function ccpLeu(uid){
     CCP.c=c; $('ccpMsg').textContent='Cartão lido ✓';
     $('ccpRes').innerHTML='<div style="border:1.5px solid var(--s3);border-radius:14px;padding:12px;margin:12px 0">'+ccpLinha(c,CCP.tot).replace('class="rzs"','')+'</div>';
     $('shF').innerHTML='<button class="bt" style="margin:0 0 8px"'+(ccpFalta(c,CCP.tot)?' disabled':'')+' onclick="ccpCobrar()">Cobrar '+brl(CCP.tot)+'</button><button class="bt s" style="margin:0" onclick="ccpVolta()">Voltar</button>';
+  });
+}
+/* na tela do pedido: encostar o cartão do cliente já identifica o cliente e abre a comanda (loja com cartão ligado) */
+function nfcTemMesa(msg){ var rs=(msg&&msg.records)||[], i; for(i=0;i<rs.length;i++){ var r=rs[i]; if(r.recordType==='url'||r.recordType==='absolute-url'||r.recordType==='text'){ try{ if(nfcMesaDaUrl(new TextDecoder(r.encoding||'utf-8').decode(r.data))) return true; }catch(e){} } } return false; }
+var CCI={ult:'',t:0};
+function ccpIdentifica(uid){
+  uid=String(uid||'').replace(/[^0-9A-Fa-f]/g,'').toUpperCase(); if(uid.length<4) return;
+  var ag=Date.now(); if(CCI.ult===uid&&ag-CCI.t<2500) return; CCI.ult=uid; CCI.t=ag;
+  if(TROCA||($('chm')&&$('chm').classList.contains('on'))||$('sh').style.display==='flex') return;
+  if(CART.length){ bpSom(false); toast('Envie ou cancele o pedido atual antes de ler outro cartão.'); return; }
+  api('/painel/atend-cartao-ler',{uid:uid}).then(function(r){
+    if(r._h===401){ mostraLogin('Entre de novo.'); return; }
+    var c=r.cartao; if(!r.ok||!c){ bpSom(false); toast(r.erro==='rota_nao_encontrada'?'Publique o Worker 276 para usar o cartão.':(r.mensagem||'Não consegui ler o cartão.')); return; }
+    if(!c.ativo){ bpSom(false); toast('Este cartão está bloqueado.'); return; }
+    if(!c.ligado){ bpSom(false); toast('A loja não usa este tipo de cartão.'); return; }
+    bpSom(true); aba('ped'); if(COM.avulso||COM.mesa||COM.joia) zeraComanda();
+    $('iJoia').value=c.joia; toast(c.nome+' identificado'); abreComanda();
   });
 }
 function ccpCobrar(){ if(!CCP.c||!CCP.cb) return; var c=CCP.c, cb=CCP.cb; CCP.on=0; CCP.cb=null; cb(c); }
