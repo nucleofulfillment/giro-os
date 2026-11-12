@@ -993,12 +993,19 @@ function ccpIdentifica(uid){
   uid=String(uid||'').replace(/[^0-9A-Fa-f]/g,'').toUpperCase(); if(uid.length<4) return;
   var ag=Date.now(); if(CCI.ult===uid&&ag-CCI.t<2500) return; CCI.ult=uid; CCI.t=ag;
   if(TROCA||($('chm')&&$('chm').classList.contains('on'))||$('sh').style.display==='flex') return;
-  if(CART.length){ bpSom(false); toast('Envie ou cancele o pedido atual antes de ler outro cartão.'); return; }
+  var naCom=(ABA==='com'&&$('bPed')&&!$('v-com').classList.contains('hide')&&!$('bPed').classList.contains('hide'));
+  if(CART.length&&!naCom){ bpSom(false); toast('Envie ou cancele o pedido atual antes de ler outro cartão.'); return; }
   api('/painel/atend-cartao-ler',{uid:uid}).then(function(r){
     if(r._h===401){ mostraLogin('Entre de novo.'); return; }
     var c=r.cartao; if(!r.ok||!c){ bpSom(false); toast(r.erro==='rota_nao_encontrada'?'Publique o Worker 276 para usar o cartão.':(r.mensagem||'Não consegui ler o cartão.')); return; }
     if(!c.ativo){ bpSom(false); toast('Este cartão está bloqueado.'); return; }
     if(!c.ligado){ bpSom(false); toast('A loja não usa este tipo de cartão.'); return; }
+    /* aba Comandas: o cartão faz o papel do campo de busca com o número do cliente e deixa só a comanda dele na tela */
+    if(naCom){
+      bpSom(true); var bp=$('bPed'); bp.value=String(c.joia); achaPed(); var ach=0;
+      COMS.forEach(function(k,i){ var e=$('cm'+i); if(!e) return; if(String(k.joia)!==String(c.joia)) e.style.display='none'; else if(e.style.display!=='none') ach++; });
+      toast(ach?c.nome+': comanda na tela':c.nome+' não tem comanda aberta'); return;
+    }
     bpSom(true); aba('ped'); if(COM.avulso||COM.mesa||COM.joia) zeraComanda();
     $('iJoia').value=c.joia; toast(c.nome+' identificado'); abreComanda();
   });
