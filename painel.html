@@ -8772,7 +8772,7 @@ function cdFotoIa(forcar){
       /* produto de marca: busca a foto real; se não achar, aí sim pergunta se quer desenhar mesmo assim */
       if(d&&d.erro==='marca'){ cdFotoBuscar(n,cat,b).then(function(ok){ if(!ok&&confirm('Não achei a foto real deste produto de marca.\n\nCriar uma foto com IA mesmo assim? (o rótulo pode sair diferente)')) cdFotoIa(true); }); return; }
       el('cd-erro').textContent=(d&&d.mensagem)||'Não deu para criar a foto.'; return; }
-    return cdRedimUrl(d.foto).then(function(u){ CD.foto=u; cdFotoBox(); b.disabled=false; b.textContent='↻ Outra com IA'; aviso('Foto criada. Salve o produto para publicar.'+(d.restantes!=null?' ('+d.restantes+' restantes hoje)':'')); });
+    return (d.branco?cdFotoReal(d.foto):cdRedimUrl(d.foto)).then(function(u){ CD.foto=u; cdFotoBox(); b.disabled=false; b.textContent='↻ Outra com IA'; aviso('Foto criada. Salve o produto para publicar.'+(d.restantes!=null?' ('+d.restantes+' restantes hoje)':'')); });
   }).catch(function(){ b.disabled=false; b.textContent=cdIaRot(); el('cd-erro').textContent='Sem conexão. Tente de novo.'; });
 }
 function cdFotosIaLote(){
@@ -8793,7 +8793,7 @@ function cdFotosRefazer(){
   el('cd-imp-corpo').innerHTML='<p style="margin:0 0 12px;font-size:13px;line-height:1.55;color:var(--muted2)"><b>'+ps.length+' produto'+(ps.length==1?'':'s')+' marcado'+(ps.length==1?'':'s')+'.</b> Para cada um o sistema procura a foto de novo: produto de marca recebe a foto real (a IA confere se é mesmo o produto, e não um logo); os outros ganham foto criada com IA. Se não achar, a foto errada sai e o produto fica sem foto, para você enviar a real.</p><div id="cd-ia-res" style="font-size:12.5px;margin-bottom:10px"></div><button class="btn pri wide" id="cd-ia-go">🔎 Refazer '+ps.length+' foto'+(ps.length==1?'':'s')+'</button>';
   abrir('sh-import');
   var b=el('cd-ia-go'), r=el('cd-ia-res'), i=0, ok=0, sem=[], falha=[];
-  var salva=function(p,src,real){ return (real?cdFotoReal(src):cdRedimUrl(src)).then(function(u){ var c=JSON.parse(JSON.stringify(p)); c.foto=u; return cdSalvarApi('prod',c).then(function(){ p.foto=u; ok++; }); }); };
+  var salva=function(p,src,real,br){ return ((real||br)?cdFotoReal(src):cdRedimUrl(src)).then(function(u){ var c=JSON.parse(JSON.stringify(p)); c.foto=u; return cdSalvarApi('prod',c).then(function(){ p.foto=u; ok++; }); }); };
   var tira=function(p){ var c=JSON.parse(JSON.stringify(p)); c.foto=''; return cdSalvarApi('prod',c).then(function(){ p.foto=''; sem.push(p.nome); }); };
   var fim=function(msg){ b.disabled=false; b.textContent='Fechar'; b.onclick=fecharTudo; CD.sel={}; cdBarraSel(); cdPintar();
     r.innerHTML=(ok?'<b>'+ok+' foto'+(ok==1?'':'s')+' nova'+(ok==1?'':'s')+'.</b> ':'<b>Nenhuma foto nova.</b> ')+(sem.length?'<br>Ficaram sem foto (envie a foto real pelo celular ou pelo Fotos em lote): '+sem.map(esc).join(', '):'')+(falha.length?'<br>Não deu: '+falha.map(esc).join(', '):'')+(msg?'<br>'+esc(msg):''); };
@@ -8801,7 +8801,7 @@ function cdFotosRefazer(){
     if(i>=ps.length) return fim();
     var p=ps[i++]; b.textContent='Refazendo '+i+' de '+ps.length+'…'; r.textContent='🔎 '+p.nome;
     cdFotoIaPedir(p.nome,p.desc,cdCatNome(p.cat),false).then(function(d){
-      if(d&&d.ok) return salva(p,d.foto,false);
+      if(d&&d.ok) return salva(p,d.foto,false,d.branco);   /* (271) bebida: foto de produto em fundo branco, no padrão das fotos reais */
       if(d&&d.erro==='limite') throw {limite:d.mensagem};
       if(d&&d.erro==='marca') return cdFotoBuscaPedir(p.nome,p.barras,cdCatNome(p.cat)).then(function(x){ if(x&&x.ok) return salva(p,x.foto,true); if(x&&x.erro==='limite') throw {limite:x.mensagem}; return tira(p); });
       falha.push(p.nome);
@@ -8814,7 +8814,7 @@ function cdFotosIaRoda(){
   var fim=function(msg){ b.disabled=false; b.textContent='Fechar'; b.onclick=fecharTudo; cdPintar();
     r.innerHTML=(achadas?'<b>'+achadas+' foto'+(achadas==1?'':'s')+' real'+(achadas==1?'':'is')+' encontrada'+(achadas==1?'':'s')+'.</b> ':'')+(feitas?'<b>'+feitas+' criada'+(feitas==1?'':'s')+' com IA.</b>':'')+(!achadas&&!feitas?'<b>Nenhuma foto nova.</b>':'')
       +(nao.length?'<br>Não achei a foto real (envie pelo celular ou pelo Fotos em lote): '+nao.map(esc).join(', '):'')+(falha.length?'<br>Não deu: '+falha.map(esc).join(', '):'')+(msg?'<br>'+esc(msg):''); };
-  var salva=function(p,src,real){ return (real?cdFotoReal(src):cdRedimUrl(src)).then(function(u){ var c=JSON.parse(JSON.stringify(p)); c.foto=u; return cdSalvarApi('prod',c).then(function(){ p.foto=u; if(real) achadas++; else feitas++; }); }); };
+  var salva=function(p,src,real,br){ return ((real||br)?cdFotoReal(src):cdRedimUrl(src)).then(function(u){ var c=JSON.parse(JSON.stringify(p)); c.foto=u; return cdSalvarApi('prod',c).then(function(){ p.foto=u; if(real) achadas++; else feitas++; }); }); };
   var busca=function(p){ return cdFotoBuscaPedir(p.nome,p.barras,cdCatNome(p.cat)).then(function(d){
       if(d&&d.ok) return salva(p,d.foto,true);
       if(d&&d.erro==='limite') throw {limite:d.mensagem};
@@ -8823,7 +8823,7 @@ function cdFotosIaRoda(){
     if(i>=sem.length) return fim();
     var p=sem[i++]; b.textContent=(lj?'Buscando ':'Criando ')+i+' de '+sem.length+'…'; r.textContent=(lj?'🔎 ':'✨ ')+p.nome;
     var t=lj?busca(p):cdFotoIaPedir(p.nome,p.desc,cdCatNome(p.cat),false).then(function(d){
-      if(d&&d.ok) return salva(p,d.foto,false);
+      if(d&&d.ok) return salva(p,d.foto,false,d.branco);   /* (271) bebida: foto de produto em fundo branco, no padrão das fotos reais */
       if(d&&d.erro==='marca') return busca(p);   /* restaurante: refrigerante, cerveja... recebe a foto real */
       if(d&&d.erro==='limite') throw {limite:d.mensagem};
       falha.push(p.nome); });
