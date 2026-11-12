@@ -308,7 +308,7 @@ label.l.big{font-size:14px;margin-top:16px}
 </div>
 
 <div id="app" class="hide">
-  <div id="top"><div style="flex:1;min-width:0;display:flex;align-items:center;gap:12px"><b id="emp" style="flex:none">Atendimento</b><small id="usu"></small></div><!-- "Atender via mapa" (mpAbre) fora do ar enquanto evolui; o código do mapa continua abaixo --><span style="font-size:10px;color:#9a8f86;font-weight:700;margin-right:8px;white-space:nowrap">ATEND-37</span><a class="bt-hub" href="hub.html" title="Voltar ao Hub"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Hub</a><button onclick="sair()">Sair</button></div>
+  <div id="top"><div style="flex:1;min-width:0;display:flex;align-items:center;gap:12px"><b id="emp" style="flex:none">Atendimento</b><small id="usu"></small></div><!-- "Atender via mapa" (mpAbre) fora do ar enquanto evolui; o código do mapa continua abaixo --><span style="font-size:10px;color:#9a8f86;font-weight:700;margin-right:8px;white-space:nowrap">ATEND-38</span><a class="bt-hub" href="hub.html" title="Voltar ao Hub"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Hub</a><button onclick="sair()">Sair</button></div>
   <div id="chip" class="hide"><div class="t"><b id="chipT"></b><small id="chipS"></small></div><button onclick="trocaComanda()">Trocar</button></div>
 
   <!-- PEDIDO -->
@@ -334,6 +334,7 @@ label.l.big{font-size:14px;margin-top:16px}
   </div>
 
   <!-- COMANDAS -->
+  <div id="v-ent" class="main hide"><h2>Entregas na praia</h2><div id="entGps" style="font-size:13px;font-weight:700;color:var(--mu2);margin:-4px 0 10px"></div><input class="inp" id="bEnt" placeholder="🔎 Número do pedido ou nome do cliente…" oninput="entPinta()" autocomplete="off" inputmode="search" style="margin-bottom:12px"><div id="lEnt"></div></div>
   <div id="v-com" class="main hide"><h2 id="comH">Comandas abertas</h2><input class="inp" id="bPed" placeholder="🔎 Buscar por nome ou número do cliente…" oninput="achaPed()" autocomplete="off" style="margin-bottom:12px"><div id="lCom"></div><div id="vendas" class="hide"></div></div>
 
   <!-- CLIENTES -->
@@ -349,6 +350,7 @@ label.l.big{font-size:14px;margin-top:16px}
   <div id="nav">
     <button id="n-ped" class="on" onclick="aba('ped')"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Pedido</button>
     <button id="n-com" onclick="aba('com')"><svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 3h6v3H9zM9 11h6M9 15h6"/></svg>Comandas</button>
+    <button id="n-ent" class="hide" onclick="aba('ent')"><svg viewBox="0 0 24 24"><path d="M12 21s-6-5.3-6-10a6 6 0 0112 0c0 4.7-6 10-6 10z"/><circle cx="12" cy="11" r="2.3"/></svg>Entregas</button>
     <button id="n-soc" class="gest hide" onclick="aba('soc')"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 5.2a3.2 3.2 0 010 5.6M18 14.5c1.8.8 3 2.6 3 5.5"/></svg>Clientes</button>
   </div>
 </div>
@@ -414,12 +416,13 @@ function atualizaDados(d){
   [].forEach.call(document.querySelectorAll('.gest'),function(b){ b.classList.toggle('hide',!GEST); });
   if(mudouCard){ try{ pintaCats(); if($('bProd')&&$('bProd').value) buscaProd(); }catch(e){} }
   if(mudouMesas) try{ mostraMapaBtn(); }catch(e){}
+  praiaAplica(d);
   if(mudouCfg){ try{ abaComNome(); bpBotoes(); if(!(COM.mesa||COM.joia||COM.avulso)) modo(COM.modo); }catch(e){} }
 }
 function montaApp(d){
     carregaAbertas();
     D=d; try{ (D.prods||[]).sort(function(a,b){ return String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR',{sensitivity:'base',numeric:true}); }); }catch(e){} CLI=d.cli; try{ window.GiroMarca&&GiroMarca.set(CLI); }catch(e){} GEST=!!d.gestor; CLIS=(d.clientes&&d.clientes.length<5000)?d.clientes:null; tema(d.cor);
-    $('login').classList.add('hide'); $('app').classList.remove('hide'); abaComNome();
+    $('login').classList.add('hide'); $('app').classList.remove('hide'); abaComNome(); praiaAplica(d);
     $('emp').innerHTML=d.logo?'<img src="'+API+'/food/foto/'+encodeURIComponent(d.cli)+'/_logop" alt="'+esc(d.empresa||'')+'" style="height:30px;border-radius:6px;vertical-align:middle">':esc(d.empresa||'Atendimento'); $('usu').textContent=d.usuario||''; try{ var li=$('emp').querySelector('img'); if(li&&window.GiroMarca&&GiroMarca.ajusta) GiroMarca.ajusta(li,'claro'); }catch(e){} if(window.LojaTroca) LojaTroca.ligar($('emp'));   /* (269) trocar de loja */
     [].forEach.call(document.querySelectorAll('.gest'),function(b){ b.classList.toggle('hide',!GEST); });
     /* (230) garçom só lança na Mesa (com ou sem mesa escolhida); Balcão fica para o dono/gerente */
@@ -431,10 +434,11 @@ function montaApp(d){
 }
 /* ── abas ── */
 function aba(a){
-  ABA=a; ['ped','com','soc'].forEach(function(k){ $('v-'+k).classList.toggle('hide',k!==a); $('n-'+k).classList.toggle('on',k===a); });
+  ABA=a; ['ped','com','ent','soc'].forEach(function(k){ $('v-'+k).classList.toggle('hide',k!==a); $('n-'+k).classList.toggle('on',k===a); });
   clearInterval(POLL); POLL=null; window.scrollTo(0,0); cartBar();
   if(a==='com'){ carregaCom(); POLL=setInterval(carregaCom,15000); if(cobraHora()) vendasAbre(); }   /* (239) cobrar na hora: a aba vira Vendas (comprovantes do garçom) */
   if(a==='soc') carregaSocios();
+  if(a==='ent'){ entCarrega(); POLL=setInterval(entCarrega,15000); }
 }
 /* ── (154) NFC DA MESA: com o Atendimento aberto no Chrome do Android, encostar na etiqueta já seleciona a mesa (e o celular não abre o cardápio do cliente) ── */
 var NFM={on:false,ctl:null,ult:'',ultT:0};
@@ -902,6 +906,7 @@ function abreCarrinho(){
   var h=''; CART.forEach(function(i,k){ h+='<div class="opt"><span class="n"><b>'+i.qty+'x '+esc(i.nome)+'</b><small>'+descItem(i,1)+'</small></span><span class="p">'+brl(i.unit*i.qty)+'</span><button onclick="tiraItem('+k+')" style="border:0;background:var(--s3);border-radius:8px;width:32px;height:32px;font-weight:800">×</button></div>'; });
   h+=srvLinha(srvVal(cartTot()),srvPct());
   h+=coposHtml();
+  if(PRAIA) h+='<label class="l">📍 Como achar o cliente (opcional)</label><input class="inp" id="pRef" maxlength="140" placeholder="Ex.: guarda-sol azul, 2ª fileira" value="'+esc(GEO.ref||'')+'" oninput="GEO.ref=this.value">'+praiaGpsTxt();
   h+='<label class="l">Observação do pedido (cozinha)</label><input class="inp" id="pObs" maxlength="300"><div class="er" id="pErr"></div>';
   var totC=Math.round((cartTot()+srvVal(cartTot()))*100)/100, hj=cobraHora();
   folha('Pedido · '+(COM.sm?'Sem mesa':ehSMM(COM.mesa)?smTit(COM.mesa):COM.avulso||ehBalM(COM.mesa)?'Cliente Balcão':[(COM.mesa?(COM.modo==='balcao'?'Balcão ':'Mesa ')+COM.mesa:''),COM.joia].filter(Boolean).join(' · ')),h,'<button class="bt" id="pBt" style="margin:0" onclick="'+(hj?'copoOk(fcEscolher)':'copoOk(enviaPedido)')+'">'+(hj?'Fechar comanda':(COM.avulso?'Finalizar pedido':'Enviar para a cozinha'))+' · '+brl(totC)+'</button>'); foco('#pBt');
@@ -950,12 +955,12 @@ function fcCancela(){
 /* (246) rede ruim: cada envio leva um número (env). Se a resposta não chegar e o garçom tocar de novo com o mesmo pedido, o servidor devolve o pedido
    que já criou em vez de duplicar. Mudou o carrinho, a mesa ou o cliente = número novo. Deu certo = zera. */
 var ENVIO={id:'',sig:''};
-function comEnvio(corpo){ var c={},k; for(k in corpo) if(k!=='liberar') c[k]=corpo[k]; var sig=JSON.stringify(c); if(sig!==ENVIO.sig){ ENVIO.sig=sig; ENVIO.id=Date.now().toString(36)+Math.random().toString(36).slice(2,10); } corpo.env=ENVIO.id; return corpo; }
+function comEnvio(corpo){ var c={},k; for(k in corpo) if(k!=='liberar'&&k!=='geo') c[k]=corpo[k]; var sig=JSON.stringify(c); if(sig!==ENVIO.sig){ ENVIO.sig=sig; ENVIO.id=Date.now().toString(36)+Math.random().toString(36).slice(2,10); } corpo.env=ENVIO.id; return corpo; }
 function envioOk(){ ENVIO.id=''; ENVIO.sig=''; }
 var SEM_REDE='Sem rede agora. Quando a rede voltar, toque de novo: se o pedido já tinha chegado, ele não duplica.';
 function fcConfirma(){
   var b=$('rzOk'); if(!b||b.disabled) return; b.disabled=true; var tx0=b.textContent; b.textContent='Enviando…'; $('rzErr').textContent='';
-  api('/painel/atend-pedido',comEnvio({modo:COM.modo,mesa:COM.mesa,joia:COM.joia,obs:FC.obs,liberar:COM.liberar,pagar:FC.forma,partes:FC.forma==='misto'?(FC.partes||[]).map(function(pt){ return {f:pt.f,v:pt.v}; }):undefined,copos:FC.copos||undefined,itens:CART.map(function(i){ return {p:i.p,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs,qty:i.qty}; })})).then(function(r){
+  api('/painel/atend-pedido',comEnvio({geo:praiaGeo(),modo:COM.modo,mesa:COM.mesa,joia:COM.joia,obs:FC.obs,liberar:COM.liberar,pagar:FC.forma,partes:FC.forma==='misto'?(FC.partes||[]).map(function(pt){ return {f:pt.f,v:pt.v}; }):undefined,copos:FC.copos||undefined,itens:CART.map(function(i){ return {p:i.p,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs,qty:i.qty}; })})).then(function(r){
     if(r.ok&&r.pago){ envioOk();
       var ped={num:r.num,sub:r.sub||0,mesa:COM.mesa||(COM.sm?'':r.mesa)||'',joia:COM.joia,nome:COM.nome,atend:D.usuario,criado:Date.now(),obs:FC.obs,modo:COM.modo,copos:FC.copos,l:CART.map(function(i){ return {p:i.p,nome:i.nome,qty:i.qty,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs}; })};
       var x=FC_FORMAS[FC.forma]||['','',''], tot=r.total; if(FC.forma==='misto') x=['🔀',(FC.partes||[]).map(function(pt){ return (FC_FORMAS[pt.f]||['',pt.f])[1]+' '+brl(pt.v); }).join(' + ')]; fcFechaTela(); CART=[]; COPOS=null; FC.partes=null; FC.copos=0; cartBar(); if(FC.imp) imprimeAuto(ped);
@@ -971,8 +976,8 @@ function fcConfirma(){
 function tiraItem(k){ CART.splice(k,1); if(!CART.length){ fecha(); cartBar(); } else { abreCarrinho(); cartBar(); } }
 function enviaPedido(){
   var b=$('pBt'); b.disabled=true; b.textContent='Enviando…'; $('pErr').textContent=''; var cpE=coposVal();   /* (250) copos */
-  api('/painel/atend-pedido',comEnvio({modo:COM.modo,mesa:COM.mesa,joia:COM.joia,obs:($('pObs')||{value:''}).value,liberar:COM.liberar,copos:cpE||undefined,itens:CART.map(function(i){ return {p:i.p,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs,qty:i.qty}; })})).then(function(r){
-    if(r.ok){ lpBaixa(r.num); envioOk(); var ped={num:r.num,sub:r.sub||0,mesa:COM.mesa,joia:COM.joia,nome:COM.nome,atend:D.usuario,criado:Date.now(),obs:($('pObs')||{value:''}).value,modo:COM.modo,copos:cpE,l:CART.map(function(i){ return {p:i.p,nome:i.nome,qty:i.qty,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs}; })}; var avulsoP=COM.avulso, smP=COM.sm; CART=[]; COPOS=null; fecha(); cartBar();
+  api('/painel/atend-pedido',comEnvio({geo:praiaGeo(),modo:COM.modo,mesa:COM.mesa,joia:COM.joia,obs:($('pObs')||{value:''}).value,liberar:COM.liberar,copos:cpE||undefined,itens:CART.map(function(i){ return {p:i.p,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs,qty:i.qty}; })})).then(function(r){
+    if(r.ok){ lpBaixa(r.num); envioOk(); GEO.ref=''; var ped={num:r.num,sub:r.sub||0,mesa:COM.mesa,joia:COM.joia,nome:COM.nome,atend:D.usuario,criado:Date.now(),obs:($('pObs')||{value:''}).value,modo:COM.modo,copos:cpE,l:CART.map(function(i){ return {p:i.p,nome:i.nome,qty:i.qty,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs}; })}; var avulsoP=COM.avulso, smP=COM.sm; CART=[]; COPOS=null; fecha(); cartBar();
       /* venda do balcão sem cliente: já pergunta como o cliente pagou (ou fica em Comandas, se cobrar depois) · (238) garçom sem mesa e sem cliente: igual, com a taxa do garçom */
       if(avulsoP){ toast('Pedido #'+plab(r)+' '+(smP?'enviado para a cozinha':'criado')); zeraComanda(); if(impOn()) imprimeAuto(ped); COMS=[{mesa:r.mesa,joia:'',nome:smP?'Sem mesa':'Cliente Balcão',total:r.total,servico:r.servico||0,pedidos:[],avulso:1}]; fechaForm(0); return; }
       if(window.LiveApp) LiveApp.comemorar({titulo:'Pedido #'+plab(r)+' enviado!',sub:'Já está na cozinha 🍳',ms:1700}); else toast('Pedido #'+plab(r)+' enviado para a cozinha'); zeraComanda(); if(impOn()) imprimeAuto(ped); return; }
@@ -980,6 +985,80 @@ function enviaPedido(){
     b.disabled=false; b.textContent='Enviar para a cozinha'; $('pErr').innerHTML=esc(r._h===0?SEM_REDE:(r.mensagem||'Não consegui enviar.'))+(r.erro==='bloqueado'&&r.pode_liberar?'<br><button class="bt mini r" style="margin-top:8px" onclick="COM.liberar=true;enviaPedido()">Liberar mesmo assim</button>':'');
   });
 }
+/* ══ (277) ENTREGA NA PRAIA ══
+   Com "Entrega na praia" ligado no Admin: o aparelho do garçom acompanha o GPS e cada pedido vai com o lugar do cliente
+   (o garçom está ao lado dele quando lança). Na aba Entregas, o mapa de satélite mostra o cliente, o garçom andando,
+   a distância e uma seta. O garçom corrige o lugar: "Estou aqui com o cliente" ou arrastando o ponto no mapa. */
+var PRAIA=false, GEO={pos:null,watch:null,erro:'',ref:'',head:null}, ENT={lista:[],map:null,cli:null,eu:null,euC:null,cliC:null,c:null,novo:null};
+function praiaAplica(d){
+  PRAIA=!!(d&&d.praia); $('n-ent').classList.toggle('hide',!PRAIA);
+  if(PRAIA&&GEO.watch==null&&navigator.geolocation){
+    GEO.watch=navigator.geolocation.watchPosition(function(p){ GEO.pos={lat:p.coords.latitude,lng:p.coords.longitude,acc:p.coords.accuracy,t:Date.now()}; GEO.erro=''; entEu(); entGpsTxt(); },
+      function(e){ GEO.erro=e&&e.code===1?'Localização bloqueada: libere no cadeado ao lado do endereço.':'Procurando o GPS…'; entGpsTxt(); },{enableHighAccuracy:true,maximumAge:5000,timeout:20000});
+  }
+}
+function praiaGeo(){ if(!PRAIA||!GEO.pos||Date.now()-GEO.pos.t>180000) return undefined; return {lat:GEO.pos.lat,lng:GEO.pos.lng,acc:Math.round(GEO.pos.acc||0),ref:(GEO.ref||'').trim()}; }
+function praiaGpsTxt(){ var g=praiaGeo(); return '<div style="font-size:12.5px;font-weight:700;margin:-4px 0 8px;color:'+(g?'#15803D':'#B45309')+'">'+(g?'📍 Localização do cliente será gravada (precisão '+g.acc+' m)':'📍 '+esc(GEO.erro||'Procurando o GPS… o pedido sai mesmo sem localização'))+'</div>'; }
+function entGpsTxt(){ var e=$('entGps'); if(!e) return; e.innerHTML=GEO.pos?'📡 Seu GPS: precisão '+Math.round(GEO.pos.acc)+' m':esc(GEO.erro||'📡 Procurando o seu GPS…'); }
+function geoDist(a,b){ var R=6371000,r=Math.PI/180,dLa=(b.lat-a.lat)*r,dLn=(b.lng-a.lng)*r,x=Math.sin(dLa/2)*Math.sin(dLa/2)+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dLn/2)*Math.sin(dLn/2); return 2*R*Math.atan2(Math.sqrt(x),Math.sqrt(1-x)); }
+function geoRumo(a,b){ var r=Math.PI/180,y=Math.sin((b.lng-a.lng)*r)*Math.cos(b.lat*r),x=Math.cos(a.lat*r)*Math.sin(b.lat*r)-Math.sin(a.lat*r)*Math.cos(b.lat*r)*Math.cos((b.lng-a.lng)*r); return (Math.atan2(y,x)/r+360)%360; }
+function geoM(m){ return m<1000?Math.round(m)+' m':(m/1000).toFixed(1).replace('.',',')+' km'; }
+function entCarrega(){ api('/painel/atend-comandas').then(function(d){ if(!d||!d.ok) return; ENT.lista=d.comandas||[]; entPinta(); }); }
+function entPinta(){
+  var q=($('bEnt').value||'').toLowerCase().trim(), h='';
+  ENT.lista.forEach(function(c,i){
+    var nums=c.pedidos.map(function(p){ return String(p.num); }), txt=(comTit(c)+' '+(c.nome||'')+' '+nums.join(' ')).toLowerCase(); if(q&&txt.indexOf(q)<0) return;
+    var g=c.geo, dist=g&&GEO.pos?geoM(geoDist(GEO.pos,g)):'';
+    h+='<div class="cm"><div class="h"><div><b>'+comTit(c)+(c.joia?(c.mesa?' · ':'')+pill(c.joia):'')+'</b><div style="font-size:12.5px;color:var(--mu2)">'+(c.nome&&c.nome!==comTit(c)?esc(c.nome)+' · ':'')+'pedido #'+esc(nums[0]||'')+'</div></div>'+(g?'<span class="v" style="color:#15803D">'+(dist||'📍')+'</span>':'<span style="font-size:12px;font-weight:800;color:#B45309">sem local</span>')+'</div>'
+      +(g&&g.ref?'<div style="font-size:13.5px;margin-top:6px">📍 '+esc(g.ref)+'</div>':'')
+      +'<div class="ac">'+(g?'<button class="bt g" onclick="entAbre('+i+')">🧭 Ir até o cliente</button>':'')+'<button class="bt s" onclick="entAqui('+i+')">📍 Estou aqui com o cliente</button></div></div>';
+  });
+  $('lEnt').innerHTML=h||'<p style="color:var(--mu2)">'+(q?'Nada encontrado.':'Nenhuma comanda aberta agora.')+'</p>'; entGpsTxt();
+}
+function entSalva(c,g,msg){ return api('/painel/atend-geo',{joia:c.joia,mesa:c.mesa,lat:g.lat,lng:g.lng,acc:g.acc,ref:g.ref}).then(function(r){ if(r&&r.ok){ c.geo={lat:g.lat,lng:g.lng,acc:g.acc,ref:g.ref||(c.geo&&c.geo.ref)||''}; toast(msg); entPinta(); return true; } toast((r&&r.mensagem)||'Não consegui salvar.'); return false; }); }
+function entAqui(i){ var c=ENT.lista[i]; if(!c) return; var g=praiaGeo(); if(!g){ toast(GEO.erro||'Ainda sem GPS. Espere uns segundos ao ar livre.'); return; } entSalva(c,{lat:g.lat,lng:g.lng,acc:g.acc,ref:''},'Lugar do cliente atualizado ✅'); }
+/* mapa (Leaflet + foto de satélite), carregado só quando abre */
+function entLeaflet(){ if(window.L) return Promise.resolve(); return new Promise(function(ok,no){ var l=document.createElement('link'); l.rel='stylesheet'; l.href='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css'; document.head.appendChild(l); var s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js'; s.onload=ok; s.onerror=no; document.head.appendChild(s); }); }
+function entAbre(i){
+  var c=ENT.lista[i]; if(!c||!c.geo) return; ENT.c=c; ENT.novo=null;
+  var o=document.createElement('div'); o.id='entMap'; o.style.cssText='position:fixed;inset:0;z-index:3000;background:#111;display:flex;flex-direction:column';
+  o.innerHTML='<div id="entMapa" style="flex:1"></div><div style="background:#fff;border-radius:20px 20px 0 0;padding:14px 16px 18px;box-shadow:0 -8px 30px rgba(0,0,0,.25)">'
+    +'<div style="display:flex;align-items:center;gap:14px"><div id="entSeta" style="width:64px;height:64px;flex:none;border-radius:50%;background:#FF5A00;display:flex;align-items:center;justify-content:center;transition:transform .25s"><svg viewBox="0 0 24 24" width="38" height="38" fill="#fff"><path d="M12 2l6 18-6-4-6 4z"/></svg></div>'
+    +'<div style="flex:1;min-width:0"><div id="entDist" style="font-size:28px;font-weight:900;line-height:1.1">…</div><div style="font-size:14px;font-weight:700;color:#555">'+esc(comTit(c)+(c.nome&&c.nome!==comTit(c)?' · '+c.nome:''))+'</div>'+(c.geo.ref?'<div style="font-size:14px;margin-top:2px">📍 '+esc(c.geo.ref)+'</div>':'')+'<div id="entBus" style="font-size:12px;color:#888;margin-top:2px"></div></div></div>'
+    +'<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><button class="bt s" style="flex:1" onclick="entAquiMapa()">📍 Estou aqui com o cliente</button><button class="bt g hide" id="entSalvarB" style="flex:1" onclick="entSalvaArraste()">Salvar novo lugar</button><button class="bt s" onclick="entFecha()">Fechar</button></div>'
+    +'<div style="font-size:12px;color:#888;margin-top:8px">Dica: arraste o ponto laranja no mapa para corrigir o lugar do cliente.</div></div>';
+  document.body.appendChild(o); entBussola();
+  entLeaflet().then(function(){
+    var g=c.geo, m=L.map('entMapa',{zoomControl:false,attributionControl:false}).setView([g.lat,g.lng],19); ENT.map=m;
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:20,maxNativeZoom:19}).addTo(m);
+    var ic=L.divIcon({className:'',html:'<div style="width:26px;height:26px;border-radius:50%;background:#FF5A00;border:4px solid #fff;box-shadow:0 0 0 3px rgba(255,90,0,.45),0 4px 10px rgba(0,0,0,.4)"></div>',iconSize:[26,26],iconAnchor:[13,13]});
+    ENT.cliC=L.circle([g.lat,g.lng],{radius:Math.max(3,g.acc||0),color:'#FF5A00',weight:1,fillOpacity:.12}).addTo(m);
+    ENT.cli=L.marker([g.lat,g.lng],{icon:ic,draggable:true}).addTo(m);
+    ENT.cli.on('dragend',function(){ var ll=ENT.cli.getLatLng(); ENT.novo={lat:ll.lat,lng:ll.lng}; ENT.cliC.setLatLng(ll); $('entSalvarB').classList.remove('hide'); entEu(); });
+    entEu(true);
+  }).catch(function(){ $('entMapa').innerHTML='<div style="color:#fff;padding:20px">Não consegui carregar o mapa (internet fraca). A seta e a distância continuam funcionando.</div>'; entEu(); });
+}
+function entAlvo(){ if(!ENT.c||!ENT.c.geo) return null; return ENT.novo||ENT.c.geo; }
+function entEu(enquadra){
+  if(!$('entMap')) return; var a=entAlvo(); if(!a) return;
+  if(GEO.pos){
+    var d=geoDist(GEO.pos,a); $('entDist').textContent=d<6?'Você chegou! 🎉':geoM(d);
+    var rumo=geoRumo(GEO.pos,a), gira=GEO.head!=null?rumo-GEO.head:rumo; $('entSeta').style.transform='rotate('+gira+'deg)';
+    $('entBus').textContent=GEO.head!=null?'Siga a seta (bússola ligada) · GPS ±'+Math.round(GEO.pos.acc)+' m':'Seta em relação ao norte do mapa · GPS ±'+Math.round(GEO.pos.acc)+' m';
+    if(ENT.map&&window.L){ var ll=[GEO.pos.lat,GEO.pos.lng];
+      if(!ENT.eu){ ENT.euC=L.circle(ll,{radius:GEO.pos.acc,color:'#2563EB',weight:1,fillOpacity:.1}).addTo(ENT.map); ENT.eu=L.circleMarker(ll,{radius:9,color:'#fff',weight:3,fillColor:'#2563EB',fillOpacity:1}).addTo(ENT.map); }
+      else { ENT.eu.setLatLng(ll); ENT.euC.setLatLng(ll).setRadius(GEO.pos.acc); }
+      if(enquadra){ try{ ENT.map.fitBounds(L.latLngBounds([ll,[a.lat,a.lng]]).pad(.35),{maxZoom:19}); }catch(e){} } }
+  } else { $('entDist').textContent='Procurando seu GPS…'; }
+}
+function entBussola(){
+  var liga=function(){ var f=function(e){ var h=e.webkitCompassHeading!=null?e.webkitCompassHeading:(e.absolute&&e.alpha!=null?360-e.alpha:null); if(h!=null){ GEO.head=h; entEu(); } }; window.addEventListener('deviceorientationabsolute',f,true); window.addEventListener('deviceorientation',f,true); ENT.bf=f; };
+  if(window.DeviceOrientationEvent&&typeof DeviceOrientationEvent.requestPermission==='function'){ $('entBus').innerHTML='<button class="bt mini" onclick="DeviceOrientationEvent.requestPermission().then(function(s){ if(s===\'granted\') ENT.ligaB(); })">Ligar bússola</button>'; ENT.ligaB=liga; }
+  else liga();
+}
+function entAquiMapa(){ var g=praiaGeo(); if(!g){ toast(GEO.erro||'Ainda sem GPS.'); return; } entSalva(ENT.c,{lat:g.lat,lng:g.lng,acc:g.acc,ref:''},'Lugar do cliente atualizado ✅').then(function(ok){ if(ok) entFecha(); }); }
+function entSalvaArraste(){ if(!ENT.novo) return; entSalva(ENT.c,{lat:ENT.novo.lat,lng:ENT.novo.lng,acc:5,ref:''},'Novo lugar salvo ✅').then(function(ok){ if(ok){ ENT.novo=null; $('entSalvarB').classList.add('hide'); } }); }
+function entFecha(){ if(ENT.bf){ window.removeEventListener('deviceorientationabsolute',ENT.bf,true); window.removeEventListener('deviceorientation',ENT.bf,true); ENT.bf=null; } GEO.head=null; if(ENT.map){ try{ ENT.map.remove(); }catch(e){} } ENT.map=null; ENT.eu=null; ENT.euC=null; ENT.cli=null; var o=$('entMap'); if(o) o.remove(); }
 /* ── comandas em aberto + fechamento ── */
 var COMS=[];
 function carregaCom(){
