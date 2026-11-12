@@ -282,7 +282,7 @@ label.l.big{font-size:14px;margin-top:16px}
 <!-- abertura com o Live (fundo branco + logo laranja); curta, para não atrasar o garçom -->
 <div id="lf-abertura" data-minimo="350" data-esperar="1" data-rapido="1" style="position:fixed;inset:0;z-index:2147483000;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px"><div class="lfa-live" style="width:140px"></div><img src="livefood-logo.png" alt="LiveFood" style="height:42px;width:auto"><div class="lfa-barra"><i></i></div></div>
 <script>setTimeout(function(){ var a=document.getElementById('lf-abertura'); if(a) a.remove(); },3500);   /* rede de segurança: a abertura nunca passa de 3,5 s */</script>
-<script src="site/js/live-mascote.js"></script><script src="site/js/live-app.js?v=2"></script><script src="lojas.js"></script>
+<script src="site/js/live-mascote.js"></script><script src="site/js/live-app.js?v=2"></script><script src="lojas.js"></script><script src="bipador.js?v=1"></script>
 
 <div id="login">
   <div class="c">
@@ -308,7 +308,7 @@ label.l.big{font-size:14px;margin-top:16px}
 </div>
 
 <div id="app" class="hide">
-  <div id="top"><div style="flex:1;min-width:0;display:flex;align-items:center;gap:12px"><b id="emp" style="flex:none">Atendimento</b><small id="usu"></small></div><!-- "Atender via mapa" (mpAbre) fora do ar enquanto evolui; o código do mapa continua abaixo --><span style="font-size:10px;color:#9a8f86;font-weight:700;margin-right:8px;white-space:nowrap">ATEND-39</span><a class="bt-hub" href="hub.html" title="Voltar ao Hub"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Hub</a><button onclick="sair()">Sair</button></div>
+  <div id="top"><div style="flex:1;min-width:0;display:flex;align-items:center;gap:12px"><b id="emp" style="flex:none">Atendimento</b><small id="usu"></small></div><!-- "Atender via mapa" (mpAbre) fora do ar enquanto evolui; o código do mapa continua abaixo --><span style="font-size:10px;color:#9a8f86;font-weight:700;margin-right:8px;white-space:nowrap">ATEND-40</span><a class="bt-hub" href="hub.html" title="Voltar ao Hub"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Hub</a><button onclick="sair()">Sair</button></div>
   <div id="chip" class="hide"><div class="t"><b id="chipT"></b><small id="chipS"></small></div><button onclick="trocaComanda()">Trocar</button></div>
 
   <!-- PEDIDO -->
@@ -334,8 +334,7 @@ label.l.big{font-size:14px;margin-top:16px}
   </div>
 
   <!-- COMANDAS -->
-  <div id="v-ent" class="main hide"><div style="display:flex;align-items:center;gap:10px"><h2 style="flex:1">Entregas na praia</h2><button class="bt s mini gest hide" onclick="areaCfgAbre()">🗺️ Foto do espaço</button></div><div id="entGps" style="font-size:13px;font-weight:700;color:var(--mu2);margin:-4px 0 10px"></div><input class="inp" id="bEnt" placeholder="🔎 Número do pedido ou nome do cliente…" oninput="entPinta()" autocomplete="off" inputmode="search" style="margin-bottom:12px"><div id="lEnt"></div></div>
-  <div id="v-com" class="main hide"><h2 id="comH">Comandas abertas</h2><input class="inp" id="bPed" placeholder="🔎 Buscar por nome ou número do cliente…" oninput="achaPed()" autocomplete="off" style="margin-bottom:12px"><div id="lCom"></div><div id="vendas" class="hide"></div></div>
+  <div id="v-com" class="main hide"><h2 id="comH">Comandas abertas</h2><div class="praia hide" style="display:flex;gap:8px;margin-bottom:10px"><button class="bt g" style="flex:1" onclick="comBipar()">▮▯▮▮ Bipar pedido impresso</button><button class="bt s praia praiaG hide" onclick="areaCfgAbre()">🗺️ Foto do espaço</button></div><input class="inp" id="bPed" placeholder="🔎 Buscar por nome ou número do cliente…" oninput="achaPed()" onkeydown="if(event.key==='Enter'){ var cE=comPorPedido(this.value); if(cE&&PRAIA&&(cE.geo||(cE.foto&&cE.foto.k))){ event.preventDefault(); entAbreC(cE); } }" autocomplete="off" style="margin-bottom:12px"><div id="lCom"></div><div id="vendas" class="hide"></div></div>
 
   <!-- CLIENTES -->
   <div id="v-soc" class="main hide">
@@ -350,7 +349,6 @@ label.l.big{font-size:14px;margin-top:16px}
   <div id="nav">
     <button id="n-ped" class="on" onclick="aba('ped')"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Pedido</button>
     <button id="n-com" onclick="aba('com')"><svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 3h6v3H9zM9 11h6M9 15h6"/></svg>Comandas</button>
-    <button id="n-ent" class="hide" onclick="aba('ent')"><svg viewBox="0 0 24 24"><path d="M12 21s-6-5.3-6-10a6 6 0 0112 0c0 4.7-6 10-6 10z"/><circle cx="12" cy="11" r="2.3"/></svg>Entregas</button>
     <button id="n-soc" class="gest hide" onclick="aba('soc')"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 5.2a3.2 3.2 0 010 5.6M18 14.5c1.8.8 3 2.6 3 5.5"/></svg>Clientes</button>
   </div>
 </div>
@@ -434,11 +432,10 @@ function montaApp(d){
 }
 /* ── abas ── */
 function aba(a){
-  ABA=a; ['ped','com','ent','soc'].forEach(function(k){ $('v-'+k).classList.toggle('hide',k!==a); $('n-'+k).classList.toggle('on',k===a); });
+  ABA=a; ['ped','com','soc'].forEach(function(k){ $('v-'+k).classList.toggle('hide',k!==a); $('n-'+k).classList.toggle('on',k===a); });
   clearInterval(POLL); POLL=null; window.scrollTo(0,0); cartBar();
   if(a==='com'){ carregaCom(); POLL=setInterval(carregaCom,15000); if(cobraHora()) vendasAbre(); }   /* (239) cobrar na hora: a aba vira Vendas (comprovantes do garçom) */
   if(a==='soc') carregaSocios();
-  if(a==='ent'){ entCarrega(); POLL=setInterval(entCarrega,15000); }
 }
 /* ── (154) NFC DA MESA: com o Atendimento aberto no Chrome do Android, encostar na etiqueta já seleciona a mesa (e o celular não abre o cardápio do cliente) ── */
 var NFM={on:false,ctl:null,ult:'',ultT:0};
@@ -906,10 +903,10 @@ function abreCarrinho(){
   var h=''; CART.forEach(function(i,k){ h+='<div class="opt"><span class="n"><b>'+i.qty+'x '+esc(i.nome)+'</b><small>'+descItem(i,1)+'</small></span><span class="p">'+brl(i.unit*i.qty)+'</span><button onclick="tiraItem('+k+')" style="border:0;background:var(--s3);border-radius:8px;width:32px;height:32px;font-weight:800">×</button></div>'; });
   h+=srvLinha(srvVal(cartTot()),srvPct());
   h+=coposHtml();
-  if(PRAIA) h+='<label class="l">📍 Como achar o cliente (opcional)</label><input class="inp" id="pRef" maxlength="140" placeholder="Ex.: guarda-sol azul, 2ª fileira" value="'+esc(GEO.ref||'')+'" oninput="GEO.ref=this.value">'+praiaGpsTxt();
+  if(PRAIA) h+='<div id="pFotoBx"></div><label class="l">📍 Observação do local (opcional)</label><input class="inp" id="pRef" maxlength="140" placeholder="Ex.: guarda-sol azul, 2ª fileira" value="'+esc(GEO.ref||'')+'" oninput="GEO.ref=this.value">'+praiaGpsTxt();
   h+='<label class="l">Observação do pedido (cozinha)</label><input class="inp" id="pObs" maxlength="300"><div class="er" id="pErr"></div>';
   var totC=Math.round((cartTot()+srvVal(cartTot()))*100)/100, hj=cobraHora();
-  folha('Pedido · '+(COM.sm?'Sem mesa':ehSMM(COM.mesa)?smTit(COM.mesa):COM.avulso||ehBalM(COM.mesa)?'Cliente Balcão':[(COM.mesa?(COM.modo==='balcao'?'Balcão ':'Mesa ')+COM.mesa:''),COM.joia].filter(Boolean).join(' · ')),h,'<button class="bt" id="pBt" style="margin:0" onclick="'+(hj?'copoOk(fcEscolher)':'copoOk(enviaPedido)')+'">'+(hj?'Fechar comanda':(COM.avulso?'Finalizar pedido':'Enviar para a cozinha'))+' · '+brl(totC)+'</button>'); foco('#pBt');
+  folha('Pedido · '+(COM.sm?'Sem mesa':ehSMM(COM.mesa)?smTit(COM.mesa):COM.avulso||ehBalM(COM.mesa)?'Cliente Balcão':[(COM.mesa?(COM.modo==='balcao'?'Balcão ':'Mesa ')+COM.mesa:''),COM.joia].filter(Boolean).join(' · ')),h,'<button class="bt" id="pBt" style="margin:0" onclick="'+(hj?'copoOk(fcEscolher)':'copoOk(enviaPedido)')+'">'+(hj?'Fechar comanda':(COM.avulso?'Finalizar pedido':'Enviar para a cozinha'))+' · '+brl(totC)+'</button>'+(PRAIA&&!hj&&!COM.avulso?'<button class="bt s" style="margin:8px 0 0;width:100%" onclick="fotoLocalTirar(\'cart\')">📷 Foto do local</button>':'')); foco('#pBt'); fotoLocalBx();
 }
 /* ── (228) COBRAR NA HORA (opção da loja, no painel em Configurações clientes): o garçom fecha a comanda, escolhe a forma de pagamento,
    mostra o resumo para o cliente e só depois do pagamento aprovado o pedido vai para a cozinha. Cancelar não cria pedido nenhum. ── */
@@ -1041,7 +1038,7 @@ function tiraItem(k){ CART.splice(k,1); if(!CART.length){ fecha(); cartBar(); } 
 function enviaPedido(){
   var b=$('pBt'); b.disabled=true; b.textContent='Enviando…'; $('pErr').textContent=''; var cpE=coposVal();   /* (250) copos */
   api('/painel/atend-pedido',comEnvio({geo:praiaGeo(),modo:COM.modo,mesa:COM.mesa,joia:COM.joia,obs:($('pObs')||{value:''}).value,liberar:COM.liberar,copos:cpE||undefined,itens:CART.map(function(i){ return {p:i.p,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs,qty:i.qty}; })})).then(function(r){
-    if(r.ok){ lpBaixa(r.num); envioOk(); GEO.ref=''; var ped={num:r.num,sub:r.sub||0,mesa:COM.mesa,joia:COM.joia,nome:COM.nome,atend:D.usuario,criado:Date.now(),obs:($('pObs')||{value:''}).value,modo:COM.modo,copos:cpE,l:CART.map(function(i){ return {p:i.p,nome:i.nome,qty:i.qty,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs}; })}; var avulsoP=COM.avulso, smP=COM.sm; CART=[]; COPOS=null; fecha(); cartBar();
+    if(r.ok){ lpBaixa(r.num); envioOk(); if(PRAIA&&(FOTOL.img||(GEO.ref||'').trim())) api('/painel/atend-local-foto',{joia:COM.joia,mesa:COM.mesa,img:FOTOL.img||undefined,obs:(GEO.ref||'').trim()}); FOTOL.img=''; GEO.ref=''; var ped={num:r.num,sub:r.sub||0,mesa:COM.mesa,joia:COM.joia,nome:COM.nome,atend:D.usuario,criado:Date.now(),obs:($('pObs')||{value:''}).value,modo:COM.modo,copos:cpE,l:CART.map(function(i){ return {p:i.p,nome:i.nome,qty:i.qty,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs}; })}; var avulsoP=COM.avulso, smP=COM.sm; CART=[]; COPOS=null; fecha(); cartBar();
       /* venda do balcão sem cliente: já pergunta como o cliente pagou (ou fica em Comandas, se cobrar depois) · (238) garçom sem mesa e sem cliente: igual, com a taxa do garçom */
       if(avulsoP){ toast('Pedido #'+plab(r)+' '+(smP?'enviado para a cozinha':'criado')); zeraComanda(); if(impOn()) imprimeAuto(ped); COMS=[{mesa:r.mesa,joia:'',nome:smP?'Sem mesa':'Cliente Balcão',total:r.total,servico:r.servico||0,pedidos:[],avulso:1}]; fechaForm(0); return; }
       if(window.LiveApp) LiveApp.comemorar({titulo:'Pedido #'+plab(r)+' enviado!',sub:'Já está na cozinha 🍳',ms:1700}); else toast('Pedido #'+plab(r)+' enviado para a cozinha'); zeraComanda(); if(impOn()) imprimeAuto(ped); return; }
@@ -1055,7 +1052,7 @@ function enviaPedido(){
    a distância e uma seta. O garçom corrige o lugar: "Estou aqui com o cliente" ou arrastando o ponto no mapa. */
 var PRAIA=false, GEO={pos:null,watch:null,erro:'',ref:'',head:null}, ENT={lista:[],map:null,cli:null,eu:null,euC:null,cliC:null,c:null,novo:null};
 function praiaAplica(d){
-  PRAIA=!!(d&&d.praia); $('n-ent').classList.toggle('hide',!PRAIA);
+  PRAIA=!!(d&&d.praia); [].forEach.call(document.querySelectorAll('.praia'),function(b){ b.classList.toggle('hide',!PRAIA||(b.classList.contains('praiaG')&&!GEST)); }); if(PRAIA) areaCarrega();
   if(PRAIA&&GEO.watch==null&&navigator.geolocation){
     GEO.watch=navigator.geolocation.watchPosition(function(p){ GEO.pos={lat:p.coords.latitude,lng:p.coords.longitude,acc:p.coords.accuracy,t:Date.now()}; GEO.erro=''; entEu(); entGpsTxt(); },
       function(e){ GEO.erro=e&&e.code===1?'Localização bloqueada: libere no cadeado ao lado do endereço.':'Procurando o GPS…'; entGpsTxt(); },{enableHighAccuracy:true,maximumAge:5000,timeout:20000});
@@ -1079,24 +1076,25 @@ function entPinta(){
   });
   $('lEnt').innerHTML=h||'<p style="color:var(--mu2)">'+(q?'Nada encontrado.':'Nenhuma comanda aberta agora.')+'</p>'; entGpsTxt();
 }
-function entSalva(c,g,msg){ return api('/painel/atend-geo',{joia:c.joia,mesa:c.mesa,lat:g.lat,lng:g.lng,acc:g.acc,ref:g.ref}).then(function(r){ if(r&&r.ok){ c.geo={lat:g.lat,lng:g.lng,acc:g.acc,ref:g.ref||(c.geo&&c.geo.ref)||''}; toast(msg); entPinta(); return true; } toast((r&&r.mensagem)||'Não consegui salvar.'); return false; }); }
+function entSalva(c,g,msg){ return api('/painel/atend-geo',{joia:c.joia,mesa:c.mesa,lat:g.lat,lng:g.lng,acc:g.acc,ref:g.ref}).then(function(r){ if(r&&r.ok){ c.geo={lat:g.lat,lng:g.lng,acc:g.acc,ref:g.ref||(c.geo&&c.geo.ref)||''}; toast(msg); if(ABA==='com') carregaCom(); return true; } toast((r&&r.mensagem)||'Não consegui salvar.'); return false; }); }
 function entAqui(i){ var c=ENT.lista[i]; if(!c) return; var g=praiaGeo(); if(!g){ toast(GEO.erro||'Ainda sem GPS. Espere uns segundos ao ar livre.'); return; } entSalva(c,{lat:g.lat,lng:g.lng,acc:g.acc,ref:''},'Lugar do cliente atualizado ✅'); }
 /* mapa (Leaflet + foto de satélite), carregado só quando abre */
 function entLeaflet(){ if(window.L) return Promise.resolve(); return new Promise(function(ok,no){ var l=document.createElement('link'); l.rel='stylesheet'; l.href='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css'; document.head.appendChild(l); var s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js'; s.onload=ok; s.onerror=no; document.head.appendChild(s); }); }
 function entAbre(i){
-  var c=ENT.lista[i]; if(!c||!c.geo) return; ENT.c=c; ENT.novo=null;
+  var c=ENT.lista[i]; if(!c||!(c.geo||(c.foto&&c.foto.k))) return; ENT.c=c; ENT.novo=null;
   var o=document.createElement('div'); o.id='entMap'; o.style.cssText='position:fixed;inset:0;z-index:3000;background:#111;display:flex;flex-direction:column';
-  o.innerHTML='<div style="position:relative;flex:1;min-height:0"><div id="entMapa" style="position:absolute;inset:0"></div><div id="entFoto" class="hide" style="position:absolute;inset:0;overflow:auto;background:#1b1b1b;-webkit-overflow-scrolling:touch"></div>'
+  o.innerHTML='<div style="position:relative;flex:1;min-height:38vh"><div id="entMapa" style="position:absolute;inset:0"></div><div id="entFoto" class="hide" style="position:absolute;inset:0;overflow:auto;background:#1b1b1b;-webkit-overflow-scrolling:touch"></div>'
     +'<div id="entVis" style="position:absolute;top:12px;left:12px;z-index:900;display:flex;gap:6px"></div><div id="entZoom" class="hide" style="position:absolute;top:12px;right:12px;z-index:900;display:flex;flex-direction:column;gap:6px"><button class="bt s" style="width:46px;height:46px;padding:0;font-size:22px" onclick="areaZoom(1)">+</button><button class="bt s" style="width:46px;height:46px;padding:0;font-size:22px" onclick="areaZoom(-1)">−</button></div></div><div style="background:#fff;border-radius:20px 20px 0 0;padding:14px 16px 18px;box-shadow:0 -8px 30px rgba(0,0,0,.25)">'
     +'<div style="display:flex;align-items:center;gap:14px"><div id="entSeta" style="width:64px;height:64px;flex:none;border-radius:50%;background:#FF5A00;display:flex;align-items:center;justify-content:center;transition:transform .25s"><svg viewBox="0 0 24 24" width="38" height="38" fill="#fff"><path d="M12 2l6 18-6-4-6 4z"/></svg></div>'
-    +'<div style="flex:1;min-width:0"><div id="entDist" style="font-size:28px;font-weight:900;line-height:1.1">…</div><div style="font-size:14px;font-weight:700;color:#555">'+esc(comTit(c)+(c.nome&&c.nome!==comTit(c)?' · '+c.nome:''))+'</div>'+(c.geo.ref?'<div style="font-size:14px;margin-top:2px">📍 '+esc(c.geo.ref)+'</div>':'')+'<div id="entBus" style="font-size:12px;color:#888;margin-top:2px"></div></div></div>'
-    +'<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><button class="bt s" style="flex:1" onclick="entAquiMapa()">📍 Estou aqui com o cliente</button><button class="bt g hide" id="entSalvarB" style="flex:1" onclick="entSalvaArraste()">Salvar novo lugar</button><button class="bt s" onclick="entFecha()">Fechar</button></div>'
+    +'<div style="flex:1;min-width:0"><div id="entDist" style="font-size:28px;font-weight:900;line-height:1.1">…</div><div style="font-size:14px;font-weight:700;color:#555">'+esc(comTit(c)+(c.nome&&c.nome!==comTit(c)?' · '+c.nome:''))+'</div>'+((c.foto&&c.foto.obs)||(c.geo&&c.geo.ref)?'<div style="font-size:14px;margin-top:2px">📍 '+esc((c.foto&&c.foto.obs)||c.geo.ref)+'</div>':'')+'<div id="entBus" style="font-size:12px;color:#888;margin-top:2px"></div></div></div>'
+    +'<div id="entFotoL"></div><div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><button class="bt s" style="flex:1" onclick="entAquiMapa()">📍 Estou aqui com o cliente</button><button class="bt g hide" id="entSalvarB" style="flex:1" onclick="entSalvaArraste()">Salvar novo lugar</button><button class="bt s" onclick="entFecha()">Fechar</button></div>'
     +'<div style="font-size:12px;color:#888;margin-top:8px">Dica: arraste o ponto laranja no mapa para corrigir o lugar do cliente.</div></div>';
-  document.body.appendChild(o); entBussola(); ENT.vista=null;
+  document.body.appendChild(o); entBussola(); ENT.vista=null; fotoLocalMostra(c);
   entVista(AREA.url?'foto':'sat');
 }
 function entVista(v){
   ENT.vista=v; var c=ENT.c; if(!c) return;
+  if(!c.geo){ $('entVis').innerHTML=''; $('entZoom').classList.add('hide'); $('entFoto').classList.add('hide'); $('entMapa').classList.remove('hide'); $('entMapa').innerHTML='<div style="color:#fff;padding:24px;font-size:15px;line-height:1.5">Este pedido não tem localização do GPS.<br>Use a foto do local abaixo, ou toque em "Estou aqui com o cliente" quando chegar até ele.</div>'; return; }
   $('entVis').innerHTML=AREA.url?['foto','sat'].map(function(k){ return '<button class="bt '+(k===v?'g':'s')+' mini" onclick="entVista(\''+k+'\')">'+(k==='foto'?'🏖️ Foto do espaço':'🛰️ Satélite')+'</button>'; }).join(''):'';
   $('entFoto').classList.toggle('hide',v!=='foto'); $('entMapa').classList.toggle('hide',v!=='sat'); $('entZoom').classList.toggle('hide',v!=='foto');
   if(v==='foto'){ areaPinta(true); entEu(); return; }
@@ -1197,17 +1195,53 @@ function entBussola(){
 function entAquiMapa(){ var g=praiaGeo(); if(!g){ toast(GEO.erro||'Ainda sem GPS.'); return; } entSalva(ENT.c,{lat:g.lat,lng:g.lng,acc:g.acc,ref:''},'Lugar do cliente atualizado ✅').then(function(ok){ if(ok) entFecha(); }); }
 function entSalvaArraste(){ if(!ENT.novo) return; entSalva(ENT.c,{lat:ENT.novo.lat,lng:ENT.novo.lng,acc:5,ref:''},'Novo lugar salvo ✅').then(function(ok){ if(ok){ ENT.novo=null; $('entSalvarB').classList.add('hide'); } }); }
 function entFecha(){ if(ENT.bf){ window.removeEventListener('deviceorientationabsolute',ENT.bf,true); window.removeEventListener('deviceorientation',ENT.bf,true); ENT.bf=null; } GEO.head=null; if(ENT.map){ try{ ENT.map.remove(); }catch(e){} } ENT.map=null; ENT.eu=null; ENT.euC=null; ENT.cli=null; ENT.vista=null; var o=$('entMap'); if(o) o.remove(); }
+/* ── (279) entrega na praia dentro da comanda: localização, foto do local e bipar o pedido impresso ── */
+var FOTOL={img:''};
+function entAbreC(c){ if(!c) return; var i=COMS.indexOf(c); ENT.lista=COMS; if(i<0){ ENT.lista=[c]; i=0; } entAbre(i); }
+function comPorPedido(cod){ var n=String(cod||'').trim().split('-')[0].replace(/\D/g,''); if(!n) return null; for(var i=0;i<COMS.length;i++){ if(COMS[i].pedidos.some(function(p){ return String(p.num)===n; })) return COMS[i]; } return null; }
+function comBipar(){
+  if(!window.Bipador){ var v=prompt('Número do pedido impresso:'); var c0=comPorPedido(v); if(c0) entAbreC(c0); else if(v) toast('Pedido '+v+' não está em nenhuma comanda aberta.'); return; }
+  Bipador.abrir({titulo:'Bipar pedido impresso',dica:'Aponte a câmera para o código de barras do pedido. Leitor USB também funciona.',aoLer:function(cod,fechar){ var c=comPorPedido(cod); if(!c) return false; fechar(); setTimeout(function(){ if(c.geo||(c.foto&&c.foto.k)) entAbreC(c); else toast((comTit(c)||'Comanda')+': sem localização. Toque em "Estou aqui" ao chegar no cliente.'); },120); return true; }});
+}
+function locHtml(c,i){
+  if(!PRAIA) return ''; var g=c.geo, f=c.foto&&c.foto.k?c.foto:null, obs=(c.foto&&c.foto.obs)||(g&&g.ref)||'', dist=g&&GEO.pos?geoM(geoDist(GEO.pos,g)):'';
+  return '<div style="margin-top:8px;padding:9px 10px;border-radius:12px;background:'+(g||f?'#F0FDF4':'#FFF7ED')+';font-size:13px"><div style="font-weight:800;color:'+(g||f?'#15803D':'#B45309')+'">'+(g?'📍 Localização gravada'+(dist?' · '+dist:''):'📍 Sem localização')+(f?' · 📷 com foto':'')+'</div>'+(obs?'<div style="margin-top:2px">'+esc(obs)+'</div>':'')
+    +'<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">'+(g||f?'<button class="bt g mini" onclick="entAbreC(COMS['+i+'])">🧭 Localizar</button>':'')+'<button class="bt s mini" onclick="ENT.lista=COMS;entAqui('+i+')">📍 Estou aqui</button><button class="bt s mini" onclick="fotoLocalTirar(\'com\','+i+')">📷 Foto do local</button></div></div>';
+}
+function fotoReduz(f){ return new Promise(function(ok,no){ var u=URL.createObjectURL(f), im=new Image(); im.onload=function(){ var m=Math.max(im.width,im.height), k=Math.min(1,1280/m), cv=document.createElement('canvas'); cv.width=Math.round(im.width*k); cv.height=Math.round(im.height*k); cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height); URL.revokeObjectURL(u); ok(cv.toDataURL('image/jpeg',0.8)); }; im.onerror=no; im.src=u; }); }
+function fotoLocalTirar(destino,i){
+  var inp=document.createElement('input'); inp.type='file'; inp.accept='image/*'; inp.setAttribute('capture','environment');
+  inp.onchange=function(){ var f=inp.files&&inp.files[0]; if(!f) return; fotoReduz(f).then(function(d){ if(destino==='cart'){ FOTOL.img=d; fotoLocalBx(); toast('📷 Foto do local pronta'); } else fotoLocalFolha(COMS[i],d); },function(){ toast('Não consegui abrir a foto.'); }); };
+  inp.click();
+}
+function fotoLocalBx(){ var b=$('pFotoBx'); if(!b) return; b.innerHTML=FOTOL.img?'<div style="display:flex;gap:10px;align-items:center;margin:4px 0 10px;padding:8px;border-radius:12px;background:#F0FDF4"><img src="'+FOTOL.img+'" style="width:78px;height:78px;object-fit:cover;border-radius:10px"><div style="flex:1;font-size:13px;font-weight:700;color:#15803D">📷 Foto do local pronta. Vai junto com o pedido.</div><button class="bt s mini" onclick="FOTOL.img=\'\';fotoLocalBx()">Tirar</button></div>':''; }
+function fotoLocalFolha(c,img){
+  if(!c) return; ENT.fl={c:c,img:img};
+  folha('📷 Foto do local · '+comTit(c),'<img src="'+img+'" style="width:100%;max-height:46vh;object-fit:cover;border-radius:14px;display:block"><label class="l" style="margin-top:12px">Observação do local (opcional)</label><input class="inp" id="flObs" maxlength="200" placeholder="Ex.: guarda-sol azul, 2ª fileira" value="'+esc((c.foto&&c.foto.obs)||(c.geo&&c.geo.ref)||'')+'">',
+    '<button class="bt" id="flBt" style="margin:0" onclick="fotoLocalSalva()">Salvar foto</button>');
+}
+function fotoLocalSalva(){ var F=ENT.fl; if(!F) return; var b=$('flBt'); b.disabled=true; b.textContent='Salvando…';
+  api('/painel/atend-local-foto',{joia:F.c.joia,mesa:F.c.mesa,img:F.img,obs:$('flObs').value}).then(function(r){ if(r&&r.ok){ fecha(); toast('Foto do local salva ✅'); ENT.fl=null; carregaCom(); return; } b.disabled=false; b.textContent='Salvar foto'; toast((r&&r.mensagem)||'Não consegui salvar.'); }); }
+var FOTOC={};
+function fotoLocalMostra(c){
+  var bx=$('entFotoL'); if(!bx||!c.foto||!c.foto.k) return; var k=c.foto.k;
+  var pinta=function(u){ if(!$('entFotoL')) return; setTimeout(function(){ if(ENT.map){ try{ ENT.map.invalidateSize(); }catch(e){} entEu(true); } else if(ENT.vista==='foto') areaPinta(true); },60); $('entFotoL').innerHTML='<img src="'+u+'" onclick="fotoGrande(this.src)" style="width:100%;max-height:22vh;object-fit:cover;border-radius:14px;margin-top:10px;display:block;cursor:zoom-in" alt="Foto do local">'; };
+  if(FOTOC[k]){ pinta(FOTOC[k]); return; }
+  bx.innerHTML='<div style="font-size:13px;color:#888;margin-top:10px">Carregando a foto do local…</div>';
+  fetch(API+'/painel/atend-local-foto?k='+encodeURIComponent(k),{headers:{'Authorization':'Bearer '+TK}}).then(function(r){ return r.ok?r.blob():null; }).then(function(b){ if(!b){ bx.innerHTML=''; return; } FOTOC[k]=URL.createObjectURL(b); pinta(FOTOC[k]); }).catch(function(){ bx.innerHTML=''; });
+}
+function fotoGrande(src){ var o=document.createElement('div'); o.style.cssText='position:fixed;inset:0;z-index:3500;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;padding:12px'; o.innerHTML='<img src="'+src+'" style="max-width:100%;max-height:100%;border-radius:12px">'; o.onclick=function(){ o.remove(); }; document.body.appendChild(o); }
 /* ── comandas em aberto + fechamento ── */
 var COMS=[];
 function carregaCom(){
   api('/painel/atend-comandas').then(function(d){
     if(d._h===401){ mostraLogin('Entre de novo.'); return; } if(!d.ok){ $('lCom').innerHTML='<p>'+esc(d.mensagem||'Erro')+'</p>'; return; }
-    COMS=d.comandas||[]; OPENL=COMS.filter(function(c){ return c.mesa&&c.joia; }); OPENH=d.hoje||OPENH; var h='';
+    COMS=d.comandas||[]; ENT.lista=COMS; OPENL=COMS.filter(function(c){ return c.mesa&&c.joia; }); OPENH=d.hoje||OPENH; var h='';
     COMS.forEach(function(c,i){
       var t=comTit(c)+(c.joia?(c.mesa?' · ':'')+pill(c.joia):'');
       h+='<div class="cm" id="cm'+i+'"><div class="h"><div><b>'+t+'</b><div style="font-size:12.5px;color:var(--mu2)">'+esc(c.nome||'')+'</div></div><span class="v">'+brl(c.total)+'</span></div>'+(c.pedidos.length&&c.pedidos[0].sub?'<div style="font-size:12px;font-weight:800;color:var(--mu2);margin-top:6px">PEDIDO #'+c.pedidos[0].num+'</div>':'')+'<div class="pd">'+c.pedidos.map(function(p,k){ return '<div class="pr"><div class="ph"><span><b>#'+plab(p)+'</b> · '+new Date(p.criado).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+(p.atend?' · '+esc(p.atend):'')+'</span><button onclick="reimp('+i+','+k+')" title="Imprimir">🖨</button></div>'+String(p.itens||'').split('; ').map(function(t){ return '<div class="pi">'+esc(t)+'</div>'; }).join('')+'</div>'; }).join('')+'</div>'
         +(c.servico>0?'<div style="display:flex;justify-content:space-between;font-size:13px;color:var(--mu2);margin-top:6px"><span>Serviço do garçom</span><b>'+brl(c.servico)+'</b></div>':'')
-        +'<div class="ac"><button class="bt s" onclick="ativaComanda(COMS['+i+'])">+ Pedido</button><button class="bt s" onclick="trocaForm('+i+')">Trocar mesa</button><button class="bt g" onclick="fechaForm('+i+')">Fechar conta</button></div></div>';
+        +locHtml(c,i)+'<div class="ac"><button class="bt s" onclick="ativaComanda(COMS['+i+'])">+ Pedido</button><button class="bt s" onclick="trocaForm('+i+')">Trocar mesa</button><button class="bt g" onclick="fechaForm('+i+')">Fechar conta</button></div></div>';
     });
     $('lCom').innerHTML=cobraHora()?(h?'<div class="sec" style="margin-top:22px">Comandas ainda abertas</div>'+h:''):(h||'<p style="color:var(--mu2)">Nenhuma comanda aberta agora.</p>'); achaPed();   /* (239) cobrar na hora: só mostra se ainda houver alguma aberta */
   });
