@@ -749,6 +749,26 @@ function salvarNovoCliente(){
     fechar();toast('Cliente criado!');recarregar();
   }).catch(function(){el('nc-btn').disabled=false;});
 }
+/* (276) tira do painel da loja os dados que vieram de outra conta: pedidos ANTES de uma data (padrão: criação da conta) e, se marcar, os cadastros */
+function limparPainelPrevia(id, ate, est){
+  var r=el('lp-res'); r.innerHTML='Consultando…';
+  chamar('POST','/admin/clientes/'+encodeURIComponent(id)+'/limpar-painel',{ate:ate||'',est:!!est}).then(function(d){
+    if(!d||!d.ok){ r.textContent=(d&&d.mensagem)||'Não foi possível consultar.'; return; }
+    var dias=Object.keys(d.resumo.dias).sort(), cad=Object.keys(d.resumo.cadastros);
+    r.innerHTML='Conta criada em <b>'+esc(d.criada_em||'?')+'</b>. Saem os pedidos antes de <input type="date" id="lp-ate" value="'+esc(d.apagar_antes_de)+'" style="width:auto;padding:4px 8px" onchange="limparPainelPrevia(\''+esc(id)+'\',this.value,el(\'lp-est\').checked)">.<br>'+
+      '<b>'+d.resumo.pedidos+' pedido(s)</b> em '+dias.length+' dia(s)'+(dias.length?' ('+esc(dias[0])+' a '+esc(dias[dias.length-1])+')':'')+'.<br>'+
+      '<label style="display:flex;align-items:center;gap:8px;margin:6px 0"><input type="checkbox" id="lp-est" style="width:auto"'+(est?' checked':'')+' onchange="limparPainelPrevia(\''+esc(id)+'\',el(\'lp-ate\').value,this.checked)"> Tirar também os cadastros do painel (motoristas, extrato, áreas…)</label>'+
+      (est?'Cadastros que saem: '+(cad.length?cad.map(function(k){ return esc(k)+' ('+d.resumo.cadastros[k]+')'; }).join(', '):'nenhum')+'<br>':'')+
+      ((d.resumo.pedidos||cad.length)?'<button type="button" class="btn peq" style="background:#B91C1C;color:#fff;margin-top:6px" onclick="limparPainelRodar(\''+esc(id)+'\')">Tirar esses dados</button>':'<b>Nada para tirar.</b>');
+  }).catch(function(){ r.textContent='Sem conexão.'; });
+}
+function limparPainelRodar(id){
+  var ate=el('lp-ate').value, est=el('lp-est').checked;
+  if(!confirm('Tirar do painel desta loja os pedidos antes de '+ate+(est?' e os cadastros':'')+'?\n\nFica uma cópia de segurança.')) return;
+  chamar('POST','/admin/clientes/'+encodeURIComponent(id)+'/limpar-painel',{ate:ate,est:est,rodar:true}).then(function(d){
+    el('lp-res').innerHTML=d&&d.ok?'✅ Pronto: '+d.resumo.pedidos+' pedido(s) tirados'+(est?' e os cadastros':'')+'. Peça para a loja atualizar o painel (Ctrl+Shift+R).':esc((d&&d.mensagem)||'Não deu.');
+  }).catch(function(){ el('lp-res').textContent='Sem conexão.'; });
+}
 function abrirCliente(id){
   var c=CLIENTES.filter(function(x){return x.id===id;})[0]; if(!c) return;
   abrirModal('<h3>'+esc(c.nome)+'</h3><p class="sub">'+esc(c.id)+'</p>'+
@@ -762,6 +782,7 @@ function abrirCliente(id){
   (function(){ var filhas=CLIENTES.filter(function(x){ return x.grupo===c.id; }); var ops=CLIENTES.filter(function(x){ return x.id!==c.id&&!x.grupo; });   /* (269) grupo de lojas */
     return '<label style="margin-top:14px">Faz parte do grupo de (outra loja da mesma empresa)</label>'+(filhas.length?'<p class="sub" style="margin:4px 0 0"><b>Conta principal</b> das lojas: '+filhas.map(function(f){ return esc(f.nome); }).join(', ')+'.</p><input type="hidden" id="ec-grupo" value="">':
       '<select id="ec-grupo"><option value="">— nenhum (loja independente) —</option>'+ops.map(function(x){ return '<option value="'+esc(x.id)+'"'+(c.grupo===x.id?' selected':'')+'>'+esc(x.nome)+'</option>'; }).join('')+'</select><p class="sub" style="margin:4px 0 0">Ex.: o Restaurante faz parte do grupo da Padaria. As lojas do grupo usam um LivePro só (o da principal), e o dono troca de loja pelo Hub, Painel e Atendimento. Cada loja continua com o próprio cardápio, link e pedidos.</p>'); })()+
+  '<div style="margin-top:14px;padding:12px;border:1px solid #F3D9C9;border-radius:12px;background:#FFF8F3"><b style="font-size:14px">Dados de outra conta no painel?</b><p class="sub" style="margin:4px 0 8px">Se o painel desta loja mostra pedidos ou cadastros de outra conta (vieram de um navegador usado por outra loja), tire aqui. Fica uma cópia de segurança.</p><button type="button" class="btn peq" onclick="limparPainelPrevia(\''+esc(c.id)+'\')">Ver o que sairia</button><div id="lp-res" class="sub" style="margin-top:8px"></div></div>'+
   '<div class="linha2"><div><label>Dia do vencimento (1 a 31)</label><input id="ec-dia" inputmode="numeric" maxlength="2" value="'+esc(c.dia_venc||10)+'"></div><div></div></div>'+
   '<div class="erro" id="ec-erro"></div>'+
   '<div class="acoes" style="margin-top:10px;justify-content:space-between"><button class="btn peq '+(c.ativo?'perigo':'')+'" onclick="alternarCliente(\''+esc(c.id)+'\','+(c.ativo?0:1)+')">'+(c.ativo?'Desativar cliente':'Reativar cliente')+'</button><button class="btn pri" onclick="salvarCliente(\''+esc(c.id)+'\')">Salvar dados</button></div>'+
