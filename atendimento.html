@@ -315,7 +315,7 @@ label.l.big{font-size:14px;margin-top:16px}
 </div>
 
 <div id="app" class="hide">
-  <div id="top"><div style="flex:1;min-width:0;display:flex;align-items:center;gap:12px"><b id="emp" style="flex:none">Atendimento</b><small id="usu"></small></div><!-- "Atender via mapa" (mpAbre) fora do ar enquanto evolui; o código do mapa continua abaixo --><span style="font-size:10px;color:#9a8f86;font-weight:700;margin-right:8px;white-space:nowrap">ATEND-47</span><a class="bt-hub" href="hub.html" title="Voltar ao Hub"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Hub</a><button onclick="sair()">Sair</button></div>
+  <div id="top"><div style="flex:1;min-width:0;display:flex;align-items:center;gap:12px"><b id="emp" style="flex:none">Atendimento</b><small id="usu"></small></div><!-- "Atender via mapa" (mpAbre) fora do ar enquanto evolui; o código do mapa continua abaixo --><span style="font-size:10px;color:#9a8f86;font-weight:700;margin-right:8px;white-space:nowrap">ATEND-48</span><a class="bt-hub" href="hub.html" title="Voltar ao Hub"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Hub</a><button onclick="sair()">Sair</button></div>
   <div id="chip" class="hide"><div class="t"><b id="chipT"></b><small id="chipS"></small></div><button onclick="trocaComanda()">Trocar</button></div>
 
   <!-- PEDIDO -->
@@ -398,8 +398,12 @@ function sair(){ try{ localStorage.removeItem(dadosChave()); }catch(e){} mostraL
 /* (abre rápido) o cardápio, os clientes e a configuração ficam guardados no celular: a tela abre na hora com a cópia e se atualiza por trás.
    O servidor confere tudo de novo ao enviar o pedido (preço, bloqueio do cliente, mesa), então a cópia nunca grava nada errado. */
 function dadosChave(){ var u=null; try{ u=JSON.parse(localStorage.getItem('dd_user')||'null'); }catch(e){} return 'at_dados_'+((u&&(u.id||u.email))||''); }
-function dadosGuardados(){ try{ var x=JSON.parse(localStorage.getItem(dadosChave())||'null'); if(x&&x.d&&x.d.ok&&Date.now()-x.t<20*3600000) return x.d; }catch(e){} return null; }
-function dadosGuarda(d){ try{ localStorage.setItem(dadosChave(),JSON.stringify({t:Date.now(),d:d})); }catch(e){ try{ localStorage.removeItem(dadosChave()); }catch(e2){} } }
+function dadosGuardados(){ try{ var x=JSON.parse(localStorage.getItem(dadosChave())||'null'); if(x&&x.d&&x.d.ok&&Date.now()-x.t<20*3600000) return x.d; }catch(e){}
+  /* (282) primeira vez deste usuário neste aparelho: usa o cardápio da mesma loja guardado por outro usuário (o nome e o perfil vêm do login) */
+  try{ var u=JSON.parse(localStorage.getItem('dd_user')||'null'), y=u&&u.cliente_id?JSON.parse(localStorage.getItem('at_dados_cli_'+u.cliente_id)||'null'):null;
+    if(y&&y.d&&y.d.ok&&Date.now()-y.t<20*3600000){ var d=JSON.parse(JSON.stringify(y.d)); d.usuario=u.nome||''; d.gestor=/^(dono|gerente|master)$/.test(String(u.perfil||'')); return d; } }catch(e){}
+  return null; }
+function dadosGuarda(d){ try{ localStorage.setItem(dadosChave(),JSON.stringify({t:Date.now(),d:d})); if(d&&d.cli) localStorage.setItem('at_dados_cli_'+d.cli,JSON.stringify({t:Date.now(),d:d})); }catch(e){ try{ localStorage.removeItem(dadosChave()); }catch(e2){} } }
 function prontoTela(){ try{ window.LiveApp&&LiveApp.pronto(); }catch(e){} }
 function inicio(){
   if(!TK){ mostraLogin(''); prontoTela(); return; }
@@ -526,8 +530,14 @@ function mostraMapaBtn(){ var b=$('bMapa'), tem=!!(D&&D.mesas&&D.mesas.length&&C
 }
 /* (159) as mesas ficam guardadas: a lista abre na hora e a cor de cada uma se atualiza logo depois */
 var MZC=null, MZ_SEGUE=false;
-function mzBusca(){ return api('/painel/atend-mesas').then(function(d){ if(d&&d.ok) MZC=d.mesas||[]; return d; }); }
-function mzLista(){ return MZC||((D&&D.mesas)||[]).map(function(n){ return {num:n,oc:0}; }); }
+function mzBusca(){ return api('/painel/atend-mesas').then(function(d){ if(d&&d.ok){ MZC=d.mesas||[]; try{ localStorage.setItem('at_mesas_'+CLI,JSON.stringify(MZC)); }catch(e){} } return d; }); }
+/* (282) a grade abre na hora já com as ocupadas: mesas guardadas + comandas abertas guardadas; o servidor confirma logo depois */
+function mzLista(){
+  if(!MZC){ try{ MZC=JSON.parse(localStorage.getItem('at_mesas_'+CLI)||'null'); }catch(e){} }
+  var l=(MZC||((D&&D.mesas)||[]).map(function(n){ return {num:n,oc:0}; })).map(function(m){ return {num:m.num,oc:m.oc}; }), oc={};
+  ((comGuardada()||{}).comandas||[]).forEach(function(c){ if(c.mesa) oc[String(c.mesa)]=1; });
+  l.forEach(function(m){ if(oc[String(m.num)]) m.oc=1; }); return l;
+}
 function mzGrade(l){ return '<div class="mlg"><span><i style="background:var(--pri)"></i>Livre</span><span><i style="background:#16A34A"></i>Comanda aberta</span></div><div class="mz">'+l.map(function(m){ return '<button class="mb'+(m.oc?' oc':'')+'" onclick="pegaMesa(\''+esc(m.num)+'\')">'+esc(m.num)+'</button>'; }).join('')+'</div>'; }
 function abreMapa(segue){
   MZ_SEGUE=segue===true; MZ_TROCA=null; var l=mzLista(), tok=MZ_ABRE=(MZ_ABRE||0)+1; carregaAbertas();
@@ -1304,7 +1314,7 @@ function carregaCom(){
     if(JSON.stringify(d.comandas||[])===COMSIG) return; comPinta(d);
   });
 }
-setInterval(function(){ try{ if(TK&&D&&ABA!=='com') comBusca(); }catch(e){} },20000);
+setInterval(function(){ try{ if(TK&&D&&ABA!=='com') comBusca(); if(TK&&D&&D.mesas&&D.mesas.length) mzBusca(); }catch(e){} },20000);
 function comPinta(d){
     COMSIG=JSON.stringify(d.comandas||[]);
     COMS=d.comandas||[]; ENT.lista=COMS; OPENL=COMS.filter(function(c){ return c.mesa&&c.joia; }); OPENH=d.hoje||OPENH; var h='';
