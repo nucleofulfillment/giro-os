@@ -9151,7 +9151,7 @@ function msPintar(){
   h+='<div style="font-weight:800;font-size:13.5px;margin:12px 0 6px">🍽️ Pedidos das mesas</div>';
   if(!MS.ped.length) h+='<div style="border:1px dashed var(--border);border-radius:12px;padding:14px;font-size:13px;color:var(--muted)">Nenhum pedido de mesa em andamento.</div>';
   MS.ped.forEach(function(x){
-    var st=x.fase==='preparo'?['Em preparo','#f59e0b']:(x.fase==='rota'?['Pronto','#22c55e']:['Novo','#ef4444']), pg=x.status==='pago'?(x.pagto==='pix'?'Pago no Pix':x.pagto==='dinheiro'?'Pago em dinheiro':x.pagto==='cartao'?'Pago no cartão':x.pagto==='racha'?'Conta rachada':x.pagto==='misto'?'Pago dividido'+(x.partes?': '+pgPartesTxt(x.partes):''):'Pago'):(x.status==='marcado'?'Pendurado (conta do cliente)':x.pagto==='conta'?'Na conta da mesa':x.pagto==='caixa'?'Pagar no caixa (cartão ou dinheiro)':'Pago no Pix');
+    var st=x.fase==='preparo'?['Em preparo','#f59e0b']:(x.fase==='rota'?['Pronto','#22c55e']:['Novo','#ef4444']), pg=x.status==='pago'?(x.pagto==='pix'?'Pago no Pix':x.pagto==='dinheiro'?'Pago em dinheiro':x.pagto==='cartao'?'Pago no cartão':x.pagto==='racha'?'Conta rachada':x.pagto==='cartao_cliente'?'Pago com o cartão do cliente':x.pagto==='misto'?'Pago dividido'+(x.partes?': '+pgPartesTxt(x.partes):''):'Pago'):(x.status==='marcado'?'Pendurado (conta do cliente)':x.pagto==='conta'?'Na conta da mesa':x.pagto==='caixa'?'Pagar no caixa (cartão ou dinheiro)':'Pago no Pix');
     var bt=x.fase===''?'<button class="btn pri sm" type="button" onclick="msFase(\''+esc(x.id)+'\',\'preparo\')">Começar preparo</button>':(x.fase==='preparo'?'<button class="btn pri sm" type="button" onclick="msFase(\''+esc(x.id)+'\',\'rota\')">Pronto</button>':'');   /* (240) Pronto não pede mais "Servido" */
     h+='<div style="border:1px solid var(--border);border-radius:12px;padding:10px;margin-bottom:10px"><div style="display:flex;align-items:center;gap:8px"><b style="font-size:15px">'+msLocal(x.mesa)+'</b><span style="font-size:12px;color:var(--muted)">#'+x.num+' · '+msHora(x.criado)+'</span><span style="margin-left:auto;font-size:11.5px;font-weight:800;color:#fff;background:'+st[1]+';border-radius:10px;padding:2px 9px">'+st[0]+'</span></div><div style="font-size:13.5px;margin:6px 0;line-height:1.45">'+esc(x.itens)+'</div>'+(x.atend?'<div style="font-size:12px;font-weight:700;color:var(--muted2);margin-bottom:4px">Garçom: '+esc(x.atend)+(x.cli?' · Cliente: '+esc(x.cli)+' ('+esc(x.joia)+')':'')+'</div>':'')+(x.obs?'<div style="font-size:12.5px;color:#f59e0b;margin-bottom:6px">Obs: '+esc(x.obs)+'</div>':'')+'<div style="display:flex;align-items:center;gap:8px"><span style="font-size:12.5px;color:var(--muted);flex:1">'+pg+' · '+moeda(x.total)+'</span>'+bt+'</div></div>'; });
   el('cd-imp-corpo').innerHTML=h;
@@ -9190,8 +9190,8 @@ function clAbrir(j){
   var s=CL.lista.filter(function(x){ return String(x.joia)===String(j); })[0]; if(!s) return;
   el('sh-cli').querySelector('h3').textContent='Cliente '+s.joia+' · '+s.nome;
   var st=s.bloqueado?'<div style="background:#fdecec;color:#b91c1c;border-radius:10px;padding:9px 12px;font-weight:700;margin-bottom:12px">⛔ Bloqueado por cobrança vencida · deve '+moeda(s.devendo)+'</div>':(s.devendo>0?'<div style="background:#fff4db;color:#92580a;border-radius:10px;padding:9px 12px;font-weight:700;margin-bottom:12px">Deve '+moeda(s.devendo)+'</div>':'');
-  el('cl-corpo').innerHTML=st+clForm(s,false)+'<div style="font-weight:800;margin:20px 0 8px">Pedidos do cliente</div><div id="cl-hist" style="color:var(--muted);font-size:13px">Carregando…</div>';
-  abrir('sh-cli');
+  el('cl-corpo').innerHTML=st+clForm(s,false)+'<div style="font-weight:800;margin:20px 0 8px">💳 Cartão do cliente</div><div id="cl-cart"></div><div style="font-weight:800;margin:20px 0 8px">Pedidos do cliente</div><div id="cl-hist" style="color:var(--muted);font-size:13px">Carregando…</div>';
+  abrir('sh-cli'); ccCarregar(j);
   clApi('/painel/atend-cliente?joia='+encodeURIComponent(j)).then(function(d){
     var b=el('cl-hist'); if(!b) return; if(!d||!d.ok){ b.textContent=(d&&d.mensagem)||'Sem histórico.'; return; }
     var ps=d.pedidos||[]; if(!ps.length){ b.textContent='Nenhum pedido ainda.'; return; }
@@ -9207,6 +9207,78 @@ function clSalvar(novo){
   if(novo&&CL.lista.some(function(x){ return String(x.joia)===String(b.joia); })){ er.textContent='Já existe um cliente com esse número.'; return; }
   clApi('/painel/atend-socio-salvar',b).then(function(d){ if(!d||!d.ok) throw new Error((d&&d.mensagem)||'Não salvou'); fecharTudo(); aviso(novo?'Cliente cadastrado':'Cliente atualizado'); clCarregar(); })
   .catch(function(e){ er.textContent=e.message||'Não salvou'; });
+}
+/* ── (276) CARTÃO DO CLIENTE (NFC/RFID) na ficha do cliente: cadastrar, recarregar, bloquear e ver o extrato.
+   O cartão só identifica (o número de série); o saldo fica no servidor. Nada grava ao mexer: só nos botões Salvar/Confirmar. ── */
+var CC={lista:[],cfg:{pre:0,pos:0,limite:0},joia:''};
+var CC_FORMAS=[['dinheiro','Dinheiro'],['pix','Pix'],['credito','Cartão de crédito'],['debito','Cartão de débito']];
+function ccNum(s){ s=String(s==null?'':s).replace(/[^\d,.]/g,''); if(s.indexOf(',')>=0) s=s.replace(/\./g,'').replace(',','.'); var v=parseFloat(s); return v>0?Math.round(v*100)/100:0; }
+function ccFinal(u){ u=String(u||''); return u.length>6?'…'+u.slice(-6):u; }
+function ccOpcoes(){ return CC_FORMAS.map(function(f){ return '<option value="'+f[0]+'">'+f[1]+'</option>'; }).join(''); }
+function ccCarregar(j){
+  CC.joia=String(j); var b=el('cl-cart'); if(!b) return; b.innerHTML='<div style="color:var(--muted);font-size:13px">Carregando…</div>';
+  clApi('/painel/atend-cartao-lista').then(function(d){
+    if(!d||!d.ok) throw new Error((d&&d.mensagem)||(d&&d.erro==='rota_nao_encontrada'?'Publique o Worker 276 para usar os cartões.':'Não carregou os cartões.'));
+    CC.lista=d.cartoes||[]; CC.cfg=d.cfg||CC.cfg; ccPintar();
+  }).catch(function(e){ var b2=el('cl-cart'); if(b2) b2.innerHTML='<div style="color:var(--muted);font-size:13px">'+esc(e.message||'Não carregou os cartões.')+'</div>'; });
+}
+function ccPintar(){
+  var b=el('cl-cart'); if(!b) return; try{ if(CC.ctl){ CC.ctl.abort(); CC.ctl=null; } }catch(e){}
+  var meus=CC.lista.filter(function(c){ return String(c.joia)===CC.joia; }), h='';
+  meus.forEach(function(c){
+    var pre=c.modo==='pre', u=esc(c.uid), bl=c.ativo?'':' <span style="color:#fff;background:#ef4444;border-radius:10px;padding:2px 8px;font-size:11px;font-weight:800">Bloqueado</span>';
+    h+='<div style="border:1px solid var(--border);border-radius:12px;padding:10px;margin-bottom:8px"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><b>'+(pre?'Com crédito':'Paga no final')+'</b>'+bl+'<span style="font-size:12px;color:var(--muted)">cartão '+esc(ccFinal(c.uid))+'</span><span style="margin-left:auto;font-weight:800;font-size:15px">'+(pre?moeda(c.saldo):(c.limite>0?'limite '+moeda(c.limite):'limite da loja'))+'</span></div>'
+     +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">'+(pre&&c.ativo?'<button class="btn pri sm" type="button" onclick="ccRecForm(\''+u+'\')">Recarregar</button>':'')+'<button class="btn sec sm" type="button" onclick="ccExtrato(\''+u+'\')">Extrato</button><button class="btn sec sm" type="button" onclick="ccAtivo(\''+u+'\','+(c.ativo?0:1)+')">'+(c.ativo?'Bloquear':'Desbloquear')+'</button></div><div id="cc-x-'+u+'"></div></div>'; });
+  if(!meus.length) h+='<div style="font-size:13px;color:var(--muted);margin-bottom:8px">Este cliente ainda não tem cartão.</div>';
+  h+=(CC.cfg.pre||CC.cfg.pos)?'<button class="btn pri wide" type="button" onclick="ccNovoForm()">Cadastrar cartão</button>':'<div style="font-size:12.5px;color:var(--muted)">Para cadastrar cartão, ligue o cartão do cliente em Configurações › Formas de pagamento.</div>';
+  b.innerHTML=h;
+}
+function ccNovoForm(){
+  var b=el('cl-cart'), c=CC.cfg, op=function(v,t){ return '<option value="'+v+'">'+t+'</option>'; }, lb='font-size:12px;color:var(--muted)';
+  b.innerHTML='<div style="border:1px solid var(--border);border-radius:12px;padding:12px">'
+   +'<label style="'+lb+'">Tipo de cartão</label><select class="inp" id="cc-modo" onchange="ccModo()" style="margin-bottom:10px">'+(c.pre?op('pre','Com crédito (o cliente recarrega)'):'')+(c.pos?op('pos','Paga no final (consome e fecha a conta)'):'')+'</select>'
+   +'<label style="'+lb+'">Cartão</label><div style="display:flex;gap:6px;margin-bottom:10px"><input class="inp" id="cc-uid" placeholder="Aproxime do leitor USB ou digite o número" autocomplete="off" style="margin:0;flex:1">'+(('NDEFReader' in window)?'<button class="btn sec sm" type="button" onclick="ccLerNfc(\'cc-uid\')">Ler no celular</button>':'')+'</div>'
+   +'<div id="cc-pre"><label style="'+lb+'">Crédito inicial (R$)</label><input class="inp" id="cc-sal" inputmode="decimal" placeholder="0,00" style="margin-bottom:10px"><label style="'+lb+'">Como o cliente pagou</label><select class="inp" id="cc-forma" style="margin-bottom:10px">'+ccOpcoes()+'</select></div>'
+   +'<div id="cc-pos" style="display:none"><label style="'+lb+'">Limite deste cartão (R$) · vazio = limite da loja</label><input class="inp" id="cc-lim" inputmode="decimal" style="margin-bottom:10px"></div>'
+   +'<div id="cc-erro" style="color:var(--red);font-size:12.5px;margin-bottom:6px"></div><div style="display:flex;gap:8px"><button class="btn pri" style="flex:1" type="button" onclick="ccSalvar()">Salvar cartão</button><button class="btn sec" type="button" onclick="ccPintar()">Cancelar</button></div></div>';
+  ccModo();
+  if('NDEFReader' in window) ccLerNfc('cc-uid');   /* já deixa o leitor ligado: com ele ligado o Chrome segura o toque e o Android não abre uma aba em branco */
+}
+function ccModo(){ var m=el('cc-modo'); if(!m) return; el('cc-pre').style.display=m.value==='pre'?'':'none'; el('cc-pos').style.display=m.value==='pos'?'':'none'; }
+/* o Chrome do Android lê o número de série do cartão (NTAG, MIFARE) pelo NFC; no computador use o leitor USB (digita o número) */
+function ccLerNfc(id){
+  if(!('NDEFReader' in window)){ aviso('Este aparelho não lê NFC pelo navegador. Use o Chrome no Android ou um leitor USB.'); return; }
+  try{ if(CC.ctl) CC.ctl.abort(); }catch(e){}
+  var ctl=new AbortController(), rd=new NDEFReader(); CC.ctl=ctl;
+  rd.onreading=function(ev){ var i=el(id); if(i) i.value=ev.serialNumber||''; ctl.abort(); CC.ctl=null; aviso('Cartão lido'); };
+  rd.onreadingerror=function(){ aviso('Não consegui ler. Encoste de novo e segure parado.'); };
+  rd.scan({signal:ctl.signal}).then(function(){ aviso('Aproxime o cartão do celular'); }).catch(function(e){ aviso(e&&e.name==='NotAllowedError'?'Libere o NFC para este site no cadeado do endereço.':'Não consegui ligar o NFC.'); });
+}
+function ccSalvar(){
+  var er=el('cc-erro'); er.textContent=''; var modo=el('cc-modo').value;
+  var b={uid:el('cc-uid').value.trim(),joia:CC.joia,modo:modo,saldo:modo==='pre'?ccNum(el('cc-sal').value):0,forma:modo==='pre'?el('cc-forma').value:'dinheiro',limite:modo==='pos'?ccNum(el('cc-lim').value):0};
+  if(!b.uid){ er.textContent='Aproxime o cartão ou digite o número.'; return; }
+  clApi('/painel/atend-cartao-salvar',b).then(function(d){ if(!d||!d.ok) throw new Error((d&&d.mensagem)||'Não salvou'); aviso(d.novo?'Cartão cadastrado':'Cartão atualizado'); ccCarregar(CC.joia); }).catch(function(e){ er.textContent=e.message||'Não salvou'; });
+}
+function ccRecForm(u){
+  var x=el('cc-x-'+u); if(!x) return; var lb='font-size:12px;color:var(--muted)';
+  x.innerHTML='<div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--border)"><label style="'+lb+'">Valor da recarga (R$)</label><input class="inp" id="cc-rv" inputmode="decimal" placeholder="0,00" style="margin-bottom:8px"><label style="'+lb+'">Como o cliente pagou</label><select class="inp" id="cc-rf" style="margin-bottom:8px">'+ccOpcoes()+'</select><div id="cc-re" style="color:var(--red);font-size:12.5px;margin-bottom:6px"></div><div style="display:flex;gap:8px"><button class="btn pri sm" type="button" onclick="ccRecarregar(\''+u+'\')">Confirmar recarga</button><button class="btn sec sm" type="button" onclick="ccPintar()">Cancelar</button></div></div>';
+}
+function ccRecarregar(u){
+  var er=el('cc-re'), v=ccNum(el('cc-rv').value); er.textContent=''; if(!(v>0)){ er.textContent='Informe o valor da recarga.'; return; }
+  clApi('/painel/atend-cartao-recarga',{uid:u,valor:v,forma:el('cc-rf').value}).then(function(d){ if(!d||!d.ok) throw new Error((d&&d.mensagem)||'Não recarregou'); aviso('Recarga feita · saldo '+moeda(d.saldo)); ccCarregar(CC.joia); }).catch(function(e){ er.textContent=e.message||'Não recarregou'; });
+}
+function ccAtivo(u,a){
+  if(!a&&!confirm('Bloquear este cartão? Ele deixa de funcionar até ser desbloqueado.')) return;
+  clApi('/painel/atend-cartao-ativo',{uid:u,ativo:a}).then(function(d){ if(!d||!d.ok) throw new Error((d&&d.mensagem)||'Não mudou'); aviso(a?'Cartão desbloqueado':'Cartão bloqueado'); ccCarregar(CC.joia); }).catch(function(e){ aviso(e.message||'Não mudou'); });
+}
+function ccExtrato(u){
+  var x=el('cc-x-'+u); if(!x) return; x.innerHTML='<div style="margin-top:8px;font-size:12.5px;color:var(--muted)">Carregando…</div>';
+  clApi('/painel/atend-cartao-extrato?uid='+encodeURIComponent(u)).then(function(d){
+    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'Sem extrato');
+    var nm={recarga:'Recarga',consumo:'Consumo',estorno:'Estorno',ajuste:'Crédito devolvido',troca:'Troca de cartão'}, m=d.mov||[];
+    x.innerHTML='<div style="margin-top:8px;font-size:12.5px">'+(m.length?m.map(function(r){ var dt=new Date(r.criado); return '<div style="display:flex;justify-content:space-between;gap:8px;padding:4px 0;border-bottom:1px solid var(--border)"><span>'+dt.toLocaleDateString('pt-BR')+' '+msHora(r.criado)+' · '+esc(nm[r.tipo]||r.tipo)+(r.por?' · '+esc(r.por):'')+'</span><b style="color:'+(r.valor<0?'var(--red)':'#16a34a')+'">'+(r.valor<0?'−':'+')+moeda(Math.abs(r.valor))+'</b></div>'; }).join(''):'Sem movimentos ainda.')+'</div>';
+  }).catch(function(e){ x.innerHTML='<div style="margin-top:8px;font-size:12.5px;color:var(--red)">'+esc(e.message||'Não carregou')+'</div>'; });
 }
 /* importação em massa */
 function clImportarAbrir(){
@@ -9323,7 +9395,7 @@ function gaPintaCfg(d){
   el('ga-regra-txt').innerHTML=(sv.on?'<b style="color:#B45309">Com a taxa do garçom ligada, a regra abaixo só vale para pedidos sem a taxa</b> (lançados antes de ligar). ':'')+'Regra atual da loja: <b>'+esc(gaRegraTxt(rl))+'</b>. Vale para todos os garçons; para um garçom ter regra diferente, toque em <b>Regra</b> na linha dele.'+(rl.tipo==='dia'?' Na diária, conta cada dia em que ele lançou pelo menos um pedido de conta fechada.':'');
 }
 /* EXCEL das vendas dos garçons no período da tela: abas Itens (uma linha por item), Pedidos e Resumo. Usa a rota de vendas do Atendimento (até 62 dias) */
-var GA_FPX={pix:'Pix',cartao:'Cartão',credito:'Cartão crédito',debito:'Cartão débito',dinheiro:'Dinheiro',marcar:'Fiado (na conta)',maquina:'Maquininha',racha:'Racha pelo app',caixa:'Caixa',conta:'Conta'};
+var GA_FPX={pix:'Pix',cartao:'Cartão',credito:'Cartão crédito',debito:'Cartão débito',dinheiro:'Dinheiro',marcar:'Fiado (na conta)',maquina:'Maquininha',racha:'Racha pelo app',caixa:'Caixa',conta:'Conta',cartao_cliente:'Cliente Crédito'};
 function gaXlsLocal(v){ var m=String(v.mesa||''); if(/^BAL\d+$/.test(m)) return 'Balcão'; if(/^SM\d+$/.test(m)) return 'Sem mesa #'+m.slice(2); if(/^TK\d+$/.test(m)) return 'Tickets lote '+m.slice(2); if(m) return 'Mesa '+m; return v.joia?'Cliente '+v.joia:'Sem mesa'; }
 function gaXlsItem(l){ var d=[], n=(l.sab||[]).length; if(l.tam) d.push(l.tam); (l.sab||[]).forEach(function(s){ d.push((n>1?'1/'+n+' ':'')+s); }); if(l.borda) d.push('Borda: '+l.borda); (l.adds||[]).forEach(function(a){ d.push('+ '+a); }); if(l.obs) d.push('Obs: '+l.obs); return l.nome+(d.length?' ('+d.join(' · ')+')':''); }
 function gaExcel(uid){
@@ -9869,7 +9941,7 @@ function nfcTenta(){
 }
 function msDetalhe(id){
   var x=((typeof MS!=='undefined'&&MS.ped)||[]).filter(function(o){ return o.id===id; })[0]; if(!x) return;
-  var rc=x.status==='pago'?(x.pagto==='pix'?'Pago no Pix':x.pagto==='dinheiro'?'Pago em dinheiro':x.pagto==='cartao'?'Pago no cartão':x.pagto==='racha'?'Conta rachada':x.pagto==='misto'?'Pago dividido'+(x.partes?': '+pgPartesTxt(x.partes):''):'Pago'):(x.status==='marcado'?'Pendurado':'Conta aberta');
+  var rc=x.status==='pago'?(x.pagto==='pix'?'Pago no Pix':x.pagto==='dinheiro'?'Pago em dinheiro':x.pagto==='cartao'?'Pago no cartão':x.pagto==='racha'?'Conta rachada':x.pagto==='cartao_cliente'?'Pago com o cartão do cliente':x.pagto==='misto'?'Pago dividido'+(x.partes?': '+pgPartesTxt(x.partes):''):'Pago'):(x.status==='marcado'?'Pendurado':'Conta aberta');
   var fs=x.fase==='preparo'?'Em preparo':(x.fase==='rota'?'Pronto':'Novo');
   var linha=function(t){ return '<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:14px;line-height:1.4">'+esc(t)+'</div>'; };
   var li=(x.subs&&x.subs.length)?x.subs.map(function(sb,i){ return '<div style="margin-top:10px;font-size:12.5px;font-weight:800;color:var(--muted)">'+x.num+'-'+(sb.sub||i+1)+' · '+msHora(sb.criado)+(sb.atend?' · '+esc(sb.atend):'')+'</div>'+String(sb.itens||'').split('; ').map(linha).join('')+(sb.obs?'<div style="color:var(--amber);font-weight:700;font-size:12.5px">Obs: '+esc(sb.obs)+'</div>':''); }).join(''):String(x.itens||'').split('; ').map(linha).join('');
@@ -10115,6 +10187,11 @@ function pgPintar(){
   h+=ck('pg-din',PG.dinheiro&&PG.dinheiro.on,'Dinheiro','Pago na entrega ou na retirada, com troco.');
   h+=ck('pg-car',c.on,'Cartão de crédito pelo app','O cliente paga no app com o cartão.')+num('pg-par',c.parcelas||1,'Parcelar em até','x',12)+num('pg-sj',c.semJuros||1,'Sem juros até','x',12)+num('pg-acr',c.acresc,'Acima disso, acréscimo de','% no total',30);
   h+=ck('pg-maq',PG.maquina&&PG.maquina.on,'Cartão na maquininha','Débito ou crédito na entrega ou na retirada.')+num('pg-deb',PG.maquina&&PG.maquina.descDebito,'Desconto no débito','%',30);
+  /* (276) CARTÃO DO CLIENTE (NFC): aparece como "Cliente Crédito" no fechamento do garçom e do caixa */
+  var cs=PG.cashless||{};
+  h+='<div style="margin-top:18px;padding-top:6px;border-top:1px solid var(--border)"><b style="font-size:14px">Cartão do cliente (NFC)</b><div style="font-size:12px;color:var(--muted);margin-top:2px">No fechamento do garçom e do caixa aparece a forma <b>Cliente Crédito</b>: o garçom aproxima o cartão do celular e a venda já é lançada. Cadastre os cartões em Clientes.</div></div>'
+   +ck('pgc-pre',cs.pre,'Cartão com crédito (pré-pago)','O cliente recarrega um valor e vai consumindo. A cada venda o valor sai do saldo do cartão; sem saldo, a venda não passa.')
+   +ck('pgc-pos',cs.pos,'Cartão para pagar no final (pós-pago)','O cliente cadastra nome e celular, recebe o cartão e consome. A venda fica na conta dele e é paga no fechamento, como "Marcar na conta".')+num('pgc-lim',cs.limite,'Limite de consumo por cartão (0 = sem limite) R$','',100000);
   h+='<div style="margin-top:18px;padding-top:6px;border-top:1px solid var(--border)"><b style="font-size:14px">Pagamento na mesa</b></div>'+ck('pgt-mesa',PG.mesa,'Pagar pelo celular na mesa','No botão Conta, o cliente paga com Pix ou cartão. Precisa do Asaas conectado em Configurar checkout. Desligado, a conta continua como hoje.')+ck('pgt-racha',PG.racha,'Rachar a conta','O cliente divide por igual ou por valor e cada pessoa recebe o link para pagar. Cada parte é uma cobrança separada no Asaas, com a taxa de cada uma.')+'<div id="pg-asaas"></div>';
   h+='<label style="display:block;font-size:12px;font-weight:700;color:var(--muted2);margin-top:16px">Política da loja (opcional)</label><textarea class="inp" id="pg-pol" rows="3" maxlength="600" placeholder="Ex.: Pedido mínimo de R$ 20 para cartão. Troca em até 7 dias com nota." style="margin:6px 0 12px">'+esc(PG.politica||'')+'</textarea>';
   h+='<div id="pg-m" style="font-size:12.5px;min-height:18px;margin-bottom:8px"></div><button class="btn pri" type="button" onclick="pgSalvar()">Salvar</button>';
@@ -10130,7 +10207,7 @@ function pgAviso(){
 function pgSalvar(){
   var v=function(id){ return Number(String(el(id).value).replace(',','.'))||0; }, on=function(id){ return el(id).checked?1:0; };
   var par=Math.max(1,Math.min(12,Math.round(v('pg-par')))), sj=Math.max(1,Math.min(par,Math.round(v('pg-sj'))));
-  var body={pagto:{mesa:on('pgt-mesa'),racha:on('pgt-mesa')&&on('pgt-racha'),pix:{on:on('pg-pix'),desc:v('pg-pix-d')},dinheiro:{on:on('pg-din')},cartao:{on:on('pg-car'),parcelas:par,semJuros:sj,acresc:v('pg-acr')},maquina:{on:on('pg-maq'),descDebito:v('pg-deb')},politica:el('pg-pol').value.trim()}};
+  var body={pagto:{mesa:on('pgt-mesa'),racha:on('pgt-mesa')&&on('pgt-racha'),pix:{on:on('pg-pix'),desc:v('pg-pix-d')},dinheiro:{on:on('pg-din')},cartao:{on:on('pg-car'),parcelas:par,semJuros:sj,acresc:v('pg-acr')},maquina:{on:on('pg-maq'),descDebito:v('pg-deb')},cashless:{pre:on('pgc-pre'),pos:on('pgc-pos'),limite:v('pgc-lim')},politica:el('pg-pol').value.trim()}};
   var m=el('pg-m');
   fetch(DELTADIS_API+'/painel/cardapio-config',{method:'POST',headers:cdHdr(),body:JSON.stringify(body)}).then(function(r){return r.json();}).then(function(d){
     if(!d||!d.ok) throw new Error((d&&d.mensagem)||'não salvou'); aviso((body.pagto.mesa&&PG_ASAAS===false)?'Salvo. Conecte o Asaas para o pagamento na mesa aparecer':'Formas de pagamento salvas'); fecharTudo();
