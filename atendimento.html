@@ -56,6 +56,8 @@ h2{margin:6px 0 10px;font-size:19px;font-weight:800}
 .bt:focus-visible,#cartbar button:focus-visible{outline:3px solid #1C1C1E;outline-offset:3px}
 .prod{display:flex;align-items:center;gap:12px;padding:10px;border-radius:14px;background:#fff;border:1px solid var(--b2);margin-bottom:8px;width:100%;text-align:left;cursor:pointer}
 .prod .im{width:54px;height:54px;border-radius:11px;background:var(--s4) center/cover;flex:none}
+.padd{flex:none;width:46px;height:46px;border-radius:50%;border:0;background:var(--pri);color:#fff;font-size:28px;font-weight:700;line-height:1;position:relative;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;box-shadow:0 3px 10px rgba(0,0,0,.15);transition:transform .12s}.padd:active{transform:scale(.88)}.padd.pop{animation:paddPop .32s}@keyframes paddPop{40%{transform:scale(1.22)}}
+.padd .pq{position:absolute;top:-6px;right:-6px;min-width:22px;height:22px;border-radius:11px;background:#1C1C1E;color:#fff;font-size:12.5px;font-weight:800;line-height:22px;padding:0 6px;border:2px solid #fff}
 .prod b{display:block;font-size:15px}.prod small{color:var(--mu2);font-size:12.5px}.prod .v{margin-left:auto;font-weight:800;color:var(--pri);font-size:14px;text-align:right;flex:none}
 .voltar{border:0;background:none;color:var(--pri);font-weight:800;padding:6px 0;font-size:15px}
 /* folhas */
@@ -308,7 +310,7 @@ label.l.big{font-size:14px;margin-top:16px}
 </div>
 
 <div id="app" class="hide">
-  <div id="top"><div style="flex:1;min-width:0;display:flex;align-items:center;gap:12px"><b id="emp" style="flex:none">Atendimento</b><small id="usu"></small></div><!-- "Atender via mapa" (mpAbre) fora do ar enquanto evolui; o código do mapa continua abaixo --><span style="font-size:10px;color:#9a8f86;font-weight:700;margin-right:8px;white-space:nowrap">ATEND-41</span><a class="bt-hub" href="hub.html" title="Voltar ao Hub"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Hub</a><button onclick="sair()">Sair</button></div>
+  <div id="top"><div style="flex:1;min-width:0;display:flex;align-items:center;gap:12px"><b id="emp" style="flex:none">Atendimento</b><small id="usu"></small></div><!-- "Atender via mapa" (mpAbre) fora do ar enquanto evolui; o código do mapa continua abaixo --><span style="font-size:10px;color:#9a8f86;font-weight:700;margin-right:8px;white-space:nowrap">ATEND-42</span><a class="bt-hub" href="hub.html" title="Voltar ao Hub"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Hub</a><button onclick="sair()">Sair</button></div>
   <div id="chip" class="hide"><div class="t"><b id="chipT"></b><small id="chipS"></small></div><button onclick="trocaComanda()">Trocar</button></div>
 
   <!-- PEDIDO -->
@@ -695,8 +697,25 @@ function semAcento(t){ return String(t||'').normalize('NFD').replace(/[̀-ͯ]/g,
 function buscaProd(){
   var q=semAcento($('bProd').value), box=$('lBusca');
   if(!q){ box.classList.add('hide'); $('cwrap').classList.remove('hide'); return; }
-  var pal=q.split(' '), h=''; (D.prods||[]).forEach(function(p){ if(!p._b) p._b=' '+semAcento(p.nome)+' '+semAcento(p.barras||''); if(!pal.every(function(w){ return p._b.indexOf(w)>=0; })) return; var m=menorPreco(p), u=fotoProd(p); h+='<button class="prod" onclick="itemSheet(\''+esc(p.id)+'\')"><span class="im" '+(u?'style="background-image:url(\''+u+'\')"':'')+'></span><span><b>'+esc(p.nome)+'</b><small>'+esc((p.desc||'').slice(0,60))+'</small></span><span class="v">'+(m.de?'a partir de<br>':'')+brl(m.v)+'</span></button>'; });
+  var pal=q.split(' '), h=''; (D.prods||[]).forEach(function(p){ if(!p._b) p._b=' '+semAcento(p.nome)+' '+semAcento(p.barras||''); if(!pal.every(function(w){ return p._b.indexOf(w)>=0; })) return; var m=menorPreco(p), u=fotoProd(p); h+=prodRow(p,m,u); });
   box.innerHTML=h||'<p style="color:var(--mu2)">Nenhum produto com esse nome.</p>'; box.classList.remove('hide'); $('cwrap').classList.add('hide'); BSEL=0; marcaSel();
+}
+/* (280) botão + na lista: produto simples vai direto para o pedido (sem abrir a tela do item); com tamanho/sabor para escolher, abre as opções */
+function qtdNoPedido(id){ var n=0; CART.forEach(function(x){ if(x.p===id) n+=x.qty; }); return n; }
+function prodRow(p,m,u){ var id=esc(p.id), n=qtdNoPedido(p.id);
+  return '<div class="prod" role="button" tabindex="0" onclick="itemSheet(\''+id+'\')"><span class="im" '+(u?'style="background-image:url(\''+u+'\')"':'')+'></span><span><b>'+esc(p.nome)+'</b><small>'+esc((p.desc||'').slice(0,60))+'</small></span><span class="v">'+(m.de?'a partir de<br>':'')+brl(m.v)+'</span>'
+    +'<button type="button" class="padd" data-p="'+id+'" aria-label="Adicionar '+esc(p.nome)+'" onclick="event.stopPropagation();addRapido(\''+id+'\',this)">+'+(n?'<span class="pq">'+n+'</span>':'')+'</button></div>'; }
+function prodEscolhe(p){ return (p.tamanhos||[]).length>1||(p.sabores||[]).length>0; }
+function addRapido(id,bt){
+  var p=(D.prods||[]).filter(function(x){ return x.id===id; })[0]; if(!p) return;
+  if(prodEscolhe(p)){ itemSheet(id); return; }
+  var tam=(p.tamanhos&&p.tamanhos.length===1)?p.tamanhos[0].nome:'';
+  IT={p:p,tam:tam,sab:[],borda:'',adds:{},obs:'',qty:1,busca:'',borOk:1,opcOk:0,sabAck:0,pop:0}; var un=itemPreco(); IT=null;
+  var ja=CART.filter(function(x){ return x.p===p.id&&x.tam===tam&&!x.sab.length&&!x.borda&&!x.adds.length&&!x.obs; })[0];
+  if(ja) ja.qty=Math.min(50,ja.qty+1); else CART.push({p:p.id,nome:p.nome,tam:tam,sab:[],borda:'',adds:[],obs:'',qty:1,unit:un});
+  try{ navigator.vibrate&&navigator.vibrate(25); }catch(e){}
+  var n=qtdNoPedido(p.id); [].forEach.call(document.querySelectorAll('.padd[data-p="'+id+'"]'),function(b){ b.innerHTML='+<span class="pq">'+n+'</span>'; b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); });
+  cartBar(); toast(p.nome+' · '+n+' no pedido');
 }
 function verCats(){ $('p-ident').classList.add('hide'); $('p-prods').classList.add('hide'); $('p-cats').classList.remove('hide'); cartBar(); window.scrollTo(0,0); }
 function menorPreco(p){ var t=(p.tamanhos||[]).map(function(x){ return x.preco; }).filter(function(x){ return x>0; }); return t.length?{v:Math.min.apply(null,t),de:t.length>1}:{v:p.preco||0,de:false}; }
@@ -704,7 +723,7 @@ function verCat(id){
   var g=grupos().filter(function(x){ return x.id===id; })[0]; if(!g) return; CATSEL=id;
   if(g.ps.length===1&&(g.ps[0].sabores||[]).length){ itemSheet(g.ps[0].id); return; }
   $('tCat').textContent=g.nome; var h='';
-  g.ps.forEach(function(p){ var m=menorPreco(p), u=fotoProd(p); h+='<button class="prod" onclick="itemSheet(\''+esc(p.id)+'\')"><span class="im" '+(u?'style="background-image:url(\''+u+'\')"':'')+'></span><span><b>'+esc(p.nome)+'</b><small>'+esc((p.desc||'').slice(0,60))+'</small></span><span class="v">'+(m.de?'a partir de<br>':'')+brl(m.v)+'</span></button>'; });
+  g.ps.forEach(function(p){ var m=menorPreco(p), u=fotoProd(p); h+=prodRow(p,m,u); });
   $('lProds').innerHTML=h; $('p-cats').classList.add('hide'); $('p-prods').classList.remove('hide'); window.scrollTo(0,0);
 }
 /* ── folha ── */
@@ -876,7 +895,8 @@ function cartTot(){ var t=0; CART.forEach(function(i){ t+=i.unit*i.qty; }); retu
 function srvPct(){ var p=Number(D&&D.cfg&&D.cfg.servico)||0; return (p>0&&!((COM.avulso&&!COM.sm)||COM.modo==='balcao'||ehBalM(COM.mesa)))?p:0; }   /* (231) só o Balcão fica sem a taxa; cliente sem mesa leva · (238) sem mesa e sem cliente também leva */
 function srvVal(t){ return Math.round(t*srvPct())/100; }
 function srvLinha(v,pct){ return v>0?'<div class="opt" style="color:var(--mu2)"><span class="n"><b>Serviço do garçom'+(pct?' ('+String(pct).replace('.',',')+'%)':'')+'</b></span><span class="p">'+brl(v)+'</span></div>':''; }
-function cartBar(){
+function paddSync(){ [].forEach.call(document.querySelectorAll('.padd[data-p]'),function(b){ var n=qtdNoPedido(b.getAttribute('data-p')); b.innerHTML='+'+(n?'<span class="pq">'+n+'</span>':''); }); }
+function cartBar(){ try{ paddSync(); }catch(e){}
   var on=CART.length&&ABA==='ped'&&(COM.avulso||COM.mesa+COM.joia!==''); $('cartbar').classList.toggle('hide',!on);
   if(on){ var n=0; CART.forEach(function(i){ n+=i.qty; }); $('cbN').textContent='Ver pedido · '+n+' ite'+(n==1?'m':'ns'); $('cbV').textContent=brl(cartTot()); }
 }
