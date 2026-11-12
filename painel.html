@@ -1116,7 +1116,7 @@ html.loja-p .cd-dest{display:none!important}
         <div class="pghd"><div><h1>Cardápio</h1><div class="sub">produtos do seu restaurante <span style="opacity:.6">· GIRO-OS-081</span></div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn sec" onclick="cdFotoCardapio()" title="Só no celular">📷 Cardápio por foto</button><button class="btn sec" onclick="cdAbrirCats()">Categorias</button><button class="btn sec" onclick="cdLinkCardapio()">🔗 Link da loja</button><button class="btn sec" onclick="cdEtiquetas()">Etiquetas</button><button class="btn sec" onclick="cdAparencia()">🎨 Marca e cores</button><button class="btn sec" onclick="cdHorario()">🕒 Horário</button><button class="btn sec" onclick="cdFrete()">🛵 Entrega</button><button class="btn sec" onclick="cdGeo()">📍 Mesa</button><button class="btn sec" onclick="cdMesas()" style="display:none" title="(116) oculto: as mesas agora ficam no Hub">🍽️ Mesas <span id="ms-bd" style="display:none;background:#ef4444;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px"></span></button><button class="btn sec" onclick="planoAtendimento()">🧾 Atendimento (garçom/balcão)</button><button class="btn sec" onclick="cdAbrirOfertas()">▶ Ofertas</button><button class="btn sec" onclick="clbAbrir()">💎 Clube de assinatura</button><button class="btn sec" onclick="cdAbrirImport()">Importar planilha</button><button class="btn sec" onclick="cdFotosLote()">📷 Fotos em lote</button><button class="btn sec" onclick="cdFotosIaLote()">✨ Fotos com IA</button><button class="btn sec" onclick="cimpAbrir()" title="Monta o cardápio para a gráfica e baixa o PDF">🖨 + Cardápio impresso</button><button class="btn pri" onclick="cdNovo()">+ Novo produto</button></div></div>
         <div class="card">
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px"><input class="inp" id="cd-busca" placeholder="Buscar produto" oninput="cdPintar()" style="flex:1;min-width:200px"><select class="inp" id="cd-fcat" onchange="cdPintar()" style="width:210px;max-width:100%"></select></div>
-          <div id="cd-selbar" style="display:none;align-items:center;gap:10px;flex-wrap:wrap;background:var(--s2);border-radius:12px;padding:8px 12px;margin-bottom:10px;font-size:13px"><span id="cd-seltxt" style="font-weight:700"></span><button class="btn pri sm" onclick="cdExibirOferta()">▶ Exibir oferta</button><button class="btn sec sm" onclick="cdLimparSel()">Limpar</button></div>
+          <div id="cd-selbar" style="display:none;align-items:center;gap:10px;flex-wrap:wrap;background:var(--s2);border-radius:12px;padding:8px 12px;margin-bottom:10px;font-size:13px"><span id="cd-seltxt" style="font-weight:700"></span><button class="btn pri sm" onclick="cdExibirOferta()">▶ Exibir oferta</button><button class="btn sec sm" onclick="cdFotosRefazer()">🔎 Refazer fotos</button><button class="btn sec sm" onclick="cdLimparSel()">Limpar</button></div>
           <div id="cd-lista"></div>
         </div>
       </section>
@@ -8783,6 +8783,31 @@ function cdFotosIaLote(){
   el('cd-imp-corpo').innerHTML=sem.length?'<p style="margin:0 0 12px;font-size:13px;line-height:1.55;color:var(--muted2)"><b>'+sem.length+' produto'+(sem.length==1?'':'s')+' sem foto.</b>'+txt+'</p><div id="cd-ia-res" style="font-size:12.5px;margin-bottom:10px"></div><button class="btn pri wide" id="cd-ia-go" onclick="cdFotosIaRoda()">'+(lj?'Buscar as fotos':'Criar as fotos')+'</button>'
     :'<p style="margin:0;font-size:13px;color:var(--muted2)">Todos os produtos ativos já têm foto. 👍</p>';
   abrir('sh-import');
+}
+/* (270) REFAZER FOTOS dos produtos marcados (ex.: veio o logo da loja ou da marca no lugar do produto).
+   Produto de marca: busca a foto real de novo (agora a IA confere se a imagem é mesmo do produto). Outros: cria com IA.
+   Se não achar, tira a foto errada e avisa para enviar a foto real. */
+function cdFotosRefazer(){
+  var ids=Object.keys(CD.sel||{}), ps=(CD.prods||[]).filter(function(p){ return ids.indexOf(p.id)>=0; }); if(!ps.length) return;
+  el('sh-import').querySelector('h3').textContent='Refazer fotos';
+  el('cd-imp-corpo').innerHTML='<p style="margin:0 0 12px;font-size:13px;line-height:1.55;color:var(--muted2)"><b>'+ps.length+' produto'+(ps.length==1?'':'s')+' marcado'+(ps.length==1?'':'s')+'.</b> Para cada um o sistema procura a foto de novo: produto de marca recebe a foto real (a IA confere se é mesmo o produto, e não um logo); os outros ganham foto criada com IA. Se não achar, a foto errada sai e o produto fica sem foto, para você enviar a real.</p><div id="cd-ia-res" style="font-size:12.5px;margin-bottom:10px"></div><button class="btn pri wide" id="cd-ia-go">🔎 Refazer '+ps.length+' foto'+(ps.length==1?'':'s')+'</button>';
+  abrir('sh-import');
+  var b=el('cd-ia-go'), r=el('cd-ia-res'), i=0, ok=0, sem=[], falha=[];
+  var salva=function(p,src,real){ return (real?cdFotoReal(src):cdRedimUrl(src)).then(function(u){ var c=JSON.parse(JSON.stringify(p)); c.foto=u; return cdSalvarApi('prod',c).then(function(){ p.foto=u; ok++; }); }); };
+  var tira=function(p){ var c=JSON.parse(JSON.stringify(p)); c.foto=''; return cdSalvarApi('prod',c).then(function(){ p.foto=''; sem.push(p.nome); }); };
+  var fim=function(msg){ b.disabled=false; b.textContent='Fechar'; b.onclick=fecharTudo; CD.sel={}; cdBarraSel(); cdPintar();
+    r.innerHTML=(ok?'<b>'+ok+' foto'+(ok==1?'':'s')+' nova'+(ok==1?'':'s')+'.</b> ':'<b>Nenhuma foto nova.</b> ')+(sem.length?'<br>Ficaram sem foto (envie a foto real pelo celular ou pelo Fotos em lote): '+sem.map(esc).join(', '):'')+(falha.length?'<br>Não deu: '+falha.map(esc).join(', '):'')+(msg?'<br>'+esc(msg):''); };
+  var passo=function(){
+    if(i>=ps.length) return fim();
+    var p=ps[i++]; b.textContent='Refazendo '+i+' de '+ps.length+'…'; r.textContent='🔎 '+p.nome;
+    cdFotoIaPedir(p.nome,p.desc,cdCatNome(p.cat),false).then(function(d){
+      if(d&&d.ok) return salva(p,d.foto,false);
+      if(d&&d.erro==='limite') throw {limite:d.mensagem};
+      if(d&&d.erro==='marca') return cdFotoBuscaPedir(p.nome,p.barras,cdCatNome(p.cat)).then(function(x){ if(x&&x.ok) return salva(p,x.foto,true); if(x&&x.erro==='limite') throw {limite:x.mensagem}; return tira(p); });
+      falha.push(p.nome);
+    }).then(passo).catch(function(e){ if(e&&e.limite) return fim(e.limite); falha.push(p.nome); passo(); });
+  };
+  b.onclick=function(){ b.disabled=true; passo(); };
 }
 function cdFotosIaRoda(){
   var sem=(CD.prods||[]).filter(function(p){ return !p.foto&&p.ativo!==false; }), lj=cdLojaModo(), i=0, feitas=0, achadas=0, nao=[], falha=[], b=el('cd-ia-go'), r=el('cd-ia-res'); b.disabled=true;
