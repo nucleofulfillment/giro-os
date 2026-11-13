@@ -17,6 +17,7 @@ object Ui {
     const val LARANJA = 0xFFFF5A00.toInt()
     const val VERDE = 0xFF16A34A.toInt()
     const val VERMELHO = 0xFFDC2626.toInt()
+    const val WHATS = 0xFF1FA855.toInt()
     const val CINZA = 0xFFF1F1F1.toInt()
     const val TEXTO = 0xFF1F1A17.toInt()
     const val SUAVE = 0xFF6B625C.toInt()
