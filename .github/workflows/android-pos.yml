@@ -1,0 +1,82 @@
+# Monta o app LiveFood da maquininha (Vileve / PayStore · PAX A910S)
+# - "LiveFood Teste": cobrança de mentira, instala em qualquer celular Android
+# - "LiveFood" (Vileve): só é montado quando os segredos do kit estiverem cadastrados no GitHub
+name: App da maquininha
+
+on:
+  push:
+    branches: [main, 'ccr-*']
+    paths: ['android/**', '.github/workflows/android-pos.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-pos-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  montar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PAYOS_MAVEN_URL: ${{ secrets.PAYOS_MAVEN_URL }}
+      PAYOS_MAVEN_USER: ${{ secrets.PAYOS_MAVEN_USER }}
+      PAYOS_MAVEN_PASS: ${{ secrets.PAYOS_MAVEN_PASS }}
+      TAP_MAVEN_URL: ${{ secrets.TAP_MAVEN_URL }}
+      TAP_MAVEN_USER: ${{ secrets.TAP_MAVEN_USER }}
+      TAP_MAVEN_PASS: ${{ secrets.TAP_MAVEN_PASS }}
+      TAP_LICENCA: ${{ secrets.TAP_LICENCA }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Montar o app de teste
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleSimDebug
+          mkdir -p ../saida
+          cp app/build/outputs/apk/sim/debug/*.apk ../saida/livefood-teste.apk
+
+      - name: Montar o app Vileve (quando o kit estiver liberado)
+        if: env.PAYOS_MAVEN_URL != ''
+        working-directory: android
+        run: |
+          ./gradlew --no-daemon assembleVileveDebug
+          cp app/build/outputs/apk/vileve/debug/*.apk ../saida/livefood-vileve-teste.apk
+
+      - name: Montar o app celular-maquininha (quando o Tap on Phone estiver liberado)
+        if: env.TAP_MAVEN_URL != ''
+        working-directory: android
+        run: |
+          ./gradlew --no-daemon assembleCelularDebug
+          cp app/build/outputs/apk/celular/debug/*.apk ../saida/livefood-celular-teste.apk
+
+      - name: Guardar os arquivos
+        uses: actions/upload-artifact@v4
+        with:
+          name: livefood-maquininha
+          path: saida/*.apk
+
+      - name: Publicar para download
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: maquininha-teste
+          name: App da maquininha (teste)
+          prerelease: true
+          make_latest: false
+          files: saida/*.apk
+          body: |
+            App LiveFood para a maquininha.
+            • livefood-teste.apk: modo de teste (nada é cobrado), instala em qualquer celular Android.
+            • livefood-vileve-teste.apk: aparece quando o kit da Vileve for liberado (para a maquininha de teste PAX A910S).
+            • livefood-celular-teste.apk: aparece quando o Tap on Phone for liberado (celular Android 11+ com NFC vira maquininha).
