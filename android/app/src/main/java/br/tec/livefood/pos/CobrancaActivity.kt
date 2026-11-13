@@ -117,6 +117,8 @@ class CobrancaActivity : AppCompatActivity(), Tela {
         val seguir = {
             if (!lido) {
                 lido = true; pararNfc()
+                tempo.visibility = View.GONE
+                runCatching { (getSystemService(VIBRATOR_SERVICE) as? android.os.Vibrator)?.vibrate(150) }
                 runCatching { ToneGenerator(AudioManager.STREAM_NOTIFICATION, 90).startTone(ToneGenerator.TONE_PROP_BEEP, 180) }
                 mensagem("Cartão lido ✓")
                 mostrarBotoes(listOf(Triple("Cancelar", Ui.CINZA, ::sair)))
@@ -142,10 +144,17 @@ class CobrancaActivity : AppCompatActivity(), Tela {
         val cb = aoTocar ?: return
         if (leitorNfc || !lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) return
         val nfc = NfcAdapter.getDefaultAdapter(this) ?: return
-        leitorNfc = runCatching {
+        val r = runCatching {
+            val extras = android.os.Bundle().apply { putInt(NfcAdapter.EXTRA_READER_PRESENCE_CHECK_DELAY, 250) }
             nfc.enableReaderMode(this, { _ -> runOnUiThread { cb() } },
-                NfcAdapter.FLAG_READER_NFC_A or NfcAdapter.FLAG_READER_NFC_B or NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK, null)
-        }.isSuccess
+                NfcAdapter.FLAG_READER_NFC_A or NfcAdapter.FLAG_READER_NFC_B or NfcAdapter.FLAG_READER_NFC_F or
+                    NfcAdapter.FLAG_READER_NFC_V or NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK, extras)
+        }
+        leitorNfc = r.isSuccess
+        // mostra na tela se o leitor ligou (ajuda a descobrir problema no teste)
+        tempo.visibility = View.VISIBLE
+        tempo.text = if (r.isSuccess) "📶 Leitor de cartão ligado · encoste no meio das costas do celular e segure 2 segundos"
+                     else "Leitor de cartão não ligou (${r.exceptionOrNull()?.javaClass?.simpleName}). Use o botão abaixo."
     }
 
     private fun pararNfc() {
