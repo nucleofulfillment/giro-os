@@ -34,7 +34,7 @@ label.l{display:block;font-size:12.5px;font-weight:700;color:var(--mu2);margin:1
 #top{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid var(--b2);padding:10px 14px;display:flex;align-items:center;gap:10px}
 #top b{font-size:16px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #top small{color:var(--tx,#1C1C1E);font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.bt-hub{display:flex;align-items:center;gap:6px;border:1px solid var(--b2);background:var(--s3);border-radius:10px;padding:8px 11px;font-weight:700;font-size:13px;color:inherit;text-decoration:none;white-space:nowrap;flex:none}
+.bt-hub{display:flex;align-items:center;gap:6px;border:1px solid var(--b2);background:var(--s3);border-radius:10px;padding:8px 10px;font-weight:700;font-size:13px;color:inherit;text-decoration:none;white-space:nowrap;flex:none}
 #top button{border:1px solid var(--b2);background:var(--s3);border-radius:10px;padding:8px 11px;font-weight:700;font-size:13px}
 #chip{margin:12px 14px 0;background:#fff;border:1.5px solid var(--b2);border-radius:14px;padding:10px 13px;display:flex;align-items:center;gap:10px}
 #chip .t{flex:1;min-width:0}#chip b{font-size:15px}#chip small{display:block;color:var(--mu2);font-size:12.5px}
@@ -315,7 +315,7 @@ label.l.big{font-size:14px;margin-top:16px}
 </div>
 
 <div id="app" class="hide">
-  <div id="top"><div style="flex:1;min-width:0;display:flex;align-items:center;gap:12px"><b id="emp" style="flex:none">Atendimento</b><small id="usu"></small></div><!-- "Atender via mapa" (mpAbre) fora do ar enquanto evolui; o código do mapa continua abaixo --><span style="font-size:10px;color:#9a8f86;font-weight:700;margin-right:8px;white-space:nowrap">ATEND-51</span><button id="btPos" style="display:none;margin-right:8px" onclick="try{LiveFoodPOS.menu()}catch(e){}">💳 Maquininha</button><a class="bt-hub" href="hub.html" title="Voltar ao Hub"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Hub</a><button onclick="sair()">Sair</button></div>
+  <div id="top" data-versao="ATEND-52"><div style="flex:1;min-width:0;display:flex;align-items:center;gap:12px"><b id="emp" style="flex:none">Atendimento</b><small id="usu"></small></div><!-- "Atender via mapa" (mpAbre) fora do ar enquanto evolui; o código do mapa continua abaixo --><button id="btPos" style="display:none;flex:none;font-size:17px;padding:6px 10px" title="Maquininha" aria-label="Maquininha" onclick="try{LiveFoodPOS.menu()}catch(e){}">💳</button><a class="bt-hub" href="hub.html" title="Voltar ao Hub" aria-label="Voltar ao Hub"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></a><button onclick="sair()">Sair</button></div>
   <div id="chip" class="hide"><div class="t"><b id="chipT"></b><small id="chipS"></small></div><button onclick="trocaComanda()">Trocar</button></div>
 
   <!-- PEDIDO -->
@@ -432,7 +432,7 @@ function montaApp(d){
     carregaAbertas();
     D=d; try{ (D.prods||[]).sort(function(a,b){ return String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR',{sensitivity:'base',numeric:true}); }); }catch(e){} CLI=d.cli; try{ window.GiroMarca&&GiroMarca.set(CLI); }catch(e){} GEST=!!d.gestor; CLIS=(d.clientes&&d.clientes.length<5000)?d.clientes:null; tema(d.cor);
     $('login').classList.add('hide'); $('app').classList.remove('hide'); abaComNome(); praiaAplica(d);
-    $('emp').innerHTML=d.logo?'<img src="'+API+'/food/foto/'+encodeURIComponent(d.cli)+'/_logop" alt="'+esc(d.empresa||'')+'" style="height:30px;border-radius:6px;vertical-align:middle">':esc(d.empresa||'Atendimento'); $('usu').textContent=d.usuario||''; try{ var li=$('emp').querySelector('img'); if(li&&window.GiroMarca&&GiroMarca.ajusta) GiroMarca.ajusta(li,'claro'); }catch(e){} if(window.LojaTroca) LojaTroca.ligar($('emp'));   /* (269) trocar de loja */
+    $('emp').innerHTML=d.logo?'<img src="'+API+'/food/foto/'+encodeURIComponent(d.cli)+'/_logop" alt="'+esc(d.empresa||'')+'" style="height:40px;max-width:150px;object-fit:contain;border-radius:6px;vertical-align:middle">':esc(d.empresa||'Atendimento'); $('usu').textContent=d.usuario||''; try{ var li=$('emp').querySelector('img'); if(li&&window.GiroMarca&&GiroMarca.ajusta) GiroMarca.ajusta(li,'claro'); }catch(e){} if(window.LojaTroca) LojaTroca.ligar($('emp'));   /* (269) trocar de loja */
     [].forEach.call(document.querySelectorAll('.gest'),function(b){ b.classList.toggle('hide',!GEST); });
     /* (230) garçom só lança na Mesa (com ou sem mesa escolhida); Balcão fica para o dono/gerente */
     if(!GEST){ $('sgB').classList.add('hide'); COM.modo='mesa'; }
@@ -971,7 +971,7 @@ function posCobra(forma,valor,fim,ex){
 }
 function posTef(r){ var v=r.venda||{}; return {gk:v.gk||'',forma:v.forma||'',valor:v.valor||0,nsu:v.nsu||'',aut:v.aut||'',bandeira:v.bandeira||'',final:v.final||'',quando:v.quando||Date.now()}; }
 function posVoltar(){ if($('sh')&&$('sh').style.display==='flex'){ fecha(); return true; } return false; }   /* botão "voltar" da maquininha fecha a janela aberta */
-if(posTem()){ var _bp=$('btPos'); if(_bp){ _bp.style.display=''; if(posInfo().motor==='celular') _bp.textContent='💳 Celular maquininha'; } }
+if(posTem()){ var _bp=$('btPos'); if(_bp){ _bp.style.display=''; if(posInfo().motor==='celular') _bp.title='Celular maquininha'; } }
 function fcEscolher(){
   if(FC.tef){ toast('O pagamento já foi aprovado na maquininha. Toque em Enviar o pedido.'); return; }
   if($('pObs')){ FC.obs=$('pObs').value; FC.copos=coposVal(); }   /* (250) voltando de outra tela, a observação e os copos ficam */
