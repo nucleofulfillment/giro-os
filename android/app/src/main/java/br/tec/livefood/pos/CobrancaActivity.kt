@@ -166,7 +166,7 @@ class CobrancaActivity : AppCompatActivity(), Tela {
         msg.setTextColor(Ui.VERDE)
         msg.text = "Pagamento aprovado!"
         val lista = mutableListOf<Triple<String, Int, () -> Unit>>(Triple("Concluir", Ui.VERDE, ::concluir))
-        if (venda.forma != Forma.PIX.codigo) lista.add(Triple("Imprimir via do cliente", Ui.CINZA) {
+        if (venda.forma != Forma.PIX.codigo && Pagamento.motor.imprime) lista.add(Triple("Imprimir via do cliente", Ui.CINZA) {
             mensagem("Imprimindo a via do cliente…")
             Pagamento.motor.reimprimir(Via.CLIENTE) { e -> mensagem(if (e == null) "Pagamento aprovado!" else e) }
         })

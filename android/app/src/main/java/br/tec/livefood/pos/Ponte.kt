@@ -20,8 +20,8 @@ class Ponte(private val tela: MainActivity) {
             .put("ativa", m.ativo())
             .put("modelo", runCatching { m.modelo() }.getOrDefault(""))
             .put("serie", runCatching { m.serie() }.getOrDefault(""))
-            .put("bobina", 58)
-            .put("formas", org.json.JSONArray(listOf("credito", "debito", "cartao", "pix")))
+            .put("bobina", if (m.imprime) 58 else 0)
+            .put("formas", org.json.JSONArray(m.formas))
             .toString()
     }
 
@@ -32,7 +32,7 @@ class Ponte(private val tela: MainActivity) {
         val id = o?.optString("id").orEmpty()
         val forma = Forma.de(o?.optString("forma"))
         val valor = o?.optLong("valor") ?: 0L
-        if (o == null || forma == null || valor <= 0) {
+        if (o == null || forma == null || valor <= 0 || forma.codigo !in Pagamento.motor.formas) {
             tela.responder(id, JSONObject().put("ok", false).put("msg", "Cobrança inválida."))
             return
         }

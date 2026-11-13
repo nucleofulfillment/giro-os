@@ -28,15 +28,17 @@ class MaquininhaActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val col = Ui.coluna(this)
-        col.addView(Ui.texto(this, "Maquininha", 26f, true))
+        col.addView(Ui.texto(this, if (motor.nome == "celular") "Celular maquininha" else "Maquininha", 26f, true))
         info = Ui.texto(this, "", 15f, false, Ui.SUAVE)
         col.addView(info, Ui.linha(this, col, 6))
 
         col.addView(Ui.botao(this, "Vendas de hoje") { carregarVendas() }, Ui.linha(this, col, 18))
         lista = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         col.addView(lista, Ui.linha(this, col, 4))
-        col.addView(Ui.botao(this, "Reimprimir último comprovante", Ui.CINZA, Ui.TEXTO) { reimprimir() }, Ui.linha(this, col, 12))
-        col.addView(Ui.botao(this, "Testar impressora", Ui.CINZA, Ui.TEXTO) { testarImpressora() }, Ui.linha(this, col, 12))
+        if (motor.imprime) {
+            col.addView(Ui.botao(this, "Reimprimir último comprovante", Ui.CINZA, Ui.TEXTO) { reimprimir() }, Ui.linha(this, col, 12))
+            col.addView(Ui.botao(this, "Testar impressora", Ui.CINZA, Ui.TEXTO) { testarImpressora() }, Ui.linha(this, col, 12))
+        }
         col.addView(Ui.botao(this, "Atualizar dados da maquininha", Ui.CINZA, Ui.TEXTO) { atualizar() }, Ui.linha(this, col, 12))
         col.addView(Ui.botao(this, "Ativar com código", Ui.CINZA, Ui.TEXTO) { ativar() }, Ui.linha(this, col, 12))
         col.addView(Ui.botao(this, "Voltar ao Atendimento", Ui.LARANJA) { finish() }, Ui.linha(this, col, 24))
@@ -47,7 +49,7 @@ class MaquininhaActivity : AppCompatActivity() {
     private fun mostrarInfo() {
         val m = motor
         info.text = buildString {
-            append(if (m.deVerdade) "Pagamento: Vileve / PayStore" else "MODO DE TESTE (nada é cobrado)")
+            append(when { !m.deVerdade -> "MODO DE TESTE (nada é cobrado)"; m.nome == "celular" -> "Pagamento: Vileve · Tap on Phone (aproximação)"; else -> "Pagamento: Vileve / PayStore" })
             append("\nSituação: ").append(if (m.ativo()) "ativada ✓" else "não ativada")
             runCatching { m.modelo() }.getOrNull()?.takeIf { it.isNotBlank() }?.let { append("\nModelo: ").append(it) }
             runCatching { m.serie() }.getOrNull()?.takeIf { it.isNotBlank() }?.let { append("\nNº de série: ").append(it) }

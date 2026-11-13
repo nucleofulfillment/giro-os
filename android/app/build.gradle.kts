@@ -39,6 +39,13 @@ android {
             versionNameSuffix = "-teste"
             resValue("string", "app_name", "LiveFood Teste")
         }
+        // "celular": Tap on Phone da Vileve (celular Android 11+ com NFC vira maquininha)
+        create("celular") {
+            dimension = "pagamento"
+            minSdk = 30
+            resValue("string", "app_name", "LiveFood")
+            buildConfigField("String", "TAP_LICENCA", "\"${segredo("TAP_LICENCA") ?: ""}\"")
+        }
         create("vileve") {
             dimension = "pagamento"
             targetSdk = 29
@@ -93,6 +100,8 @@ kotlin { jvmToolchain(17) }
 // configurações do kit só para a versão Vileve (o Gradle cria na hora; declaramos antes para poder usar abaixo)
 configurations.maybeCreate("vileveDebugImplementation")
 configurations.maybeCreate("vileveReleaseImplementation")
+configurations.maybeCreate("celularDebugImplementation")
+configurations.maybeCreate("celularReleaseImplementation")
 
 dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
@@ -103,4 +112,8 @@ dependencies {
     // Kit de pagamento PayStore/Vileve (PAX A960, A910S, A910)
     "vileveDebugImplementation"("com.paytime:payossdk-pax-debug:1.3.0")
     "vileveReleaseImplementation"("com.paytime:payossdk-pax:1.3.0")
+
+    // Kit Tap on Phone (Vileve) — celular como maquininha
+    "celularDebugImplementation"("com.paytime:taponphonesdk-debug:1.0.5")
+    "celularReleaseImplementation"("com.paytime:taponphonesdk:1.0.5")
 }

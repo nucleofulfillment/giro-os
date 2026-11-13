@@ -24,6 +24,10 @@ jobs:
       PAYOS_MAVEN_URL: ${{ secrets.PAYOS_MAVEN_URL }}
       PAYOS_MAVEN_USER: ${{ secrets.PAYOS_MAVEN_USER }}
       PAYOS_MAVEN_PASS: ${{ secrets.PAYOS_MAVEN_PASS }}
+      TAP_MAVEN_URL: ${{ secrets.TAP_MAVEN_URL }}
+      TAP_MAVEN_USER: ${{ secrets.TAP_MAVEN_USER }}
+      TAP_MAVEN_PASS: ${{ secrets.TAP_MAVEN_PASS }}
+      TAP_LICENCA: ${{ secrets.TAP_LICENCA }}
     steps:
       - uses: actions/checkout@v4
 
@@ -49,6 +53,13 @@ jobs:
           ./gradlew --no-daemon assembleVileveDebug
           cp app/build/outputs/apk/vileve/debug/*.apk ../saida/livefood-vileve-teste.apk
 
+      - name: Montar o app celular-maquininha (quando o Tap on Phone estiver liberado)
+        if: env.TAP_MAVEN_URL != ''
+        working-directory: android
+        run: |
+          ./gradlew --no-daemon assembleCelularDebug
+          cp app/build/outputs/apk/celular/debug/*.apk ../saida/livefood-celular-teste.apk
+
       - name: Guardar os arquivos
         uses: actions/upload-artifact@v4
         with:
@@ -68,3 +79,4 @@ jobs:
             App LiveFood para a maquininha.
             • livefood-teste.apk: modo de teste (nada é cobrado), instala em qualquer celular Android.
             • livefood-vileve-teste.apk: aparece quando o kit da Vileve for liberado (para a maquininha de teste PAX A910S).
+            • livefood-celular-teste.apk: aparece quando o Tap on Phone for liberado (celular Android 11+ com NFC vira maquininha).

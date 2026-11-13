@@ -51,11 +51,16 @@ interface Tela {
 /**
  * O "motor" de pagamento. Há dois:
  *  - sim: imita a maquininha (para testar o fluxo em qualquer celular);
- *  - vileve: o kit verdadeiro da PayStore/Vileve na PAX A910S.
+ *  - vileve: o kit verdadeiro da PayStore/Vileve na PAX A910S;
+ *  - celular: Tap on Phone da Vileve (o celular com NFC vira maquininha; só aproximação, sem Pix e sem impressora).
  */
 interface Motor {
     val nome: String
     val deVerdade: Boolean
+    /** formas que este motor cobra sozinho (as outras continuam como hoje no Atendimento) */
+    val formas: List<String> get() = listOf("credito", "debito", "cartao", "pix")
+    /** tem impressora (bobina de 58 mm)? */
+    val imprime: Boolean get() = true
     fun configurar(ctx: Context)
     fun ativo(): Boolean
     fun ativar(codigo: String, fim: (String?) -> Unit)        // fim(null) = deu certo; senão, a mensagem de erro

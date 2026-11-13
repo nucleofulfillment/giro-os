@@ -25,13 +25,14 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
         maven { url = uri("https://jitpack.io") }
-        val url = segredo("PAYOS_MAVEN_URL")
-        if (url != null) {
+        // kit da maquininha (PAYOS_*) e kit Tap on Phone (TAP_*)
+        for (k in listOf("PAYOS", "TAP")) {
+            val url = segredo("${k}_MAVEN_URL") ?: continue
             maven {
                 this.url = uri(url)
                 credentials {
-                    username = segredo("PAYOS_MAVEN_USER")
-                    password = segredo("PAYOS_MAVEN_PASS")
+                    username = segredo("${k}_MAVEN_USER")
+                    password = segredo("${k}_MAVEN_PASS")
                 }
                 authentication { create<BasicAuthentication>("basic") }
             }
