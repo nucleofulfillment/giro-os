@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -5,12 +7,8 @@ plugins {
 
 fun segredo(nome: String): String? {
     val arq = rootProject.file("local.properties")
-    if (arq.exists()) {
-        val p = java.util.Properties()
-        arq.inputStream().use { p.load(it) }
-        p.getProperty(nome)?.takeIf { it.isNotBlank() }?.let { return it }
-    }
-    return System.getenv(nome)?.takeIf { it.isNotBlank() }
+    val local = if (arq.exists()) Properties().apply { arq.inputStream().use { load(it) } }.getProperty(nome) else null
+    return listOf(local, System.getenv(nome)).firstOrNull { !it.isNullOrBlank() }
 }
 
 val versaoNome = "1.0.0"
