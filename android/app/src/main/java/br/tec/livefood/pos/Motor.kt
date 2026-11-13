@@ -46,6 +46,8 @@ interface Tela {
     fun digitar(titulo: String, numerico: Boolean, resposta: (String?) -> Unit)
     fun aprovado(venda: Venda)
     fun erro(texto: String)
+    /** Modo de teste: espera encostar um cartão de verdade no celular (NFC). Nada é cobrado. */
+    fun esperarCartao(aoLer: () -> Unit) = aoLer()
 }
 
 /**
