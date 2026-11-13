@@ -853,7 +853,7 @@ function desenharClientes(){
     if(CLI_FILTRO!=='todos'&&x.s.k!==CLI_FILTRO) return false;
     if(pv==='-'&&c.plano_id) return false; if(pv&&pv!=='-'&&c.plano_id!==pv) return false;
     return !q||String(c.nome||'').toLowerCase().indexOf(q)>=0||String(c.slug||'').toLowerCase().indexOf(q)>=0||String(c.id||'').toLowerCase().indexOf(q)>=0; });
-  L.sort(function(a,b){ var o={atraso:0,teste:1,ativo:2,off:3}; return o[a.s.k]-o[b.s.k]||String(a.c.nome).localeCompare(String(b.c.nome)); });
+  L.sort(function(a,b){ return String(a.c.nome||'').trim().localeCompare(String(b.c.nome||'').trim(),'pt-BR',{sensitivity:'base',numeric:true}); });   /* ordem alfabética (maiúscula e minúscula juntas) */
   if(!L.length){el('lista-clientes').innerHTML='<div class="vazio">'+(CLIENTES.length?'Nenhum cliente encontrado com esse filtro.':'Nenhum cliente ainda.')+'</div>';atualizarTopo();return;}
   var pags=Math.ceil(L.length/CLI_POR); if(CLI_PG>=pags) CLI_PG=pags-1; var P=L.slice(CLI_PG*CLI_POR,(CLI_PG+1)*CLI_POR);
   el('lista-clientes').innerHTML='<div class="hx-rol"><table class="hx-tab"><thead><tr><th>Cliente</th><th class="hx-esconde">Plano</th><th>Situação</th><th class="hx-esconde">Mensalidade</th><th class="hx-esconde">Vencimento</th><th class="hx-esconde">Uso</th><th></th></tr></thead><tbody>'+
