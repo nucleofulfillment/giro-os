@@ -25,7 +25,7 @@ class Ponte(private val tela: MainActivity) {
             .toString()
     }
 
-    /** json: {id, forma: credito|debito|cartao|pix, valor: centavos} */
+    /** json: {id, forma: credito|debito|cartao|pix, valor: centavos, loja?, fone? (do cliente), ref? (mesa/cliente)} */
     @JavascriptInterface
     fun cobrar(json: String) {
         val o = runCatching { JSONObject(json) }.getOrNull()
@@ -36,7 +36,8 @@ class Ponte(private val tela: MainActivity) {
             tela.responder(id, JSONObject().put("ok", false).put("msg", "Cobrança inválida."))
             return
         }
-        tela.runOnUiThread { tela.abrirCobranca(id, forma, valor) }
+        val extras = Comprovante.Extras(o.optString("loja"), o.optString("fone"), o.optString("ref"))
+        tela.runOnUiThread { tela.abrirCobranca(id, forma, valor, extras) }
     }
 
     /** html do cupom pronto para bobina de 58 mm; largura = largura da página em px (padrão 240) */

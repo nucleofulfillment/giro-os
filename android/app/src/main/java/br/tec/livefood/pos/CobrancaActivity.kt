@@ -30,6 +30,9 @@ class CobrancaActivity : AppCompatActivity(), Tela {
         const val FORMA = "forma"
         const val VALOR = "valor"
         const val RESULTADO = "resultado"
+        const val LOJA = "loja"
+        const val FONE = "fone"
+        const val REF = "ref"
     }
 
     private lateinit var forma: Forma
@@ -240,7 +243,32 @@ class CobrancaActivity : AppCompatActivity(), Tela {
             mensagem("Imprimindo a via do cliente…")
             Pagamento.motor.reimprimir(Via.CLIENTE) { e -> mensagem(if (e == null) "Pagamento aprovado!" else e) }
         })
+        // comprovante digital: abre o WhatsApp do aparelho com a mensagem pronta para o cliente
+        lista.add(Triple("📲 Enviar comprovante no WhatsApp", Ui.WHATS) { enviarWhats(venda) })
         mostrarBotoes(lista)
+    }
+
+    private fun enviarWhats(venda: Venda) {
+        val campo = EditText(this).apply {
+            hint = "(47) 99999-9999"
+            inputType = InputType.TYPE_CLASS_PHONE
+            textSize = 24f
+            setText(Comprovante.formatarFone(intent.getStringExtra(FONE).orEmpty()))
+            setSelection(text.length)
+        }
+        AlertDialog.Builder(this)
+            .setTitle("Celular do cliente (com DDD)")
+            .setView(campo)
+            .setPositiveButton("Abrir WhatsApp") { _, _ ->
+                val numero = Comprovante.numero(campo.text.toString())
+                if (numero == null) { mensagem("Número inválido. Digite com DDD."); return@setPositiveButton }
+                val texto = Comprovante.texto(venda, intent.getStringExtra(LOJA).orEmpty(), intent.getStringExtra(REF).orEmpty())
+                val uri = android.net.Uri.parse("https://wa.me/$numero?text=" + android.net.Uri.encode(texto))
+                runCatching { startActivity(Intent(Intent.ACTION_VIEW, uri)) }
+                    .onFailure { mensagem("Não consegui abrir o WhatsApp.") }
+            }
+            .setNegativeButton("Voltar", null)
+            .show()
     }
 
     override fun erro(texto: String) = runOnUiThread {

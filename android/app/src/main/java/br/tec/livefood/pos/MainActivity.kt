@@ -124,12 +124,15 @@ class MainActivity : AppCompatActivity() {
 
     private fun temPermissao(p: String) = ContextCompat.checkSelfPermission(this, p) == PackageManager.PERMISSION_GRANTED
 
-    fun abrirCobranca(id: String, forma: Forma, valor: Long) {
+    fun abrirCobranca(id: String, forma: Forma, valor: Long, extras: Comprovante.Extras) {
         cobrancaId = id
         cobranca.launch(
             Intent(this, CobrancaActivity::class.java)
                 .putExtra(CobrancaActivity.FORMA, forma.codigo)
                 .putExtra(CobrancaActivity.VALOR, valor)
+                .putExtra(CobrancaActivity.LOJA, extras.loja)
+                .putExtra(CobrancaActivity.FONE, extras.fone)
+                .putExtra(CobrancaActivity.REF, extras.ref)
         )
     }
 

@@ -315,7 +315,7 @@ label.l.big{font-size:14px;margin-top:16px}
 </div>
 
 <div id="app" class="hide">
-  <div id="top"><div style="flex:1;min-width:0;display:flex;align-items:center;gap:12px"><b id="emp" style="flex:none">Atendimento</b><small id="usu"></small></div><!-- "Atender via mapa" (mpAbre) fora do ar enquanto evolui; o código do mapa continua abaixo --><span style="font-size:10px;color:#9a8f86;font-weight:700;margin-right:8px;white-space:nowrap">ATEND-49</span><button id="btPos" style="display:none;margin-right:8px" onclick="try{LiveFoodPOS.menu()}catch(e){}">💳 Maquininha</button><a class="bt-hub" href="hub.html" title="Voltar ao Hub"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Hub</a><button onclick="sair()">Sair</button></div>
+  <div id="top"><div style="flex:1;min-width:0;display:flex;align-items:center;gap:12px"><b id="emp" style="flex:none">Atendimento</b><small id="usu"></small></div><!-- "Atender via mapa" (mpAbre) fora do ar enquanto evolui; o código do mapa continua abaixo --><span style="font-size:10px;color:#9a8f86;font-weight:700;margin-right:8px;white-space:nowrap">ATEND-50</span><button id="btPos" style="display:none;margin-right:8px" onclick="try{LiveFoodPOS.menu()}catch(e){}">💳 Maquininha</button><a class="bt-hub" href="hub.html" title="Voltar ao Hub"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Hub</a><button onclick="sair()">Sair</button></div>
   <div id="chip" class="hide"><div class="t"><b id="chipT"></b><small id="chipS"></small></div><button onclick="trocaComanda()">Trocar</button></div>
 
   <!-- PEDIDO -->
@@ -963,9 +963,11 @@ function posTem(){ return !!(window.LiveFoodPOS&&window.LiveFoodPOS.cobrar); }
 function posInfo(){ if(!POS.info){ try{ POS.info=JSON.parse(LiveFoodPOS.info())||{}; }catch(e){ POS.info={}; } } return POS.info; }   /* maquininha PAX: tudo e imprime; celular (Tap on Phone): só cartão, sem Pix e sem impressora */
 function posForma(f){ return posTem()&&(posInfo().formas||['credito','debito','cartao','pix']).indexOf(f)>=0; }
 window.LiveFoodPOSRetorno=function(id,r){ var cb=POS.cb[id]; delete POS.cb[id]; if(cb) cb(r||{ok:false}); };
-function posCobra(forma,valor,fim){
-  var id='c'+(++POS.seq)+'_'+Date.now(); POS.cb[id]=fim;
-  try{ LiveFoodPOS.cobrar(JSON.stringify({id:id,forma:forma,valor:Math.round(valor*100)})); }catch(e){ delete POS.cb[id]; fim({ok:false,msg:'Não consegui abrir a maquininha.'}); }
+/* (ATEND-50) dados para o comprovante no WhatsApp: nome da loja, celular do cliente (se tiver cadastro) e mesa/cliente */
+function posFone(joia){ if(!joia) return ''; var s=(SOCIOS||[]).filter(function(x){ return String(x.joia)===String(joia); })[0]; return (s&&s.fone)||''; }
+function posCobra(forma,valor,fim,ex){
+  var id='c'+(++POS.seq)+'_'+Date.now(); POS.cb[id]=fim; ex=ex||{};
+  try{ LiveFoodPOS.cobrar(JSON.stringify({id:id,forma:forma,valor:Math.round(valor*100),loja:(D&&D.empresa)||'',fone:posFone(ex.joia),ref:ex.ref||''})); }catch(e){ delete POS.cb[id]; fim({ok:false,msg:'Não consegui abrir a maquininha.'}); }
 }
 function posTef(r){ var v=r.venda||{}; return {gk:v.gk||'',forma:v.forma||'',valor:v.valor||0,nsu:v.nsu||'',aut:v.aut||'',bandeira:v.bandeira||'',final:v.final||'',quando:v.quando||Date.now()}; }
 function posVoltar(){ if($('sh')&&$('sh').style.display==='flex'){ fecha(); return true; } return false; }   /* botão "voltar" da maquininha fecha a janela aberta */
@@ -1080,7 +1082,8 @@ function fcConfirma(){
   var b=$('rzOk'); if(!b||b.disabled) return;
   if(posForma(FC.forma)&&!FC.tef){   /* (ATEND-49) cobra na maquininha; aprovado, envia o pedido já pago */
     var vt=Math.round((cartTot()+srvVal(cartTot()))*100)/100; b.disabled=true; $('rzErr').textContent='';
-    posCobra(FC.forma,vt,function(r){ b.disabled=false; if(r.ok){ FC.tef=posTef(r); b.textContent='Enviar o pedido (já pago ✓)'; fcConfirma(); } else $('rzErr').textContent=r.cancelado?'':(r.msg||'Pagamento não aprovado.'); });
+    var ref=COM.mesa&&!ehSMM(COM.mesa)&&!ehBalM(COM.mesa)?'Mesa '+COM.mesa:(COM.nome||'');
+    posCobra(FC.forma,vt,function(r){ b.disabled=false; if(r.ok){ FC.tef=posTef(r); b.textContent='Enviar o pedido (já pago ✓)'; fcConfirma(); } else $('rzErr').textContent=r.cancelado?'':(r.msg||'Pagamento não aprovado.'); },{joia:COM.joia,ref:ref});
     return;
   }
   b.disabled=true; var tx0=b.textContent; b.textContent='Enviando…'; $('rzErr').textContent='';
@@ -1395,7 +1398,7 @@ function fechaFazer(i,forma,partes,cartao){
   var pk=(c.mesa||'')+'|'+(c.joia||''), pj=POS.fech[pk];   /* (ATEND-49) conta já paga na maquininha: reenviar não cobra de novo */
   if(pj&&!partes){ forma=pj.forma; }
   else if(posForma(forma)&&!partes){
-    posCobra(forma,c.total,function(r){ if(r.ok){ POS.fech[pk]={forma:forma,tef:posTef(r)}; fechaFazer(i,forma,null,cartao); } else { var e=$('fcErr'); if(e) e.textContent=r.cancelado?'':(r.msg||'Pagamento não aprovado.'); } });
+    posCobra(forma,c.total,function(r){ if(r.ok){ POS.fech[pk]={forma:forma,tef:posTef(r)}; fechaFazer(i,forma,null,cartao); } else { var e=$('fcErr'); if(e) e.textContent=r.cancelado?'':(r.msg||'Pagamento não aprovado.'); } },{joia:c.joia,ref:c.mesa&&!ehSMM(c.mesa)&&!ehBalM(c.mesa)?'Mesa '+c.mesa:(c.nome||'')});
     return;
   }
   var bOk=$('dvOk'); if(bOk){ bOk.disabled=true; bOk.textContent='Fechando…'; }
