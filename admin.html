@@ -188,13 +188,102 @@ td.vin{color:var(--green);font-weight:800;white-space:nowrap}td.vout{color:var(-
 @media(max-width:560px){.card{padding:16px 14px}.card h3 .dir{margin-left:0;width:100%;flex-wrap:wrap;gap:10px}.busca{width:100%;max-width:none;flex:1 1 100%}.card table{min-width:660px}.finrow,.finrow.tres{grid-template-columns:1fr}.kpi .vl{font-size:26px}.acs{flex-wrap:wrap}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
+<style>
+/* ══ (ADMIN-02) visual igual ao Hub: topo laranja, cards por função e listas no padrão de sistema ══ */
+:root{--hx-bg:#F6F6F8;--hx-ln:#ECECEF;--hx-tx:#1C1C1E;--hx-mu:#6B6B73;--hx-ok:#16A34A;--hx-okb:#E8F7EE;--hx-av:#B45309;--hx-avb:#FEF3C7;--hx-er:#DC2626;--hx-erb:#FDECEC;--hx-in:#2563EB;--hx-inb:#E8EFFD}
+html,body{background:var(--hx-bg)}
+#app{color:var(--hx-tx)}
+.hx-topo{position:relative;background:linear-gradient(150deg,#FF5A00 0%,#FF6A10 55%,#FF8A33 100%);color:#fff;overflow:hidden}
+.hx-topo::before{content:'';position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.18) 1px,transparent 1.5px);background-size:22px 22px;-webkit-mask-image:radial-gradient(70% 80% at 50% 0%,#000,transparent);mask-image:radial-gradient(70% 80% at 50% 0%,#000,transparent);pointer-events:none}
+.hx-wrap{position:relative;max-width:1240px;margin:0 auto;padding:0 22px}
+#app header{position:relative;height:auto;padding:20px 0;background:none;border:0;backdrop-filter:none}
+#app header .tb-logo .lf{height:34px}
+#app header .papel{background:rgba(0,0,0,.16);font-size:11px;letter-spacing:.12em;padding:6px 12px}
+.hx-hbtn{font:inherit;font-size:13px;font-weight:800;color:#fff;background:rgba(0,0,0,.16);border:0;border-radius:99px;padding:9px 14px}
+.hx-hbtn:hover{background:rgba(0,0,0,.24)}
+#app .tb-av{width:38px;height:38px;background:#fff;color:#FF5A00;font-size:15px}
+#hx-tit{padding:4px 0 86px}
+.hx-ola h1,.hx-t h1{margin:0 0 6px;font-size:clamp(28px,4vw,42px);font-weight:800;letter-spacing:-.02em;line-height:1.05}
+.hx-ola p,.hx-t p{margin:0;font-size:16px;font-weight:600;opacity:.92}
+.hx-miga{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700;padding:0 0 12px}
+.hx-miga a{color:#fff;text-decoration:none;background:rgba(0,0,0,.16);padding:6px 12px;border-radius:99px}.hx-miga a:hover{background:rgba(0,0,0,.26)}
+.hx-t{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}.hx-t .esp{flex:1}
+.hx-bt{font:inherit;font-size:14px;font-weight:800;border:0;border-radius:12px;padding:0 16px;height:44px;display:inline-flex;align-items:center;gap:6px;cursor:pointer;text-decoration:none}
+.hx-bt.esc{background:#1C1C1E;color:#fff}.hx-bt.br{background:#fff;color:#1C1C1E}.hx-bt.pri{background:#FF5A00;color:#fff}.hx-bt.lin{background:#fff;color:#1C1C1E;border:1px solid var(--hx-ln)}
+.hx-bt.pq{height:36px;font-size:13px;padding:0 12px;border-radius:10px}
+#app main{max-width:1240px;padding:0 22px 50px}
+.hx-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:-58px;position:relative;z-index:2;margin-bottom:6px}
+.hx-kpis:empty{display:none}
+.hx-kpi{background:#fff;border-radius:18px;padding:16px 18px;box-shadow:0 14px 34px -20px rgba(60,20,0,.45);min-width:0}
+.hx-kpi small{display:block;font-size:11.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--hx-mu)}
+.hx-kpi b{display:block;font-size:26px;font-weight:800;letter-spacing:-.02em;margin:6px 0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hx-kpi span{font-size:12.5px;font-weight:700;color:var(--hx-mu)}.hx-kpi .up{color:var(--hx-ok)}.hx-kpi .dn{color:var(--hx-er)}
+.pg{display:none;animation:subir .35s both}.pg.on{display:block}
+.hx-sec{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--hx-mu);margin:26px 0 12px}
+.hx-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+.hx-card{position:relative;display:flex;flex-direction:column;gap:10px;min-height:178px;padding:20px;border-radius:22px;background:#fff;color:var(--hx-tx);text-decoration:none;border:1px solid var(--hx-ln);box-shadow:0 12px 30px -24px rgba(0,0,0,.35);transition:transform .15s,box-shadow .15s}
+.hx-card:hover{transform:translateY(-3px);box-shadow:0 18px 40px -22px rgba(0,0,0,.4)}
+.hx-card .ic{width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:23px}
+.hx-card h3{margin:2px 0 0;font-size:18px;font-weight:800;letter-spacing:-.01em}
+.hx-card p{margin:0;font-size:13.5px;font-weight:600;color:var(--hx-mu);line-height:1.4}
+.hx-card .rod{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;font-weight:800}
+.hx-card .rod i{font-style:normal;flex:none;width:32px;height:32px;border-radius:10px;background:#FF5A00;color:#fff;display:flex;align-items:center;justify-content:center}
+.c1{background:#FFF1E8}.c2{background:#E8EFFD}.c3{background:#E8F7EE}.c4{background:#FEF3C7}.c5{background:#F3E8FD}.c6{background:#FDECEC}.c7{background:#E6F6F8}.c8{background:#F1F1F3}
+.hx-alerta{position:absolute;top:16px;right:16px;font-size:11.5px;font-weight:800;padding:4px 9px;border-radius:99px;background:var(--hx-erb);color:var(--hx-er)}
+/* listas no padrão de sistema */
+.hx-painel{background:#fff;border:1px solid var(--hx-ln);border-radius:20px;box-shadow:0 12px 30px -24px rgba(0,0,0,.35);overflow:hidden;margin-top:18px}
+.hx-barra{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:16px 18px;border-bottom:1px solid var(--hx-ln)}
+.hx-barra .busca{flex:1;min-width:220px;width:auto;max-width:none;height:44px;border-radius:12px;background:var(--hx-bg);border:1px solid var(--hx-ln)}
+.hx-barra select{height:44px;border-radius:12px;padding:0 12px;font-weight:700;font-size:13px}
+.hx-chips{display:flex;gap:6px;flex-wrap:wrap}
+.hx-chip{font:inherit;font-size:13px;font-weight:800;padding:8px 12px;border-radius:99px;background:var(--hx-bg);color:var(--hx-mu);border:1px solid var(--hx-ln);cursor:pointer}
+.hx-chip.on{background:var(--hx-tx);color:#fff;border-color:var(--hx-tx)}.hx-chip em{font-style:normal;opacity:.6;margin-left:4px}
+.hx-rol{overflow-x:auto}
+.hx-tab{width:100%;border-collapse:collapse;font-size:14px;border:0;border-radius:0;background:#fff}
+.hx-tab th{text-align:left;font-size:11.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--hx-mu);padding:12px 14px;background:#FAFAFB;border-bottom:1px solid var(--hx-ln);white-space:nowrap}
+.hx-tab td{padding:13px 14px;border-top:0;border-bottom:1px solid var(--hx-ln);vertical-align:middle}
+.hx-tab tr:hover td{background:#FFFAF6}.hx-tab tr{cursor:pointer}
+.hx-nm{display:flex;align-items:center;gap:12px;min-width:210px}.hx-nm .a{flex:none;width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:16px}
+.hx-nm b{display:block;font-size:14.5px}.hx-nm small{font-size:12.5px;color:var(--hx-mu);font-weight:600}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:800;padding:5px 10px;border-radius:99px;white-space:nowrap}.st::before{content:'';width:7px;height:7px;border-radius:50%;background:currentColor}
+.st.ok{background:var(--hx-okb);color:var(--hx-ok)}.st.av{background:var(--hx-avb);color:var(--hx-av)}.st.er{background:var(--hx-erb);color:var(--hx-er)}.st.in{background:var(--hx-inb);color:var(--hx-in)}.st.of{background:#F1F1F3;color:#8A8A92}
+.hx-num{font-weight:800;white-space:nowrap}.hx-mu{color:var(--hx-mu);font-weight:600;font-size:13px}
+.hx-ac{display:flex;gap:6px;justify-content:flex-end;align-items:center;white-space:nowrap}
+.hx-pag{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:14px 18px;font-size:13px;font-weight:700;color:var(--hx-mu)}
+.hx-pag b{color:var(--hx-tx)}.hx-pp{display:flex;gap:6px}.hx-pp button{font:inherit;width:34px;height:34px;border-radius:10px;border:1px solid var(--hx-ln);background:#fff;font-weight:800;color:var(--hx-tx);cursor:pointer}.hx-pp button.on{background:var(--hx-tx);color:#fff;border-color:var(--hx-tx)}.hx-pp button:disabled{opacity:.35;cursor:default}
+/* planos */
+.hx-planos{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin-top:18px}
+.hx-pl{background:#fff;border:1px solid var(--hx-ln);border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 12px 30px -24px rgba(0,0,0,.35)}
+.hx-pl.dest{border:2px solid #FF5A00}.hx-pl.off{opacity:.62}
+.hx-pl .tp{display:flex;justify-content:space-between;align-items:center;gap:8px}.hx-pl .tp span{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+.hx-pl h3{margin:0;font-size:19px;font-weight:800}
+.hx-pl .pr{font-size:30px;font-weight:800;letter-spacing:-.02em}.hx-pl .pr small{font-size:14px;color:var(--hx-mu);font-weight:700}
+.hx-pl ul{margin:0;padding:0;list-style:none;display:grid;gap:7px;font-size:13.5px;font-weight:600}.hx-pl li::before{content:'✓';color:var(--hx-ok);font-weight:800;margin-right:8px}
+.hx-pl .met{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;background:var(--hx-bg);border-radius:14px;padding:10px}
+.hx-pl .met div{text-align:center;min-width:0}.hx-pl .met b{display:block;font-size:15px}.hx-pl .met small{font-size:11.5px;color:var(--hx-mu);font-weight:700}
+.hx-pl .hx-bt{margin-top:auto;justify-content:center}
+.hx-bloco{background:#fff;border:1px solid var(--hx-ln);border-radius:20px;padding:18px 20px;margin-top:16px;box-shadow:0 12px 30px -24px rgba(0,0,0,.35)}
+.hx-bloco:empty{display:none}.hx-bloco>div{margin-top:0!important}
+/* cliente aberto */
+.hx-det{display:grid;grid-template-columns:300px 1fr;gap:16px;align-items:start;margin-top:18px}.hx-det .hx-painel{margin-top:0}
+.hx-ficha{background:#fff;border:1px solid var(--hx-ln);border-radius:20px;padding:20px;text-align:center;box-shadow:0 12px 30px -24px rgba(0,0,0,.35)}
+.hx-ficha .a{width:72px;height:72px;border-radius:20px;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800;color:#fff}
+.hx-ficha h2{margin:0;font-size:20px}.hx-ficha .hx-mu{margin:4px 0 12px;word-break:break-all}
+.hx-ficha dl{text-align:left;margin:16px 0 0;display:grid;gap:10px;font-size:13.5px}.hx-ficha dt{color:var(--hx-mu);font-weight:800;font-size:11.5px;text-transform:uppercase;letter-spacing:.05em}.hx-ficha dd{margin:2px 0 0;font-weight:800}
+.hx-abas{display:flex;gap:4px;padding:8px;border-bottom:1px solid var(--hx-ln);overflow-x:auto}
+.hx-abas button{font:inherit;font-size:14px;font-weight:800;padding:10px 14px;border-radius:10px;color:var(--hx-mu);white-space:nowrap;background:none;border:0;cursor:pointer}.hx-abas button.on{background:#FFF1E8;color:#FF5A00}
+.hx-form{padding:4px 20px 20px}.hx-form [data-aba]{display:none}.hx-form [data-aba].on{display:block}
+.hx-form .acoes{position:sticky;bottom:0;background:#fff;padding:12px 0 0;margin-top:16px;border-top:1px solid var(--hx-ln)}
+/* cards antigos dentro das telas: mesmo cantinho e sombra */
+#app .card{border-radius:20px;border:1px solid var(--hx-ln);box-shadow:0 12px 30px -24px rgba(0,0,0,.35);margin:18px 0 0}
+#app .duo{margin-top:18px}
+@media(max-width:900px){.hx-kpis{grid-template-columns:repeat(2,1fr)}.hx-det{grid-template-columns:1fr}}
+@media(max-width:700px){.hx-esconde{display:none}.hx-nm{min-width:0}.hx-tab th:last-child,.hx-tab td:last-child{display:none}#hx-tit{padding-bottom:78px}.hx-kpi b{font-size:21px}#app header .papel{display:none}}
+</style>
 <style>html.dd-ret #login{visibility:hidden}</style>
 <script>try{if(localStorage.getItem('lf_admin_jwt'))document.documentElement.classList.add('dd-ret');}catch(e){}</script>
 </head>
 <body>
-<div id="bg-vivo"><i class="b1"></i><i class="b2"></i><i class="b3"></i></div>
-<canvas id="curves"></canvas>
-<div class="glow"></div>
 
 <div id="login">
   <div class="lg-arte">
@@ -220,77 +309,160 @@ td.vin{color:var(--green);font-weight:800;white-space:nowrap}td.vout{color:var(-
       <button class="btn pri" id="lg-btn" style="width:100%;margin-top:18px;padding:13px;font-size:14.5px" onclick="entrar()">Entrar</button>
       <p style="text-align:center;margin:12px 0 0"><a href="#" id="lg-alt" onclick="lgAlternar();return false" style="font-size:13px;font-weight:700;color:#D96D28;text-decoration:none">Entrar com código (WhatsApp ou e-mail)</a></p>
       <div class="erro" id="lg-erro"></div>
-      <div class="bld">LIVEFOOD-ADMIN-01</div>
+      <div class="bld">LIVEFOOD-ADMIN-02</div>
     </div>
   </div>
 </div>
 
 <div id="app">
-  <header>
-    <div class="tb-logo"><img class="lf" src="livefood-logo.png" alt="LiveFood"></div><span class="papel">ADMIN</span>
-    <div class="esp"></div>
-    <button class="btn peq" onclick="recarregar()" title="Atualizar">↻</button>
-    <div class="menu-av">
-      <button class="tb-av" id="av-ini" onclick="menuAv(event)" title="Minha conta">A</button>
-      <div class="menu-lista" id="menu-lista">
-        <div class="quem"><b id="ola-nome">—</b><small id="ola-mail"></small></div>
-        <button onclick="menuFecha();abrirAsaasCfg()">💳 Conta Asaas</button>
-        <button onclick="menuFecha();abrirWhatsPedidos()">💬 Pedidos pelo WhatsApp</button>
-        <button onclick="menuFecha();abrirTrocarSenha()">🔑 Trocar minha senha</button>
-        <button class="sair" onclick="menuFecha();sair()">⎋ Sair</button>
+  <!-- (ADMIN-02) topo laranja igual ao Hub: o título e os números mudam conforme a tela -->
+  <div class="hx-topo"><div class="hx-wrap">
+    <header>
+      <div class="tb-logo"><img class="lf" src="livefood-logo-branca.png" alt="LiveFood"></div><span class="papel">ADMIN MASTER</span>
+      <div class="esp"></div>
+      <button class="hx-hbtn" onclick="recarregar()" title="Atualizar">↻ Atualizar</button>
+      <div class="menu-av">
+        <button class="tb-av" id="av-ini" onclick="menuAv(event)" title="Minha conta">A</button>
+        <div class="menu-lista" id="menu-lista">
+          <div class="quem"><b id="ola-nome">—</b><small id="ola-mail"></small></div>
+          <button onclick="menuFecha();abrirAsaasCfg()">💳 Conta Asaas</button>
+          <button onclick="menuFecha();abrirWhatsPedidos()">💬 Pedidos pelo WhatsApp</button>
+          <button onclick="menuFecha();abrirTrocarSenha()">🔑 Trocar minha senha</button>
+          <button class="sair" onclick="menuFecha();sair()">⎋ Sair</button>
+        </div>
       </div>
-    </div>
-  </header>
+    </header>
+    <div id="hx-tit"></div>
+  </div></div>
+
   <main>
-    <div class="cab"><h1>Financeiro</h1><div class="sub">clientes e caixa do LiveFood</div></div>
-    <div class="finrow" id="fin-resumo"></div>
-    <div class="duo">
-      <div class="kpi"><div class="lb">TOTAL MOVIMENTADO</div><div class="vl" id="fin-mov">R$ 0,00</div><div class="dl" id="fin-mov-d"></div></div>
-      <div class="saldo"><div class="lb">Saldo em conta</div><div class="vl" id="fin-saldo">—</div><div class="lb" id="fin-saldo-info" style="font-weight:500;opacity:.85">Conta Asaas do LiveFood</div>
-        <div class="lk"><span onclick="carregarSaldo()">atualizar</span><span onclick="abrirExtrato()">ver extrato</span><span onclick="abrirAsaasCfg()">configurar</span></div></div>
-    </div>
-    <div class="card">
-      <h3><span>Clientes</span><span class="sub2" id="cli-resumo"></span><span class="dir"><input class="busca" id="cli-busca" placeholder="buscar cliente" oninput="desenharClientes()"><span class="lnk" onclick="abrirNovoCliente()">+ Novo cliente</span><span class="mais" id="cli-mais" onclick="alternaClientes()" title="Mostrar / ocultar">−</span></span></h3>
-      <div id="cli-corpo"><div id="lista-clientes"><div class="vazio">Carregando...</div></div></div>
-    </div>
-    <div class="card">
-      <h3><span>Planos</span><span class="sub2" id="pl-resumo"></span><span class="dir"><span class="lnk" onclick="abrirPlano()">+ Novo plano</span></span></h3>
+    <div class="hx-kpis" id="hx-kpis"></div>
+
+    <!-- ═════ INÍCIO: um card para cada função ═════ -->
+    <section class="pg" data-pg="inicio">
+      <div class="hx-sec">Negócio</div>
+      <div class="hx-grade">
+        <a class="hx-card" href="#clientes"><span class="hx-alerta" id="hc-cli-al" hidden></span><span class="ic c1">🏪</span><h3>Clientes</h3><p>Lojas, restaurantes e pontos que usam o LiveFood. Cadastro, plano, acesso e cobrança.</p><div class="rod"><span id="hc-cli">…</span><i>→</i></div></a>
+        <a class="hx-card" href="#planos"><span class="hx-alerta" id="hc-pl-al" hidden></span><span class="ic c5">📦</span><h3>Planos</h3><p>Preços, pacotes inclusos, recursos de cada plano, bloqueio por falta de pagamento e pedidos de troca.</p><div class="rod"><span id="hc-pl">…</span><i>→</i></div></a>
+        <a class="hx-card" href="#financeiro"><span class="ic c3">💰</span><h3>Financeiro</h3><p>Fluxo de caixa, lançamentos, saldo e extrato da conta do LiveFood.</p><div class="rod"><span id="hc-fin">…</span><i>→</i></div></a>
+        <a class="hx-card" href="marketing.html"><span class="ic c2">📣</span><h3>Marketing</h3><p>Buscar estabelecimentos no Google Maps e chamar no WhatsApp com 7 dias de teste.</p><div class="rod"><span>Abrir</span><i>→</i></div></a>
+      </div>
+      <div class="hx-sec">Operação</div>
+      <div class="hx-grade">
+        <a class="hx-card" href="#app"><span class="ic c4">🛵</span><h3>App do motorista</h3><p>Motoristas que assinam o app, preços e promoção.</p><div class="rod"><span id="hc-app">…</span><i>→</i></div></a>
+        <a class="hx-card" href="#servicos"><span class="ic c7">🧾</span><h3>Serviços e publicidade</h3><p>Taxas e preços dos serviços do motorista e os banners de publicidade.</p><div class="rod"><span id="hc-srv">…</span><i>→</i></div></a>
+        <a class="hx-card" href="#fest"><span class="ic c6">🎟️</span><h3>LiveFest</h3><p>Ingressos com divisão automática: comissão e casas que vendem.</p><div class="rod"><span>Configurar</span><i>→</i></div></a>
+        <a class="hx-card" href="#downloads"><span class="ic c8">📲</span><h3>Apps para download</h3><p>Enviar e trocar os arquivos dos apps que o site entrega.</p><div class="rod"><span>Motorista e Mesa</span><i>→</i></div></a>
+      </div>
+      <div class="hx-sec">Pagamentos e integrações</div>
+      <div class="hx-grade">
+        <a class="hx-card" href="#pagamentos"><span class="ic c1">💳</span><h3>Vileve / PayStore</h3><p>Pagamentos na mesa e na maquininha: testar a conexão e ver os avisos recebidos.</p><div class="rod"><span>Em teste</span><i>→</i></div></a>
+        <a class="hx-card" href="#" onclick="abrirAsaasCfg();return false"><span class="ic c3">🏦</span><h3>Conta Asaas</h3><p>Conta que recebe as mensalidades dos clientes e emite as cobranças.</p><div class="rod"><span id="hc-asaas">…</span><i>→</i></div></a>
+        <a class="hx-card" href="#" onclick="abrirWhatsPedidos();return false"><span class="ic c3">💬</span><h3>Pedidos pelo WhatsApp</h3><p>Número e mensagens do atendimento de pedidos pelo WhatsApp.</p><div class="rod"><span>Configurar</span><i>→</i></div></a>
+        <a class="hx-card" href="#" onclick="abrirTrocarSenha();return false"><span class="ic c8">🔑</span><h3>Minha conta</h3><p>Trocar a senha de acesso. Para sair, toque no seu nome lá em cima.</p><div class="rod"><span id="hc-eu">…</span><i>→</i></div></a>
+      </div>
+    </section>
+
+    <!-- ═════ CLIENTES ═════ -->
+    <section class="pg" data-pg="clientes">
+      <div class="hx-painel">
+        <div class="hx-barra">
+          <input class="busca" id="cli-busca" placeholder="🔍 Buscar por nome ou endereço do cardápio" oninput="CLI_PG=0;desenharClientes()">
+          <div class="hx-chips" id="cli-chips"></div>
+          <select id="cli-plano" onchange="CLI_PG=0;desenharClientes()" style="width:auto"><option value="">Plano: todos</option></select>
+        </div>
+        <div id="cli-corpo"><div id="lista-clientes"><div class="vazio">Carregando...</div></div></div>
+        <span id="cli-resumo" hidden></span>
+      </div>
+    </section>
+
+    <!-- ═════ CLIENTE ABERTO ═════ -->
+    <section class="pg" data-pg="cliente">
+      <div class="hx-det">
+        <div class="hx-ficha" id="cd-ficha"></div>
+        <div class="hx-painel">
+          <div class="hx-abas" id="cd-abas"></div>
+          <div id="cd-form" class="hx-form"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═════ PLANOS ═════ -->
+    <section class="pg" data-pg="planos">
       <div id="lista-planos"><div class="vazio">Carregando...</div></div>
-    </div>
-    <div class="card">
-      <h3><span>App</span><span class="sub2" id="app-resumo"></span><span class="dir"><span class="lnk" onclick="abrirAppCfg()">Preços e promoção</span><span class="mais" id="app-mais" onclick="alternaApp()" title="Mostrar / esconder os motoristas">+</span></span></h3>
-      <div id="app-cfg-info" class="sub2" style="padding:0 2px 8px"></div>
-      <div id="app-corpo" style="display:none"><div id="lista-app"><div class="vazio">Carregando...</div></div></div>
-    </div>
-    <div class="card">
-      <h3><span>Serviços do motorista</span><span class="dir"><span class="lnk" onclick="abrirSrvCfg()">Taxas e preços</span><span class="lnk" onclick="abrirBanners()">Publicidade</span></span></h3>
-      <div id="srv-cfg-info" class="sub2" style="padding:0 2px 8px">Carregando...</div>
-    </div>
-    <div class="card">
-      <h3><span>Apps para download</span><span class="dir"><span class="lnk" onclick="abrirApks()">Enviar / trocar APK</span></span></h3>
-      <div id="apk-info" class="sub2" style="padding:0 2px 8px">O site entrega direto o arquivo enviado aqui.</div>
-    </div>
-    <div class="card">
-      <h3><span>LiveFest</span><span class="sub2" id="fest-resumo">ingressos com split: comissão e casas que vendem</span><span class="dir"><span class="lnk" onclick="abrirFest()">Configurar</span><a class="lnk" href="livefest.html" target="_blank" rel="noopener" style="text-decoration:none">Abrir o app</a></span></h3>
-    </div>
-    <div class="card">
-      <h3><span>Marketing</span><span class="sub2">buscar estabelecimentos no Google Maps e chamar no WhatsApp com 7 dias de teste</span><span class="dir"><a class="lnk" href="marketing.html" style="text-decoration:none">Abrir</a></span></h3>
-    </div>
-    <div class="card">
-      <h3><span>Paytime</span><span class="sub2">pagamentos na mesa e na maquininha (teste)</span><span class="dir"><span class="lnk" onclick="abrirPaytime()">Testar conexão</span><span class="lnk" onclick="abrirPtEventos()">Avisos recebidos</span></span></h3>
-    </div>
-    <div class="card">
-      <h3><span>Fluxo de caixa</span><span class="dir"><span class="lnk" onclick="carregarFluxo();carregarSaldo()">↻ Atualizar</span><span class="lnk" onclick="abrirLanc()">+ Novo lançamento</span></span></h3>
-      <div class="filtros" id="fc-filtros"></div>
-      <div id="fc-aviso"></div>
-      <div class="finrow tres" id="fc-periodo"></div>
-      <div class="tabela-wrap"><table>
-        <colgroup><col style="width:11%"><col style="width:38%"><col style="width:15%"><col style="width:13%"><col style="width:23%"></colgroup>
-        <thead><tr><th>Data</th><th>Descrição</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead>
-        <tbody id="fc-corpo"><tr><td colspan="5" class="vazio">Carregando...</td></tr></tbody>
-      </table></div>
-    </div>
-    <div class="bld">LIVEFOOD-ADMIN-01</div>
+      <span id="pl-resumo" hidden></span>
+    </section>
+
+    <!-- ═════ FINANCEIRO ═════ -->
+    <section class="pg" data-pg="financeiro">
+      <div class="duo">
+        <div class="kpi"><div class="lb">TOTAL MOVIMENTADO</div><div class="vl" id="fin-mov">R$ 0,00</div><div class="dl" id="fin-mov-d"></div></div>
+        <div class="saldo"><div class="lb">Saldo em conta</div><div class="vl" id="fin-saldo">—</div><div class="lb" id="fin-saldo-info" style="font-weight:500;opacity:.85">Conta Asaas do LiveFood</div>
+          <div class="lk"><span onclick="carregarSaldo()">atualizar</span><span onclick="abrirExtrato()">ver extrato</span><span onclick="abrirAsaasCfg()">configurar</span></div></div>
+      </div>
+      <div class="finrow" id="fin-resumo"></div>
+      <div class="card">
+        <h3><span>Fluxo de caixa</span><span class="dir"><span class="lnk" onclick="carregarFluxo();carregarSaldo()">↻ Atualizar</span><span class="lnk" onclick="abrirLanc()">+ Novo lançamento</span></span></h3>
+        <div class="filtros" id="fc-filtros"></div>
+        <div id="fc-aviso"></div>
+        <div class="finrow tres" id="fc-periodo"></div>
+        <div class="tabela-wrap"><table>
+          <colgroup><col style="width:11%"><col style="width:38%"><col style="width:15%"><col style="width:13%"><col style="width:23%"></colgroup>
+          <thead><tr><th>Data</th><th>Descrição</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead>
+          <tbody id="fc-corpo"><tr><td colspan="5" class="vazio">Carregando...</td></tr></tbody>
+        </table></div>
+      </div>
+    </section>
+
+    <!-- ═════ APP DO MOTORISTA ═════ -->
+    <section class="pg" data-pg="app">
+      <div class="card">
+        <h3><span>Preços do app</span><span class="sub2" id="app-resumo"></span><span class="dir"><span class="lnk" onclick="abrirAppCfg()">Editar preços e promoção</span></span></h3>
+        <div id="app-cfg-info" class="sub2" style="padding:0 2px"></div>
+      </div>
+      <div class="card"><h3><span>Motoristas</span><span id="app-mais" hidden></span></h3>
+        <div id="app-corpo"><div id="lista-app"><div class="vazio">Carregando...</div></div></div>
+      </div>
+    </section>
+
+    <!-- ═════ SERVIÇOS E PUBLICIDADE ═════ -->
+    <section class="pg" data-pg="servicos">
+      <div class="card">
+        <h3><span>Serviços do motorista</span><span class="dir"><span class="lnk" onclick="abrirSrvCfg()">Editar taxas e preços</span></span></h3>
+        <div id="srv-cfg-info" class="sub2" style="padding:0 2px">Carregando...</div>
+      </div>
+      <div class="card"><h3><span>Publicidade</span><span class="dir"><span class="lnk" onclick="abrirBanners()">Ver e editar banners</span></span></h3><div class="sub2">Banners que aparecem no app do motorista.</div></div>
+    </section>
+
+    <!-- ═════ LIVEFEST ═════ -->
+    <section class="pg" data-pg="fest">
+      <div class="card">
+        <h3><span>LiveFest</span><span class="dir"><span class="lnk" onclick="abrirFest()">Configurar</span><a class="lnk" href="livefest.html" target="_blank" rel="noopener" style="text-decoration:none">Abrir o app</a></span></h3>
+        <div class="sub2" id="fest-resumo">Ingressos com split: comissão e casas que vendem.</div>
+      </div>
+    </section>
+
+    <!-- ═════ APPS PARA DOWNLOAD ═════ -->
+    <section class="pg" data-pg="downloads">
+      <div class="card">
+        <h3><span>Apps para download</span><span class="dir"><span class="lnk" onclick="abrirApks()">Enviar / trocar APK</span></span></h3>
+        <div id="apk-info" class="sub2">O site entrega direto o arquivo enviado aqui (LiveFood Motorista e LiveFood Mesa).</div>
+      </div>
+      <div class="card">
+        <h3><span>App LiveFood (maquininha e garçom)</span><span class="dir"><a class="lnk" href="https://github.com/nucleofulfillment/giro-os/releases/tag/maquininha-teste" target="_blank" rel="noopener" style="text-decoration:none">Ver versões</a></span></h3>
+        <div class="sub2">Montado sozinho a cada atualização. O botão "Baixar o app LiveFood" do Hub entrega a versão de teste.</div>
+      </div>
+    </section>
+
+    <!-- ═════ PAGAMENTOS (Vileve / PayStore) ═════ -->
+    <section class="pg" data-pg="pagamentos">
+      <div class="card">
+        <h3><span>Conexão de pagamentos</span><span class="dir"><span class="lnk" onclick="abrirPaytime()">Testar conexão</span><span class="lnk" onclick="abrirPtEventos()">Avisos recebidos</span></span></h3>
+        <div class="sub2">Pagamentos na mesa e na maquininha (ambiente de teste da Vileve / PayStore).</div>
+      </div>
+    </section>
+
+    <div class="bld">LIVEFOOD-ADMIN-02</div>
   </main>
 </div>
 
@@ -374,9 +546,11 @@ function entrar(){
 function iniciar(){
   el('login').style.display='none';el('app').style.display='block';el('ola-nome').textContent=USUARIO?USUARIO.nome:'';el('ola-mail').textContent=USUARIO?USUARIO.email:'';el('av-ini').textContent=USUARIO&&USUARIO.nome?USUARIO.nome.charAt(0).toUpperCase():'A';
   if(!FC.ini){var h=hojeIso();FC.ini=h.slice(0,7)+'-01';FC.fim=ultDia(h.slice(0,7));}
-  recarregar();
+  recarregar(); iniciarTelas();
 }
 function recarregar(){carregarClientes();carregarPlanos();carregarApp();carregarSrv();carregarFluxo();carregarSaldo();}
+/* (ADMIN-02) ao entrar, abre a tela do endereço */
+function iniciarTelas(){ rotaHash(); }
 /* ── Planos de assinatura (fixo mensal + valor por pacote) — o site mostra os ativos no botão "Assinar" ── */
 var PLANOS=[];
 /* (169) recursos que cada plano libera */
@@ -399,7 +573,7 @@ function upgradeFeito(c){ chamar('POST','/admin/upgrade-feito',{cli:c}).then(fun
 /* (170) trava por falta de pagamento */
 function carregarTrava(){
   chamar('GET','/admin/trava').then(function(d){
-    var b=el('pl-trava'); if(!b||!d.ok) return; var c=d.cfg;
+    if(!d.ok) return; TRAVA_ITENS=d.itens||[]; desenharClientes(); var b=el('pl-trava'); if(!b) return; var c=d.cfg;
     b.innerHTML='<div style="margin-top:18px"><b>Bloqueio por falta de pagamento</b><p class="sub" style="margin:2px 0 8px">Bloqueia a equipe e os pedidos novos quando a fatura fica em aberto depois do prazo. Ao ligar, só valem as faturas que vencerem a partir de hoje. O Asaas é consultado antes de bloquear e a liberação é automática depois do pagamento.</p><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><label style="display:flex;align-items:center;gap:8px;margin:0;font-weight:700"><input type="checkbox" id="tv-on" '+(c.on?'checked':'')+' style="width:auto;margin:0"> Ligado</label><span class="sub" style="margin:0">Bloquear</span><input id="tv-dias" inputmode="numeric" value="'+c.dias+'" style="width:60px;margin:0"><span class="sub" style="margin:0">dias após o vencimento</span><button class="btn pri peq" onclick="salvarTrava()">Salvar</button></div>'+
     ((d.itens||[]).length?'<div style="margin-top:10px">'+d.itens.map(function(x){ var est=x.liberada_ate?'liberada até '+dataBr(x.liberada_ate):(x.travada?'<b style="color:#DC2626">BLOQUEADA</b>':(x.antiga?'fatura anterior à regra, não bloqueia':(c.on?'bloqueia em '+dataBr(x.trava_em):'seria bloqueada em '+dataBr(x.trava_em)))); return '<div class="sub" style="margin:0;padding:8px 0;border-top:1px solid #eee;display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:space-between"><span><b>'+esc(x.nome)+'</b> · '+reais(x.valor)+' · venceu em '+dataBr(x.venc)+' · '+est+'</span><span><button class="btn peq" onclick="liberarTrava(\''+esc(x.cli)+'\',3)">Liberar 3 dias</button>'+(x.liberada_ate?' <button class="btn peq" onclick="liberarTrava(\''+esc(x.cli)+'\',0)">Tirar liberação</button>':'')+'</span></div>'; }).join('')+'</div>':'<div class="sub" style="margin:10px 0 0">Nenhuma fatura em aberto.</div>')+'</div>';
   }).catch(function(){});
@@ -422,13 +596,18 @@ function carregarPlanos(){
 function desenharPlanos(){
   var at=PLANOS.filter(function(p){return p.ativo;}).length;
   el('pl-resumo').textContent=at+' ativo'+(at===1?'':'s');
-  if(!PLANOS.length){el('lista-planos').innerHTML='<div class="vazio">Nenhum plano ainda. Clique em "+ Novo plano".</div>';return;}
   setTimeout(function(){ carregarPlanoLog(); carregarTrava(); carregarUpgrades(); },0);
-  el('lista-planos').innerHTML=PLANOS.map(function(p){
-    return '<div class="cli"><div class="av">'+esc((p.nome||'?').charAt(0).toUpperCase())+'</div><div style="min-width:160px"><div class="nome">'+esc(p.nome)+'</div><div class="id">'+esc(p.descricao||'sem descrição')+' · <span class="tag '+(p.ativo?'on':'off')+'">'+(p.ativo?'Ativo':'Desativado')+'</span>'+(p.padrao?' <span class="tag on">Padrão</span>':'')+' · '+(p.recursos?p.recursos.length+' recursos':'tudo liberado')+'</div></div>'+
-      '<div class="dados"><div><b>'+reais(p.fixo_centavos)+'</b>fixo mensal</div><div><b>'+reaisPac(p.pacote_centavos)+'</b>por pacote</div><div><b>'+(p.variavel_total?'desde o 1º':(p.franquia||0))+'</b>'+(p.variavel_total?'pacote':'pacotes inclusos')+'</div></div>'+
-      '<button class="btn pri peq" onclick="abrirPlano(\''+esc(p.id)+'\')">Abrir</button></div>';
-  }).join('')+'<div id="pl-upg"></div><div id="pl-trava"></div><div id="pl-log"></div>';
+  var cont={}; CLIENTES.forEach(function(c){ if(c.ativo&&c.plano_id) cont[c.plano_id]=(cont[c.plano_id]||0)+1; });
+  el('lista-planos').innerHTML=(PLANOS.length?'<div class="hx-planos">'+PLANOS.map(function(p){
+    return '<div class="hx-pl'+(p.padrao?' dest':'')+(p.ativo?'':' off')+'"><div class="tp"><h3>'+esc(p.nome)+'</h3><span>'+(p.padrao?'<span class="st in">Padrão</span>':'')+'<span class="st '+(p.ativo?'ok':'of')+'">'+(p.ativo?'Ativo':'Desativado')+'</span></span></div>'+
+      '<div class="pr">'+reais(p.fixo_centavos)+'<small>/mês</small></div>'+(p.descricao?'<div class="hx-mu">'+esc(p.descricao)+'</div>':'')+
+      '<div class="met"><div><b>'+(cont[p.id]||0)+'</b><small>clientes</small></div><div><b>'+(p.variavel_total?'—':(p.franquia||0))+'</b><small>'+(p.variavel_total?'cobra desde o 1º':'pacotes inclusos')+'</small></div><div><b>'+reaisPac(p.pacote_centavos)+'</b><small>por pacote</small></div></div>'+
+      ((p.itens||[]).length?'<ul>'+p.itens.slice(0,6).map(function(i){ return '<li>'+esc(i)+'</li>'; }).join('')+(p.itens.length>6?'<li style="list-style:none" class="hx-mu">+ '+(p.itens.length-6)+' itens</li>':'')+'</ul>':'')+
+      '<div class="hx-mu" style="font-size:12.5px">'+(p.recursos?p.recursos.length+' recursos liberados':'Todos os recursos liberados')+'</div>'+
+      '<button class="hx-bt lin pq" onclick="abrirPlano(\''+esc(p.id)+'\')">Editar</button></div>';
+  }).join('')+'</div>':'<div class="hx-bloco"><div class="vazio">Nenhum plano ainda. Toque em "+ Novo plano".</div></div>')+
+  '<div class="hx-bloco" id="pl-upg"></div><div class="hx-bloco" id="pl-trava"></div><div class="hx-bloco" id="pl-log"></div>';
+  atualizarTopo();
 }
 function abrirPlano(id){
   var p=id?PLANOS.filter(function(x){return x.id===id;})[0]:null; if(id&&!p) return;
@@ -476,6 +655,7 @@ function desenharApp(){
   el('app-resumo').textContent=r.total+' motorista'+(r.total===1?'':'s')+' · '+r.pagos+' pago'+(r.pagos===1?'':'s');
   el('app-cfg-info').innerHTML='Mensalidade: <b>'+reais(c.preco_promo_centavos)+'</b> nos primeiros '+(c.meses_promo||0)+' meses, depois <b>'+reais(c.preco_normal_centavos)+'</b>'+(c.selo?' · selo "'+esc(c.selo)+'"':'')+' · '+(c.ativo?'<span class="tag on">Venda ligada</span>':'<span class="tag off">Venda desligada</span>')+' '+(c.bloqueio?'<span class="tag on">Bloqueio ligado</span>':'<span class="tag off">Bloqueio desligado</span>');
   var L=APPD.motoristas||[];
+  atualizarTopo();
   if(!L.length){el('lista-app').innerHTML='<div class="vazio">Nenhum motorista ainda.</div>';return;}
   el('lista-app').innerHTML=L.map(function(m){
     return '<div class="cli"><div class="av">'+esc((m.nome||'?').charAt(0).toUpperCase())+'</div><div style="min-width:160px"><div class="nome">'+esc(m.nome||'(sem nome)')+'</div><div class="id">'+esc(m.cliente||'')+' · '+esc(m.telefone||'sem whats')+'</div></div>'+
@@ -513,7 +693,7 @@ function carregarSrv(){
   chamar('GET','/admin/servicos').then(function(d){
     var e=el('srv-cfg-info'); if(!e) return;
     if(!d||!d.ok){e.textContent='Não consegui carregar.';return;}
-    SRVD=d.config||{};
+    SRVD=d.config||{}; setTimeout(atualizarTopo,0);
     e.innerHTML='Recarga de celular: <b>'+(SRVD.recarga_ativo?'ligada':'desligada')+'</b> · taxa '+srvReais(SRVD.recarga_taxa_centavos)+' · limite por dia '+srvReais(SRVD.limite_dia_centavos)+'<br>Consulta de multa: <b>'+(SRVD.multa_ativo?'ligada':'desligada')+'</b> · preço '+srvReais(SRVD.multa_preco_centavos);
   }).catch(function(){var e=el('srv-cfg-info'); if(e) e.textContent='Não consegui carregar.';});
 }
@@ -645,18 +825,57 @@ function carregarClientes(){
     CLIENTES=d.clientes||[]; desenharClientes();
   }).catch(function(){});
 }
+/* (ADMIN-02) lista de clientes: filtros com contagem, plano, situação colorida e páginas */
+var CLI_FILTRO='todos', CLI_PG=0, CLI_POR=20, TRAVA_ITENS=[];
+var CORES_AV=['#FF7A1A','#2563EB','#16A34A','#9333EA','#DB2777','#0891B2','#CA8A04','#4F46E5'];
+function corAv(t){ var h=0; String(t||'').split('').forEach(function(ch){ h=(h*31+ch.charCodeAt(0))>>>0; }); return CORES_AV[h%CORES_AV.length]; }
+function planoNome(id){ var p=(PLANOS||[]).filter(function(x){ return x.id===id; })[0]; return p?p.nome:''; }
+function diasEntre(iso){ return Math.round((new Date(hojeIso()+'T12:00:00')-new Date(String(iso).slice(0,10)+'T12:00:00'))/864e5); }
+/* situação do cliente: desativado, em atraso (fatura vencida em aberto), em teste ou ativo */
+function situacao(c){
+  if(!c.ativo) return {k:'off',cls:'of',txt:'Desativado'};
+  var at=(TRAVA_ITENS||[]).filter(function(x){ return x.cli===c.id&&x.venc&&x.venc<hojeIso(); })[0];
+  if(at){ var d=diasEntre(at.venc); return {k:'atraso',cls:'er',txt:'Em atraso · '+d+' dia'+(d===1?'':'s'),valor:at.valor||0}; }
+  if(c.teste_ate&&c.teste_ate>=hojeIso()){ var f=-diasEntre(c.teste_ate); return {k:'teste',cls:'av',txt:f<=0?'Em teste · termina hoje':'Em teste · faltam '+f+' dia'+(f===1?'':'s')}; }
+  return {k:'ativo',cls:'ok',txt:'Ativo'};
+}
 function desenharClientes(){
-  var at=0,mot=0;
-  CLIENTES.forEach(function(c){if(c.ativo)at++;mot+=c.motoristas_ativos||0;});
+  var at=0,mot=0; CLIENTES.forEach(function(c){if(c.ativo)at++;mot+=c.motoristas_ativos||0;});
   el('cli-resumo').textContent=at+' ativo'+(at===1?'':'s')+' · '+mot+' motorista'+(mot===1?'':'s');
+  var S=CLIENTES.map(function(c){ return {c:c,s:situacao(c)}; });
+  var cont={todos:S.length,ativo:0,teste:0,atraso:0,off:0}; S.forEach(function(x){ cont[x.s.k]++; });
+  el('cli-chips').innerHTML=[['todos','Todos'],['ativo','Ativos'],['teste','Em teste'],['atraso','Em atraso'],['off','Desativados']].map(function(f){
+    return '<button type="button" class="hx-chip'+(CLI_FILTRO===f[0]?' on':'')+'" onclick="CLI_FILTRO=\''+f[0]+'\';CLI_PG=0;desenharClientes()">'+f[1]+'<em>'+cont[f[0]]+'</em></button>'; }).join('');
+  var sp=el('cli-plano'), pv=sp.value;
+  sp.innerHTML='<option value="">Plano: todos</option><option value="-">Sem plano</option>'+(PLANOS||[]).map(function(p){ return '<option value="'+esc(p.id)+'">'+esc(p.nome)+'</option>'; }).join(''); sp.value=pv;
   var q=((el('cli-busca')||{}).value||'').trim().toLowerCase();
-  var L=CLIENTES.filter(function(c){return !q||String(c.nome||'').toLowerCase().indexOf(q)>=0||String(c.id||'').toLowerCase().indexOf(q)>=0;});
-  if(!L.length){el('lista-clientes').innerHTML='<div class="vazio">'+(CLIENTES.length?'Nenhum cliente encontrado.':'Nenhum cliente ainda.')+'</div>';return;}
-  el('lista-clientes').innerHTML=L.map(function(c){
-    return '<div class="cli"><div class="av">'+esc((c.nome||'?').charAt(0).toUpperCase())+'</div><div style="min-width:160px"><div class="nome">'+esc(c.nome)+'</div><div class="id">'+esc(c.id)+' · <span class="tag '+(c.ativo?'on':'off')+'">'+(c.ativo?'Ativo':'Desativado')+'</span>'+(c.piloto?' · <span class="tag">cliente-base</span>':'')+'</div>'+(c.slug?'<div class="id"><a href="https://livefood.tec.br/'+encodeURIComponent(c.slug)+'" target="_blank" rel="noopener" style="color:inherit">livefood.tec.br/'+esc(c.slug)+'</a></div>':'')+'</div>'+
-      '<div class="dados"><div><b>'+(c.motoristas_ativos||0)+'</b>motoristas</div><div><b>'+(c.equipe||0)+'</b>equipe painel</div><div><b>'+reais(c.mensalidade_centavos)+'</b>mensalidade</div><div><b>'+reais(c.taxa_app_centavos)+'</b>por motorista</div><div><b>dia '+(c.dia_venc||10)+'</b>vencimento</div></div>'+
-      '<button class="btn pri peq" onclick="abrirCliente(\''+esc(c.id)+'\')">Abrir</button></div>';
-  }).join('');
+  var L=S.filter(function(x){ var c=x.c;
+    if(CLI_FILTRO!=='todos'&&x.s.k!==CLI_FILTRO) return false;
+    if(pv==='-'&&c.plano_id) return false; if(pv&&pv!=='-'&&c.plano_id!==pv) return false;
+    return !q||String(c.nome||'').toLowerCase().indexOf(q)>=0||String(c.slug||'').toLowerCase().indexOf(q)>=0||String(c.id||'').toLowerCase().indexOf(q)>=0; });
+  L.sort(function(a,b){ var o={atraso:0,teste:1,ativo:2,off:3}; return o[a.s.k]-o[b.s.k]||String(a.c.nome).localeCompare(String(b.c.nome)); });
+  if(!L.length){el('lista-clientes').innerHTML='<div class="vazio">'+(CLIENTES.length?'Nenhum cliente encontrado com esse filtro.':'Nenhum cliente ainda.')+'</div>';atualizarTopo();return;}
+  var pags=Math.ceil(L.length/CLI_POR); if(CLI_PG>=pags) CLI_PG=pags-1; var P=L.slice(CLI_PG*CLI_POR,(CLI_PG+1)*CLI_POR);
+  el('lista-clientes').innerHTML='<div class="hx-rol"><table class="hx-tab"><thead><tr><th>Cliente</th><th class="hx-esconde">Plano</th><th>Situação</th><th class="hx-esconde">Mensalidade</th><th class="hx-esconde">Vencimento</th><th class="hx-esconde">Uso</th><th></th></tr></thead><tbody>'+
+    P.map(function(x){ var c=x.c, pn=planoNome(c.plano_id);
+      return '<tr onclick="abrirCliente(\''+esc(c.id)+'\')"><td><div class="hx-nm"><span class="a" style="background:'+(c.ativo?corAv(c.nome):'#8A8A92')+'">'+esc((c.nome||'?').charAt(0).toUpperCase())+'</span><div><b>'+esc(c.nome)+'</b><small>'+(c.slug?'livefood.tec.br/'+esc(c.slug):esc(c.id))+(c.piloto?' · cliente-base':'')+'</small></div></div></td>'+
+        '<td class="hx-esconde">'+(pn?'<span class="st in">'+esc(pn)+'</span>':'<span class="hx-mu">Manual</span>')+'</td>'+
+        '<td><span class="st '+x.s.cls+'">'+x.s.txt+'</span></td>'+
+        '<td class="hx-esconde hx-num">'+(c.mensalidade_centavos?reais(c.mensalidade_centavos):'<span class="hx-mu">—</span>')+'</td>'+
+        '<td class="hx-esconde">dia '+(c.dia_venc||10)+'</td>'+
+        '<td class="hx-esconde"><b>'+(c.equipe||0)+'</b> na equipe<br><span class="hx-mu">'+(c.motoristas_ativos||0)+' motorista'+((c.motoristas_ativos||0)===1?'':'s')+'</span></td>'+
+        '<td><div class="hx-ac"><button class="hx-bt lin pq" onclick="event.stopPropagation();abrirCliente(\''+esc(c.id)+'\')">Abrir ›</button></div></td></tr>'; }).join('')+
+    '</tbody></table></div>'+
+    '<div class="hx-pag"><span>Mostrando <b>'+(CLI_PG*CLI_POR+1)+'–'+(CLI_PG*CLI_POR+P.length)+'</b> de <b>'+L.length+'</b> cliente'+(L.length===1?'':'s')+'</span>'+
+    (pags>1?'<div class="hx-pp"><button '+(CLI_PG?'':'disabled')+' onclick="CLI_PG--;desenharClientes()">‹</button>'+Array.apply(null,{length:pags}).map(function(_,i){ return '<button class="'+(i===CLI_PG?'on':'')+'" onclick="CLI_PG='+i+';desenharClientes()">'+(i+1)+'</button>'; }).join('')+'<button '+(CLI_PG<pags-1?'':'disabled')+' onclick="CLI_PG++;desenharClientes()">›</button></div>':'')+'</div>';
+  atualizarTopo();
+}
+/* exportar a lista de clientes para planilha (CSV) */
+function exportarClientes(){
+  var linhas=[['Cliente','Endereço','Plano','Situação','Mensalidade','Taxa por motorista','Vencimento (dia)','Equipe','Motoristas']];
+  CLIENTES.forEach(function(c){ linhas.push([c.nome,c.slug?'livefood.tec.br/'+c.slug:'',planoNome(c.plano_id)||'Manual',situacao(c).txt,(Number(c.mensalidade_centavos||0)/100).toFixed(2).replace('.',','),(Number(c.taxa_app_centavos||0)/100).toFixed(2).replace('.',','),c.dia_venc||10,c.equipe||0,c.motoristas_ativos||0]); });
+  var csv='﻿'+linhas.map(function(l){ return l.map(function(v){ v=String(v==null?'':v); return /[;"\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; }).join(';'); }).join('\n');
+  var a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})); a.download='clientes-livefood-'+hojeIso()+'.csv'; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },500);
 }
 function alternaClientes(){var b=el('cli-corpo'),o=b.style.display==='none';b.style.display=o?'block':'none';el('cli-mais').textContent=o?'−':'+';}
 /* ── janelas ── */
@@ -771,27 +990,42 @@ function limparPainelRodar(id){
 }
 function abrirCliente(id){
   var c=CLIENTES.filter(function(x){return x.id===id;})[0]; if(!c) return;
-  abrirModal('<h3>'+esc(c.nome)+'</h3><p class="sub">'+esc(c.id)+'</p>'+
+  fechar(); CLI_ABERTO=id; if(location.hash!=='#cliente') history.pushState(null,'','#cliente'); irPara('cliente');
+  var abaAntes=CD_ABA;
+  el('cd-form').innerHTML=('<div data-aba="dados">'+
   '<label>Nome da empresa</label><input id="ec-nome" value="'+esc(c.nome)+'">'+
   '<label>Endereço do cardápio</label><div style="display:flex;align-items:center;gap:6px"><span class="sub" style="margin:0;white-space:nowrap">livefood.tec.br/</span><input id="ec-slug" value="'+esc(c.slug||'')+'" placeholder="nome-da-loja" autocapitalize="off" spellcheck="false"></div><p class="sub" style="margin:4px 0 0">Só letras, números e hífen. Cuidado: se mudar, as etiquetas e QR codes já impressos com o endereço antigo param de abrir.</p>'+
+  '</div><div data-aba="plano">'+
   '<label>Plano</label><select id="ec-plano" onchange="planoDoCliente()"><option value="">Sem plano (valores manuais)</option>'+(PLANOS||[]).map(function(p){return '<option value="'+esc(p.id)+'"'+(c.plano_id===p.id?' selected':'')+'>'+esc(p.nome)+'</option>';}).join('')+'</select><p class="sub" id="ec-plano-info" style="margin:4px 0 0"></p>'+
   '<label>Teste grátis até</label><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><input type="date" id="ec-teste" value="'+esc(c.teste_ate||'')+'" style="width:auto;flex:1;min-width:150px"><button type="button" class="btn peq" onclick="ecTeste(7)">7 dias</button><button type="button" class="btn peq" onclick="ecTeste(15)">15 dias</button><button type="button" class="btn peq" onclick="ecTeste(30)">30 dias</button><button type="button" class="btn peq" onclick="ecTeste(0)">Sem teste</button></div><p class="sub" style="margin:4px 0 0">Acesso aos recursos do plano escolhido, sem fatura até essa data. A cobrança começa depois dela.</p>'+
   '<div class="linha2"><div><label>Mensalidade (R$)</label><input id="ec-men" inputmode="decimal" value="'+esc(deCentavos(c.mensalidade_centavos))+'"></div><div><label>Taxa por motorista (R$)</label><input id="ec-taxa" inputmode="decimal" value="'+esc(deCentavos(c.taxa_app_centavos))+'"></div></div>'+
+  '</div><div data-aba="recursos">'+
   '<label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-weight:700"><input type="checkbox" id="ec-lp" '+(c.livepro?'checked':'')+' style="width:auto;margin:0"> Exibir LivePro</label><p class="sub" style="margin:4px 0 0">Mostra o card do LivePro (gestão da operação) no Hub desta conta e guarda os dados dela no servidor.</p>'+
   '<label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-weight:700"><input type="checkbox" id="ec-praia" '+(c.praia?'checked':'')+' style="width:auto;margin:0"> Entrega na praia</label><p class="sub" style="margin:4px 0 0">O Atendimento grava onde o cliente está (GPS do garçom) e mostra o mapa para achar o cliente na hora de entregar.</p>'+
   '<label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-weight:700"><input type="checkbox" id="ec-lpf" '+(c.lp_fluxo?'checked':'')+' style="width:auto;margin:0"> Fluxo de caixa no LivePro</label><p class="sub" style="margin:4px 0 0">O fluxo de caixa passa a ser usado no LivePro e fica oculto no Financeiro do painel do LiveFood.</p>'+
+  '</div><div data-aba="avancado">'+
   (function(){ var filhas=CLIENTES.filter(function(x){ return x.grupo===c.id; }); var ops=CLIENTES.filter(function(x){ return x.id!==c.id&&!x.grupo; });   /* (269) grupo de lojas */
     return '<label style="margin-top:14px">Faz parte do grupo de (outra loja da mesma empresa)</label>'+(filhas.length?'<p class="sub" style="margin:4px 0 0"><b>Conta principal</b> das lojas: '+filhas.map(function(f){ return esc(f.nome); }).join(', ')+'.</p><input type="hidden" id="ec-grupo" value="">':
       '<select id="ec-grupo"><option value="">— nenhum (loja independente) —</option>'+ops.map(function(x){ return '<option value="'+esc(x.id)+'"'+(c.grupo===x.id?' selected':'')+'>'+esc(x.nome)+'</option>'; }).join('')+'</select><p class="sub" style="margin:4px 0 0">Ex.: o Restaurante faz parte do grupo da Padaria. As lojas do grupo usam um LivePro só (o da principal), e o dono troca de loja pelo Hub, Painel e Atendimento. Cada loja continua com o próprio cardápio, link e pedidos.</p>'); })()+
   '<div style="margin-top:14px;padding:12px;border:1px solid #F3D9C9;border-radius:12px;background:#FFF8F3"><b style="font-size:14px">Dados de outra conta no painel?</b><p class="sub" style="margin:4px 0 8px">Se o painel desta loja mostra pedidos ou cadastros de outra conta (vieram de um navegador usado por outra loja), tire aqui. Fica uma cópia de segurança.</p><button type="button" class="btn peq" onclick="limparPainelPrevia(\''+esc(c.id)+'\')">Ver o que sairia</button><div id="lp-res" class="sub" style="margin-top:8px"></div></div>'+
+  '</div><div data-aba="plano2">'+
   '<div class="linha2"><div><label>Dia do vencimento (1 a 31)</label><input id="ec-dia" inputmode="numeric" maxlength="2" value="'+esc(c.dia_venc||10)+'"></div><div></div></div>'+
+  '<div style="margin-top:20px"><b>Cobrança no fluxo</b></div><p class="sub" style="margin:2px 0 8px">A mensalidade e a taxa entram sozinhas no fluxo. Se você excluiu uma por engano, lance de novo aqui.</p><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input type="month" id="ec-mes" style="width:auto" value="'+hojeIso().slice(0,7)+'"><button class="btn peq" onclick="relancarCobranca(\''+esc(c.id)+'\')">Lançar no fluxo</button></div>'+
+  '</div><div data-aba="acesso">'+
+  '<div style="margin-top:14px"><b>Acesso do dono ao painel</b></div><div id="ec-dono"><div class="vazio">Carregando...</div></div>'+
+  '<p class="sub" style="margin-top:6px">Os motoristas e os acessos do app são cadastrados pelo próprio cliente, dentro do painel dele.</p>'+
+  '</div><div data-aba="avancado2">'+
+  (c.piloto?'<p class="sub" style="margin-top:18px">Este é o <b>cliente-base</b> do sistema: ele não pode ser excluído.</p>':'<div style="margin-top:22px;padding-top:14px;border-top:1px solid #f1d5d0"><b style="color:#DC2626">Excluir loja</b><p class="sub" style="margin:2px 0 8px">Apaga a loja e tudo dela de vez: acessos, cardápio, pedidos, mesas e clientes. Não dá para desfazer.</p><button class="btn peq perigo" onclick="excluirCliente(\''+esc(c.id)+'\')">Excluir esta loja</button></div>')+
+  '</div>'+
   '<div class="erro" id="ec-erro"></div>'+
   '<div class="acoes" style="margin-top:10px;justify-content:space-between"><button class="btn peq '+(c.ativo?'perigo':'')+'" onclick="alternarCliente(\''+esc(c.id)+'\','+(c.ativo?0:1)+')">'+(c.ativo?'Desativar cliente':'Reativar cliente')+'</button><button class="btn pri" onclick="salvarCliente(\''+esc(c.id)+'\')">Salvar dados</button></div>'+
-  '<div style="margin-top:20px"><b>Cobrança no fluxo</b></div><p class="sub" style="margin:2px 0 8px">A mensalidade e a taxa entram sozinhas no fluxo. Se você excluiu uma por engano, lance de novo aqui.</p><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input type="month" id="ec-mes" style="width:auto" value="'+hojeIso().slice(0,7)+'"><button class="btn peq" onclick="relancarCobranca(\''+esc(c.id)+'\')">Lançar no fluxo</button></div>'+
-  '<div style="margin-top:20px"><b>Acesso do dono ao painel</b></div><div id="ec-dono"><div class="vazio">Carregando...</div></div>'+
-  '<p class="sub" style="margin-top:6px">Os motoristas e os acessos do app são cadastrados pelo próprio cliente, dentro do painel dele.</p>'+
-  (c.piloto?'<p class="sub" style="margin-top:18px">Este é o <b>cliente-base</b> do sistema: ele não pode ser excluído.</p>':'<div style="margin-top:22px;padding-top:14px;border-top:1px solid #f1d5d0"><b style="color:#DC2626">Excluir loja</b><p class="sub" style="margin:2px 0 8px">Apaga a loja e tudo dela de vez: acessos, cardápio, pedidos, mesas e clientes. Não dá para desfazer.</p><button class="btn peq perigo" onclick="excluirCliente(\''+esc(c.id)+'\')">Excluir esta loja</button></div>')+
-  '<div class="acoes"><button class="btn" onclick="fechar()">Fechar</button></div>');
+  '').replace('data-aba="plano2"','data-aba="plano"').replace('data-aba="avancado2"','data-aba="avancado"');
+  /* abas */
+  var ABAS=[['dados','Dados'],['plano','Plano e cobrança'],['recursos','Recursos'],['acesso','Acesso do dono'],['avancado','Avançado']];
+  if(!ABAS.some(function(x){ return x[0]===abaAntes; })) abaAntes='dados';
+  el('cd-abas').innerHTML=ABAS.map(function(x){ return '<button type="button" data-a="'+x[0]+'" onclick="cdAba(\''+x[0]+'\')">'+x[1]+'</button>'; }).join('');
+  cdAba(abaAntes);
+  cdFicha(c);
   carregarDono(c.id);planoDoCliente();
 }
 function ecTeste(d){ var i=el('ec-teste'); if(!d){ i.value=''; return; } var t=new Date(hojeIso()+'T12:00:00'); t.setDate(t.getDate()+d); i.value=t.toISOString().slice(0,10); }
@@ -823,7 +1057,7 @@ function confirmarExclusao(id){
   el('ex-btn').disabled=true;el('ex-btn').textContent='Excluindo...';el('ex-erro').textContent='';
   chamar('POST','/admin/clientes/'+encodeURIComponent(id)+'/excluir',{confirmar:dig}).then(function(d){
     if(!d.ok){el('ex-btn').disabled=false;el('ex-btn').textContent='Excluir para sempre';el('ex-erro').textContent=d.mensagem||d.erro||'Não consegui excluir.';return;}
-    fechar();toast(c.nome+' excluída.');recarregarLista();
+    fechar();toast(c.nome+' excluída.');CLI_ABERTO='';location.hash='#clientes';recarregarLista();
   }).catch(function(){el('ex-btn').disabled=false;el('ex-btn').textContent='Excluir para sempre';el('ex-erro').textContent='Falha na conexão. Tente de novo.';});
 }
 function alternarCliente(id,ativo){
@@ -850,7 +1084,7 @@ var USUARIOS_CLI={};
 function carregarDono(cid){
   chamar('GET','/admin/clientes/'+encodeURIComponent(cid)+'/usuarios').then(function(d){
     if(!d.ok){el('ec-dono').innerHTML='<div class="vazio">'+esc(d.mensagem||'Erro.')+'</div>';return;}
-    USUARIOS_CLI[cid]=d.usuarios||[];
+    USUARIOS_CLI[cid]=d.usuarios||[]; cdDonoFicha(cid);
     var dn=(d.usuarios||[]).filter(function(u){return u.perfil==='dono';});
     /* (208) conta sem dono (ex.: prévia do Marketing ou conta criada sem dono): cria o acesso ao painel aqui */
     if(!dn.length){var ip='style="width:100%;padding:9px 11px;border:1px solid #e5d6d2;border-radius:10px;font:inherit;box-sizing:border-box"';
@@ -905,7 +1139,7 @@ function pintarCards(){
     '<div class="kpi"><div class="lb cg">A receber</div><div class="vl vg">'+reais(aRec)+'</div><div class="dl"><b>'+nInP+'</b> pendentes<br>já recebido: '+reais(rec)+'</div></div>'+
     '<div class="kpi"><div class="lb cr">A pagar</div><div class="vl vr">'+reais(aPag)+'</div><div class="dl"><b>'+nOut+'</b> saídas pendentes<br>já pago: '+reais(pago)+'</div></div>'+
     '<div class="kpi"><div class="lb">Margem</div><div class="vl" style="color:'+(prev-saidas<0?'var(--red)':'var(--text)')+'">'+reais(prev-saidas)+'</div><div class="dl">previsto menos saídas<br>'+per+'</div></div>';
-  el('fin-mov').textContent=reais(prev+saidas);el('fin-mov-d').textContent=per;
+  el('fin-mov').textContent=reais(prev+saidas);el('fin-mov-d').textContent=per; atualizarTopo();
 }
 function pintarFiltros(){
   var co='<option value="todas">Todas categorias</option>'+CATS.map(function(c){return '<option value="'+esc(c)+'"'+(FC.cat===c?' selected':'')+'>'+esc(c)+'</option>';}).join('');
@@ -1005,8 +1239,8 @@ function salvarCategoria(){var n=el('nct-nome').value.trim();if(!n){el('nct-erro
 function carregarSaldo(){
   el('fin-saldo-info').textContent='Consultando o Asaas...';
   chamar('GET','/admin/asaas/saldo').then(function(d){
-    if(d.ok){el('fin-saldo').textContent=reais(Math.round(d.saldo*100));el('fin-saldo-info').textContent='Asaas · atualizado '+new Date().toTimeString().slice(0,5)+(d.ambiente==='sandbox'?' · teste':'');}
-    else{el('fin-saldo').textContent='—';el('fin-saldo-info').textContent=d.erro==='nao_configurado'?'Conta Asaas ainda não configurada':(d.mensagem||'Não consegui consultar o Asaas');}
+    if(d.ok){el('fin-saldo').textContent=reais(Math.round(d.saldo*100));setTimeout(atualizarTopo,0);el('fin-saldo-info').textContent='Asaas · atualizado '+new Date().toTimeString().slice(0,5)+(d.ambiente==='sandbox'?' · teste':'');}
+    else{setTimeout(atualizarTopo,0);el('fin-saldo').textContent='—';el('fin-saldo-info').textContent=d.erro==='nao_configurado'?'Conta Asaas ainda não configurada':(d.mensagem||'Não consegui consultar o Asaas');}
   }).catch(function(){});
 }
 function abrirExtrato(){
@@ -1206,6 +1440,86 @@ function salvarSenha(){
   var a=el('ts-a').value,n=el('ts-n').value; if(!a||!n){el('ts-erro').textContent='Preencha os dois campos.';return;}
   el('ts-btn').disabled=true;
   chamar('POST','/auth/trocar-senha',{atual:a,nova:n}).then(function(d){if(!d.ok){el('ts-erro').textContent=d.mensagem||'Erro.';el('ts-btn').disabled=false;return;}fechar();toast('Senha trocada.');}).catch(function(){el('ts-btn').disabled=false;});
+}
+
+
+/* ── (ADMIN-02) cliente aberto: abas e ficha ── */
+var CLI_ABERTO='', CD_ABA='dados';
+function cdAba(k){ CD_ABA=k; document.querySelectorAll('#cd-abas button').forEach(function(b){ b.classList.toggle('on',b.getAttribute('data-a')===k); }); document.querySelectorAll('#cd-form [data-aba]').forEach(function(d){ d.classList.toggle('on',d.getAttribute('data-aba')===k); }); }
+function cdFicha(c){
+  var s=situacao(c), pn=planoNome(c.plano_id);
+  el('cd-ficha').innerHTML='<div class="a" style="background:'+(c.ativo?corAv(c.nome):'#8A8A92')+'">'+esc((c.nome||'?').charAt(0).toUpperCase())+'</div><h2>'+esc(c.nome)+'</h2><div class="hx-mu">'+(c.slug?'<a href="https://livefood.tec.br/'+esc(c.slug)+'" target="_blank" rel="noopener" style="color:inherit">livefood.tec.br/'+esc(c.slug)+'</a>':esc(c.id))+'</div><span class="st '+s.cls+'">'+s.txt+'</span>'+
+    '<dl><div><dt>Plano</dt><dd>'+(pn?esc(pn):'Sem plano (valores manuais)')+'</dd></div><div><dt>Mensalidade</dt><dd>'+reais(c.mensalidade_centavos)+' · dia '+(c.dia_venc||10)+'</dd></div><div><dt>Taxa por motorista</dt><dd>'+reais(c.taxa_app_centavos)+'</dd></div><div><dt>Equipe</dt><dd>'+(c.equipe||0)+' no painel · '+(c.motoristas_ativos||0)+' motorista'+((c.motoristas_ativos||0)===1?'':'s')+'</dd></div><div id="cd-dono-fic"></div></dl>';
+}
+/* dados do dono na ficha (vêm junto com o acesso ao painel) */
+function cdDonoFicha(cid){
+  var b=el('cd-dono-fic'); if(!b||CLI_ABERTO!==cid) return;
+  var dn=(USUARIOS_CLI[cid]||[]).filter(function(u){ return u.perfil==='dono'; })[0];
+  b.innerHTML=dn?'<dt>Responsável</dt><dd>'+esc(dn.nome)+'</dd><dd style="font-weight:600;margin-top:4px">'+esc(dn.email||'')+(dn.telefone?'<br>'+esc(dn.telefone):'')+'</dd>':'<dt>Responsável</dt><dd class="hx-mu">sem dono cadastrado</dd>';
+}
+
+/* ── (ADMIN-02) navegação: cada card abre a sua tela (endereço com #, o "voltar" do navegador funciona) ── */
+var PAGINAS={
+  inicio:{t:function(){ return '<div class="hx-ola"><h1>Olá, '+esc(((USUARIO&&USUARIO.nome)||'').split(' ')[0]||'administrador')+' 👋</h1><p>Tudo do LiveFood num lugar só. Toque num card para abrir.</p></div>'; }},
+  clientes:{n:'Clientes',s:'Lojas e restaurantes que usam o LiveFood',b:'<button class="hx-bt br" onclick="exportarClientes()">⬇ Exportar</button><button class="hx-bt esc" onclick="abrirNovoCliente()">+ Novo cliente</button>'},
+  cliente:{volta:['#clientes','Clientes']},
+  planos:{n:'Planos',s:'O que cada cliente paga e o que recebe',b:'<button class="hx-bt esc" onclick="abrirPlano()">+ Novo plano</button>'},
+  financeiro:{n:'Financeiro',s:'Fluxo de caixa e conta do LiveFood',b:'<button class="hx-bt esc" onclick="abrirLanc()">+ Novo lançamento</button>'},
+  app:{n:'App do motorista',s:'Motoristas que assinam o app, preços e promoção',b:'<button class="hx-bt esc" onclick="abrirAppCfg()">Preços e promoção</button>'},
+  servicos:{n:'Serviços e publicidade',s:'Recarga, consulta de multa e banners do app do motorista'},
+  fest:{n:'LiveFest',s:'Ingressos com divisão automática',b:'<button class="hx-bt esc" onclick="abrirFest()">Configurar</button>'},
+  downloads:{n:'Apps para download',s:'Arquivos dos apps que o site entrega'},
+  pagamentos:{n:'Vileve / PayStore',s:'Pagamentos na mesa e na maquininha',b:'<button class="hx-bt esc" onclick="abrirPaytime()">Testar conexão</button>'}
+};
+var PG_ATUAL='inicio';
+function irPara(pg){
+  if(!PAGINAS[pg]) pg='inicio'; if(pg==='cliente'&&!CLI_ABERTO) pg='clientes';
+  PG_ATUAL=pg;
+  document.querySelectorAll('#app .pg').forEach(function(x){ x.classList.toggle('on',x.getAttribute('data-pg')===pg); });
+  atualizarTopo(); scrollTo(0,0);
+}
+function rotaHash(){ irPara((location.hash||'#inicio').slice(1)); }
+window.addEventListener('hashchange',rotaHash);
+function hxKpi(t,v,d,cls){ return '<div class="hx-kpi"><small>'+t+'</small><b>'+v+'</b><span class="'+(cls||'')+'">'+(d||'&nbsp;')+'</span></div>'; }
+/* números de cada tela e resumo dos cards do início (refaz sempre que um dado chega do servidor) */
+function atualizarTopo(){
+  if(!el('hx-tit')) return;
+  var hoje=hojeIso(), ativos=CLIENTES.filter(function(c){ return c.ativo; });
+  var teste=ativos.filter(function(c){ return c.teste_ate&&c.teste_ate>=hoje; });
+  var pagantes=ativos.filter(function(c){ return !(c.teste_ate&&c.teste_ate>=hoje); });
+  var receita=pagantes.reduce(function(t,c){ return t+(Number(c.mensalidade_centavos)||0); },0);
+  var atr=(TRAVA_ITENS||[]).filter(function(x){ return x.venc&&x.venc<hoje; }), atrV=atr.reduce(function(t,x){ return t+(Number(x.valor)||0); },0);
+  var cliAtr={}; atr.forEach(function(x){ cliAtr[x.cli]=1; }); var nAtr=Object.keys(cliAtr).length;
+  var saldo=(el('fin-saldo')||{}).textContent||'—';
+  var P=PAGINAS[PG_ATUAL]||{}, t='';
+  if(P.t) t=P.t();
+  else if(PG_ATUAL==='cliente'){ var c=CLIENTES.filter(function(x){ return x.id===CLI_ABERTO; })[0]||{};
+    t='<div class="hx-miga"><a href="#clientes">← Clientes</a><span>/ '+esc(c.nome||'')+'</span></div><div class="hx-t"><div><h1>'+esc(c.nome||'')+'</h1><p>'+(c.slug?'livefood.tec.br/'+esc(c.slug):esc(c.id||''))+'</p></div><span class="esp"></span>'+(c.slug?'<a class="hx-bt br" href="https://livefood.tec.br/'+esc(c.slug)+'" target="_blank" rel="noopener">Ver cardápio</a>':'')+'<button class="hx-bt esc" onclick="salvarCliente(\''+esc(c.id||'')+'\')">Salvar dados</button></div>'; }
+  else t='<div class="hx-miga"><a href="#inicio">← Início</a><span>/ '+esc(P.n||'')+'</span></div><div class="hx-t"><div><h1>'+esc(P.n||'')+'</h1><p>'+esc(P.s||'')+'</p></div><span class="esp"></span>'+(P.b||'')+'</div>';
+  el('hx-tit').innerHTML=t;
+  var k='';
+  if(PG_ATUAL==='inicio'||PG_ATUAL==='clientes'){
+    k=hxKpi('Clientes ativos',ativos.length,teste.length?teste.length+' em teste':'')+
+      hxKpi('Receita mensal',reais(receita),pagantes.length?'média '+reais(pagantes.length?Math.round(receita/pagantes.length):0)+' por cliente':'mensalidades dos clientes')+
+      (PG_ATUAL==='inicio'?hxKpi('Saldo em conta',esc(saldo),'Conta Asaas'):hxKpi('Em teste',teste.length,teste.filter(function(c){ return c.teste_ate===hoje; }).length?'alguns terminam hoje':'grátis por enquanto'))+
+      hxKpi('Em atraso',reais(atrV),nAtr?nAtr+' cliente'+(nAtr===1?'':'s'):'ninguém em atraso',nAtr?'dn':'up');
+  } else if(PG_ATUAL==='cliente'){ var c2=CLIENTES.filter(function(x){ return x.id===CLI_ABERTO; })[0];
+    if(c2){ var s2=situacao(c2);
+      k=hxKpi('Mensalidade',reais(c2.mensalidade_centavos),'vence todo dia '+(c2.dia_venc||10))+hxKpi('Plano',esc(planoNome(c2.plano_id)||'Manual'),c2.teste_ate?'teste até '+dataBr(c2.teste_ate):'')+hxKpi('Equipe',(c2.equipe||0),'acessos ao painel')+hxKpi('Situação',s2.txt.split(' · ')[0],s2.txt.split(' · ')[1]||'',s2.k==='atraso'?'dn':(s2.k==='ativo'?'up':'')); } }
+  else if(PG_ATUAL==='planos'){ var pa=PLANOS.filter(function(p){ return p.ativo; }), cont={}; ativos.forEach(function(c){ if(c.plano_id) cont[c.plano_id]=(cont[c.plano_id]||0)+1; });
+    var top=PLANOS.slice().sort(function(a,b){ return (cont[b.id]||0)-(cont[a.id]||0); })[0];
+    k=hxKpi('Planos ativos',pa.length,PLANOS.filter(function(p){ return p.padrao; }).length?'1 padrão':'')+hxKpi('Mais usado',top?esc(top.nome):'—',top?(cont[top.id]||0)+' clientes':'')+hxKpi('Sem plano',ativos.filter(function(c){ return !c.plano_id; }).length,'valores manuais')+hxKpi('Receita mensal',reais(receita),'todos os planos'); }
+  el('hx-kpis').innerHTML=k; el('hx-tit').style.paddingBottom=k?'':'34px';   /* telas sem números: o laranja fica mais baixo */
+  /* resumo dos cards do início */
+  var tx=function(id,v){ var e=el(id); if(e) e.textContent=v; };
+  tx('hc-cli',ativos.length+' ativo'+(ativos.length===1?'':'s')+(teste.length?' · '+teste.length+' em teste':''));
+  var al=el('hc-cli-al'); if(al){ al.hidden=!nAtr; al.textContent=nAtr+' em atraso'; }
+  tx('hc-pl',PLANOS.filter(function(p){ return p.ativo; }).length+' plano'+(PLANOS.filter(function(p){ return p.ativo; }).length===1?'':'s')+' ativo'+(PLANOS.filter(function(p){ return p.ativo; }).length===1?'':'s'));
+  tx('hc-fin','Saldo '+saldo);
+  if(window.APPD&&APPD.resumo) tx('hc-app',(APPD.resumo.total||0)+' motorista'+((APPD.resumo.total||0)===1?'':'s')+' · '+(APPD.resumo.pagos||0)+' pago'+((APPD.resumo.pagos||0)===1?'':'s'));
+  if(window.SRVD&&SRVD) tx('hc-srv','Recarga '+(SRVD.recarga_ativo?'ligada':'desligada')+' · multa '+(SRVD.multa_ativo?'ligada':'desligada'));
+  tx('hc-asaas',saldo!=='—'?'Conectada ✓':'Configurar');
+  tx('hc-eu',(USUARIO&&USUARIO.nome)||'');
 }
 
 /* ao abrir: se já tem sessão guardada, confere no servidor */
