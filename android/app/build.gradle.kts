@@ -90,6 +90,10 @@ android {
 
 kotlin { jvmToolchain(17) }
 
+// configurações do kit só para a versão Vileve (o Gradle cria na hora; declaramos antes para poder usar abaixo)
+configurations.maybeCreate("vileveDebugImplementation")
+configurations.maybeCreate("vileveReleaseImplementation")
+
 dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.appcompat:appcompat:1.7.0")
