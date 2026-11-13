@@ -315,7 +315,7 @@ label.l.big{font-size:14px;margin-top:16px}
 </div>
 
 <div id="app" class="hide">
-  <div id="top"><div style="flex:1;min-width:0;display:flex;align-items:center;gap:12px"><b id="emp" style="flex:none">Atendimento</b><small id="usu"></small></div><!-- "Atender via mapa" (mpAbre) fora do ar enquanto evolui; o código do mapa continua abaixo --><span style="font-size:10px;color:#9a8f86;font-weight:700;margin-right:8px;white-space:nowrap">ATEND-50</span><button id="btPos" style="display:none;margin-right:8px" onclick="try{LiveFoodPOS.menu()}catch(e){}">💳 Maquininha</button><a class="bt-hub" href="hub.html" title="Voltar ao Hub"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Hub</a><button onclick="sair()">Sair</button></div>
+  <div id="top"><div style="flex:1;min-width:0;display:flex;align-items:center;gap:12px"><b id="emp" style="flex:none">Atendimento</b><small id="usu"></small></div><!-- "Atender via mapa" (mpAbre) fora do ar enquanto evolui; o código do mapa continua abaixo --><span style="font-size:10px;color:#9a8f86;font-weight:700;margin-right:8px;white-space:nowrap">ATEND-51</span><button id="btPos" style="display:none;margin-right:8px" onclick="try{LiveFoodPOS.menu()}catch(e){}">💳 Maquininha</button><a class="bt-hub" href="hub.html" title="Voltar ao Hub"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Hub</a><button onclick="sair()">Sair</button></div>
   <div id="chip" class="hide"><div class="t"><b id="chipT"></b><small id="chipS"></small></div><button onclick="trocaComanda()">Trocar</button></div>
 
   <!-- PEDIDO -->
@@ -1157,7 +1157,19 @@ function entPinta(){
 function entSalva(c,g,msg){ return api('/painel/atend-geo',{joia:c.joia,mesa:c.mesa,lat:g.lat,lng:g.lng,acc:g.acc,ref:g.ref}).then(function(r){ if(r&&r.ok){ c.geo={lat:g.lat,lng:g.lng,acc:g.acc,ref:g.ref||(c.geo&&c.geo.ref)||''}; toast(msg); if(ABA==='com') carregaCom(); return true; } toast((r&&r.mensagem)||'Não consegui salvar.'); return false; }); }
 function entAqui(i){ var c=ENT.lista[i]; if(!c) return; var g=praiaGeo(); if(!g){ toast(GEO.erro||'Ainda sem GPS. Espere uns segundos ao ar livre.'); return; } entSalva(c,{lat:g.lat,lng:g.lng,acc:g.acc,ref:''},'Lugar do cliente atualizado ✅'); }
 /* mapa (Leaflet + foto de satélite), carregado só quando abre */
-function entLeaflet(){ if(window.L) return Promise.resolve(); return new Promise(function(ok,no){ var l=document.createElement('link'); l.rel='stylesheet'; l.href='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css'; document.head.appendChild(l); var s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js'; s.onload=ok; s.onerror=no; document.head.appendChild(s); }); }
+function entLeaflet(){ if(window.L) return Promise.resolve(); return new Promise(function(ok,no){ var l=document.createElement('link'); l.rel='stylesheet'; l.href='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css'; document.head.appendChild(l); var s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js'; s.onload=function(){ var r=document.createElement('script'); r.src='https://cdn.jsdelivr.net/npm/leaflet-rotate@0.2.8/dist/leaflet-rotate.js'; r.onload=ok; r.onerror=function(){ ok(); }; document.head.appendChild(r); }; s.onerror=no; document.head.appendChild(s); }); }
+/* (ATEND-51) mapa girado: o quiosque fica embaixo e o garçom anda "para cima" até o cliente.
+   Direção para cima = da porta do quiosque (ponto 1 da Foto do espaço) até o ponto 2 (perto do mar).
+   Sem a Foto do espaço configurada: da posição do garçom até o cliente. O botão "Virar" gira 180°. */
+function mapaVira(){ try{ return localStorage.getItem('at_mapa_vira')==='1'; }catch(e){ return false; } }
+function mapaBase(){
+  var b=null, P=AREA.cfg&&AREA.cfg.pts;
+  if(P&&P.length>1&&P[0].lat!=null&&P[1].lat!=null) b=geoRumo(P[0],P[1]);
+  else { var a=entAlvo(); if(a&&GEO.pos) b=geoRumo(GEO.pos,a); }
+  if(b==null) return 0;
+  return (b+(mapaVira()?180:0))%360;
+}
+function mapaVirar(){ try{ localStorage.setItem('at_mapa_vira',mapaVira()?'0':'1'); }catch(e){} ENT.base=mapaBase(); AREA.rot=null; if(ENT.map&&ENT.map.setBearing) ENT.map.setBearing(360-ENT.base); entVista(ENT.vista); entEu(true); }
 function entAbre(i){
   var c=ENT.lista[i]; if(!c||!(c.geo||(c.foto&&c.foto.k))) return; ENT.c=c; ENT.novo=null;
   var o=document.createElement('div'); o.id='entMap'; o.style.cssText='position:fixed;inset:0;z-index:3000;background:#111;display:flex;flex-direction:column';
@@ -1166,18 +1178,18 @@ function entAbre(i){
     +'<div style="display:flex;align-items:center;gap:14px"><div id="entSeta" style="width:64px;height:64px;flex:none;border-radius:50%;background:#FF5A00;display:flex;align-items:center;justify-content:center;transition:transform .25s"><svg viewBox="0 0 24 24" width="38" height="38" fill="#fff"><path d="M12 2l6 18-6-4-6 4z"/></svg></div>'
     +'<div style="flex:1;min-width:0"><div id="entDist" style="font-size:28px;font-weight:900;line-height:1.1">…</div><div style="font-size:14px;font-weight:700;color:#555">'+esc(comTit(c)+(c.nome&&c.nome!==comTit(c)?' · '+c.nome:''))+'</div>'+((c.foto&&c.foto.obs)||(c.geo&&c.geo.ref)?'<div style="font-size:14px;margin-top:2px">📍 '+esc((c.foto&&c.foto.obs)||c.geo.ref)+'</div>':'')+'<div id="entBus" style="font-size:12px;color:#888;margin-top:2px"></div></div></div>'
     +'<div id="entFotoL"></div><button class="bt g hide" id="entSalvarB" style="width:100%;margin:10px 0 0" onclick="entSalvaArraste()">Salvar novo lugar</button><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px"><button class="bt s" style="margin:0" onclick="entMudouMapa()">📍 Mudar de lugar</button><button class="bt s" style="margin:0" onclick="entFecha()">Fechar</button></div></div>';
-  document.body.appendChild(o); entBussola(); ENT.vista=null; fotoLocalMostra(c);
+  document.body.appendChild(o); entBussola(); ENT.vista=null; ENT.base=mapaBase(); if(!(AREA.cfg&&AREA.cfg.pts)) AREA.rot=null; fotoLocalMostra(c);
   entVista(AREA.url?'foto':'sat');
 }
 function entVista(v){
   ENT.vista=v; var c=ENT.c; if(!c) return;
   if(!c.geo){ $('entVis').innerHTML=''; $('entZoom').classList.add('hide'); $('entFoto').classList.add('hide'); $('entMapa').classList.remove('hide'); $('entMapa').innerHTML='<div style="color:#fff;padding:24px;font-size:15px;line-height:1.5">Este pedido não tem localização do GPS.<br>Use a foto do local abaixo, ou toque em "Cliente mudou de lugar" quando estiver ao lado dele.</div>'; return; }
-  $('entVis').innerHTML=AREA.url?['foto','sat'].map(function(k){ return '<button class="bt '+(k===v?'g':'s')+' mini" onclick="entVista(\''+k+'\')">'+(k==='foto'?'🏖️ Foto do espaço':'🛰️ Satélite')+'</button>'; }).join(''):'';
+  $('entVis').innerHTML=(AREA.url?['foto','sat'].map(function(k){ return '<button class="bt '+(k===v?'g':'s')+' mini" onclick="entVista(\''+k+'\')">'+(k==='foto'?'🏖️ Foto do espaço':'🛰️ Satélite')+'</button>'; }).join(''):'')+'<button class="bt s mini" onclick="mapaVirar()" title="Girar o mapa de cabeça para baixo">🔄 Virar</button>';
   $('entFoto').classList.toggle('hide',v!=='foto'); $('entMapa').classList.toggle('hide',v!=='sat'); $('entZoom').classList.toggle('hide',v!=='foto');
   if(v==='foto'){ areaPinta(true); entEu(); return; }
   if(ENT.map){ setTimeout(function(){ try{ ENT.map.invalidateSize(); }catch(e){} },50); return; }
   entLeaflet().then(function(){
-    var g=c.geo, m=L.map('entMapa',{zoomControl:false,attributionControl:false}).setView([g.lat,g.lng],19); ENT.map=m;
+    var g=c.geo; ENT.base=mapaBase(); var m=L.map('entMapa',{zoomControl:false,attributionControl:false,rotate:true,bearing:360-ENT.base,touchRotate:false,shiftKeyRotate:false,rotateControl:false,compassBearing:false}).setView([g.lat,g.lng],19); ENT.map=m;
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:20,maxNativeZoom:19}).addTo(m);
     var ic=L.divIcon({className:'',html:'<div style="width:26px;height:26px;border-radius:50%;background:#FF5A00;border:4px solid #fff;box-shadow:0 0 0 3px rgba(255,90,0,.45),0 4px 10px rgba(0,0,0,.4)"></div>',iconSize:[26,26],iconAnchor:[13,13]});
     ENT.cliC=L.circle([g.lat,g.lng],{radius:Math.max(3,g.acc||0),color:'#FF5A00',weight:1,fillOpacity:.12}).addTo(m);
@@ -1191,7 +1203,7 @@ function entVista(v){
 var AREA={cfg:null,url:'',carregou:false,z:1};
 function areaCarrega(forca){
   if(AREA.carregou&&!forca) return Promise.resolve(); AREA.carregou=true;
-  return api('/painel/atend-area').then(function(d){ if(!d||!d.ok||!d.area){ AREA.cfg=null; AREA.url=''; return; } var mud=!AREA.cfg||AREA.cfg.v!==d.area.v; AREA.cfg=d.area; if(!mud&&AREA.url) return;
+  return api('/painel/atend-area').then(function(d){ if(!d||!d.ok||!d.area){ AREA.cfg=null; AREA.url=''; return; } var mud=!AREA.cfg||AREA.cfg.v!==d.area.v; AREA.cfg=d.area; if(mud) AREA.rot=null; if(!mud&&AREA.url) return;
     return fetch(API+'/painel/atend-area-img?v='+encodeURIComponent(d.area.v),{headers:{'Authorization':'Bearer '+TK}}).then(function(r){ return r.ok?r.blob():null; }).then(function(b){ if(b) AREA.url=URL.createObjectURL(b); }); }).catch(function(){ AREA.carregou=false; });
 }
 function cxM(a,b){ return [a[0]*b[0]-a[1]*b[1],a[0]*b[1]+a[1]*b[0]]; }
@@ -1204,19 +1216,40 @@ function areaT(cfg){ cfg=cfg||AREA.cfg; if(!cfg||!cfg.pts||cfg.pts.length<2) ret
            uv:function(la,ln){ var z=zf(la,ln), p=cxD([z[0]-b[0],z[1]-b[1]],a); return {u:p[0],v:-p[1]/an}; } };
 }
 function areaZoom(d){ var f=$('entFoto'); if(!f) return; var cx=(f.scrollLeft+f.clientWidth/2)/f.scrollWidth, cy=(f.scrollTop+f.clientHeight/2)/f.scrollHeight; AREA.z=Math.max(1,Math.min(5,AREA.z+(d>0?0.75:-0.75))); areaPinta(false); f.scrollLeft=cx*f.scrollWidth-f.clientWidth/2; f.scrollTop=cy*f.scrollHeight-f.clientHeight/2; }
+/* foto girada: ângulo para a direção "para cima" (ENT.base) ficar no topo da tela */
+function areaRot(){
+  if(AREA.rot&&AREA.rot.url) return AREA.rot;
+  if(AREA.rot&&AREA.rot.carregando) return null;
+  var T=areaT(); if(!T||!AREA.url) return null;
+  AREA.rot={carregando:true};
+  var im=new Image(); im.onload=function(){
+    var W=im.naturalWidth, H=im.naturalHeight, an=(AREA.cfg&&AREA.cfg.an)||H/W, base=ENT.base==null?mapaBase():ENT.base;
+    /* direção norte e leste na foto, para saber em que ângulo fica o rumo "base" */
+    var P=AREA.cfg.pts[0], o=T.uv(P.lat,P.lng), r=base*Math.PI/180, d=0.0002, q=T.uv(P.lat+d*Math.cos(r),P.lng+d*Math.sin(r)/Math.cos(P.lat*Math.PI/180));
+    var dx=(q.u-o.u)*W, dy=(q.v-o.v)*H, ang=Math.atan2(dx,-dy), th=-ang;   /* gira a foto para essa direção apontar para cima */
+    var c=Math.abs(Math.cos(th)), sn=Math.abs(Math.sin(th)), W2=Math.round(W*c+H*sn), H2=Math.round(W*sn+H*c), k=Math.min(1,2400/Math.max(W2,H2));
+    var cv=document.createElement('canvas'); cv.width=Math.round(W2*k); cv.height=Math.round(H2*k); var g=cv.getContext('2d');
+    g.fillStyle='#1b1b1b'; g.fillRect(0,0,cv.width,cv.height); g.scale(k,k); g.translate(W2/2,H2/2); g.rotate(th); g.drawImage(im,-W/2,-H/2);
+    cv.toBlob(function(b){ AREA.rot={url:URL.createObjectURL(b),th:th,W:W,H:H,W2:W2,H2:H2}; var fi=$('entFotoIn'); if(fi) fi.remove(); areaPinta(true); },'image/jpeg',0.85);
+  }; im.onerror=function(){ AREA.rot={url:AREA.url,th:0,W:1,H:1,W2:1,H2:1}; areaPinta(true); }; im.src=AREA.url;
+  return null;
+}
+function rotIda(R,u,v){ var x=u*R.W-R.W/2, y=v*R.H-R.H/2, c=Math.cos(R.th), s=Math.sin(R.th); return {u:(x*c-y*s+R.W2/2)/R.W2, v:(x*s+y*c+R.H2/2)/R.H2}; }
+function rotVolta(R,u,v){ var x=u*R.W2-R.W2/2, y=v*R.H2-R.H2/2, c=Math.cos(-R.th), s=Math.sin(-R.th); return {u:(x*c-y*s+R.W/2)/R.W, v:(x*s+y*c+R.H/2)/R.H}; }
 function areaPinta(centra){
   var f=$('entFoto'), T=areaT(); if(!f||!T||!AREA.url) return;
-  if(!$('entFotoIn')){ f.innerHTML='<div id="entFotoIn" style="position:relative;margin:0 auto"><img id="entFotoImg" src="'+AREA.url+'" style="width:100%;display:block;user-select:none;-webkit-user-drag:none" draggable="false"><div id="mkEu" class="hide" style="position:absolute;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;background:#2563EB;border:3px solid #fff;box-shadow:0 0 0 6px rgba(37,99,235,.25)"></div><div id="mkCli" style="position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;background:#FF5A00;border:4px solid #fff;box-shadow:0 0 0 4px rgba(255,90,0,.45),0 4px 10px rgba(0,0,0,.5);touch-action:none;cursor:grab"></div></div>';
+  var R=areaRot(); if(!R){ if(!$('entFotoIn')) f.innerHTML='<div style="color:#ddd;padding:24px">Preparando a foto…</div>'; return; }
+  if(!$('entFotoIn')){ f.innerHTML='<div id="entFotoIn" style="position:relative;margin:0 auto"><img id="entFotoImg" src="'+R.url+'" style="width:100%;display:block;user-select:none;-webkit-user-drag:none" draggable="false"><div id="mkEu" class="hide" style="position:absolute;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;background:#2563EB;border:3px solid #fff;box-shadow:0 0 0 6px rgba(37,99,235,.25)"></div><div id="mkCli" style="position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;background:#FF5A00;border:4px solid #fff;box-shadow:0 0 0 4px rgba(255,90,0,.45),0 4px 10px rgba(0,0,0,.5);touch-action:none;cursor:grab"></div></div>';
     $('entFotoImg').onload=function(){ areaPinta(true); }; areaArrasta(); }
   $('entFotoIn').style.width=(AREA.z*100)+'%';
-  var a=entAlvo(); if(a){ var q=T.uv(a.lat,a.lng), m=$('mkCli'), dentro=q.u>=-0.02&&q.u<=1.02&&q.v>=-0.02&&q.v<=1.02; m.style.left=(q.u*100)+'%'; m.style.top=(q.v*100)+'%'; m.classList.toggle('hide',!dentro);
+  var a=entAlvo(); if(a){ var q0=T.uv(a.lat,a.lng), q=rotIda(R,q0.u,q0.v), m=$('mkCli'), dentro=q.u>=-0.02&&q.u<=1.02&&q.v>=-0.02&&q.v<=1.02; m.style.left=(q.u*100)+'%'; m.style.top=(q.v*100)+'%'; m.classList.toggle('hide',!dentro);
     if(centra&&dentro){ f.scrollLeft=q.u*f.scrollWidth-f.clientWidth/2; f.scrollTop=q.v*f.scrollHeight-f.clientHeight/2; } }
-  var e=$('mkEu'); if(GEO.pos){ var w=T.uv(GEO.pos.lat,GEO.pos.lng); e.style.left=(w.u*100)+'%'; e.style.top=(w.v*100)+'%'; e.classList.toggle('hide',w.u<-0.02||w.u>1.02||w.v<-0.02||w.v>1.02); }
+  var e=$('mkEu'); if(GEO.pos){ var w0=T.uv(GEO.pos.lat,GEO.pos.lng), w=rotIda(R,w0.u,w0.v); e.style.left=(w.u*100)+'%'; e.style.top=(w.v*100)+'%'; e.classList.toggle('hide',w.u<-0.02||w.u>1.02||w.v<-0.02||w.v>1.02); }
 }
 function areaArrasta(){
   var m=$('mkCli'), on=false;
   m.addEventListener('pointerdown',function(ev){ on=true; m.setPointerCapture(ev.pointerId); ev.preventDefault(); });
-  m.addEventListener('pointermove',function(ev){ if(!on) return; var r=$('entFotoImg').getBoundingClientRect(), u=(ev.clientX-r.left)/r.width, v=(ev.clientY-r.top)/r.height; m.style.left=(u*100)+'%'; m.style.top=(v*100)+'%'; var ll=areaT().ll(u,v); ENT.novo={lat:ll.lat,lng:ll.lng}; });
+  m.addEventListener('pointermove',function(ev){ if(!on) return; var r=$('entFotoImg').getBoundingClientRect(), u=(ev.clientX-r.left)/r.width, v=(ev.clientY-r.top)/r.height; m.style.left=(u*100)+'%'; m.style.top=(v*100)+'%'; var o=AREA.rot&&AREA.rot.url?rotVolta(AREA.rot,u,v):{u:u,v:v}, ll=areaT().ll(o.u,o.v); ENT.novo={lat:ll.lat,lng:ll.lng}; });
   m.addEventListener('pointerup',function(){ if(!on) return; on=false; if(ENT.novo){ $('entSalvarB').classList.remove('hide'); entEu(); } });
 }
 /* configuração (dono/gerente): foto + 2 pontos */
@@ -1255,8 +1288,9 @@ function entEu(enquadra){
   if(!$('entMap')) return; var a=entAlvo(); if(!a) return;
   if(GEO.pos){
     var d=geoDist(GEO.pos,a); $('entDist').textContent=d<6?'Você chegou! 🎉':geoM(d);
-    var rumo=geoRumo(GEO.pos,a), gira=GEO.head!=null?rumo-GEO.head:rumo; $('entSeta').style.transform='rotate('+gira+'deg)';
-    $('entBus').textContent=GEO.head!=null?'Siga a seta (bússola ligada) · GPS ±'+Math.round(GEO.pos.acc)+' m':'Seta em relação ao norte do mapa · GPS ±'+Math.round(GEO.pos.acc)+' m';
+    if(ENT.base==null) ENT.base=mapaBase();
+    var rumo=geoRumo(GEO.pos,a), gira=GEO.head!=null?rumo-GEO.head:rumo-ENT.base; $('entSeta').style.transform='rotate('+gira+'deg)';
+    $('entBus').textContent=GEO.head!=null?'Siga a seta (bússola ligada) · GPS ±'+Math.round(GEO.pos.acc)+' m':'Seta em relação ao mapa · GPS ±'+Math.round(GEO.pos.acc)+' m';
     if(ENT.map&&window.L){ var ll=[GEO.pos.lat,GEO.pos.lng];
       if(!ENT.eu){ ENT.euC=L.circle(ll,{radius:GEO.pos.acc,color:'#2563EB',weight:1,fillOpacity:.1}).addTo(ENT.map); ENT.eu=L.circleMarker(ll,{radius:9,color:'#fff',weight:3,fillColor:'#2563EB',fillOpacity:1}).addTo(ENT.map); }
       else { ENT.eu.setLatLng(ll); ENT.euC.setLatLng(ll).setRadius(GEO.pos.acc); }
@@ -1271,7 +1305,7 @@ function entBussola(){
 }
 function entAquiMapa(){ var g=praiaGeo(); if(!g){ toast(GEO.erro||'Ainda sem GPS.'); return; } entSalva(ENT.c,{lat:g.lat,lng:g.lng,acc:g.acc,ref:''},'Lugar do cliente atualizado ✅').then(function(ok){ if(ok) entFecha(); }); }
 function entSalvaArraste(){ if(!ENT.novo) return; entSalva(ENT.c,{lat:ENT.novo.lat,lng:ENT.novo.lng,acc:5,ref:''},'Novo lugar salvo ✅').then(function(ok){ if(ok){ ENT.novo=null; $('entSalvarB').classList.add('hide'); } }); }
-function entFecha(){ if(ENT.bf){ window.removeEventListener('deviceorientationabsolute',ENT.bf,true); window.removeEventListener('deviceorientation',ENT.bf,true); ENT.bf=null; } GEO.head=null; if(ENT.map){ try{ ENT.map.remove(); }catch(e){} } ENT.map=null; ENT.eu=null; ENT.euC=null; ENT.cli=null; ENT.vista=null; var o=$('entMap'); if(o) o.remove(); }
+function entFecha(){ if(ENT.bf){ window.removeEventListener('deviceorientationabsolute',ENT.bf,true); window.removeEventListener('deviceorientation',ENT.bf,true); ENT.bf=null; } GEO.head=null; if(ENT.map){ try{ ENT.map.remove(); }catch(e){} } ENT.map=null; ENT.eu=null; ENT.euC=null; ENT.cli=null; ENT.vista=null; ENT.base=null; var o=$('entMap'); if(o) o.remove(); }
 /* ── (279) entrega na praia dentro da comanda: localização, foto do local e bipar o pedido impresso ── */
 var FOTOL={img:''};
 function entAbreC(c){ if(!c) return; var i=COMS.indexOf(c); ENT.lista=COMS; if(i<0){ ENT.lista=[c]; i=0; } entAbre(i); }
