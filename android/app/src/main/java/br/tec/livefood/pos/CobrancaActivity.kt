@@ -4,6 +4,9 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.media.AudioManager
+import android.media.ToneGenerator
+import android.nfc.NfcAdapter
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.text.InputType
@@ -34,6 +37,8 @@ class CobrancaActivity : AppCompatActivity(), Tela {
     private var trabalhando = false
     private var venda: Venda? = null
     private var relogio: CountDownTimer? = null
+    private var leitorNfc = false
+    private var aoTocar: (() -> Unit)? = null
 
     private lateinit var icone: TextView
     private lateinit var msg: TextView
@@ -105,7 +110,63 @@ class CobrancaActivity : AppCompatActivity(), Tela {
         }
     }
 
+    // ── modo de teste: lê um cartão de verdade pelo NFC (só para sentir o fluxo; nada é cobrado) ──
+    override fun esperarCartao(aoLer: () -> Unit) = runOnUiThread {
+        val nfc = NfcAdapter.getDefaultAdapter(this)
+        var lido = false
+        val seguir = {
+            if (!lido) {
+                lido = true; pararNfc()
+                runCatching { ToneGenerator(AudioManager.STREAM_NOTIFICATION, 90).startTone(ToneGenerator.TONE_PROP_BEEP, 180) }
+                mensagem("Cartão lido ✓")
+                mostrarBotoes(listOf(Triple("Cancelar", Ui.CINZA, ::sair)))
+                aoLer()
+            }
+        }
+        val botoesTeste = mutableListOf<Triple<String, Int, () -> Unit>>()
+        if (nfc != null && nfc.isEnabled) {
+            icone.text = "📶"
+            mensagem("Encoste o cartão atrás do celular")
+            aoTocar = seguir
+            ligarNfc()
+        } else {
+            mensagem(if (nfc == null) "Este celular não lê cartão (sem NFC). Use o botão abaixo." else "Ligue o NFC do celular para encostar o cartão, ou use o botão abaixo.")
+        }
+        botoesTeste.add(Triple("Simular sem cartão (teste)", Ui.LARANJA) { seguir() })
+        botoesTeste.add(Triple("Cancelar", Ui.CINZA, ::sair))
+        mostrarBotoes(botoesTeste)
+    }
+
+    /** O leitor só pode ser ligado com a tela à frente (por isso também é ligado no onResume). */
+    private fun ligarNfc() {
+        val cb = aoTocar ?: return
+        if (leitorNfc || !lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) return
+        val nfc = NfcAdapter.getDefaultAdapter(this) ?: return
+        leitorNfc = runCatching {
+            nfc.enableReaderMode(this, { _ -> runOnUiThread { cb() } },
+                NfcAdapter.FLAG_READER_NFC_A or NfcAdapter.FLAG_READER_NFC_B or NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK, null)
+        }.isSuccess
+    }
+
+    private fun pararNfc() {
+        aoTocar = null
+        if (!leitorNfc) return
+        leitorNfc = false
+        runCatching { NfcAdapter.getDefaultAdapter(this)?.disableReaderMode(this) }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        ligarNfc()
+    }
+
+    override fun onPause() {
+        if (leitorNfc) { leitorNfc = false; runCatching { NfcAdapter.getDefaultAdapter(this)?.disableReaderMode(this) } }   // volta a ligar no onResume
+        super.onPause()
+    }
+
     private fun sair() {
+        pararNfc()
         if (venda != null) { concluir(); return }
         if (trabalhando) Pagamento.motor.abortar()   // sempre abortar ao sair (exigência do kit)
         trabalhando = false
@@ -174,6 +235,7 @@ class CobrancaActivity : AppCompatActivity(), Tela {
     }
 
     override fun erro(texto: String) = runOnUiThread {
+        pararNfc()
         trabalhando = false
         relogio?.cancel()
         qr.visibility = View.GONE; tempo.visibility = View.GONE

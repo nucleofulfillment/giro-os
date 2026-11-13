@@ -11,6 +11,7 @@ import java.util.UUID
  * Nada é cobrado. Regras parecidas com as do ambiente de testes da Vileve:
  *  - Pix com valor terminado em 1 ou 3 (centavos) expira/cancela; os demais são pagos.
  *  - Cartão com valor terminado em 5 centavos é recusado; os demais são aprovados.
+ *  - O cartão é "lido" de verdade pelo NFC do celular (só para sentir o fluxo); acima de R$ 200 pede senha.
  */
 class MotorImpl : Motor {
     override val nome = "teste"
@@ -47,10 +48,18 @@ class MotorImpl : Motor {
             }
             return
         }
-        depois(1500) {
+        tela.esperarCartao {
             if (forma == Forma.CARTAO) {
-                tela.escolher("Crédito ou débito?", listOf("Crédito", "Débito")) { i -> seguirCartao(if (i == 0) Forma.CREDITO else Forma.DEBITO, valorCentavos, chave, tela) }
-            } else seguirCartao(forma, valorCentavos, chave, tela)
+                tela.escolher("Crédito ou débito?", listOf("Crédito", "Débito")) { i -> senha(if (i == 0) Forma.CREDITO else Forma.DEBITO, valorCentavos, chave, tela) }
+            } else senha(forma, valorCentavos, chave, tela)
+        }
+    }
+
+    /** Acima de R$ 200 a maquininha pede a senha do cartão (no teste, qualquer senha serve). */
+    private fun senha(forma: Forma, valor: Long, chave: String, tela: Tela) {
+        if (valor < 20_000) { seguirCartao(forma, valor, chave, tela); return }
+        tela.digitar("Digite a senha do cartão (teste: qualquer número)", true) { r ->
+            if (r.isNullOrBlank()) tela.erro("Operação cancelada.") else seguirCartao(forma, valor, chave, tela)
         }
     }
 
