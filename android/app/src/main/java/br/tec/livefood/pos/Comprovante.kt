@@ -39,6 +39,7 @@ object Comprovante {
             if (v.nsu.isNotBlank()) append("\nNSU: ").append(v.nsu)
             if (!Pagamento.motor.deVerdade) append("\n\n⚠️ TESTE · nada foi cobrado")
             append("\n\nObrigado pela preferência! 🧡")
+            append("\n\nEssa compra foi transacionada por > www.livefood.tec.br 😉")
             append("\n_Não é documento fiscal._")
         }
     }
