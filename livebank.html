@@ -8,7 +8,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#FF3D5E">
 <title>LiveBank · LiveFood</title>
-<!-- LIVEBANK · vendas das maquininhas (Vileve / PayStore) da loja, dentro do LiveFood. LB-01 -->
+<!-- LIVEBANK · vendas das maquininhas (Vileve / PayStore) da loja, dentro do LiveFood. LB-02 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -111,15 +111,25 @@ td{padding:12px;border-bottom:1px solid var(--ln);vertical-align:middle}
 .st.ap{background:#E8F7EE;color:var(--ok)}.st.ca{background:#FDECEC;color:var(--er)}.st.pe{background:#FFF4E5;color:#B45309}
 .tag{font-size:12px;font-weight:800;color:var(--lf)}.tag.av{color:var(--mu2)}
 .stm{display:none;margin-top:4px;font-size:11.5px;font-weight:800}.stm.ap{color:var(--ok)}.stm.ca{color:var(--er)}.stm.pe{color:#B45309}
+.liqH{display:inline-block;margin:0 0 8px;font-size:14px;font-weight:800;background:rgba(0,0,0,.16);padding:5px 11px;border-radius:99px}
+.liqH[hidden]{display:none}
+.tx3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}
+.tx3 div{border-radius:14px;padding:12px 14px;background:var(--bg)}
+.tx3 small{display:block;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--mu2)}
+.tx3 b{display:block;font-size:22px;font-weight:800;letter-spacing:-.02em;margin-top:4px}
+.tx3 .lq{background:#E8F7EE}.tx3 .lq b{color:var(--ok)}.tx3 .tx b{color:var(--er)}
+.txt td,.txt th{padding:9px 10px}.txt td:not(:first-child),.txt th:not(:first-child){text-align:right;white-space:nowrap}
+.txt tfoot td{font-weight:800;border-bottom:0}
+.liq{display:block;margin-top:3px;font-size:11.5px;font-weight:700;color:var(--ok);white-space:nowrap}
 .mais{display:block;margin:14px auto 0;font-size:14px;font-weight:800;background:var(--bg);border:1px solid var(--ln);border-radius:12px;padding:12px 18px}
 .nota{font-size:12.5px;color:var(--mu);font-weight:600;margin:16px 2px 40px}
-.carrega{opacity:.55;transition:opacity .2s}
+.atu{display:inline-flex;align-items:center;gap:7px}.atu::before{content:'';width:12px;height:12px;border-radius:50%;border:2px solid rgba(255,255,255,.45);border-top-color:#fff;animation:gira .7s linear infinite}@keyframes gira{to{transform:rotate(360deg)}}
 /* fechado (sem LiveBank) */
 .fechado{max-width:440px;margin:40px auto;text-align:center;background:#fff;border-radius:22px;padding:28px 22px;box-shadow:0 16px 40px -24px rgba(0,0,0,.4)}
 .fechado h2{margin:0 0 8px;font-size:22px}.fechado p{color:var(--mu);font-weight:600;margin:0 0 18px}
 .fechado a{display:inline-block;background:var(--gr);color:#fff;text-decoration:none;font-weight:800;padding:13px 22px;border-radius:14px}
 @media(max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)}.g2,.g3{grid-template-columns:1fr}.g3 .bl{grid-column:auto!important}.hide{display:none}.hd .lg{font-size:32px}}
-@media(max-width:600px){.chip,.loja{display:none}.bands{grid-template-columns:repeat(2,1fr)}.rosca{flex-direction:column;align-items:stretch}.rosca svg{align-self:center}
+@media(max-width:600px){.tx3{grid-template-columns:1fr 1fr}.tx3 .lq{grid-column:span 2}.tx3 b{font-size:19px}.chip,.loja{display:none}.bands{grid-template-columns:repeat(2,1fr)}.rosca{flex-direction:column;align-items:stretch}.rosca svg{align-self:center}
   .hero{padding-bottom:86px}.liveZ{position:absolute;right:0;top:6px}.liveZ .lv{width:78px}.bal{display:none}.hero>div:first-child{padding-right:86px}
   .per{width:100%}.per button{flex:1;padding:9px 6px}.kpi b{font-size:21px}.bl{padding:16px}td,th{padding:10px 8px}.sit,.cx small{display:none}.stm{display:block!important}.cx .lgB{width:38px}}
 @media (prefers-reduced-motion:reduce){.bal{transition:none}}
@@ -129,7 +139,7 @@ td{padding:12px;border-bottom:1px solid var(--ln);vertical-align:middle}
 <div class="topo"><div class="wrap">
   <div class="hd"><span class="lg marca">livebank</span><span class="chip">pagamentos LiveFood</span><span class="esp"></span><span class="loja" id="loja"></span><a class="hb" href="hub.html">← Hub</a></div>
   <div class="hero" id="hero">
-    <div><small id="tTit">Recebido hoje</small><div class="tot" id="tTot">R$ 0,00</div><div class="sub" id="tSub">carregando…</div></div>
+    <div><small id="tTit">Recebido hoje</small><div class="tot" id="tTot">R$ 0,00</div><span class="liqH" id="tLiq" hidden></span><div class="sub" id="tSub">carregando…</div></div>
     <div class="liveZ"><div class="bal esc" id="bal"></div><div class="lv" id="lv" title="Live"></div></div>
     <div class="per" id="per">
       <button data-p="hoje" class="on">Hoje</button><button data-p="ontem">Ontem</button><button data-p="7d">7 dias</button><button data-p="mes">Mês</button><button data-p="dia" aria-label="Escolher um dia">📅</button>
@@ -146,6 +156,8 @@ td{padding:12px;border-bottom:1px solid var(--ln);vertical-align:middle}
     <div class="kpi"><small>Cancelamentos</small><b id="kCan" class="dn">R$ 0,00</b><span id="kCanS">&nbsp;</span></div>
   </div>
   <div id="aviso"></div>
+
+  <div class="bl" style="margin-top:16px"><h3>Bruto, taxas e líquido</h3><div id="taxas"></div></div>
 
   <div class="g2">
     <div class="bl"><h3 id="gTit">Vendas por hora</h3><div id="graf"></div></div>
@@ -183,7 +195,7 @@ function somaDia(s,n){ var d=new Date(s+'T12:00:00Z'); d.setUTCDate(d.getUTCDate
 function hBR(iso){ var t=Date.parse(iso); if(isNaN(t)) return null; return new Date(t-3*3600000); }   /* hora de Brasília (campos UTC) */
 function diaCurto(s){ var p=s.split('-'); return p[2]+'/'+p[1]; }
 
-var EST={per:'hoje',de:'',ate:'',vendas:[],ant:null,demo:false,filtro:'todas',busca:'',limite:25,timer:null};
+var EST={pedido:0,taxas:null,per:'hoje',de:'',ate:'',vendas:[],ant:null,demo:false,filtro:'todas',busca:'',limite:25,timer:null};
 var FORMAS={credito:{n:'Crédito',c:'#2563EB'},parcelado:{n:'Crédito parcelado',c:'#F59E0B'},debito:{n:'Débito',c:'#9333EA'},pix:{n:'Pix',c:'#32BCAD'},voucher:{n:'Vale-refeição',c:'#0EA5E9'},outro:{n:'Outros',c:'#94A3B8'}};
 var BANDS={visa:'Visa',mastercard:'Mastercard',elo:'Elo',amex:'American Express',hipercard:'Hipercard',diners:'Diners',pix:'Pix',cartao:'Outras'};
 function bandeira(v){ if(v.forma==='pix') return 'pix'; var b=String(v.bandeira||'').toUpperCase();
@@ -191,6 +203,16 @@ function bandeira(v){ if(v.forma==='pix') return 'pix'; var b=String(v.bandeira|
   if(b.indexOf('AMEX')>=0||b.indexOf('AMERICAN')>=0) return 'amex'; if(b.indexOf('HIPER')>=0) return 'hipercard'; if(b.indexOf('DINERS')>=0) return 'diners'; return 'cartao'; }
 function logo(k){ return '<img src="site/img/bandeiras/'+k+'.svg" alt="'+esc(BANDS[k]||'')+'" loading="lazy">'; }
 function formaDe(v){ return v.forma==='credito'&&v.parcelas>1?'parcelado':(FORMAS[v.forma]?v.forma:'outro'); }
+var TAXA_EX={debito:1.39,credito:2.99,parc2_6:3.79,parc7_12:4.49,pix:0.99,voucher:3.5};   /* só no exemplo */
+function tabTaxas(){ var t=EST.taxas; if(t&&Object.keys(t).some(function(k){ return t[k]!==''&&t[k]!=null; })) return t; return EST.demo?TAXA_EX:null; }
+function taxaPct(v){ var t=tabTaxas(); if(!t) return null; var x;
+  if(v.forma==='pix') x=t.pix; else if(v.forma==='debito') x=t.debito; else if(v.forma==='voucher') x=t.voucher;
+  else if(v.forma==='credito') x=v.parcelas>1?(v.parcelas<=6?t.parc2_6:t.parc7_12):t.credito; else x=null;
+  x=parseFloat(String(x==null?'':x).replace(',','.')); return isNaN(x)?null:x; }
+function bruto(v){ return v.valor-(v.devolvido||0); }
+function taxaV(v){ var p=taxaPct(v); return p==null?0:Math.round(bruto(v)*p/100); }
+function liquido(v){ return bruto(v)-taxaV(v); }
+function pct(x){ return x.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'%'; }
 function valida(v){ return v.situacao==='aprovada'&&!v.estorno; }
 function cancelada(v){ return !v.estorno&&(v.situacao==='estornada'||v.situacao==='desfeita'); }
 function leitura(c){ return {'01':'digitado','02':'tarja','03':'chip e senha','04':'aproximação','05':'QR Code','06':'aproximação'}[c]||''; }
@@ -208,23 +230,36 @@ function periodo(p){
 function buscar(de,ate){
   return fetch(API+'/painel/livebank?de='+de+'&ate='+ate,{headers:{'Authorization':'Bearer '+TK}}).then(function(r){ return r.json().catch(function(){ return {ok:false}; }).then(function(d){ d._st=r.status; return d; }); });
 }
+/* cada período aberto fica guardado: trocar de filtro mostra na hora, sem apagar a tela */
+var CACHE={}, DEMO_MOT=null;
+function respostaDe(de,ate){ var k=de+'|'+ate, c=CACHE[k];
+  if(c&&(Date.now()-c.t<(ate===hoje()?45000:600000))) return Promise.resolve(c.d);
+  return buscar(de,ate).then(function(d){ if(d&&d.ok) CACHE[k]={t:Date.now(),d:d}; return d; }); }
+function aplicar(d,a,p,comp){
+  if(d._st===401){ location.replace('hub.html'); return; }
+  if(d.erro==='sem_livebank'||d.erro==='sem_permissao'){ fechado(d.mensagem); return; }
+  if(!d.ok){ aviso('er','Não consegui buscar as vendas agora. Tente de novo em instantes.'); return; }
+  if(d.taxas) EST.taxas=d.taxas;
+  if(d.pronto){ EST.demo=false; DEMO_MOT=null; EST.vendas=d.vendas||[]; EST.ant=a&&a.pronto?(a.vendas||[]):null; aviso(); }
+  else {
+    EST.demo=true; DEMO_MOT=d.motivo||'sem_token'; EST.vendas=exemplo(p.de,p.ate,1); EST.ant=comp?exemplo(comp,comp,0.85):null;
+    if(DEMO_MOT==='token_recusado'||DEMO_MOT==='falha') aviso('er','<b>A Vileve não respondeu.</b> Os números abaixo são só um exemplo. Se continuar, avise o suporte do LiveFood.');
+    else aviso('','<b>Exemplo de como vai ficar.</b> Assim que a Vileve liberar a conexão da sua conta, aparecem aqui as vendas de verdade das suas maquininhas.');
+  }
+  mostrar();
+}
 function carregar(silencioso){
-  var p=periodo(EST.per); EST.de=p.de; EST.ate=p.ate; $('tTit').textContent=p.tit;
-  if(!silencioso) $('corpo').classList.add('carrega');
+  var p=periodo(EST.per), pedido=++EST.pedido; EST.de=p.de; EST.ate=p.ate; $('tTit').textContent=p.tit; EST.limite=25;
   var comp=(EST.per==='hoje'||EST.per==='ontem'||EST.per==='dia')?somaDia(p.de,-1):null;
-  Promise.all([buscar(p.de,p.ate),comp?buscar(comp,comp).catch(function(){ return null; }):Promise.resolve(null)]).then(function(rs){
-    var d=rs[0], a=rs[1]; $('corpo').classList.remove('carrega');
-    if(d._st===401){ location.replace('hub.html'); return; }
-    if(d.erro==='sem_livebank'||d.erro==='sem_permissao'){ fechado(d.mensagem); return; }
-    if(!d.ok){ aviso('er','Não consegui buscar as vendas agora. Tente de novo em instantes.'); return; }
-    if(d.pronto){ EST.demo=false; EST.vendas=d.vendas||[]; EST.ant=a&&a.pronto?(a.vendas||[]):null; aviso(); }
-    else {
-      EST.demo=true; EST.vendas=exemplo(p.de,p.ate,1); EST.ant=comp?exemplo(comp,comp,0.85):null;
-      if(d.motivo==='token_recusado'||d.motivo==='falha') aviso('er','<b>A Vileve não respondeu.</b> Os números abaixo são só um exemplo. Se continuar, avise o suporte do LiveFood.');
-      else aviso('','<b>Exemplo de como vai ficar.</b> Assim que a Vileve liberar a conexão da sua conta, aparecem aqui as vendas de verdade das suas maquininhas.');
-    }
-    mostrar();
-  }).catch(function(){ $('corpo').classList.remove('carrega'); aviso('er','Sem internet agora. Assim que voltar, os números atualizam.'); });
+  /* já sabemos que a conta está no exemplo: desenha na hora */
+  if(EST.demo&&!silencioso){ aplicar({ok:true,pronto:false,motivo:DEMO_MOT},null,p,comp); }
+  if(!silencioso&&!EST.demo) $('tSub').innerHTML='<span class="atu">atualizando…</span>';
+  Promise.all([respostaDe(p.de,p.ate),comp?respostaDe(comp,comp).catch(function(){ return null; }):Promise.resolve(null)]).then(function(rs){
+    if(pedido!==EST.pedido) return;   /* a pessoa já trocou de filtro */
+    var d=rs[0]; if(EST.demo&&d&&d.ok&&!d.pronto&&!silencioso) return;   /* continua no exemplo: já está na tela */
+    aplicar(d,rs[1],p,comp);
+    if(d&&d.ok&&d.pronto&&!EST.pre){ EST.pre=1; setTimeout(function(){ ['ontem','7d'].forEach(function(x){ var q=periodo(x); respostaDe(q.de,q.ate).catch(function(){}); }); },1500); }
+  }).catch(function(){ if(pedido===EST.pedido) aviso('er','Sem internet agora. Assim que voltar, os números atualizam.'); });
 }
 function aviso(tipo,html){ $('aviso').innerHTML=html?'<div class="aviso'+(tipo?' '+tipo:'')+'"><span style="font-size:20px">'+(tipo==='er'?'⚠️':'💡')+'</span><div>'+html+'</div></div>':''; }
 function fechado(m){
@@ -248,8 +283,21 @@ function mostrar(){
   $('kVen').textContent=ok.length; $('kTic').textContent=brl(ok.length?Math.round(tot/ok.length):0);
   var lf=ok.filter(function(v){ return /^LF-/.test(v.ref||''); }).length; $('kLf').textContent=lf; $('kLfS').textContent=ok.length-lf?(ok.length-lf)+(ok.length-lf===1?' venda avulsa':' vendas avulsas'):'todas cobradas pelo app';
   $('kCan').textContent=brl(canT); $('kCanS').textContent=can.length?can.length+(can.length===1?' cancelamento':' cancelamentos'):'nenhum';
-  grafico(ok); formas(ok); bandeiras(ok); maquinas(ok); filtros(); lista();
+  taxas(ok,tot); grafico(ok); formas(ok); bandeiras(ok); maquinas(ok); filtros(); lista();
   falaResumo(ok,tot);
+}
+function taxas(ok,tot){
+  var tem=!!tabTaxas(), tx=ok.reduce(function(s,v){ return s+taxaV(v); },0), lq=tot-tx;
+  $('tLiq').hidden=!(tem&&ok.length); $('tLiq').textContent='Líquido '+brl(lq);
+  if(!tem){ $('taxas').innerHTML='<div class="tx3"><div><small>Bruto</small><b>'+brl(tot)+'</b></div><div class="tx"><small>Taxas</small><b>—</b></div><div class="lq"><small>Líquido</small><b>—</b></div></div><div class="vazio" style="padding:6px 0;text-align:left">Para ver as taxas e o líquido, o LiveFood cadastra a tabela de taxas do seu contrato com a Vileve. Fale com a gente.</div>'; return; }
+  var g={}; ok.forEach(function(v){ var f=formaDe(v), x=g[f]||(g[f]={b:0,t:0}); x.b+=bruto(v); x.t+=taxaV(v); });
+  var ord=Object.keys(FORMAS).filter(function(f){ return g[f]; });
+  var t=tabTaxas(), pf={credito:t.credito,parcelado:t.parc2_6,debito:t.debito,pix:t.pix,voucher:t.voucher};
+  $('taxas').innerHTML='<div class="tx3"><div><small>Bruto</small><b>'+brl(tot)+'</b></div><div class="tx"><small>Taxas'+(tot?' · '+pct(tx/tot*100):'')+'</small><b>− '+brl(tx)+'</b></div><div class="lq"><small>Líquido</small><b>'+brl(lq)+'</b></div></div>'
+    +(ord.length?'<div style="overflow-x:auto"><table class="txt"><thead><tr><th>Forma</th><th>Bruto</th><th>Taxa</th><th>Líquido</th></tr></thead><tbody>'
+    +ord.map(function(f){ var x=g[f], p=parseFloat(String(pf[f]==null?'':pf[f]).replace(',','.')); return '<tr><td><span style="display:inline-block;width:9px;height:9px;border-radius:3px;background:'+FORMAS[f].c+';margin-right:8px"></span>'+FORMAS[f].n+'</td><td>'+brl(x.b)+'</td><td>'+(f==='parcelado'?'':isNaN(p)?'':'<small style="color:#8E8E93;font-weight:700">'+pct(p)+'</small> ')+'− '+brl(x.t)+'</td><td><b>'+brl(x.b-x.t)+'</b></td></tr>'; }).join('')
+    +'</tbody><tfoot><tr><td>Total</td><td>'+brl(tot)+'</td><td>− '+brl(tx)+'</td><td style="color:#16A34A">'+brl(lq)+'</td></tr></tfoot></table></div>':'')
+    +(EST.demo&&!(EST.taxas&&Object.keys(EST.taxas).length)?'<p class="nota" style="margin:10px 0 0">Taxas de exemplo. As de verdade são as do contrato da sua loja com a Vileve.</p>':'');
 }
 function grafico(ok){
   var um=EST.de===EST.ate, gs={}, ks=[], i;
@@ -319,12 +367,12 @@ function lista(){
     var stm=riscado?'<span class="stm ca">'+(v.situacao==='negada'?'negada':'cancelada')+'</span>':v.situacao==='aprovada'?'':'<span class="stm pe">pendente</span>';
     return '<tr><td>'+hr+'</td><td><div class="cx"><span class="lgB">'+logo(b)+'</span><div><b>'+tit+'</b><small>'+det+'</small></div></div></td>'
       +'<td class="hide">'+(/^LF-/.test(v.ref||'')?'<span class="tag">LiveFood</span>':'<span class="tag av">avulsa</span>')+'</td><td class="hide">'+esc(nomeMaq(v))+'</td><td class="sit">'+st+'</td>'
-      +'<td style="text-align:right"><b'+(riscado?' style="text-decoration:line-through;color:#8E8E93"':'')+'>'+brl(v.valor)+'</b>'+stm+'</td></tr>'; }).join('');
+      +'<td style="text-align:right"><b'+(riscado?' style="text-decoration:line-through;color:#8E8E93"':'')+'>'+brl(v.valor)+'</b>'+(!riscado&&taxaPct(v)!=null?'<span class="liq">líq. '+brl(liquido(v))+'</span>':'')+stm+'</td></tr>'; }).join('');
   $('bMais').hidden=L.length<=EST.limite;
 }
 function csv(){
-  var L=filtradas(), linhas=[['Data','Hora','Forma','Bandeira','Final','Parcelas','Valor','Situação','Autorização','NSU','Maquininha','Origem']];
-  L.forEach(function(v){ var d=hBR(v.quando), s=d?d.toISOString():''; linhas.push([s.slice(0,10),s.slice(11,16),(FORMAS[formaDe(v)]||{}).n||'',BANDS[bandeira(v)]||'',v.final||'',v.parcelas||1,(v.valor/100).toFixed(2).replace('.',','),cancelada(v)?'Cancelada':v.situacao,v.aut||'',v.nsu||'',nomeMaq(v),/^LF-/.test(v.ref||'')?'LiveFood':'Avulsa']); });
+  var L=filtradas(), linhas=[['Data','Hora','Forma','Bandeira','Final','Parcelas','Valor bruto','Taxa (%)','Taxa (R$)','Valor líquido','Situação','Autorização','NSU','Maquininha','Origem']];
+  L.forEach(function(v){ var d=hBR(v.quando), s=d?d.toISOString():''; linhas.push([s.slice(0,10),s.slice(11,16),(FORMAS[formaDe(v)]||{}).n||'',BANDS[bandeira(v)]||'',v.final||'',v.parcelas||1,(v.valor/100).toFixed(2).replace('.',','),taxaPct(v)==null?'':String(taxaPct(v)).replace('.',','),(taxaV(v)/100).toFixed(2).replace('.',','),(liquido(v)/100).toFixed(2).replace('.',','),cancelada(v)?'Cancelada':v.situacao,v.aut||'',v.nsu||'',nomeMaq(v),/^LF-/.test(v.ref||'')?'LiveFood':'Avulsa']); });
   var txt='﻿'+linhas.map(function(l){ return l.map(function(c){ c=String(c); return /[;"\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c; }).join(';'); }).join('\n');
   var a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([txt],{type:'text/csv;charset=utf-8'})); a.download='livebank-'+EST.de+(EST.ate!==EST.de?'-a-'+EST.ate:'')+'.csv'; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },500);
 }
@@ -337,7 +385,7 @@ function exemplo(de,ate,fator){
     for(var i=0;i<n;i++){ var h=9+Math.floor(Math.pow(r(),.9)*11); if(h>=13&&h<=14&&r()<.4) h=13; var m=Math.floor(r()*60); if(h+m/60>lim) continue;
       var x=r(), forma=x<.47?'credito':x<.75?'debito':x<.97?'pix':'voucher', bs=['VISA','MASTERCARD','MASTERCARD','VISA','ELO','AMEX','HIPERCARD'], par=forma==='credito'&&r()<.08?2+Math.floor(r()*4):1;
       var val=Math.round((12+Math.pow(r(),1.6)*140)*(par>1?2.2:1))*100+(r()<.5?90:0), sit=r()<.015?'estornada':'aprovada';
-      out.push({id:'ex'+s+i,quando:s+'T'+String(h+3).padStart(2,'0')+':'+String(m).padStart(2,'0')+':00.000Z',valor:val,devolvido:sit==='estornada'?val:0,forma:forma,bandeira:forma==='pix'?'':bs[Math.floor(r()*bs.length)],final:String(1000+Math.floor(r()*9000)),parcelas:par,situacao:sit,estorno:false,
+      out.push({id:'ex'+s+i,quando:s+'T'+String(h+3).padStart(2,'0')+':'+String(m).padStart(2,'0')+':00.000Z',valor:val,devolvido:sit==='estornada'?val:0,forma:forma,bandeira:forma==='pix'?'':bs[Math.floor(r()*(forma==='credito'?bs.length:5))],final:String(1000+Math.floor(r()*9000)),parcelas:par,situacao:sit,estorno:false,
         nsu:String(100000+Math.floor(r()*899999)),aut:String(100000+Math.floor(r()*899999)),ref:r()<.94?'LF-exemplo':'',maquina:maqs[Math.floor(r()*maqs.length)],modelo:'Positivo L300',leitura:forma==='pix'?'05':(r()<.7?'04':'03')});
     }
   }
@@ -369,7 +417,7 @@ $('lv').addEventListener('click',function(){ if(!FALAS.length) return; FI=(FI+1)
 /* ── eventos ── */
 $('per').addEventListener('click',function(e){ var b=e.target.closest('button'); if(!b) return;
   if(b.getAttribute('data-p')==='dia'){ var i=$('pDia'); i.max=hoje(); i.value=EST.diaEsc||hoje(); if(i.showPicker){ try{ i.showPicker(); return; }catch(er){} } i.style.pointerEvents='auto'; i.focus(); i.click(); return; }
-  EST.per=b.getAttribute('data-p'); marcaPer(); EST.limite=25; carregar(); });
+  EST.per=b.getAttribute('data-p'); marcaPer(); carregar(); });
 $('pDia').addEventListener('change',function(){ if(!this.value) return; EST.diaEsc=this.value>hoje()?hoje():this.value; EST.per='dia'; marcaPer(); EST.limite=25; carregar(); });
 function marcaPer(){ [].forEach.call($('per').querySelectorAll('button'),function(x){ x.classList.toggle('on',x.getAttribute('data-p')===EST.per); }); }
 $('filtros').addEventListener('click',function(e){ var b=e.target.closest('button'); if(!b) return; EST.filtro=b.getAttribute('data-f'); EST.limite=25; filtros(); lista(); });
