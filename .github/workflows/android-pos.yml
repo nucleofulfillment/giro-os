@@ -21,6 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
+      POS_KEYSTORE_B64: ${{ secrets.POS_KEYSTORE_B64 }}
       PAYSTORE_APP_ID: ${{ secrets.PAYSTORE_APP_ID }}
       PAYSTORE_SECRET: ${{ secrets.PAYSTORE_SECRET }}
       PAYOS_MAVEN_URL: ${{ secrets.PAYOS_MAVEN_URL }}
@@ -56,6 +57,20 @@ jobs:
           ./gradlew --no-daemon assembleVileveDebug
           cp app/build/outputs/apk/vileve/debug/*.apk ../saida/livefood-vileve-teste.apk
 
+      - name: Montar a versão OFICIAL da L300 (assinada, para enviar à loja PayStore)
+        if: env.POS_KEYSTORE_B64 != ''
+        working-directory: android
+        env:
+          POS_KEYSTORE_PASS: ${{ secrets.POS_KEYSTORE_PASS }}
+          POS_KEY_PASS: ${{ secrets.POS_KEYSTORE_PASS }}
+          POS_KEY_ALIAS: livefood
+        run: |
+          echo "$POS_KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/livefood-release.jks"
+          export POS_KEYSTORE_FILE="$RUNNER_TEMP/livefood-release.jks"
+          ./gradlew --no-daemon assembleVileveRelease
+          cp app/build/outputs/apk/vileve/release/*.apk ../saida/livefood-vileve-oficial.apk
+          rm -f "$RUNNER_TEMP/livefood-release.jks"
+
       - name: Montar o app Paytime (guardado; só com os segredos da Paytime)
         if: env.PAYOS_MAVEN_URL != ''
         working-directory: android
@@ -89,4 +104,5 @@ jobs:
             App LiveFood para a maquininha.
             • livefood-teste.apk: modo de teste (nada é cobrado), instala em qualquer celular Android.
             • livefood-vileve-teste.apk: para a maquininha da Vileve (Positivo L300) com o app de pagamento da PayStore.
+            • livefood-vileve-oficial.apk: a mesma, assinada com a assinatura oficial (é esta que vai para a loja PayStore).
             • livefood-celular-teste.apk: aparece quando o Tap on Phone for liberado (celular Android 11+ com NFC vira maquininha).
