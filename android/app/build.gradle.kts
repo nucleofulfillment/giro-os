@@ -84,7 +84,7 @@ android {
                 // a loja PayStore confere a assinatura "clássica" (v1) além da moderna (v2/v3)
                 enableV1Signing = true
                 enableV2Signing = true
-                enableV3Signing = true
+                enableV3Signing = false   // a loja PayStore não reconhece a assinatura v3
             }
         }
     }
