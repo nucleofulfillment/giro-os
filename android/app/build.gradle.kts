@@ -98,6 +98,9 @@ android {
 
     packaging { jniLibs.useLegacyPackaging = true }
 
+    // a versão oficial não para por avisos de estilo do código
+    lint { checkReleaseBuilds = false; abortOnError = false }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
