@@ -9,7 +9,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#FF5A00">
 <title>LiveFood — Hub</title>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 <!-- HUB: atalhos para todas as telas da LiveFood, com o Live espiando pelas bordas (mesmo jeito do totem em espera) -->
 <style>
 :root{--lf:#FF5A00;--lf2:#FF7A1A;--tx:#1C1C1E;--mu:#5E5E66;--f:'Manrope',-apple-system,system-ui,sans-serif}
@@ -168,6 +168,26 @@ body.em-login footer{display:none}
 .card.card-pro p{color:#C9C9CF}
 .card.card-pro .ir{color:#FF8A33}
 .pro-selo{position:absolute;top:18px;right:18px;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;background:var(--lf);color:#fff;padding:5px 11px;border-radius:99px;z-index:1}
+/* (LB-01) LiveBank: card em degradê laranja → pink, só para quem tem o LiveBank */
+.card.card-lb[hidden]{display:none}
+.card.card-lb{grid-column:span 2;background:linear-gradient(125deg,#FF5A00 0%,#FF3D5E 55%,#FF2D87 100%);color:#fff;overflow:hidden;border:0;min-height:200px}
+.card.card-lb::before{content:'';position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.2) 1px,transparent 1.5px);background-size:18px 18px;-webkit-mask-image:radial-gradient(80% 100% at 100% 0%,#000,transparent);mask-image:radial-gradient(80% 100% at 100% 0%,#000,transparent);pointer-events:none}
+.card.card-lb::after{content:'';position:absolute;right:-70px;top:-90px;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.32),rgba(255,255,255,0) 65%);pointer-events:none}
+.card-lb .lbtopo{display:flex;align-items:center;gap:10px;position:relative;z-index:1}
+.card-lb .lbmarca{font-family:'Baloo 2',system-ui,sans-serif;font-weight:800;font-size:38px;line-height:1;letter-spacing:-.02em}
+.card-lb .lbsel{margin-left:auto;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;background:rgba(255,255,255,.22);padding:5px 11px;border-radius:99px}
+.card-lb p{color:rgba(255,255,255,.92)!important;position:relative;z-index:1;max-width:340px}
+.card-lb .lbnum{display:flex;gap:22px;position:relative;z-index:1;align-items:flex-end;flex-wrap:wrap}
+.card-lb .lbnum[hidden]{display:none}
+.card-lb .lbnum div small{display:block;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;opacity:.85}
+.card-lb .lbnum div b{display:block;font-size:26px;font-weight:800;letter-spacing:-.02em;margin-top:2px}
+.card-lb .lbnum svg{margin-left:auto}
+.card-lb .lbpe{display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1}
+.card-lb .ir{color:#fff!important}
+.card-lb .lbband{display:flex;gap:6px}
+.card-lb .lbband img{height:22px;width:auto;border-radius:4px;background:#fff}
+.card-lb .lbband img.pix{padding:3px 5px}
+@media(max-width:700px){.card.card-lb{grid-column:auto}}
 footer{margin-top:40px;font-size:12.5px;font-weight:700;opacity:.75;text-align:center}
 #espiao{position:fixed;left:0;top:0;z-index:30;width:clamp(100px,12vw,140px);transform:translate(-300px,40vh);cursor:pointer}
 #balao{position:fixed;left:0;top:0;z-index:31;max-width:min(280px,80vw);padding:11px 16px;border-radius:18px;background:#fff;color:var(--tx);font-weight:800;font-size:16px;box-shadow:0 16px 40px -12px rgba(0,0,0,.45);pointer-events:none;opacity:0;transform:translate(var(--bx,0),var(--by,0)) scale(.5);transform-origin:var(--bo,50% 100%);transition:opacity .2s,transform .35s cubic-bezier(.34,1.56,.64,1)}
@@ -236,6 +256,11 @@ footer{margin-top:40px;font-size:12.5px;font-weight:700;opacity:.75;text-align:c
   <h1 id="ola">Para onde vamos agora?</h1>
   <p class="sub">Escolha a tela da operação. Cada uma abre já com o seu acesso.</p>
   <nav class="grade" aria-label="Telas da LiveFood">
+    <a class="card card-lb" id="cardLb" hidden href="livebank.html" data-fala="LiveBank: seu dinheiro na palma da mão! 💸"><div class="lbtopo"><span class="lbmarca">livebank</span><span class="lbsel">Novo</span></div>
+      <p>Tudo o que você recebe na maquininha e no Pix, num lugar só.</p>
+      <div class="lbnum" id="lbNum" hidden><div><small>Recebido hoje</small><b id="lbTot">R$ 0,00</b></div><div><small>Vendas</small><b id="lbQt">0</b></div>
+        <svg width="130" height="44" viewBox="0 0 130 44" aria-hidden="true"><polyline id="lbLinha" fill="none" stroke="rgba(255,255,255,.95)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="2,38 16,34 30,36 44,24 58,28 72,14 86,18 100,8 114,12 128,4"/></svg></div>
+      <div class="lbpe"><div class="lbband"><img src="site/img/bandeiras/visa.svg" alt="Visa"><img src="site/img/bandeiras/mastercard.svg" alt="Mastercard"><img src="site/img/bandeiras/elo.svg" alt="Elo"><img class="pix" src="site/img/bandeiras/pix.svg" alt="Pix"></div><span class="ir">Abrir <i>→</i></span></div></a>
     <a class="card" href="painel.html" data-fala="Painel na mão: pedidos, salão e financeiro!"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg></span><h2>Painel</h2><p>Pedidos, mapeamento, cardápio, mesas e financeiro.</p><span class="ir">Abrir <i>→</i></span></a>
     <a class="card" href="cozinha.html" data-fala="Bora preparar os pedidos! 📦"><span class="ic"><svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="M9 12.5l2 2 4-4"/></svg></span><h2>Preparo</h2><p>Novos, em preparo e prontos, para a cozinha, o bar ou a separação.</p><span class="ir">Abrir <i>→</i></span></a>
     <a class="card" href="mesa.html" data-fala="Conferência na Mesa, sem erro!"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 9h18M5 9v11M19 9v11M3 9l2-5h14l2 5"/><path d="M9 14h6"/></svg></span><h2>Mesa</h2><p>Bipagem, fotos dos pedidos e fechamento dos motoristas.</p><span class="ir">Abrir <i>→</i></span></a>
@@ -266,7 +291,7 @@ function mostraHub(){
   $('ola').textContent=nome?'Olá, '+nome+'! Para onde vamos?':'Para onde vamos agora?';
   $('loja').textContent=US&&US.cliente_nome?US.cliente_nome:''; $('loja').hidden=!(US&&US.cliente_nome);
   document.body.classList.remove('em-login'); $('etLogin').hidden=true; $('tag').hidden=true; $('bSair').hidden=false; $('etHub').hidden=false;
-  hubModo(); hubPro(); if(window.LojaTroca) LojaTroca.ligar($('loja'));   /* (269) grupo de lojas */
+  hubModo(); hubPro(); hubBank(); if(window.LojaTroca) LojaTroca.ligar($('loja'));   /* (269) grupo de lojas */
 }
 /* LivePro: o card só aparece para a conta cujo plano inclui o recurso 'livepro' (Admin master → Planos) */
 /* contas com o LivePro liberado direto (flag por conta, sem depender do plano): código da conta no Admin master */
@@ -279,6 +304,21 @@ function hubPro(){ var c=$('cardPro'); if(!c) return; var conta=contaPro();
   try{ if(localStorage.getItem('lf_livepro')==='1') c.hidden=false; }catch(e){}
   if(!TK) return;
   fetch(API+'/painel/acesso',{headers:{'Authorization':'Bearer '+TK}}).then(function(r){ return r.json(); }).then(function(d){ mostra(!!(d&&d.ok&&(d.livepro===true||(d.recursos&&d.recursos.indexOf('livepro')>=0)))); }).catch(function(){});
+}
+/* (LB-01) LiveBank: card só para a conta com o LiveBank ligado (Admin master); mostra o recebido de hoje quando a Vileve já está conectada */
+function hubBank(){ var c=$('cardLb'); if(!c) return;
+  try{ if(localStorage.getItem('lf_livebank')==='1') c.hidden=false; }catch(e){}
+  if(!TK) return;
+  fetch(API+'/painel/acesso',{headers:{'Authorization':'Bearer '+TK}}).then(function(r){ return r.json(); }).then(function(d){ var ok=!!(d&&d.ok&&d.livebank===true);
+    c.hidden=!ok; try{ localStorage.setItem('lf_livebank',ok?'1':'0'); }catch(e){}
+    if(!ok||(US&&US.perfil!=='dono'&&US.perfil!=='gerente')) return;
+    fetch(API+'/painel/livebank',{headers:{'Authorization':'Bearer '+TK}}).then(function(r){ return r.json(); }).then(function(b){ if(!b||!b.ok||!b.pronto) return;
+      var ok2=(b.vendas||[]).filter(function(v){ return v.situacao==='aprovada'&&!v.estorno; }), tot=0, hs=[], i; for(i=0;i<10;i++) hs.push(0);
+      ok2.forEach(function(v){ tot+=v.valor-(v.devolvido||0); var t=Date.parse(v.quando); if(!isNaN(t)){ var h=new Date(t-3*3600000).getUTCHours(), k=Math.max(0,Math.min(9,Math.floor((h-8)/1.5))); hs[k]+=v.valor; } });
+      $('lbTot').textContent=(tot/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); $('lbQt').textContent=ok2.length;
+      var acc=0, pts=hs.map(function(x){ acc+=x; return acc; }), mx=Math.max(1,pts[9]); $('lbLinha').setAttribute('points',pts.map(function(x,j){ return (2+j*14)+','+(40-Math.round(x/mx*36)); }).join(' '));
+      $('lbNum').hidden=false; }).catch(function(){});
+  }).catch(function(){});
 }
 /* (252) modalidade do negócio (mesmo botão do catálogo do painel): fora de restaurante, o Atendimento é do atendente */
 function hubModoAplica(loja){ var a=document.querySelector('a.card[href="atendimento.html"]'); if(!a) return; var p=a.querySelector('p');

@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<link rel="icon" type="image/svg+xml" href="/site/img/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="/site/img/icone-32.png">
+<link rel="apple-touch-icon" href="/site/img/icone-180.png">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#FF3D5E">
+<title>LiveBank · LiveFood</title>
+<!-- LIVEBANK · vendas das maquininhas (Vileve / PayStore) da loja, dentro do LiveFood. LB-01 -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<script>/* só abre para quem entrou no Hub */(function(){ try{ if(!localStorage.getItem('dd_jwt')) location.replace('hub.html'); }catch(e){} })();</script>
+<style>
+:root{--tx:#1C1C1E;--mu:#5E5E66;--mu2:#8E8E93;--ln:#ECECEF;--bg:#F6F6F8;--lf:#FF5A00;--pk:#FF2D87;--ok:#16A34A;--er:#DC2626;--gr:linear-gradient(120deg,#FF5A00 0%,#FF3D5E 55%,#FF2D87 100%)}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;font-family:'Manrope',system-ui,sans-serif;background:var(--bg);color:var(--tx);-webkit-font-smoothing:antialiased}
+button{font:inherit;cursor:pointer}
+.marca{font-family:'Baloo 2',system-ui,sans-serif;font-weight:800;letter-spacing:-.02em;line-height:1}
+/* topo */
+.topo{position:relative;background:var(--gr);color:#fff;overflow:hidden}
+.topo::before{content:'';position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.18) 1px,transparent 1.5px);background-size:22px 22px;-webkit-mask-image:radial-gradient(70% 90% at 30% 0%,#000,transparent);mask-image:radial-gradient(70% 90% at 30% 0%,#000,transparent)}
+.topo::after{content:'';position:absolute;right:-120px;top:-160px;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.28),rgba(255,255,255,0) 65%)}
+.wrap{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:0 18px}
+.hd{display:flex;align-items:center;gap:12px;padding:calc(16px + env(safe-area-inset-top)) 0 14px}
+.hd .lg{font-size:40px}
+.chip{font-size:12px;font-weight:800;background:rgba(0,0,0,.16);padding:6px 11px;border-radius:99px;letter-spacing:.04em}
+.esp{flex:1}
+.hb{font-size:14px;font-weight:800;color:#fff;background:rgba(0,0,0,.18);border:0;border-radius:99px;padding:10px 15px;text-decoration:none;white-space:nowrap}
+.loja{font-size:13px;font-weight:800;opacity:.92;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hero{position:relative;display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap;padding:4px 0 92px}
+.hero small{display:block;font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;opacity:.85}
+.hero .tot{font-size:clamp(40px,6vw,60px);font-weight:800;letter-spacing:-.03em;line-height:1;margin:8px 0 6px}
+.hero .sub{font-size:15px;font-weight:700;opacity:.95}
+.hero .sub b{background:rgba(255,255,255,.22);padding:2px 8px;border-radius:99px;margin-right:6px}
+.per{display:flex;background:rgba(0,0,0,.16);border-radius:12px;padding:4px;flex-wrap:wrap}
+.per button{font-size:14px;font-weight:800;border:0;background:none;color:#fff;padding:9px 14px;border-radius:9px;opacity:.88;min-height:40px}
+.per button.on{background:#fff;color:#FF3D5E;opacity:1}
+.per input{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px}
+/* Live dentro do LiveBank */
+.liveZ{display:flex;align-items:flex-end;gap:10px;margin-left:auto}
+.liveZ .lv{width:118px;flex:none;cursor:pointer}
+.bal{position:relative;background:#fff;color:var(--tx);font-family:'Baloo 2',system-ui,sans-serif;font-weight:800;font-size:17px;line-height:1.2;padding:11px 15px;border-radius:18px 18px 4px 18px;max-width:240px;box-shadow:0 16px 36px -16px rgba(80,0,40,.55);margin-bottom:58px;transition:opacity .25s,transform .3s}
+.bal.esc{opacity:0;transform:translateY(6px) scale(.96)}
+.live-mascote{position:relative;width:100%;aspect-ratio:220/230}
+.live-corpo{position:absolute;inset:0;transform-origin:50% 46%;will-change:transform}
+.live-corpo svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 14px 22px rgba(90,0,40,.45))}
+.live-rosto{position:absolute;border-radius:14%/18%}
+/* aviso */
+.aviso{display:flex;gap:12px;align-items:flex-start;background:#fff;border:1px solid #FFD8C2;border-left:5px solid var(--lf);border-radius:16px;padding:14px 16px;margin-top:16px;font-size:14px;font-weight:600;color:var(--mu)}
+.aviso b{color:var(--tx)}
+.aviso.er{border-color:#F6C9C9;border-left-color:var(--er)}
+/* kpis */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:-66px;position:relative;z-index:2}
+.kpi{background:#fff;border-radius:18px;padding:16px 18px;box-shadow:0 16px 36px -22px rgba(120,10,60,.55)}
+.kpi small{display:block;font-size:11.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--mu2)}
+.kpi b{display:block;font-size:25px;font-weight:800;letter-spacing:-.02em;margin:6px 0 2px}
+.kpi span{font-size:12.5px;font-weight:700;color:var(--mu)}.up{color:var(--ok)!important}.dn{color:var(--er)!important}
+/* blocos */
+.g2{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-top:16px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:16px}
+.bl{background:#fff;border:1px solid var(--ln);border-radius:20px;padding:18px 20px;box-shadow:0 12px 30px -26px rgba(0,0,0,.35);min-width:0}
+.bl h3{margin:0 0 14px;font-size:15px;font-weight:800;display:flex;align-items:center;gap:8px}
+.bl h3 .esp{flex:1}.bl h3 button{font-size:13px;font-weight:800;color:var(--lf);background:none;border:0;padding:4px 0}
+.vazio{font-size:13.5px;color:var(--mu2);font-weight:700;padding:18px 0;text-align:center}
+/* gráfico de barras */
+.graf{display:flex;align-items:flex-end;gap:5px;height:170px;padding-top:6px}
+.graf div{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end;min-width:0}
+.graf i{display:block;width:100%;border-radius:8px 8px 3px 3px;background:var(--gr);min-height:4px}
+.graf i.fr{background:#F1E4EA}
+.graf small{font-size:11px;font-weight:700;color:var(--mu2);white-space:nowrap}
+.graf .pk i{box-shadow:0 0 0 3px rgba(255,61,94,.18)}
+.leg{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:12.5px;font-weight:700;color:var(--mu);margin-top:10px}
+.leg b{color:var(--tx)}
+/* rosca */
+.rosca{display:flex;align-items:center;gap:18px}
+.rosca svg{flex:none}
+.fl{display:grid;gap:10px;flex:1}
+.fl div{display:flex;align-items:center;gap:9px;font-size:13.5px;font-weight:700}
+.fl i{width:10px;height:10px;border-radius:3px;flex:none}
+.fl span{flex:1}.fl b{font-weight:800;white-space:nowrap}.fl small{color:var(--mu2);font-weight:700;width:38px;text-align:right}
+/* bandeiras */
+.bands{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.band{border:1px solid var(--ln);border-radius:14px;padding:11px 12px;display:flex;flex-direction:column;gap:7px}
+.band .lgB{height:26px;display:flex;align-items:center}
+.band .lgB img{height:26px;width:auto}
+.band b{font-size:15px}.band small{font-size:11.5px;color:var(--mu);font-weight:700}
+.band .br{height:5px;background:var(--bg);border-radius:9px;overflow:hidden}.band .br i{display:block;height:100%;background:var(--gr)}
+/* maquininhas */
+.maq{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--ln)}.maq:last-child{border-bottom:0}
+.maq .ico{width:40px;height:40px;border-radius:12px;background:#FFF1EC;display:flex;align-items:center;justify-content:center;font-size:20px;flex:none}
+.maq b{display:block;font-size:14px}.maq small{font-size:12px;color:var(--mu2);font-weight:600}
+.maq .v{margin-left:auto;text-align:right;flex:none}
+/* lista de vendas */
+.barra{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.busca{flex:1;min-width:220px;border:1px solid var(--ln);background:var(--bg);border-radius:12px;padding:12px 13px;font:inherit;font-size:15px;color:var(--tx);outline:none}
+.busca:focus{border-color:#FFB48A;background:#fff}
+.fch{font-size:13.5px;font-weight:800;padding:9px 13px;border-radius:99px;border:1px solid var(--ln);background:var(--bg);color:var(--mu)}
+.fch.on{background:var(--tx);color:#fff;border-color:var(--tx)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--mu2);padding:10px 12px;background:#FAFAFB;border-bottom:1px solid var(--ln)}
+td{padding:12px;border-bottom:1px solid var(--ln);vertical-align:middle}
+.cx{display:flex;align-items:center;gap:10px}
+.cx .lgB{width:44px;height:30px;display:flex;align-items:center;justify-content:center;flex:none}
+.cx .lgB img{max-width:44px;max-height:30px}
+.cx b{display:block;font-size:13.5px}.cx small{font-size:12px;color:var(--mu2);font-weight:600}
+.st{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:800;padding:4px 9px;border-radius:99px;white-space:nowrap}
+.st.ap{background:#E8F7EE;color:var(--ok)}.st.ca{background:#FDECEC;color:var(--er)}.st.pe{background:#FFF4E5;color:#B45309}
+.tag{font-size:12px;font-weight:800;color:var(--lf)}.tag.av{color:var(--mu2)}
+.stm{display:none;margin-top:4px;font-size:11.5px;font-weight:800}.stm.ap{color:var(--ok)}.stm.ca{color:var(--er)}.stm.pe{color:#B45309}
+.mais{display:block;margin:14px auto 0;font-size:14px;font-weight:800;background:var(--bg);border:1px solid var(--ln);border-radius:12px;padding:12px 18px}
+.nota{font-size:12.5px;color:var(--mu);font-weight:600;margin:16px 2px 40px}
+.carrega{opacity:.55;transition:opacity .2s}
+/* fechado (sem LiveBank) */
+.fechado{max-width:440px;margin:40px auto;text-align:center;background:#fff;border-radius:22px;padding:28px 22px;box-shadow:0 16px 40px -24px rgba(0,0,0,.4)}
+.fechado h2{margin:0 0 8px;font-size:22px}.fechado p{color:var(--mu);font-weight:600;margin:0 0 18px}
+.fechado a{display:inline-block;background:var(--gr);color:#fff;text-decoration:none;font-weight:800;padding:13px 22px;border-radius:14px}
+@media(max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)}.g2,.g3{grid-template-columns:1fr}.g3 .bl{grid-column:auto!important}.hide{display:none}.hd .lg{font-size:32px}}
+@media(max-width:600px){.chip,.loja{display:none}.bands{grid-template-columns:repeat(2,1fr)}.rosca{flex-direction:column;align-items:stretch}.rosca svg{align-self:center}
+  .hero{padding-bottom:86px}.liveZ{position:absolute;right:0;top:6px}.liveZ .lv{width:78px}.bal{display:none}.hero>div:first-child{padding-right:86px}
+  .per{width:100%}.per button{flex:1;padding:9px 6px}.kpi b{font-size:21px}.bl{padding:16px}td,th{padding:10px 8px}.sit,.cx small{display:none}.stm{display:block!important}.cx .lgB{width:38px}}
+@media (prefers-reduced-motion:reduce){.bal{transition:none}}
+</style>
+</head>
+<body>
+<div class="topo"><div class="wrap">
+  <div class="hd"><span class="lg marca">livebank</span><span class="chip">pagamentos LiveFood</span><span class="esp"></span><span class="loja" id="loja"></span><a class="hb" href="hub.html">← Hub</a></div>
+  <div class="hero" id="hero">
+    <div><small id="tTit">Recebido hoje</small><div class="tot" id="tTot">R$ 0,00</div><div class="sub" id="tSub">carregando…</div></div>
+    <div class="liveZ"><div class="bal esc" id="bal"></div><div class="lv" id="lv" title="Live"></div></div>
+    <div class="per" id="per">
+      <button data-p="hoje" class="on">Hoje</button><button data-p="ontem">Ontem</button><button data-p="7d">7 dias</button><button data-p="mes">Mês</button><button data-p="dia" aria-label="Escolher um dia">📅</button>
+      <input type="date" id="pDia" aria-label="Dia">
+    </div>
+  </div>
+</div></div>
+
+<div class="wrap" id="corpo">
+  <div class="kpis">
+    <div class="kpi"><small>Vendas</small><b id="kVen">0</b><span id="kVenS">&nbsp;</span></div>
+    <div class="kpi"><small>Ticket médio</small><b id="kTic">R$ 0,00</b><span>por venda</span></div>
+    <div class="kpi"><small>Pelo LiveFood</small><b id="kLf">0</b><span id="kLfS">&nbsp;</span></div>
+    <div class="kpi"><small>Cancelamentos</small><b id="kCan" class="dn">R$ 0,00</b><span id="kCanS">&nbsp;</span></div>
+  </div>
+  <div id="aviso"></div>
+
+  <div class="g2">
+    <div class="bl"><h3 id="gTit">Vendas por hora</h3><div id="graf"></div></div>
+    <div class="bl"><h3>Por forma de pagamento</h3><div id="formas"></div></div>
+  </div>
+
+  <div class="g3">
+    <div class="bl" style="grid-column:span 2"><h3>Por bandeira</h3><div id="bands"></div></div>
+    <div class="bl"><h3>Maquininhas</h3><div id="maqs"></div></div>
+  </div>
+
+  <div class="bl" style="margin-top:16px">
+    <h3>Vendas <span class="esp"></span><button id="bCsv">⬇ baixar planilha</button></h3>
+    <div class="barra"><input class="busca" id="busca" placeholder="🔍 Buscar por valor, final do cartão ou autorização" autocomplete="off" inputmode="search"><span id="filtros" style="display:contents"></span></div>
+    <div style="overflow-x:auto"><table>
+      <thead><tr><th>Hora</th><th>Pagamento</th><th class="hide">Origem</th><th class="hide">Maquininha</th><th class="sit">Situação</th><th style="text-align:right">Valor</th></tr></thead>
+      <tbody id="lista"></tbody>
+    </table></div>
+    <button class="mais" id="bMais" hidden>Ver mais vendas</button>
+  </div>
+  <p class="nota" id="nota">Os valores são os das maquininhas LiveBank (Vileve). Cancelamentos e devoluções são feitos pelo painel da Vileve.</p>
+</div>
+
+<script src="site/js/live-mascote.js"></script>
+<script>
+var API='https://giro-os-api.nucleofull.workers.dev', TK='', US=null;
+try{ TK=localStorage.getItem('dd_jwt')||''; US=JSON.parse(localStorage.getItem('dd_user')||'null'); }catch(e){}
+function $(i){ return document.getElementById(i); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function brl(c){ return (Number(c||0)/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
+function brlC(c){ var v=Number(c||0)/100; return v>=1000?'R$ '+Math.round(v).toLocaleString('pt-BR'):brl(c); }
+function dBR(d){ return new Date(d.getTime()-3*3600000).toISOString().slice(0,10); }   /* data no horário de Brasília */
+function hoje(){ return dBR(new Date()); }
+function somaDia(s,n){ var d=new Date(s+'T12:00:00Z'); d.setUTCDate(d.getUTCDate()+n); return d.toISOString().slice(0,10); }
+function hBR(iso){ var t=Date.parse(iso); if(isNaN(t)) return null; return new Date(t-3*3600000); }   /* hora de Brasília (campos UTC) */
+function diaCurto(s){ var p=s.split('-'); return p[2]+'/'+p[1]; }
+
+var EST={per:'hoje',de:'',ate:'',vendas:[],ant:null,demo:false,filtro:'todas',busca:'',limite:25,timer:null};
+var FORMAS={credito:{n:'Crédito',c:'#2563EB'},parcelado:{n:'Crédito parcelado',c:'#F59E0B'},debito:{n:'Débito',c:'#9333EA'},pix:{n:'Pix',c:'#32BCAD'},voucher:{n:'Vale-refeição',c:'#0EA5E9'},outro:{n:'Outros',c:'#94A3B8'}};
+var BANDS={visa:'Visa',mastercard:'Mastercard',elo:'Elo',amex:'American Express',hipercard:'Hipercard',diners:'Diners',pix:'Pix',cartao:'Outras'};
+function bandeira(v){ if(v.forma==='pix') return 'pix'; var b=String(v.bandeira||'').toUpperCase();
+  if(b.indexOf('MASTER')>=0||b.indexOf('MAESTRO')>=0) return 'mastercard'; if(b.indexOf('VISA')>=0||b.indexOf('ELECTRON')>=0) return 'visa'; if(b.indexOf('ELO')>=0) return 'elo';
+  if(b.indexOf('AMEX')>=0||b.indexOf('AMERICAN')>=0) return 'amex'; if(b.indexOf('HIPER')>=0) return 'hipercard'; if(b.indexOf('DINERS')>=0) return 'diners'; return 'cartao'; }
+function logo(k){ return '<img src="site/img/bandeiras/'+k+'.svg" alt="'+esc(BANDS[k]||'')+'" loading="lazy">'; }
+function formaDe(v){ return v.forma==='credito'&&v.parcelas>1?'parcelado':(FORMAS[v.forma]?v.forma:'outro'); }
+function valida(v){ return v.situacao==='aprovada'&&!v.estorno; }
+function cancelada(v){ return !v.estorno&&(v.situacao==='estornada'||v.situacao==='desfeita'); }
+function leitura(c){ return {'01':'digitado','02':'tarja','03':'chip e senha','04':'aproximação','05':'QR Code','06':'aproximação'}[c]||''; }
+function nomeMaq(v){ var m=String(v.modelo||'').replace(/positivo/i,'').trim()||'Maquininha'; var s=String(v.maquina||''); return m+(s?' · nº '+s.slice(-6):''); }
+
+/* ── período ── */
+function periodo(p){
+  var h=hoje();
+  if(p==='hoje') return {de:h,ate:h,tit:'Recebido hoje'};
+  if(p==='ontem'){ var o=somaDia(h,-1); return {de:o,ate:o,tit:'Recebido ontem'}; }
+  if(p==='7d') return {de:somaDia(h,-6),ate:h,tit:'Recebido em 7 dias'};
+  if(p==='mes') return {de:h.slice(0,8)+'01',ate:h,tit:'Recebido no mês'};
+  var d=EST.diaEsc||h; return {de:d,ate:d,tit:'Recebido em '+diaCurto(d)};
+}
+function buscar(de,ate){
+  return fetch(API+'/painel/livebank?de='+de+'&ate='+ate,{headers:{'Authorization':'Bearer '+TK}}).then(function(r){ return r.json().catch(function(){ return {ok:false}; }).then(function(d){ d._st=r.status; return d; }); });
+}
+function carregar(silencioso){
+  var p=periodo(EST.per); EST.de=p.de; EST.ate=p.ate; $('tTit').textContent=p.tit;
+  if(!silencioso) $('corpo').classList.add('carrega');
+  var comp=(EST.per==='hoje'||EST.per==='ontem'||EST.per==='dia')?somaDia(p.de,-1):null;
+  Promise.all([buscar(p.de,p.ate),comp?buscar(comp,comp).catch(function(){ return null; }):Promise.resolve(null)]).then(function(rs){
+    var d=rs[0], a=rs[1]; $('corpo').classList.remove('carrega');
+    if(d._st===401){ location.replace('hub.html'); return; }
+    if(d.erro==='sem_livebank'||d.erro==='sem_permissao'){ fechado(d.mensagem); return; }
+    if(!d.ok){ aviso('er','Não consegui buscar as vendas agora. Tente de novo em instantes.'); return; }
+    if(d.pronto){ EST.demo=false; EST.vendas=d.vendas||[]; EST.ant=a&&a.pronto?(a.vendas||[]):null; aviso(); }
+    else {
+      EST.demo=true; EST.vendas=exemplo(p.de,p.ate,1); EST.ant=comp?exemplo(comp,comp,0.85):null;
+      if(d.motivo==='token_recusado'||d.motivo==='falha') aviso('er','<b>A Vileve não respondeu.</b> Os números abaixo são só um exemplo. Se continuar, avise o suporte do LiveFood.');
+      else aviso('','<b>Exemplo de como vai ficar.</b> Assim que a Vileve liberar a conexão da sua conta, aparecem aqui as vendas de verdade das suas maquininhas.');
+    }
+    mostrar();
+  }).catch(function(){ $('corpo').classList.remove('carrega'); aviso('er','Sem internet agora. Assim que voltar, os números atualizam.'); });
+}
+function aviso(tipo,html){ $('aviso').innerHTML=html?'<div class="aviso'+(tipo?' '+tipo:'')+'"><span style="font-size:20px">'+(tipo==='er'?'⚠️':'💡')+'</span><div>'+html+'</div></div>':''; }
+function fechado(m){
+  document.getElementById('hero').querySelector('.per').hidden=true;
+  $('corpo').innerHTML='<div class="fechado"><h2>LiveBank</h2><p>'+esc(m||'O LiveBank ainda não está liberado para esta conta.')+' Fale com o LiveFood para ativar as maquininhas.</p><a href="hub.html">Voltar ao Hub</a></div>';
+  $('tTot').textContent='—'; $('tSub').textContent=''; falar('Fala com o LiveFood que a gente liga o LiveBank pra você! 😉');
+}
+
+/* ── desenho ── */
+function mostrar(){
+  var V=EST.vendas, ok=V.filter(valida), tot=ok.reduce(function(s,v){ return s+v.valor-(v.devolvido||0); },0);
+  var can=V.filter(cancelada), canT=can.reduce(function(s,v){ return s+(v.situacao==='estornada'?(v.devolvido||v.valor):v.valor); },0);
+  $('tTot').textContent=brl(tot);
+  var sub='';
+  if(EST.ant){ var aOk=EST.ant.filter(valida), aT=aOk.reduce(function(s,v){ return s+v.valor-(v.devolvido||0); },0);
+    if(aT>0){ var pc=Math.round((tot-aT)/aT*100); sub+='<b>'+(pc>=0?'▲ ':'▼ ')+Math.abs(pc)+'%</b>vs. dia anterior · '; }
+    var dif=ok.length-aOk.length; $('kVenS').innerHTML=dif===0?'igual ao dia anterior':'<span class="'+(dif>0?'up':'dn')+'">'+(dif>0?'▲ ':'▼ ')+Math.abs(dif)+(dif>0?' a mais':' a menos')+' que o dia anterior</span>';
+  } else $('kVenS').textContent=EST.de===EST.ate?'no dia':diaCurto(EST.de)+' a '+diaCurto(EST.ate);
+  sub+=ok.length+(ok.length===1?' venda':' vendas')+(EST.per==='hoje'?' · atualizado agora':'');
+  $('tSub').innerHTML=sub;
+  $('kVen').textContent=ok.length; $('kTic').textContent=brl(ok.length?Math.round(tot/ok.length):0);
+  var lf=ok.filter(function(v){ return /^LF-/.test(v.ref||''); }).length; $('kLf').textContent=lf; $('kLfS').textContent=ok.length-lf?(ok.length-lf)+(ok.length-lf===1?' venda avulsa':' vendas avulsas'):'todas cobradas pelo app';
+  $('kCan').textContent=brl(canT); $('kCanS').textContent=can.length?can.length+(can.length===1?' cancelamento':' cancelamentos'):'nenhum';
+  grafico(ok); formas(ok); bandeiras(ok); maquinas(ok); filtros(); lista();
+  falaResumo(ok,tot);
+}
+function grafico(ok){
+  var um=EST.de===EST.ate, gs={}, ks=[], i;
+  if(um){ $('gTit').textContent='Vendas por hora';
+    ok.forEach(function(v){ var d=hBR(v.quando); if(!d) return; var h=d.getUTCHours(); gs[h]=(gs[h]||0)+v.valor; });
+    var hs=Object.keys(gs).map(Number), a=hs.length?Math.min.apply(null,hs):9, b=hs.length?Math.max.apply(null,hs):20; a=Math.min(a,9); b=Math.max(b,a+9); if(b>23) b=23;
+    for(i=a;i<=b;i++) ks.push({k:i,r:i+'h',v:gs[i]||0});
+  } else { $('gTit').textContent='Vendas por dia';
+    ok.forEach(function(v){ var d=hBR(v.quando); if(!d) return; var k=d.toISOString().slice(0,10); gs[k]=(gs[k]||0)+v.valor; });
+    for(var s=EST.de;s<=EST.ate;s=somaDia(s,1)) ks.push({k:s,r:ks.length>14&&(ks.length%3)?'':diaCurto(s).slice(0,2),v:gs[s]||0});
+  }
+  var mx=Math.max.apply(null,ks.map(function(x){ return x.v; }).concat([1])), pk=null;
+  ks.forEach(function(x){ if(!pk||x.v>pk.v) pk=x; });
+  if(!ok.length){ $('graf').innerHTML='<div class="vazio">Nenhuma venda aprovada neste período.</div>'; return; }
+  var tot=ks.reduce(function(s,x){ return s+x.v; },0), com=ks.filter(function(x){ return x.v>0; }).length||1;
+  $('graf').innerHTML='<div class="graf">'+ks.map(function(x){ return '<div'+(x===pk?' class="pk"':'')+' title="'+esc(x.r||diaCurto(String(x.k)))+': '+brl(x.v)+'"><i'+(x.v?'':' class="fr"')+' style="height:'+Math.max(3,Math.round(x.v/mx*100))+'%"></i><small>'+esc(x.r)+'</small></div>'; }).join('')+'</div>'
+    +'<div class="leg"><span>Pico '+(um?'às <b>'+pk.k+'h</b>':'em <b>'+diaCurto(pk.k)+'</b>')+' · '+brl(pk.v)+'</span><span>Média por '+(um?'hora':'dia')+' <b>'+brlC(Math.round(tot/com))+'</b></span></div>';
+}
+function formas(ok){
+  if(!ok.length){ $('formas').innerHTML='<div class="vazio">Sem vendas para mostrar.</div>'; return; }
+  var g={}, tot=0; ok.forEach(function(v){ var f=formaDe(v); g[f]=(g[f]||0)+v.valor; tot+=v.valor; });
+  var ord=Object.keys(FORMAS).filter(function(f){ return g[f]; }).sort(function(a,b){ return g[b]-g[a]; }), acc=0, C=100;
+  var arcs=ord.map(function(f){ var pc=g[f]/tot*C, s='<circle cx="21" cy="21" r="15.9155" fill="none" stroke="'+FORMAS[f].c+'" stroke-width="6" stroke-dasharray="'+pc.toFixed(2)+' '+(C-pc).toFixed(2)+'" stroke-dashoffset="'+(25-acc).toFixed(2)+'"/>'; acc+=pc; return s; }).join('');
+  $('formas').innerHTML='<div class="rosca"><svg width="140" height="140" viewBox="0 0 42 42"><circle cx="21" cy="21" r="15.9155" fill="none" stroke="#F1F1F3" stroke-width="6"/>'+arcs
+    +'<text x="21" y="20.5" text-anchor="middle" font-size="5.2" font-weight="800" fill="#1C1C1E" font-family="Manrope">'+ok.length+'</text><text x="21" y="26" text-anchor="middle" font-size="3" font-weight="700" fill="#8E8E93" font-family="Manrope">'+(ok.length===1?'venda':'vendas')+'</text></svg>'
+    +'<div class="fl">'+ord.map(function(f){ return '<div><i style="background:'+FORMAS[f].c+'"></i><span>'+FORMAS[f].n+'</span><b>'+brlC(g[f])+'</b><small>'+Math.round(g[f]/tot*100)+'%</small></div>'; }).join('')+'</div></div>';
+}
+function bandeiras(ok){
+  if(!ok.length){ $('bands').innerHTML='<div class="vazio">Sem vendas para mostrar.</div>'; return; }
+  var g={}, n={}, tot=0; ok.forEach(function(v){ var b=bandeira(v); g[b]=(g[b]||0)+v.valor; n[b]=(n[b]||0)+1; tot+=v.valor; });
+  $('bands').innerHTML='<div class="bands">'+Object.keys(g).sort(function(a,b){ return g[b]-g[a]; }).map(function(b){ var pc=Math.round(g[b]/tot*100);
+    return '<div class="band"><span class="lgB">'+logo(b)+'</span><b>'+brl(g[b])+'</b><small>'+n[b]+(n[b]===1?' venda':' vendas')+' · '+pc+'%</small><span class="br"><i style="width:'+Math.max(2,pc)+'%"></i></span></div>'; }).join('')+'</div>';
+}
+function maquinas(ok){
+  var g={}; ok.forEach(function(v){ var k=v.maquina||v.terminal||'?'; var m=g[k]||(g[k]={v:0,n:0,ult:'',x:v}); m.v+=v.valor; m.n++; if(String(v.quando)>m.ult) m.ult=String(v.quando); });
+  var ks=Object.keys(g).sort(function(a,b){ return g[b].v-g[a].v; });
+  if(!ks.length){ $('maqs').innerHTML='<div class="vazio">Nenhuma maquininha vendeu neste período.</div>'; return; }
+  $('maqs').innerHTML=ks.map(function(k){ var m=g[k], d=hBR(m.ult), q=d?(EST.de===EST.ate?'última venda '+d.toISOString().slice(11,16):'última em '+diaCurto(d.toISOString().slice(0,10))):'';
+    return '<div class="maq"><span class="ico">📟</span><div><b>'+esc(nomeMaq(m.x))+'</b><small>'+esc(q)+'</small></div><div class="v"><b>'+brlC(m.v)+'</b><small>'+m.n+(m.n===1?' venda':' vendas')+'</small></div></div>'; }).join('');
+}
+function filtros(){
+  var V=EST.vendas.filter(function(v){ return !v.estorno; }), c={todas:V.length,credito:0,debito:0,pix:0,cancel:0};
+  V.forEach(function(v){ if(cancelada(v)) c.cancel++; else if(v.forma==='credito') c.credito++; else if(v.forma==='debito') c.debito++; else if(v.forma==='pix') c.pix++; });
+  var nomes={todas:'Todas',credito:'Crédito',debito:'Débito',pix:'Pix',cancel:'Cancelamentos'};
+  $('filtros').innerHTML=Object.keys(nomes).filter(function(k){ return k==='todas'||c[k]; }).map(function(k){ return '<button class="fch'+(EST.filtro===k?' on':'')+'" data-f="'+k+'">'+nomes[k]+' '+c[k]+'</button>'; }).join('');
+}
+function filtradas(){
+  var q=EST.busca.toLowerCase().replace(/r\$\s*/,'').trim(), qn=q.replace(/\./g,'').replace(',','.');
+  return EST.vendas.filter(function(v){
+    if(v.estorno) return false;
+    if(EST.filtro==='cancel'&&!cancelada(v)) return false;
+    if(EST.filtro!=='todas'&&EST.filtro!=='cancel'&&(v.forma!==EST.filtro||cancelada(v))) return false;
+    if(!q) return true;
+    var val=(v.valor/100).toFixed(2);
+    return val.indexOf(qn)===0||(v.final||'').indexOf(q)>=0||(v.aut||'').indexOf(q)>=0||(v.nsu||'').indexOf(q)>=0||(BANDS[bandeira(v)]||'').toLowerCase().indexOf(q)>=0;
+  });
+}
+function lista(){
+  var L=filtradas(), um=EST.de===EST.ate;
+  if(!L.length){ $('lista').innerHTML='<tr><td colspan="6"><div class="vazio">'+(EST.vendas.length?'Nada encontrado com esse filtro.':'Nenhuma venda neste período.')+'</div></td></tr>'; $('bMais').hidden=true; return; }
+  $('lista').innerHTML=L.slice(0,EST.limite).map(function(v){
+    var d=hBR(v.quando), hr=d?(um?d.toISOString().slice(11,16):diaCurto(d.toISOString().slice(0,10))+' '+d.toISOString().slice(11,16)):'—', b=bandeira(v);
+    var tit=v.forma==='pix'?'Pix':(FORMAS[v.forma]?FORMAS[v.forma].n:'Cartão')+(v.parcelas>1?' · '+v.parcelas+'x':'')+(v.final?' · final '+esc(v.final):'');
+    var det=v.forma==='pix'?'pago pelo QR Code':[v.parcelas>1?'parcelado':'à vista',leitura(v.leitura),v.aut?'aut. '+esc(v.aut):''].filter(Boolean).join(' · ');
+    var st=cancelada(v)?'<span class="st ca">↩ '+(v.situacao==='desfeita'?'Desfeita':'Estornada')+'</span>':v.situacao==='aprovada'?'<span class="st ap">✓ Aprovada</span>':v.situacao==='negada'?'<span class="st ca">✕ Negada</span>':'<span class="st pe">… Pendente</span>';
+    var riscado=cancelada(v)||v.situacao==='negada';
+    var stm=riscado?'<span class="stm ca">'+(v.situacao==='negada'?'negada':'cancelada')+'</span>':v.situacao==='aprovada'?'':'<span class="stm pe">pendente</span>';
+    return '<tr><td>'+hr+'</td><td><div class="cx"><span class="lgB">'+logo(b)+'</span><div><b>'+tit+'</b><small>'+det+'</small></div></div></td>'
+      +'<td class="hide">'+(/^LF-/.test(v.ref||'')?'<span class="tag">LiveFood</span>':'<span class="tag av">avulsa</span>')+'</td><td class="hide">'+esc(nomeMaq(v))+'</td><td class="sit">'+st+'</td>'
+      +'<td style="text-align:right"><b'+(riscado?' style="text-decoration:line-through;color:#8E8E93"':'')+'>'+brl(v.valor)+'</b>'+stm+'</td></tr>'; }).join('');
+  $('bMais').hidden=L.length<=EST.limite;
+}
+function csv(){
+  var L=filtradas(), linhas=[['Data','Hora','Forma','Bandeira','Final','Parcelas','Valor','Situação','Autorização','NSU','Maquininha','Origem']];
+  L.forEach(function(v){ var d=hBR(v.quando), s=d?d.toISOString():''; linhas.push([s.slice(0,10),s.slice(11,16),(FORMAS[formaDe(v)]||{}).n||'',BANDS[bandeira(v)]||'',v.final||'',v.parcelas||1,(v.valor/100).toFixed(2).replace('.',','),cancelada(v)?'Cancelada':v.situacao,v.aut||'',v.nsu||'',nomeMaq(v),/^LF-/.test(v.ref||'')?'LiveFood':'Avulsa']); });
+  var txt='﻿'+linhas.map(function(l){ return l.map(function(c){ c=String(c); return /[;"\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c; }).join(';'); }).join('\n');
+  var a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([txt],{type:'text/csv;charset=utf-8'})); a.download='livebank-'+EST.de+(EST.ate!==EST.de?'-a-'+EST.ate:'')+'.csv'; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },500);
+}
+
+/* ── exemplo (enquanto a Vileve não libera a conexão) ── */
+function exemplo(de,ate,fator){
+  var out=[], seed=0, s; function r(){ seed=(seed*9301+49297)%233280; return seed/233280; }
+  for(s=de;s<=ate;s=somaDia(s,1)){ seed=Number(s.replace(/-/g,''))%9973;
+    var agora=new Date(), lim=s===hoje()?(agora.getTime()-3*3600000-Date.parse(s+'T00:00:00Z'))/3600000:24, n=Math.round((70+r()*60)*fator), maqs=['L300-8890','L300-8891','L300-8892'];
+    for(var i=0;i<n;i++){ var h=9+Math.floor(Math.pow(r(),.9)*11); if(h>=13&&h<=14&&r()<.4) h=13; var m=Math.floor(r()*60); if(h+m/60>lim) continue;
+      var x=r(), forma=x<.47?'credito':x<.75?'debito':x<.97?'pix':'voucher', bs=['VISA','MASTERCARD','MASTERCARD','VISA','ELO','AMEX','HIPERCARD'], par=forma==='credito'&&r()<.08?2+Math.floor(r()*4):1;
+      var val=Math.round((12+Math.pow(r(),1.6)*140)*(par>1?2.2:1))*100+(r()<.5?90:0), sit=r()<.015?'estornada':'aprovada';
+      out.push({id:'ex'+s+i,quando:s+'T'+String(h+3).padStart(2,'0')+':'+String(m).padStart(2,'0')+':00.000Z',valor:val,devolvido:sit==='estornada'?val:0,forma:forma,bandeira:forma==='pix'?'':bs[Math.floor(r()*bs.length)],final:String(1000+Math.floor(r()*9000)),parcelas:par,situacao:sit,estorno:false,
+        nsu:String(100000+Math.floor(r()*899999)),aut:String(100000+Math.floor(r()*899999)),ref:r()<.94?'LF-exemplo':'',maquina:maqs[Math.floor(r()*maqs.length)],modelo:'Positivo L300',leitura:forma==='pix'?'05':(r()<.7?'04':'03')});
+    }
+  }
+  return out.sort(function(a,b){ return String(b.quando).localeCompare(String(a.quando)); });
+}
+
+/* ── Live ── */
+var LIVE=null, FALAS=[], FI=0, falaT=null;
+try{ if(window.LiveMascote) LIVE=LiveMascote.criar($('lv'),{sombra:false,flutuar:true,expressao:'animado',rotulo:'Live'}); }catch(e){}
+function falar(t){
+  var b=$('bal'); b.classList.add('esc'); clearTimeout(falaT);
+  falaT=setTimeout(function(){ b.textContent=t; b.classList.remove('esc'); try{ if(LIVE){ LIVE.expressao(/😕|ainda/i.test(t)?'curioso':'animado'); LIVE.falar(t); } }catch(e){} },220);
+}
+function falaResumo(ok,tot){
+  var nome=US&&US.nome?String(US.nome).split(' ')[0]:'';
+  FALAS=[];
+  if(!ok.length) FALAS.push(EST.per==='hoje'?'Ainda sem vendas hoje. Bora vender! 💪':'Nenhuma venda nesse período.');
+  else {
+    FALAS.push((EST.per==='hoje'?(nome?nome+', hoje':'Hoje')+' já entrou ':'Entrou ')+brl(tot)+'! 🎉');
+    var pix=ok.filter(function(v){ return v.forma==='pix'; }).length; if(pix) FALAS.push(pix+' '+(pix===1?'pagamento':'pagamentos')+' no Pix. Dinheiro na hora! ⚡');
+    var g={}; ok.forEach(function(v){ var d=hBR(v.quando); if(d){ var h=d.getUTCHours(); g[h]=(g[h]||0)+1; } }); var hp=Object.keys(g).sort(function(a,b){ return g[b]-g[a]; })[0];
+    if(hp&&EST.de===EST.ate) FALAS.push('O movimento mais forte foi às '+hp+'h. 🔥');
+    FALAS.push('Ticket médio de '+brl(Math.round(tot/ok.length))+' por venda.');
+  }
+  FI=0; falar(FALAS[0]);
+}
+$('lv').addEventListener('click',function(){ if(!FALAS.length) return; FI=(FI+1)%FALAS.length; falar(FALAS[FI]); try{ LIVE&&LIVE.gesto&&LIVE.gesto('aceno'); }catch(e){} });
+
+/* ── eventos ── */
+$('per').addEventListener('click',function(e){ var b=e.target.closest('button'); if(!b) return;
+  if(b.getAttribute('data-p')==='dia'){ var i=$('pDia'); i.max=hoje(); i.value=EST.diaEsc||hoje(); if(i.showPicker){ try{ i.showPicker(); return; }catch(er){} } i.style.pointerEvents='auto'; i.focus(); i.click(); return; }
+  EST.per=b.getAttribute('data-p'); marcaPer(); EST.limite=25; carregar(); });
+$('pDia').addEventListener('change',function(){ if(!this.value) return; EST.diaEsc=this.value>hoje()?hoje():this.value; EST.per='dia'; marcaPer(); EST.limite=25; carregar(); });
+function marcaPer(){ [].forEach.call($('per').querySelectorAll('button'),function(x){ x.classList.toggle('on',x.getAttribute('data-p')===EST.per); }); }
+$('filtros').addEventListener('click',function(e){ var b=e.target.closest('button'); if(!b) return; EST.filtro=b.getAttribute('data-f'); EST.limite=25; filtros(); lista(); });
+$('busca').addEventListener('input',function(){ EST.busca=this.value; EST.limite=25; lista(); });
+$('bMais').addEventListener('click',function(){ EST.limite+=50; lista(); });
+$('bCsv').addEventListener('click',csv);
+if(US&&US.cliente_nome) $('loja').textContent=US.cliente_nome;
+carregar();
+setInterval(function(){ if(EST.per==='hoje'&&!document.hidden&&!EST.demo) carregar(true); },60000);
+</script>
+</body>
+</html>
