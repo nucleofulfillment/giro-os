@@ -31,11 +31,12 @@ data class Venda(
     val final4: String = "",
     val quando: Long = System.currentTimeMillis(),
     val estornada: Boolean = false,
+    val ref: String = "",          // identificador que o LiveFood mandou junto (aparece nas vendas da PayStore)
 ) {
     fun json(): JSONObject = JSONObject()
         .put("gk", chave).put("forma", forma).put("valor", valorCentavos).put("status", status)
         .put("nsu", nsu).put("aut", autorizacao).put("bandeira", bandeira).put("final", final4)
-        .put("quando", quando).put("estornada", estornada)
+        .put("quando", quando).put("estornada", estornada).put("ref", ref)
 }
 
 /** O que a tela de cobrança mostra enquanto o kit trabalha. Sempre chamado na tela (thread principal). */

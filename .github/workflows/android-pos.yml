@@ -1,4 +1,4 @@
-# Monta o app LiveFood da maquininha (Vileve / PayStore · PAX A910S)
+# Monta o app LiveFood da maquininha (Vileve / PayStore · Positivo L300)
 # - "LiveFood Teste": cobrança de mentira, instala em qualquer celular Android
 # - "LiveFood" (Vileve): só é montado quando os segredos do kit estiverem cadastrados no GitHub
 name: App da maquininha
@@ -21,6 +21,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
+      PAYSTORE_APP_ID: ${{ secrets.PAYSTORE_APP_ID }}
+      PAYSTORE_SECRET: ${{ secrets.PAYSTORE_SECRET }}
       PAYOS_MAVEN_URL: ${{ secrets.PAYOS_MAVEN_URL }}
       PAYOS_MAVEN_USER: ${{ secrets.PAYOS_MAVEN_USER }}
       PAYOS_MAVEN_PASS: ${{ secrets.PAYOS_MAVEN_PASS }}
@@ -46,12 +48,20 @@ jobs:
           mkdir -p ../saida
           cp app/build/outputs/apk/sim/debug/*.apk ../saida/livefood-teste.apk
 
-      - name: Montar o app Vileve (quando o kit estiver liberado)
+      - name: Montar o app da maquininha Vileve (Positivo L300, app de pagamento PayStore)
+        working-directory: android
+        run: |
+          mkdir -p app/libs
+          curl -fsSL -o app/libs/payments-api-4.1.0.12.aar https://github.com/paystore/paystore-api/raw/master/payments-api-4.1.0.12.aar
+          ./gradlew --no-daemon assembleVileveDebug
+          cp app/build/outputs/apk/vileve/debug/*.apk ../saida/livefood-vileve-teste.apk
+
+      - name: Montar o app Paytime (guardado; só com os segredos da Paytime)
         if: env.PAYOS_MAVEN_URL != ''
         working-directory: android
         run: |
-          ./gradlew --no-daemon assembleVileveDebug
-          cp app/build/outputs/apk/vileve/debug/*.apk ../saida/livefood-vileve-teste.apk
+          ./gradlew --no-daemon assemblePaytimeDebug
+          cp app/build/outputs/apk/paytime/debug/*.apk ../saida/livefood-paytime-teste.apk
 
       - name: Montar o app celular-maquininha (quando o Tap on Phone estiver liberado)
         if: env.TAP_MAVEN_URL != ''
@@ -78,5 +88,5 @@ jobs:
           body: |
             App LiveFood para a maquininha.
             • livefood-teste.apk: modo de teste (nada é cobrado), instala em qualquer celular Android.
-            • livefood-vileve-teste.apk: aparece quando o kit da Vileve for liberado (para a maquininha de teste PAX A910S).
+            • livefood-vileve-teste.apk: para a maquininha da Vileve (Positivo L300) com o app de pagamento da PayStore.
             • livefood-celular-teste.apk: aparece quando o Tap on Phone for liberado (celular Android 11+ com NFC vira maquininha).

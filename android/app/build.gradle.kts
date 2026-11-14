@@ -30,7 +30,8 @@ android {
     buildFeatures { buildConfig = true }
 
     // "sim": cobrança de mentira, roda em qualquer celular Android (para testar o fluxo).
-    // "vileve": cobrança de verdade com o kit PayStore/Vileve, só na PAX A910S.
+    // "vileve": cobrança de verdade na maquininha da Vileve (Positivo L300) pelo app de pagamento da PayStore.
+    // "paytime": kit da Paytime (PAX A910S) — guardado, não é o caminho da Vileve.
     flavorDimensions += "pagamento"
     productFlavors {
         create("sim") {
@@ -47,6 +48,14 @@ android {
             buildConfigField("String", "TAP_LICENCA", "\"${segredo("TAP_LICENCA") ?: ""}\"")
         }
         create("vileve") {
+            dimension = "pagamento"
+            targetSdk = 29
+            resValue("string", "app_name", "LiveFood")
+            // dados do app cadastrado no portal da PayStore (Aplicativos): vêm dos segredos do GitHub
+            buildConfigField("String", "PAYSTORE_APP_ID", "\"${segredo("PAYSTORE_APP_ID") ?: ""}\"")
+            buildConfigField("String", "PAYSTORE_SECRET", "\"${segredo("PAYSTORE_SECRET") ?: ""}\"")
+        }
+        create("paytime") {
             dimension = "pagamento"
             targetSdk = 29
             resValue("string", "app_name", "LiveFood")
@@ -98,8 +107,9 @@ android {
 kotlin { jvmToolchain(17) }
 
 // configurações do kit só para a versão Vileve (o Gradle cria na hora; declaramos antes para poder usar abaixo)
-configurations.maybeCreate("vileveDebugImplementation")
-configurations.maybeCreate("vileveReleaseImplementation")
+configurations.maybeCreate("vileveImplementation")
+configurations.maybeCreate("paytimeDebugImplementation")
+configurations.maybeCreate("paytimeReleaseImplementation")
 configurations.maybeCreate("celularDebugImplementation")
 configurations.maybeCreate("celularReleaseImplementation")
 
@@ -109,9 +119,13 @@ dependencies {
     implementation("com.google.zxing:core:3.5.3")   // desenha o QR Code do Pix
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
 
-    // Kit de pagamento PayStore/Vileve (PAX A960, A910S, A910)
-    "vileveDebugImplementation"("com.paytime:payossdk-pax-debug:1.3.0")
-    "vileveReleaseImplementation"("com.paytime:payossdk-pax:1.3.0")
+    // Biblioteca da PayStore (pública: github.com/paystore/paystore-api). A montagem baixa o arquivo para app/libs.
+    "vileveImplementation"(files("libs/payments-api-4.1.0.12.aar"))
+    "vileveImplementation"("com.google.code.gson:gson:2.10.1")
+
+    // Kit da Paytime (PAX A960, A910S, A910) — guardado
+    "paytimeDebugImplementation"("com.paytime:payossdk-pax-debug:1.3.0")
+    "paytimeReleaseImplementation"("com.paytime:payossdk-pax:1.3.0")
 
     // Kit Tap on Phone (Vileve) — celular como maquininha
     "celularDebugImplementation"("com.paytime:taponphonesdk-debug:1.0.5")

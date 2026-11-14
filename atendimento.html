@@ -969,7 +969,7 @@ function posCobra(forma,valor,fim,ex){
   var id='c'+(++POS.seq)+'_'+Date.now(); POS.cb[id]=fim; ex=ex||{};
   try{ LiveFoodPOS.cobrar(JSON.stringify({id:id,forma:forma,valor:Math.round(valor*100),loja:(D&&D.empresa)||'',fone:posFone(ex.joia),ref:ex.ref||''})); }catch(e){ delete POS.cb[id]; fim({ok:false,msg:'Não consegui abrir a maquininha.'}); }
 }
-function posTef(r){ var v=r.venda||{}; return {gk:v.gk||'',forma:v.forma||'',valor:v.valor||0,nsu:v.nsu||'',aut:v.aut||'',bandeira:v.bandeira||'',final:v.final||'',quando:v.quando||Date.now()}; }
+function posTef(r){ var v=r.venda||{}; return {gk:v.gk||'',forma:v.forma||'',valor:v.valor||0,nsu:v.nsu||'',aut:v.aut||'',bandeira:v.bandeira||'',final:v.final||'',ref:v.ref||'',quando:v.quando||Date.now()}; }   /* ref = número que o LiveFood mandou à maquininha (aparece nas vendas da PayStore) */
 function posVoltar(){ if($('sh')&&$('sh').style.display==='flex'){ fecha(); return true; } return false; }   /* botão "voltar" da maquininha fecha a janela aberta */
 if(posTem()){ var _bp=$('btPos'); if(_bp){ _bp.style.display=''; if(posInfo().motor==='celular') _bp.title='Celular maquininha'; } }
 function fcEscolher(){
