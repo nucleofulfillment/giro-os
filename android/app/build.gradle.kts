@@ -81,6 +81,10 @@ android {
                 storePassword = segredo("POS_KEYSTORE_PASS")
                 keyAlias = segredo("POS_KEY_ALIAS")
                 keyPassword = segredo("POS_KEY_PASS")
+                // a loja PayStore confere a assinatura "clássica" (v1) além da moderna (v2/v3)
+                enableV1Signing = true
+                enableV2Signing = true
+                enableV3Signing = true
             }
         }
     }
