@@ -68,7 +68,13 @@ jobs:
           echo "$POS_KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/livefood-release.jks"
           export POS_KEYSTORE_FILE="$RUNNER_TEMP/livefood-release.jks"
           ./gradlew --no-daemon assembleVileveRelease
-          cp app/build/outputs/apk/vileve/release/*.apk ../saida/livefood-vileve-oficial.apk
+          ls -la app/build/outputs/apk/vileve/release/
+          APK=$(ls app/build/outputs/apk/vileve/release/*.apk | grep -v unsigned | head -1)
+          if [ -z "$APK" ]; then echo "ERRO: a versão oficial saiu SEM assinatura"; exit 1; fi
+          AS=$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)apksigner
+          "$AS" verify --verbose --print-certs "$APK"
+          unzip -l "$APK" | grep -i "META-INF/" || true
+          cp "$APK" ../saida/livefood-vileve-oficial.apk
           rm -f "$RUNNER_TEMP/livefood-release.jks"
 
       - name: Montar o app Paytime (guardado; só com os segredos da Paytime)
