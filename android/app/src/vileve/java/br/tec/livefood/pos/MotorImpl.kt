@@ -2,251 +2,242 @@ package br.tec.livefood.pos
 
 import android.content.Context
 import android.graphics.Bitmap
-import com.paytime.payossdk.*
-import com.paytime.payossdk.external.*
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import android.os.Build
+import android.os.Handler
+import android.os.Looper
+import android.util.Base64
+import br.com.phoebus.android.payments.api.AbortRequest
+import br.com.phoebus.android.payments.api.ApplicationInfo
+import br.com.phoebus.android.payments.api.Credentials
+import br.com.phoebus.android.payments.api.ErrorData
+import br.com.phoebus.android.payments.api.PaymentClient
+import br.com.phoebus.android.payments.api.PaymentRequestV2
+import br.com.phoebus.android.payments.api.PaymentType
+import br.com.phoebus.android.payments.api.PaymentV2
+import br.com.phoebus.android.payments.api.ReprintReceiptRequestV2
+import br.com.phoebus.android.payments.api.ReversePayment
+import br.com.phoebus.android.payments.api.ReversePaymentRequestV2
+import br.com.phoebus.android.payments.api.client.Client
+import org.json.JSONArray
+import java.io.ByteArrayOutputStream
+import java.math.BigDecimal
+import java.util.UUID
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 /**
- * Motor de VERDADE: kit de pagamento PayStore/Vileve (PayOsSdk) na PAX A910S.
- * Segue a documentação do kit (Desenvolvimento > Transação / Impressão / Dispositivo).
- * Campos da venda que a documentação não detalha são lidos por nome (veja [Leitor]),
- * para o app não quebrar se o kit mudar o nome de algum campo.
+ * Motor da VILEVE: maquininha Positivo L300 (também A910/A910S) com o app de pagamento da PayStore.
+ * O LiveFood "chama" o pagamento da própria maquininha (biblioteca payments-api da PayStore):
+ * a tela de cartão, senha e Pix é a do app de pagamento; o resultado volta para o LiveFood.
+ * Venda aprovada fica PENDENTE até o LiveFood confirmar (confirmPayment) — confirmamos logo em seguida.
  */
 class MotorImpl : Motor {
     override val nome = "vileve"
     override val deVerdade = true
 
-    private val pag get() = PayOsSdkPayment.instance
-    private val dispositivo get() = PayOsSdkDevice.instance
-    private val impressora get() = PayOsSdkPrinter.instance
+    private lateinit var ctx: Context
+    private val cliente = PaymentClient()
+    @Volatile private var ligado = false
+    private val principal = Handler(Looper.getMainLooper())
 
     override fun configurar(ctx: Context) {
-        val app = ctx.applicationContext
-        pag.configure(app)
-        dispositivo.configure(app)
-        impressora.configure(app)
-        // reinicia sozinha todo dia às 5h (só PAX): a máquina não trava no meio do expediente
-        runCatching {
-            dispositivo.setRebootTimeEnable(true)
-            dispositivo.setRebootTime("05:00:00")
+        this.ctx = ctx.applicationContext
+        ligar(null)
+    }
+
+    /** Liga com o app de pagamento da PayStore (pode demorar um instante na primeira vez). */
+    private fun ligar(pronto: ((Boolean) -> Unit)?) {
+        if (ligado && cliente.isBound) { pronto?.invoke(true); return }
+        val ok = runCatching {
+            cliente.bind(ctx, object : Client.OnConnectionCallback {
+                override fun onConnected() { ligado = true; principal.post { pronto?.invoke(true) } }
+                override fun onDisconnected(forcado: Boolean) { ligado = false }
+            })
+        }.getOrDefault(false)
+        if (!ok) principal.post { pronto?.invoke(false) }
+    }
+
+    private fun app(): ApplicationInfo = ApplicationInfo().apply {
+        credentials = Credentials().apply {
+            applicationId = BuildConfig.PAYSTORE_APP_ID
+            secretToken = BuildConfig.PAYSTORE_SECRET
         }
+        softwareVersion = BuildConfig.VERSION_NAME
     }
 
-    override fun ativo(): Boolean = runCatching { pag.isInitialized() }.getOrDefault(false)
+    /** A ativação da maquininha é feita no próprio app da PayStore (pela Vileve), não aqui. */
+    override fun ativo() = true
+    override fun ativar(codigo: String, fim: (String?) -> Unit) =
+        fim("a ativação da maquininha é feita no app de pagamento da PayStore (fale com a Vileve)")
 
-    override fun ativar(codigo: String, fim: (String?) -> Unit) {
-        if (codigo.isBlank()) { fim("digite o código"); return }
-        pag.init(codigo, simples(fim))
-    }
-
-    override fun atualizar(fim: (String?) -> Unit) = pag.updateTerminalConfigurations(simples(fim))
-
-    /** Callback para operações sem tela (ativar, atualizar, reimprimir). */
-    private fun simples(fim: (String?) -> Unit) = object : PayOsSdkConnectorCallback {
-        override fun onRequest(flow: PayOsSdkRequestFlow, payload: Any?) {}
-        override fun onMessage(type: PayOsSdkNotificationType, message: String) {}
-        override fun onApproved(data: Any?) = fim(null)
-        override fun onError(code: PayOsSdkReturnCode, messages: List<String>, extra: Int?) = fim(textoErro(code, messages))
-    }
+    override fun atualizar(fim: (String?) -> Unit) = ligar { ok -> fim(if (ok) null else SEM_APP) }
 
     override fun cobrar(forma: Forma, valorCentavos: Long, tela: Tela) {
-        val tipo = when (forma) {
-            Forma.CREDITO -> PayOsSdkTransactionType.CREDIT
-            Forma.DEBITO -> PayOsSdkTransactionType.DEBIT
-            Forma.PIX -> PayOsSdkTransactionType.PIX
-            Forma.CARTAO -> PayOsSdkTransactionType.NONE   // o cartão escolhe (crédito/débito)
-        }
-        val params = if (forma == Forma.PIX)
-            PayOsSdkTransactionParams(amount = valorCentavos.toInt(), typeTransaction = tipo)
-        else
-            PayOsSdkTransactionParams(
-                amount = valorCentavos.toInt(),
-                creditType = PayOsSdkCreditType.NO_INSTALLMENT,
-                installment = null,
-                typeTransaction = tipo,
-            )
-        if (forma != Forma.PIX) params.setPrintReceipt(true)   // a via da loja sai sozinha
-        pag.makeTransaction(params, callbackTela(tela, forma, valorCentavos))
-    }
-
-    private fun callbackTela(tela: Tela, forma: Forma, valor: Long) = object : PayOsSdkConnectorCallback {
-        override fun onRequest(flow: PayOsSdkRequestFlow, payload: Any?) {
-            when (flow) {
-                PayOsSdkRequestFlow.APPLICATION -> {
-                    val itens = Leitor.lista(payload).map { Leitor.rotulo(it) }
-                    tela.escolher("Escolha a opção do cartão", itens.ifEmpty { listOf("Crédito", "Débito") }) { pag.selectApplication(it) }
+        if (BuildConfig.PAYSTORE_APP_ID.isBlank()) { tela.erro("Falta cadastrar o app LiveFood no portal da PayStore (Aplicativos)."); return }
+        tela.mensagem("Siga as instruções na tela da maquininha")
+        ligar { ok ->
+            if (!ok) { tela.erro(SEM_APP); return@ligar }
+            val ref = "LF-" + UUID.randomUUID().toString().replace("-", "").take(16)
+            val pedido = PaymentRequestV2().apply {
+                value = BigDecimal(valorCentavos).movePointLeft(2)
+                paymentTypes = when (forma) {
+                    Forma.CREDITO -> listOf(PaymentType.CREDIT)
+                    Forma.DEBITO -> listOf(PaymentType.DEBIT)
+                    Forma.PIX -> listOf(PaymentType.PIX)
+                    Forma.CARTAO -> listOf(PaymentType.CREDIT, PaymentType.DEBIT)
                 }
-                PayOsSdkRequestFlow.LAST_DIGITS_CONFIRMATION ->
-                    tela.digitar("Digite os 4 últimos números do cartão", true) { r -> if (r == null) pag.abort() else pag.setLastDigits(r) }
-                PayOsSdkRequestFlow.CVV_TYPE -> {
-                    val tipos = enumValues<PayOsSdkCvvType>().toList()
-                    tela.escolher("O cartão tem o código de segurança (CVV) no verso?", tipos.map { if (it.name == "EXISTS") "Sim, tem" else it.name.lowercase().replace('_', ' ') }) {
-                        pag.setCvvType(tipos[it])
+                installments = 1
+                appTransactionId = ref
+                appInfo = app()
+                isShowReceiptView = false
+                printMerchantReceipt = true      // via da loja sai na hora
+                printCustomerReceipt = false     // via do cliente: botão "Imprimir via do cliente" ou WhatsApp
+            }
+            runCatching {
+                cliente.startPaymentV2(pedido, object : PaymentClient.PaymentCallback<PaymentV2> {
+                    override fun onSuccess(p: PaymentV2) {
+                        tela.mensagem("Confirmando o pagamento…")
+                        confirmar(p, forma, valorCentavos, ref, tela)
                     }
-                }
-                PayOsSdkRequestFlow.CVV ->
-                    tela.digitar("Digite o código de segurança (CVV)", true) { r -> if (r == null) pag.abort() else pag.setCvv(r) }
-                PayOsSdkRequestFlow.PRINT_ERROR ->
-                    tela.mensagem("Problema na impressora: confira o papel. O pagamento continua valendo.")
-                else -> {}
-            }
-        }
-
-        override fun onMessage(type: PayOsSdkNotificationType, message: String) = tela.mensagem(message)   // exibição obrigatória
-
-        override fun onApproved(data: Any?) {
-            val v = Leitor.venda(data, forma, valor) ?: run { tela.erro("Resposta inesperada da maquininha."); return }
-            when (v.status) {
-                "PENDING" -> tela.mostrarPix(Leitor.qrPix(data), Leitor.data(data, "expiration"))
-                "CONFIRMED" -> tela.aprovado(v)
-                "CANCELLED" -> tela.erro("O QR Code expirou ou foi cancelado. O Pix não foi pago.")
-                "FAILED" -> tela.erro("Não consegui gerar o Pix. Tente de novo.")
-                else -> tela.aprovado(v)
-            }
-        }
-
-        override fun onError(code: PayOsSdkReturnCode, messages: List<String>, extra: Int?) {
-            if (code.name.contains("EXPIRED") && code.name.contains("TABLE")) {
-                tela.mensagem("Atualizando as tabelas da maquininha…")
-                pag.tableLoad(simples { e -> tela.erro(e ?: "Tabelas atualizadas. Toque em Tentar de novo.") })
-                return
-            }
-            tela.erro(textoErro(code, messages))
+                    override fun onError(e: ErrorData) = tela.erro(texto(e))
+                })
+            }.onFailure { tela.erro(it.message ?: SEM_APP) }
         }
     }
 
-    override fun abortar() = runCatching { pag.abort() }.let { }
+    /** O app de pagamento só conclui a venda depois que o LiveFood confirma. */
+    private fun confirmar(p: PaymentV2, forma: Forma, valor: Long, ref: String, tela: Tela) {
+        val id = p.paymentId
+        if (id.isNullOrBlank()) { tela.erro("A maquininha não devolveu o número da venda."); return }
+        runCatching {
+            cliente.confirmPayment(id, object : PaymentClient.PaymentCallback<Any?> {
+                override fun onSuccess(r: Any?) {
+                    val tipo = p.paymentType?.name.orEmpty()
+                    val v = Venda(
+                        chave = id,
+                        forma = when { tipo.contains("PIX") -> "pix"; tipo.contains("DEBIT") -> "debito"; tipo.contains("CREDIT") -> "credito"; else -> forma.codigo },
+                        valorCentavos = p.value?.movePointRight(2)?.toLong() ?: valor,
+                        status = "CONFIRMED",
+                        nsu = p.acquirerNsu ?: p.nsuTerminal ?: "",
+                        autorizacao = p.acquirerAuthorizationNumber ?: "",
+                        bandeira = p.card?.brand?.uppercase() ?: "",
+                        final4 = p.card?.panLast4Digits ?: "",
+                        ref = ref,
+                    )
+                    guardar(v)
+                    tela.aprovado(v)
+                }
+                override fun onError(e: ErrorData) = tela.erro("O pagamento não foi confirmado: " + texto(e))
+            })
+        }.onFailure { tela.erro(it.message ?: "Não consegui confirmar o pagamento.") }
+    }
+
+    override fun abortar() {
+        runCatching { cliente.abortTransaction(AbortRequest(), object : PaymentClient.PaymentCallback<Void?> {
+            override fun onSuccess(r: Void?) {}
+            override fun onError(e: ErrorData) {}
+        }) }
+    }
 
     override fun estornar(chave: String, tela: Tela) {
-        val params = PayOsSdkRevertTransactionParams()
-        params.setGatewayKey(chave)
-        pag.revertTransaction(params, object : PayOsSdkConnectorCallback {
-            override fun onRequest(flow: PayOsSdkRequestFlow, payload: Any?) {
-                if (flow == PayOsSdkRequestFlow.APPLICATION) pag.selectApplication(0)
+        val v = lista().firstOrNull { it.chave == chave } ?: run { tela.erro("Venda não encontrada nesta maquininha."); return }
+        tela.mensagem("Siga as instruções na tela da maquininha")
+        ligar { ok ->
+            if (!ok) { tela.erro(SEM_APP); return@ligar }
+            val pedido = ReversePaymentRequestV2().apply {
+                paymentId = chave
+                value = BigDecimal(v.valorCentavos).movePointLeft(2)
+                appTransactionId = "LF-E-" + UUID.randomUUID().toString().replace("-", "").take(14)
+                credentials = app().credentials
+                isShowReceiptView = false
+                printMerchantReceipt = true
+                printCustomerReceipt = false
+                autoConfirm = true
             }
-            override fun onMessage(type: PayOsSdkNotificationType, message: String) = tela.mensagem(message)
-            override fun onApproved(data: Any?) = tela.aprovado(Leitor.venda(data, Forma.CARTAO, 0) ?: Venda(chave, "cartao", 0, "CANCELLED", estornada = true))
-            override fun onError(code: PayOsSdkReturnCode, messages: List<String>, extra: Int?) = tela.erro(textoErro(code, messages))
-        })
+            runCatching {
+                cliente.reversePaymentV2(pedido, object : PaymentClient.PaymentCallback<ReversePayment> {
+                    override fun onSuccess(r: ReversePayment) {
+                        val nova = v.copy(estornada = true, status = "CANCELLED")
+                        guardar(nova)
+                        tela.aprovado(nova)
+                    }
+                    override fun onError(e: ErrorData) = tela.erro(texto(e))
+                })
+            }.onFailure { tela.erro(it.message ?: SEM_APP) }
+        }
     }
 
-    override fun vendas(fim: (List<Venda>?, String?) -> Unit) {
-        pag.listTransactions(object : PayOsSdkConnectorCallback {
-            override fun onRequest(flow: PayOsSdkRequestFlow, payload: Any?) {}
-            override fun onMessage(type: PayOsSdkNotificationType, message: String) {}
-            override fun onApproved(data: Any?) = fim(Leitor.lista(data).mapNotNull { Leitor.venda(it, null, 0) }, null)
-            override fun onError(code: PayOsSdkReturnCode, messages: List<String>, extra: Int?) = fim(null, textoErro(code, messages))
-        })
+    override fun vendas(fim: (List<Venda>?, String?) -> Unit) { principal.post { fim(lista(), null) } }
+
+    override fun reimprimir(via: Via, fim: (String?) -> Unit) {
+        val ultima = lista().filter { it.status == "CONFIRMED" && it.forma != "pix" }.maxByOrNull { it.quando }
+            ?: run { fim("Nenhuma venda no cartão para reimprimir."); return }
+        ligar { ok ->
+            if (!ok) { fim(SEM_APP); return@ligar }
+            val pedido = ReprintReceiptRequestV2().apply {
+                applicationInfo = app()
+                softwareVersion = BuildConfig.VERSION_NAME
+                paymentId = ultima.chave
+                printCustomerReceipt = via == Via.CLIENTE
+                printMerchantReceipt = via == Via.LOJA
+            }
+            runCatching {
+                cliente.reprintV2(pedido, object : PaymentClient.PaymentCallback<Void?> {
+                    override fun onSuccess(r: Void?) = fim(null)
+                    override fun onError(e: ErrorData) = fim(texto(e))
+                })
+            }.onFailure { fim(it.message ?: SEM_APP) }
+        }
     }
 
-    override fun reimprimir(via: Via, fim: (String?) -> Unit) =
-        pag.printReceipt(if (via == Via.CLIENTE) PayOsSdkReceiptCopyType.CLIENT_SECOND_COPY else PayOsSdkReceiptCopyType.ESTABLISHMENT_SECOND_COPY, simples(fim))
-
-    /** Imprime a imagem do cupom em pedaços (a impressora tem limite por impressão). */
+    /** Imprime o cupom (imagem de 384 pontos) pela impressora da maquininha, via app da PayStore. */
     override fun imprimir(bitmap: Bitmap): String? {
-        val pedaco = 800
-        var y = 0
-        while (y < bitmap.height) {
-            val h = minOf(pedaco, bitmap.height - y)
-            val parte = Bitmap.createBitmap(bitmap, 0, y, bitmap.width, h)
-            impressora.init().exceptionOrNull()?.let { return "Impressora não respondeu." }
-            impressora.setGray(4)
-            impressora.printBitmap(parte)
-            if (y + h >= bitmap.height) impressora.step(120)
-            val st = impressora.start().getOrNull()
-            val nomeSt = st?.toString() ?: "ERROR"
-            if (nomeSt != "SUCCESS") return statusImpressora(nomeSt)
-            y += h
-        }
-        return null
-    }
-
-    private fun statusImpressora(s: String) = when (s) {
-        "OUT_OF_PAPER" -> "Acabou o papel. Troque a bobina e imprima de novo."
-        "PRINTER_IS_BUSY" -> "A impressora está ocupada. Tente de novo."
-        "PRINTER_OVER_HEATS" -> "A impressora esquentou. Espere um pouco e tente de novo."
-        "PRINTER_VOLTAGE_IS_TO_LOW" -> "Bateria fraca para imprimir. Coloque a maquininha para carregar."
-        else -> "Erro na impressora ($s)."
-    }
-
-    override fun modelo() = dispositivo.getModel().getOrDefault("")
-    override fun serie() = dispositivo.getSerialNumber().getOrDefault("")
-
-    private fun textoErro(code: PayOsSdkReturnCode, messages: List<String>): String {
-        val n = code.name
-        return when {
-            n == "CTLSS_WITHOUT_APPLICATION" -> "Por aproximação não deu. Insira o cartão no chip ou passe na tarja."
-            messages.isNotEmpty() -> messages.joinToString("\n")
-            else -> "Não deu certo ($n)."
-        }
-    }
-}
-
-/** Lê os dados da venda devolvidos pelo kit, procurando os campos pelo nome. */
-object Leitor {
-    private fun valor(o: Any?, vararg nomes: String): Any? {
-        if (o == null) return null
-        for (n in nomes) {
-            var c: Class<*>? = o.javaClass
-            while (c != null && c != Any::class.java) {
-                runCatching { return c!!.getDeclaredField(n).apply { isAccessible = true }.get(o) }
-                c = c.superclass
+        val png = ByteArrayOutputStream().also { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }.toByteArray()
+        val b64 = Base64.encodeToString(png, Base64.NO_WRAP)
+        val fim = CountDownLatch(1)
+        var erro: String? = null
+        principal.post {
+            ligar { ok ->
+                if (!ok) { erro = SEM_APP; fim.countDown(); return@ligar }
+                runCatching {
+                    cliente.printFromBase64(ctx, b64, false, object : PaymentClient.PaymentCallback<Any?> {
+                        override fun onSuccess(r: Any?) { fim.countDown() }
+                        override fun onError(e: ErrorData) { erro = texto(e); fim.countDown() }
+                    })
+                }.onFailure { erro = it.message ?: "Erro na impressora."; fim.countDown() }
             }
-            val cap = n.replaceFirstChar { it.uppercase() }
-            for (m in listOf("get$cap", "is$cap", n)) runCatching { return o.javaClass.getMethod(m).invoke(o) }
         }
-        return null
+        if (!fim.await(60, TimeUnit.SECONDS)) return "A impressora não respondeu."
+        return erro
     }
 
-    private fun txt(o: Any?, vararg nomes: String) = valor(o, *nomes)?.toString()?.takeIf { it.isNotBlank() && it != "null" } ?: ""
+    override fun modelo(): String = listOf(Build.MANUFACTURER, Build.MODEL).filter { !it.isNullOrBlank() }.joinToString(" ")
+    override fun serie() = ""
 
-    fun lista(o: Any?): List<Any> = when (o) {
-        is Collection<*> -> o.filterNotNull()
-        is Array<*> -> o.filterNotNull()
-        null -> emptyList()
-        else -> (valor(o, "items", "list", "applications", "options") as? Collection<*>)?.filterNotNull() ?: emptyList()
-    }
+    // ── vendas guardadas no aparelho (para "Vendas de hoje", estorno e reimpressão) ──
+    private fun prefs() = ctx.getSharedPreferences("vendas_paystore", Context.MODE_PRIVATE)
 
-    fun rotulo(o: Any): String = txt(o, "label", "name", "description", "applicationLabel", "title").ifBlank { o.toString() }
-
-    fun data(o: Any?, vararg nomes: String): Long? = when (val v = valor(o, *nomes)) {
-        is Date -> v.time
-        is Long -> if (v < 10_000_000_000L) v * 1000 else v
-        is Number -> v.toLong()
-        is String -> listOf("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", "yyyy-MM-dd'T'HH:mm:ssXXX", "yyyy-MM-dd'T'HH:mm:ss", "yyyy-MM-dd HH:mm:ss")
-            .firstNotNullOfOrNull { f -> runCatching { SimpleDateFormat(f, Locale.US).parse(v)?.time }.getOrNull() }
-        else -> null
-    }
-
-    fun qrPix(o: Any?) = txt(o, "qrCode", "qrcode", "pixQrCode", "emv", "copyPaste", "pixCopyPaste", "qrCodeContent").ifBlank { null }
-
-    fun venda(o: Any?, forma: Forma?, valorPedido: Long): Venda? {
-        if (o == null) return null
-        val chave = txt(o, "gatewayKey")
-        val status = txt(o, "transactionStatus", "status").uppercase().substringAfterLast('.')
-        if (chave.isBlank() && status.isBlank()) return null
-        val tipo = txt(o, "typeTransaction", "transactionType", "type").uppercase()
-        val f = when {
-            tipo.contains("PIX") -> Forma.PIX
-            tipo.contains("DEBIT") -> Forma.DEBITO
-            tipo.contains("CREDIT") -> Forma.CREDITO
-            else -> forma ?: Forma.CARTAO
+    @Synchronized private fun lista(): List<Venda> = runCatching {
+        val a = JSONArray(prefs().getString("lista", "[]"))
+        (0 until a.length()).map { i ->
+            val o = a.getJSONObject(i)
+            Venda(o.optString("gk"), o.optString("forma"), o.optLong("valor"), o.optString("status"),
+                o.optString("nsu"), o.optString("aut"), o.optString("bandeira"), o.optString("final"),
+                o.optLong("quando"), o.optBoolean("estornada"), o.optString("ref"))
         }
-        val valor = (valor(o, "amount", "value") as? Number)?.toLong() ?: valorPedido
-        val pan = txt(o, "lastDigits", "cardLastDigits", "panLast4", "maskedPan", "pan")
-        return Venda(
-            chave = chave,
-            forma = f.codigo,
-            valorCentavos = valor,
-            status = status.ifBlank { "CONFIRMED" },
-            nsu = txt(o, "nsu", "hostNsu", "nsuHost", "acquirerNsu"),
-            autorizacao = txt(o, "authorizationCode", "authCode", "authorization"),
-            bandeira = txt(o, "cardBrand", "brand", "flag", "cardFlag").uppercase(),
-            final4 = pan.filter { it.isDigit() }.takeLast(4),
-            quando = data(o, "createdAt", "date", "transactionDate", "dateTime") ?: System.currentTimeMillis(),
-            estornada = valor(o, "cancelledAt") != null,
-        )
+    }.getOrDefault(emptyList())
+
+    @Synchronized private fun guardar(v: Venda) {
+        val limite = System.currentTimeMillis() - 3L * 24 * 3600 * 1000   // guarda 3 dias
+        val l = lista().filter { it.chave != v.chave && it.quando > limite } + v
+        prefs().edit().putString("lista", JSONArray(l.map { it.json() }).toString()).apply()
+    }
+
+    private fun texto(e: ErrorData?): String =
+        listOfNotNull(e?.responseMessage, e?.acquirerAdditionalMessage).filter { it.isNotBlank() }.joinToString("\n")
+            .ifBlank { "Não deu certo (" + (e?.paymentsResponseCode ?: "?") + ")." }
+
+    companion object {
+        const val SEM_APP = "Não encontrei o app de pagamento da PayStore nesta maquininha."
     }
 }
