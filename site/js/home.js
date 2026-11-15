@@ -95,9 +95,9 @@
   }
   abas.forEach((a, i) => a.addEventListener('click', () => abaVai(i, true)));
   const secLf = $('#livefood');
-  if (secLf && 'IntersectionObserver' in window) new IntersectionObserver((es) => { naTela = es[0].isIntersecting; if (naTela) abaVai(abaAtual); else clearTimeout(relogio); }, { threshold: 0.3 }).observe(secLf);
+  if (abas.length && secLf && 'IntersectionObserver' in window) new IntersectionObserver((es) => { naTela = es[0].isIntersecting; if (naTela) abaVai(abaAtual); else clearTimeout(relogio); }, { threshold: 0.3 }).observe(secLf);
   // links antigos (#delivery, #comanda...) continuam valendo: abrem a aba certa
-  function abaDoEndereco() { const h = location.hash.slice(1), i = abas.findIndex((a) => a.dataset.aba === h); if (i >= 0) { abaVai(i, true); secLf.scrollIntoView(); } }
+  function abaDoEndereco() { if (!abas.length) return; const h = location.hash.slice(1), i = abas.findIndex((a) => a.dataset.aba === h); if (i >= 0) { abaVai(i, true); secLf.scrollIntoView(); } }
   addEventListener('hashchange', abaDoEndereco); abaDoEndereco();
 
   // ---------------------------------------------------------------- LiveBank: cor do cartão
