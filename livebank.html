@@ -8,7 +8,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#FF3D5E">
 <title>LiveBank · LiveFood</title>
-<!-- LIVEBANK · vendas das maquininhas (Vileve / PayStore) da loja, dentro do LiveFood. LB-02 -->
+<!-- LIVEBANK · vendas das maquininhas (Vileve / PayStore) da loja, dentro do LiveFood. LB-03 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -204,10 +204,14 @@ function bandeira(v){ if(v.forma==='pix') return 'pix'; var b=String(v.bandeira|
 function logo(k){ return '<img src="site/img/bandeiras/'+k+'.svg" alt="'+esc(BANDS[k]||'')+'" loading="lazy">'; }
 function formaDe(v){ return v.forma==='credito'&&v.parcelas>1?'parcelado':(FORMAS[v.forma]?v.forma:'outro'); }
 var TAXA_EX={debito:1.39,credito:2.99,parc2_6:3.79,parc7_12:4.49,pix:0.99,voucher:3.5};   /* só no exemplo */
-function tabTaxas(){ var t=EST.taxas; if(t&&Object.keys(t).some(function(k){ return t[k]!==''&&t[k]!=null; })) return t; return EST.demo?TAXA_EX:null; }
+/* tabela de taxas LiveBank (recebimento antecipado). parc = Visa e Mastercard, parcO = Elo, Hipercard e Amex; posição = número de parcelas - 1 */
+var TAXA_PADRAO={padrao:1,pix:1.25,debito:1.25,credito:3.29,voucher:'',
+  parc:[3.29,5.13,5.93,6.69,7.46,8.24,9.40,10.20,11.00,11.82,11.90,12.29,14.57,15.41,16.26,17.11,18.00,18.88,19.78,20.67,21.55],
+  parcO:[3.49,6.45,7.24,7.99,8.75,9.52,10.72,11.50,12.30,13.11,13.91,14.74,15.64,16.46,17.29,18.17,19.04,19.88,20.78,21.66,22.54]};
+function tabTaxas(){ var t=EST.taxas; if(t&&Object.keys(t).some(function(k){ return t[k]!==''&&t[k]!=null; })) return t; return TAXA_PADRAO; }
 function taxaPct(v){ var t=tabTaxas(); if(!t) return null; var x;
   if(v.forma==='pix') x=t.pix; else if(v.forma==='debito') x=t.debito; else if(v.forma==='voucher') x=t.voucher;
-  else if(v.forma==='credito') x=v.parcelas>1?(v.parcelas<=6?t.parc2_6:t.parc7_12):t.credito; else x=null;
+  else if(v.forma==='credito'){ if(t.parc){ var bd=bandeira(v), ar=(bd==='elo'||bd==='hipercard'||bd==='amex')?t.parcO:t.parc; x=ar[Math.min(Math.max(v.parcelas||1,1),ar.length)-1]; } else x=v.parcelas>1?(v.parcelas<=6?t.parc2_6:t.parc7_12):t.credito; } else x=null;
   x=parseFloat(String(x==null?'':x).replace(',','.')); return isNaN(x)?null:x; }
 function bruto(v){ return v.valor-(v.devolvido||0); }
 function taxaV(v){ var p=taxaPct(v); return p==null?0:Math.round(bruto(v)*p/100); }
@@ -240,7 +244,8 @@ function aplicar(d,a,p,comp){
   if(d.erro==='sem_livebank'||d.erro==='sem_permissao'){ fechado(d.mensagem); return; }
   if(!d.ok){ aviso('er','Não consegui buscar as vendas agora. Tente de novo em instantes.'); return; }
   if(d.taxas) EST.taxas=d.taxas;
-  if(d.pronto){ EST.demo=false; DEMO_MOT=null; EST.vendas=d.vendas||[]; EST.ant=a&&a.pronto?(a.vendas||[]):null; aviso(); }
+  if(d.pronto){ EST.demo=false; DEMO_MOT=null; EST.vendas=d.vendas||[]; EST.ant=a&&a.pronto?(a.vendas||[]):null; EST.origem=d.origem||'';
+    if(EST.origem==='painel') aviso('','<b>Vendas lançadas no seu painel LiveFood.</b> Aqui entram o Pix e o cartão que você registrou nos pedidos. Quando a maquininha chegar, as vendas passam a vir direto dela.'); else aviso(); }
   else {
     EST.demo=true; DEMO_MOT=d.motivo||'sem_token'; EST.vendas=exemplo(p.de,p.ate,1); EST.ant=comp?exemplo(comp,comp,0.85):null;
     if(DEMO_MOT==='token_recusado'||DEMO_MOT==='falha') aviso('er','<b>A Vileve não respondeu.</b> Os números abaixo são só um exemplo. Se continuar, avise o suporte do LiveFood.');
@@ -297,7 +302,7 @@ function taxas(ok,tot){
     +(ord.length?'<div style="overflow-x:auto"><table class="txt"><thead><tr><th>Forma</th><th>Bruto</th><th>Taxa</th><th>Líquido</th></tr></thead><tbody>'
     +ord.map(function(f){ var x=g[f], p=parseFloat(String(pf[f]==null?'':pf[f]).replace(',','.')); return '<tr><td><span style="display:inline-block;width:9px;height:9px;border-radius:3px;background:'+FORMAS[f].c+';margin-right:8px"></span>'+FORMAS[f].n+'</td><td>'+brl(x.b)+'</td><td>'+(f==='parcelado'?'':isNaN(p)?'':'<small style="color:#8E8E93;font-weight:700">'+pct(p)+'</small> ')+'− '+brl(x.t)+'</td><td><b>'+brl(x.b-x.t)+'</b></td></tr>'; }).join('')
     +'</tbody><tfoot><tr><td>Total</td><td>'+brl(tot)+'</td><td>− '+brl(tx)+'</td><td style="color:#16A34A">'+brl(lq)+'</td></tr></tfoot></table></div>':'')
-    +(EST.demo&&!(EST.taxas&&Object.keys(EST.taxas).length)?'<p class="nota" style="margin:10px 0 0">Taxas de exemplo. As de verdade são as do contrato da sua loja com a Vileve.</p>':'');
+    +(t.padrao?'<p class="nota" style="margin:10px 0 0">Taxas LiveBank: Pix '+pct(t.pix)+', débito '+pct(t.debito)+' e crédito à vista '+pct(t.credito)+'. No parcelado a taxa muda conforme o número de parcelas.</p>':'');
 }
 function grafico(ok){
   var um=EST.de===EST.ate, gs={}, ks=[], i;
