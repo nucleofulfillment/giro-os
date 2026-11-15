@@ -156,20 +156,25 @@
       const r = manifesto.getBoundingClientRect(), p = limita((h * 0.86 - r.top) / (r.height + h * 0.36), 0, 1), n = Math.round(p * palavras.length);
       palavras.forEach((w, i) => w.classList.toggle('on', i < n));
     }
-    // cartão LiveBank: vira com a rolagem e inclina com o ponteiro
-    if (gira) {
-      const r = cenaBank.getBoundingClientRect();
-      if (r.bottom > 0 && r.top < h) {
-        const p = calmo ? 0.35 : limita((h - r.top) / (h + r.height), 0, 1);
-        cbx += (bx - cbx) * 0.1; cby += (by - cby) * 0.1;
-        const ry = (p - 0.5) * 300 - 14 + cbx * 26, rx = 12 - p * 8 - cby * 18, rz = -7 + p * 9;   /* de frente quando a seção está no meio da tela */
-        gira.style.transform = 'rotateX(' + rx.toFixed(2) + 'deg) rotateY(' + ry.toFixed(2) + 'deg) rotateZ(' + rz.toFixed(2) + 'deg)';
-        gira.style.setProperty('--brilho', (-40 + ((ry % 180) + 180) % 180 / 180 * 80).toFixed(1) + '%');
-        if (Math.abs(bx - cbx) > 0.001 || Math.abs(by - cby) > 0.001) pede();
-      }
-    }
   }
   function pede() { if (!rodando) { rodando = true; requestAnimationFrame(quadro); } }
+
+  // cartão LiveBank: em pé, girando devagar o tempo todo (só enquanto está na tela) e inclinando com o ponteiro
+  if (gira && cartaoBank) {
+    let vendo = false, tAnt = 0, ang = 0;
+    function giraCartao(t) {
+      if (!vendo) return;
+      const dt = Math.min(0.05, (t - (tAnt || t)) / 1000); tAnt = t;
+      ang += dt * 0.55;
+      cbx += (bx - cbx) * 0.08; cby += (by - cby) * 0.08;
+      const s1 = Math.sin(ang), ry = s1 * 42 + (Math.sin(ang * 0.5) > 0.985 ? 0 : 0) + cbx * 40 - 8;
+      const rx = 12 + Math.sin(ang * 0.7) * 5 - cby * 22, rz = 14 + Math.sin(ang * 0.45) * 3, y = Math.sin(ang * 1.3) * 8;
+      cartaoBank.style.transform = 'translate3d(0,' + y.toFixed(1) + 'px,0) rotateX(' + rx.toFixed(2) + 'deg) rotateY(' + ry.toFixed(2) + 'deg) rotateZ(' + rz.toFixed(2) + 'deg)';
+      cartaoBank.style.setProperty('--brilho', (ry * 0.9).toFixed(1) + '%');
+      requestAnimationFrame(giraCartao);
+    }
+    if (!calmo && 'IntersectionObserver' in window) new IntersectionObserver((es) => { const v = es[0].isIntersecting; if (v && !vendo) { vendo = true; tAnt = 0; requestAnimationFrame(giraCartao); } else if (!v) vendo = false; }, { threshold: 0.05 }).observe(cenaBank);
+  }
   addEventListener('scroll', () => { topoRola(); pede(); }, { passive: true });
   addEventListener('resize', pede);
   topoRola(); pede();
