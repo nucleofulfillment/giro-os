@@ -28,12 +28,12 @@
     const alvos = raiz.matches && raiz.matches('[data-conta]') ? [raiz] : $$('[data-conta]', raiz);
     alvos.forEach((el) => {
       if (el.dataset.contou) return; el.dataset.contou = '1';
-      const fim = parseFloat(el.dataset.conta), casas = +(el.dataset.casas || 0), pre = el.dataset.pre || '';
+      const fim = parseFloat(el.dataset.conta), casas = +(el.dataset.casas || 0), pre = el.dataset.pre || '', suf = el.dataset.suf || '';
       if (calmo || !isFinite(fim)) return;
       const t0 = performance.now(), dur = 1500 + Math.min(900, fim / 20);
       (function passo(t) {
         const p = limita((t - t0) / dur, 0, 1), s = 1 - Math.pow(1 - p, 4);
-        el.textContent = pre + formata(fim * s, casas);
+        el.textContent = pre + formata(fim * s, casas) + suf;
         if (p < 1) requestAnimationFrame(passo);
       })(t0);
     });
