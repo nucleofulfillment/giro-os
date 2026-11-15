@@ -179,6 +179,36 @@
   addEventListener('resize', pede);
   topoRola(); pede();
 
+  // ---------------------------------------------------------------- segmentos: carrossel com o item do meio em destaque
+  (function () {
+    const trilhoS = $('#seg-trilho'); if (!trilhoS) return;
+    const itens = $$('.seg', trilhoS), pontos = $('#seg-pontos');
+    pontos.innerHTML = itens.map(() => '<i></i>').join('');
+    const pts = $$('i', pontos);
+    let atual = 0, mexeu = false, timer = null, pedeS = false;
+    function mede() {
+      const r = trilhoS.getBoundingClientRect(), meio = r.left + r.width / 2; let melhor = 0, md = 1e9;
+      itens.forEach((el, i) => {
+        const b = el.getBoundingClientRect(), d = Math.abs(b.left + b.width / 2 - meio), k = limita(d / (b.width * 1.05), 0, 1);
+        el.style.setProperty('--s', (1 - k * 0.32).toFixed(3)); el.style.setProperty('--op', (1 - k * 0.5).toFixed(3));
+        if (d < md) { md = d; melhor = i; }
+      });
+      atual = melhor; pts.forEach((p, i) => p.classList.toggle('on', i === atual));
+    }
+    function vai(i, suave) { const el = itens[(i + itens.length) % itens.length]; trilhoS.scrollTo({ left: el.offsetLeft - trilhoS.offsetLeft - (trilhoS.clientWidth - el.offsetWidth) / 2, behavior: suave === false || calmo ? 'auto' : 'smooth' }); }
+    function para() { mexeu = true; clearInterval(timer); }
+    trilhoS.addEventListener('scroll', () => { if (!pedeS) { pedeS = true; requestAnimationFrame(() => { pedeS = false; mede(); }); } }, { passive: true });
+    ['pointerdown', 'wheel', 'touchstart', 'keydown'].forEach((ev) => trilhoS.addEventListener(ev, para, { passive: true }));
+    itens.forEach((el, i) => el.addEventListener('click', () => { para(); vai(i); }));
+    $$('.seg-seta').forEach((b) => b.addEventListener('click', () => { para(); vai(atual + (+b.dataset.seg)); }));
+    addEventListener('resize', mede);
+    vai(1, false); mede();
+    if (!calmo && 'IntersectionObserver' in window) new IntersectionObserver((es) => {
+      clearInterval(timer);
+      if (es[0].isIntersecting && !mexeu) timer = setInterval(() => vai(atual + 1), 3200);
+    }, { threshold: 0.4 }).observe(trilhoS);
+  })();
+
   // confete simples para o "conta criada" do cadastro (usado pelo planos.js)
   window.LFConfete = function (x, y) {
     if (calmo) return;
