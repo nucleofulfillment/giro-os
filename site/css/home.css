@@ -570,6 +570,32 @@ a.foto-bloco:hover, button.foto-bloco:hover { transform: translateY(-6px); box-s
 }
 @media (max-width: 720px) { .c-cartao { width: 34%; right: 2%; bottom: 0; } .capa-marcas { margin-top: 22px; } .peca.foto.p-food { min-height: 520px; } }
 
+/* ---------- HOME-04: capa com vídeo de fundo, botões dos produtos e o Live espiando ---------- */
+.capa { padding: calc(var(--topo-h) + 10px) clamp(8px, 1.4vw, 20px) 0; overflow: visible; }
+.capa-bloco { position: relative; border-radius: clamp(28px, 4vw, 56px); overflow: hidden; min-height: min(76svh, 760px); display: flex; align-items: flex-end; background: #0E0E11 url(../img/fotos/capa.jpg) center / cover; isolation: isolate; }
+.capa-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; }
+.capa-bloco::after { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, rgba(8, 8, 10, .82) 0%, rgba(8, 8, 10, .5) 46%, rgba(8, 8, 10, .08) 78%), linear-gradient(180deg, rgba(8, 8, 10, .35) 0%, rgba(8, 8, 10, 0) 30%, rgba(8, 8, 10, .62) 100%); }
+.capa-bloco .capa-texto { color: #fff; padding: clamp(28px, 6vw, 96px); max-width: 860px; }
+.capa-bloco .olho { color: rgba(255, 255, 255, .82); }
+.capa-bloco .lead { color: rgba(255, 255, 255, .88); }
+.capa-bloco .t1 .grad-t { background: linear-gradient(100deg, #FF7A2E 0%, #FF5470 58%, #FF4D9A 100%); -webkit-background-clip: text; background-clip: text; }
+.capa-marcas { width: min(var(--caixa), 100%); margin: 22px auto 0; padding: 4px clamp(12px, 2.6vw, 20px) 8px; gap: 10px; justify-content: center; }
+.capa-marcas a { height: 56px; padding: 0 clamp(18px, 2.2vw, 30px); border-radius: 99px; background: #fff; border: 1px solid var(--linha); box-shadow: var(--sombra-1); display: inline-flex; align-items: center; font-size: clamp(22px, 2.2vw, 28px); color: var(--tinta); padding-bottom: 3px; transition: transform .35s var(--sai), box-shadow .35s, border-color .3s; }
+.capa-marcas a:hover { transform: translateY(-3px); box-shadow: var(--sombra-2); border-color: transparent; color: var(--tinta); }
+.embreve { background: #E8F7EE; color: #15803D; }
+#espiao { position: fixed; z-index: 60; right: 0; bottom: 18vh; width: clamp(86px, 9vw, 128px); transform: translateX(110%) rotate(-14deg); transition: transform .9s var(--sai); cursor: pointer; }
+#espiao.fora { transform: translateX(38%) rotate(-14deg); }
+#espiao.esq { right: auto; left: 0; transform: translateX(-110%) rotate(14deg); } #espiao.esq.fora { transform: translateX(-38%) rotate(14deg); }
+#balao { position: fixed; z-index: 61; right: clamp(84px, 9vw, 124px); bottom: calc(18vh + 70px); max-width: min(260px, 64vw); padding: 11px 16px; border-radius: 18px 18px 4px 18px; background: #fff; box-shadow: var(--sombra-2); font-family: var(--marca); font-weight: 800; font-size: 17px; line-height: 1.2; opacity: 0; transform: translateY(8px) scale(.94); transition: opacity .3s, transform .4s var(--sai); pointer-events: none; }
+#balao.on { opacity: 1; transform: none; }
+#balao.esq { right: auto; left: clamp(84px, 9vw, 124px); border-radius: 18px 18px 18px 4px; }
+@media (max-width: 720px) {
+  .capa-bloco { min-height: 82svh; } .capa-bloco::after { background: linear-gradient(180deg, rgba(8, 8, 10, .3) 0%, rgba(8, 8, 10, .1) 30%, rgba(8, 8, 10, .88) 100%); }
+  .capa-bloco .capa-texto { padding: 26px 22px 30px; }
+  .capa-marcas { justify-content: flex-start; margin-top: 16px; } .capa-marcas a { height: 50px; font-size: 22px; padding: 0 18px 3px; }
+}
+@media (prefers-reduced-motion: reduce) { #espiao, #balao { display: none; } }
+
 /* ---------- números ---------- */
 .numeros { padding: clamp(64px, 8vw, 120px) 0; border-block: 1px solid var(--linha); }
 .numeros .caixa { display: grid; grid-template-columns: repeat(4, 1fr); }

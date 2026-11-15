@@ -22,7 +22,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://giro-os-api.nucleofull.workers.dev" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="site/css/home.css?v=7">
+<link rel="stylesheet" href="site/css/home.css?v=8">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"Organization","name":"LiveFood","url":"https://livefood.tec.br/","logo":"https://livefood.tec.br/site/img/livefood-logo.png"}
 </script>
@@ -42,6 +42,7 @@
           <a href="#livepro"><b class="marca-t">live<span class="lf-t" style="display:inline;font:inherit">pro</span></b><span>Custos, compras, estoque e lucro.</span></a>
           <a href="#livefest"><b class="marca-t" style="color:var(--coral)">livefest</b><span>Eventos, ingressos e acesso pelo rosto.</span></a>
           <a href="#livebank"><b class="marca-t grad-t">livebank</b><span>Maquininha, Pix, melhores taxas e split.</span></a>
+          <a href="#livefiscal"><b class="marca-t">live<span class="lf-t" style="display:inline;font:inherit">fiscal</span></b><span>Nota fiscal direto da venda.</span></a>
         </div>
       </div>
       <a href="#ecossistema">Ecossistema</a>
@@ -63,7 +64,8 @@
     <a class="prod" href="#livefood"><b class="marca-t lf-t">livefood</b><span>Pedidos e atendimento</span></a>
     <a class="prod" href="#livepro"><b class="marca-t">live<span class="lf-t" style="font:inherit">pro</span></b><span>Gestão e lucro</span></a>
     <a class="prod" href="#livefest"><b class="marca-t" style="color:var(--coral)">livefest</b><span>Eventos e ingressos</span></a>
-    <a class="prod" href="#livebank"><b class="marca-t grad-t">livebank</b><span>Operadora de pagamentos</span></a>
+    <a class="prod" href="#livebank"><b class="marca-t grad-t">livebank</b><span>Pagamentos</span></a>
+    <a class="prod" href="#livefiscal"><b class="marca-t">live<span class="lf-t" style="font:inherit">fiscal</span></b><span>Nota fiscal</span></a>
     <p>LiveFood</p>
     <a class="simples" href="#ecossistema">Ecossistema</a>
     <a class="simples" href="#planos">Planos</a>
@@ -74,12 +76,15 @@
   </nav>
 </div>
 
+<div id="espiao" aria-hidden="true"><div id="espiao-live"></div></div>
+<div id="balao" role="status" aria-live="polite"></div>
+
 <main id="conteudo">
 
   <!-- CAPA -->
   <section id="inicio" class="capa">
-    <div class="capa-luz" aria-hidden="true"><i></i><i></i><i></i></div>
-    <div class="caixa capa-in">
+    <div class="capa-bloco">
+      <video class="capa-video" id="capa-video" muted loop playsinline preload="metadata" poster="site/img/fotos/capa.jpg" aria-hidden="true"><source src="site/video/capa.mp4" type="video/mp4"></video>
       <div class="capa-texto">
         <p class="olho">Muito além do delivery</p>
         <h1 class="t1" aria-label="Sua operação conectada em tempo real.">
@@ -87,38 +92,27 @@
           <span class="ln" style="--i:1"><span>conectada</span></span>
           <span class="ln" style="--i:2"><span class="grad-t">em tempo real.</span></span>
         </h1>
-        <p class="lead">Vendas, gestão, eventos e pagamentos em um só ecossistema.</p>
+        <p class="lead">Vendas, gestão, eventos, pagamentos e fiscal em um só ecossistema.</p>
         <div class="botoes-linha">
           <a class="btn btn-pri" href="#planos">Começar agora <span class="seta" aria-hidden="true">→</span></a>
-          <a class="btn btn-sec" href="#ecossistema">Conhecer as soluções</a>
+          <a class="btn btn-branco" href="#ecossistema">Conhecer as soluções</a>
         </div>
-        <nav class="capa-marcas" aria-label="Produtos"><a class="marca-t" href="#livefood">livefood</a><a class="marca-t" href="#livepro">livepro</a><a class="marca-t" href="#livefest">livefest</a><a class="marca-t" href="#livebank">livebank</a></nav>
-      </div>
-
-      <div class="palco" id="palco" aria-hidden="true">
-        <div class="cam c-totem" data-prof="-10"><div class="boia" style="--t:9s;--b:-8px"><div class="totem"><div class="totem-corpo"><div class="totem-tela"><div class="lv" id="live-totem-capa"></div><p>Bateu a <span>fome?</span></p><small>Toque e fale com o Live</small><i class="mic"></i></div></div><div class="totem-pe"></div></div></div></div>
-        <div class="cam c-painel" data-prof="8"><div class="boia" style="--t:8s;--b:-6px">
-          <div class="janela">
-            <div class="janela-barra"><i></i><i></i><i></i><span>livefood.tec.br/painel</span></div>
-            <div class="pn">
-              <div class="pn-lado"><b>livefood</b><span class="on">Pedidos</span><span>Salão</span><span>Cardápio</span><span>Financeiro</span><span>Clientes</span></div>
-              <div class="pn-corpo">
-                <div class="pn-kpis"><div><small>Vendas hoje</small><b>R$ 7.491</b></div><div><small>Pedidos</small><b>132</b></div><div><small>Ticket médio</small><b>R$ 56,70</b></div></div>
-                <div class="pn-graf"><small>Vendas por hora</small>
-                  <svg viewBox="0 0 400 110" fill="none"><defs><linearGradient id="gA" x1="0" x2="1"><stop stop-color="#FF5A00"/><stop offset="1" stop-color="#FF2D87"/></linearGradient><linearGradient id="gB" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#FF3D5E" stop-opacity=".22"/><stop offset="1" stop-color="#FF3D5E" stop-opacity="0"/></linearGradient></defs>
-                    <path d="M0 92 C40 88 60 70 100 66 S150 80 190 50 S250 20 290 34 S350 14 400 8 V110 H0Z" fill="url(#gB)"/>
-                    <path class="traco" d="M0 92 C40 88 60 70 100 66 S150 80 190 50 S250 20 290 34 S350 14 400 8" stroke="url(#gA)" stroke-width="4" stroke-linecap="round"/></svg></div>
-                <div class="pn-lista"><div>#131 · Mesa 7<em class="st-novo">Novo</em></div><div>#130 · Entrega<em class="st-prep">Em preparo</em></div><div>#129 · Balcão<em class="st-ok">Pronto</em></div></div>
-              </div>
-            </div>
-          </div></div></div>
-        <div class="cam c-live" data-prof="16"><div class="boia" style="--t:6s;--b:-9px"><div id="live-capa"></div></div></div>
-        <div class="cam c-fone" data-prof="26"><div class="boia" style="--t:7s;--d:-2s;--b:-12px"><div class="fone"><div class="fone-tela"><div class="ap-capa" style="background-image:url(site/img/burger.jpg)"><b>Burger da Casa</b></div><div class="ap-cat"><span class="on">Lanches</span><span>Porções</span><span>Bebidas</span></div><div class="ap-item"><i style="background-image:url(site/img/burger.jpg)"></i><div><b>Smash burger</b><small>Pão brioche, cheddar</small></div><em>R$ 38</em></div><div class="ap-item"><i style="background-image:url(site/img/batata.jpg)"></i><div><b>Batata rústica</b><small>Porção média</small></div><em>R$ 22</em></div><div class="ap-item"><i style="background-image:url(site/img/shake.jpg)"></i><div><b>Milkshake</b><small>Chocolate 500 ml</small></div><em>R$ 19</em></div><div class="ap-cta">Ver sacola · R$ 79,00</div></div></div></div></div>
-        <div class="cam c-cartao" data-prof="34"><div class="boia" style="--t:7.5s;--d:-4s;--b:-12px"><div class="cv"><i class="esp" style="--z:-3px"></i><i class="esp" style="--z:-2px"></i><i class="esp" style="--z:-1px"></i><i class="esp" style="--z:0px"></i><i class="esp" style="--z:1px"></i><i class="esp" style="--z:2px"></i><i class="esp" style="--z:3px"></i><div class="cv-face cv-frente"><span class="cv-chip"></span><svg class="cv-nfc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 0 8M10 5.5a10 10 0 0 1 0 13M14 3a14 14 0 0 1 0 18"/></svg><span class="cv-marca marca-t"><span class="grad-t">livebank</span></span><img class="cv-visa" src="site/img/bandeiras/visa-branca.svg" alt="Visa" width="76" height="24"></div><div class="cv-face cv-verso"><span class="cv-tarja"></span><span class="cv-ass"></span><span class="cv-marca marca-t"><span class="grad-t">livebank</span></span></div></div></div></div>
-        <div class="cam c-chip1" data-prof="-20"><div class="boia" style="--t:6.5s;--d:-1s"><div class="chip"><i class="l">7</i><div>Mesa 7<small>enviado à cozinha</small></div></div></div></div>
-        <div class="cam c-chip2" data-prof="42"><div class="boia" style="--t:6s;--d:-3s"><div class="chip"><i class="v">✓</i><div>Pix confirmado<small>R$ 89,90 · agora</small></div></div></div></div>
       </div>
     </div>
+    <nav class="capa-marcas" aria-label="Produtos">
+      <a class="marca-t" href="#livefood"><span class="lf-t">livefood</span></a>
+      <a class="marca-t" href="#livepro">live<span class="lf-t">pro</span></a>
+      <a class="marca-t" href="#livefest"><span style="color:var(--coral)">livefest</span></a>
+      <a class="marca-t" href="#livebank"><span class="grad-t">livebank</span></a>
+      <a class="marca-t" href="#livefiscal">live<span class="lf-t">fiscal</span></a>
+    </nav>
+  </section>
+
+  <!-- SEGMENTOS -->
+  <section class="segmentos" id="segmentos" aria-labelledby="seg-t">
+    <div class="caixa"><h2 class="t2" id="seg-t" data-revela>Feito para o seu negócio</h2></div>
+    <div class="seg-trilho" id="seg-trilho" tabindex="0" aria-label="Segmentos atendidos"><figure class="seg"><div class="seg-img" style="background-image:url(site/img/segmentos/restaurantes.jpg)" role="img" aria-label="Restaurantes"></div><figcaption>Restaurantes</figcaption></figure><figure class="seg"><div class="seg-img" style="background-image:url(site/img/segmentos/bares.jpg)" role="img" aria-label="Bares"></div><figcaption>Bares</figcaption></figure><figure class="seg"><div class="seg-img" style="background-image:url(site/img/segmentos/padarias.jpg)" role="img" aria-label="Padarias"></div><figcaption>Padarias</figcaption></figure><figure class="seg"><div class="seg-img" style="background-image:url(site/img/segmentos/petshops.jpg)" role="img" aria-label="Pet shops"></div><figcaption>Pet shops</figcaption></figure><figure class="seg"><div class="seg-img" style="background-image:url(site/img/segmentos/farmacias.jpg)" role="img" aria-label="Farmácias"></div><figcaption>Farmácias</figcaption></figure><figure class="seg"><div class="seg-img" style="background-image:url(site/img/segmentos/mercados.jpg)" role="img" aria-label="Mercados"></div><figcaption>Mercados</figcaption></figure><figure class="seg"><div class="seg-img" style="background-image:url(site/img/segmentos/sorveterias.jpg)" role="img" aria-label="Sorveterias"></div><figcaption>Sorveterias</figcaption></figure><figure class="seg"><div class="seg-img" style="background-image:url(site/img/segmentos/quiosques.jpg)" role="img" aria-label="Quiosques"></div><figcaption>Quiosques</figcaption></figure></div>
+    <div class="seg-ctrl"><button type="button" class="seg-seta" data-seg="-1" aria-label="Anterior">←</button><div class="seg-pontos" id="seg-pontos" aria-hidden="true"></div><button type="button" class="seg-seta" data-seg="1" aria-label="Próximo">→</button></div>
   </section>
 
   <!-- PAGAMENTOS (chamada no topo) -->
@@ -134,19 +128,12 @@
     </div>
   </section>
 
-  <!-- SEGMENTOS -->
-  <section class="segmentos" id="segmentos" aria-labelledby="seg-t">
-    <div class="caixa"><h2 class="t2" id="seg-t" data-revela>Feito para o seu negócio</h2></div>
-    <div class="seg-trilho" id="seg-trilho" tabindex="0" aria-label="Segmentos atendidos"><figure class="seg"><div class="seg-img" style="background-image:url(site/img/segmentos/restaurantes.jpg)" role="img" aria-label="Restaurantes"></div><figcaption>Restaurantes</figcaption></figure><figure class="seg"><div class="seg-img" style="background-image:url(site/img/segmentos/bares.jpg)" role="img" aria-label="Bares"></div><figcaption>Bares</figcaption></figure><figure class="seg"><div class="seg-img" style="background-image:url(site/img/segmentos/padarias.jpg)" role="img" aria-label="Padarias"></div><figcaption>Padarias</figcaption></figure><figure class="seg"><div class="seg-img" style="background-image:url(site/img/segmentos/petshops.jpg)" role="img" aria-label="Pet shops"></div><figcaption>Pet shops</figcaption></figure><figure class="seg"><div class="seg-img" style="background-image:url(site/img/segmentos/farmacias.jpg)" role="img" aria-label="Farmácias"></div><figcaption>Farmácias</figcaption></figure><figure class="seg"><div class="seg-img" style="background-image:url(site/img/segmentos/mercados.jpg)" role="img" aria-label="Mercados"></div><figcaption>Mercados</figcaption></figure><figure class="seg"><div class="seg-img" style="background-image:url(site/img/segmentos/sorveterias.jpg)" role="img" aria-label="Sorveterias"></div><figcaption>Sorveterias</figcaption></figure><figure class="seg"><div class="seg-img" style="background-image:url(site/img/segmentos/quiosques.jpg)" role="img" aria-label="Quiosques"></div><figcaption>Quiosques</figcaption></figure></div>
-    <div class="seg-ctrl"><button type="button" class="seg-seta" data-seg="-1" aria-label="Anterior">←</button><div class="seg-pontos" id="seg-pontos" aria-hidden="true"></div><button type="button" class="seg-seta" data-seg="1" aria-label="Próximo">→</button></div>
-  </section>
-
   <!-- ECOSSISTEMA -->
   <section id="ecossistema" class="secao">
     <div class="caixa">
       <div class="cab">
         <p class="olho" data-revela>O ecossistema</p>
-        <h2 class="t2" data-revela>Quatro produtos. <span class="grad-t">Uma operação só.</span></h2>
+        <h2 class="t2" data-revela>Cinco produtos. <span class="grad-t">Uma operação só.</span></h2>
       </div>
       <div class="grade">
         <a class="peca foto p-food" href="#livefood" data-revela="escala" style="background-image:url(site/img/fotos/comanda.jpg)">
@@ -170,8 +157,8 @@
           <h3 class="t3">Processamento de pagamentos.</h3>
           <span class="link-seta">Conhecer <span class="seta" aria-hidden="true">→</span></span>
         </a>
-        <div class="peca p-fiscal" data-revela="escala">
-          <div><span class="embreve">Em breve</span><span class="nome marca-t">live<b>fiscal</b></span></div>
+        <div class="peca p-fiscal" id="livefiscal" data-revela="escala">
+          <div><span class="embreve">Novo</span><span class="nome marca-t">live<b>fiscal</b></span></div>
           <p class="d"><b>Nota fiscal direto da venda.</b></p>
           <div class="nota-m" aria-hidden="true"><small>NFC-e</small><b>Nº 000.128</b><i></i><i></i><i style="width:60%"></i><em>Autorizada ✓</em></div>
         </div>
@@ -296,7 +283,7 @@
   <!-- NÚMEROS -->
   <section class="numeros" aria-label="LiveFood em números">
     <div class="caixa">
-      <div class="numero" data-revela><b class="grad-t" data-conta="4">4</b><span>produtos em um único ecossistema</span></div>
+      <div class="numero" data-revela><b class="grad-t" data-conta="5">5</b><span>produtos em um único ecossistema</span></div>
       <div class="numero" data-revela style="--atraso:.08s"><b class="grad-t" data-conta="5">5</b><span>canais de venda no mesmo painel</span></div>
       <div class="numero" data-revela style="--atraso:.16s"><b class="grad-t" data-conta="1">1</b><span>login para toda a operação</span></div>
       <div class="numero" data-revela style="--atraso:.24s"><b class="grad-t"><span data-conta="24">24</span>h</b><span>com o Live atendendo seus clientes</span></div>
@@ -349,8 +336,8 @@
 <footer id="rodape">
   <div class="caixa">
     <div class="rodape-in">
-      <div><a class="logo marca-t" href="#inicio">livefood</a><p>O ecossistema completo para o seu negócio: operação, gestão, eventos, recebimentos e, em breve, fiscal.</p></div>
-      <nav aria-label="Produtos"><p>Produtos</p><a href="#livefood">LiveFood</a><a href="#livepro">LivePro</a><a href="#livefest">LiveFest</a><a href="#livebank">LiveBank</a><a href="#ecossistema">Fiscal · em breve</a></nav>
+      <div><a class="logo marca-t" href="#inicio">livefood</a><p>O ecossistema completo para o seu negócio: operação, gestão, eventos, recebimentos e fiscal.</p></div>
+      <nav aria-label="Produtos"><p>Produtos</p><a href="#livefood">LiveFood</a><a href="#livepro">LivePro</a><a href="#livefest">LiveFest</a><a href="#livebank">LiveBank</a><a href="#livefiscal">LiveFiscal</a></nav>
       <nav aria-label="LiveFood"><p>LiveFood</p><a href="#ecossistema">Ecossistema</a><a href="#planos">Planos</a><a href="#sobre">Sobre</a><button type="button" data-abrir-contato>Fale com a gente</button></nav>
       <nav aria-label="Acesso"><p>Acesso</p><a data-painel href="hub.html">Entrar</a><a href="privacidade.html">Privacidade</a></nav>
     </div>
@@ -371,6 +358,6 @@
 <noscript><style>[data-revela],.capa-texto *,.palco{opacity:1!important;transform:none!important}</style></noscript>
 <script src="site/js/live-mascote.js"></script>
 <script src="site/js/planos.js"></script>
-<script src="site/js/home.js?v=5"></script>
+<script src="site/js/home.js?v=6"></script>
 </body>
 </html>
