@@ -115,7 +115,7 @@
   }
 
   // ---------------------------------------------------------------- um laço só: paralaxe, trilho, cartão
-  const palco = $('#palco'), cams = $$('.cam', palco).map((el) => ({ el, prof: parseFloat(el.dataset.prof || 0) }));
+  const palco = $('#palco'), cams = (palco ? $$('.cam', palco) : []).map((el) => ({ el, prof: parseFloat(el.dataset.prof || 0) }));
   const pares = $$('[data-par]').map((el) => ({ el, f: parseFloat(el.dataset.par) }));
   const trilho = $('#trilho'), etapas = $$('.etapa', trilho), gira = $('#gira'), cenaBank = $('#cena-bank');
   let mx = 0, my = 0, ax = 0, ay = 0, bx = 0, by = 0, cbx = 0, cby = 0, sujo = true, rodando = false;
@@ -207,6 +207,38 @@
       clearInterval(timer);
       if (es[0].isIntersecting && !mexeu) timer = setInterval(() => vai(atual + 1), 3200);
     }, { threshold: 0.4 }).observe(trilhoS);
+  })();
+
+  // ---------------------------------------------------------------- capa: vídeo de fundo (só toca se o aparelho permitir movimento)
+  (function () {
+    const v = $('#capa-video'); if (!v) return;
+    if (calmo) { v.removeAttribute('loop'); return; }
+    v.play().catch(() => {});
+    if ('IntersectionObserver' in window) new IntersectionObserver((es) => { if (es[0].isIntersecting) v.play().catch(() => {}); else v.pause(); }, { threshold: 0.05 }).observe(v);
+  })();
+
+  // ---------------------------------------------------------------- o Live espia pela borda da tela enquanto a pessoa rola
+  (function () {
+    const esp = $('#espiao'), bal = $('#balao'); if (!esp || calmo || !window.LiveMascote) return;
+    let lv = null; try { lv = LiveMascote.criar($('#espiao-live'), { sombra: false, flutuar: true, expressao: 'feliz', rotulo: 'Live' }); } catch (e) { return; }
+    const FALAS = { segmentos: 'Seu negócio está aqui? 👀', pagamentos: 'Pagou, caiu no painel! 💸', ecossistema: 'Tudo isso conversa entre si 🔗', livefood: 'Bora vender em todo canal? 🚀', atendimento: 'Eu respondo no WhatsApp 24h 😉', livepro: 'Lucro de verdade, sem planilha 📈', livefest: 'O rosto é o ingresso! 🎉', livebank: 'Taxa na ponta do lápis ✏️', planos: 'Escolhe um e vem comigo! 🧡' };
+    const secs = Object.keys(FALAS).map((id) => document.getElementById(id)).filter(Boolean);
+    let ultima = '', tSai = null, tBal = null, lado = 0;
+    function aparece(id) {
+      if (id === ultima) return; ultima = id; lado = 1 - lado;
+      clearTimeout(tSai); clearTimeout(tBal); bal.classList.remove('on'); esp.classList.remove('fora');
+      setTimeout(() => {
+        esp.classList.toggle('esq', lado === 1 && innerWidth > 720); bal.classList.toggle('esq', esp.classList.contains('esq'));
+        requestAnimationFrame(() => requestAnimationFrame(() => { esp.classList.add('fora'); try { lv.expressao('animado'); lv.piscar(); } catch (e) {} }));
+        tBal = setTimeout(() => { bal.textContent = FALAS[id]; bal.classList.add('on'); try { lv.falar(FALAS[id]); } catch (e) {} }, 700);
+        tSai = setTimeout(() => { bal.classList.remove('on'); esp.classList.remove('fora'); }, 5200);
+      }, 450);
+    }
+    if ('IntersectionObserver' in window) {
+      const o = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) aparece(e.target.id); }), { rootMargin: '-45% 0px -45% 0px' });
+      secs.forEach((el) => o.observe(el));
+    }
+    esp.addEventListener('click', () => { try { lv.gesto('piscadinha'); } catch (e) {} bal.classList.add('on'); clearTimeout(tSai); tSai = setTimeout(() => { bal.classList.remove('on'); esp.classList.remove('fora'); }, 3200); });
   })();
 
   // confete simples para o "conta criada" do cadastro (usado pelo planos.js)
