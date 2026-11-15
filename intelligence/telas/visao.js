@@ -4,7 +4,7 @@
 (function(){
 'use strict';
 var LFI=window.LFI, UI=LFI.ui, F=LFI.fmt, esc=UI.esc;
-var CORES_OP={pad:'#E08A1E', res:'#1D4ED8', sus:'#C2185B'};
+var CORES_OP={pad:'#FF5A00', res:'#7C3AED', sus:'#E0368C'};
 
 function st(){ return LFI.estado.visao = LFI.estado.visao || {per:'30d', op:'todas', de:null, ate:null, rank:'vendidos'}; }
 function depsFiltro(){ var s=st(), vis=LFI.depIds().filter(function(d){ return d!=='cen'; }); return s.op==='todas'?vis:vis.filter(function(d){ return d===s.op; }); }

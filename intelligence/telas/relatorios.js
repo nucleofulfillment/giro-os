@@ -6,7 +6,7 @@
 (function(){
 'use strict';
 var LFI=window.LFI, UI=LFI.ui, F=LFI.fmt, esc=UI.esc, r2=LFI.dataUtil.r2;
-var CORES_OP={pad:'#E08A1E', res:'#1D4ED8', sus:'#C2185B', cen:'#5E5E66'};
+var CORES_OP={pad:'#FF5A00', res:'#7C3AED', sus:'#E0368C', cen:'#5E5E66'};
 
 function css(){
   if(document.getElementById('css-relatorios')) return;

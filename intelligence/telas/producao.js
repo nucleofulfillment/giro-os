@@ -109,7 +109,7 @@ function render(el, arg){
   var dias=[], i; for(i=6;i>=0;i--) dias.push(LFI.dataUtil.D(-i));
   var porDep={}; LFI.depIds().filter(function(d){ return d!=='cen'; }).forEach(function(d){ porDep[d]=dias.map(function(){ return 0; }); });
   LFI.db.movs.forEach(function(m){ if(m.tipo!=='producao'||m.qtd>=0||!m.origem||m.origem.tipo!=='op'||!porDep[m.dep]) return; var k=dias.indexOf(m.d.slice(0,10)); if(k>=0) porDep[m.dep][k]+=Math.abs(m.qtd)*(m.custo||0); });
-  var cores={pad:'#E08A1E',res:'#1D4ED8',sus:'#C2185B'};
+  var cores={pad:'#FF5A00',res:'#7C3AED',sus:'#E0368C'};
   UI.grafBarras(el.querySelector('#op-g'),{cats:dias.map(function(d){ return F.diaSemana(d)+' '+F.dataC(d); }), empilhado:true, altura:220, series:Object.keys(porDep).map(function(d){ return {nome:LFI.dep(d).curto, cor:cores[d]||'#888', valores:porDep[d]}; })});
   var ins={}; LFI.db.movs.forEach(function(m){ if(m.tipo!=='producao'||m.qtd>=0||m.d.slice(0,10)!==hoje||!LFI.depVisivel(m.dep)) return; var p=LFI.prod(m.prod); if(!p) return; var o=ins[m.prod]=ins[m.prod]||{nome:p.nome, valor:0, q:0, un:p.un}; o.valor+=Math.abs(m.qtd)*(m.custo||0); o.q+=Math.abs(m.qtd); });
   var il=Object.keys(ins).map(function(k){ var o=ins[k]; return {nome:o.nome, valor:o.valor, sub:F.qtd(o.q,o.un), id:'estoque/'+k}; }).sort(function(a,b){ return b.valor-a.valor; }).slice(0,7);

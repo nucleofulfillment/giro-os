@@ -25,17 +25,17 @@ LFI.criarBase = function(){
   /* ===== EMPRESAS (multi-CNPJ) ===== */
   db.grupo = {nome:'Grupo Pão Dourado', cidade:'Campinas/SP'};
   db.empresas = [
-    {id:'e1', sigla:'PD', fantasia:'Pão Dourado Padaria', razao:'Pão Dourado Panificadora Ltda', cnpj:'12.345.678/0001-90', ie:'244.118.902.115', regime:'Simples Nacional', uf:'SP', cidade:'Campinas', endereco:'Av. Orosimbo Maia, 1.420 — Cambuí', tipo:'Matriz', impVenda:8.0, pisCofins:'nao_se_aplica', cor:'#E08A1E'},
-    {id:'e2', sigla:'DR', fantasia:'Dourado Restaurante', razao:'Pão Dourado Panificadora Ltda', cnpj:'12.345.678/0002-71', ie:'244.118.903.110', regime:'Simples Nacional', uf:'SP', cidade:'Campinas', endereco:'Av. Orosimbo Maia, 1.420 — Loja 2', tipo:'Filial', impVenda:8.0, pisCofins:'nao_se_aplica', cor:'#1D4ED8'},
-    {id:'e3', sigla:'KS', fantasia:'Kaizen Sushi', razao:'Kaizen Sushi Bar Ltda', cnpj:'45.987.321/0001-08', ie:'244.556.781.119', regime:'Lucro Presumido', uf:'SP', cidade:'Campinas', endereco:'Rua Coronel Quirino, 980 — Cambuí', tipo:'Matriz', impVenda:11.33, pisCofins:'cumulativo', cor:'#C2185B'}
+    {id:'e1', sigla:'PD', fantasia:'Pão Dourado Padaria', razao:'Pão Dourado Panificadora Ltda', cnpj:'12.345.678/0001-90', ie:'244.118.902.115', regime:'Simples Nacional', uf:'SP', cidade:'Campinas', endereco:'Av. Orosimbo Maia, 1.420 — Cambuí', tipo:'Matriz', impVenda:8.0, pisCofins:'nao_se_aplica', cor:'#FF5A00'},
+    {id:'e2', sigla:'DR', fantasia:'Dourado Restaurante', razao:'Pão Dourado Panificadora Ltda', cnpj:'12.345.678/0002-71', ie:'244.118.903.110', regime:'Simples Nacional', uf:'SP', cidade:'Campinas', endereco:'Av. Orosimbo Maia, 1.420 — Loja 2', tipo:'Filial', impVenda:8.0, pisCofins:'nao_se_aplica', cor:'#7C3AED'},
+    {id:'e3', sigla:'KS', fantasia:'Kaizen Sushi', razao:'Kaizen Sushi Bar Ltda', cnpj:'45.987.321/0001-08', ie:'244.556.781.119', regime:'Lucro Presumido', uf:'SP', cidade:'Campinas', endereco:'Rua Coronel Quirino, 980 — Cambuí', tipo:'Matriz', impVenda:11.33, pisCofins:'cumulativo', cor:'#E0368C'}
   ];
 
   /* ===== DEPARTAMENTOS / OPERAÇÕES ===== */
   db.departamentos = [
     {id:'cen', nome:'Estoque central', curto:'Central', empresa:'e1', cor:'#5E5E66'},
-    {id:'pad', nome:'Padaria', curto:'Padaria', empresa:'e1', cor:'#E08A1E'},
-    {id:'res', nome:'Restaurante', curto:'Restaurante', empresa:'e2', cor:'#1D4ED8'},
-    {id:'sus', nome:'Sushi', curto:'Sushi', empresa:'e3', cor:'#C2185B'}
+    {id:'pad', nome:'Padaria', curto:'Padaria', empresa:'e1', cor:'#FF5A00'},
+    {id:'res', nome:'Restaurante', curto:'Restaurante', empresa:'e2', cor:'#7C3AED'},
+    {id:'sus', nome:'Sushi', curto:'Sushi', empresa:'e3', cor:'#E0368C'}
   ];
 
   /* ===== CATEGORIAS ===== */
