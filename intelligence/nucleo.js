@@ -29,7 +29,10 @@ LFI.prod = function(id){ return acha(LFI.db.produtos, id); };
 LFI.forn = function(id){ return acha(LFI.db.fornecedores, id); };
 LFI.rec = function(id){ return acha(LFI.db.receitas, id); };
 LFI.emp = function(id){ return acha(LFI.db.empresas, id); };
-LFI.dep = function(id){ return acha(LFI.db.departamentos, id); };
+/* cores da identidade (laranja, roxo e pink): contas antigas guardaram as cores de antes */
+var COR_NOVA={'#E08A1E':'#FF5A00','#1D4ED8':'#7C3AED','#C2185B':'#E0368C'};
+function corNova(d){ if(d&&d.cor&&COR_NOVA[String(d.cor).toUpperCase()]) d.cor=COR_NOVA[String(d.cor).toUpperCase()]; return d; }
+LFI.dep = function(id){ return corNova(acha(LFI.db.departamentos, id)); };
 LFI.cat = function(id){ return acha(LFI.db.categorias, id); };
 LFI.nota = function(id){ return acha(LFI.db.notas, id); };
 LFI.ordem = function(id){ return acha(LFI.db.ordens, id); };
@@ -45,7 +48,7 @@ LFI.usuario = function(){ return LFI.db.usuario; };
 /* ---------- multi-CNPJ ---------- */
 /* departamentos visíveis na empresa selecionada no topo */
 LFI.depsVisiveis = function(){
-  var e=LFI.ctx.empresa; return LFI.db.departamentos.filter(function(d){ return e==='todas'||d.empresa===e; });
+  var e=LFI.ctx.empresa; return LFI.db.departamentos.filter(function(d){ corNova(d); return e==='todas'||d.empresa===e; });
 };
 LFI.depIds = function(){ return LFI.depsVisiveis().map(function(d){ return d.id; }); };
 LFI.empresaVisivel = function(empId){ return LFI.ctx.empresa==='todas' || LFI.ctx.empresa===empId; };
