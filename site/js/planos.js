@@ -86,7 +86,7 @@
     });
   }
   function validarBasico(d) {
-    if (d.empresa.length < 2) return 'Informe o nome do restaurante.';
+    if (d.empresa.length < 2) return 'Informe o nome do negócio.';
     if (d.responsavel.length < 2) return 'Informe o seu nome.';
     if (d.whats.replace(/\D/g, '').length < 10) return 'Informe o WhatsApp com DDD.';
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(d.email)) return 'Confira o e-mail.';
@@ -103,7 +103,7 @@
       ${plano ? `<div class="resumo-plano"><span>${esc(plano.nome)}</span><span>${plano.fixo_centavos ? 'R$ ' + reais(plano.fixo_centavos) + '/mês' : ''}</span></div>` : ''}
       ${pix ? `<div class="abas" role="tablist"><button type="button" role="tab" aria-selected="true" data-aba="teste">Testar grátis</button><button type="button" role="tab" aria-selected="false" data-aba="pix">Assinar com Pix</button></div>` : ''}
       <form id="form-cadastro" novalidate>
-        ${campo('f-emp', 'Nome do restaurante', 'autocomplete="organization" required')}
+        ${campo('f-emp', 'Nome do negócio', 'autocomplete="organization" required')}
         ${campo('f-resp', 'Seu nome', 'autocomplete="name" required')}
         <div class="duas">${campo('f-fone', 'WhatsApp (com DDD)', 'inputmode="tel" autocomplete="tel" placeholder="(47) 99999-9999" required')}${campo('f-mail', 'E-mail', 'type="email" autocomplete="email" required')}</div>
         <div data-so="teste">${campo('f-sen', 'Crie uma senha (mín. 8 caracteres)', 'type="password" autocomplete="new-password" minlength="8"')}</div>
@@ -197,7 +197,7 @@
       <h2 id="modal-titulo">Fale com um especialista</h2>
       <p class="sub">Deixe seus dados e a equipe LiveFood fala com você.</p>
       <form id="form-contato" novalidate>
-        ${campo('f-emp', 'Nome do restaurante', 'autocomplete="organization" required')}
+        ${campo('f-emp', 'Nome do negócio', 'autocomplete="organization" required')}
         ${campo('f-resp', 'Seu nome', 'autocomplete="name" required')}
         <div class="duas">${campo('f-fone', 'WhatsApp (com DDD)', 'inputmode="tel" autocomplete="tel" placeholder="(47) 99999-9999" required')}${campo('f-mail', 'E-mail', 'type="email" autocomplete="email" required')}</div>
         <p class="form-msg" role="alert"></p>
