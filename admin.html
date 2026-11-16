@@ -327,7 +327,8 @@ html,body{background:var(--hx-bg)}
           <div class="quem"><b id="ola-nome">—</b><small id="ola-mail"></small></div>
           <button onclick="menuFecha();abrirAsaasCfg()">💳 Conta Asaas</button>
           <button onclick="menuFecha();abrirWhatsPedidos()">💬 Pedidos pelo WhatsApp</button>
-          <button onclick="menuFecha();abrirTrocarSenha()">🔑 Trocar minha senha</button>
+          <button onclick="menuFecha();abrirAdmins()">👥 Usuários do admin</button>
+        <button onclick="menuFecha();abrirTrocarSenha()">🔑 Trocar minha senha</button>
           <button class="sair" onclick="menuFecha();sair()">⎋ Sair</button>
         </div>
       </div>
@@ -1445,6 +1446,55 @@ function salvarSenha(){
   var a=el('ts-a').value,n=el('ts-n').value; if(!a||!n){el('ts-erro').textContent='Preencha os dois campos.';return;}
   el('ts-btn').disabled=true;
   chamar('POST','/auth/trocar-senha',{atual:a,nova:n}).then(function(d){if(!d.ok){el('ts-erro').textContent=d.mensagem||'Erro.';el('ts-btn').disabled=false;return;}fechar();toast('Senha trocada.');}).catch(function(){el('ts-btn').disabled=false;});
+}
+/* ── Usuários do admin (Worker 291): quem entra no Admin. Todos têm acesso total. Criar, desativar ou trocar a senha de outro pede a senha de quem está fazendo ── */
+var ADMINS=[], ADM_EU='';
+function admData(t){ if(!t) return 'nunca entrou'; var d=new Date(t), z=function(n){return ('0'+n).slice(-2);}; return z(d.getDate())+'/'+z(d.getMonth()+1)+'/'+d.getFullYear()+' '+z(d.getHours())+':'+z(d.getMinutes()); }
+function abrirAdmins(){
+  abrirModal('<h3>Usuários do admin</h3><p class="sub">Quem pode entrar neste Admin. Todos têm acesso total: clientes, planos, financeiro e Comercial.</p><div id="adm-corpo"><div class="vazio">Carregando...</div></div>');
+  chamar('GET','/admin/admins').then(function(d){
+    if(!el('adm-corpo')) return;
+    if(!d||!d.ok){ el('adm-corpo').innerHTML='<div class="aviso">'+esc((d&&d.mensagem)||'Esta tela precisa do Worker 291.')+'</div><div class="acoes"><button class="btn" onclick="fechar()">Fechar</button></div>'; return; }
+    ADMINS=d.admins||[]; ADM_EU=d.eu||''; admDesenha('');
+  }).catch(function(){ if(el('adm-corpo')) el('adm-corpo').innerHTML='<div class="aviso">Sem conexão. Tente de novo.</div>'; });
+}
+function admDesenha(msg){
+  var c=el('adm-corpo'); if(!c) return;
+  c.innerHTML=ADMINS.map(function(u,k){ var eu=u.id===ADM_EU;
+    return '<div class="usr"><div class="u1"><b>'+esc(u.nome||'')+(eu?' <span class="tag per">você</span>':'')+' <span class="tag '+(u.ativo?'on':'off')+'">'+(u.ativo?'Ativo':'Desativado')+'</span></b><small>'+esc(u.email||'')+' · último acesso: '+admData(u.ultimo_acesso)+'</small></div>'+
+      (eu?'':'<button class="btn peq" onclick="admSenha('+k+')">Nova senha</button><button class="btn peq'+(u.ativo?' perigo':'')+'" onclick="admAtivo('+k+')">'+(u.ativo?'Desativar':'Ativar')+'</button>')+'</div>'; }).join('')+
+   '<div class="usr" style="display:block"><b>Novo administrador</b>'+
+    '<div class="linha2"><div><label>Nome</label><input id="adm-nome" autocomplete="off"></div><div><label>E-mail (é o login)</label><input id="adm-email" type="email" autocomplete="off"></div></div>'+
+    '<label>Senha dele (mínimo 8 caracteres)</label><input id="adm-senha" type="password" autocomplete="new-password"></div>'+
+   '<label>Sua senha, para confirmar</label><input id="adm-minha" type="password" autocomplete="current-password" placeholder="pedida para criar, desativar ou trocar senha">'+
+   '<div class="erro" id="adm-erro">'+esc(msg||'')+'</div>'+
+   '<div class="acoes"><button class="btn" onclick="fechar()">Fechar</button><button class="btn pri" id="adm-btn" onclick="admCriar()">Criar administrador</button></div>';
+}
+function admMinha(){ var s=el('adm-minha').value; if(!s){ el('adm-erro').textContent='Digite a sua senha no campo de confirmação.'; el('adm-minha').focus(); return ''; } return s; }
+function admFaz(caminho,corpo,okMsg){
+  el('adm-btn').disabled=true;
+  chamar('POST',caminho,corpo).then(function(d){
+    if(!el('adm-corpo')) return;
+    if(!d||!d.ok){ el('adm-btn').disabled=false; el('adm-erro').textContent=(d&&d.mensagem)||'Não consegui concluir.'; return; }
+    ADMINS=d.admins||ADMINS; admDesenha(''); toast(okMsg);
+  }).catch(function(){ if(el('adm-btn')){ el('adm-btn').disabled=false; el('adm-erro').textContent='Sem conexão. Tente de novo.'; } });
+}
+function admCriar(){
+  var n=el('adm-nome').value.trim(), e=el('adm-email').value.trim(), s=el('adm-senha').value;
+  if(!n||!e||!s){ el('adm-erro').textContent='Preencha nome, e-mail e senha do novo administrador.'; return; }
+  var m=admMinha(); if(!m) return;
+  admFaz('/admin/admins',{nome:n,email:e,senha:s,minha_senha:m},'Administrador criado.');
+}
+function admAtivo(k){
+  var u=ADMINS[k], m=admMinha(); if(!m) return;
+  if(u.ativo && !confirm('Desativar o acesso de '+u.nome+' ao Admin?')) return;
+  admFaz('/admin/admins-ativo',{id:u.id,ativo:u.ativo?0:1,minha_senha:m},u.ativo?'Acesso desativado.':'Acesso ativado.');
+}
+function admSenha(k){
+  var u=ADMINS[k], m=admMinha(); if(!m) return;
+  var s=prompt('Nova senha para '+u.nome+' (mínimo 8 caracteres):'); if(s===null) return;
+  if(s.length<8){ el('adm-erro').textContent='A senha precisa ter pelo menos 8 caracteres.'; return; }
+  admFaz('/admin/admins-senha',{id:u.id,senha:s,minha_senha:m},'Senha de '+u.nome+' trocada.');
 }
 
 
