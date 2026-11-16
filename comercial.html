@@ -180,7 +180,7 @@ tr:hover td{background:var(--s2)}
 .nc-b small{display:block;color:var(--muted);font-size:11.5px;font-weight:600;margin-top:2px;line-height:1.25}
 .nc-ck{margin-left:auto;width:22px;height:22px;border-radius:50%;border:1.5px solid var(--border2);flex:none;display:grid;place-items:center;font-size:12px;font-weight:800;color:transparent}
 .nc.on .nc-ck{background:var(--grad);border-color:var(--grad);color:#fff}
-.nc-q{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 12px 11px 63px;font-size:12px;font-weight:800;color:var(--roxo-esc)}
+.nc-q{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 8px;padding:0 12px 11px 12px;font-size:12px;font-weight:800;color:var(--roxo-esc)}
 .nc-q .qt{margin:0;background:#fff}
 input[type=checkbox]{width:auto;padding:0;accent-color:var(--grad)}
 .chk-l{max-height:210px;overflow:auto;border:1.5px solid var(--border2);border-radius:10px;padding:6px;background:var(--s2)}
@@ -372,8 +372,16 @@ async function sincronizar(){
         var r=await api('POST','/comercial/salvar',{col:col,doc:d});
         if(r.http===401){telaLogin('Sua sessão expirou. Entre de novo.');return}
         if(!r.ok){falhou=r.mensagem||'Não consegui salvar.';continue}
-        if(r.doc){for(var k in r.doc){if(JSON.stringify(d[k])!==JSON.stringify(r.doc[k])){d[k]=r.doc[k];mudou=true}}}
-        SNAP[col][d.id]=JSON.stringify(d);
+        if(JSON.stringify(d)===js){
+          /* nada mudou na tela enquanto gravava: aceita o que o servidor completou (código da proposta, data, situação) */
+          if(r.doc){for(var k in r.doc){if(JSON.stringify(d[k])!==JSON.stringify(r.doc[k])){d[k]=r.doc[k];mudou=true}}}
+          SNAP[col][d.id]=JSON.stringify(d);
+        }else{
+          /* a pessoa alterou este cadastro enquanto a gravação estava a caminho: a versão da tela vale e é gravada em seguida.
+             Do servidor só entram os campos que ele cria e a tela ainda não tem */
+          if(r.doc){['slug','criada','dono'].forEach(function(k){if(r.doc[k]!==undefined&&d[k]===undefined){d[k]=r.doc[k];mudou=true}})}
+          SNAP[col][d.id]=js;deNovo=true;
+        }
       }
       for(var id in SNAP[col]){
         if(vistos[id])continue;
@@ -504,6 +512,7 @@ function nvDesenha(){
   var c=NV.cli?acha(CLIENTES,NV.cli):null,h;
   if(NV.novo)h='<label>Novo cliente</label><div class="cli-novo"><label>Nome do estabelecimento</label><input id="nv-nome" placeholder="ex.: Padaria do Centro" value="'+esc(NV.nome)+'">'+
     '<div class="linha2"><div><label>Contato</label><input id="nv-con" placeholder="quem vai receber"></div><div><label>WhatsApp</label><input id="nv-wa" inputmode="tel" placeholder="(47) 99999-0000"></div></div>'+
+    '<label>E-mail</label><input id="nv-mail" type="email" autocomplete="off" placeholder="cliente@email.com">'+
     '<div class="linha2" style="grid-template-columns:minmax(120px,160px) 1fr"><div><label>CEP</label><input id="nv-cep" inputmode="numeric" maxlength="9" placeholder="00000-000" autocomplete="off" oninput="cepBusca(this.value)"></div><div><label>Endereço</label><input id="nv-end" placeholder="rua, número, bairro, cidade"></div></div><div class="sub2" id="nv-cep-msg" aria-live="polite" style="margin-top:6px;min-height:16px"></div></div><p style="margin:8px 0 0"><button class="lnk" onclick="NV.novo=false;nvDesenha()">← Escolher um cliente já cadastrado</button></p>';
   else h='<label for="nv-cli">Cliente</label><div class="combo"><input id="nv-cli" role="combobox" aria-expanded="false" aria-controls="nv-lista" autocomplete="off" placeholder="digite o nome ou abra a lista" value="'+esc(c?c.nome:NV.nome)+'" oninput="NV.cli=null;NV.nome=this.value;el(\'nv-sel\').innerHTML=\'\';nvLista(true)" onfocus="nvLista(true)"><button class="combo-s" type="button" onclick="nvLista()" aria-label="Mostrar clientes cadastrados">▾</button><div class="combo-l" id="nv-lista" role="listbox" hidden></div></div>'+
     '<div id="nv-sel">'+(c?nvSel(c):'')+'</div><p style="margin:10px 0 0"><button class="btn peq" onclick="nvNovo()">+ Novo cliente</button></p>';
@@ -563,14 +572,15 @@ function salvarVisita(){
   if(cf){nvAgenda();toast('Você já tem visita em '+cf.cliente+' às '+cf.hora+'. Deixe pelo menos 1 hora de intervalo.');return}
   if(NV.novo){
     var n=el('nv-nome').value.trim();if(!n){toast('Informe o nome do estabelecimento.');return}
-    cl={id:++seq,nome:n,contato:el('nv-con').value.trim(),whats:el('nv-wa').value.trim(),end:el('nv-end').value.trim()};
+    var ml=el('nv-mail').value.trim();if(ml&&!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(ml)){toast('Confira o e-mail do cliente.');return}
+    cl={id:++seq,nome:n,contato:el('nv-con').value.trim(),whats:el('nv-wa').value.trim(),email:ml,end:el('nv-end').value.trim()};
     if(NV.cep){cl.cep=NV.cep.cep;cl.cidade=NV.cep.cidade;cl.uf=NV.cep.uf;cl.bairro=NV.cep.bairro}
     CLIENTES.push(cl);
   }else{
     cl=NV.cli?acha(CLIENTES,NV.cli):null;
     if(!cl){toast('Escolha um cliente da lista ou toque em Novo cliente.');return}
   }
-  VISITAS.push({id:++seq,cliente:cl.nome,contato:cl.contato,whats:cl.whats,end:cl.end,tipo:el('nv-tipo').value,data:dt,hora:hr,status:'agendada',ficha:null});
+  VISITAS.push({id:++seq,cliente_id:cl.id,cliente:cl.nome,contato:cl.contato,whats:cl.whats,email:cl.email||'',end:cl.end,tipo:el('nv-tipo').value,data:dt,hora:hr,status:'agendada',ficha:null});
   fechar();toast('Visita agendada.');desenhar();
 }
 
@@ -597,9 +607,37 @@ function vFicha(id){
     '<div class="linha2"><div><label>Próximo passo</label><select id="f-prox">'+['Enviar proposta','Aguardar resposta','Marcar retorno','Agendar implantação','Sem interesse'].map(function(o){return '<option'+(f.proximo===o?' selected':'')+'>'+o+'</option>'}).join('')+'</select></div><div><label>Até quando</label><input id="f-pdata" type="date" value="'+esc(f.proxData||'')+'"></div></div>'+
     '<div class="acoes"><button class="btn" onclick="salvarFicha('+id+',false)">Salvar atendimento</button><button class="btn pri" onclick="salvarFicha('+id+',true)">'+(p?'Abrir proposta':'Montar proposta')+' →</button></div></div>'+
   '</div><div>'+
-   '<div class="card"><h3><span>'+esc(v.cliente)+'</span>'+TG[v.status]+'</h3><dl class="dl"><dt>Visita</dt><dd>'+dataBr(v.data)+' às '+v.hora+' · '+esc(v.tipo)+'</dd><dt>Contato</dt><dd>'+esc(v.contato||'—')+'</dd><dt>WhatsApp</dt><dd>'+esc(v.whats||'—')+'</dd><dt>Endereço</dt><dd>'+esc(v.end||'—')+'</dd></dl><div style="margin-top:14px"><button class="btn peq zap" onclick="zap(VISITAS.filter(function(x){return x.id==='+id+'})[0].whats,\'\')">Abrir WhatsApp</button></div></div>'+
+   '<div class="card"><h3><span>'+esc(v.cliente)+'</span>'+TG[v.status]+'</h3><dl class="dl"><dt>Visita</dt><dd>'+dataBr(v.data)+' às '+v.hora+' · '+esc(v.tipo)+'</dd><dt>Contato</dt><dd>'+esc(v.contato||'—')+'</dd><dt>WhatsApp</dt><dd>'+esc(v.whats||'—')+'</dd><dt>E-mail</dt><dd style="overflow-wrap:anywhere">'+esc(v.email||'—')+'</dd><dt>Endereço</dt><dd>'+esc(v.end||'—')+'</dd></dl><div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn peq" onclick="editarDados('+id+')">✎ Editar dados</button><button class="btn peq zap" onclick="zap(VISITAS.filter(function(x){return x.id==='+id+'})[0].whats,\'\')">Abrir WhatsApp</button></div></div>'+
    '<div class="card"><h3><span>Proposta</span>'+(p?TG[p.status]:'')+'</h3>'+(p?'<p class="sub2" style="margin:0 0 12px">'+p.itens.length+' itens · '+R(somas(p.itens).t)+'</p><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn peq" onclick="montar('+p.id+')">Editar</button><button class="btn peq pri" onclick="pvAbrir(acha(PROPOSTAS,'+p.id+'))">Ver proposta</button></div>':'<p class="sub2" style="margin:0">Ainda não tem proposta. Ao montar, os itens já vêm sugeridos pelo que você marcou ao lado.</p>')+'</div>'+
   '</div></div>';
+}
+/* corrigir os dados do cliente e da visita depois de cadastrados (nome, contato, e-mail, endereço, data e hora) */
+function editarDados(vid){
+  var v=acha(VISITAS,vid);NV.cep=null;
+  abrir('<h3>Editar dados</h3><p class="sub">Corrija o que estiver errado ou complete o que faltou. Vale para o cliente, esta visita e a proposta dela.</p>'+
+   '<label>Nome do estabelecimento</label><input id="ed-nome" value="'+esc(v.cliente)+'">'+
+   '<div class="linha2"><div><label>Contato</label><input id="ed-con" value="'+esc(v.contato||'')+'" placeholder="quem atende"></div><div><label>WhatsApp</label><input id="ed-wa" inputmode="tel" value="'+esc(v.whats||'')+'" placeholder="(47) 99999-0000"></div></div>'+
+   '<label>E-mail</label><input id="ed-mail" type="email" autocomplete="off" value="'+esc(v.email||'')+'" placeholder="cliente@email.com">'+
+   '<div class="linha2" style="grid-template-columns:minmax(120px,160px) 1fr"><div><label>CEP</label><input id="nv-cep" inputmode="numeric" maxlength="9" placeholder="00000-000" autocomplete="off" value="'+esc(v.cep||'')+'" oninput="cepBusca(this.value)"></div><div><label>Endereço</label><input id="nv-end" value="'+esc(v.end||'')+'" placeholder="rua, número, bairro, cidade"></div></div><div class="sub2" id="nv-cep-msg" aria-live="polite" style="margin-top:6px;min-height:16px"></div>'+
+   '<div class="linha3"><div><label>Data da visita</label><input id="ed-data" type="date" value="'+esc(v.data)+'"></div><div><label>Hora</label><input id="ed-hora" type="time" value="'+esc(v.hora)+'"></div><div><label>Tipo</label><select id="ed-tipo">'+['Primeira visita','Retorno','Implantação','Treinamento'].map(function(t){return '<option'+(v.tipo===t?' selected':'')+'>'+t+'</option>'}).join('')+'</select></div></div>'+
+   '<div class="acoes"><button class="btn" onclick="fechar()">Cancelar</button><button class="btn pri" onclick="salvarDados('+vid+')">Salvar dados</button></div>');
+}
+function salvarDados(vid){
+  var v=acha(VISITAS,vid),nome=el('ed-nome').value.trim(),ml=el('ed-mail').value.trim(),dt=el('ed-data').value||v.data,hr=el('ed-hora').value||v.hora;
+  if(!nome){toast('Informe o nome do estabelecimento.');return}
+  if(ml&&!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(ml)){toast('Confira o e-mail do cliente.');return}
+  if(dt!==v.data||hr!==v.hora){var cf=conflito(dt,hr,v.id);if(cf){toast('Você já tem visita em '+cf.cliente+' às '+cf.hora+'. Deixe pelo menos 1 hora de intervalo.');return}}
+  var antes=v.cliente,d={contato:el('ed-con').value.trim(),whats:el('ed-wa').value.trim(),email:ml,end:el('nv-end').value.trim(),cep:el('nv-cep').value.replace(/\D/g,'')};
+  if(NV.cep){d.cidade=NV.cep.cidade;d.uf=NV.cep.uf;d.bairro=NV.cep.bairro}
+  /* o que está digitado na ficha e ainda não foi salvo continua na tela depois de editar */
+  var rasF=el('f-ped')?{ped:el('f-ped').value,mesas:el('f-mesas').value,sis:el('f-sis').value,prox:el('f-prox').value,pdata:el('f-pdata').value,nec:JSON.parse(JSON.stringify(window._nec||{}))}:null;
+  var c=(v.cliente_id&&acha(CLIENTES,v.cliente_id))||CLIENTES.filter(function(x){return x.nome===antes})[0]||null;
+  if(c){c.nome=nome;for(var k in d)c[k]=d[k];v.cliente_id=c.id}
+  VISITAS.forEach(function(x){if(x===v||(c&&x.cliente_id===c.id)||(!x.cliente_id&&x.cliente===antes)){x.cliente=nome;for(var k2 in d)x[k2]=d[k2]}});
+  PROPOSTAS.forEach(function(p){var pv=acha(VISITAS,p.visita);if(p.visita===v.id||(pv&&c&&pv.cliente_id===c.id))p.cliente=nome});
+  v.data=dt;v.hora=hr;v.tipo=el('ed-tipo').value;
+  fechar();toast('Dados atualizados.');desenhar();
+  if(rasF&&el('f-ped')){el('f-ped').value=rasF.ped;el('f-mesas').value=rasF.mesas;el('f-sis').value=rasF.sis;el('f-prox').value=rasF.prox;el('f-pdata').value=rasF.pdata;window._nec=rasF.nec;el('necs').innerHTML=necsHtml()}
 }
 function necsHtml(){
   return NECS.map(function(n){var q=window._nec[n.k]||0;
