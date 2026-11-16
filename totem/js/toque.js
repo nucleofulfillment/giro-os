@@ -29,6 +29,62 @@
   const nomeModo = (m) => (m === 'levar' ? 'Para levar' : 'Consumir aqui');
   window.Totem = { estado: { modo: 'standby' } }; // o cardapio.js só recarrega a página com o totem em espera
 
+  // ----- comemoração do pedido (personagem animado + confete): garante que ela existe mesmo se a página aberta for antiga -----
+  // Um totem fica dias com a mesma página aberta. Se o toque.html guardado no aparelho for de antes da comemoração,
+  // os arquivos do personagem e os tamanhos da tela não vieram com ele: este arquivo (sempre o mais novo) completa o que faltar.
+  (function () {
+    const poe = (src, depois) => { const s = document.createElement('script'); s.src = src; s.onload = depois || null; document.body.appendChild(s); };
+    const app = () => { if (!window.LiveApp) poe('../site/js/live-app.js'); };
+    if (!window.LiveMascote) poe('../site/js/live-mascote.js', app); else app();
+    const st = document.createElement('style');
+    st.textContent = `
+      body .lfc { inset: auto; left: var(--tt-x, 0px); top: var(--tt-y, 0px); width: var(--tt-w, 100vw); height: var(--tt-h, 100vh); gap: calc(26px * var(--tt-s, 1)); padding: calc(60px * var(--tt-s, 1)); background: rgba(244, 244, 245, .97); color: #1C1C1E; border-radius: 0 0 calc(60px * var(--tt-s, 1)) calc(60px * var(--tt-s, 1)); }
+      body .lfc .lfc-live { width: calc(420px * var(--tt-s, 1)); flex: none; }
+      body .lfc b { font-size: calc(56px * var(--tt-s, 1)); }
+      body .lfc .lfc-val { font: 800 calc(300px * var(--tt-s, 1))/1 'Baloo 2', sans-serif; letter-spacing: -.03em; }
+      body .lfc .lfc-fp { font-size: calc(34px * var(--tt-s, 1)); padding: calc(18px * var(--tt-s, 1)) calc(38px * var(--tt-s, 1)); gap: calc(14px * var(--tt-s, 1)); }
+      body .lfc span { font-size: calc(34px * var(--tt-s, 1)); max-width: calc(840px * var(--tt-s, 1)); line-height: 1.3; color: #5E5E66; }
+      body .lfc .lfc-bt { margin-top: calc(34px * var(--tt-s, 1)); min-width: calc(520px * var(--tt-s, 1)); padding: calc(34px * var(--tt-s, 1)) calc(64px * var(--tt-s, 1)); border-radius: calc(36px * var(--tt-s, 1)); font-size: calc(36px * var(--tt-s, 1)); }
+      body .lfc-confete { font-size: calc(64px * var(--tt-s, 1)); }
+      body.tt-deitado .lfc { gap: calc(14px * var(--tt-s, 1)); padding: calc(30px * var(--tt-s, 1)); border-radius: 0 0 calc(44px * var(--tt-s, 1)) calc(44px * var(--tt-s, 1)); }
+      body.tt-deitado .lfc .lfc-live { width: calc(250px * var(--tt-s, 1)); }
+      body.tt-deitado .lfc b { font-size: calc(44px * var(--tt-s, 1)); }
+      body.tt-deitado .lfc .lfc-val { font-size: calc(190px * var(--tt-s, 1)); }
+      body.tt-deitado .lfc .lfc-bt { margin-top: calc(14px * var(--tt-s, 1)); padding: calc(26px * var(--tt-s, 1)) calc(56px * var(--tt-s, 1)); }`;
+    document.head.appendChild(st);
+  })();
+  // lugar e escala da tela (sem a faixa do LiveFood), para a comemoração ocupar exatamente a tela do totem
+  function medeTela() {
+    const r = totem.getBoundingClientRect(), W = totem.offsetWidth, H = totem.offsetHeight, s = r.width / W, d = document.documentElement.style;
+    d.setProperty('--tt-x', r.left + 'px'); d.setProperty('--tt-y', r.top + 'px'); d.setProperty('--tt-w', r.width + 'px');
+    d.setProperty('--tt-h', ((H - (W > H ? 60 : 84)) * s) + 'px'); d.setProperty('--tt-s', s);
+    document.body.classList.toggle('tt-deitado', W > H);
+  }
+  addEventListener('resize', () => setTimeout(medeTela, 0));
+
+  // ----- versão nova no ar: o totem se atualiza sozinho -----
+  // A cada 10 minutos confere se a página ou este arquivo mudaram no site; se mudaram, recarrega quando o totem estiver na tela de entrada.
+  (function () {
+    const arquivos = ['toque.html', 'js/toque.js'], marca = {};
+    let pendente = false;
+    async function confere() {
+      for (const a of arquivos) {
+        try {
+          const r = await fetch(a + '?c=' + Date.now(), { method: 'HEAD', cache: 'no-store' });
+          const m = r.ok ? (r.headers.get('etag') || r.headers.get('last-modified') || '') : '';
+          if (!m) continue;
+          if (marca[a] === undefined) marca[a] = m; else if (marca[a] !== m) pendente = true;
+        } catch (e) { /* sem rede agora: tenta na próxima */ }
+      }
+      if (pendente) recarregaLivre();
+    }
+    function recarregaLivre() {
+      const livre = window.Totem && window.Totem.estado.modo === 'standby' && !document.getElementById('tq-painel') && !document.querySelector('.lfc');
+      if (livre) location.reload(); else setTimeout(recarregaLivre, 5000);
+    }
+    setTimeout(confere, 20000); setInterval(confere, 10 * 60000);
+  })();
+
   // ----- Live oficial (mesma cabeça do totem de voz, rosto padrão "feliz") -----
   const LIVE = `<svg class="lv" viewBox="-110 -125 220 215" aria-hidden="true"><g class="lv-corpo">
     <g class="lv-antena"><path d="M-4,-76 L-27,-116" stroke="#FF5A00" stroke-width="10" stroke-linecap="round"/><path d="M4,-76 L27,-116" stroke="#FF5A00" stroke-width="10" stroke-linecap="round"/><rect x="-14" y="-84" width="28" height="15" rx="6" fill="#E84E00"/></g>
@@ -144,7 +200,7 @@
     $('#barra-itens').innerHTML = E.carrinho.map((l) => `<div>${l.qtd}× ${esc(PRODS[l.pid].nome)}<span>${R$(M.precoLinha(l))}</span></div>`).join('');
     $('#btn-ver').disabled = !n;
   }
-  function tudo() { montaCats(); if (E.cat >= CATS.length) E.cat = 0; desenhaFixos(); desenhaCats(); desenhaGrade(); desenhaBarra(); if (window.ajustarEscalaToque) window.ajustarEscalaToque(); setas(); }
+  function tudo() { montaCats(); if (E.cat >= CATS.length) E.cat = 0; desenhaFixos(); desenhaCats(); desenhaGrade(); desenhaBarra(); if (window.ajustarEscalaToque) window.ajustarEscalaToque(); medeTela(); setas(); }
 
   // ----- sacola -----
   function poe(pid, id, q, sab, adds) {
