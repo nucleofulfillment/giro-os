@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#ECEEF1">
+<title>Proposta LiveFood</title>
+<link rel="icon" href="/site/img/favicon.svg" type="image/svg+xml">
+<!-- Proposta comercial do LiveFood: o que o cliente abre pelo link (proposta.html?p=<código>). Lê GET /proposta/<código> do Worker (a partir do 286). -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Uma coluna que rola, listas simples por grupo, resumo curto e barra fixa com total e botão */
+:root{--bg:#ECEEF1;--s2:#F7F8FA;--border:#E4E6EB;--border2:#D5D8DF;--text:#22252B;--muted:#8A8F9A;--muted2:#5C616C;--grad:#FF5A00;--f:'Manrope',-apple-system,system-ui,sans-serif}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:var(--f);-webkit-font-smoothing:antialiased}
+button{font-family:var(--f);cursor:pointer}
+[hidden]{display:none!important}
+.pc-in{max-width:720px;margin:0 auto;padding:22px 18px 26px}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px}
+header img{height:26px;display:block}
+header span{font-size:12px;font-weight:700;color:var(--muted)}
+h1{margin:26px 0 4px;font-size:15px;font-weight:700;color:var(--muted2);line-height:1.2}
+h1 b{display:block;font-size:30px;font-weight:800;color:var(--text);letter-spacing:-.6px;margin-top:2px;overflow-wrap:anywhere}
+.dica{margin:0 0 20px;font-size:13px;font-weight:600;color:var(--muted)}
+h2{margin:22px 4px 8px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--muted2);display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+h2 small{font-size:12px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--muted);text-align:right}
+ul{list-style:none;margin:0;padding:0;background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden}
+li{display:grid;grid-template-columns:52px 1fr auto;align-items:center;gap:13px;padding:11px 14px;border-top:1px solid var(--border);transition:background .15s}
+li:first-child{border-top:0}
+li[role=button]{cursor:pointer}
+li[role=button]:hover,li[role=button]:focus-visible{background:var(--s2);outline:none}
+.ic{width:52px;height:52px;border-radius:11px;background:#fff;border:1px solid var(--border);display:grid;place-items:center;overflow:hidden}
+.ic img{width:100%;height:100%;object-fit:contain}
+.ic svg{width:24px;height:24px;fill:none;stroke:var(--grad);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.d{min-width:0}
+.d b{display:block;font-size:14.5px;font-weight:700;line-height:1.25;overflow-wrap:anywhere}
+.d small{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin-top:2px}
+.qx{display:inline-block;background:var(--grad);color:#fff;font-size:12px;font-weight:800;border-radius:6px;padding:2px 7px;margin-right:7px}
+.p{font-size:15px;font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums}
+.p small{font-size:11px;font-weight:700;color:var(--muted)}
+.res{margin-top:24px;background:#fff;border:1px solid var(--border);border-radius:16px;padding:6px 16px}
+.res div{display:flex;justify-content:space-between;gap:12px;align-items:baseline;padding:11px 0;border-top:1px solid var(--border);font-size:14px;font-weight:600;color:var(--muted2)}
+.res div:first-child{border-top:0}
+.res div b{font-weight:800;color:var(--text);white-space:nowrap;font-variant-numeric:tabular-nums}
+.res div small{display:block;font-size:12px;font-weight:600;color:var(--muted)}
+.res .tt{font-size:16px;font-weight:800;color:var(--text)}.res .tt b{font-size:20px}
+.nota{margin:14px 4px 0;font-size:12.5px;font-weight:600;color:var(--muted);line-height:1.5}
+.bar{position:sticky;bottom:0;background:rgba(255,255,255,.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--border2);padding:10px 18px calc(10px + env(safe-area-inset-bottom))}
+.bar>div{max-width:720px;margin:0 auto;display:flex;align-items:center;gap:14px}
+.bar .v{flex:1;min-width:0}
+.bar .v small{display:block;font-size:11.5px;font-weight:700;color:var(--muted)}
+.bar .v b{display:block;font-size:19px;font-weight:800;letter-spacing:-.3px;white-space:nowrap}
+.bar a{display:flex;align-items:center;gap:8px;text-decoration:none;background:#1FAF5A;color:#fff;border-radius:99px;padding:13px 22px;font-size:15px;font-weight:800;white-space:nowrap}
+.bar a:hover{background:#19994E}
+.bar a:focus-visible{outline:3px solid #0B6B35;outline-offset:2px}
+.bar a svg{width:19px;height:19px;fill:#fff}
+.ok{display:inline-block;background:#DCFCE7;color:#166534;font-size:12px;font-weight:800;border-radius:99px;padding:4px 11px;margin-top:10px}
+.aviso{max-width:520px;margin:18vh auto 0;padding:0 24px;text-align:center}
+.aviso img{height:30px;margin-bottom:22px}
+.aviso h1{font-size:20px;color:var(--text);margin:0 0 8px}
+.aviso p{font-size:14px;font-weight:600;color:var(--muted2);line-height:1.5;margin:0}
+/* ficha do item */
+.fundo{position:fixed;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(34,37,43,.5);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);opacity:0;pointer-events:none;transition:opacity .2s}
+.fundo.on{opacity:1;pointer-events:auto}
+.sheet{width:min(100%,430px);max-height:100%;overflow:auto;background:#fff;border-radius:22px;position:relative;box-shadow:0 30px 60px rgba(34,37,43,.35)}
+.sheet .foto{aspect-ratio:4/3;display:grid;place-items:center;border-bottom:1px solid var(--border)}
+.sheet .foto img{height:90%;max-width:90%;object-fit:contain}
+.sheet .foto svg{width:34%;height:34%;fill:none;stroke:var(--grad);stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round}
+.sheet .x{position:absolute;right:10px;top:10px;width:38px;height:38px;border-radius:50%;border:0;background:rgba(34,37,43,.78);color:#fff;font-size:20px;font-weight:700}
+.sheet .inf{padding:18px 20px 20px;display:flex;flex-direction:column;gap:10px}
+.sheet h3{margin:0;font-size:21px;font-weight:800;line-height:1.15}
+.sheet .qtd{font-size:12px;font-weight:800;color:#C2410C;letter-spacing:.06em;text-transform:uppercase}
+.sheet ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
+.sheet ol li{all:unset;display:flex;gap:8px;font-size:14px;font-weight:600;line-height:1.35;color:var(--muted2)}
+.sheet ol li::before{content:"";flex:none;width:7px;height:7px;margin-top:6px;border-radius:50%;background:var(--grad)}
+.sheet .preco{background:var(--s2);border:1px solid var(--border);border-radius:14px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.sheet .preco span{font-size:12.5px;font-weight:700;color:var(--muted2);line-height:1.35}.sheet .preco strong{font-size:21px;font-weight:800;white-space:nowrap}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div id="tela"><div class="aviso"><img src="livefood-logo.png" alt="LiveFood"><p>Abrindo a proposta…</p></div></div>
+<div class="fundo" id="fundo" onclick="if(event.target===this)fechar()"></div>
+<script>
+var Q=new URLSearchParams(location.search),SLUG=(Q.get('p')||'').toLowerCase().replace(/[^a-z0-9-]/g,''),PREVIA=Q.get('previa')==='1';
+/* ?api=... troca o servidor só em testes locais (localhost) */
+var API=((location.hostname==='localhost'||location.hostname==='127.0.0.1')&&Q.get('api'))||'https://giro-os-api.nucleofull.workers.dev';
+var P=null,ORD=[];
+var IC_SERV='<svg viewBox="0 0 24 24"><path d="M14.5 6.5a4 4 0 0 0-5 5L4 17l3 3 5.5-5.5a4 4 0 0 0 5-5l-2.5 2.5-2.5-.5-.5-2.5z"/></svg>';
+var IC_CX='<svg viewBox="0 0 24 24"><path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>';
+var IC_NFC='<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M9 15a4 4 0 0 0 0-6M12 17a7 7 0 0 0 0-10M15 15.5a5 5 0 0 0 0-7"/></svg>';
+var WA='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.3-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.8 11.9 11.9 0 0 0 4.6 4c1.7.7 2.4.8 3.2.7a2.8 2.8 0 0 0 1.8-1.3 2.3 2.3 0 0 0 .2-1.3c-.1-.1-.3-.2-.5-.3z"/></svg>';
+function el(i){return document.getElementById(i)}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function R(v){return 'R$ '+Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function dh(ts){var d=new Date(ts||Date.now()),z=function(n){return ('0'+n).slice(-2)};return z(d.getDate())+'/'+z(d.getMonth()+1)+'/'+d.getFullYear()+' · '+z(d.getHours())+':'+z(d.getMinutes())}
+function mes(i){return i.t==='a'?'/mês':''}
+function ico(i){return i.img?'<img src="'+esc(i.img)+'" alt="">':i.t==='s'?IC_SERV:i.t==='p'?IC_NFC:IC_CX}
+function parc(i){return i.parc>1?'até '+i.parc+'x '+R(i.preco/i.parc)+' sem juros':'à vista'}
+function pgTxt(pg){
+  if(!pg)return '';var f=[];
+  if(pg.pix)f.push('Pix'+(pg.desc>0?' com '+String(pg.desc).replace('.',',')+'% de desconto':''));
+  if(pg.boleto)f.push('boleto');
+  if(pg.cartao)f.push('cartão'+(pg.parc>1?' em até '+pg.parc+'x':''));
+  return f.length>1?f.slice(0,-1).join(', ')+' ou '+f[f.length-1]:(f[0]||'');
+}
+function aviso(tit,txt){el('tela').innerHTML='<div class="aviso"><img src="livefood-logo.png" alt="LiveFood"><h1>'+tit+'</h1><p>'+txt+'</p></div>'}
+
+function desenhar(){
+  var p=P,so=0,sl=0,sm=0;ORD=[];
+  p.itens.forEach(function(i){var v=i.preco*i.q;if(i.t==='o')so+=v;else if(i.t==='a')sm+=v;else sl+=v});
+  var total=so+sl,mensal=sm+(p.plano?p.plano.preco:0);
+  var pgLf='';p.itens.forEach(function(i){if(!pgLf&&i.t==='s'&&i.pg)pgLf=pgTxt(i.pg)});   /* forma de pagamento do serviço (a da implantação vem primeiro) */
+  function linhas(t){return p.itens.filter(function(i){return i.t===t}).map(function(i){var k=ORD.push(i)-1;
+    return '<li tabindex="0" role="button" onclick="abrir('+k+')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();abrir('+k+')}"><span class="ic">'+ico(i)+'</span><span class="d"><b>'+esc(i.nome)+'</b><small>'+(i.q>1?'<span class="qx">'+i.q+'x</span>'+R(i.preco)+mes(i)+' cada':esc(i.det))+'</small></span><span class="p">'+R(i.preco*i.q)+(i.t==='a'?'<small>/mês</small>':'')+'</span></li>'}).join('')}
+  function grupo(tit,sub,h){return h?'<h2>'+tit+'<small>'+sub+'</small></h2><ul>'+h+'</ul>':''}
+  var msg='Olá! Quero aprovar a proposta da LiveFood para '+p.cliente+'. (proposta: '+p.slug+')';
+  var link=p.whats?'https://wa.me/'+p.whats+'?text='+encodeURIComponent(msg):'';
+  document.title='Proposta LiveFood · '+p.cliente;
+  el('tela').innerHTML='<div class="pc-in"><header><img src="livefood-logo.png" alt="LiveFood"><span>'+dh(p.criada)+'</span></header>'+
+   '<h1>Proposta para<b>'+esc(p.cliente)+'</b></h1>'+(p.status==='aprovada'?'<span class="ok">✓ Proposta aprovada</span>':'')+'<p class="dica"'+(p.status==='aprovada'?' style="margin-top:10px"':'')+'>Toque em um item para ver os detalhes.</p>'+
+   grupo('Equipamentos','compra direto no Mercado Livre',linhas('o'))+
+   grupo('LiveFood','implantação e personalizados',linhas('p')+linhas('s'))+
+   grupo('Todo mês','plano e aluguel',linhas('a')+(p.plano?'<li><span class="ic">'+IC_SERV+'</span><span class="d"><b>'+esc(p.plano.nome)+'</b><small>mensalidade do sistema</small></span><span class="p">'+R(p.plano.preco)+'<small>/mês</small></span></li>':''))+
+   '<div class="res">'+
+    (so?'<div><span>Equipamentos<small>você paga e parcela no Mercado Livre</small></span><b>'+R(so)+'</b></div>':'')+
+    (sl?'<div><span>LiveFood'+(pgLf?'<small>'+esc(pgLf)+'</small>':'')+'</span><b>'+R(sl)+'</b></div>':'')+
+    '<div class="tt"><span>Total</span><b>'+R(total)+'</b></div>'+
+    (mensal?'<div><span>Todo mês</span><b>'+R(mensal)+'/mês</b></div>':'')+
+   '</div><p class="nota">'+(p.status==='aprovada'?'Os links para comprar cada equipamento foram enviados no seu WhatsApp. Se precisar, toque em Aprovar para receber de novo.':'Ao aprovar, você recebe no WhatsApp os links para comprar cada equipamento. Os preços dos equipamentos são os do Mercado Livre e podem mudar.')+'</p></div>'+
+   '<div class="bar"><div><span class="v"><small>Total'+(mensal?' · + '+R(mensal)+'/mês':'')+'</small><b>'+R(total)+'</b></span>'+
+    (link?'<a href="'+esc(link)+'"'+(PREVIA?' onclick="alert(\'Prévia. Para o cliente, este botão abre o WhatsApp do LiveFood com a mensagem de aprovação pronta.\');return false"':' target="_blank" rel="noopener"')+'>'+WA+'Aprovar</a>':'')+
+   '</div></div>';
+}
+function abrir(k){
+  var i=ORD[k];
+  el('fundo').innerHTML='<div class="sheet" role="dialog" aria-modal="true" aria-label="'+esc(i.nome)+'"><button class="x" id="fx" aria-label="Fechar" onclick="fechar()">×</button><div class="foto">'+ico(i)+'</div><div class="inf"><span class="qtd">Quantidade: '+i.q+'x'+(i.full?' · ⚡ envio Full':'')+(i.usado?' · usado':'')+'</span><h3>'+esc(i.nome)+'</h3>'+
+   (i.det?'<span style="font-size:13.5px;font-weight:600;color:var(--muted2)">'+esc(i.det)+'</span>':'')+
+   '<ol>'+(i.desc||[]).map(function(d){return '<li>'+esc(d)+'</li>'}).join('')+'</ol>'+
+   '<div class="preco"><span>'+(i.t==='o'?'No Mercado Livre<br>'+parc(i):i.t==='p'?'Produto LiveFood<br>'+R(i.preco)+' por '+esc(i.un||'unidade'):i.t==='a'?'Aluguel mensal'+(i.min?'<br>contrato mínimo de '+i.min+' meses':''):'Serviço LiveFood'+(pgTxt(i.pg)?'<br>'+esc(pgTxt(i.pg)):''))+'</span><strong>'+R(i.preco*i.q)+mes(i)+'</strong></div></div></div>';
+  el('fundo').classList.add('on');el('fx').focus();
+}
+function fechar(){el('fundo').classList.remove('on')}
+addEventListener('keydown',function(e){if(e.key==='Escape')fechar()});
+
+(async function(){
+  if(!SLUG){aviso('Link incompleto','Confira o link que você recebeu ou peça um novo ao LiveFood.');return}
+  try{
+    var r=await fetch(API+'/proposta/'+SLUG),d=await r.json();
+    if(!d.ok||!d.proposta){aviso('Proposta não encontrada','Confira o link que você recebeu ou peça um novo ao LiveFood.');return}
+    P=d.proposta;desenhar();
+  }catch(e){aviso('Não consegui abrir agora','Confira a sua internet e tente de novo em instantes.')}
+})();
+</script>
+</body>
+</html>

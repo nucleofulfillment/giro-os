@@ -1,0 +1,896 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>LiveFood · Comercial</title>
+<link rel="icon" type="image/svg+xml" href="/site/img/favicon-admin.svg">
+<!-- Comercial do LiveFood: agenda de visitas, atendimento, propostas e catálogo. Fala com o Worker (rotas /comercial/*, a partir do 286). -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Baloo+2:wght@600;700;800&family=Nunito:wght@600;700;800&family=Kaushan+Script&display=swap" rel="stylesheet">
+<style>
+/* ───────── admin (mesma cara do admin.html) ───────── */
+:root{
+  --bg:#ECEEF1; --s1:#FFFFFF; --s2:#F7F8FA; --s3:#F1F2F5; --s4:#E6E8EC;
+  --border:#E4E6EB; --border2:#D5D8DF;
+  --text:#22252B; --texto2:#30343C; --muted:#8A8F9A; --muted2:#5C616C;
+  --roxo:#D96D28; --roxo-esc:#914413; --grad:#FF5A00;
+  --green:#16A34A; --red:#DC2626; --full:#00A650;
+  --fbody:'Manrope',-apple-system,sans-serif;
+  --r:16px; --sh1:0 1px 2px rgba(41,35,30,.05); --sh2:0 10px 26px -10px rgba(41,35,30,.14); --sh3:0 30px 70px -25px rgba(41,35,30,.32);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--fbody);font-size:14px;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font-family:var(--fbody)}
+button{cursor:pointer}
+[hidden]{display:none!important}
+.proto{background:#29231E;color:#fff;font-size:12px;font-weight:700;text-align:center;padding:7px 16px}
+.proto b{color:#FFB27A}
+.btn{border:1px solid var(--border2);background:var(--s3);color:var(--text);padding:9px 15px;border-radius:10px;font-weight:700;font-size:13px;transition:transform .15s,filter .15s,background .15s;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;white-space:nowrap}
+.btn:hover{background:var(--s4)}
+.btn.pri{background:var(--grad);border-color:transparent;color:#fff;box-shadow:0 8px 20px -10px rgba(255,90,0,.7)}
+.btn.pri:hover{filter:brightness(1.07);transform:translateY(-1px);background:var(--grad)}
+.btn.peq{padding:6px 11px;font-size:12px;border-radius:9px}
+.btn.perigo{color:var(--red);background:#fff}
+label{display:block;font-size:12px;font-weight:700;margin:14px 0 6px;color:var(--texto2)}
+input,select,textarea{width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid var(--border2);background:var(--s2);font-size:14px;color:var(--text)}
+textarea{min-height:92px;resize:vertical;line-height:1.5}
+input::placeholder,textarea::placeholder{color:#B6BAC3;font-style:italic}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--roxo);box-shadow:0 0 0 4px rgba(217,109,40,.10);background:#fff}
+header.topo{min-height:64px;display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;padding:8px 22px;border-bottom:1px solid var(--border);background:rgba(255,255,255,.78);backdrop-filter:blur(10px);position:sticky;top:0;z-index:5}
+header.topo img{height:34px;display:block}
+header.topo .papel{background:var(--grad);color:#fff;font-size:10.5px;font-weight:800;padding:4px 10px;border-radius:99px;letter-spacing:.6px}
+header.topo .esp{flex:1}
+.tb-av{width:32px;height:32px;border-radius:50%;background:var(--grad);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex:none}
+main{max-width:1240px;margin:0 auto;padding:26px 22px 60px}
+.cab{margin-bottom:18px}
+.cab h1{margin:0;font-size:24px;font-weight:800;letter-spacing:-.3px}.cab .sub{color:var(--muted);font-size:13px;margin-top:3px}
+.abas{display:flex;gap:4px;margin:0 0 0 10px;padding:4px;background:var(--s3);border:1px solid var(--border);border-radius:12px;overflow-x:auto;scrollbar-width:none;max-width:max-content}
+.abas::-webkit-scrollbar{display:none}
+.aba{background:none;border:0;padding:8px 18px;font-weight:800;font-size:13.5px;color:var(--muted);border-radius:9px;white-space:nowrap}
+.aba:hover{color:var(--roxo-esc)}
+.aba.on{background:var(--grad);color:#fff;box-shadow:0 8px 18px -10px rgba(255,90,0,.8)}
+.finrow{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px}
+.kpi{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:16px 20px;box-shadow:var(--sh1)}
+.kpi .lb{font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)}
+.kpi .vl{font-size:28px;font-weight:800;margin-top:4px;letter-spacing:-.5px}
+.kpi .vl.vg{color:var(--green)}.kpi .vl.vo{color:var(--grad)}
+.card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:20px 22px;margin-bottom:16px;box-shadow:var(--sh1)}
+.card h3{margin:0 0 14px;font-size:17px;font-weight:800;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.card h3 .dir{margin-left:auto;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.lnk{color:var(--roxo);font-weight:800;font-size:13px;cursor:pointer;white-space:nowrap;background:none;border:0;padding:0}.lnk:hover{text-decoration:underline}
+.sub2{color:var(--muted);font-size:12.5px;font-weight:600}
+.busca{width:250px;max-width:100%}
+.chip{border:1.5px solid var(--border2);background:#fff;color:var(--muted2);border-radius:99px;padding:7px 13px;font-size:12px;font-weight:800;white-space:nowrap}
+.chip:hover{color:var(--roxo);border-color:var(--roxo)}
+.chip.on{background:var(--grad);border-color:transparent;color:#fff}
+.tg{display:inline-block;font-size:11px;font-weight:800;padding:3px 9px;border-radius:99px;white-space:nowrap}
+.tg.pend{background:#FEF3C7;color:#92400E}.tg.ok{background:#DCFCE7;color:#166534}.tg.neu{background:var(--s3);color:var(--roxo);border:1px solid var(--border2)}.tg.azul{background:#DBEAFE;color:#1E40AF}.tg.off{background:#F1F1F1;color:#777}
+.full{display:inline-flex;align-items:center;gap:3px;font-size:10.5px;font-weight:800;font-style:italic;color:#fff;background:var(--full);border-radius:5px;padding:2px 6px;letter-spacing:.04em;white-space:nowrap}
+.tabela-wrap{overflow-x:auto;border-radius:var(--r);border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;background:var(--s1)}
+th{text-align:left;font-size:11px;text-transform:uppercase;color:var(--muted);padding:12px 14px;background:var(--s2);letter-spacing:.5px;font-weight:800;white-space:nowrap}
+td{padding:12px 14px;border-top:1px solid var(--border);vertical-align:middle}td.n,th.n{text-align:right;white-space:nowrap}
+tr:hover td{background:var(--s2)}
+.prod{display:flex;align-items:center;gap:12px;min-width:230px}
+.prod img,.prod .semfoto{width:46px;height:46px;border-radius:10px;border:1px solid var(--border2);object-fit:contain;background:#fff;flex:none}
+.semfoto{display:grid;place-items:center;color:var(--roxo)}
+.semfoto svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.prod b{display:block;font-weight:800}.prod small{color:var(--muted);font-size:12px}
+.acs{display:flex;gap:6px;flex-wrap:nowrap}
+.vazio{color:var(--muted);text-align:center;padding:28px}
+.aviso{background:#FEF3C7;color:#92400E;padding:11px 13px;border-radius:10px;font-size:12.5px;margin:12px 0;border:1px solid #FDE68A;font-weight:600}
+.info{background:var(--s3);color:var(--muted2);padding:11px 13px;border-radius:10px;font-size:12.5px;margin:0 0 14px;border:1px solid var(--border2);font-weight:600;line-height:1.5}
+.linha2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.linha3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.acoes{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;flex-wrap:wrap}
+.fundo{position:fixed;inset:0;background:rgba(41,35,30,.42);backdrop-filter:blur(5px);display:none;align-items:flex-start;justify-content:center;padding:24px 12px;overflow:auto;z-index:20}
+.fundo.on{display:flex}
+.modal{background:#fff;border-radius:20px;width:100%;max-width:580px;padding:24px;box-shadow:var(--sh3);border:1px solid var(--border)}
+.modal h3{margin:0 0 4px;font-size:19px;font-weight:800}.modal .sub{color:var(--muted);font-size:12.5px;margin:0 0 6px}
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#29231E;color:#fff;padding:11px 18px;border-radius:99px;font-weight:700;font-size:13px;display:none;z-index:90;box-shadow:var(--sh3);max-width:92vw;text-align:center}
+.volta{display:inline-flex;align-items:center;gap:6px;margin-bottom:12px}
+
+/* agenda */
+.sem{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+.dia{background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:8px;min-height:170px;display:flex;flex-direction:column;gap:6px}
+.dia.hoje{border-color:var(--grad);background:#FFF6F0}
+.dia .dh{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);display:flex;justify-content:space-between;align-items:baseline}
+.dia .dh b{font-size:17px;color:var(--text);letter-spacing:0}
+.dia.hoje .dh b{color:var(--grad)}
+.vis{display:block;width:100%;text-align:left;background:#fff;border:1px solid var(--border2);border-left:4px solid var(--grad);border-radius:9px;padding:7px 8px;transition:transform .15s,box-shadow .15s}
+.vis:hover{transform:translateY(-1px);box-shadow:var(--sh2)}
+.vis.feita{border-left-color:var(--green)}
+.vis .h{font-size:11.5px;font-weight:800;color:var(--roxo)}
+.vis .c{font-weight:800;font-size:13px;line-height:1.2;margin:2px 0}
+.vis .t{font-size:11px;color:var(--muted);font-weight:700}
+.dia .nada{font-size:11.5px;color:#B6BAC3;font-weight:700;margin:auto;text-align:center}
+.cli{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;box-shadow:var(--sh1)}
+.cli .av{width:42px;height:42px;border-radius:12px;background:var(--grad);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;flex:none}
+.cli .nome{font-weight:800;font-size:15px}.cli .id{color:var(--muted);font-size:12px;margin-top:2px}
+.cli .dados{display:flex;gap:22px;flex-wrap:wrap;flex:1;color:var(--muted);font-size:12px}.cli .dados b{color:var(--text);font-size:14px;display:block;font-weight:800}
+
+/* ficha */
+.ficha{display:grid;grid-template-columns:1.6fr 1fr;gap:16px;align-items:start}
+.necs{display:flex;flex-wrap:wrap;gap:8px}
+.nec{border:1.5px solid var(--border2);background:#fff;color:var(--muted2);border-radius:12px;padding:9px 13px;font-size:13px;font-weight:800}
+.nec.on{background:#FFF1E8;border-color:var(--grad);color:var(--roxo-esc)}
+.nec.on::before{content:'✓ '}
+.dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:13px;margin:0}
+.dl dt{color:var(--muted);font-weight:700}.dl dd{margin:0;font-weight:700}
+
+/* montar proposta */
+.montar{display:grid;grid-template-columns:1.5fr 1fr;gap:16px;align-items:start}
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+.of{background:#fff;border:1px solid var(--border2);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:6px;position:relative}
+.of .ft{aspect-ratio:4/3;border-radius:10px;background:#fff;display:grid;place-items:center;overflow:hidden}
+.of .ft img{width:100%;height:100%;object-fit:contain}
+.of .ft .semfoto{width:60px;height:60px;border:0;background:var(--s3)}
+.of .full{position:absolute;left:14px;top:14px}
+.of b{font-size:13px;line-height:1.25}
+.of .pr{font-size:17px;font-weight:800}
+.of small{color:var(--muted);font-size:11.5px;font-weight:700}
+.of small.sj{color:var(--full)}
+.of .btn{margin-top:auto}
+.of.sel{border-color:var(--grad);box-shadow:0 0 0 3px rgba(255,90,0,.12)}
+.resumo{position:sticky;top:80px}
+.it{display:grid;grid-template-columns:52px 1fr auto;gap:4px 12px;padding:10px 0;border-top:1px solid var(--border);align-items:center}
+.it .th{width:52px;height:52px;border-radius:10px;border:1px solid var(--border2);background:#fff;display:grid;place-items:center;overflow:hidden;align-self:start}
+.it .th img{width:100%;height:100%;object-fit:contain}
+.it .th svg{width:24px;height:24px;fill:none;stroke:var(--roxo);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.it:first-child{border-top:0}
+.it b{font-size:13px}.it small{color:var(--muted);font-size:11.5px;font-weight:700;display:block}
+.it .v{font-weight:800;text-align:right;white-space:nowrap}
+.qt{display:inline-flex;align-items:center;gap:0;border:1.5px solid var(--border2);border-radius:9px;overflow:hidden;margin-top:4px}
+.qt button{width:28px;height:26px;border:0;background:var(--s3);font-weight:800;color:var(--roxo)}
+.qt span{min-width:28px;text-align:center;font-weight:800;font-size:13px}
+.tira{background:none;border:0;color:var(--red);font-size:11.5px;font-weight:800;padding:0;margin-left:10px}
+.tot{display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:var(--muted2);padding:4px 0}
+.tot.g{font-size:18px;font-weight:800;color:var(--text);border-top:1px solid var(--border2);margin-top:6px;padding-top:10px}
+
+.subabas{order:20;width:100%;display:flex;gap:22px;overflow-x:auto;scrollbar-width:none;border-top:1px solid var(--border);margin:0 -22px -8px;padding:0 22px;width:calc(100% + 44px)}
+.subabas::-webkit-scrollbar{display:none}
+.subabas button{background:none;border:0;border-bottom:3px solid transparent;padding:10px 0 8px;font-weight:800;font-size:13.5px;color:var(--muted);white-space:nowrap}
+.subabas button:hover{color:var(--text)}
+.subabas button.on{color:var(--grad);border-bottom-color:var(--grad)}
+.perfil{width:auto;padding:6px 10px;font-size:12px;font-weight:700;border-style:dashed}
+.planobox.falta{border-color:var(--red);background:#FEF2F2}
+.planobox.falta label{color:var(--red)}
+#login{min-height:100vh;display:grid;place-items:center;padding:24px}
+#login[hidden]{display:none}
+.lg{width:100%;max-width:380px;background:#fff;border:1px solid var(--border);border-radius:20px;padding:30px 28px;box-shadow:var(--sh3)}
+.lg img{height:38px;display:block;margin-bottom:18px}
+.lg h2{margin:0 0 4px;font-size:22px;font-weight:800}
+.lg-erro{color:var(--red);font-weight:700;font-size:13px;margin-top:10px;min-height:16px}
+.sync{font-size:12px;font-weight:700;color:var(--muted)}
+.sync.erro{color:var(--red)}
+.pv-tela iframe{width:100%;height:100%;border:0;display:block;background:var(--bg)}
+.ft-prev{width:64px;height:64px;border-radius:12px;border:1px solid var(--border2);background:#fff;display:grid;place-items:center;overflow:hidden;flex:none}
+.ft-prev img{width:100%;height:100%;object-fit:contain}
+/* necessidades (ficha) */
+.necs{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:10px}
+.nc{border:1.5px solid var(--border2);background:#fff;border-radius:14px;overflow:hidden;transition:border-color .15s,box-shadow .15s}
+.nc.on{border-color:var(--grad);background:#FFF6F0;box-shadow:0 0 0 3px rgba(255,90,0,.10)}
+.nc-b{display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:none;border:0;padding:12px 12px;color:var(--text)}
+.nc-i{width:40px;height:40px;border-radius:11px;background:var(--s3);display:grid;place-items:center;font-size:20px;flex:none}
+.nc.on .nc-i{background:#fff}
+.nc-b b{display:block;font-size:13.5px;font-weight:800;line-height:1.2}
+.nc-b small{display:block;color:var(--muted);font-size:11.5px;font-weight:600;margin-top:2px;line-height:1.25}
+.nc-ck{margin-left:auto;width:22px;height:22px;border-radius:50%;border:1.5px solid var(--border2);flex:none;display:grid;place-items:center;font-size:12px;font-weight:800;color:transparent}
+.nc.on .nc-ck{background:var(--grad);border-color:var(--grad);color:#fff}
+.nc-q{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 12px 11px 63px;font-size:12px;font-weight:800;color:var(--roxo-esc)}
+.nc-q .qt{margin:0;background:#fff}
+input[type=checkbox]{width:auto;padding:0;accent-color:var(--grad)}
+.chk-l{max-height:210px;overflow:auto;border:1.5px solid var(--border2);border-radius:10px;padding:6px;background:var(--s2)}
+.chk-l label{display:flex;align-items:center;gap:9px;margin:0;padding:7px 8px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer}
+.chk-l label:hover{background:#fff}
+.chk-l small{color:var(--muted);font-weight:600;margin-left:auto;white-space:nowrap}
+.chk-l .grp{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:8px 8px 3px}
+.nec-ic{width:40px;height:40px;border-radius:11px;background:var(--s3);display:grid;place-items:center;font-size:20px;flex:none}
+/* seletor de clientes (nova visita) */
+.combo{position:relative}
+.combo input{padding-right:46px}
+.combo-s{position:absolute;right:5px;top:5px;bottom:5px;width:36px;border:0;border-radius:8px;background:var(--s3);color:var(--muted2);font-size:14px}
+.combo-s:hover{background:var(--s4)}
+.combo-l{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:3;background:#fff;border:1.5px solid var(--border2);border-radius:12px;box-shadow:var(--sh2);max-height:230px;overflow:auto;padding:5px}
+.combo-l button{display:block;width:100%;text-align:left;background:none;border:0;border-radius:8px;padding:8px 10px;color:var(--text)}
+.combo-l button:hover,.combo-l button:focus-visible{background:var(--s3)}
+.combo-l b{display:block;font-size:13.5px}.combo-l small{color:var(--muted);font-weight:600;font-size:12px}
+.combo-l .nada{padding:10px;color:var(--muted);font-size:12.5px;font-weight:600}
+.cli-sel{margin-top:10px;padding:11px 13px;border:1.5px solid var(--grad);background:#FFF6F0;border-radius:12px;font-size:13px;font-weight:700;display:flex;gap:10px;align-items:center}
+.cli-sel small{display:block;color:var(--muted2);font-weight:600;margin-top:2px}
+.cli-sel .lnk{margin-left:auto}
+.cli-novo{margin-top:10px;padding:2px 13px 13px;border:1.5px dashed var(--border2);border-radius:12px;background:var(--s2)}
+/* busca da agenda */
+.achados{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.achado{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:#fff;border:1.5px solid var(--border2);border-radius:12px;padding:10px 12px;color:var(--text)}
+.achado:hover{border-color:var(--grad)}
+.achado b{font-size:14px}.achado small{color:var(--muted);font-weight:700;display:block;font-size:12px}
+.achado .tg{margin-left:auto}
+.btn.zap{background:#1FAF5A;border-color:transparent;color:#fff}.btn.zap:hover{background:#19994E}
+.planobox{margin-top:12px;padding:12px;border:1.5px dashed var(--border2);border-radius:12px;background:var(--s2)}
+.planobox label{margin-top:0}
+@media(max-width:900px){.abas{order:9;width:100%;max-width:100%;margin:0}}
+@media(max-width:980px){.finrow{grid-template-columns:1fr 1fr}.ficha,.montar{grid-template-columns:1fr}.resumo{position:static}}
+@media(max-width:760px){
+  main{padding:18px 14px 50px}.card{padding:16px 14px}
+  .sem{grid-template-columns:1fr}.dia{min-height:0}.dia .nada{margin:2px 0;text-align:left}
+  .linha3{grid-template-columns:1fr}.card table{min-width:720px}
+  .card h3 .dir{margin-left:0;width:100%}.busca{width:100%}
+}
+@media(max-width:520px){.linha2{grid-template-columns:1fr}.finrow{grid-template-columns:1fr 1fr;gap:10px}.kpi{padding:12px 14px}.kpi .vl{font-size:22px}}
+
+/* ───────── visualização da proposta ───────── */
+#pv{position:fixed;inset:0;z-index:60;background:#1B1512;display:none;flex-direction:column}
+#pv.on{display:flex}
+.pv-barra{display:flex;align-items:center;gap:10px;padding:10px 14px;color:#fff;flex-wrap:wrap}
+.pv-barra .esp{flex:1}
+.pv-barra .btn{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.18);color:#fff}
+.pv-barra .btn:hover{background:rgba(255,255,255,.18)}
+.pv-barra .btn.on{background:#fff;color:#29231E}
+.pv-barra small{opacity:.7;font-weight:700}
+.pv-palco{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:0 14px 14px}
+.pv-tela{position:relative;overflow:hidden;background:#ECEEF1;box-shadow:0 30px 80px -20px rgba(0,0,0,.7)}
+.pv-tela.cel{width:min(390px,100%);height:min(800px,100%);border-radius:34px;border:8px solid #000}
+.pv-tela.desk{width:100%;height:100%;border-radius:14px}
+
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="login" hidden>
+  <div class="lg">
+    <img src="livefood-logo.png" alt="LiveFood">
+    <h2>Comercial</h2>
+    <p class="sub2">Entre com o seu e-mail e a sua senha.</p>
+    <label for="lg-email">E-mail</label><input id="lg-email" type="email" autocomplete="username" onkeydown="if(event.key==='Enter')entrar()">
+    <label for="lg-senha">Senha</label><input id="lg-senha" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')entrar()">
+    <button class="btn pri" id="lg-btn" style="width:100%;margin-top:18px;padding:13px" onclick="entrar()">Entrar</button>
+    <div class="lg-erro" id="lg-erro"></div>
+  </div>
+</div>
+<div id="app" hidden>
+<header class="topo">
+  <img src="livefood-logo.png" alt="LiveFood"><span class="papel" id="papel">ADMIN</span>
+  <nav class="abas" id="abas" aria-label="Comercial"></nav>
+  <div class="esp"></div>
+  <span class="sync" id="sync"></span>
+  <a class="btn peq" id="lk-admin" href="admin.html">← Admin</a>
+  <button class="btn peq" onclick="sair()">Sair</button>
+  <div class="tb-av" id="av">·</div>
+  <nav class="subabas" id="subabas" aria-label="Seções"></nav>
+</header>
+<main>
+  <div id="conteudo"></div>
+</main>
+</div>
+
+<div class="fundo" id="fundo" onmousedown="window._fd=(event.target===this)" onclick="if(event.target===this&&window._fd)fechar()"><div class="modal" id="modal"></div></div>
+<div id="toast"></div>
+
+<div id="pv">
+  <div class="pv-barra">
+    <button class="btn peq" onclick="pvFechar()">← Voltar ao admin</button>
+    <small id="pv-url"></small>
+    <span class="esp"></span>
+    <button class="btn peq" id="pv-cel" onclick="pvModo('cel')">📱 Celular</button>
+    <button class="btn peq" id="pv-desk" onclick="pvModo('desk')">🖥 Computador</button>
+  </div>
+  <div class="pv-palco"><div class="pv-tela cel" id="pv-tela"></div></div>
+</div>
+
+<script>
+/* ───────── dados (vêm do servidor) ───────── */
+/* ?api=... troca o servidor só em testes locais (localhost) */
+var API=((location.hostname==='localhost'||location.hostname==='127.0.0.1')&&new URLSearchParams(location.search).get('api'))||'https://giro-os-api.nucleofull.workers.dev';
+var HOJE=new Date(); HOJE.setHours(0,0,0,0);
+function iso(d){return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2)}
+function seg(d){var x=new Date(d);var w=(x.getDay()+6)%7;x.setDate(x.getDate()-w);return x}
+var SEG0=seg(HOJE);
+var OFERTAS=[],SERVICOS=[],PRODUTOS=[],ALUGUEIS=[],NECS=[],PLANOS=[],CLIENTES=[],VISITAS=[],PROPOSTAS=[],EQUIPE=[],seq=1000,EU={nome:'',uid:''};
+window._planosReais=true;
+/* necessidades criadas sozinhas no primeiro acesso do administrador (ele vincula os itens e pode mudar tudo) */
+var NECS_PADRAO=[
+ {k:'caixa',n:'Caixa / PDV',d:'computador, tela e gaveta no balcão',i:'🖥️',q:'caixas',sug:[]},
+ {k:'impressao',n:'Impressão de pedidos',d:'cozinha, bar e caixa',i:'🖨️',q:'pontos de impressão',sug:[]},
+ {k:'garcom',n:'Garçom com celular',d:'pedido lançado direto na mesa',i:'📱',q:'celulares',sug:[]},
+ {k:'totem',n:'Totem',d:'o cliente pede sozinho',i:'🤳',q:'totens',sug:[]},
+ {k:'maquininha',n:'Maquininha',d:'cobrança integrada ao pedido',i:'💳',q:'maquininhas',sug:[]},
+ {k:'delivery',n:'Delivery e WhatsApp',d:'pedidos pelo link e pelo Whats',i:'🛵',q:'',sug:[]},
+ {k:'nf',n:'Nota fiscal',d:'nota emitida no caixa',i:'🧾',q:'',sug:[]},
+ {k:'internet',n:'Internet',d:'rede, Wi-Fi ou Starlink',i:'📡',q:'',sug:[]}
+];
+function plano(id){for(var i=0;i<PLANOS.length;i++)if(String(PLANOS[i].id)===String(id))return PLANOS[i];return null}
+
+/* ───────── servidor: login, carga e gravação ───────── */
+var TOKEN='';try{TOKEN=localStorage.getItem('lf_com_jwt')||localStorage.getItem('lf_admin_jwt')||''}catch(e){}
+async function api(m,c,b){
+  try{
+    var h={'Content-Type':'application/json'};if(TOKEN)h.Authorization='Bearer '+TOKEN;
+    var r=await fetch(API+c,{method:m,headers:h,body:b?JSON.stringify(b):undefined});
+    var d=await r.json().catch(function(){return{}});d.http=r.status;return d;
+  }catch(e){return{ok:false,http:0,mensagem:'Sem conexão com o servidor.'}}
+}
+function telaLogin(msg){el('app').hidden=true;el('login').hidden=false;el('lg-erro').textContent=msg||'';el('lg-btn').disabled=false;el('lg-btn').textContent='Entrar'}
+async function entrar(){
+  var e=el('lg-email').value.trim(),s=el('lg-senha').value;if(!e||!s){el('lg-erro').textContent='Informe o e-mail e a senha.';return}
+  el('lg-btn').disabled=true;el('lg-btn').textContent='Entrando…';el('lg-erro').textContent='';
+  TOKEN='';var d=await api('POST','/auth/login',{email:e,senha:s});
+  if(!d.ok||!d.token){telaLogin(d.mensagem||'Não consegui entrar.');return}
+  var p=d.usuario&&d.usuario.perfil;if(p!=='master'&&p!=='vendedor'){telaLogin('Esse usuário não tem acesso ao Comercial.');return}
+  TOKEN=d.token;try{localStorage.setItem('lf_com_jwt',TOKEN)}catch(x){}
+  el('lg-senha').value='';carregar();
+}
+function sair(){try{localStorage.removeItem('lf_com_jwt')}catch(e){}TOKEN='';telaLogin('')}
+/* cada cadastro é uma linha no servidor. SNAP guarda a última versão gravada: depois de cada ação da tela, o que mudou é enviado */
+var CAT={oferta:1,produto:1,servico:1,aluguel:1,nec:1},SNAP={},carregado=false;
+function cols(){return{oferta:OFERTAS,produto:PRODUTOS,servico:SERVICOS,aluguel:ALUGUEIS,nec:NECS,cliente:CLIENTES,visita:VISITAS,proposta:PROPOSTAS}}
+async function carregar(){
+  if(!TOKEN){telaLogin('');return}
+  var d=await api('GET','/comercial/tudo');
+  if(!d.ok){telaLogin(d.http===401||d.http===403?'':(d.mensagem||'Não consegui carregar. Tente de novo.'));return}
+  perfil=d.usuario.perfil;EU=d.usuario;seq=d.seq;
+  PLANOS=(d.planos||[]).map(function(p){return{id:String(p.id),nome:p.nome,desc:p.descricao||'',preco:p.preco}});
+  var x=d.docs||{};OFERTAS=x.oferta||[];PRODUTOS=x.produto||[];SERVICOS=x.servico||[];ALUGUEIS=x.aluguel||[];CLIENTES=x.cliente||[];VISITAS=x.visita||[];PROPOSTAS=x.proposta||[];
+  NECS=(x.nec||[]).sort(function(a,b){return (a.ordem||0)-(b.ordem||0)});
+  var c=cols();for(var k in c){SNAP[k]={};c[k].forEach(function(o){SNAP[k][o.id]=JSON.stringify(o)})}
+  if(perfil==='admin'&&!NECS.length)NECS=NECS_PADRAO.map(function(n){var o=JSON.parse(JSON.stringify(n));o.id=++seq;return o});
+  if(perfil==='admin'){var e=await api('GET','/comercial/equipe');EQUIPE=e.equipe||[]}
+  el('login').hidden=true;el('app').hidden=false;
+  el('av').textContent=(EU.nome||'?').charAt(0).toUpperCase();el('av').title=EU.nome||'';el('lk-admin').hidden=perfil!=='admin';
+  carregado=true;desenhar();
+}
+var gravando=false,deNovo=false,tSync=null;
+function avisoSync(txt,erro){var s=el('sync');s.textContent=txt;s.className='sync'+(erro?' erro':'')}
+async function sincronizar(){
+  if(!carregado)return;
+  if(gravando){deNovo=true;return}
+  gravando=true;clearTimeout(tSync);
+  var falhou='',mudou=false,gravou=false;
+  try{
+    NECS.forEach(function(n,i){n.ordem=i});
+    var c=cols();
+    for(var col in c){
+      if(CAT[col]&&perfil!=='admin')continue;
+      var lista=c[col],vistos={};
+      for(var i=0;i<lista.length;i++){
+        var d=lista[i];vistos[d.id]=1;
+        var js=JSON.stringify(d);if(SNAP[col][d.id]===js)continue;
+        if(!gravou){gravou=true;avisoSync('Salvando…')}
+        var r=await api('POST','/comercial/salvar',{col:col,doc:d});
+        if(r.http===401){telaLogin('Sua sessão expirou. Entre de novo.');return}
+        if(!r.ok){falhou=r.mensagem||'Não consegui salvar.';continue}
+        if(r.doc){for(var k in r.doc){if(JSON.stringify(d[k])!==JSON.stringify(r.doc[k])){d[k]=r.doc[k];mudou=true}}}
+        SNAP[col][d.id]=JSON.stringify(d);
+      }
+      for(var id in SNAP[col]){
+        if(vistos[id])continue;
+        if(!gravou){gravou=true;avisoSync('Salvando…')}
+        var ra=await api('POST','/comercial/apagar',{col:col,id:+id});
+        if(ra.ok)delete SNAP[col][id];else falhou=ra.mensagem||'Não consegui apagar.';
+      }
+    }
+  }finally{gravando=false}
+  if(falhou){avisoSync('Não salvou: '+falhou,true);tSync=setTimeout(sincronizar,15000)}
+  else if(gravou)avisoSync('Tudo salvo');
+  if(mudou&&!tela)desenhar();
+  else if(deNovo){deNovo=false;sincronizar()}
+}
+function urlProp(p){return new URL('proposta.html?p='+encodeURIComponent(p.slug||''),location.href).href.replace(/([?&])api=[^&]*&?/,'$1')}
+function zap(fone,msg){
+  var d=String(fone||'').replace(/\D/g,'');if(d.length<10){toast('Esse cliente está sem WhatsApp com DDD.');return}
+  if(d.length<=11)d='55'+d;
+  window.open('https://wa.me/'+d+(msg?'?text='+encodeURIComponent(msg):''),'_blank','noopener');
+}
+/* foto: endereço de imagem ou arquivo (reduzido para caber no cadastro) */
+function fotoCampo(atual){
+  atual=atual||'';
+  return '<label>Foto</label><div style="display:flex;gap:12px;align-items:center"><span class="ft-prev" id="ft-prev">'+(atual?'<img src="'+esc(atual)+'" alt="">':'')+'</span><div style="flex:1;min-width:0"><input id="ft-url" placeholder="cole o endereço da imagem (https://...)" value="'+(atual.indexOf('data:')===0?'':esc(atual))+'" oninput="fotoUrl(this.value)"><input type="file" accept="image/*" onchange="fotoArq(this.files[0])" style="margin-top:6px"></div></div><input type="hidden" id="ft-val" value="'+esc(atual)+'">';
+}
+function fotoUrl(v){v=v.trim();el('ft-val').value=v;el('ft-prev').innerHTML=v?'<img src="'+esc(v)+'" alt="">':''}
+function fotoArq(f){
+  if(!f)return;var r=new FileReader();
+  r.onload=function(){var im=new Image();im.onload=function(){
+    var k=Math.min(1,600/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);
+    var x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);
+    var d=c.toDataURL('image/jpeg',.82);el('ft-val').value=d;el('ft-url').value='';el('ft-prev').innerHTML='<img src="'+d+'" alt="">';
+  };im.src=r.result};
+  r.readAsDataURL(f);
+}
+function fotoVal(){var e=el('ft-val');return e?e.value:''}
+
+/* ───────── utilidades ───────── */
+function el(i){return document.getElementById(i)}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function R(v){return 'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function parc(o){return o.parc+'x '+R(o.preco/o.parc)+' sem juros'}
+function acha(l,id){for(var i=0;i<l.length;i++)if(l[i].id===id)return l[i];return null}
+function item(i){return i.t==='o'?acha(OFERTAS,i.id):i.t==='p'?acha(PRODUTOS,i.id):i.t==='a'?acha(ALUGUEIS,i.id):acha(SERVICOS,i.id)}
+function mes(i){return i.t==='a'?'/mês':''}
+function ico(i,x){return x.img?'<img src="'+x.img+'" alt="">':i.t==='s'?IC_SERV:i.t==='p'?IC_NFC:IC_CX}
+function somas(itens){var p=0,s=0,m=0;itens.forEach(function(i){var x=item(i);if(!x)return;if(i.t==='o')p+=x.preco*i.q;else if(i.t==='a')m+=x.preco*i.q;else s+=x.preco*i.q});return{p:p,s:s,t:p+s,m:m}}
+function dataBr(s){var p=s.split('-');return p[2]+'/'+p[1]}
+function dh(ts,sep){var d=new Date(ts||Date.now()),z=function(n){return ('0'+n).slice(-2)};return z(d.getDate())+'/'+z(d.getMonth()+1)+'/'+d.getFullYear()+(sep||' às ')+z(d.getHours())+':'+z(d.getMinutes())}
+function sem(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')}
+function slug(s){return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')}
+function ha(min){return min<1?'agora':min<60?'há '+min+' min':'há '+Math.round(min/60)+' h'}
+var tT;function toast(m){var t=el('toast');t.textContent=m;t.style.display='block';clearTimeout(tT);tT=setTimeout(function(){t.style.display='none'},2600)}
+function abrir(h){el('modal').innerHTML=h;el('fundo').classList.add('on')}
+function fechar(){el('fundo').classList.remove('on')}
+var IC_SERV='<svg viewBox="0 0 24 24"><path d="M14.5 6.5a4 4 0 0 0-5 5L4 17l3 3 5.5-5.5a4 4 0 0 0 5-5l-2.5 2.5-2.5-.5-.5-2.5z"/></svg>';
+var IC_CX='<svg viewBox="0 0 24 24"><path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>';
+var IC_NFC='<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M9 15a4 4 0 0 0 0-6M12 17a7 7 0 0 0 0-10M15 15.5a5 5 0 0 0 0-7"/></svg>';
+function foto(o){return o.img?'<img src="'+o.img+'" alt="">':'<span class="semfoto">'+IC_CX+'</span>'}
+var TG={agendada:'<span class="tg pend">Agendada</span>',atendida:'<span class="tg ok">Atendida</span>',rascunho:'<span class="tg neu">Rascunho</span>',enviada:'<span class="tg azul">Enviada</span>',aprovada:'<span class="tg ok">Aprovada</span>'};
+
+/* ───────── navegação ───────── */
+/* Comercial tem dois caminhos: Proposta Comercial (admin e representante) e Catálogo de produtos (só admin) */
+var SECOES=[['prop','Proposta Comercial',[['agenda','Agenda'],['atend','Atendimentos'],['prop','Propostas']]],['cat','Catálogo de produtos',[['ofertas','Mercado Livre'],['prods','Produtos LiveFood'],['serv','Implantação e serviços'],['alug','Aluguel de equipamentos'],['necs','Necessidades do cliente']]],['equipe','Equipe',[['equipe','Representantes']]]];
+var aba='agenda',tela=null,semOff=0,perfil='admin';
+function secDe(a){for(var i=0;i<SECOES.length;i++)for(var j=0;j<SECOES[i][2].length;j++)if(SECOES[i][2][j][0]===a)return SECOES[i];return SECOES[0]}
+function ir(a){aba=a;tela=null;desenhar()}
+function desenhar(){
+  if(perfil==='rep'&&secDe(aba)[0]!=='prop'){aba='agenda';tela=null}
+  var sec=secDe(aba);
+  el('papel').textContent=perfil==='rep'?'REPRESENTANTE':'ADMIN';
+  el('abas').innerHTML=SECOES.filter(function(s){return perfil==='admin'||s[0]==='prop'}).map(function(s){return '<button class="aba'+(s===sec?' on':'')+'" onclick="ir(\''+s[2][0][0]+'\')">'+s[1]+'</button>'}).join('');
+  el('subabas').innerHTML=sec[2].map(function(a){return '<button class="'+(a[0]===aba&&!tela?'on':'')+'" onclick="ir(\''+a[0]+'\')">'+a[1]+'</button>'}).join('');
+  var h='';
+  if(tela&&tela.t==='ficha')h=vFicha(tela.id);
+  else if(tela&&tela.t==='montar')h=vMontar();
+  else h={agenda:vAgenda,atend:vAtend,prop:vProp,ofertas:vOfertas,prods:vProdutos,serv:vServ,alug:vAlug,necs:vNecs,equipe:vEquipe}[aba]();
+  el('conteudo').innerHTML=h;
+  sincronizar();
+}
+
+/* ───────── agenda ───────── */
+var DS=['seg','ter','qua','qui','sex','sáb','dom'],MES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+function vAgenda(){
+  var ini=new Date(SEG0);ini.setDate(ini.getDate()+semOff*7);var fim=new Date(ini);fim.setDate(fim.getDate()+6);
+  var noPer=VISITAS.filter(function(v){return v.data>=iso(ini)&&v.data<=iso(fim)});
+  var h='<div class="finrow">'+
+   kpi('Visitas na semana',noPer.length,'')+kpi('Atendimentos feitos',VISITAS.filter(function(v){return v.status==='atendida'}).length,'')+
+   kpi('Propostas enviadas',PROPOSTAS.filter(function(p){return p.status!=='rascunho'}).length,'vo')+kpi('Aprovadas',PROPOSTAS.filter(function(p){return p.status==='aprovada'}).length,'vg')+'</div>';
+  h+='<div class="card"><h3><span>Semana de '+ini.getDate()+(ini.getMonth()!==fim.getMonth()?' '+MES[ini.getMonth()]:'')+' a '+fim.getDate()+' de '+MES[fim.getMonth()]+'</span>'+
+   '<span class="dir"><input class="busca" id="ag-busca" placeholder="🔍 buscar cliente" value="'+esc(agBusca)+'" oninput="agBusca=this.value;el(\'ag-achados\').innerHTML=achados()"><button class="btn peq" onclick="semOff--;desenhar()" aria-label="Semana anterior">‹</button><button class="btn peq" onclick="semOff=0;desenhar()">Hoje</button><button class="btn peq" onclick="semOff++;desenhar()" aria-label="Próxima semana">›</button><button class="btn pri peq" onclick="novaVisita()">+ Nova visita</button></span></h3><div id="ag-achados">'+achados()+'</div><div class="sem">';
+  for(var i=0;i<7;i++){var d=new Date(ini);d.setDate(d.getDate()+i);var k=iso(d);
+    var vs=VISITAS.filter(function(v){return v.data===k}).sort(function(a,b){return a.hora<b.hora?-1:1});
+    h+='<div class="dia'+(k===iso(HOJE)?' hoje':'')+'"><div class="dh"><span>'+DS[i]+(k===iso(HOJE)?' · hoje':'')+'</span><b>'+d.getDate()+'</b></div>'+
+     (vs.length?vs.map(function(v){return '<button class="vis'+(v.status==='atendida'?' feita':'')+'" onclick="abrirFicha('+v.id+')"><div class="h">'+v.hora+'</div><div class="c">'+esc(v.cliente)+'</div><div class="t">'+esc(v.tipo)+(v.status==='atendida'?' · atendida':'')+'</div></button>'}).join(''):'<div class="nada">sem visitas</div>')+'</div>';}
+  h+='</div><p class="sub2" style="margin:12px 2px 0">Toque em uma visita para abrir a ficha de atendimento.</p></div>';
+  return h;
+}
+var agBusca='';
+function achados(){
+  var b=sem(agBusca.trim());if(!b)return '';
+  var l=VISITAS.filter(function(v){return sem(v.cliente+' '+v.contato+' '+v.end).indexOf(b)>=0}).sort(function(a,c){return (c.data+c.hora)<(a.data+a.hora)?-1:1});
+  return '<div class="achados">'+(l.length?l.map(function(v){return '<button class="achado" onclick="abrirFicha('+v.id+')"><span><b>'+esc(v.cliente)+'</b><small>'+dataBr(v.data)+' às '+v.hora+' · '+esc(v.tipo)+' · '+esc(v.contato||'')+'</small></span>'+TG[v.status]+'<span class="lnk">Abrir ficha →</span></button>'}).join(''):'<div class="info" style="margin:0">Nenhum cliente com esse nome. <button class="lnk" onclick="novaVisita(agBusca)">+ Agendar visita para “'+esc(agBusca)+'”</button></div>')+'</div>';
+}
+function kpi(l,v,c){return '<div class="kpi"><div class="lb">'+l+'</div><div class="vl '+c+'">'+v+'</div></div>'}
+function novaVisita(nome){
+  abrir('<h3>Nova visita</h3><p class="sub">Agende a visita. A ficha de atendimento fica pronta para o dia.</p>'+
+   '<div id="nv-cliente"></div>'+
+   '<div class="linha3"><div><label>Data</label><input id="nv-data" type="date" value="'+iso(HOJE)+'" oninput="nvAgenda()"></div><div><label>Hora</label><input id="nv-hora" type="time" value="10:00" oninput="nvAgenda()"></div><div><label>Tipo</label><select id="nv-tipo"><option>Primeira visita</option><option>Retorno</option><option>Implantação</option><option>Treinamento</option></select></div></div>'+
+   '<div id="nv-dia" aria-live="polite"></div>'+
+   '<div class="acoes"><button class="btn" onclick="fechar()">Cancelar</button><button class="btn pri" onclick="salvarVisita()">Salvar visita</button></div>');
+  NV={cli:null,novo:!!nome,nome:nome||''};nvDesenha();nvAgenda();
+}
+/* agenda sem choque: a mesma pessoa não marca duas visitas com menos de 1 hora entre elas */
+var INTERVALO_MIN=60;
+function minutos(h){var p=String(h||'0:0').split(':');return (+p[0]||0)*60+(+p[1]||0)}
+function minhas(data){return VISITAS.filter(function(v){return v.data===data&&v.status!=='cancelada'&&(v.dono||EU.uid)===EU.uid}).sort(function(a,b){return a.hora<b.hora?-1:1})}
+function conflito(data,hora,ignora){var m=minutos(hora);return minhas(data).filter(function(v){return v.id!==ignora&&Math.abs(minutos(v.hora)-m)<INTERVALO_MIN})[0]||null}
+function nvAgenda(){
+  var c=el('nv-dia');if(!c)return;
+  var d=el('nv-data').value||iso(HOJE),h=el('nv-hora').value||'10:00',l=minhas(d),x=conflito(d,h,0);
+  c.innerHTML=l.length?'<div class="'+(x?'aviso':'info')+'" style="margin:12px 0 0">'+(x?'<b>Horário ocupado.</b> Você já tem visita em '+esc(x.cliente)+' às '+x.hora+'. Deixe pelo menos 1 hora de intervalo.<br>':'')+'Visitas neste dia: '+l.map(function(v){return '<b>'+v.hora+'</b> '+esc(v.cliente)}).join(' · ')+'</div>':'';
+}
+/* seletor: digita ou abre a lista para escolher um cliente cadastrado; "Novo cliente" abre o cadastro rápido */
+var NV={cli:null,novo:false,nome:''};
+function nvDesenha(){
+  var c=NV.cli?acha(CLIENTES,NV.cli):null,h;
+  if(NV.novo)h='<label>Novo cliente</label><div class="cli-novo"><label>Nome do estabelecimento</label><input id="nv-nome" placeholder="ex.: Padaria do Centro" value="'+esc(NV.nome)+'">'+
+    '<div class="linha2"><div><label>Contato</label><input id="nv-con" placeholder="quem vai receber"></div><div><label>WhatsApp</label><input id="nv-wa" inputmode="tel" placeholder="(47) 99999-0000"></div></div>'+
+    '<label>Endereço</label><input id="nv-end" placeholder="rua, número, cidade"></div><p style="margin:8px 0 0"><button class="lnk" onclick="NV.novo=false;nvDesenha()">← Escolher um cliente já cadastrado</button></p>';
+  else h='<label for="nv-cli">Cliente</label><div class="combo"><input id="nv-cli" role="combobox" aria-expanded="false" aria-controls="nv-lista" autocomplete="off" placeholder="digite o nome ou abra a lista" value="'+esc(c?c.nome:NV.nome)+'" oninput="NV.cli=null;NV.nome=this.value;el(\'nv-sel\').innerHTML=\'\';nvLista(true)" onfocus="nvLista(true)"><button class="combo-s" type="button" onclick="nvLista()" aria-label="Mostrar clientes cadastrados">▾</button><div class="combo-l" id="nv-lista" role="listbox" hidden></div></div>'+
+    '<div id="nv-sel">'+(c?nvSel(c):'')+'</div><p style="margin:10px 0 0"><button class="btn peq" onclick="nvNovo()">+ Novo cliente</button></p>';
+  el('nv-cliente').innerHTML=h;
+  if(NV.novo)el('nv-nome').focus();
+}
+function nvSel(c){return '<div class="cli-sel"><span>✓ '+esc(c.nome)+'<small>'+esc(c.contato||'')+' · '+esc(c.whats||'')+' · '+esc(c.end||'')+'</small></span></div>'}
+function nvLista(abre){
+  var l=el('nv-lista'),inp=el('nv-cli');if(!l)return;
+  if(abre===undefined)abre=l.hidden;
+  if(!abre){l.hidden=true;inp.setAttribute('aria-expanded','false');return}
+  var b=sem(NV.cli?'':inp.value.trim());
+  var r=CLIENTES.filter(function(c){return sem(c.nome+' '+c.contato).indexOf(b)>=0}).sort(function(a,c){return a.nome<c.nome?-1:1});
+  l.innerHTML=r.length?r.map(function(c){return '<button type="button" role="option" onclick="nvEscolhe('+c.id+')"><b>'+esc(c.nome)+'</b><small>'+esc(c.contato||'')+' · '+esc(c.end||'')+'</small></button>'}).join(''):'<div class="nada">Nenhum cliente com esse nome. Toque em “Novo cliente” para cadastrar.</div>';
+  l.hidden=false;inp.setAttribute('aria-expanded','true');
+}
+function nvEscolhe(id){NV.cli=id;NV.nome='';nvDesenha()}
+function nvNovo(){var i=el('nv-cli');NV.novo=true;NV.cli=null;NV.nome=i?i.value.trim():NV.nome;nvDesenha()}
+document.addEventListener('click',function(e){var l=el('nv-lista');if(l&&!l.hidden&&!e.target.closest('.combo'))nvLista(false)});
+function salvarVisita(){
+  var cl,dt=el('nv-data').value||iso(HOJE),hr=el('nv-hora').value||'10:00',cf=conflito(dt,hr,0);
+  if(cf){nvAgenda();toast('Você já tem visita em '+cf.cliente+' às '+cf.hora+'. Deixe pelo menos 1 hora de intervalo.');return}
+  if(NV.novo){
+    var n=el('nv-nome').value.trim();if(!n){toast('Informe o nome do estabelecimento.');return}
+    cl={id:++seq,nome:n,contato:el('nv-con').value.trim(),whats:el('nv-wa').value.trim(),end:el('nv-end').value.trim()};CLIENTES.push(cl);
+  }else{
+    cl=NV.cli?acha(CLIENTES,NV.cli):null;
+    if(!cl){toast('Escolha um cliente da lista ou toque em Novo cliente.');return}
+  }
+  VISITAS.push({id:++seq,cliente:cl.nome,contato:cl.contato,whats:cl.whats,end:cl.end,tipo:el('nv-tipo').value,data:dt,hora:hr,status:'agendada',ficha:null});
+  fechar();toast('Visita agendada.');desenhar();
+}
+
+/* ───────── atendimentos ───────── */
+function vAtend(){
+  var l=VISITAS.slice().sort(function(a,b){return (b.data+b.hora)<(a.data+a.hora)?-1:1});
+  return '<div class="card"><h3><span>Atendimentos</span><span class="sub2">'+l.length+' visitas</span><span class="dir"><button class="lnk" onclick="novaVisita()">+ Nova visita</button></span></h3>'+
+   l.map(function(v){var p=PROPOSTAS.filter(function(x){return x.visita===v.id})[0];
+    return '<div class="cli"><div class="av">'+esc(v.cliente.charAt(0))+'</div><div style="min-width:170px"><div class="nome">'+esc(v.cliente)+'</div><div class="id">'+esc(v.contato||'')+' · '+esc(v.whats||'')+'</div></div>'+
+     '<div class="dados"><div><b>'+dataBr(v.data)+' · '+v.hora+'</b>'+esc(v.tipo)+'</div><div><b>'+TG[v.status]+'</b>visita</div><div><b>'+(p?TG[p.status]:'<span class="tg off">Sem proposta</span>')+'</b>proposta</div></div>'+
+     '<button class="btn peq" onclick="abrirFicha('+v.id+')">Abrir ficha</button></div>'}).join('')+'</div>';
+}
+function abrirFicha(id){tela={t:'ficha',id:id};desenhar();scrollTo(0,0)}
+function vFicha(id){
+  var v=acha(VISITAS,id),f=v.ficha||{nec:{}},p=PROPOSTAS.filter(function(x){return x.visita===id})[0];
+  window._nec=JSON.parse(JSON.stringify(f.nec||{}));
+  return '<button class="btn peq volta" onclick="tela=null;desenhar()">← Voltar</button>'+
+  '<div class="ficha"><div>'+
+   '<div class="card"><h3><span>O que o cliente precisa</span><span class="sub2">marque o que foi conversado</span></h3>'+
+    '<div class="necs" id="necs">'+necsHtml()+'</div></div>'+
+   '<div class="card"><h3><span>Registro do atendimento</span><span class="sub2">anote enquanto conversa com o cliente</span></h3>'+
+    '<textarea id="f-ped" style="min-height:150px" placeholder="o que foi conversado, dores do cliente, o que ele pediu">'+esc(f.pedido||'')+'</textarea>'+
+    '<div class="linha2"><div><label>Mesas</label><input id="f-mesas" type="number" min="0" value="'+esc(f.mesas||'')+'" placeholder="0"></div><div><label>Como trabalha hoje</label><input id="f-sis" value="'+esc(f.sistema||'')+'" placeholder="sistema atual, caderno, maquininha"></div></div>'+
+    '<div class="linha2"><div><label>Próximo passo</label><select id="f-prox">'+['Enviar proposta','Aguardar resposta','Marcar retorno','Agendar implantação','Sem interesse'].map(function(o){return '<option'+(f.proximo===o?' selected':'')+'>'+o+'</option>'}).join('')+'</select></div><div><label>Até quando</label><input id="f-pdata" type="date" value="'+esc(f.proxData||'')+'"></div></div>'+
+    '<div class="acoes"><button class="btn" onclick="salvarFicha('+id+',false)">Salvar atendimento</button><button class="btn pri" onclick="salvarFicha('+id+',true)">'+(p?'Abrir proposta':'Montar proposta')+' →</button></div></div>'+
+  '</div><div>'+
+   '<div class="card"><h3><span>'+esc(v.cliente)+'</span>'+TG[v.status]+'</h3><dl class="dl"><dt>Visita</dt><dd>'+dataBr(v.data)+' às '+v.hora+' · '+esc(v.tipo)+'</dd><dt>Contato</dt><dd>'+esc(v.contato||'—')+'</dd><dt>WhatsApp</dt><dd>'+esc(v.whats||'—')+'</dd><dt>Endereço</dt><dd>'+esc(v.end||'—')+'</dd></dl><div style="margin-top:14px"><button class="btn peq zap" onclick="zap(VISITAS.filter(function(x){return x.id==='+id+'})[0].whats,\'\')">Abrir WhatsApp</button></div></div>'+
+   '<div class="card"><h3><span>Proposta</span>'+(p?TG[p.status]:'')+'</h3>'+(p?'<p class="sub2" style="margin:0 0 12px">'+p.itens.length+' itens · '+R(somas(p.itens).t)+'</p><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn peq" onclick="montar('+p.id+')">Editar</button><button class="btn peq pri" onclick="pvAbrir(acha(PROPOSTAS,'+p.id+'))">Ver proposta</button></div>':'<p class="sub2" style="margin:0">Ainda não tem proposta. Ao montar, os itens já vêm sugeridos pelo que você marcou ao lado.</p>')+'</div>'+
+  '</div></div>';
+}
+function necsHtml(){
+  return NECS.map(function(n){var q=window._nec[n.k]||0;
+   return '<div class="nc'+(q?' on':'')+'"><button class="nc-b" onclick="nec(\''+n.k+'\',0)" aria-pressed="'+(q?'true':'false')+'"><span class="nc-i">'+n.i+'</span><span><b>'+n.n+'</b><small>'+n.d+'</small></span><span class="nc-ck">✓</span></button>'+
+    (q&&n.q?'<div class="nc-q"><span>'+n.q+'</span><span class="qt"><button onclick="nec(\''+n.k+'\',-1)" aria-label="Menos">−</button><span>'+q+'</span><button onclick="nec(\''+n.k+'\',1)" aria-label="Mais">+</button></span></div>':'')+'</div>'}).join('');
+}
+function nec(k,d){var q=window._nec[k]||0;window._nec[k]=d?Math.max(1,q+d):(q?0:1);el('necs').innerHTML=necsHtml()}
+function salvarFicha(id,segue){
+  var v=acha(VISITAS,id);
+  v.ficha={nec:window._nec,mesas:+el('f-mesas').value||0,sistema:el('f-sis').value,pedido:el('f-ped').value,proximo:el('f-prox').value,proxData:el('f-pdata').value};
+  v.status='atendida';
+  if(!segue){toast('Atendimento salvo.');desenhar();return}
+  var p=PROPOSTAS.filter(function(x){return x.visita===id})[0];
+  if(p)montar(p.id);else montarNova(v);
+}
+
+/* ───────── montar proposta ───────── */
+var rasc=null,mFiltro='todos',mBusca='';
+function sugerir(v){
+  var f=v.ficha||{nec:{}},n=f.nec||{},it=[];
+  NECS.forEach(function(nc){var q=n[nc.k]||0;if(!q)return;
+    (nc.sug||[]).forEach(function(s){var t=s.split(':')[0],id=+s.split(':')[1];if(!item({t:t,id:id}))return;
+      var ja=it.filter(function(x){return x.t===t&&x.id===id})[0];if(ja)ja.q+=q;else it.push({t:t,id:id,q:q})})});
+  var im=SERVICOS.filter(function(x){return x.tipo==='impl'&&x.ativo})[0];if(im)it.push({t:'s',id:im.id,q:1});   /* primeira implantação ativa do catálogo */
+  return it;
+}
+function montarNova(v){rasc={id:0,visita:v.id,cliente:v.cliente,status:'rascunho',plano:'',itens:sugerir(v),nova:true};tela={t:'montar'};mFiltro='todos';mBusca='';desenhar();scrollTo(0,0);toast('Itens sugeridos pelo atendimento. Ajuste à vontade.')}
+function montar(pid){var p=acha(PROPOSTAS,pid);rasc=JSON.parse(JSON.stringify(p));rasc.itens=rasc.itens.filter(function(i){return !!item(i)});   /* item apagado do catálogo sai da proposta */tela={t:'montar'};mFiltro='todos';mBusca='';desenhar();scrollTo(0,0)}
+function naLista(t,id){for(var i=0;i<rasc.itens.length;i++)if(rasc.itens[i].t===t&&rasc.itens[i].id===id)return rasc.itens[i];return null}
+function vMontar(){
+  return '<button class="btn peq volta" onclick="sairMontar()">← Voltar</button>'+
+  '<div class="montar"><div class="card"><h3><span>Catálogo</span><span class="sub2">ofertas do LiveMarket e serviços</span><span class="dir"><input class="busca" id="m-busca" placeholder="buscar produto" value="'+esc(mBusca)+'" oninput="mBusca=this.value;el(\'m-cat\').innerHTML=catHtml()"></span></h3>'+
+   '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">'+[['todos','Tudo'],['full','⚡ Só Full'],['lf','Produtos LiveFood'],['serv','Serviços'],['alug','Aluguel']].map(function(c){return '<button class="chip'+(mFiltro===c[0]?' on':'')+'" onclick="mFiltro=\''+c[0]+'\';desenhar()">'+c[1]+'</button>'}).join('')+'</div>'+
+   '<div class="cat-grid" id="m-cat">'+catHtml()+'</div></div>'+
+  '<div class="card resumo" id="m-res">'+resHtml()+'</div></div>';
+}
+function catHtml(){
+  var b=mBusca.toLowerCase(),h='';
+  if(mFiltro==='todos'||mFiltro==='full'){
+    OFERTAS.filter(function(o){return o.loja&&(mFiltro!=='full'||o.full)&&(o.nome+' '+o.det+' '+o.cat).toLowerCase().indexOf(b)>=0})
+     .sort(function(a,c){return (c.full?1:0)-(a.full?1:0)})
+     .forEach(function(o){var s=naLista('o',o.id);
+      h+='<div class="of'+(s?' sel':'')+'">'+(o.full?'<span class="full">⚡ FULL</span>':'')+'<div class="ft">'+foto(o)+'</div><b>'+esc(o.nome)+'</b><small>'+esc(o.det)+(o.usado?' · usado':'')+'</small><div class="pr">'+R(o.preco)+'</div><small class="sj">'+parc(o)+'</small>'+
+       '<button class="btn peq'+(s?'':' pri')+'" onclick="add(\'o\','+o.id+')">'+(s?'Na proposta ('+s.q+') · +1':'+ Adicionar')+'</button></div>'});
+  }
+  if(mFiltro==='todos'||mFiltro==='lf'){
+    PRODUTOS.filter(function(o){return o.ativo&&(o.nome+' '+o.det).toLowerCase().indexOf(b)>=0}).forEach(function(o){var s=naLista('p',o.id);
+      h+='<div class="of'+(s?' sel':'')+'"><div class="ft"><span class="semfoto">'+IC_NFC+'</span></div><b>'+esc(o.nome)+'</b><small>'+esc(o.det)+' · produto LiveFood</small><div class="pr">'+R(o.preco)+'</div><small>por '+esc(o.un)+'</small>'+
+       '<button class="btn peq'+(s?'':' pri')+'" onclick="add(\'p\','+o.id+')">'+(s?'Na proposta ('+s.q+') · +1':'+ Adicionar')+'</button></div>'});
+  }
+  if(mFiltro==='todos'||mFiltro==='serv'){
+    SERVICOS.filter(function(o){return o.ativo&&o.tipo!=='impl'&&(o.nome+' '+o.det).toLowerCase().indexOf(b)>=0}).forEach(function(o){var s=naLista('s',o.id);
+      h+='<div class="of'+(s?' sel':'')+'"><div class="ft"><span class="semfoto">'+IC_SERV+'</span></div><b>'+esc(o.nome)+'</b><small>'+esc(o.det)+' · serviço LiveFood</small><div class="pr">'+R(o.preco)+'</div><small>cobrança '+o.cobr+'</small>'+
+       '<button class="btn peq'+(s?'':' pri')+'" onclick="add(\'s\','+o.id+')">'+(s?'Na proposta ('+s.q+') · +1':'+ Adicionar')+'</button></div>'});
+  }
+  if(mFiltro==='todos'||mFiltro==='alug'){
+    ALUGUEIS.filter(function(o){return o.ativo&&(o.nome+' '+o.det).toLowerCase().indexOf(b)>=0}).forEach(function(o){var s=naLista('a',o.id);
+      h+='<div class="of'+(s?' sel':'')+'"><span class="tg azul" style="position:absolute;left:14px;top:14px">ALUGUEL</span><div class="ft">'+foto(o)+'</div><b>'+esc(o.nome)+'</b><small>'+esc(o.det)+'</small><div class="pr">'+R(o.preco)+'<small>/mês</small></div><small>contrato mínimo de '+o.min+' meses</small>'+
+       '<button class="btn peq'+(s?'':' pri')+'" onclick="add(\'a\','+o.id+')">'+(s?'Na proposta ('+s.q+') · +1':'+ Adicionar')+'</button></div>'});
+  }
+  return h||'<div class="vazio" style="grid-column:1/-1">Nada encontrado.</div>';
+}
+function resHtml(){
+  var s=somas(rasc.itens);
+  return '<h3><span>'+esc(rasc.cliente)+'</span>'+TG[rasc.status]+'</h3>'+
+   (rasc.itens.length?rasc.itens.map(function(i,k){var x=item(i);return '<div class="it"><span class="th">'+ico(i,x)+'</span><div><b>'+esc(x.nome)+'</b><small>'+(i.t==='o'?(x.full?'⚡ Full · ':'')+R(x.preco)+' cada · '+parc(x):(i.t==='a'?'aluguel · '+R(x.preco)+'/mês cada · mínimo '+x.min+' meses':i.t==='p'?'produto LiveFood · '+R(x.preco)+' cada':(x.tipo==='impl'?'implantação':'serviço LiveFood')+' · '+R(x.preco)+(pgTxt(x.pg)?' · '+pgTxt(x.pg):'')))+'</small><span class="qt"><button onclick="qtd('+k+',-1)" aria-label="Menos">−</button><span>'+i.q+'</span><button onclick="qtd('+k+',1)" aria-label="Mais">+</button></span><button class="tira" onclick="rasc.itens.splice('+k+',1);refMontar()">remover</button></div><div class="v">'+R(x.preco*i.q)+mes(i)+'</div></div>'}).join(''):'<div class="vazio">Adicione itens do catálogo.</div>')+
+   '<div class="planobox"><label>Tipo de implantação</label><select onchange="setImpl(+this.value)"><option value="0">Sem implantação</option>'+SERVICOS.filter(function(x){return x.tipo==='impl'&&x.ativo}).map(function(x){return '<option value="'+x.id+'"'+(naLista('s',x.id)?' selected':'')+'>'+esc(x.nome)+' · '+R(x.preco)+'</option>'}).join('')+'</select></div>'+
+   '<div class="planobox'+(plano(rasc.plano)?'':' falta')+'" id="m-plano"><label>Plano LiveFood (obrigatório)</label><select onchange="rasc.plano=this.value;refMontar()"><option value="">Escolha o plano…</option>'+PLANOS.map(function(x){return '<option value="'+esc(x.id)+'"'+(String(rasc.plano)===String(x.id)?' selected':'')+'>'+esc(x.nome)+' · '+R(x.preco)+'/mês</option>'}).join('')+'</select><p class="sub2" style="margin:8px 0 0">'+(window._planosReais?'Planos trazidos do cadastro do admin, os mesmos do site.':'Planos de exemplo: no sistema real vêm do cadastro do admin.')+'</p></div>'+
+   '<div style="margin-top:10px"><div class="tot"><span>Produtos · Mercado Livre</span><span>'+R(s.p)+'</span></div><div class="tot"><span>Produtos e serviços LiveFood</span><span>'+R(s.s)+'</span></div><div class="tot g"><span>Total (uma vez)</span><span>'+R(s.t)+'</span></div>'+(s.m?'<div class="tot"><span>+ Aluguel de equipamentos</span><span>'+R(s.m)+'/mês</span></div>':'')+(plano(rasc.plano)?'<div class="tot"><span>+ '+esc(plano(rasc.plano).nome)+'</span><span>'+R(plano(rasc.plano).preco)+'/mês</span></div>':'')+'</div>'+
+   '<p class="sub2" style="margin:10px 0 0">Preço e parcelamento dos produtos são os do Mercado Livre e atualizam sozinhos.</p>'+
+   '<div class="acoes"><button class="btn pri" onclick="salvarProp()">Salvar proposta</button></div>';
+}
+function temPlano(){if(plano(rasc.plano))return true;toast('Escolha o plano do LiveFood para seguir com a proposta.');var b=el('m-plano');if(b){b.scrollIntoView({block:'center'});b.querySelector('select').focus()}return false}
+function setImpl(id){rasc.itens=rasc.itens.filter(function(i){if(i.t!=='s')return true;var x=acha(SERVICOS,i.id);return !x||x.tipo!=='impl'});if(id)rasc.itens.push({t:'s',id:id,q:1});refMontar()}
+function refMontar(){el('m-cat').innerHTML=catHtml();el('m-res').innerHTML=resHtml()}
+function add(t,id){var s=naLista(t,id);if(s)s.q++;else rasc.itens.push({t:t,id:id,q:1});refMontar()}
+function qtd(k,d){rasc.itens[k].q=Math.max(1,rasc.itens[k].q+d);refMontar()}
+function salvarProp(){
+  if(!rasc.itens.length){toast('Adicione ao menos um item.');return}
+  if(!temPlano())return;
+  if(rasc.nova){delete rasc.nova;rasc.id=++seq;rasc.criada=Date.now();PROPOSTAS.push(JSON.parse(JSON.stringify(rasc)))}
+  else{var p=acha(PROPOSTAS,rasc.id);p.itens=JSON.parse(JSON.stringify(rasc.itens));p.plano=rasc.plano}
+  toast('Proposta salva.');aba='prop';tela=null;desenhar();
+}
+function sairMontar(){tela=rasc&&rasc.visita?{t:'ficha',id:rasc.visita}:null;desenhar()}
+
+/* ───────── propostas ───────── */
+function vProp(){
+  return '<div class="card"><h3><span>Propostas</span><span class="sub2">'+PROPOSTAS.length+' no total</span></h3>'+
+   '<div class="info">A proposta nasce de um atendimento: abra a ficha do cliente e toque em <b>Montar proposta</b>.</div>'+
+   PROPOSTAS.map(function(p){var s=somas(p.itens);
+    return '<div class="cli"><div class="av">'+esc(p.cliente.charAt(0))+'</div><div style="min-width:170px"><div class="nome">'+esc(p.cliente)+'</div><div class="id">'+(p.dono&&p.dono!==EU.uid?'de '+esc(nomeRep(p.dono))+' · ':'')+'criada em '+dh(p.criada)+(p.enviada?' · enviada em '+dh(p.enviada):'')+'</div></div>'+
+     '<div class="dados"><div><b>'+p.itens.length+'</b>itens</div><div><b>'+R(s.p)+'</b>Mercado Livre</div><div><b>'+R(s.s)+'</b>LiveFood</div><div><b>'+(plano(p.plano)?R(plano(p.plano).preco)+'/mês':'—')+'</b>plano</div><div><b>'+TG[p.status]+'</b>situação</div></div>'+
+     '<div class="acs" style="flex-wrap:wrap"><button class="btn peq" onclick="montar('+p.id+')">Editar</button><button class="btn peq" onclick="copiar('+p.id+')">Copiar link</button>'+(p.status==='aprovada'?'':'<button class="btn peq zap" onclick="enviarWhats('+p.id+')">Enviar no WhatsApp</button>')+'<button class="btn peq pri" onclick="pvAbrir(acha(PROPOSTAS,'+p.id+'))">Ver proposta</button></div></div>'}).join('')+'</div>';
+}
+function enviarWhats(id){
+  if(!acha(PROPOSTAS,id).slug){toast('A proposta ainda está sendo salva. Tente de novo em um instante.');return}
+  var p=acha(PROPOSTAS,id),v=acha(VISITAS,p.visita)||{};
+  abrir('<h3>Enviar proposta no WhatsApp</h3><p class="sub">Abre a conversa com o cliente no seu WhatsApp, com a mensagem pronta. Você só toca em enviar.</p>'+
+   '<div class="linha2"><div><label>Para</label><input id="ew-nome" value="'+esc(v.contato||p.cliente)+'"></div><div><label>WhatsApp do cliente</label><input id="ew-wa" inputmode="tel" value="'+esc(v.whats||'')+'"></div></div>'+
+   '<label>Mensagem</label><textarea id="ew-msg" style="min-height:130px">Olá, '+esc(v.contato||'tudo bem')+'! Aqui está a proposta da LiveFood para a '+esc(p.cliente)+':\n\n'+esc(urlProp(p))+'\n\nÉ só abrir, conferir os itens e tocar em "Aprovar". Qualquer dúvida, estou por aqui.</textarea>'+
+   '<div class="acoes"><button class="btn" onclick="fechar()">Cancelar</button><button class="btn zap" onclick="enviouWhats('+id+')">Abrir WhatsApp</button></div>');
+}
+function enviouWhats(id){
+  var n=el('ew-wa').value,m=el('ew-msg').value;
+  if(n.replace(/\D/g,'').length<10){toast('Informe o WhatsApp do cliente com DDD.');return}
+  var p=acha(PROPOSTAS,id);if(p.status!=='aprovada')p.status='enviada';p.enviada=Date.now();
+  fechar();zap(n,m);desenhar();
+}
+function copiar(id){
+  var p=acha(PROPOSTAS,id);if(!p.slug){toast('A proposta ainda está sendo salva. Tente de novo em um instante.');return}
+  var u=urlProp(p);
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(u).then(function(){toast('Link copiado.')},function(){prompt('Copie o link da proposta:',u)});
+  else prompt('Copie o link da proposta:',u);
+}
+
+/* ───────── ofertas (portal do LiveMarket) ───────── */
+var oBusca='',oFull=false;
+function vOfertas(){
+  return '<div class="card"><h3><span>Ofertas do LiveMarket</span><span class="sub2">produtos do Mercado Livre com seu link de afiliado</span><span class="dir"><button class="lnk" onclick="novaOferta()">+ Nova oferta</button></span></h3>'+
+   '<div class="info">Cadastre o produto com o preço e o parcelamento que aparecem no Mercado Livre e o seu link de afiliado. O que estiver aqui fica disponível para as propostas. A coluna <b>Conferido</b> mostra quando o preço foi informado pela última vez.</div>'+
+   '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center"><input class="busca" placeholder="buscar oferta" value="'+esc(oBusca)+'" oninput="oBusca=this.value;el(\'o-corpo\').innerHTML=ofLinhas()"><button class="chip'+(oFull?' on':'')+'" onclick="oFull=!oFull;desenhar()">⚡ Só Full</button></div>'+
+   '<div class="tabela-wrap"><table><thead><tr><th>Produto</th><th>Categoria</th><th class="n">Preço no ML</th><th>Parcelamento</th><th>Envio</th><th>Conferido</th><th>Na loja</th><th>Ações</th></tr></thead><tbody id="o-corpo">'+ofLinhas()+'</tbody></table></div></div>';
+}
+function ofLinhas(){
+  var b=oBusca.toLowerCase();
+  var l=OFERTAS.filter(function(o){return (!oFull||o.full)&&(o.nome+' '+o.cat).toLowerCase().indexOf(b)>=0}).sort(function(a,c){return (c.full?1:0)-(a.full?1:0)});
+  return l.length?l.map(function(o){return '<tr><td><div class="prod">'+foto(o)+'<div><b>'+esc(o.nome)+'</b><small>'+esc(o.det)+(o.usado?' · usado':'')+'</small></div></div></td><td>'+esc(o.cat)+'</td><td class="n"><b>'+R(o.preco)+'</b></td><td>'+parc(o)+'</td><td>'+(o.full?'<span class="full">⚡ FULL</span>':'<span class="tg off">Normal</span>')+'</td><td class="sub2">'+(o.conferido?dh(o.conferido,' '):'—')+'</td><td><button class="tg '+(o.loja?'ok':'off')+'" style="border:0" onclick="lojaTroca('+o.id+')">'+(o.loja?'Visível':'Oculta')+'</button></td><td><div class="acs"><button class="btn peq" onclick="novaOferta('+o.id+')">Editar</button>'+(o.link?'<a class="btn peq" href="'+esc(o.link)+'" target="_blank" rel="noopener">Abrir no ML</a>':'')+'</div></td></tr>'}).join(''):'<tr><td colspan="8" class="vazio">Nenhuma oferta cadastrada.</td></tr>';
+}
+function lojaTroca(id){var o=acha(OFERTAS,id);o.loja=!o.loja;el('o-corpo').innerHTML=ofLinhas();toast(o.loja?'Oferta visível na loja.':'Oferta oculta da loja.')}
+function novaOferta(id){
+  var o=id?acha(OFERTAS,id):null;
+  abrir('<h3>'+(o?'Editar oferta':'Nova oferta')+'</h3><p class="sub">Produto do Mercado Livre com o seu link de afiliado. Use o preço e o parcelamento que aparecem lá.</p>'+
+   '<label>Nome do produto</label><input id="of-nome" value="'+esc(o?o.nome:'')+'" placeholder="ex.: Impressora térmica POS-80">'+
+   '<label>Resumo (aparece na proposta)</label><input id="of-det" value="'+esc(o?o.det:'')+'" placeholder="ex.: 80 mm, rede e USB">'+
+   '<div class="linha3"><div><label>Preço no ML (R$)</label><input id="of-preco" type="number" min="0" step="0.01" value="'+(o?o.preco:'')+'"></div><div><label>Parcelas sem juros</label><input id="of-parc" type="number" min="1" max="24" value="'+(o?o.parc:10)+'"></div><div><label>Envio</label><select id="of-full"><option value="1">⚡ Full</option><option value="0"'+(o&&!o.full?' selected':'')+'>Normal</option></select></div></div>'+
+   '<label>Seu link de afiliado</label><input id="of-link" placeholder="https://mercadolivre.com/sec/..." value="'+esc(o?o.link:'')+'">'+
+   fotoCampo(o?o.img:'')+
+   '<label>Características (uma linha por item)</label><textarea id="of-desc">'+esc(o&&o.desc?o.desc.join('\n'):'')+'</textarea>'+
+   '<div class="linha3"><div><label>Categoria na loja</label><select id="of-cat">'+['Caixa','Impressão','Atendimento','Energia','Rede e internet','Cozinha'].map(function(c){return '<option'+(o&&o.cat===c?' selected':'')+'>'+c+'</option>'}).join('')+'</select></div><div><label>Mostrar na loja</label><select id="of-loja"><option value="1">Sim</option><option value="0"'+(o&&!o.loja?' selected':'')+'>Não, só em propostas</option></select></div><div><label>Condição</label><select id="of-usado"><option value="0">Novo</option><option value="1"'+(o&&o.usado?' selected':'')+'>Usado</option></select></div></div>'+
+   necChecks('o',o?o.id:0)+
+   '<div class="acoes">'+(o?'<button class="btn perigo" style="margin-right:auto" onclick="excluirOf('+o.id+')">Excluir</button>':'')+'<button class="btn" onclick="fechar()">Cancelar</button><button class="btn pri" onclick="salvarOf('+(o?o.id:0)+')">Salvar oferta</button></div>');
+}
+function salvarOf(id){
+  var nome=el('of-nome').value.trim(),link=el('of-link').value.trim(),preco=+el('of-preco').value||0;
+  if(!nome){toast('Informe o nome do produto.');return}
+  if(!(preco>0)){toast('Informe o preço que aparece no Mercado Livre.');return}
+  if(!/^https?:\/\//i.test(link)){toast('Informe o seu link de afiliado (começa com https://).');return}
+  var d={nome:nome,det:el('of-det').value.trim(),preco:preco,parc:Math.max(1,Math.round(+el('of-parc').value||1)),full:el('of-full').value==='1',usado:el('of-usado').value==='1',link:link,img:fotoVal(),desc:el('of-desc').value.split('\n').map(function(x){return x.trim()}).filter(Boolean),cat:el('of-cat').value,loja:el('of-loja').value==='1'};
+  var o=id?acha(OFERTAS,id):null;
+  if(o){if(o.preco!==d.preco||o.parc!==d.parc||!o.conferido)d.conferido=Date.now();for(var k in d)o[k]=d[k]}
+  else{d.id=++seq;d.conferido=Date.now();OFERTAS.push(d);o=d}
+  necSalva('o',o.id);fechar();toast('Oferta salva.');desenhar();
+}
+function excluirOf(id){OFERTAS=OFERTAS.filter(function(o){return o.id!==id});PROPOSTAS.forEach(function(p){p.itens=p.itens.filter(function(i){return !(i.t==='o'&&i.id===id)})});fechar();toast('Oferta excluída.');desenhar()}
+
+/* ───────── serviços ───────── */
+function vServ(){
+  return '<div class="card"><h3><span>Implantação e serviços</span><span class="sub2">o que o LiveFood cobra direto do cliente</span><span class="dir"><button class="lnk" onclick="novoServ()">+ Novo</button></span></h3>'+
+   '<div class="info">Os <b>tipos de implantação</b> cadastrados aqui aparecem para escolher na hora de montar a proposta.</div>'+
+   '<div class="tabela-wrap"><table><thead><tr><th>Nome</th><th>O que inclui</th><th>Tipo</th><th class="n">Preço</th><th>Pagamento</th><th>Situação</th><th>Ações</th></tr></thead><tbody>'+
+   SERVICOS.map(function(s){return '<tr><td><div class="prod"><span class="semfoto">'+IC_SERV+'</span><div><b>'+esc(s.nome)+'</b><small>'+esc(s.det)+'</small></div></div></td><td class="sub2" style="max-width:320px">'+esc(s.desc.join(' · '))+'</td><td><span class="tg '+(s.tipo==='impl'?'azul':'neu')+'">'+(s.tipo==='impl'?'Implantação':'Serviço')+'</span></td><td class="n"><b>'+R(s.preco)+'</b></td><td class="sub2" style="max-width:220px">'+(pgTxt(s.pg)||'<span style="color:var(--red)">não definido</span>')+'</td><td><span class="tg '+(s.ativo?'ok':'off')+'">'+(s.ativo?'Ativo':'Pausado')+'</span></td><td><button class="btn peq" onclick="novoServ('+s.id+')">Editar</button></td></tr>'}).join('')+
+   '</tbody></table></div></div>';
+}
+/* forma de pagamento do serviço: o que o cliente pode escolher para pagar o LiveFood */
+function pgTxt(pg){
+  if(!pg)return '';var f=[];
+  if(pg.pix)f.push('Pix'+(pg.desc>0?' com '+String(pg.desc).replace('.',',')+'% de desconto':''));
+  if(pg.boleto)f.push('boleto');
+  if(pg.cartao)f.push('cartão'+(pg.parc>1?' em até '+pg.parc+'x':''));
+  return f.length>1?f.slice(0,-1).join(', ')+' ou '+f[f.length-1]:(f[0]||'');
+}
+function novoServ(id){
+  var s=id?acha(SERVICOS,id):null;
+  abrir('<h3>'+(s?'Editar serviço':'Novo serviço')+'</h3><p class="sub">Serviços entram na proposta junto dos produtos, com o preço do LiveFood.</p>'+
+   '<label>Nome</label><input id="sv-nome" value="'+esc(s?s.nome:'')+'" placeholder="ex.: Implantação">'+
+   '<label>Resumo (aparece na proposta)</label><input id="sv-det" value="'+esc(s?s.det:'')+'" placeholder="ex.: instalação e treinamento">'+
+   '<label>O que inclui (uma linha por item)</label><textarea id="sv-desc">'+esc(s?s.desc.join('\n'):'')+'</textarea>'+
+   '<div class="linha3"><div><label>Preço (R$)</label><input id="sv-preco" type="number" min="0" step="0.01" value="'+(s?s.preco:'')+'"></div><div><label>Tipo</label><select id="sv-tipo"><option value="impl">Implantação</option><option value="serv"'+(s&&s.tipo!=='impl'?' selected':'')+'>Serviço avulso</option></select></div><div><label>Situação</label><select id="sv-ativo"><option value="1">Ativo</option><option value="0"'+(s&&!s.ativo?' selected':'')+'>Pausado</option></select></div></div>'+
+   (function(){var g=(s&&s.pg)||{pix:1,boleto:1,cartao:1,parc:1,desc:0};
+     return '<label>Formas de pagamento aceitas</label><div class="chk-l" id="sv-pg" style="display:flex;flex-wrap:wrap;gap:4px 18px"><label><input type="checkbox" value="pix"'+(g.pix?' checked':'')+'>Pix</label><label><input type="checkbox" value="boleto"'+(g.boleto?' checked':'')+'>Boleto</label><label><input type="checkbox" value="cartao"'+(g.cartao?' checked':'')+'>Cartão de crédito</label></div>'+
+      '<div class="linha2"><div><label>Parcelas no cartão (até)</label><input id="sv-parc" type="number" min="1" max="12" value="'+(g.parc||1)+'"></div><div><label>Desconto no Pix (%)</label><input id="sv-desc-pix" type="number" min="0" max="50" step="0.5" value="'+(g.desc||0)+'"></div></div>'})()+
+   necChecks('s',s?s.id:0)+
+   '<div class="acoes"><button class="btn" onclick="fechar()">Cancelar</button><button class="btn pri" onclick="salvarServ('+(s?s.id:0)+')">Salvar serviço</button></div>');
+}
+function salvarServ(id){
+  var n=el('sv-nome').value.trim();if(!n){toast('Informe o nome do serviço.');return}
+  var d={nome:n,det:el('sv-det').value.trim(),desc:el('sv-desc').value.split('\n').map(function(x){return x.trim()}).filter(Boolean),preco:+el('sv-preco').value||0,cobr:'única',tipo:el('sv-tipo').value,ativo:el('sv-ativo').value==='1'};
+  var pg={pix:0,boleto:0,cartao:0,parc:Math.min(12,Math.max(1,Math.round(+el('sv-parc').value||1))),desc:Math.min(50,Math.max(0,+el('sv-desc-pix').value||0))};
+  [].forEach.call(document.querySelectorAll('#sv-pg input:checked'),function(c){pg[c.value]=1});
+  if(!pg.pix&&!pg.boleto&&!pg.cartao){toast('Marque ao menos uma forma de pagamento.');return}
+  d.pg=pg;
+  if(id){var s=acha(SERVICOS,id);for(var k in d)s[k]=d[k]}else{d.id=++seq;SERVICOS.push(d)}
+  necSalva('s',id||d.id);fechar();toast('Salvo.');desenhar();
+}
+
+/* ───────── necessidades do cliente (os cartões da ficha de atendimento) ───────── */
+function sugNomes(n){return (n.sug||[]).map(function(s){var x=item({t:s.split(':')[0],id:+s.split(':')[1]});return x?x.nome:null}).filter(Boolean)}
+function vNecs(){
+  return '<div class="card"><h3><span>Necessidades do cliente</span><span class="sub2">os cartões de “O que o cliente precisa” na ficha de atendimento</span><span class="dir"><button class="lnk" onclick="novaNec()">+ Nova necessidade</button></span></h3>'+
+   '<div class="info">Cada necessidade pode <b>sugerir itens do catálogo</b>. Quando o representante marca na ficha, esses itens já entram na proposta, na quantidade informada. Arraste as linhas para mudar a ordem dos cartões.</div>'+
+   '<div class="tabela-wrap"><table><thead><tr><th>Necessidade</th><th>Pede quantidade</th><th>Itens sugeridos na proposta</th><th>Ações</th></tr></thead><tbody>'+
+   NECS.map(function(n,k){var s=sugNomes(n);return '<tr draggable="true" ondragstart="window._dn='+k+';this.style.opacity=.4" ondragend="this.style.opacity=1" ondragover="event.preventDefault()" ondrop="event.preventDefault();moveNec(window._dn,'+k+')"><td><div class="prod"><span title="Arraste para mudar a ordem" style="cursor:grab;color:var(--muted);font-size:18px">⠿</span><span class="nec-ic">'+esc(n.i)+'</span><div><b>'+esc(n.n)+'</b><small>'+esc(n.d)+'</small></div></div></td><td>'+(n.q?'Sim · '+esc(n.q):'<span class="sub2">Não</span>')+'</td><td class="sub2" style="max-width:380px">'+(s.length?esc(s.join(' · ')):'nenhum')+'</td><td><div class="acs"><button class="btn peq" onclick="novaNec('+k+')">Editar</button></div></td></tr>'}).join('')+
+   '</tbody></table></div></div>';
+}
+function moveNec(de,para){if(de===undefined||de===para)return;var x=NECS.splice(de,1)[0];NECS.splice(para,0,x);desenhar()}
+function novaNec(k){
+  var n=k!==undefined?NECS[k]:null,sel=n?(n.sug||[]):[];
+  function grupo(tit,t,l){return l.length?'<div class="grp">'+tit+'</div>'+l.map(function(x){var v=t+':'+x.id;return '<label><input type="checkbox" value="'+v+'"'+(sel.indexOf(v)>=0?' checked':'')+'>'+esc(x.nome)+'<small>'+R(x.preco)+(t==='a'?'/mês':'')+'</small></label>'}).join(''):''}
+  abrir('<h3>'+(n?'Editar necessidade':'Nova necessidade')+'</h3><p class="sub">Aparece como um cartão na ficha de atendimento.</p>'+
+   '<div class="linha2" style="grid-template-columns:90px 1fr"><div><label>Ícone</label><input id="nc-i" maxlength="4" value="'+esc(n?n.i:'⭐')+'" style="text-align:center;font-size:20px;padding:7px"></div><div><label>Nome</label><input id="nc-n" value="'+esc(n?n.n:'')+'" placeholder="ex.: Balança no caixa"></div></div>'+
+   '<label>Descrição curta</label><input id="nc-d" value="'+esc(n?n.d:'')+'" placeholder="ex.: pesa e lança o valor no pedido">'+
+   '<div class="linha2"><div><label>Pede quantidade?</label><select id="nc-tq" onchange="el(\'nc-q\').disabled=this.value===\'0\'"><option value="1">Sim</option><option value="0"'+(n&&!n.q?' selected':'')+'>Não, só marcar</option></select></div><div><label>Nome da quantidade</label><input id="nc-q" value="'+esc(n&&n.q?n.q:'')+'" placeholder="ex.: balanças"'+(n&&!n.q?' disabled':'')+'></div></div>'+
+   '<label>Itens do catálogo vinculados a esta necessidade</label>'+
+   '<p class="sub2" style="margin:-2px 0 8px">A lista abaixo é o seu <b>Catálogo de produtos</b>. O que estiver marcado entra sugerido na proposta. Para um item aparecer aqui, cadastre-o em uma das abas do catálogo.</p>'+
+   '<input placeholder="🔍 buscar no catálogo" oninput="ncFiltra(this.value)" style="margin-bottom:8px">'+
+   '<div class="chk-l" id="nc-sug">'+grupo('Mercado Livre','o',OFERTAS)+grupo('Produtos LiveFood','p',PRODUTOS)+grupo('Implantação e serviços','s',SERVICOS)+grupo('Aluguel de equipamentos','a',ALUGUEIS)+'</div>'+
+   '<p style="margin:8px 0 0"><button class="lnk" onclick="fechar();ir(\'ofertas\')">+ Cadastrar um item novo no catálogo</button></p>'+
+   '<div class="acoes">'+(n?'<button class="btn perigo" style="margin-right:auto" onclick="NECS.splice('+k+',1);fechar();toast(\'Necessidade excluída.\');desenhar()">Excluir</button>':'')+'<button class="btn" onclick="fechar()">Cancelar</button><button class="btn pri" onclick="salvarNec('+(n?k:-1)+')">Salvar</button></div>');
+}
+function ncFiltra(v){var b=sem(v);[].forEach.call(document.querySelectorAll('#nc-sug label'),function(l){l.style.display=sem(l.textContent).indexOf(b)>=0?'':'none'})}
+/* vínculo pelo outro lado: no cadastro de cada item do catálogo, marcar a quais necessidades ele atende */
+function necChecks(t,id){
+  var v=t+':'+id;
+  return '<label>Atende a quais necessidades do cliente?</label><div class="chk-l" id="nec-vinc" style="max-height:150px">'+NECS.map(function(n){return '<label><input type="checkbox" value="'+esc(n.k)+'"'+(id&&(n.sug||[]).indexOf(v)>=0?' checked':'')+'>'+esc(n.i)+' '+esc(n.n)+'</label>'}).join('')+'</div>'+
+   '<p class="sub2" style="margin:6px 0 0">Quando o representante marcar essa necessidade na ficha, este item já entra sugerido na proposta.</p>';
+}
+function necSalva(t,id){
+  var v=t+':'+id;
+  [].forEach.call(document.querySelectorAll('#nec-vinc input'),function(c){
+    var n=NECS.filter(function(x){return x.k===c.value})[0];if(!n)return;n.sug=n.sug||[];
+    var i=n.sug.indexOf(v);if(c.checked&&i<0)n.sug.push(v);if(!c.checked&&i>=0)n.sug.splice(i,1)});
+}
+function necsDe(t,id){var v=t+':'+id;return NECS.filter(function(n){return (n.sug||[]).indexOf(v)>=0}).map(function(n){return n.i+' '+n.n})}
+function salvarNec(k){
+  var nome=el('nc-n').value.trim();if(!nome){toast('Informe o nome da necessidade.');return}
+  var pede=el('nc-tq').value==='1',rot=el('nc-q').value.trim();
+  if(pede&&!rot){toast('Informe o nome da quantidade (ex.: caixas).');return}
+  var d={i:el('nc-i').value.trim()||'⭐',n:nome,d:el('nc-d').value.trim(),q:pede?rot:'',sug:[].map.call(document.querySelectorAll('#nc-sug input:checked'),function(c){return c.value})};
+  if(k>=0){for(var x in d)NECS[k][x]=d[x]}else{d.id=++seq;d.k='n'+d.id;NECS.push(d)}
+  fechar();toast('Necessidade salva.');desenhar();
+}
+
+/* ───────── equipe: representantes (só o administrador) ───────── */
+function nomeRep(uid){for(var i=0;i<EQUIPE.length;i++)if(EQUIPE[i].id===uid)return EQUIPE[i].nome;return 'outro usuário'}
+function vEquipe(){
+  return '<div class="card"><h3><span>Representantes</span><span class="sub2">quem agenda visitas e monta propostas</span><span class="dir"><button class="lnk" onclick="novoRep()">+ Novo representante</button></span></h3>'+
+   '<div class="info">O representante entra nesta mesma página com o e-mail e a senha dele. Ele agenda visitas, registra o atendimento e monta propostas. Não altera o catálogo, não vê as propostas dos outros e não entra no admin.</div>'+
+   '<div class="tabela-wrap"><table><thead><tr><th>Nome</th><th>E-mail</th><th>Celular</th><th>Último acesso</th><th>Situação</th><th>Ações</th></tr></thead><tbody>'+
+   (EQUIPE.length?EQUIPE.map(function(u,k){return '<tr><td><b>'+esc(u.nome)+'</b></td><td>'+esc(u.email||'')+'</td><td>'+esc(u.telefone||'—')+'</td><td class="sub2">'+(u.ultimo_acesso?dh(u.ultimo_acesso,' '):'nunca entrou')+'</td><td><span class="tg '+(u.ativo?'ok':'off')+'">'+(u.ativo?'Ativo':'Desativado')+'</span></td><td><button class="btn peq" onclick="repAtivo('+k+')">'+(u.ativo?'Desativar':'Ativar')+'</button></td></tr>'}).join(''):'<tr><td colspan="6" class="vazio">Nenhum representante cadastrado.</td></tr>')+
+   '</tbody></table></div></div>';
+}
+function novoRep(){
+  abrir('<h3>Novo representante</h3><p class="sub">Combine a senha com ele. Mínimo de 8 caracteres.</p>'+
+   '<label>Nome</label><input id="rp-nome" autocomplete="off">'+
+   '<div class="linha2"><div><label>E-mail (é o login)</label><input id="rp-email" type="email" autocomplete="off"></div><div><label>Celular (opcional)</label><input id="rp-fone" inputmode="tel" placeholder="(47) 99999-0000"></div></div>'+
+   '<label>Senha</label><input id="rp-senha" type="password" autocomplete="new-password">'+
+   '<div class="acoes"><button class="btn" onclick="fechar()">Cancelar</button><button class="btn pri" id="rp-btn" onclick="salvarRep()">Criar representante</button></div>');
+}
+async function salvarRep(){
+  var b={nome:el('rp-nome').value.trim(),email:el('rp-email').value.trim(),senha:el('rp-senha').value,telefone:el('rp-fone').value.trim()};
+  if(!b.nome||!b.email||!b.senha){toast('Preencha nome, e-mail e senha.');return}
+  el('rp-btn').disabled=true;
+  var r=await api('POST','/comercial/equipe',b);
+  if(!r.ok){el('rp-btn').disabled=false;toast(r.mensagem||'Não consegui criar.');return}
+  EQUIPE=r.equipe||[];fechar();toast('Representante criado.');desenhar();
+}
+async function repAtivo(k){
+  var u=EQUIPE[k],r=await api('POST','/comercial/equipe-ativo',{id:u.id,ativo:u.ativo?0:1});
+  if(!r.ok){toast(r.mensagem||'Não consegui alterar.');return}
+  EQUIPE=r.equipe||[];toast(u.ativo?'Representante desativado.':'Representante ativado.');desenhar();
+}
+
+/* ───────── aluguel de equipamentos ───────── */
+function vAlug(){
+  return '<div class="card"><h3><span>Aluguel de equipamentos</span><span class="sub2">o que o cliente pode alugar por mês, em vez de comprar</span><span class="dir"><button class="lnk" onclick="novoAlug()">+ Novo equipamento</button></span></h3>'+
+   '<div class="info">O que você cadastra aqui aparece em <b>Aluguel</b> na hora de montar a proposta. O valor entra como mensalidade, separado do que é pago uma vez.</div>'+
+   '<div class="tabela-wrap"><table><thead><tr><th>Equipamento</th><th>O que inclui</th><th class="n">Aluguel por mês</th><th>Contrato mínimo</th><th>Situação</th><th>Ações</th></tr></thead><tbody>'+
+   ALUGUEIS.map(function(s){return '<tr><td><div class="prod">'+foto(s)+'<div><b>'+esc(s.nome)+'</b><small>'+esc(s.det)+'</small></div></div></td><td class="sub2" style="max-width:340px">'+esc(s.desc.join(' · '))+'</td><td class="n"><b>'+R(s.preco)+'</b>/mês</td><td>'+s.min+' meses</td><td><span class="tg '+(s.ativo?'ok':'off')+'">'+(s.ativo?'Ativo':'Pausado')+'</span></td><td><button class="btn peq" onclick="novoAlug('+s.id+')">Editar</button></td></tr>'}).join('')+
+   '</tbody></table></div></div>';
+}
+function novoAlug(id){
+  var s=id?acha(ALUGUEIS,id):null;
+  abrir('<h3>'+(s?'Editar equipamento':'Novo equipamento para aluguel')+'</h3><p class="sub">Entra na proposta como valor mensal.</p>'+
+   '<label>Nome</label><input id="al-nome" value="'+esc(s?s.nome:'')+'" placeholder="ex.: Totem de autoatendimento">'+
+   '<label>Resumo (aparece na proposta)</label><input id="al-det" value="'+esc(s?s.det:'')+'" placeholder="ex.: tela 21 polegadas com impressora">'+
+   '<label>O que inclui (uma linha por item)</label><textarea id="al-desc">'+esc(s?s.desc.join('\n'):'')+'</textarea>'+
+   fotoCampo(s?s.img:'')+
+   '<div class="linha3"><div><label>Aluguel por mês (R$)</label><input id="al-preco" type="number" min="0" step="0.01" value="'+(s?s.preco:'')+'"></div><div><label>Contrato mínimo (meses)</label><input id="al-min" type="number" min="1" value="'+(s?s.min:12)+'"></div><div><label>Situação</label><select id="al-ativo"><option value="1">Ativo</option><option value="0"'+(s&&!s.ativo?' selected':'')+'>Pausado</option></select></div></div>'+
+   necChecks('a',s?s.id:0)+
+   '<div class="acoes"><button class="btn" onclick="fechar()">Cancelar</button><button class="btn pri" onclick="salvarAlug('+(s?s.id:0)+')">Salvar equipamento</button></div>');
+}
+function salvarAlug(id){
+  var n=el('al-nome').value.trim();if(!n){toast('Informe o nome do equipamento.');return}
+  var d={nome:n,det:el('al-det').value.trim(),desc:el('al-desc').value.split('\n').map(function(x){return x.trim()}).filter(Boolean),preco:+el('al-preco').value||0,min:+el('al-min').value||1,img:fotoVal(),ativo:el('al-ativo').value==='1'};
+  if(id){var s=acha(ALUGUEIS,id);for(var k in d)s[k]=d[k]}else{d.id=++seq;ALUGUEIS.push(d)}
+  necSalva('a',id||d.id);fechar();toast('Equipamento salvo.');desenhar();
+}
+
+/* ───────── produtos LiveFood (plaquinhas, cartões) ───────── */
+function vProdutos(){
+  return '<div class="card"><h3><span>Produtos LiveFood</span><span class="sub2">itens personalizados vendidos direto pelo LiveFood</span><span class="dir"><button class="lnk" onclick="novoProd()">+ Novo produto</button></span></h3>'+
+   '<div class="tabela-wrap"><table><thead><tr><th>Produto</th><th>O que inclui</th><th class="n">Preço</th><th>Vendido por</th><th>Situação</th><th>Ações</th></tr></thead><tbody>'+
+   PRODUTOS.map(function(s){return '<tr><td><div class="prod">'+(s.img?foto(s):'<span class="semfoto">'+IC_NFC+'</span>')+'<div><b>'+esc(s.nome)+'</b><small>'+esc(s.det)+'</small></div></div></td><td class="sub2" style="max-width:340px">'+esc(s.desc.join(' · '))+'</td><td class="n"><b>'+R(s.preco)+'</b></td><td>'+esc(s.un)+'</td><td><span class="tg '+(s.ativo?'ok':'off')+'">'+(s.ativo?'Ativo':'Pausado')+'</span></td><td><button class="btn peq" onclick="novoProd('+s.id+')">Editar</button></td></tr>'}).join('')+
+   '</tbody></table></div></div>';
+}
+function novoProd(id){
+  var s=id?acha(PRODUTOS,id):null;
+  abrir('<h3>'+(s?'Editar produto':'Novo produto')+'</h3><p class="sub">Produtos do LiveFood entram na proposta com o seu preço, fora do Mercado Livre.</p>'+
+   '<label>Nome</label><input id="pd-nome" value="'+esc(s?s.nome:'')+'" placeholder="ex.: Plaquinha de mesa com NFC">'+
+   '<label>Resumo (aparece na proposta)</label><input id="pd-det" value="'+esc(s?s.det:'')+'" placeholder="ex.: personalizada com a logo">'+
+   '<label>O que inclui (uma linha por item)</label><textarea id="pd-desc">'+esc(s?s.desc.join('\n'):'')+'</textarea>'+
+   fotoCampo(s?s.img:'')+
+   '<div class="linha3"><div><label>Preço (R$)</label><input id="pd-preco" type="number" min="0" step="0.01" value="'+(s?s.preco:'')+'"></div><div><label>Vendido por</label><select id="pd-un"><option'+(s&&s.un==='unidade'?' selected':'')+'>unidade</option><option'+(s&&s.un==='pacote com 50'?' selected':'')+'>pacote com 50</option><option'+(s&&s.un==='pacote com 100'?' selected':'')+'>pacote com 100</option></select></div><div><label>Situação</label><select id="pd-ativo"><option value="1">Ativo</option><option value="0"'+(s&&!s.ativo?' selected':'')+'>Pausado</option></select></div></div>'+
+   necChecks('p',s?s.id:0)+
+   '<div class="acoes"><button class="btn" onclick="fechar()">Cancelar</button><button class="btn pri" onclick="salvarProd('+(s?s.id:0)+')">Salvar produto</button></div>');
+}
+function salvarProd(id){
+  var n=el('pd-nome').value.trim();if(!n){toast('Informe o nome do produto.');return}
+  var d={nome:n,det:el('pd-det').value.trim(),desc:el('pd-desc').value.split('\n').map(function(x){return x.trim()}).filter(Boolean),preco:+el('pd-preco').value||0,un:el('pd-un').value,img:fotoVal(),ativo:el('pd-ativo').value==='1'};
+  if(id){var s=acha(PRODUTOS,id);for(var k in d)s[k]=d[k]}else{d.id=++seq;PRODUTOS.push(d)}
+  necSalva('p',id||d.id);fechar();toast('Produto salvo.');desenhar();
+}
+
+/* ───────── proposta como o cliente vê ───────── */
+var pvP=null,pvM='cel',lives=[];
+var WA_SVG='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.3-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.8 11.9 11.9 0 0 0 4.6 4c1.7.7 2.4.8 3.2.7a2.8 2.8 0 0 0 1.8-1.3 2.3 2.3 0 0 0 .2-1.3c-.1-.1-.3-.2-.5-.3z"/></svg>';
+function pvAbrir(p){
+  if(!p.slug){toast('A proposta ainda está sendo salva. Tente de novo em um instante.');return}
+  pvP=p;el('pv').classList.add('on');el('pv-url').textContent=urlProp(p).replace(/^https?:\/\//,'');pvModo(innerWidth<760?'cel':pvM);
+}
+function pvFechar(){el('pv').classList.remove('on');el('pv-tela').innerHTML=''}
+function pvModo(m){
+  pvM=m;el('pv-tela').className='pv-tela '+m;el('pv-cel').classList.toggle('on',m==='cel');el('pv-desk').classList.toggle('on',m==='desk');
+  var a=new URLSearchParams(location.search).get('api');
+  el('pv-tela').innerHTML='<iframe title="Proposta do cliente" src="proposta.html?p='+encodeURIComponent(pvP.slug)+'&previa=1'+(a?'&api='+encodeURIComponent(a):'')+'"></iframe>';
+}
+addEventListener('keydown',function(e){if(e.key==='Escape'&&el('fundo').classList.contains('on'))fechar()});
+carregar();
+</script>
+</body>
+</html>
