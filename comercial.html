@@ -189,6 +189,15 @@ input[type=checkbox]{width:auto;padding:0;accent-color:var(--grad)}
 .chk-l small{color:var(--muted);font-weight:600;margin-left:auto;white-space:nowrap}
 .chk-l .grp{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:8px 8px 3px}
 .nec-ic{width:40px;height:40px;border-radius:11px;background:var(--s3);display:grid;place-items:center;font-size:20px;flex:none}
+.combo-l .grp{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:8px 10px 3px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.chips span{display:inline-flex;align-items:center;gap:6px;background:#FFF1E8;border:1px solid #FFD2B8;color:var(--roxo-esc);border-radius:99px;padding:5px 6px 5px 12px;font-size:12.5px;font-weight:800}
+.chips button{border:0;background:rgba(0,0,0,.08);color:inherit;width:20px;height:20px;border-radius:50%;font-size:13px;line-height:1;padding:0}
+.com-l{display:grid;grid-template-columns:1fr 150px 110px;gap:8px;align-items:center;margin-bottom:8px}
+.com-l span{font-size:13px;font-weight:700}.com-l small{display:block;color:var(--muted);font-weight:600;font-size:11.5px}
+.com-l input,.com-l select{padding:9px 10px;font-size:13px}
+button.tb-av{border:0;cursor:pointer}
+@media(max-width:520px){.com-l{grid-template-columns:1fr 1fr}.com-l span{grid-column:1/-1}}
 /* seletor de clientes (nova visita) */
 .combo{position:relative}
 .combo input{padding-right:46px}
@@ -259,7 +268,7 @@ input[type=checkbox]{width:auto;padding:0;accent-color:var(--grad)}
   <span class="sync" id="sync"></span>
   <a class="btn peq" id="lk-admin" href="admin.html">← Admin</a>
   <button class="btn peq" onclick="sair()">Sair</button>
-  <div class="tb-av" id="av">·</div>
+  <button class="tb-av" id="av" onclick="meuPainel()" aria-label="Meu painel">·</button>
   <nav class="subabas" id="subabas" aria-label="Seções"></nav>
 </header>
 <main>
@@ -289,7 +298,7 @@ var HOJE=new Date(); HOJE.setHours(0,0,0,0);
 function iso(d){return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2)}
 function seg(d){var x=new Date(d);var w=(x.getDay()+6)%7;x.setDate(x.getDate()-w);return x}
 var SEG0=seg(HOJE);
-var OFERTAS=[],SERVICOS=[],PRODUTOS=[],ALUGUEIS=[],NECS=[],PLANOS=[],CLIENTES=[],VISITAS=[],PROPOSTAS=[],EQUIPE=[],seq=1000,EU={nome:'',uid:''};
+var OFERTAS=[],SERVICOS=[],PRODUTOS=[],ALUGUEIS=[],NECS=[],PLANOS=[],CLIENTES=[],VISITAS=[],PROPOSTAS=[],EQUIPE=[],REPS=[],seq=1000,EU={nome:'',uid:''};
 window._planosReais=true;
 /* necessidades criadas sozinhas no primeiro acesso do administrador (ele vincula os itens e pode mudar tudo) */
 var NECS_PADRAO=[
@@ -325,19 +334,20 @@ async function entrar(){
 }
 function sair(){try{localStorage.removeItem('lf_com_jwt')}catch(e){}TOKEN='';telaLogin('')}
 /* cada cadastro é uma linha no servidor. SNAP guarda a última versão gravada: depois de cada ação da tela, o que mudou é enviado */
-var CAT={oferta:1,produto:1,servico:1,aluguel:1,nec:1},SNAP={},carregado=false;
-function cols(){return{oferta:OFERTAS,produto:PRODUTOS,servico:SERVICOS,aluguel:ALUGUEIS,nec:NECS,cliente:CLIENTES,visita:VISITAS,proposta:PROPOSTAS}}
+var CAT={oferta:1,produto:1,servico:1,aluguel:1,nec:1,rep:1},SNAP={},carregado=false;   /* CAT: só o administrador grava */
+function cols(){return{oferta:OFERTAS,produto:PRODUTOS,servico:SERVICOS,aluguel:ALUGUEIS,nec:NECS,rep:REPS,cliente:CLIENTES,visita:VISITAS,proposta:PROPOSTAS}}
 async function carregar(){
   if(!TOKEN){telaLogin('');return}
+  el('login').hidden=true;el('app').hidden=false;el('conteudo').innerHTML='<div class="vazio">Carregando…</div>';   /* a tela aparece na hora; os dados entram em seguida */
   var d=await api('GET','/comercial/tudo');
   if(!d.ok){telaLogin(d.http===401||d.http===403?'':(d.mensagem||'Não consegui carregar. Tente de novo.'));return}
   perfil=d.usuario.perfil;EU=d.usuario;seq=d.seq;
   PLANOS=(d.planos||[]).map(function(p){return{id:String(p.id),nome:p.nome,desc:p.descricao||'',preco:p.preco}});
-  var x=d.docs||{};OFERTAS=x.oferta||[];PRODUTOS=x.produto||[];SERVICOS=x.servico||[];ALUGUEIS=x.aluguel||[];CLIENTES=x.cliente||[];VISITAS=x.visita||[];PROPOSTAS=x.proposta||[];
+  var x=d.docs||{};OFERTAS=x.oferta||[];PRODUTOS=x.produto||[];SERVICOS=x.servico||[];ALUGUEIS=x.aluguel||[];CLIENTES=x.cliente||[];VISITAS=x.visita||[];PROPOSTAS=x.proposta||[];REPS=x.rep||[];
   NECS=(x.nec||[]).sort(function(a,b){return (a.ordem||0)-(b.ordem||0)});
   var c=cols();for(var k in c){SNAP[k]={};c[k].forEach(function(o){SNAP[k][o.id]=JSON.stringify(o)})}
   if(perfil==='admin'&&!NECS.length)NECS=NECS_PADRAO.map(function(n){var o=JSON.parse(JSON.stringify(n));o.id=++seq;return o});
-  if(perfil==='admin'){var e=await api('GET','/comercial/equipe');EQUIPE=e.equipe||[]}
+  if(perfil==='admin'){if(d.equipe)EQUIPE=d.equipe;else{var e=await api('GET','/comercial/equipe');EQUIPE=e.equipe||[]}}   /* Worker 288 já manda a equipe junto */
   el('login').hidden=true;el('app').hidden=false;
   el('av').textContent=(EU.nome||'?').charAt(0).toUpperCase();el('av').title=EU.nome||'';el('lk-admin').hidden=perfil!=='admin';
   carregado=true;desenhar();
@@ -440,6 +450,7 @@ function desenhar(){
   var h='';
   if(tela&&tela.t==='ficha')h=vFicha(tela.id);
   else if(tela&&tela.t==='montar')h=vMontar();
+  else if(tela&&tela.t==='painel')h=vPainel(tela.uid);
   else h={agenda:vAgenda,atend:vAtend,prop:vProp,ofertas:vOfertas,prods:vProdutos,serv:vServ,alug:vAlug,necs:vNecs,equipe:vEquipe}[aba]();
   el('conteudo').innerHTML=h;
   sincronizar();
@@ -493,7 +504,7 @@ function nvDesenha(){
   var c=NV.cli?acha(CLIENTES,NV.cli):null,h;
   if(NV.novo)h='<label>Novo cliente</label><div class="cli-novo"><label>Nome do estabelecimento</label><input id="nv-nome" placeholder="ex.: Padaria do Centro" value="'+esc(NV.nome)+'">'+
     '<div class="linha2"><div><label>Contato</label><input id="nv-con" placeholder="quem vai receber"></div><div><label>WhatsApp</label><input id="nv-wa" inputmode="tel" placeholder="(47) 99999-0000"></div></div>'+
-    '<label>Endereço</label><input id="nv-end" placeholder="rua, número, cidade"></div><p style="margin:8px 0 0"><button class="lnk" onclick="NV.novo=false;nvDesenha()">← Escolher um cliente já cadastrado</button></p>';
+    '<div class="linha2" style="grid-template-columns:minmax(120px,160px) 1fr"><div><label>CEP</label><input id="nv-cep" inputmode="numeric" maxlength="9" placeholder="00000-000" autocomplete="off" oninput="cepBusca(this.value)"></div><div><label>Endereço</label><input id="nv-end" placeholder="rua, número, bairro, cidade"></div></div><div class="sub2" id="nv-cep-msg" aria-live="polite" style="margin-top:6px;min-height:16px"></div></div><p style="margin:8px 0 0"><button class="lnk" onclick="NV.novo=false;nvDesenha()">← Escolher um cliente já cadastrado</button></p>';
   else h='<label for="nv-cli">Cliente</label><div class="combo"><input id="nv-cli" role="combobox" aria-expanded="false" aria-controls="nv-lista" autocomplete="off" placeholder="digite o nome ou abra a lista" value="'+esc(c?c.nome:NV.nome)+'" oninput="NV.cli=null;NV.nome=this.value;el(\'nv-sel\').innerHTML=\'\';nvLista(true)" onfocus="nvLista(true)"><button class="combo-s" type="button" onclick="nvLista()" aria-label="Mostrar clientes cadastrados">▾</button><div class="combo-l" id="nv-lista" role="listbox" hidden></div></div>'+
     '<div id="nv-sel">'+(c?nvSel(c):'')+'</div><p style="margin:10px 0 0"><button class="btn peq" onclick="nvNovo()">+ Novo cliente</button></p>';
   el('nv-cliente').innerHTML=h;
@@ -506,8 +517,43 @@ function nvLista(abre){
   if(!abre){l.hidden=true;inp.setAttribute('aria-expanded','false');return}
   var b=sem(NV.cli?'':inp.value.trim());
   var r=CLIENTES.filter(function(c){return sem(c.nome+' '+c.contato).indexOf(b)>=0}).sort(function(a,c){return a.nome<c.nome?-1:1});
-  l.innerHTML=r.length?r.map(function(c){return '<button type="button" role="option" onclick="nvEscolhe('+c.id+')"><b>'+esc(c.nome)+'</b><small>'+esc(c.contato||'')+' · '+esc(c.end||'')+'</small></button>'}).join(''):'<div class="nada">Nenhum cliente com esse nome. Toque em “Novo cliente” para cadastrar.</div>';
+  l.innerHTML=r.map(function(c){return '<button type="button" role="option" onclick="nvEscolhe('+c.id+')"><b>'+esc(c.nome)+'</b><small>'+esc(c.contato||'')+' · '+esc(c.end||'')+'</small></button>'}).join('')+
+   (r.length?'':'<div class="nada" id="nv-nada">Nenhum cliente do Comercial com esse nome.</div>')+'<div id="nv-rem"></div>';
   l.hidden=false;inp.setAttribute('aria-expanded','true');
+  nvRemoto(NV.cli?'':inp.value.trim());
+}
+/* além dos clientes já usados no Comercial, procura na base do LiveFood: lojas clientes e contatos do Marketing */
+var nvT=null,nvQ='',NV_REM=[];
+function nvRemoto(q){
+  clearTimeout(nvT);var c=el('nv-rem');if(!c)return;
+  if(q.length<2){c.innerHTML=q?'':'<div class="nada">Digite ao menos 2 letras para procurar também na base do LiveFood.</div>';return}
+  c.innerHTML='<div class="nada">Procurando na base do LiveFood…</div>';
+  nvT=setTimeout(async function(){
+    nvQ=q;var d=await api('GET','/comercial/clientes-base?q='+encodeURIComponent(q));
+    var c2=el('nv-rem');if(!c2||nvQ!==q)return;
+    var ja={};CLIENTES.forEach(function(x){if(x.origem)ja[x.origem]=1});
+    NV_REM=(d.itens||[]).filter(function(x){return !ja[x.origem+':'+x.ref]});
+    var n=el('nv-nada');if(n&&NV_REM.length)n.remove();
+    c2.innerHTML=NV_REM.length?'<div class="grp">Na base do LiveFood</div>'+NV_REM.map(function(x,k){return '<button type="button" role="option" onclick="nvImporta('+k+')"><b>'+esc(x.nome)+' <span class="tg '+(x.origem==='base'?'ok':'azul')+'">'+(x.origem==='base'?'cliente':'contato do Marketing')+'</span></b><small>'+esc([x.contato,x.whats,x.end].filter(Boolean).join(' · '))+'</small></button>'}).join(''):(d.ok?'<div class="nada">Nada na base do LiveFood com esse nome. Toque em “Novo cliente” para cadastrar.</div>':'');
+  },350);
+}
+function nvImporta(k){var x=NV_REM[k];if(!x)return;var c={id:++seq,nome:x.nome,contato:x.contato||'',whats:x.whats||'',end:x.end||'',email:x.email||'',origem:x.origem+':'+x.ref};CLIENTES.push(c);nvEscolhe(c.id)}
+/* CEP: preenche o endereço sozinho (ViaCEP) */
+var cepT=null;
+function cepBusca(v){
+  var d=String(v||'').replace(/\D/g,''),m=el('nv-cep-msg');clearTimeout(cepT);NV.cep=null;
+  if(d.length!==8){if(m)m.textContent='';return}
+  if(m)m.textContent='Procurando o CEP…';
+  cepT=setTimeout(async function(){
+    try{
+      var r=await fetch('https://viacep.com.br/ws/'+d+'/json/'),j=await r.json();
+      var m2=el('nv-cep-msg'),e=el('nv-end');if(!e)return;
+      if(!j||j.erro){if(m2)m2.textContent='CEP não encontrado. Digite o endereço.';return}
+      NV.cep={cep:d,cidade:j.localidade||'',uf:j.uf||'',bairro:j.bairro||''};
+      e.value=[j.logradouro,j.bairro,(j.localidade||'')+(j.uf?'/'+j.uf:'')].filter(Boolean).join(', ');
+      if(m2)m2.textContent='Endereço preenchido. Complete com o número.';e.focus();
+    }catch(x){var m3=el('nv-cep-msg');if(m3)m3.textContent='Não consegui consultar o CEP. Digite o endereço.'}
+  },250);
 }
 function nvEscolhe(id){NV.cli=id;NV.nome='';nvDesenha()}
 function nvNovo(){var i=el('nv-cli');NV.novo=true;NV.cli=null;NV.nome=i?i.value.trim():NV.nome;nvDesenha()}
@@ -517,7 +563,9 @@ function salvarVisita(){
   if(cf){nvAgenda();toast('Você já tem visita em '+cf.cliente+' às '+cf.hora+'. Deixe pelo menos 1 hora de intervalo.');return}
   if(NV.novo){
     var n=el('nv-nome').value.trim();if(!n){toast('Informe o nome do estabelecimento.');return}
-    cl={id:++seq,nome:n,contato:el('nv-con').value.trim(),whats:el('nv-wa').value.trim(),end:el('nv-end').value.trim()};CLIENTES.push(cl);
+    cl={id:++seq,nome:n,contato:el('nv-con').value.trim(),whats:el('nv-wa').value.trim(),end:el('nv-end').value.trim()};
+    if(NV.cep){cl.cep=NV.cep.cep;cl.cidade=NV.cep.cidade;cl.uf=NV.cep.uf;cl.bairro=NV.cep.bairro}
+    CLIENTES.push(cl);
   }else{
     cl=NV.cli?acha(CLIENTES,NV.cli):null;
     if(!cl){toast('Escolha um cliente da lista ou toque em Novo cliente.');return}
@@ -800,9 +848,72 @@ function nomeRep(uid){for(var i=0;i<EQUIPE.length;i++)if(EQUIPE[i].id===uid)retu
 function vEquipe(){
   return '<div class="card"><h3><span>Representantes</span><span class="sub2">quem agenda visitas e monta propostas</span><span class="dir"><button class="lnk" onclick="novoRep()">+ Novo representante</button></span></h3>'+
    '<div class="info">O representante entra nesta mesma página com o e-mail e a senha dele. Ele agenda visitas, registra o atendimento e monta propostas. Não altera o catálogo, não vê as propostas dos outros e não entra no admin.</div>'+
-   '<div class="tabela-wrap"><table><thead><tr><th>Nome</th><th>E-mail</th><th>Celular</th><th>Último acesso</th><th>Situação</th><th>Ações</th></tr></thead><tbody>'+
-   (EQUIPE.length?EQUIPE.map(function(u,k){return '<tr><td><b>'+esc(u.nome)+'</b></td><td>'+esc(u.email||'')+'</td><td>'+esc(u.telefone||'—')+'</td><td class="sub2">'+(u.ultimo_acesso?dh(u.ultimo_acesso,' '):'nunca entrou')+'</td><td><span class="tg '+(u.ativo?'ok':'off')+'">'+(u.ativo?'Ativo':'Desativado')+'</span></td><td><button class="btn peq" onclick="repAtivo('+k+')">'+(u.ativo?'Desativar':'Ativar')+'</button></td></tr>'}).join(''):'<tr><td colspan="6" class="vazio">Nenhum representante cadastrado.</td></tr>')+
+   '<div class="tabela-wrap"><table><thead><tr><th>Representante</th><th>Área de atuação</th><th>Comissão</th><th>Recebe</th><th>Último acesso</th><th>Situação</th><th>Ações</th></tr></thead><tbody>'+
+   (EQUIPE.length?EQUIPE.map(function(u,k){var c=repCfg(u.id);return '<tr><td><b>'+esc(u.nome)+'</b><br><small class="sub2">'+esc(u.email||'')+(u.telefone?' · '+esc(u.telefone):'')+'</small></td><td class="sub2" style="max-width:220px">'+(areaTxt(c)||'<span style="color:var(--red)">não definida</span>')+'</td><td class="sub2" style="max-width:240px">'+(comTxt(c)||'<span style="color:var(--red)">não definida</span>')+'</td><td class="sub2">'+(c?POLITICAS[c.politica]||'—':'—')+'</td><td class="sub2">'+(u.ultimo_acesso?dh(u.ultimo_acesso,' '):'nunca entrou')+'</td><td><span class="tg '+(u.ativo?'ok':'off')+'">'+(u.ativo?'Ativo':'Desativado')+'</span></td><td><div class="acs" style="flex-wrap:wrap"><button class="btn peq" onclick="configRep('+k+')">Configurar</button><button class="btn peq" onclick="tela={t:\'painel\',uid:EQUIPE['+k+'].id};desenhar();scrollTo(0,0)">Painel</button><button class="btn peq" onclick="repAtivo('+k+')">'+(u.ativo?'Desativar':'Ativar')+'</button></div></td></tr>'}).join(''):'<tr><td colspan="7" class="vazio">Nenhum representante cadastrado.</td></tr>')+
    '</tbody></table></div></div>';
+}
+/* ── área de atuação, comissão e política de pagamento de cada representante ── */
+var COM_TIPOS=[['impl','Implantação e serviços','paga uma vez'],['equip','Venda de equipamentos','Mercado Livre e produtos LiveFood'],['mens','Mensalidade do plano','% é por mês; R$ é uma vez'],['alug','Locação de equipamentos','% é por mês; R$ é uma vez']];
+var POLITICAS={integral:'No fechamento do projeto (valor integral)',recebimento:'Conforme o cliente paga'};
+var UFS='AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO'.split(' ');
+function repCfg(uid){for(var i=0;i<REPS.length;i++)if(REPS[i].uid===uid)return REPS[i];return null}
+function areaTxt(c){if(!c)return '';var a=(c.cidades||[]).map(esc).join(', ');return a+(c.regioes?(a?' · ':'')+esc(c.regioes):'')}
+function regraTxt(r){return !r||r.t==='n'||!(r.v>0)?'':r.t==='%'?String(r.v).replace('.',',')+'%':R(r.v)+' por projeto'}
+function comTxt(c){if(!c||!c.com)return '';return COM_TIPOS.map(function(t){var x=regraTxt(c.com[t[0]]);return x?t[1]+': '+x:''}).filter(Boolean).join(' · ')}
+var RC=null;
+function configRep(k){
+  var u=EQUIPE[k],c=repCfg(u.id)||{uf:'SC',cidades:[],regioes:'',com:{},politica:'recebimento'};
+  RC={uid:u.id,cidades:(c.cidades||[]).slice()};
+  abrir('<h3>'+esc(u.nome)+'</h3><p class="sub">Área de atuação, comissão e como ele recebe.</p>'+
+   '<label>Área de atuação: cidades</label><div class="chips" id="rc-chips"></div>'+
+   '<div style="display:flex;gap:8px"><select id="rc-uf" style="width:86px" onchange="rcCidades()" aria-label="Estado">'+UFS.map(function(x){return '<option'+(x===(c.uf||'SC')?' selected':'')+'>'+x+'</option>'}).join('')+'</select><input id="rc-cid" list="rc-cid-l" placeholder="digite a cidade e toque em Adicionar" autocomplete="off" onkeydown="if(event.key===\'Enter\'){event.preventDefault();rcAdd()}"><datalist id="rc-cid-l"></datalist><button class="btn" type="button" onclick="rcAdd()">Adicionar</button></div>'+
+   '<label>Bairros ou regiões (opcional)</label><textarea id="rc-reg" style="min-height:64px" placeholder="ex.: Centro, Fazenda e Praia Brava; litoral norte">'+esc(c.regioes||'')+'</textarea>'+
+   '<label>Comissão</label>'+COM_TIPOS.map(function(t){var r=(c.com||{})[t[0]]||{t:'n',v:0};
+     return '<div class="com-l"><span>'+t[1]+'<small>'+t[2]+'</small></span><select id="rc-t-'+t[0]+'" aria-label="Tipo de comissão: '+t[1]+'"><option value="n">Não paga</option><option value="%"'+(r.t==='%'?' selected':'')+'>% do valor</option><option value="R"'+(r.t==='R'?' selected':'')+'>R$ por projeto</option></select><input id="rc-v-'+t[0]+'" type="number" min="0" step="0.01" value="'+(r.v||'')+'" placeholder="valor" aria-label="Valor: '+t[1]+'"></div>'}).join('')+
+   '<label>Quando ele recebe</label><select id="rc-pol">'+Object.keys(POLITICAS).map(function(p){return '<option value="'+p+'"'+(c.politica===p?' selected':'')+'>'+POLITICAS[p]+'</option>'}).join('')+'</select>'+
+   '<div class="acoes"><button class="btn" onclick="fechar()">Cancelar</button><button class="btn pri" onclick="salvarCfgRep()">Salvar</button></div>');
+  rcChips();rcCidades();
+}
+function rcChips(){el('rc-chips').innerHTML=RC.cidades.length?RC.cidades.map(function(x,i){return '<span>'+esc(x)+'<button type="button" aria-label="Tirar '+esc(x)+'" onclick="RC.cidades.splice('+i+',1);rcChips()">×</button></span>'}).join(''):'<span style="background:none;border:0;color:var(--muted);padding-left:0">nenhuma cidade ainda</span>'}
+function rcAdd(){var i=el('rc-cid'),v=i.value.trim();if(!v)return;var n=v+(/\/[A-Z]{2}$/.test(v)?'':'/'+el('rc-uf').value);if(RC.cidades.indexOf(n)<0)RC.cidades.push(n);i.value='';rcChips();i.focus()}
+var CID_UF={};
+async function rcCidades(){   /* lista de cidades do estado (IBGE), só para ajudar a digitar */
+  var uf=el('rc-uf').value,dl=el('rc-cid-l');
+  try{if(!CID_UF[uf]){var r=await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados/'+uf+'/municipios?orderBy=nome');CID_UF[uf]=(await r.json()).map(function(m){return m.nome})}}catch(e){CID_UF[uf]=CID_UF[uf]||[]}
+  if(el('rc-cid-l')===dl&&el('rc-uf').value===uf)dl.innerHTML=CID_UF[uf].map(function(n){return '<option value="'+esc(n)+'">'}).join('');
+}
+function salvarCfgRep(){
+  var com={};COM_TIPOS.forEach(function(t){var tp=el('rc-t-'+t[0]).value,v=+el('rc-v-'+t[0]).value||0;com[t[0]]={t:v>0?tp:'n',v:tp==='n'?0:v}});
+  var c=repCfg(RC.uid);if(!c){c={id:++seq,uid:RC.uid};REPS.push(c)}
+  c.uf=el('rc-uf').value;c.cidades=RC.cidades.slice();c.regioes=el('rc-reg').value.trim();c.com=com;c.politica=el('rc-pol').value;
+  fechar();toast('Representante atualizado.');desenhar();
+}
+/* comissão de uma proposta pelas regras do representante. Bases: implantação e serviços; equipamentos (ML + produtos LiveFood); plano (mensal); locação (mensal) */
+function comissao(p,c){
+  var b={impl:0,equip:0,mens:0,alug:0},o={uma:0,mes:0};
+  p.itens.forEach(function(i){var x=item(i);if(!x)return;var v=x.preco*i.q;if(i.t==='s')b.impl+=v;else if(i.t==='a')b.alug+=v;else b.equip+=v});
+  var pl=plano(p.plano);if(pl)b.mens=pl.preco;
+  if(!c||!c.com)return o;
+  COM_TIPOS.forEach(function(t){var r=c.com[t[0]],k=t[0];if(!r||r.t==='n'||!(r.v>0)||!(b[k]>0))return;
+    if(r.t==='R')o.uma+=r.v;else if(k==='mens'||k==='alug')o.mes+=b[k]*r.v/100;else o.uma+=b[k]*r.v/100});
+  return o;
+}
+function comStr(o){return (o.uma?R(o.uma):'')+(o.uma&&o.mes?' + ':'')+(o.mes?R(o.mes)+'/mês':'')||'—'}
+function meuPainel(){if(perfil==='rep'){tela={t:'painel',uid:EU.uid};desenhar();scrollTo(0,0)}else ir('equipe')}
+function vPainel(uid){
+  var c=repCfg(uid),nome=uid===EU.uid?EU.nome:nomeRep(uid),ps=PROPOSTAS.filter(function(p){return (p.dono||EU.uid)===uid});
+  var and=ps.filter(function(p){return p.status!=='aprovada'}),apr=ps.filter(function(p){return p.status==='aprovada'}),sa={uma:0,mes:0},sp={uma:0,mes:0};
+  apr.forEach(function(p){var x=comissao(p,c);sa.uma+=x.uma;sa.mes+=x.mes});and.forEach(function(p){var x=comissao(p,c);sp.uma+=x.uma;sp.mes+=x.mes});
+  return '<button class="btn peq volta" onclick="tela=null;desenhar()">← Voltar</button>'+
+   '<div class="finrow">'+kpi('Propostas em andamento',and.length,'')+kpi('Aprovadas',apr.length,'vg')+kpi('Comissão das aprovadas',comStr(sa),'vo')+kpi('Prevista, em andamento',comStr(sp),'')+'</div>'+
+   '<div class="card"><h3><span>'+esc(nome||'Representante')+'</span><span class="sub2">área de atuação e regras</span></h3>'+
+    (c?'<dl class="dl"><dt>Área de atuação</dt><dd>'+(areaTxt(c)||'—')+'</dd><dt>Comissão</dt><dd>'+(comTxt(c)||'—')+'</dd><dt>Recebe</dt><dd>'+(POLITICAS[c.politica]||'—')+'</dd></dl>':'<p class="sub2" style="margin:0">Área de atuação e comissão ainda não foram definidas pelo administrador.</p>')+'</div>'+
+   '<div class="card"><h3><span>Por cliente</span><span class="sub2">propostas e comissão</span></h3>'+
+    '<div class="info">A comissão é calculada pelas regras acima sobre os valores da proposta. O que já foi <b>pago pelo cliente</b> e o fechamento financeiro entram quando as cobranças estiverem ligadas.</div>'+
+    '<div class="tabela-wrap"><table><thead><tr><th>Cliente</th><th>Situação</th><th class="n">Projeto (uma vez)</th><th class="n">Todo mês</th><th class="n">Comissão</th><th>Ações</th></tr></thead><tbody>'+
+    (ps.length?ps.slice().sort(function(a,b){return (b.criada||0)-(a.criada||0)}).map(function(p){var s=somas(p.itens),pl=plano(p.plano),m=s.m+(pl?pl.preco:0);
+      return '<tr><td><b>'+esc(p.cliente)+'</b><br><small class="sub2">'+dh(p.criada)+'</small></td><td>'+TG[p.status]+'</td><td class="n">'+R(s.t)+'</td><td class="n">'+(m?R(m)+'/mês':'—')+'</td><td class="n"><b>'+comStr(comissao(p,c))+'</b></td><td><button class="btn peq" onclick="pvAbrir(acha(PROPOSTAS,'+p.id+'))">Ver proposta</button></td></tr>'}).join(''):'<tr><td colspan="6" class="vazio">Nenhuma proposta ainda.</td></tr>')+
+    '</tbody></table></div></div>';
 }
 function novoRep(){
   abrir('<h3>Novo representante</h3><p class="sub">Combine a senha com ele. Mínimo de 8 caracteres.</p>'+
