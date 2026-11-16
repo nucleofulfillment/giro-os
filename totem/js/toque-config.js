@@ -12,7 +12,7 @@
   const API = M.api, HDR = { 'Content-Type': 'application/json', Authorization: 'Bearer ' + jwt };
   const el = (id) => document.getElementById(id);
   const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const PADRAO = { ativo: 0, formato: 'v', frase: '', modo: 'ambos', cat: 'esq', capa: 1, topo: 1, rotulo: '', ofs: [], troca: 5, princ: 1, cobrar: 'totem', pg: ['caixa'], ajuda: 1, video: '' };
+  const PADRAO = { ativo: 0, formato: 'v', frase: '', modo: 'ambos', cat: 'esq', capa: 1, topo: 1, rotulo: '', ofs: [], troca: 5, princ: 1, cobrar: 'totem', pg: ['caixa'], ajuda: 1, video: '', cols: 0 };
   const LADO = 400;
   let D = null, C = {}, PRODS = [], salvo = '';
 
@@ -81,7 +81,7 @@
   function largura() { window.TOQUE_LADO = innerWidth >= 900 ? LADO : 0; if (window.ajustarEscalaToque) window.ajustarEscalaToque(); }
 
   const rot = (tx) => `<label class="tq-rot">${tx}</label>`, nota = (tx) => `<div class="tq-nota">${tx}</div>`, tit = (tx) => `<div class="tq-tit">${tx}</div>`;
-  const sel = (k, ops) => `<select class="inp" data-sel="${k}">` + ops.map((o) => `<option value="${o[0]}"${o[0] === C[k] ? ' selected' : ''}>${esc(o[1])}</option>`).join('') + '</select>';
+  const sel = (k, ops) => `<select class="inp" data-sel="${k}">` + ops.map((o) => `<option value="${o[0]}"${String(o[0]) === String(C[k]) ? ' selected' : ''}>${esc(o[1])}</option>`).join('') + '</select>';
   const chk = (k, tx, forte) => `<label class="tq-ck${forte ? ' forte' : ''}"><input type="checkbox" data-ck="${k}"${C[k] ? ' checked' : ''}> ${tx}</label>`;
   const chkPg = (v, tx) => `<label class="tq-ck"><input type="checkbox" data-pg="${v}"${C.pg.indexOf(v) >= 0 ? ' checked' : ''}> ${tx}</label>`;
 
@@ -98,6 +98,8 @@
       + nota('Escolha uma sugestão ou escreva a sua (até 40 letras).')
       + rot('Tipo de pedido') + sel('modo', [['ambos', 'O cliente escolhe: consumir aqui ou levar'], ['aqui', 'Só consumir aqui'], ['levar', 'Só para levar']])
       + rot('Categorias') + sel('cat', [['esq', 'Na esquerda'], ['topo', 'No topo (4 por linha)'], ['dir', 'Na direita'], ['nao', 'Não mostrar (só os produtos)']])
+      + rot('Produtos por linha') + sel('cols', [['0', 'Automático (pela posição das categorias)'], ['2', '2 por linha (cartões maiores)'], ['3', '3 por linha (mais produtos na tela)']])
+      + nota('Na tela deitada, 2 e 3 viram 4 e 5 por linha.')
       + chk('ajuda', 'Mostrar o Live com o botão “Precisa de ajuda?”')
       + rot('Vídeo de fundo da entrada')
       + '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'
@@ -153,7 +155,7 @@
   function mudouCampo(ev) {
     const t = ev.target, d = t.dataset || {};
     if (t.id === 'tq-vid-arq') { enviaVideo(t.files && t.files[0]); t.value = ''; return; }
-    if (d.sel) { C[d.sel] = t.value; if (d.sel === 'cobrar') form(); }
+    if (d.sel) { C[d.sel] = d.sel === 'cols' ? (parseInt(t.value, 10) || 0) : t.value; if (d.sel === 'cobrar') form(); }
     else if (d.ck) C[d.ck] = t.checked ? 1 : 0;
     else if (d.pg) { const i = C.pg.indexOf(d.pg); if (t.checked && i < 0) C.pg.push(d.pg); if (!t.checked && i >= 0) C.pg.splice(i, 1); }
     else if (d.of) {
@@ -190,6 +192,7 @@
       const g = d.cfg && d.cfg.toque;
       if (!g) throw new Error('O servidor ainda não grava o Totem de toque. Publique o Worker 296 e salve de novo.');
       if (c.pg.some((x) => (x === 'credito' || x === 'debito') && g.pg.indexOf(x) < 0)) throw new Error('Salvei, mas o servidor ainda não aceita cartão no totem. Publique o Worker 296 e salve de novo.');
+      if (c.cols && !g.cols) throw new Error('Salvei, mas o servidor ainda não guarda os produtos por linha. Publique o Worker 298 e salve de novo.');
       if (c.video && !g.video) throw new Error('Salvei, mas o servidor ainda não guarda o vídeo de fundo. Publique o Worker 297 e salve de novo.');
       D.cfg = d.cfg; salvo = JSON.stringify(C);
       diz(g.ativo ? 'Salvo. Totem de toque ligado.' : 'Salvo. Totem desligado (modo teste).', '#16A34A');

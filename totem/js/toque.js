@@ -13,7 +13,7 @@
 
   // ----- configuração do painel -----
   const S = M.servidor || null;
-  const C = Object.assign({ ativo: 0, formato: 'v', frase: '', modo: 'ambos', cat: 'esq', capa: 1, topo: 1, rotulo: '', ofs: [], troca: 5, princ: 1, cobrar: 'totem', pg: ['caixa'], ajuda: 1, video: '' }, (S && S.toque) || {});
+  const C = Object.assign({ ativo: 0, formato: 'v', frase: '', modo: 'ambos', cat: 'esq', capa: 1, topo: 1, rotulo: '', ofs: [], troca: 5, princ: 1, cobrar: 'totem', pg: ['caixa'], ajuda: 1, video: '', cols: 0 }, (S && S.toque) || {});
   const Q = new URLSearchParams(location.search);
   if (/^[vh]$/.test(Q.get('formato') || '')) C.formato = Q.get('formato'); // para conferir o outro formato sem mexer no painel
   // pré-visualização: sem a chave do totem (ou seja, sempre em modo teste) o link aceita ...&demo={"cat":"topo","pg":["caixa","pix"]} para ver uma configuração antes de salvar no painel
@@ -53,6 +53,30 @@
       body.tt-deitado .lfc .lfc-bt { margin-top: calc(14px * var(--tt-s, 1)); padding: calc(26px * var(--tt-s, 1)) calc(56px * var(--tt-s, 1)); }`;
     document.head.appendChild(st);
   })();
+  // ----- rolagem por toque (iPhone e iPad) -----
+  // No Safari do iPhone, arrastar uma lista que fica dentro de uma tela fixa pode "puxar a página" em vez da lista,
+  // e o gesto se perde (a lista parece travada). Aqui a página fica proibida de rolar ou esticar e cada lista
+  // declara que rola na vertical e segura o gesto para si. De quebra, sai o zoom de dois toques e de pinça.
+  (function () {
+    const st = document.createElement('style');
+    st.textContent = `
+      html, body { overscroll-behavior: none; touch-action: manipulation; -webkit-text-size-adjust: 100%; }
+      #totem { touch-action: manipulation; -webkit-touch-callout: none; }
+      #lista, #cats, .folha .corpo, #barra-itens { -webkit-overflow-scrolling: touch; overscroll-behavior: contain; touch-action: pan-y; }
+      #tq-form, #tq-ofs { -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }`;
+    document.head.appendChild(st);
+    // o Safari antigo ignora o overscroll-behavior: barra o arrasto que não começou dentro de uma lista que rola
+    document.addEventListener('touchmove', (ev) => {
+      if (ev.touches.length > 1) { ev.preventDefault(); return; } // pinça
+      let n = ev.target;
+      while (n && n !== document.body) {
+        if (n.nodeType === 1) { const o = getComputedStyle(n).overflowY; if ((o === 'auto' || o === 'scroll') && n.scrollHeight > n.clientHeight + 1) return; }
+        n = n.parentNode;
+      }
+      ev.preventDefault();
+    }, { passive: false });
+  })();
+
   // ----- encaixe na tela do aparelho -----
   // A tela foi desenhada em 1080x1920 (em pé) ou 1920x1080 (deitada). Aparelho mais comprido ou mais largo que isso
   // (celular, tablet) ficava com faixas pretas sobrando: agora a tela estica a medida que sobra, até 45% a mais,
@@ -208,10 +232,34 @@
     if (totem.classList.contains('em-cardapio')) v.pause(); else v.play().catch(() => {});
   }
 
+  // ----- produtos por linha -----
+  // Configurável no painel: 2 ou 3 por linha na tela em pé (na deitada viram 4 e 5). Em 0 fica o automático,
+  // que decide pela posição das categorias. Com 3 ou mais por linha o cartão usa letras um pouco menores.
+  (function () {
+    const st = document.createElement('style');
+    st.textContent = `
+      #grade.aperto .prod b.nome { font-size: 26px; }
+      #grade.aperto .prod .preco { font-size: 29px; gap: 8px; }
+      #grade.aperto .prod .preco s { font-size: 18px; }
+      #grade.aperto .prod .qt, #grade.aperto .prod .mais { height: 62px; }
+      #grade.aperto .prod .qt { gap: 4px; }
+      #grade.aperto .prod .qt button { width: 56px; height: 56px; font-size: 34px; }
+      #grade.aperto .prod .mais { font-size: 23px; }
+      #grade.aperto .prod .txt { padding: 14px 16px 16px; }
+      #grade.folga .prod b.nome { font-size: 29px; } #grade.folga .prod .preco { font-size: 34px; }`;
+    document.head.appendChild(st);
+  })();
+  function colunas() {
+    const g = $('#grade'), n = C.cols === 2 || C.cols === 3 ? (C.formato === 'h' ? C.cols + 2 : C.cols) : 0;
+    g.style.gridTemplateColumns = n ? `repeat(${n}, minmax(0, 1fr))` : '';
+    g.classList.toggle('aperto', n >= 3);
+    g.classList.toggle('folga', n === 2);
+  }
+
   // ----- desenho -----
   function desenhaFixos() {
     totem.classList.toggle('horiz', C.formato === 'h');
-    fundoVideo();
+    fundoVideo(); colunas();
     if (window.pintaLogoToque) window.pintaLogoToque(M.loja);
     $('#meio').className = C.cat === 'nao' ? 'cat-topo sem-cats' : 'cat-' + C.cat;
     desenhaOfertas();
