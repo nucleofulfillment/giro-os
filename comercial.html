@@ -778,7 +778,8 @@ function aprovaAviso(){
   return 'O cliente fala direto com '+(u?esc(u.nome):'o responsável')+', se ele tiver celular no cadastro. Nesse modo a proposta não é aprovada sozinha: depois de fechar, toque em <b>Marcar aprovada</b> e em <b>Enviar links</b> na lista de propostas.';
 }
 /* desconto total no Pix dos serviços da lista (forma de pagamento configurada no serviço) */
-function pixDesc(itens){var d=0;itens.forEach(function(i){if(i.t!=='s')return;var x=item(i);if(x&&x.pg&&x.pg.pix&&Number(x.pg.desc)>0)d+=x.preco*i.q*Number(x.pg.desc)/100});return d}
+/* mesma regra da proposta: vale o desconto do primeiro serviço com forma de pagamento e pega tudo do LiveFood (produtos e serviços) */
+function pixDesc(itens){var pc=null,sl=0;itens.forEach(function(i){if(i.t!=='s'&&i.t!=='p')return;var x=item(i);if(!x)return;sl+=x.preco*i.q;if(pc===null&&i.t==='s'&&x.pg)pc=x.pg.pix&&Number(x.pg.desc)>0?Number(x.pg.desc):0});return pc>0?sl-Math.round(sl*(1-pc/100)*100)/100:0}
 function resHtml(){
   if(!rasc.aprovar){var pa='';try{pa=localStorage.getItem('lf_com_aprovar')||''}catch(e){}rasc.aprovar=pa==='rep'?'rep':'auto'}
   var s=somas(rasc.itens);
