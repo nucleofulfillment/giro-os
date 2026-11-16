@@ -1436,9 +1436,18 @@ function salvarWhatsPedidos(){
 function removerAsaas(){if(!confirm('Remover a chave do Asaas do LiveFood?'))return;chamar('POST','/admin/asaas-config',{remover:true}).then(function(d){if(d.ok){fechar();toast('Chave removida.');carregarSaldo();}}).catch(function(){});}
 
 /* ── menu do nome ── */
-function menuAv(e){e.stopPropagation();el('menu-lista').classList.toggle('on');}
+/* o topo laranja corta o que passa da borda dele (overflow:hidden). O menu abre preso à janela, logo abaixo da bolinha, para não ser cortado */
+function menuAv(e){
+  e.stopPropagation();
+  var m=el('menu-lista'), b=el('av-ini').getBoundingClientRect();
+  m.style.position='fixed'; m.style.top=Math.round(b.bottom+8)+'px'; m.style.right=Math.max(8,Math.round(window.innerWidth-b.right))+'px';
+  m.style.maxHeight=Math.max(160,window.innerHeight-b.bottom-20)+'px'; m.style.overflowY='auto';
+  m.classList.toggle('on');
+}
 function menuFecha(){el('menu-lista').classList.remove('on');}
 document.addEventListener('click',function(){var m=el('menu-lista');if(m)m.classList.remove('on');});
+window.addEventListener('scroll',function(){var m=el('menu-lista');if(m)m.classList.remove('on');},{passive:true});
+window.addEventListener('resize',function(){var m=el('menu-lista');if(m)m.classList.remove('on');});
 function abrirTrocarSenha(){
   abrirModal('<h3>Trocar minha senha</h3><label>Senha atual</label><input id="ts-a" type="password" autocomplete="current-password"><label>Nova senha (mínimo 8 caracteres)</label><input id="ts-n" type="password" autocomplete="new-password"><div class="erro" id="ts-erro"></div><div class="acoes"><button class="btn" onclick="fechar()">Cancelar</button><button class="btn pri" id="ts-btn" onclick="salvarSenha()">Trocar senha</button></div>');
 }
