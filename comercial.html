@@ -778,7 +778,7 @@ function copiar(id){
 var oBusca='',oFull=false;
 function vOfertas(){
   return '<div class="card"><h3><span>Ofertas do LiveMarket</span><span class="sub2">produtos do Mercado Livre com seu link de afiliado</span><span class="dir"><button class="lnk" onclick="novaOferta()">+ Nova oferta</button></span></h3>'+
-   '<div class="info">Cadastre o produto com o preço e o parcelamento que aparecem no Mercado Livre e o seu link de afiliado. O que estiver aqui fica disponível para as propostas. A coluna <b>Conferido</b> mostra quando o preço foi informado pela última vez.</div>'+
+   '<div class="info">Em <b>+ Nova oferta</b>, cole o seu link de afiliado e toque em Buscar: os dados do anúncio são preenchidos. O que estiver aqui fica disponível para as propostas. A coluna <b>Conferido</b> mostra quando o preço foi informado pela última vez. Produto do nosso estoque (novo ou usado) é cadastrado em <button class="lnk" onclick="ir(\'prods\')">Produtos LiveFood</button>.</div>'+
    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center"><input class="busca" placeholder="buscar oferta" value="'+esc(oBusca)+'" oninput="oBusca=this.value;el(\'o-corpo\').innerHTML=ofLinhas()"><button class="chip'+(oFull?' on':'')+'" onclick="oFull=!oFull;desenhar()">⚡ Só Full</button></div>'+
    '<div class="tabela-wrap"><table><thead><tr><th>Produto</th><th>Categoria</th><th class="n">Preço no ML</th><th>Parcelamento</th><th>Envio</th><th>Conferido</th><th>Na loja</th><th>Ações</th></tr></thead><tbody id="o-corpo">'+ofLinhas()+'</tbody></table></div></div>';
 }
@@ -790,16 +790,53 @@ function ofLinhas(){
 function lojaTroca(id){var o=acha(OFERTAS,id);o.loja=!o.loja;el('o-corpo').innerHTML=ofLinhas();toast(o.loja?'Oferta visível na loja.':'Oferta oculta da loja.')}
 function novaOferta(id){
   var o=id?acha(OFERTAS,id):null;
-  abrir('<h3>'+(o?'Editar oferta':'Nova oferta')+'</h3><p class="sub">Produto do Mercado Livre com o seu link de afiliado. Use o preço e o parcelamento que aparecem lá.</p>'+
+  window._ofMl=(o&&o.ml)||null;
+  abrir('<h3>'+(o?'Editar oferta':'Nova oferta')+'</h3><p class="sub">Cole o seu link de afiliado do Mercado Livre e toque em Buscar: nome, preço, foto, Full e condição são preenchidos.</p>'+
+   '<label for="of-link">Seu link de afiliado (ou o endereço do produto)</label><div style="display:flex;gap:8px"><input id="of-link" placeholder="https://mercadolivre.com/sec/..." value="'+esc(o?o.link:'')+'" onkeydown="if(event.key===\'Enter\'){event.preventDefault();mlBuscar()}"><button class="btn pri" type="button" id="of-buscar" onclick="mlBuscar()">Buscar</button></div>'+
+   '<div class="sub2" id="of-ml" aria-live="polite" style="margin-top:8px;min-height:18px;line-height:1.5"></div>'+
+   (o?'':'<p style="margin:6px 0 0"><button class="lnk" style="white-space:normal;text-align:left" onclick="fechar();ir(\'prods\');novoProd()">É um produto do nosso estoque, novo ou usado? Cadastrar manualmente →</button></p>')+
    '<label>Nome do produto</label><input id="of-nome" value="'+esc(o?o.nome:'')+'" placeholder="ex.: Impressora térmica POS-80">'+
    '<label>Resumo (aparece na proposta)</label><input id="of-det" value="'+esc(o?o.det:'')+'" placeholder="ex.: 80 mm, rede e USB">'+
    '<div class="linha3"><div><label>Preço no ML (R$)</label><input id="of-preco" type="number" min="0" step="0.01" value="'+(o?o.preco:'')+'"></div><div><label>Parcelas sem juros</label><input id="of-parc" type="number" min="1" max="24" value="'+(o?o.parc:10)+'"></div><div><label>Envio</label><select id="of-full"><option value="1">⚡ Full</option><option value="0"'+(o&&!o.full?' selected':'')+'>Normal</option></select></div></div>'+
-   '<label>Seu link de afiliado</label><input id="of-link" placeholder="https://mercadolivre.com/sec/..." value="'+esc(o?o.link:'')+'">'+
    fotoCampo(o?o.img:'')+
    '<label>Características (uma linha por item)</label><textarea id="of-desc">'+esc(o&&o.desc?o.desc.join('\n'):'')+'</textarea>'+
    '<div class="linha3"><div><label>Categoria na loja</label><select id="of-cat">'+['Caixa','Impressão','Atendimento','Energia','Rede e internet','Cozinha'].map(function(c){return '<option'+(o&&o.cat===c?' selected':'')+'>'+c+'</option>'}).join('')+'</select></div><div><label>Mostrar na loja</label><select id="of-loja"><option value="1">Sim</option><option value="0"'+(o&&!o.loja?' selected':'')+'>Não, só em propostas</option></select></div><div><label>Condição</label><select id="of-usado"><option value="0">Novo</option><option value="1"'+(o&&o.usado?' selected':'')+'>Usado</option></select></div></div>'+
    necChecks('o',o?o.id:0)+
    '<div class="acoes">'+(o?'<button class="btn perigo" style="margin-right:auto" onclick="excluirOf('+o.id+')">Excluir</button>':'')+'<button class="btn" onclick="fechar()">Cancelar</button><button class="btn pri" onclick="salvarOf('+(o?o.id:0)+')">Salvar oferta</button></div>');
+  mlMostra();
+}
+/* Mercado Livre: conta conectada no Worker (a partir do 289). Colou o link, tocou em Buscar, os campos são preenchidos */
+var ML_ST=null;
+async function mlMostra(){
+  if(!el('of-ml'))return;
+  if(!ML_ST||!ML_ST.ok)ML_ST=await api('GET','/comercial/ml/status');
+  var c=el('of-ml'),s=ML_ST;if(!c)return;
+  if(s.http===0)c.textContent='Sem conexão com o servidor. Você pode preencher à mão.';
+  else if(!s.ok)c.textContent='A busca automática entra com o Worker 289. Enquanto isso, preencha os campos à mão.';
+  else if(!s.configurado)c.innerHTML='Busca automática desligada: falta criar o aplicativo no Mercado Livre e guardar <b>ML_CLIENT_ID</b> e <b>ML_CLIENT_SECRET</b> no Cloudflare. Enquanto isso, preencha os campos à mão.';
+  else if(!s.conectado)c.innerHTML='A conta do Mercado Livre ainda não está conectada. <button class="lnk" onclick="mlConectar()">Conectar agora</button>';
+  else c.innerHTML='✓ Mercado Livre conectado'+(s.conta?' ('+esc(s.conta)+')':'')+'.';
+}
+async function mlConectar(){
+  var r=await api('GET','/comercial/ml/conectar');if(!r.ok){toast(r.mensagem||'Não consegui iniciar a conexão.');return}
+  ML_ST=null;window.open(r.url,'_blank','noopener');
+  var c=el('of-ml');if(c)c.innerHTML='Autorize na aba que abriu. Depois, <button class="lnk" onclick="ML_ST=null;mlMostra()">toque aqui para conferir</button>.';
+}
+async function mlBuscar(){
+  var u=el('of-link').value.trim(),b=el('of-buscar');
+  if(!/^https?:\/\//i.test(u)){toast('Cole o link do produto (começa com https://).');return}
+  b.disabled=true;b.textContent='Buscando…';
+  var r=await api('POST','/comercial/ml-ler',{url:u});
+  b=el('of-buscar');var c=el('of-ml');if(!b||!c)return;
+  b.disabled=false;b.textContent='Buscar';
+  if(!r.ok){c.innerHTML='<span style="color:var(--red)">'+esc(r.http===404?'A busca automática entra com o Worker 289.':(r.mensagem||'Não consegui buscar.'))+'</span> Você pode preencher os campos à mão.';return}
+  var d=r.dados||{};
+  if(d.nome)el('of-nome').value=d.nome;
+  if(d.preco>0)el('of-preco').value=d.preco;
+  el('of-full').value=d.full?'1':'0';el('of-usado').value=d.usado?'1':'0';
+  if(d.img){el('ft-url').value=d.img;fotoUrl(d.img)}
+  window._ofMl=d.ml||null;
+  c.innerHTML='✓ Dados trazidos do Mercado Livre. Confira as <b>parcelas sem juros</b>, que não vêm automáticas.'+(/\/sec\/|meli\.la/i.test(u)?'':' <b style="color:var(--red)">Esse não parece ser o seu link de afiliado. Troque o link acima pelo de afiliado antes de salvar, para a comissão ser sua.</b>');
 }
 function salvarOf(id){
   var nome=el('of-nome').value.trim(),link=el('of-link').value.trim(),preco=+el('of-preco').value||0;
@@ -807,6 +844,7 @@ function salvarOf(id){
   if(!(preco>0)){toast('Informe o preço que aparece no Mercado Livre.');return}
   if(!/^https?:\/\//i.test(link)){toast('Informe o seu link de afiliado (começa com https://).');return}
   var d={nome:nome,det:el('of-det').value.trim(),preco:preco,parc:Math.max(1,Math.round(+el('of-parc').value||1)),full:el('of-full').value==='1',usado:el('of-usado').value==='1',link:link,img:fotoVal(),desc:el('of-desc').value.split('\n').map(function(x){return x.trim()}).filter(Boolean),cat:el('of-cat').value,loja:el('of-loja').value==='1'};
+  if(window._ofMl)d.ml=window._ofMl;   /* código do anúncio: é o que vai permitir atualizar o preço sozinho */
   var o=id?acha(OFERTAS,id):null;
   if(o){if(o.preco!==d.preco||o.parc!==d.parc||!o.conferido)d.conferido=Date.now();for(var k in d)o[k]=d[k]}
   else{d.id=++seq;d.conferido=Date.now();OFERTAS.push(d);o=d}
@@ -1034,13 +1072,14 @@ function novoProd(id){
    '<label>Resumo (aparece na proposta)</label><input id="pd-det" value="'+esc(s?s.det:'')+'" placeholder="ex.: personalizada com a logo">'+
    '<label>O que inclui (uma linha por item)</label><textarea id="pd-desc">'+esc(s?s.desc.join('\n'):'')+'</textarea>'+
    fotoCampo(s?s.img:'')+
+   '<label>Condição</label><select id="pd-usado"><option value="0">Novo</option><option value="1"'+(s&&s.usado?' selected':'')+'>Usado</option></select>'+
    '<div class="linha3"><div><label>Preço (R$)</label><input id="pd-preco" type="number" min="0" step="0.01" value="'+(s?s.preco:'')+'"></div><div><label>Vendido por</label><select id="pd-un"><option'+(s&&s.un==='unidade'?' selected':'')+'>unidade</option><option'+(s&&s.un==='pacote com 50'?' selected':'')+'>pacote com 50</option><option'+(s&&s.un==='pacote com 100'?' selected':'')+'>pacote com 100</option></select></div><div><label>Situação</label><select id="pd-ativo"><option value="1">Ativo</option><option value="0"'+(s&&!s.ativo?' selected':'')+'>Pausado</option></select></div></div>'+
    necChecks('p',s?s.id:0)+
    '<div class="acoes"><button class="btn" onclick="fechar()">Cancelar</button><button class="btn pri" onclick="salvarProd('+(s?s.id:0)+')">Salvar produto</button></div>');
 }
 function salvarProd(id){
   var n=el('pd-nome').value.trim();if(!n){toast('Informe o nome do produto.');return}
-  var d={nome:n,det:el('pd-det').value.trim(),desc:el('pd-desc').value.split('\n').map(function(x){return x.trim()}).filter(Boolean),preco:+el('pd-preco').value||0,un:el('pd-un').value,img:fotoVal(),ativo:el('pd-ativo').value==='1'};
+  var d={nome:n,det:el('pd-det').value.trim(),desc:el('pd-desc').value.split('\n').map(function(x){return x.trim()}).filter(Boolean),preco:+el('pd-preco').value||0,un:el('pd-un').value,usado:el('pd-usado').value==='1',img:fotoVal(),ativo:el('pd-ativo').value==='1'};
   if(id){var s=acha(PRODUTOS,id);for(var k in d)s[k]=d[k]}else{d.id=++seq;PRODUTOS.push(d)}
   necSalva('p',id||d.id);fechar();toast('Produto salvo.');desenhar();
 }
