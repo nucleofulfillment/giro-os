@@ -533,10 +533,24 @@ function nvLista(abre){
   nvRemoto(NV.cli?'':inp.value.trim());
 }
 /* além dos clientes já usados no Comercial, procura na base do LiveFood: lojas clientes e contatos do Marketing */
-var nvT=null,nvQ='',NV_REM=[];
+var nvT=null,nvQ='',NV_REM=[],BASE_T=null;
+/* lojas com conta no LiveFood: carregadas uma vez por sessão (Worker 290) e mostradas assim que a lista abre */
+async function nvBase(q){
+  var c=el('nv-rem');if(!c)return;
+  if(!BASE_T){
+    c.innerHTML='<div class="nada">Carregando os clientes do LiveFood…</div>';
+    var d=await api('GET','/comercial/clientes-base?q=');if(d.ok&&d.todos)BASE_T=d.itens||[];
+    c=el('nv-rem');var i=el('nv-cli');if(!c||!i||NV.cli||i.value.trim()!==q)return;   /* a pessoa já digitou outra coisa */
+  }
+  if(!BASE_T){c.innerHTML='<div class="nada">Digite ao menos 2 letras para procurar também na base do LiveFood.</div>';return}
+  var ja={},b=sem(q);CLIENTES.forEach(function(x){if(x.origem)ja[x.origem]=1});
+  NV_REM=BASE_T.filter(function(x){return !ja[x.origem+':'+x.ref]&&sem(x.nome+' '+x.contato).indexOf(b)>=0});
+  var n=el('nv-nada');if(n&&NV_REM.length)n.remove();
+  c.innerHTML=NV_REM.length?'<div class="grp">Clientes com conta no LiveFood</div>'+NV_REM.map(function(x,k){return '<button type="button" role="option" onclick="nvImporta('+k+')"><b>'+esc(x.nome)+' <span class="tg ok">cliente</span></b><small>'+esc([x.contato,x.whats].filter(Boolean).join(' · '))+'</small></button>'}).join(''):'';
+}
 function nvRemoto(q){
   clearTimeout(nvT);var c=el('nv-rem');if(!c)return;
-  if(q.length<2){c.innerHTML=q?'':'<div class="nada">Digite ao menos 2 letras para procurar também na base do LiveFood.</div>';return}
+  if(q.length<2){nvBase(q);return}   /* sem digitar (ou com 1 letra): mostra as lojas que já têm conta no LiveFood */
   c.innerHTML='<div class="nada">Procurando na base do LiveFood…</div>';
   nvT=setTimeout(async function(){
     nvQ=q;var d=await api('GET','/comercial/clientes-base?q='+encodeURIComponent(q));
