@@ -313,6 +313,21 @@
 
   let tFim = null;
   function fim(r, forma) {
+    // comemoração do cardápio e do atendimento: o Live animado, confete e o número do pedido bem grande (site/js/live-app.js)
+    if (window.LiveApp && window.LiveMascote) {
+      const valor = R$(r.total || total());
+      abre(null);
+      window.LiveApp.comemorar({
+        titulo: r.teste ? 'Modo teste: este pedido não foi enviado' : forma === 'mesa' ? 'Pedido enviado! Número' : 'Pedido confirmado! Sua senha é',
+        valor: r.teste ? 'teste' : String(r.num),
+        forma: forma === 'mesa' ? 'Mesa ' + MESA : forma === 'pix' ? 'Pix confirmado' : ehCartao(forma) ? `Pague ${valor} no ${forma === 'debito' ? 'débito' : 'crédito'}, na maquininha` : `Pague ${valor} no caixa`,
+        sub: forma === 'mesa' ? 'Já foi para a cozinha e o bar. Levamos até a sua mesa.' : E.modo === 'levar' ? 'Retire no balcão quando chamarem a senha.' : 'Aguarde a senha ser chamada e retire no balcão.',
+        botao: { texto: 'Fazer outro pedido', acao: recomeca },
+      });
+      // ninguém tocou em 25 s: fecha sozinho e volta para a entrada
+      clearTimeout(tFim); tFim = setTimeout(() => { const b = document.querySelector('.lfc .lfc-bt'); if (b) b.click(); else recomeca(); }, 25000);
+      return;
+    }
     const ic = (d) => `<svg viewBox="0 0 24 24" fill="none" stroke="#1C1C1E" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
     const iPag = ic('<rect x="2.5" y="6" width="19" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.8"/><path d="M6 9.5v5M18 9.5v5"/>'), iOk = ic('<path d="M5 12.5 10 17.5 19 7"/>'), iLocal = ic('<path d="M12 21s7-5.5 7-11a7 7 0 0 0-14 0c0 5.5 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/>');
     $('#fim-num').textContent = r.teste ? 'teste' : r.num;

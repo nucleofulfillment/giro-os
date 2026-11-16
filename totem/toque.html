@@ -316,6 +316,21 @@
   #ped-erro:empty { display: none; }
   #btn-modo:disabled { opacity: 1; cursor: default; }
   #fim-num.pequeno { font-size: 150px; letter-spacing: -3px; }
+  /* comemoração do pedido (a mesma do cardápio e do atendimento: site/js/live-app.js), no tamanho e no lugar da tela do totem.
+     --tt-x/y/w/h e --tt-s vêm do encaixe da tela; o "body" na frente garante que estas medidas valem sobre as do celular */
+  body .lfc { inset: auto; left: var(--tt-x, 0px); top: var(--tt-y, 0px); width: var(--tt-w, 100vw); height: var(--tt-h, 100vh); gap: calc(26px * var(--tt-s, 1)); padding: calc(60px * var(--tt-s, 1)); background: rgba(244, 244, 245, .97); color: #1C1C1E; border-radius: 0 0 calc(60px * var(--tt-s, 1)) calc(60px * var(--tt-s, 1)); }
+  body .lfc .lfc-live { width: calc(420px * var(--tt-s, 1)); flex: none; }
+  body .lfc b { font-size: calc(56px * var(--tt-s, 1)); }
+  body .lfc .lfc-val { font: 800 calc(300px * var(--tt-s, 1))/1 'Baloo 2', sans-serif; letter-spacing: -.03em; }
+  body .lfc .lfc-fp { font-size: calc(34px * var(--tt-s, 1)); padding: calc(18px * var(--tt-s, 1)) calc(38px * var(--tt-s, 1)); gap: calc(14px * var(--tt-s, 1)); }
+  body .lfc span { font-size: calc(34px * var(--tt-s, 1)); max-width: calc(840px * var(--tt-s, 1)); line-height: 1.3; color: #5E5E66; }
+  body .lfc .lfc-bt { margin-top: calc(34px * var(--tt-s, 1)); min-width: calc(520px * var(--tt-s, 1)); padding: calc(34px * var(--tt-s, 1)) calc(64px * var(--tt-s, 1)); border-radius: calc(36px * var(--tt-s, 1)); font-size: calc(36px * var(--tt-s, 1)); }
+  body .lfc-confete { font-size: calc(64px * var(--tt-s, 1)); }
+  body.tt-deitado .lfc { gap: calc(14px * var(--tt-s, 1)); padding: calc(30px * var(--tt-s, 1)); border-radius: 0 0 calc(44px * var(--tt-s, 1)) calc(44px * var(--tt-s, 1)); }
+  body.tt-deitado .lfc .lfc-live { width: calc(250px * var(--tt-s, 1)); }
+  body.tt-deitado .lfc b { font-size: calc(44px * var(--tt-s, 1)); }
+  body.tt-deitado .lfc .lfc-val { font-size: calc(190px * var(--tt-s, 1)); }
+  body.tt-deitado .lfc .lfc-bt { margin-top: calc(14px * var(--tt-s, 1)); padding: calc(26px * var(--tt-s, 1)) calc(56px * var(--tt-s, 1)); }
   /* Pix na tela */
   #f-pix, .horiz #f-pix { left: 0; top: 0; width: auto; border-radius: 0; align-items: center; justify-content: center; text-align: center; padding: 0 80px; }
   #f-pix p { margin: 14px 0 0; font-size: 34px; font-weight: 700; color: var(--mu2); }
@@ -462,11 +477,18 @@
     window.ajustarEscalaToque = function () {
       // TOQUE_LADO: largura do painel de configurações do dono, quando ele está aberto à esquerda
       var lado = window.TOQUE_LADO || 0, larg = innerWidth - lado, W = totem.offsetWidth, H = totem.offsetHeight, s = Math.min(larg / W, innerHeight / H);
-      totem.style.transform = 'translate(' + (lado + (larg - W * s) / 2) + 'px, ' + ((innerHeight - H * s) / 2) + 'px) scale(' + s + ')';
+      var x = lado + (larg - W * s) / 2, y = (innerHeight - H * s) / 2, rodape = W > H ? 60 : 84, r = document.documentElement.style;
+      totem.style.transform = 'translate(' + x + 'px, ' + y + 'px) scale(' + s + ')';
+      // lugar e escala da tela (sem a faixa do LiveFood), usados pela comemoração do pedido
+      r.setProperty('--tt-x', x + 'px'); r.setProperty('--tt-y', y + 'px'); r.setProperty('--tt-w', (W * s) + 'px'); r.setProperty('--tt-h', ((H - rodape) * s) + 'px'); r.setProperty('--tt-s', s);
+      document.body.classList.toggle('tt-deitado', W > H);
     };
     addEventListener('resize', window.ajustarEscalaToque); window.ajustarEscalaToque();
   })();
 </script>
+<!-- personagem animado e comemoração do pedido: os mesmos do cardápio e do atendimento -->
+<script src="../site/js/live-mascote.js"></script>
+<script src="../site/js/live-app.js"></script>
 <script src="js/cardapio-exemplo.js"></script>
 <script>document.write('<script src="js/cardapio.js?v=' + Date.now() + '"><\/script>');</script>
 </body>
