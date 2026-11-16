@@ -361,6 +361,22 @@
     abre('#f-ajuda');
   }
 
+  // ----- tela cheia -----
+  // O navegador só deixa entrar em tela cheia a partir de um toque, então ela entra no toque que começa o pedido
+  // (e volta a entrar no pedido seguinte, se alguém tiver saído com Esc). Junto, pede para a tela não apagar.
+  // Não vale com as configurações do dono abertas nem dentro da janela do painel.
+  let acesa = null;
+  async function manterAcesa() {
+    try { if ('wakeLock' in navigator && !acesa) { acesa = await navigator.wakeLock.request('screen'); acesa.addEventListener('release', () => { acesa = null; }); } } catch (e) { /* o aparelho não deixa: segue sem */ }
+  }
+  function telaCheia() {
+    if (EDITANDO || window.top !== window.self) return;
+    const d = document.documentElement;
+    try { if (!document.fullscreenElement && d.requestFullscreen) d.requestFullscreen({ navigationUI: 'hide' }).catch(() => {}); } catch (e) { /* sem suporte (iPhone): segue normal */ }
+    manterAcesa();
+  }
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && document.fullscreenElement) manterAcesa(); });
+
   // ----- toques -----
   totem.addEventListener('click', (ev) => {
     const b = ev.target.closest('button'), d = b ? b.dataset : {};
@@ -370,7 +386,7 @@
       if (card) { const p = PRODS[card.dataset.prod]; if (p && p.video) abreProd(p.pid); else mais(card.dataset.prod); } // com vídeo, tocar na foto abre para mostrar
       return;
     }
-    if (d.modo) { E.modo = d.modo === 'mesa' ? '' : d.modo; desenhaFixos(); totem.classList.add('em-cardapio'); window.Totem.estado.modo = 'conversa'; setas(); if (M.prepararEnvio && ENVIA) M.prepararEnvio(); }
+    if (d.modo) { telaCheia(); E.modo = d.modo === 'mesa' ? '' : d.modo; desenhaFixos(); totem.classList.add('em-cardapio'); window.Totem.estado.modo = 'conversa'; setas(); if (M.prepararEnvio && ENVIA) M.prepararEnvio(); }
     else if (d.cat !== undefined) { E.cat = +d.cat; desenhaCats(); desenhaGrade(); $('#lista').scrollTop = 0; }
     else if (d.rola) $('#cats').scrollBy({ top: +d.rola * 420, behavior: 'smooth' });
     else if (d.mais) mais(d.mais);
