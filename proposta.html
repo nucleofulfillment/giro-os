@@ -24,6 +24,7 @@ header img{height:26px;display:block}
 header span{font-size:12px;font-weight:700;color:var(--muted)}
 h1{margin:26px 0 4px;font-size:15px;font-weight:700;color:var(--muted2);line-height:1.2}
 h1 b{display:block;font-size:30px;font-weight:800;color:var(--text);letter-spacing:-.6px;margin-top:2px;overflow-wrap:anywhere}
+.logo-cli{display:block;max-height:84px;max-width:min(240px,70%);object-fit:contain;margin:10px 0 8px;border-radius:10px}
 .dica{margin:0 0 20px;font-size:13px;font-weight:600;color:var(--muted)}
 h2{margin:22px 4px 8px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--muted2);display:flex;justify-content:space-between;gap:10px;align-items:baseline}
 h2 small{font-size:12px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--muted);text-align:right}
@@ -66,7 +67,10 @@ li[role=button]:hover,li[role=button]:focus-visible{background:var(--s2);outline
 .fundo{position:fixed;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(34,37,43,.5);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);opacity:0;pointer-events:none;transition:opacity .2s}
 .fundo.on{opacity:1;pointer-events:auto}
 .sheet{width:min(100%,430px);max-height:100%;overflow:auto;background:#fff;border-radius:22px;position:relative;box-shadow:0 30px 60px rgba(34,37,43,.35)}
-.sheet .foto{aspect-ratio:4/3;display:grid;place-items:center;border-bottom:1px solid var(--border)}
+.sheet .foto{height:clamp(130px,26vh,190px);display:grid;place-items:center;border-bottom:1px solid var(--border)}
+.us{display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:.06em;background:#22252B;color:#fff;border-radius:5px;padding:2px 6px;vertical-align:middle;white-space:nowrap}
+small .pix,.d .pix{color:#15803D;font-weight:800}
+.res .pix{color:#166534}.res .pix b{color:#166534}
 .sheet .foto img{height:90%;max-width:90%;object-fit:contain}
 .sheet .foto svg{width:34%;height:34%;fill:none;stroke:var(--grad);stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round}
 .sheet .x{position:absolute;right:10px;top:10px;width:38px;height:38px;border-radius:50%;border:0;background:rgba(34,37,43,.78);color:#fff;font-size:20px;font-weight:700}
@@ -113,40 +117,50 @@ function planoVar(p){
   if(c>0)return '+ R$ '+(c/100).toLocaleString('pt-BR',{minimumFractionDigits:(c%1)?3:2,maximumFractionDigits:3})+' por pedido'+(!p.vtotal&&f>0?' acima de '+f.toLocaleString('pt-BR')+' inclusos':'');
   return f>0?f.toLocaleString('pt-BR')+' pedidos inclusos':'';
 }
+/* valor do item pagando no Pix, quando o serviço tem desconto no Pix; senão null */
+function pixDe(i){return i.t==='s'&&i.pg&&i.pg.pix&&Number(i.pg.desc)>0?i.preco*i.q*(1-Number(i.pg.desc)/100):null}
 function aviso(tit,txt){el('tela').innerHTML='<div class="aviso"><img src="livefood-logo.png" alt="LiveFood"><h1>'+tit+'</h1><p>'+txt+'</p></div>'}
 
 function desenhar(){
   var p=P,so=0,sl=0,sm=0;ORD=[];
   p.itens.forEach(function(i){var v=i.preco*i.q;if(i.t==='o')so+=v;else if(i.t==='a')sm+=v;else sl+=v});
   var total=so+sl,mensal=sm+(p.plano?p.plano.preco:0);
+  /* parte do LiveFood paga no Pix: serviços com desconto no Pix entram com o valor menor */
+  var slPix=0,temPix=false;p.itens.forEach(function(i){if(i.t==='o'||i.t==='a')return;var x=pixDe(i);if(x!=null){slPix+=x;temPix=true}else slPix+=i.preco*i.q});
   var pgLf='';p.itens.forEach(function(i){if(!pgLf&&i.t==='s'&&i.pg)pgLf=pgTxt(i.pg)});   /* forma de pagamento do serviço (a da implantação vem primeiro) */
   function linhas(t){return p.itens.filter(function(i){return i.t===t}).map(function(i){var k=ORD.push(i)-1;
-    return '<li tabindex="0" role="button" onclick="abrir('+k+')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();abrir('+k+')}"><span class="ic">'+ico(i)+'</span><span class="d"><b>'+esc(i.nome)+'</b><small>'+(i.q>1?'<span class="qx">'+i.q+'x</span>'+R(i.preco)+mes(i)+' cada':esc(i.det))+'</small></span><span class="p">'+R(i.preco*i.q)+(i.t==='a'?'<small>/mês</small>':'')+'</span></li>'}).join('')}
+    return '<li tabindex="0" role="button" onclick="abrir('+k+')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();abrir('+k+')}"><span class="ic">'+ico(i)+'</span><span class="d"><b>'+esc(i.nome)+(i.usado?' <span class="us">USADO</span>':'')+'</b><small>'+(i.q>1?'<span class="qx">'+i.q+'x</span>'+R(i.preco)+mes(i)+' cada':esc(i.det))+(pixDe(i)!=null?'<span class="pix">'+(i.q>1||i.det?' · ':'')+R(pixDe(i))+' no Pix</span>':'')+'</small></span><span class="p">'+R(i.preco*i.q)+(i.t==='a'?'<small>/mês</small>':'')+'</span></li>'}).join('')}
   function grupo(tit,sub,h){return h?'<h2>'+tit+'<small>'+sub+'</small></h2><ul>'+h+'</ul>':''}
-  var msg='Olá! Quero aprovar a proposta da LiveFood para '+p.cliente+'. (proposta: '+p.slug+')';
+  /* Aprovar: 'rep' abre o WhatsApp do representante responsável (ele mesmo confirma); senão abre o do LiveFood, que aprova sozinho pelo código da proposta */
+  var doRep=p.aprovar==='rep',repNome=(p.rep&&p.rep.nome)?p.rep.nome.split(' ')[0]:'';
+  var msg=doRep?'Olá'+(repNome?', '+repNome:'')+'! Quero aprovar a proposta da LiveFood para '+p.cliente+'.\n'+location.origin+location.pathname+'?p='+encodeURIComponent(p.slug):'Olá! Quero aprovar a proposta da LiveFood para '+p.cliente+'. (proposta: '+p.slug+')';
+  var hMes=grupo('Todo mês','plano e aluguel',linhas('a')+(p.plano?'<li><span class="ic">'+IC_SERV+'</span><span class="d"><b>'+esc(p.plano.nome)+'</b><small>mensalidade do sistema'+(planoVar(p.plano)?' · '+esc(planoVar(p.plano)):'')+'</small></span><span class="p">'+R(p.plano.preco)+'<small>/mês</small></span></li>':''));
   var link=p.whats?'https://wa.me/'+p.whats+'?text='+encodeURIComponent(msg):'';
   document.title='Proposta LiveFood · '+p.cliente;
   el('tela').innerHTML='<div class="pc-in"><header><img src="livefood-logo.png" alt="LiveFood"><span>'+dh(p.criada)+'</span></header>'+
-   '<h1>Proposta para<b>'+esc(p.cliente)+'</b></h1>'+(p.status==='aprovada'?'<span class="ok">✓ Proposta aprovada</span>':'')+'<p class="dica"'+(p.status==='aprovada'?' style="margin-top:10px"':'')+'>Toque em um item para ver os detalhes.</p>'+
+   '<h1>Proposta para'+(p.logo?'<img class="logo-cli" src="'+esc(p.logo)+'" alt="'+esc(p.cliente)+'" onerror="this.outerHTML=\'<b>\'+this.alt+\'</b>\'">':'<b>'+esc(p.cliente)+'</b>')+'</h1>'+(p.status==='aprovada'?'<span class="ok">✓ Proposta aprovada</span>':'')+'<p class="dica"'+(p.status==='aprovada'?' style="margin-top:10px"':'')+'>Toque em um item para ver os detalhes.</p>'+
    grupo('Equipamentos','compra direto no Mercado Livre',linhas('o'))+
    grupo('LiveFood','implantação e personalizados',linhas('p')+linhas('s'))+
-   grupo('Todo mês','plano e aluguel',linhas('a')+(p.plano?'<li><span class="ic">'+IC_SERV+'</span><span class="d"><b>'+esc(p.plano.nome)+'</b><small>mensalidade do sistema'+(planoVar(p.plano)?' · '+esc(planoVar(p.plano)):'')+'</small></span><span class="p">'+R(p.plano.preco)+'<small>/mês</small></span></li>':''))+
    '<div class="res">'+
     (so?'<div><span>Equipamentos<small>você paga e parcela no Mercado Livre</small></span><b>'+R(so)+'</b></div>':'')+
     (sl?'<div><span>LiveFood'+(pgLf?'<small>'+esc(pgLf)+'</small>':'')+'</span><b>'+R(sl)+'</b></div>':'')+
     '<div class="tt"><span>Total</span><b>'+R(total)+'</b></div>'+
-    (mensal?'<div><span>Todo mês'+(planoVar(p.plano)?'<small>'+esc(planoVar(p.plano))+'</small>':'')+'</span><b>'+R(mensal)+'/mês</b></div>':'')+
-   '</div><p class="nota">'+(p.status==='aprovada'?'Os links para comprar cada equipamento foram enviados no seu WhatsApp. Se precisar, toque em Aprovar para receber de novo.':(so?'Ao aprovar, você recebe no WhatsApp os links para comprar cada equipamento. Os preços dos equipamentos são os do Mercado Livre e podem mudar.':'Ao aprovar, nossa equipe fala com você no WhatsApp para combinar o pagamento e a instalação.'))+'</p></div>'+
+    (temPix?'<div class="pix"><span>Pagando o LiveFood no Pix<small>desconto de '+R(sl-slPix)+'</small></span><b>'+R(so+slPix)+'</b></div>':'')+
+   '</div>'+
+   /* a mensalidade vem depois da soma dos itens: é o que o cliente paga todo mês, separado do projeto */
+   hMes+(mensal&&hMes?'<div class="res" style="margin-top:8px"><div class="tt"><span>Todo mês'+(planoVar(p.plano)?'<small style="font-weight:600">'+esc(planoVar(p.plano))+'</small>':'')+'</span><b>'+R(mensal)+'/mês</b></div></div>':'')+
+   '<p class="nota">'+(doRep?(p.status==='aprovada'?'Proposta aprovada. Qualquer dúvida, fale com '+esc(repNome||'o seu representante')+' pelo botão abaixo.':'Ao aprovar, você fala direto com '+esc(repNome||'o seu representante')+' no WhatsApp para fechar.'+(so?' Os preços dos equipamentos são os do Mercado Livre e podem mudar.':'')):(p.status==='aprovada'?'Os links para comprar cada equipamento foram enviados no seu WhatsApp. Se precisar, toque em Aprovar para receber de novo.':(so?'Ao aprovar, você recebe no WhatsApp os links para comprar cada equipamento. Os preços dos equipamentos são os do Mercado Livre e podem mudar.':'Ao aprovar, nossa equipe fala com você no WhatsApp para combinar o pagamento e a instalação.')))+'</p></div>'+
    '<div class="bar"><div><span class="v"><small>Total'+(mensal?' · + '+R(mensal)+'/mês':'')+'</small><b>'+R(total)+'</b></span>'+
-    (link?'<a href="'+esc(link)+'"'+(PREVIA?' onclick="alert(\'Prévia. Para o cliente, este botão abre o WhatsApp do LiveFood com a mensagem de aprovação pronta.\');return false"':' target="_blank" rel="noopener"')+'>'+WA+'Aprovar</a>':'')+
+    (link?'<a href="'+esc(link)+'"'+(PREVIA?' onclick="alert(\'Prévia. Para o cliente, este botão abre o WhatsApp '+(doRep?'do representante':'do LiveFood')+' com a mensagem de aprovação pronta.\');return false"':' target="_blank" rel="noopener"')+'>'+WA+'Aprovar</a>':'')+
    '</div></div>';
 }
 function abrir(k){
   var i=ORD[k];
-  el('fundo').innerHTML='<div class="sheet" role="dialog" aria-modal="true" aria-label="'+esc(i.nome)+'"><button class="x" id="fx" aria-label="Fechar" onclick="fechar()">×</button><div class="foto">'+ico(i)+'</div><div class="inf"><span class="qtd">Quantidade: '+i.q+'x'+(i.full?' · ⚡ envio Full':'')+(i.usado?' · usado':'')+'</span><h3>'+esc(i.nome)+'</h3>'+
+  el('fundo').innerHTML='<div class="sheet" role="dialog" aria-modal="true" aria-label="'+esc(i.nome)+'"><button class="x" id="fx" aria-label="Fechar" onclick="fechar()">×</button><div class="foto">'+ico(i)+'</div><div class="inf"><span class="qtd">Quantidade: '+i.q+'x'+(i.full?' · ⚡ envio Full':'')+'</span><h3>'+esc(i.nome)+(i.usado?' <span class="us">USADO</span>':'')+'</h3>'+
    (i.det?'<span style="font-size:13.5px;font-weight:600;color:var(--muted2)">'+esc(i.det)+'</span>':'')+
    '<ol>'+(i.desc||[]).map(function(d){return '<li>'+esc(d)+'</li>'}).join('')+'</ol>'+
-   '<div class="preco"><span>'+(i.t==='o'?'No Mercado Livre<br>'+parc(i):i.t==='p'?'Produto LiveFood<br>'+R(i.preco)+' por '+esc(i.un||'unidade'):i.t==='a'?'Aluguel mensal'+(i.min?'<br>contrato mínimo de '+i.min+' meses':''):'Serviço LiveFood'+(pgTxt(i.pg)?'<br>'+esc(pgTxt(i.pg)):''))+'</span><strong>'+R(i.preco*i.q)+mes(i)+'</strong></div></div></div>';
+   '<div class="preco"><span>'+(i.t==='o'?'No Mercado Livre<br>'+parc(i):i.t==='p'?'Produto LiveFood<br>'+R(i.preco)+' por '+esc(i.un||'unidade'):i.t==='a'?'Aluguel mensal'+(i.min?'<br>contrato mínimo de '+i.min+' meses':''):'Serviço LiveFood'+(pgTxt(i.pg)?'<br>'+esc(pgTxt(i.pg)):''))+'</span><strong>'+R(i.preco*i.q)+mes(i)+'</strong></div>'+
+   (pixDe(i)!=null?'<div class="preco" style="background:#ECFDF3;border-color:#BBF7D0"><span style="color:#166534">No Pix<br>'+String(i.pg.desc).replace('.',',')+'% de desconto</span><strong style="color:#166534">'+R(pixDe(i))+'</strong></div>':'')+'</div></div>';
   el('fundo').classList.add('on');el('fx').focus();
 }
 function fechar(){el('fundo').classList.remove('on')}
