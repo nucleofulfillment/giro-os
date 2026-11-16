@@ -12,7 +12,7 @@
   const API = M.api, HDR = { 'Content-Type': 'application/json', Authorization: 'Bearer ' + jwt };
   const el = (id) => document.getElementById(id);
   const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const PADRAO = { ativo: 0, formato: 'v', frase: '', modo: 'ambos', cat: 'esq', capa: 1, topo: 1, rotulo: '', ofs: [], troca: 5, princ: 1, cobrar: 'totem', pg: ['caixa'], ajuda: 1 };
+  const PADRAO = { ativo: 0, formato: 'v', frase: '', modo: 'ambos', cat: 'esq', capa: 1, topo: 1, rotulo: '', ofs: [], troca: 5, princ: 1, cobrar: 'totem', pg: ['caixa'], ajuda: 1, video: '' };
   const LADO = 400;
   let D = null, C = {}, PRODS = [], salvo = '';
 
@@ -99,6 +99,12 @@
       + rot('Tipo de pedido') + sel('modo', [['ambos', 'O cliente escolhe: consumir aqui ou levar'], ['aqui', 'Só consumir aqui'], ['levar', 'Só para levar']])
       + rot('Categorias') + sel('cat', [['esq', 'Na esquerda'], ['topo', 'No topo (4 por linha)'], ['dir', 'Na direita'], ['nao', 'Não mostrar (só os produtos)']])
       + chk('ajuda', 'Mostrar o Live com o botão “Precisa de ajuda?”')
+      + rot('Vídeo de fundo da entrada')
+      + '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'
+        + `<label class="btn" style="cursor:pointer">${C.video ? 'Trocar vídeo' : 'Escolher vídeo'}<input type="file" id="tq-vid-arq" accept="video/mp4,video/webm,video/quicktime" hidden></label>`
+        + (C.video ? '<button type="button" class="btn" id="tq-vid-tira">Remover vídeo</button><span style="font-size:12.5px;font-weight:700;color:#16A34A">Vídeo no fundo da entrada.</span>' : '')
+      + '</div>'
+      + nota('MP4, WebM ou MOV, até 90 MB. Roda sem som e em repetição atrás da tela de entrada; a frase fica branca por cima. Um vídeo curto (10 a 20 segundos), no mesmo formato da tela, fica melhor. Só vale depois de Salvar.')
       + tit('Ofertas')
       + chk('capa', 'Banner de ofertas na tela de entrada')
       + chk('topo', 'Banner de ofertas no topo do cardápio')
@@ -125,8 +131,28 @@
   function diz(tx, cor) { const m = el('tq-m'); m.textContent = tx || ''; m.style.color = cor || '#8E8E93'; }
   function mudou() { T.aplica(C); diz(JSON.stringify(C) === salvo ? '' : 'Mudanças ainda não salvas.'); }
 
+  // envia o vídeo de fundo para o mesmo armazenamento dos vídeos das ofertas (/painel/video-upload) e mostra o andamento
+  function enviaVideo(arq) {
+    if (!arq) return;
+    const tipo = arq.type || 'video/mp4';
+    if (!/^video\/(mp4|webm|quicktime)$/.test(tipo)) { diz('Envie um vídeo MP4, WebM ou MOV.', '#DC2626'); return; }
+    if (arq.size > 90000000) { diz('Vídeo grande demais (máximo 90 MB). Use um vídeo mais curto.', '#DC2626'); return; }
+    const x = new XMLHttpRequest();
+    x.open('POST', API + '/painel/video-upload');
+    x.setRequestHeader('Authorization', 'Bearer ' + jwt); x.setRequestHeader('Content-Type', tipo);
+    x.upload.onprogress = (e) => { if (e.lengthComputable) diz('Enviando o vídeo… ' + Math.round(e.loaded / e.total * 100) + '%'); };
+    x.onerror = () => diz('Não consegui enviar o vídeo. Confira a internet e tente de novo.', '#DC2626');
+    x.onload = () => {
+      let j = {}; try { j = JSON.parse(x.responseText); } catch (e) { /* resposta inesperada */ }
+      if (!j.ok || !j.vid) { diz(j.mensagem || 'Não consegui enviar o vídeo (' + x.status + ').', '#DC2626'); return; }
+      C.video = j.vid; form(); mudou(); diz('Vídeo enviado. Toque em Salvar para valer no totem.', '#16A34A');
+    };
+    diz('Enviando o vídeo…'); x.send(arq);
+  }
+
   function mudouCampo(ev) {
     const t = ev.target, d = t.dataset || {};
+    if (t.id === 'tq-vid-arq') { enviaVideo(t.files && t.files[0]); t.value = ''; return; }
     if (d.sel) { C[d.sel] = t.value; if (d.sel === 'cobrar') form(); }
     else if (d.ck) C[d.ck] = t.checked ? 1 : 0;
     else if (d.pg) { const i = C.pg.indexOf(d.pg); if (t.checked && i < 0) C.pg.push(d.pg); if (!t.checked && i >= 0) C.pg.splice(i, 1); }
@@ -145,6 +171,7 @@
   function toque(ev) {
     const b = ev.target.closest('button'); if (!b) return;
     if (b.id === 'tq-salvar') return salvar();
+    if (b.id === 'tq-vid-tira') { C.video = ''; form(); mudou(); return; }
     if (b.id === 'tq-copiar') { const i = el('tq-link'); i.select(); (navigator.clipboard ? navigator.clipboard.writeText(i.value) : Promise.reject()).catch(() => document.execCommand('copy')).then(() => diz('Link copiado.', '#16A34A')); return; }
     if (b.id === 'tq-alterna') { document.body.classList.add('tq-ver-totem'); return; }
     if (b.id === 'tq-ocultar') {
@@ -163,6 +190,7 @@
       const g = d.cfg && d.cfg.toque;
       if (!g) throw new Error('O servidor ainda não grava o Totem de toque. Publique o Worker 296 e salve de novo.');
       if (c.pg.some((x) => (x === 'credito' || x === 'debito') && g.pg.indexOf(x) < 0)) throw new Error('Salvei, mas o servidor ainda não aceita cartão no totem. Publique o Worker 296 e salve de novo.');
+      if (c.video && !g.video) throw new Error('Salvei, mas o servidor ainda não guarda o vídeo de fundo. Publique o Worker 297 e salve de novo.');
       D.cfg = d.cfg; salvo = JSON.stringify(C);
       diz(g.ativo ? 'Salvo. Totem de toque ligado.' : 'Salvo. Totem desligado (modo teste).', '#16A34A');
     }).catch((e) => diz(String((e && e.message) || e), '#DC2626')).then(() => { bt.disabled = false; });

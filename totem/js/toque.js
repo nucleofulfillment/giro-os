@@ -13,7 +13,7 @@
 
   // ----- configuração do painel -----
   const S = M.servidor || null;
-  const C = Object.assign({ ativo: 0, formato: 'v', frase: '', modo: 'ambos', cat: 'esq', capa: 1, topo: 1, rotulo: '', ofs: [], troca: 5, princ: 1, cobrar: 'totem', pg: ['caixa'], ajuda: 1 }, (S && S.toque) || {});
+  const C = Object.assign({ ativo: 0, formato: 'v', frase: '', modo: 'ambos', cat: 'esq', capa: 1, topo: 1, rotulo: '', ofs: [], troca: 5, princ: 1, cobrar: 'totem', pg: ['caixa'], ajuda: 1, video: '' }, (S && S.toque) || {});
   const Q = new URLSearchParams(location.search);
   if (/^[vh]$/.test(Q.get('formato') || '')) C.formato = Q.get('formato'); // para conferir o outro formato sem mexer no painel
   // pré-visualização: sem a chave do totem (ou seja, sempre em modo teste) o link aceita ...&demo={"cat":"topo","pg":["caixa","pix"]} para ver uma configuração antes de salvar no painel
@@ -169,9 +169,49 @@
   function ligaTroca() { clearInterval(tTroca); OI = 0; if (OFS.length > 1) tTroca = setInterval(() => { OI++; desenhaOfertas(true); }, Math.max(2, C.troca || 5) * 1000); }
   ligaTroca();
 
+  // ----- vídeo de fundo da tela de entrada -----
+  // Enviado pelo dono nas configurações. Roda sem som e em repetição atrás da entrada, com um véu escuro por cima
+  // para a frase continuar legível (texto branco). Fica pausado enquanto o cliente está no cardápio.
+  (function () {
+    const st = document.createElement('style');
+    st.textContent = `
+      /* z-index negativo: o vídeo e o véu ficam atrás de tudo o que já existe na entrada, sem mexer na posição de nada */
+      #inicio-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1; background: #111; }
+      #inicio.com-video::after { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(rgba(0, 0, 0, .52), rgba(0, 0, 0, .34) 45%, rgba(0, 0, 0, .62)); pointer-events: none; }
+      #inicio.com-video > .loja-logo { color: #fff; }
+      #inicio.com-video > .loja-logo img { background: #fff; border-radius: 36px; padding: 16px 30px; box-sizing: content-box; } /* a logo ganha uma placa branca para aparecer sobre o vídeo */
+      #inicio.com-video > .loja-logo img.clara { filter: none; background: none; padding: 0; } /* logo branca: aparece direto sobre o vídeo escurecido */
+      #inicio.com-video h1 { color: #fff; text-shadow: 0 4px 30px rgba(0, 0, 0, .45); }
+      #inicio.com-video .sub { color: #fff; opacity: .92; }
+      #inicio.com-video .aviso { color: #fff; opacity: .85; }
+      #inicio.com-video .escolha button:not(.unico), #inicio.com-video #capa { border-color: transparent; }`;
+    document.head.appendChild(st);
+  })();
+  let videoRuim = '';
+  function fundoVideo() {
+    const ini = $('#inicio'); let v = $('#inicio-video');
+    const url = C.video && M.cli ? `${M.api}/food/video/${encodeURIComponent(M.cli)}/${encodeURIComponent(C.video)}` : '';
+    if (!url || url === videoRuim) { if (v) v.remove(); ini.classList.remove('com-video'); return; }
+    if (!v) {
+      v = document.createElement('video'); v.id = 'inicio-video';
+      v.muted = true; v.loop = true; v.autoplay = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.setAttribute('aria-hidden', 'true'); v.preload = 'auto';
+      // vídeo apagado ou que não carrega: volta ao fundo normal e não tenta de novo esse mesmo vídeo
+      v.addEventListener('error', () => { videoRuim = v.getAttribute('src') || ''; v.remove(); ini.classList.remove('com-video'); });
+      ini.prepend(v);
+    }
+    if (v.getAttribute('src') !== url) v.src = url;
+    ini.classList.add('com-video');
+    tocaFundo();
+  }
+  function tocaFundo() {
+    const v = $('#inicio-video'); if (!v) return;
+    if (totem.classList.contains('em-cardapio')) v.pause(); else v.play().catch(() => {});
+  }
+
   // ----- desenho -----
   function desenhaFixos() {
     totem.classList.toggle('horiz', C.formato === 'h');
+    fundoVideo();
     if (window.pintaLogoToque) window.pintaLogoToque(M.loja);
     $('#meio').className = C.cat === 'nao' ? 'cat-topo sem-cats' : 'cat-' + C.cat;
     desenhaOfertas();
@@ -460,7 +500,7 @@
       if (card) { const p = PRODS[card.dataset.prod]; if (p && p.video) abreProd(p.pid); else mais(card.dataset.prod); } // com vídeo, tocar na foto abre para mostrar
       return;
     }
-    if (d.modo) { telaCheia(); E.modo = d.modo === 'mesa' ? '' : d.modo; desenhaFixos(); totem.classList.add('em-cardapio'); window.Totem.estado.modo = 'conversa'; setas(); if (M.prepararEnvio && ENVIA) M.prepararEnvio(); }
+    if (d.modo) { telaCheia(); E.modo = d.modo === 'mesa' ? '' : d.modo; desenhaFixos(); totem.classList.add('em-cardapio'); tocaFundo(); window.Totem.estado.modo = 'conversa'; setas(); if (M.prepararEnvio && ENVIA) M.prepararEnvio(); }
     else if (d.cat !== undefined) { E.cat = +d.cat; desenhaCats(); desenhaGrade(); $('#lista').scrollTop = 0; }
     else if (d.rola) $('#cats').scrollBy({ top: +d.rola * 420, behavior: 'smooth' });
     else if (d.mais) mais(d.mais);
@@ -497,6 +537,7 @@
   function recomeca() {
     clearTimeout(tFim); E.carrinho = []; E.pagar = ''; E.cat = 0; E.modo = ''; abre(null); tudo();
     totem.classList.remove('em-cardapio'); window.Totem.estado.modo = 'standby';
+    tocaFundo();
   }
 
   // totem parado por 2 minutos no meio de um pedido: volta para a entrada (o próximo cliente não herda a sacola de ninguém)
