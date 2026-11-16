@@ -107,6 +107,12 @@ function pgTxt(pg){
   if(pg.cartao)f.push('cartão'+(pg.parc>1?' em até '+pg.parc+'x':''));
   return f.length>1?f.slice(0,-1).join(', ')+' ou '+f[f.length-1]:(f[0]||'');
 }
+/* parte variável do plano, com o mesmo texto do site: "+ R$ 0,19 por pedido", "acima de N inclusos" ou "N pedidos inclusos" */
+function planoVar(p){
+  if(!p)return '';var c=Number(p.pedido_centavos)||0,f=Number(p.franquia)||0;
+  if(c>0)return '+ R$ '+(c/100).toLocaleString('pt-BR',{minimumFractionDigits:(c%1)?3:2,maximumFractionDigits:3})+' por pedido'+(!p.vtotal&&f>0?' acima de '+f.toLocaleString('pt-BR')+' inclusos':'');
+  return f>0?f.toLocaleString('pt-BR')+' pedidos inclusos':'';
+}
 function aviso(tit,txt){el('tela').innerHTML='<div class="aviso"><img src="livefood-logo.png" alt="LiveFood"><h1>'+tit+'</h1><p>'+txt+'</p></div>'}
 
 function desenhar(){
@@ -124,13 +130,13 @@ function desenhar(){
    '<h1>Proposta para<b>'+esc(p.cliente)+'</b></h1>'+(p.status==='aprovada'?'<span class="ok">✓ Proposta aprovada</span>':'')+'<p class="dica"'+(p.status==='aprovada'?' style="margin-top:10px"':'')+'>Toque em um item para ver os detalhes.</p>'+
    grupo('Equipamentos','compra direto no Mercado Livre',linhas('o'))+
    grupo('LiveFood','implantação e personalizados',linhas('p')+linhas('s'))+
-   grupo('Todo mês','plano e aluguel',linhas('a')+(p.plano?'<li><span class="ic">'+IC_SERV+'</span><span class="d"><b>'+esc(p.plano.nome)+'</b><small>mensalidade do sistema</small></span><span class="p">'+R(p.plano.preco)+'<small>/mês</small></span></li>':''))+
+   grupo('Todo mês','plano e aluguel',linhas('a')+(p.plano?'<li><span class="ic">'+IC_SERV+'</span><span class="d"><b>'+esc(p.plano.nome)+'</b><small>mensalidade do sistema'+(planoVar(p.plano)?' · '+esc(planoVar(p.plano)):'')+'</small></span><span class="p">'+R(p.plano.preco)+'<small>/mês</small></span></li>':''))+
    '<div class="res">'+
     (so?'<div><span>Equipamentos<small>você paga e parcela no Mercado Livre</small></span><b>'+R(so)+'</b></div>':'')+
     (sl?'<div><span>LiveFood'+(pgLf?'<small>'+esc(pgLf)+'</small>':'')+'</span><b>'+R(sl)+'</b></div>':'')+
     '<div class="tt"><span>Total</span><b>'+R(total)+'</b></div>'+
-    (mensal?'<div><span>Todo mês</span><b>'+R(mensal)+'/mês</b></div>':'')+
-   '</div><p class="nota">'+(p.status==='aprovada'?'Os links para comprar cada equipamento foram enviados no seu WhatsApp. Se precisar, toque em Aprovar para receber de novo.':'Ao aprovar, você recebe no WhatsApp os links para comprar cada equipamento. Os preços dos equipamentos são os do Mercado Livre e podem mudar.')+'</p></div>'+
+    (mensal?'<div><span>Todo mês'+(planoVar(p.plano)?'<small>'+esc(planoVar(p.plano))+'</small>':'')+'</span><b>'+R(mensal)+'/mês</b></div>':'')+
+   '</div><p class="nota">'+(p.status==='aprovada'?'Os links para comprar cada equipamento foram enviados no seu WhatsApp. Se precisar, toque em Aprovar para receber de novo.':(so?'Ao aprovar, você recebe no WhatsApp os links para comprar cada equipamento. Os preços dos equipamentos são os do Mercado Livre e podem mudar.':'Ao aprovar, nossa equipe fala com você no WhatsApp para combinar o pagamento e a instalação.'))+'</p></div>'+
    '<div class="bar"><div><span class="v"><small>Total'+(mensal?' · + '+R(mensal)+'/mês':'')+'</small><b>'+R(total)+'</b></span>'+
     (link?'<a href="'+esc(link)+'"'+(PREVIA?' onclick="alert(\'Prévia. Para o cliente, este botão abre o WhatsApp do LiveFood com a mensagem de aprovação pronta.\');return false"':' target="_blank" rel="noopener"')+'>'+WA+'Aprovar</a>':'')+
    '</div></div>';
