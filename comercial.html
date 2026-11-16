@@ -197,6 +197,7 @@ input[type=checkbox]{width:auto;padding:0;accent-color:var(--grad)}
 .com-l span{font-size:13px;font-weight:700}.com-l small{display:block;color:var(--muted);font-weight:600;font-size:11.5px}
 .com-l input,.com-l select{padding:9px 10px;font-size:13px}
 button.tb-av{border:0;cursor:pointer}
+.mapa{display:block;width:100%;height:230px;border:0;border-radius:12px;margin-top:14px;background:var(--s3)}
 @media(max-width:520px){.com-l{grid-template-columns:1fr 1fr}.com-l span{grid-column:1/-1}}
 /* seletor de clientes (nova visita) */
 .combo{position:relative}
@@ -513,7 +514,7 @@ function nvDesenha(){
   if(NV.novo)h='<label>Novo cliente</label><div class="cli-novo"><label>Nome do estabelecimento</label><input id="nv-nome" placeholder="ex.: Padaria do Centro" value="'+esc(NV.nome)+'">'+
     '<div class="linha2"><div><label>Contato</label><input id="nv-con" placeholder="quem vai receber"></div><div><label>WhatsApp</label><input id="nv-wa" inputmode="tel" placeholder="(47) 99999-0000"></div></div>'+
     '<label>E-mail</label><input id="nv-mail" type="email" autocomplete="off" placeholder="cliente@email.com">'+
-    '<div class="linha2" style="grid-template-columns:minmax(120px,160px) 1fr"><div><label>CEP</label><input id="nv-cep" inputmode="numeric" maxlength="9" placeholder="00000-000" autocomplete="off" oninput="cepBusca(this.value)"></div><div><label>Endereço</label><input id="nv-end" placeholder="rua, número, bairro, cidade"></div></div><div class="sub2" id="nv-cep-msg" aria-live="polite" style="margin-top:6px;min-height:16px"></div></div><p style="margin:8px 0 0"><button class="lnk" onclick="NV.novo=false;nvDesenha()">← Escolher um cliente já cadastrado</button></p>';
+    endCampos({})+'</div><p style="margin:8px 0 0"><button class="lnk" onclick="NV.novo=false;nvDesenha()">← Escolher um cliente já cadastrado</button></p>';
   else h='<label for="nv-cli">Cliente</label><div class="combo"><input id="nv-cli" role="combobox" aria-expanded="false" aria-controls="nv-lista" autocomplete="off" placeholder="digite o nome ou abra a lista" value="'+esc(c?c.nome:NV.nome)+'" oninput="NV.cli=null;NV.nome=this.value;el(\'nv-sel\').innerHTML=\'\';nvLista(true)" onfocus="nvLista(true)"><button class="combo-s" type="button" onclick="nvLista()" aria-label="Mostrar clientes cadastrados">▾</button><div class="combo-l" id="nv-lista" role="listbox" hidden></div></div>'+
     '<div id="nv-sel">'+(c?nvSel(c):'')+'</div><p style="margin:10px 0 0"><button class="btn peq" onclick="nvNovo()">+ Novo cliente</button></p>';
   el('nv-cliente').innerHTML=h;
@@ -550,19 +551,37 @@ function nvImporta(k){var x=NV_REM[k];if(!x)return;var c={id:++seq,nome:x.nome,c
 /* CEP: preenche o endereço sozinho (ViaCEP) */
 var cepT=null;
 function cepBusca(v){
-  var d=String(v||'').replace(/\D/g,''),m=el('nv-cep-msg');clearTimeout(cepT);NV.cep=null;
+  var d=String(v||'').replace(/\D/g,''),m=el('en-msg');clearTimeout(cepT);
   if(d.length!==8){if(m)m.textContent='';return}
   if(m)m.textContent='Procurando o CEP…';
   cepT=setTimeout(async function(){
     try{
       var r=await fetch('https://viacep.com.br/ws/'+d+'/json/'),j=await r.json();
-      var m2=el('nv-cep-msg'),e=el('nv-end');if(!e)return;
-      if(!j||j.erro){if(m2)m2.textContent='CEP não encontrado. Digite o endereço.';return}
-      NV.cep={cep:d,cidade:j.localidade||'',uf:j.uf||'',bairro:j.bairro||''};
-      e.value=[j.logradouro,j.bairro,(j.localidade||'')+(j.uf?'/'+j.uf:'')].filter(Boolean).join(', ');
-      if(m2)m2.textContent='Endereço preenchido. Complete com o número.';e.focus();
-    }catch(x){var m3=el('nv-cep-msg');if(m3)m3.textContent='Não consegui consultar o CEP. Digite o endereço.'}
+      var m2=el('en-msg');if(!el('en-rua'))return;
+      if(!j||j.erro){if(m2)m2.textContent='CEP não encontrado. Preencha o endereço.';return}
+      el('en-rua').value=j.logradouro||'';el('en-bairro').value=j.bairro||'';el('en-cidade').value=j.localidade||'';if(j.uf)el('en-uf').value=j.uf;
+      if(m2)m2.textContent='Endereço preenchido. Informe o número.';el('en-num').focus();
+    }catch(x){var m3=el('en-msg');if(m3)m3.textContent='Não consegui consultar o CEP. Preencha o endereço.'}
   },250);
+}
+/* endereço em campos separados (CEP, rua, número, bairro, cidade, estado). `end` é o endereço por extenso, usado nas listas e no mapa */
+function endMonta(o){var c=(o.cidade||'')+(o.cidade&&o.uf?'/'+o.uf:'');return [[o.rua,o.num].filter(Boolean).join(', '),o.bairro,c].filter(Boolean).join(' · ')}
+function endCampos(o){
+  o=o||{};var semPartes=!o.rua&&!o.bairro&&!o.cidade;   /* cadastro antigo só tinha o endereço numa linha: ele entra em Rua para ser arrumado */
+  return '<div class="linha2" style="grid-template-columns:minmax(110px,150px) 1fr"><div><label>CEP</label><input id="en-cep" inputmode="numeric" maxlength="9" placeholder="00000-000" autocomplete="off" value="'+esc(o.cep||'')+'" oninput="cepBusca(this.value)"></div><div><label>Rua</label><input id="en-rua" value="'+esc(semPartes?(o.end||''):(o.rua||''))+'" placeholder="rua ou avenida"></div></div>'+
+   '<div class="sub2" id="en-msg" aria-live="polite" style="margin-top:6px;min-height:16px"></div>'+
+   '<div class="linha2" style="grid-template-columns:minmax(90px,120px) 1fr"><div><label style="margin-top:6px">Número</label><input id="en-num" value="'+esc(o.num||'')+'" placeholder="nº"></div><div><label style="margin-top:6px">Bairro</label><input id="en-bairro" value="'+esc(o.bairro||'')+'"></div></div>'+
+   '<div class="linha2" style="grid-template-columns:1fr minmax(80px,100px)"><div><label>Cidade</label><input id="en-cidade" value="'+esc(o.cidade||'')+'"></div><div><label>Estado</label><select id="en-uf"><option value=""></option>'+UFS.map(function(u){return '<option'+(u===(o.uf||'')?' selected':'')+'>'+u+'</option>'}).join('')+'</select></div></div>';
+}
+function endLer(){
+  var o={cep:el('en-cep').value.replace(/\D/g,''),rua:el('en-rua').value.trim(),num:el('en-num').value.trim(),bairro:el('en-bairro').value.trim(),cidade:el('en-cidade').value.trim(),uf:el('en-uf').value};
+  o.end=endMonta(o);return o;
+}
+var END_K=['cep','rua','num','bairro','cidade','uf','end'];
+/* endereço para o Google Maps (mapa da ficha e rota "Ir até o cliente") */
+function mapaEnd(o){
+  if(o.rua||o.cidade)return [[o.rua,o.num].filter(Boolean).join(', '),o.bairro,o.cidade,o.uf,'Brasil'].filter(Boolean).join(', ');
+  return o.end?String(o.end).replace(/ · /g,', ')+', Brasil':'';
 }
 function nvEscolhe(id){NV.cli=id;NV.nome='';nvDesenha()}
 function nvNovo(){var i=el('nv-cli');NV.novo=true;NV.cli=null;NV.nome=i?i.value.trim():NV.nome;nvDesenha()}
@@ -573,14 +592,14 @@ function salvarVisita(){
   if(NV.novo){
     var n=el('nv-nome').value.trim();if(!n){toast('Informe o nome do estabelecimento.');return}
     var ml=el('nv-mail').value.trim();if(ml&&!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(ml)){toast('Confira o e-mail do cliente.');return}
-    cl={id:++seq,nome:n,contato:el('nv-con').value.trim(),whats:el('nv-wa').value.trim(),email:ml,end:el('nv-end').value.trim()};
-    if(NV.cep){cl.cep=NV.cep.cep;cl.cidade=NV.cep.cidade;cl.uf=NV.cep.uf;cl.bairro=NV.cep.bairro}
+    cl={id:++seq,nome:n,contato:el('nv-con').value.trim(),whats:el('nv-wa').value.trim(),email:ml};
+    var en=endLer();END_K.forEach(function(k){cl[k]=en[k]});
     CLIENTES.push(cl);
   }else{
     cl=NV.cli?acha(CLIENTES,NV.cli):null;
     if(!cl){toast('Escolha um cliente da lista ou toque em Novo cliente.');return}
   }
-  VISITAS.push({id:++seq,cliente_id:cl.id,cliente:cl.nome,contato:cl.contato,whats:cl.whats,email:cl.email||'',end:cl.end,tipo:el('nv-tipo').value,data:dt,hora:hr,status:'agendada',ficha:null});
+  VISITAS.push({id:++seq,cliente_id:cl.id,cliente:cl.nome,contato:cl.contato,whats:cl.whats,email:cl.email||'',end:cl.end||'',cep:cl.cep||'',rua:cl.rua||'',num:cl.num||'',bairro:cl.bairro||'',cidade:cl.cidade||'',uf:cl.uf||'',tipo:el('nv-tipo').value,data:dt,hora:hr,status:'agendada',ficha:null});
   fechar();toast('Visita agendada.');desenhar();
 }
 
@@ -607,18 +626,19 @@ function vFicha(id){
     '<div class="linha2"><div><label>Próximo passo</label><select id="f-prox">'+['Enviar proposta','Aguardar resposta','Marcar retorno','Agendar implantação','Sem interesse'].map(function(o){return '<option'+(f.proximo===o?' selected':'')+'>'+o+'</option>'}).join('')+'</select></div><div><label>Até quando</label><input id="f-pdata" type="date" value="'+esc(f.proxData||'')+'"></div></div>'+
     '<div class="acoes"><button class="btn" onclick="salvarFicha('+id+',false)">Salvar atendimento</button><button class="btn pri" onclick="salvarFicha('+id+',true)">'+(p?'Abrir proposta':'Montar proposta')+' →</button></div></div>'+
   '</div><div>'+
-   '<div class="card"><h3><span>'+esc(v.cliente)+'</span>'+TG[v.status]+'</h3><dl class="dl"><dt>Visita</dt><dd>'+dataBr(v.data)+' às '+v.hora+' · '+esc(v.tipo)+'</dd><dt>Contato</dt><dd>'+esc(v.contato||'—')+'</dd><dt>WhatsApp</dt><dd>'+esc(v.whats||'—')+'</dd><dt>E-mail</dt><dd style="overflow-wrap:anywhere">'+esc(v.email||'—')+'</dd><dt>Endereço</dt><dd>'+esc(v.end||'—')+'</dd></dl><div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn peq" onclick="editarDados('+id+')">✎ Editar dados</button><button class="btn peq zap" onclick="zap(VISITAS.filter(function(x){return x.id==='+id+'})[0].whats,\'\')">Abrir WhatsApp</button></div></div>'+
+   '<div class="card"><h3><span>'+esc(v.cliente)+'</span>'+TG[v.status]+'</h3><dl class="dl"><dt>Visita</dt><dd>'+dataBr(v.data)+' às '+v.hora+' · '+esc(v.tipo)+'</dd><dt>Contato</dt><dd>'+esc(v.contato||'—')+'</dd><dt>WhatsApp</dt><dd>'+esc(v.whats||'—')+'</dd><dt>E-mail</dt><dd style="overflow-wrap:anywhere">'+esc(v.email||'—')+'</dd><dt>Endereço</dt><dd>'+esc(v.end||'—')+'</dd></dl><div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn peq" onclick="editarDados('+id+')">✎ Editar dados</button><button class="btn peq zap" onclick="zap(VISITAS.filter(function(x){return x.id==='+id+'})[0].whats,\'\')">Abrir WhatsApp</button>'+(mapaEnd(v)?'<a class="btn peq pri" href="https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(mapaEnd(v))+'" target="_blank" rel="noopener">📍 Ir até o cliente</a>':'')+'</div>'+
+    (mapaEnd(v)?'<iframe class="mapa" title="Mapa de '+esc(v.cliente)+'" loading="lazy" referrerpolicy="no-referrer" src="https://www.google.com/maps?q='+encodeURIComponent(mapaEnd(v))+'&z=16&output=embed"></iframe>':'<p class="sub2" style="margin:12px 0 0">Sem endereço. Toque em Editar dados para incluir e ver o mapa.</p>')+'</div>'+
    '<div class="card"><h3><span>Proposta</span>'+(p?TG[p.status]:'')+'</h3>'+(p?'<p class="sub2" style="margin:0 0 12px">'+p.itens.length+' itens · '+R(somas(p.itens).t)+'</p><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn peq" onclick="montar('+p.id+')">Editar</button><button class="btn peq pri" onclick="pvAbrir(acha(PROPOSTAS,'+p.id+'))">Ver proposta</button></div>':'<p class="sub2" style="margin:0">Ainda não tem proposta. Ao montar, os itens já vêm sugeridos pelo que você marcou ao lado.</p>')+'</div>'+
   '</div></div>';
 }
 /* corrigir os dados do cliente e da visita depois de cadastrados (nome, contato, e-mail, endereço, data e hora) */
 function editarDados(vid){
-  var v=acha(VISITAS,vid);NV.cep=null;
+  var v=acha(VISITAS,vid);
   abrir('<h3>Editar dados</h3><p class="sub">Corrija o que estiver errado ou complete o que faltou. Vale para o cliente, esta visita e a proposta dela.</p>'+
    '<label>Nome do estabelecimento</label><input id="ed-nome" value="'+esc(v.cliente)+'">'+
    '<div class="linha2"><div><label>Contato</label><input id="ed-con" value="'+esc(v.contato||'')+'" placeholder="quem atende"></div><div><label>WhatsApp</label><input id="ed-wa" inputmode="tel" value="'+esc(v.whats||'')+'" placeholder="(47) 99999-0000"></div></div>'+
    '<label>E-mail</label><input id="ed-mail" type="email" autocomplete="off" value="'+esc(v.email||'')+'" placeholder="cliente@email.com">'+
-   '<div class="linha2" style="grid-template-columns:minmax(120px,160px) 1fr"><div><label>CEP</label><input id="nv-cep" inputmode="numeric" maxlength="9" placeholder="00000-000" autocomplete="off" value="'+esc(v.cep||'')+'" oninput="cepBusca(this.value)"></div><div><label>Endereço</label><input id="nv-end" value="'+esc(v.end||'')+'" placeholder="rua, número, bairro, cidade"></div></div><div class="sub2" id="nv-cep-msg" aria-live="polite" style="margin-top:6px;min-height:16px"></div>'+
+   endCampos(v)+
    '<div class="linha3"><div><label>Data da visita</label><input id="ed-data" type="date" value="'+esc(v.data)+'"></div><div><label>Hora</label><input id="ed-hora" type="time" value="'+esc(v.hora)+'"></div><div><label>Tipo</label><select id="ed-tipo">'+['Primeira visita','Retorno','Implantação','Treinamento'].map(function(t){return '<option'+(v.tipo===t?' selected':'')+'>'+t+'</option>'}).join('')+'</select></div></div>'+
    '<div class="acoes"><button class="btn" onclick="fechar()">Cancelar</button><button class="btn pri" onclick="salvarDados('+vid+')">Salvar dados</button></div>');
 }
@@ -627,8 +647,8 @@ function salvarDados(vid){
   if(!nome){toast('Informe o nome do estabelecimento.');return}
   if(ml&&!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(ml)){toast('Confira o e-mail do cliente.');return}
   if(dt!==v.data||hr!==v.hora){var cf=conflito(dt,hr,v.id);if(cf){toast('Você já tem visita em '+cf.cliente+' às '+cf.hora+'. Deixe pelo menos 1 hora de intervalo.');return}}
-  var antes=v.cliente,d={contato:el('ed-con').value.trim(),whats:el('ed-wa').value.trim(),email:ml,end:el('nv-end').value.trim(),cep:el('nv-cep').value.replace(/\D/g,'')};
-  if(NV.cep){d.cidade=NV.cep.cidade;d.uf=NV.cep.uf;d.bairro=NV.cep.bairro}
+  var antes=v.cliente,d={contato:el('ed-con').value.trim(),whats:el('ed-wa').value.trim(),email:ml},en=endLer();
+  END_K.forEach(function(k){d[k]=en[k]});
   /* o que está digitado na ficha e ainda não foi salvo continua na tela depois de editar */
   var rasF=el('f-ped')?{ped:el('f-ped').value,mesas:el('f-mesas').value,sis:el('f-sis').value,prox:el('f-prox').value,pdata:el('f-pdata').value,nec:JSON.parse(JSON.stringify(window._nec||{}))}:null;
   var c=(v.cliente_id&&acha(CLIENTES,v.cliente_id))||CLIENTES.filter(function(x){return x.nome===antes})[0]||null;
