@@ -53,14 +53,32 @@
       body.tt-deitado .lfc .lfc-bt { margin-top: calc(14px * var(--tt-s, 1)); padding: calc(26px * var(--tt-s, 1)) calc(56px * var(--tt-s, 1)); }`;
     document.head.appendChild(st);
   })();
+  // ----- encaixe na tela do aparelho -----
+  // A tela foi desenhada em 1080x1920 (em pé) ou 1920x1080 (deitada). Aparelho mais comprido ou mais largo que isso
+  // (celular, tablet) ficava com faixas pretas sobrando: agora a tela estica a medida que sobra, até 45% a mais,
+  // e o conteúdo se acomoda (mais produtos visíveis). Só acima disso é que sobra faixa.
+  function encaixa() {
+    const deitada = totem.classList.contains('horiz'), W0 = deitada ? 1920 : 1080, H0 = deitada ? 1080 : 1920;
+    const lado = window.TOQUE_LADO || 0, larg = Math.max(50, innerWidth - lado), alt = Math.max(50, innerHeight), prop = larg / alt;
+    let W = W0, H = H0;
+    if (prop < W0 / H0) H = Math.min(Math.round(W0 / prop), Math.round(H0 * 1.45)); else W = Math.min(Math.round(H0 * prop), Math.round(W0 * 1.45));
+    totem.style.width = W + 'px'; totem.style.height = H + 'px';
+    const s = Math.min(larg / W, alt / H);
+    totem.style.transform = 'translate(' + (lado + (larg - W * s) / 2) + 'px, ' + ((alt - H * s) / 2) + 'px) scale(' + s + ')';
+    medeTela();
+  }
+  window.ajustarEscalaToque = encaixa; // o painel de configurações chama por este nome
   // lugar e escala da tela (sem a faixa do LiveFood), para a comemoração ocupar exatamente a tela do totem
   function medeTela() {
     const r = totem.getBoundingClientRect(), W = totem.offsetWidth, H = totem.offsetHeight, s = r.width / W, d = document.documentElement.style;
     d.setProperty('--tt-x', r.left + 'px'); d.setProperty('--tt-y', r.top + 'px'); d.setProperty('--tt-w', r.width + 'px');
-    d.setProperty('--tt-h', ((H - (W > H ? 60 : 84)) * s) + 'px'); d.setProperty('--tt-s', s);
-    document.body.classList.toggle('tt-deitado', W > H);
+    const deitada = totem.classList.contains('horiz');
+    d.setProperty('--tt-h', ((H - (deitada ? 60 : 84)) * s) + 'px'); d.setProperty('--tt-s', s);
+    document.body.classList.toggle('tt-deitado', deitada);
   }
-  addEventListener('resize', () => setTimeout(medeTela, 0));
+  // (a página também tem um encaixe próprio, mais antigo; este roda depois dele e é o que vale)
+  ['resize', 'orientationchange', 'fullscreenchange'].forEach((ev) => addEventListener(ev, () => setTimeout(encaixa, 0)));
+  document.addEventListener('fullscreenchange', () => setTimeout(encaixa, 60));
 
   // ----- versão nova no ar: o totem se atualiza sozinho -----
   // A cada 10 minutos confere se a página ou este arquivo mudaram no site; se mudaram, recarrega quando o totem estiver na tela de entrada.
@@ -200,7 +218,7 @@
     $('#barra-itens').innerHTML = E.carrinho.map((l) => `<div>${l.qtd}× ${esc(PRODS[l.pid].nome)}<span>${R$(M.precoLinha(l))}</span></div>`).join('');
     $('#btn-ver').disabled = !n;
   }
-  function tudo() { montaCats(); if (E.cat >= CATS.length) E.cat = 0; desenhaFixos(); desenhaCats(); desenhaGrade(); desenhaBarra(); if (window.ajustarEscalaToque) window.ajustarEscalaToque(); medeTela(); setas(); }
+  function tudo() { montaCats(); if (E.cat >= CATS.length) E.cat = 0; desenhaFixos(); desenhaCats(); desenhaGrade(); desenhaBarra(); encaixa(); setas(); }
 
   // ----- sacola -----
   function poe(pid, id, q, sab, adds) {
