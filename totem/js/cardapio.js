@@ -238,7 +238,8 @@
   }
 
   // op (totem de toque): { modo: 'retirada' | 'mesa', pagto: 'dinheiro' | 'pix' | 'conta', mesa, obs }. Sem op, vale o totem de voz: retirada, pago no caixa
-  async function enviarPedido(carrinho, { nome = '', modo = 'retirada', pagto = 'dinheiro', mesa = '', obs } = {}) {
+  // pagto 'maquina' (cartão na maquininha do totem) leva maqTipo: 'credito' | 'debito'
+  async function enviarPedido(carrinho, { nome = '', modo = 'retirada', pagto = 'dinheiro', mesa = '', obs, maqTipo = '' } = {}) {
     if (!M.cli) return { ok: false, erro: 'sem_loja', mensagem: 'Totem sem loja do LiveFood configurada.' };
     const itens = carrinho.map((l) => {
       const i = M.itens.find((x) => x.id === l.id);
@@ -250,6 +251,7 @@
     const dados = { modo, pagto, troco: 0, itens, nome,
       obs: obs !== undefined ? obs : (nome ? `Cliente: ${nome}. ` : '') + 'Pedido feito no totem (Live). Pagar no caixa.' };
     if (modo === 'mesa') dados.mesa = mesa;
+    if (pagto === 'maquina') dados.maqTipo = maqTipo === 'debito' ? 'debito' : 'credito';
     const corpo = JSON.stringify(dados);
     let resp = null;
     for (const renovar of [false, true]) {

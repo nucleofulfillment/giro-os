@@ -283,9 +283,16 @@
   #carregando { position: fixed; inset: 0; display: grid; place-items: center; color: #fff; font: 700 20px var(--f); }
   #totem.pronto ~ #carregando { display: none; }
   /* logo da loja: a mesma cadastrada no painel; sem logo, o nome da loja */
-  .loja-logo img { display: block; height: 84px; max-width: 420px; object-fit: contain; }
-  #inicio > .loja-logo img { height: 130px; max-width: 600px; }
-  .horiz #topo .loja-logo img { height: 68px; }
+  .loja-logo img { display: block; height: 104px; max-width: 460px; object-fit: contain; }
+  #inicio > .loja-logo img { height: 210px; max-width: 780px; }
+  #inicio { padding-top: 300px; }
+  .horiz #inicio { padding-top: 40px; } .horiz #inicio > .loja-logo img { height: 130px; max-width: 520px; }
+  .horiz #topo .loja-logo img { height: 80px; }
+  /* bolinhas do carrossel: embaixo do banner, fora dele, para não ficar por cima do nome do produto */
+  .oferta { overflow: visible; }
+  .oferta > img, .oferta > .sem-foto { border-radius: 38px 0 0 38px; }
+  .oferta .pts, #capa .pts, .horiz #banner .pts, .horiz #capa .pts { left: 50%; bottom: -26px; transform: translateX(-50%); }
+  .horiz #banner .pts { bottom: -18px; }
   .loja-logo img.clara { filter: brightness(0) opacity(.86); } /* logo branca vira escura no fundo claro */
   /* produto sem foto: o desenho da categoria no lugar */
   .sem-foto { display: grid; place-items: center; background: var(--s3); font-size: 110px; line-height: 1; }
@@ -453,8 +460,9 @@
     // a tela (1080x1920 em pé, 1920x1080 deitada) é encaixada na janela
     var totem = document.getElementById('totem');
     window.ajustarEscalaToque = function () {
-      var W = totem.offsetWidth, H = totem.offsetHeight, s = Math.min(innerWidth / W, innerHeight / H);
-      totem.style.transform = 'translate(' + ((innerWidth - W * s) / 2) + 'px, ' + ((innerHeight - H * s) / 2) + 'px) scale(' + s + ')';
+      // TOQUE_LADO: largura do painel de configurações do dono, quando ele está aberto à esquerda
+      var lado = window.TOQUE_LADO || 0, larg = innerWidth - lado, W = totem.offsetWidth, H = totem.offsetHeight, s = Math.min(larg / W, innerHeight / H);
+      totem.style.transform = 'translate(' + (lado + (larg - W * s) / 2) + 'px, ' + ((innerHeight - H * s) / 2) + 'px) scale(' + s + ')';
     };
     addEventListener('resize', window.ajustarEscalaToque); window.ajustarEscalaToque();
   })();

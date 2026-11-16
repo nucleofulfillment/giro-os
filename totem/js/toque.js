@@ -19,9 +19,13 @@
   // pré-visualização: sem a chave do totem (ou seja, sempre em modo teste) o link aceita ...&demo={"cat":"topo","pg":["caixa","pix"]} para ver uma configuração antes de salvar no painel
   if (!S && Q.get('demo')) { try { Object.assign(C, JSON.parse(Q.get('demo')), { ativo: 0 }); if (!Array.isArray(C.pg) || !C.pg.length) C.pg = ['caixa']; if (!Array.isArray(C.ofs)) C.ofs = []; } catch (e) { /* demo inválido: fica o padrão */ } }
   const MESA = M.mesa || '';                 // tablet de mesa: o pedido entra na conta da mesa
-  const ENVIA = !!(M.cli && S && C.ativo);   // senão: modo teste
-  const FRASE = C.frase || (M.ehRest === false ? 'Faça seu pedido aqui' : 'Bateu a fome?');
-  const ROTULO = C.rotulo || 'Oferta de hoje';
+  let ENVIA = !!(M.cli && S && C.ativo);     // senão: modo teste
+  let EDITANDO = false;                      // dono logado com o painel de configurações aberto ao lado: nada é enviado
+  const FORMAS = ['caixa', 'pix', 'credito', 'debito'];
+  function arrumaCfg() { C.pg = (Array.isArray(C.pg) ? C.pg : []).filter((p) => FORMAS.includes(p)); if (!C.pg.length) C.pg = ['caixa']; if (!Array.isArray(C.ofs)) C.ofs = []; }
+  arrumaCfg();
+  const frase = () => C.frase || (M.ehRest === false ? 'Faça seu pedido aqui' : 'Bateu a fome?');
+  const rotulo = () => C.rotulo || 'Oferta de hoje';
   const nomeModo = (m) => (m === 'levar' ? 'Para levar' : 'Consumir aqui');
   window.Totem = { estado: { modo: 'standby' } }; // o cardapio.js só recarrega a página com o totem em espera
 
@@ -66,7 +70,8 @@
     if (soltos.length) CATS.push({ id: '_out', nome: CATS.length ? 'Outros' : (M.catNome || 'Cardápio'), itens: soltos });
   }
   // banner: os produtos escolhidos no painel; sem escolha, os que estão em promoção
-  const OFS = (C.ofs.length ? C.ofs.map((id) => PRODS[id]).filter(Boolean) : ORDEM.filter((p) => p.promo).slice(0, 6));
+  const calcOfs = () => (C.ofs.length ? C.ofs.map((id) => PRODS[id]).filter(Boolean) : ORDEM.filter((p) => p.promo).slice(0, 6));
+  let OFS = calcOfs();
 
   const E = { cat: 0, carrinho: [], modo: '', pagar: '', aberto: null, ocupado: false };
   const qtdDe = (pid) => E.carrinho.filter((l) => l.pid === pid).reduce((s, l) => s + l.qtd, 0);
@@ -81,12 +86,14 @@
     const p = OFS.length ? ofertaAtual() : null;
     [['#capa', C.capa], ['#banner', C.topo]].forEach(([s, ligado]) => {
       const el = $(s); el.classList.toggle('some-de-vez', !ligado || !p); if (!p) return;
-      el.innerHTML = `${fotoOuEmoji(p)}<div class="t"><small>${esc(ROTULO)}</small><b>${esc(p.nome)}</b></div><em>${p.preco > 0 ? R$(p.preco) : 'Ver'}</em>` +
+      el.innerHTML = `${fotoOuEmoji(p)}<div class="t"><small>${esc(rotulo())}</small><b>${esc(p.nome)}</b></div><em>${p.preco > 0 ? R$(p.preco) : 'Ver'}</em>` +
         (OFS.length > 1 ? `<span class="pts">${OFS.map((x, k) => `<i class="${k === OI % OFS.length ? 'on' : ''}"></i>`).join('')}</span>` : '');
       el.classList.remove('troca'); if (anima) { void el.offsetWidth; el.classList.add('troca'); }
     });
   }
-  if (OFS.length > 1) setInterval(() => { OI++; desenhaOfertas(true); }, Math.max(2, C.troca || 5) * 1000);
+  let tTroca = null;
+  function ligaTroca() { clearInterval(tTroca); OI = 0; if (OFS.length > 1) tTroca = setInterval(() => { OI++; desenhaOfertas(true); }, Math.max(2, C.troca || 5) * 1000); }
+  ligaTroca();
 
   // ----- desenho -----
   function desenhaFixos() {
@@ -95,7 +102,7 @@
     $('#meio').className = C.cat === 'nao' ? 'cat-topo sem-cats' : 'cat-' + C.cat;
     desenhaOfertas();
     $('#inicio-visual').style.display = C.ajuda ? '' : 'none';
-    $('#inicio-frase').textContent = FRASE;
+    $('#inicio-frase').textContent = frase();
     const ic = { aqui: '<circle cx="26" cy="24" r="13"/><circle cx="26" cy="24" r="6.5"/><path d="M6 8v12a3 3 0 0 0 6 0V8M9 8v32"/>', levar: '<path d="M10 16h28l-3 26H13Z"/><path d="M17 16c0-6 3-10 7-10s7 4 7 10"/>' };
     const doisModos = !MESA && C.modo === 'ambos';
     $('#inicio-escolha').innerHTML = doisModos
@@ -105,7 +112,7 @@
     bm.style.display = (doisModos || MESA) ? '' : 'none';
     bm.textContent = MESA ? 'Mesa ' + MESA : nomeModo(E.modo || 'aqui'); bm.disabled = !!MESA;
     $('#ajuda-btn').style.display = C.ajuda ? '' : 'none';
-    $('#inicio-aviso').textContent = ENVIA ? '' : 'Modo teste: os pedidos não são enviados para a loja.';
+    $('#inicio-aviso').textContent = ENVIA ? '' : EDITANDO ? 'Configurando: os pedidos feitos aqui não são enviados para a loja.' : 'Modo teste: os pedidos não são enviados para a loja.';
   }
   function desenhaCats() {
     $('#cats').innerHTML = CATS.map((c, k) => `<button type="button" data-cat="${k}" class="${k === E.cat ? 'on' : ''}">${fotoOuEmoji(c.itens.find((p) => p.foto) || c.itens[0])}${esc(c.nome)}</button>`).join('');
@@ -236,9 +243,13 @@
     return [it && it.tam].concat(l.sab.map((s) => (n > 1 ? '1/' + n + ' ' : '') + s), l.adds).filter(Boolean).join(', ');
   }
   const PGS = {
-    caixa: ['Pagar no caixa', '<rect x="2.5" y="6" width="19" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.8"/><path d="M6 9.5v5M18 9.5v5"/>'],
+    caixa: ['No caixa', '<rect x="2.5" y="6" width="19" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.8"/><path d="M6 9.5v5M18 9.5v5"/>'],
     pix: ['Pix', '<path d="M12 2.8 21.2 12 12 21.2 2.8 12Z"/><path d="M7.5 7.5 12 12l4.5-4.5M7.5 16.5 12 12l4.5 4.5"/>'],
+    // crédito e débito: pagos na maquininha do totem (ela não é ligada ao sistema; o pedido entra com a forma anotada)
+    credito: ['Crédito', '<rect x="2.5" y="5" width="19" height="14" rx="3"/><path d="M2.5 10h19M6.5 15h4"/>'],
+    debito: ['Débito', '<rect x="2.5" y="5" width="19" height="14" rx="3"/><path d="M2.5 10h19M14 15h4"/>'],
   };
+  const ehCartao = (f) => f === 'credito' || f === 'debito';
   const cobraNaTela = () => !MESA && C.cobrar === 'totem';
   function abrePedido() {
     if (cobraNaTela()) { if (C.pg.length === 1) E.pagar = C.pg[0]; if (!C.pg.includes(E.pagar)) E.pagar = ''; }
@@ -266,6 +277,7 @@
       const onde = E.modo === 'levar' ? ' Para levar.' : E.modo === 'aqui' ? ' Consumir no local.' : '';
       const op = MESA ? { modo: 'mesa', mesa: MESA, pagto: 'conta', obs: 'Pedido feito no tablet da mesa.' }
         : forma === 'pix' ? { modo: 'retirada', pagto: 'pix', obs: 'Totem de toque.' + onde }
+        : ehCartao(forma) ? { modo: 'retirada', pagto: 'maquina', maqTipo: forma, obs: 'Totem de toque.' + onde + ' Pagar na maquininha do totem.' }
         : { modo: 'retirada', pagto: 'dinheiro', obs: 'Totem de toque.' + onde + ' Pagar no caixa.' };
       const r = await M.enviarPedido(E.carrinho.map((l) => ({ id: l.id, qtd: l.qtd, sab: l.sab, adds: l.adds, obs: '' })), op);
       if (!r.ok) throw new Error(r.mensagem || 'Não consegui enviar o pedido.');
@@ -307,7 +319,9 @@
     $('#fim-num').classList.toggle('pequeno', !!r.teste);
     $('#fim-tit').textContent = r.teste ? 'Modo teste: este pedido não foi enviado' : (forma === 'mesa' ? 'Pedido enviado. Número' : 'Pedido confirmado. Sua senha é');
     const passos = forma === 'mesa' ? [iOk + 'Seu pedido já foi para a cozinha e o bar.', iLocal + `Levamos até a mesa ${esc(MESA)}. O valor entra na conta da mesa.`]
-      : [forma === 'pix' ? iOk + 'Pagamento por Pix confirmado.' : iPag + `Pague ${R$(r.total || total())} no caixa e informe a sua senha.`,
+      : [forma === 'pix' ? iOk + 'Pagamento por Pix confirmado.'
+        : ehCartao(forma) ? iPag + `Pague ${R$(r.total || total())} no ${forma === 'debito' ? 'débito' : 'crédito'}, na maquininha do totem.`
+        : iPag + `Pague ${R$(r.total || total())} no caixa e informe a sua senha.`,
         iLocal + (E.modo === 'levar' ? 'Retire no balcão quando chamarem a senha.' : 'Aguarde a senha ser chamada e retire no balcão.')];
     $('#fim-passos').innerHTML = passos.map((x) => `<div>${x}</div>`).join('');
     abre('#f-fim');
@@ -318,7 +332,7 @@
   function ajudaOps() {
     const pagar = MESA ? 'O valor entra na conta da mesa. Você paga quando fechar a conta.'
       : !cobraNaTela() ? 'O pagamento é feito no caixa, informando a senha do pedido.'
-      : 'Aqui no totem você escolhe: ' + C.pg.map((p) => (p === 'pix' ? 'Pix, lendo o QR Code na tela' : 'pagar no caixa')).join(' ou ') + '.';
+      : 'Aqui no totem você escolhe: ' + C.pg.map((p) => ({ pix: 'Pix, lendo o QR Code na tela', credito: 'crédito na maquininha', debito: 'débito na maquininha', caixa: 'pagar no caixa' }[p])).join(', ').replace(/, ([^,]*)$/, ' ou $1') + '.';
     return [
       ['Como faço meu pedido?', 'Escolha a categoria, toque em Adicionar em cada produto e depois em “Ver pedido”.'],
       ['Como posso pagar?', pagar],
@@ -387,6 +401,29 @@
     tParado = setTimeout(() => { if (totem.classList.contains('em-cardapio') && $('#f-pix').classList.contains('some') && !E.ocupado) recomeca(); else mexeu(); }, 120000);
   }
   ['pointerdown', 'keydown', 'scroll'].forEach((ev) => addEventListener(ev, mexeu, true));
+
+  // ----- painel de configurações do dono (js/toque-config.js) -----
+  // Com o dono logado no painel neste navegador, as configurações aparecem à esquerda do totem e cada mudança
+  // redesenha a tela na hora. Enquanto o painel está aberto o totem não envia pedidos. Cliente nunca vê: sem login, nada carrega.
+  const enviaNormal = ENVIA;
+  window.ToqueCfg = {
+    atual: () => JSON.parse(JSON.stringify(C)),
+    produtos: () => ORDEM.map((p) => ({ id: p.pid, nome: p.nome, promo: !!p.promo })),
+    editar(ligado) { EDITANDO = !!ligado; ENVIA = EDITANDO ? false : enviaNormal; tudo(); },
+    aplica(cfg) {
+      Object.assign(C, cfg); arrumaCfg();
+      OFS = calcOfs(); ligaTroca();
+      const noPedido = !$('#f-ped').classList.contains('some');
+      tudo();
+      if (noPedido && E.carrinho.length) abrePedido();
+    },
+  };
+  let jwt = ''; try { jwt = localStorage.getItem('dd_jwt') || ''; } catch (e) { /* sem armazenamento */ }
+  let oculto = false; try { oculto = localStorage.getItem('toque-sem-config') === '1'; } catch (e) { /* ok */ }
+  const pediu = Q.get('config') === '1';
+  if (jwt && M.cli && !MESA && (pediu || (!oculto && innerWidth >= 900))) {
+    const sc = document.createElement('script'); sc.src = 'js/toque-config.js?v=' + Date.now(); document.body.appendChild(sc);
+  }
 
   tudo(); mexeu();
   totem.classList.add('pronto');

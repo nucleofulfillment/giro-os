@@ -1825,6 +1825,19 @@ html.loja-p .cd-dest{display:none!important}
   <div class="sh-bd" id="cd-imp-corpo"></div>
 </div>
 
+<!-- (296) Totem de toque: a tela do totem com as configurações ao lado (totem/toque.html?config=1) -->
+<style>
+@media (min-width:860px){ #sh-totem{width:1280px;max-width:97vw;height:92vh;max-height:92vh} }
+@media (max-width:859px){ #sh-totem{height:92vh;max-height:92vh} }
+#sh-totem .tq-corpo{flex:1;min-height:0;position:relative;background:#D9D9DE;overflow:hidden;border-radius:0 0 17px 17px}
+#sh-totem iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+#sh-totem .tq-msg{padding:20px;font-size:13px;color:var(--muted)}
+</style>
+<div class="sheet" id="sh-totem">
+  <div class="sh-hd"><h3>Totem de toque</h3><button onclick="tqFechar()">✕</button></div>
+  <div class="tq-corpo" id="tq-corpo"></div>
+</div>
+
 <div class="sheet" id="sh-cats">
   <div class="sh-hd"><h3>Categorias</h3><button onclick="fecharTudo()">✕</button></div>
   <div class="sh-bd">
@@ -10228,80 +10241,19 @@ function lvSalvar(){
     aviso(d.cfg.ativo?'Live salvo e ligado':'Live salvo (desligado)'); fecharTudo();
   }).catch(function(e){ var m=el('lv-m'); if(m){ m.style.color='#f87171'; m.textContent=e.message||'Não salvou'; } });
 }
-/* ── (295) TOTEM DE TOQUE: autoatendimento por toque (totem em pé ou deitado, ou tablet de mesa), sem voz.
-   A configuração fica junto da do Assistente Live (campo "toque") e a tela do totem lê em /live/config. Só grava no botão Salvar. ── */
-var TQ={};
+/* ── (295/296) TOTEM DE TOQUE: autoatendimento por toque (totem em pé ou deitado, ou tablet de mesa), sem voz.
+   As configurações ficam na própria tela do totem (totem/js/toque-config.js): com o dono logado, aparecem à esquerda
+   e o totem ao lado muda a cada clique. Aqui o painel só abre essa tela dentro de uma janela grande. ── */
 function tqAbrir(){
-  el('cd-imp-corpo').innerHTML='<div style="font-size:13px;color:var(--muted)">Carregando…</div>';
-  el('sh-import').querySelector('h3').textContent='Totem de toque'; abrir('sh-import');
+  el('tq-corpo').innerHTML='<div class="tq-msg">Carregando…</div>'; abrir('sh-totem');
   fetch(DELTADIS_API+'/painel/live-config',{headers:cdHdr()}).then(function(r){return r.json();}).then(function(d){
-    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'erro'); TQ=d;
-    return fetch(DELTADIS_API+'/food/cardapio/'+encodeURIComponent(d.cli)).then(function(r){return r.json();}).catch(function(){ return {}; }).then(function(cd){ tqDesenha(d,cd||{}); });
-  }).catch(function(e){ el('cd-imp-corpo').innerHTML='<div style="color:#f87171;font-size:13px">'+esc(e.message||'Não consegui abrir.')+'</div>'; });
+    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'erro');
+    el('tq-corpo').innerHTML='<iframe title="Totem de toque: configurações e a tela do totem" src="totem/toque.html?loja='+encodeURIComponent(d.cli)+'&config=1"></iframe>';
+  }).catch(function(e){ el('tq-corpo').innerHTML='<div class="tq-msg" style="color:#DC2626">'+esc(e.message||'Não consegui abrir.')+'</div>'; });
 }
-function tqDesenha(d,cd){
-  var novo=!(d.cfg&&d.cfg.toque), c=(d.cfg&&d.cfg.toque)||{ativo:0,formato:'v',frase:'',modo:'ambos',cat:'esq',capa:1,topo:1,rotulo:'',ofs:[],troca:5,princ:1,cobrar:'totem',pg:['caixa'],ajuda:1};
-  var link='https://livefood.tec.br/totem/toque.html?loja='+encodeURIComponent(d.cli)+'&k='+encodeURIComponent(d.chave);
-  var rot=function(tx){ return '<label style="font-size:12px;font-weight:700;color:var(--muted2);display:block;margin-top:14px">'+tx+'</label>'; };
-  var nota=function(tx){ return '<div style="font-size:12px;color:var(--muted);margin:4px 0 0">'+tx+'</div>'; };
-  var sel=function(id,ops,val){ return '<select class="inp" id="'+id+'" style="margin:6px 0 0">'+ops.map(function(o){ return '<option value="'+o[0]+'"'+(o[0]===val?' selected':'')+'>'+esc(o[1])+'</option>'; }).join('')+'</select>'; };
-  var chk=function(id,on,tx,extra){ return '<label style="display:flex;gap:8px;align-items:center;font-size:13.5px;font-weight:700;margin-top:10px"><input type="checkbox" id="'+id+'" '+(on?'checked':'')+' '+(extra||'')+' style="width:18px;height:18px;flex:none"> '+tx+'</label>'; };
-  var tit=function(tx){ return '<div style="font-size:13px;font-weight:800;margin:22px 0 0;padding-top:16px;border-top:1px solid var(--border,rgba(255,255,255,.1))">'+tx+'</div>'; };
-  var prods=[], pp=(cd&&cd.produtos)||{}; Object.keys(pp).forEach(function(k){ if(pp[k]&&pp[k].nome) prods.push({id:pp[k].id||k,nome:pp[k].nome,promo:!!pp[k].promo}); });
-  prods.sort(function(a,b){ return a.nome.localeCompare(b.nome,'pt-BR'); });
-  var ofs=c.ofs||[], pg=c.pg||['caixa'];
-  el('cd-imp-corpo').innerHTML=(novo?'<div style="background:#3b2a0b;color:#fcd34d;border-radius:10px;padding:10px 12px;font-size:12.5px;margin-bottom:12px">O servidor ainda não conhece o Totem de toque. Publique o Worker 295 (ou mais novo) para conseguir salvar.</div>':'')
-    +'<label style="display:flex;gap:8px;align-items:center;font-size:14px;font-weight:800"><input type="checkbox" id="tq-ativo" '+(c.ativo?'checked':'')+' style="width:18px;height:18px"> Totem de toque ligado nesta loja</label>'
-    +nota('Desligado = modo teste: a tela abre com o cardápio, mas os pedidos não vão para a cozinha.')
-    +tit('Tela')
-    +rot('Formato da tela')+sel('tq-formato',[['v','Em pé (vertical)'],['h','Deitada (horizontal)']],c.formato)
-    +rot('Frase da tela de entrada')
-    +'<input class="inp" id="tq-frase" maxlength="40" list="tq-frases" placeholder="em branco = Bateu a fome?" value="'+esc(c.frase||'')+'" style="margin:6px 0 0"><datalist id="tq-frases"><option value="Bateu a fome?"><option value="Bateu a sede?"><option value="O que vai beber hoje?"><option value="Faça seu pedido aqui"></datalist>'
-    +nota('Escolha uma sugestão ou escreva a sua (até 40 letras).')
-    +rot('Tipo de pedido')+sel('tq-modo',[['ambos','O cliente escolhe: consumir aqui ou levar'],['aqui','Só consumir aqui'],['levar','Só para levar']],c.modo)
-    +rot('Categorias')+sel('tq-cat',[['esq','Na esquerda'],['topo','No topo (4 por linha)'],['dir','Na direita'],['nao','Não mostrar (só os produtos)']],c.cat)
-    +chk('tq-ajuda',c.ajuda,'Mostrar o Live com o botão “Precisa de ajuda?”')
-    +tit('Ofertas')
-    +chk('tq-capa',c.capa,'Banner de ofertas na tela de entrada')
-    +chk('tq-topo',c.topo,'Banner de ofertas no topo do cardápio')
-    +rot('Título do banner')+'<input class="inp" id="tq-rotulo" maxlength="30" placeholder="em branco = Oferta de hoje" value="'+esc(c.rotulo||'')+'" style="margin:6px 0 0">'
-    +rot('Produtos do banner')
-    +'<div id="tq-ofs" style="margin-top:6px;max-height:190px;overflow-y:auto;border:1px solid var(--border,rgba(255,255,255,.14));border-radius:10px;padding:6px 10px">'
-      +(prods.length?prods.map(function(p){ return '<label style="display:flex;gap:8px;align-items:center;font-size:13px;padding:5px 0"><input type="checkbox" value="'+esc(p.id)+'" '+(ofs.indexOf(p.id)>=0?'checked':'')+' style="width:16px;height:16px;flex:none"> '+esc(p.nome)+(p.promo?' <span style="color:var(--muted);font-size:11.5px">(em promoção)</span>':'')+'</label>'; }).join(''):'<div style="font-size:12.5px;color:var(--muted);padding:6px 0">Não consegui ler os produtos agora.</div>')+'</div>'
-    +nota('Marque até 12. Com mais de um, o banner vira carrossel. Sem nenhum marcado, entram os produtos em promoção.')
-    +rot('Trocar de oferta a cada (segundos)')+'<input class="inp" id="tq-troca" type="number" min="2" max="60" value="'+(c.troca||5)+'" style="margin:6px 0 0;width:110px">'
-    +chk('tq-princ',c.princ,'Categoria “Ofertas” em primeiro (produtos em promoção)')
-    +tit('Cobrança')
-    +sel('tq-cobrar',[['totem','Cobrar no totem: o cliente escolhe a forma de pagamento'],['direto','Enviar direto: sem pagamento na tela, vai para a cozinha e o bar']],c.cobrar)
-    +'<div id="tq-pgs">'+chk('tq-pg-caixa',pg.indexOf('caixa')>=0,'Pagar no caixa')
-    +chk('tq-pg-pix',pg.indexOf('pix')>=0,'Pix, com QR Code na tela do totem')
-    +nota('O Pix usa a conta de pagamento do cardápio da loja e é confirmado sozinho. Crédito e débito na maquininha do totem ainda não estão disponíveis.')+'</div>'
-    +nota('No tablet de mesa o pedido sempre entra na conta da mesa, sem cobrança na tela.')
-    +tit('Link')
-    +rot('Link do totem de toque desta loja')
-    +'<div style="display:flex;gap:8px;margin:6px 0 0"><input class="inp" id="tq-link" readonly value="'+esc(link)+'" style="flex:1;font-size:12px"><button class="btn" type="button" onclick="tqCopiar()">Copiar</button></div>'
-    +nota('Abra no navegador do totem, em tela cheia. Para tablet de mesa, acrescente <b>&amp;mesa=12</b> no fim do link (troque 12 pelo número da mesa). Não compartilhe o link.')
-    +'<div id="tq-m" style="font-size:12.5px;min-height:18px;margin:14px 0 8px"></div><button class="btn pri" type="button" onclick="tqSalvar()">Salvar</button>';
-  var cb=el('tq-cobrar'), ajusta=function(){ el('tq-pgs').style.display=cb.value==='totem'?'':'none'; }; cb.onchange=ajusta; ajusta();
-}
-function tqCopiar(){
-  var i=el('tq-link'); i.select();
-  (navigator.clipboard?navigator.clipboard.writeText(i.value):Promise.reject()).then(function(){ aviso('Link copiado'); },function(){ document.execCommand('copy'); aviso('Link copiado'); });
-}
-function tqSalvar(){
-  var on=function(id){ return el(id).checked; }, m=el('tq-m'), pg=[], ofs=[];
-  if(on('tq-pg-caixa')) pg.push('caixa'); if(on('tq-pg-pix')) pg.push('pix');
-  var cks=el('tq-ofs').querySelectorAll('input:checked'), k; for(k=0;k<cks.length;k++) ofs.push(cks[k].value);
-  if(el('tq-cobrar').value==='totem'&&!pg.length){ m.style.color='#f87171'; m.textContent='Marque pelo menos uma forma de pagamento, ou escolha “Enviar direto”.'; return; }
-  if(ofs.length>12){ m.style.color='#f87171'; m.textContent='Marque no máximo 12 produtos no banner.'; return; }
-  var body={soToque:1,toque:{ativo:on('tq-ativo'),formato:el('tq-formato').value,frase:el('tq-frase').value.trim(),modo:el('tq-modo').value,cat:el('tq-cat').value,ajuda:on('tq-ajuda'),
-    capa:on('tq-capa'),topo:on('tq-topo'),rotulo:el('tq-rotulo').value.trim(),ofs:ofs,troca:parseInt(el('tq-troca').value,10)||5,princ:on('tq-princ'),cobrar:el('tq-cobrar').value,pg:pg.length?pg:['caixa']}};
-  fetch(DELTADIS_API+'/painel/live-config',{method:'POST',headers:cdHdr(),body:JSON.stringify(body)}).then(function(r){return r.json();}).then(function(d){
-    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'não salvou');
-    if(!d.cfg||!d.cfg.toque) throw new Error('O servidor ainda não grava o Totem de toque. Publique o Worker 295 e salve de novo.');
-    var b=el('tq-badge'); if(b) b.textContent=d.cfg.toque.ativo?'ligado':'desligado';
-    aviso(d.cfg.toque.ativo?'Totem de toque salvo e ligado':'Totem de toque salvo (desligado, em modo teste)'); fecharTudo();
-  }).catch(function(e){ m.style.color='#f87171'; m.textContent=e.message||'Não salvou'; });
+function tqFechar(){
+  el('tq-corpo').innerHTML=''; fecharTudo();
+  fetch(DELTADIS_API+'/painel/live-config',{headers:cdHdr()}).then(function(r){return r.json();}).then(function(d){ var b=el('tq-badge'), g=d&&d.cfg&&d.cfg.toque; if(b&&g) b.textContent=g.ativo?'ligado':'desligado'; }).catch(function(){});
 }
 /* ── (120) SALÃO: desenhar a planta do restaurante (mesas, balcão, cozinha, banheiros, entrada, saída) ── */
 var SL={L:[],sel:0,drag:null,uid:1,v3:false,ang:35,areas:[],area:''};
