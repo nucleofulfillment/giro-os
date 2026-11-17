@@ -551,6 +551,150 @@
   };
   const ehCartao = (f) => f === 'credito' || f === 'debito';
   const cobraNaTela = () => !MESA && C.cobrar === 'totem';
+
+  // ----- cartão na maquininha do totem + cupom impresso na impressora do totem -----
+  // Visual da cobrança: a mesma tela do app da maquininha (fundo branco, Roboto, valor laranja #FF5A00, botões grandes), igual em qualquer provedor.
+  // Loja ligada à maquininha (Payer, ou o modo simulação do Admin): o Worker cobra no terminal do totem e manda imprimir.
+  // Sem isso (modo teste do totem), tudo é simulado aqui mesmo: a maquininha "aprova" em 3,5 s e o cupom é desenhado na tela.
+  const KEY = (S && S.k) || '';
+  const PAYER = { ativa: false, simulado: false };
+  if (ENVIA && KEY) fetch(`${M.api}/live/payer-info?loja=${encodeURIComponent(M.codigo)}&k=${KEY}`, { cache: 'no-store' }).then((r) => r.json()).then((d) => { if (d && d.ok) { PAYER.ativa = !!d.ativa; PAYER.simulado = !!d.simulado; } }).catch(() => {});
+  const cartaoNaMaquina = (f) => ehCartao(f) && !MESA && (!ENVIA || PAYER.ativa);
+  const pPost = (rota, c) => fetch(M.api + rota, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ loja: M.codigo, k: KEY }, c)) }).then((r) => r.json()).catch(() => ({ ok: false, mensagem: 'Sem conexão com o servidor.' }));
+  const pGet = (rota) => fetch(`${M.api}${rota}${rota.includes('?') ? '&' : '?'}loja=${encodeURIComponent(M.codigo)}&k=${KEY}`, { cache: 'no-store' }).then((r) => r.json()).catch(() => null);
+  const MAQ = document.createElement('section'), CUP = document.createElement('section');
+  MAQ.className = CUP.className = 'folha some'; MAQ.id = 'f-maq'; CUP.id = 'f-cupom';
+  { const ref = $('#f-pix'); ref.parentNode.insertBefore(MAQ, ref.nextSibling); MAQ.parentNode.insertBefore(CUP, MAQ.nextSibling); }
+  FOLHAS.push('#f-maq', '#f-cupom');
+  (function () {
+    if (!document.getElementById('lf-roboto')) { const l = document.createElement('link'); l.id = 'lf-roboto'; l.rel = 'stylesheet'; l.href = 'https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap'; document.head.appendChild(l); }
+    const st = document.createElement('style');
+    st.textContent = `
+      #f-maq, #f-cupom { top: 0 !important; left: 0 !important; right: 0 !important; width: auto !important; border-radius: 0 !important; z-index: 13; font-family: Roboto, Manrope, system-ui, sans-serif; color: #1F1A17; text-align: center; overflow-y: auto; }
+      #f-maq { background: #fff; }
+      .horiz #f-maq, .horiz #f-cupom { --m: .62; }
+      #f-maq .mc { width: 100%; max-width: 900px; margin: 0 auto; padding: calc(170px * var(--m, 1)) 40px 60px; box-sizing: border-box; }
+      #f-maq .mt { font-size: calc(46px * var(--m, 1)); font-weight: 700; color: #6B625C; }
+      #f-maq .mv { font-size: calc(170px * var(--m, 1)); font-weight: 700; color: #FF5A00; margin-top: calc(8px * var(--m, 1)); line-height: 1.1; }
+      #f-maq .mi { font-size: calc(200px * var(--m, 1)); margin-top: calc(40px * var(--m, 1)); line-height: 1.15; }
+      #f-maq .mm { font-size: calc(58px * var(--m, 1)); font-weight: 700; margin-top: calc(20px * var(--m, 1)); }
+      #f-maq .mb { margin-top: calc(70px * var(--m, 1)); }
+      .mbt { display: flex; align-items: center; justify-content: center; width: 100%; min-height: calc(150px * var(--m, 1)); margin-top: calc(26px * var(--m, 1)); padding: 0 24px; border: 0; border-radius: calc(36px * var(--m, 1)); font: 700 calc(52px * var(--m, 1)) Roboto, Manrope, system-ui, sans-serif; background: #F1F1F1; color: #1F1A17; cursor: pointer; }
+      .mbt.lj { background: #FF5A00; color: #fff; }
+      #f-cupom { background: #E9E9EC; }
+      #f-cupom .cc { display: flex; flex-direction: column; align-items: center; gap: calc(22px * var(--m, 1)); padding: calc(120px * var(--m, 1)) 50px 50px; min-height: 100%; box-sizing: border-box; }
+      #f-cupom .ci { font-size: calc(110px * var(--m, 1)); line-height: 1; }
+      #f-cupom h2 { margin: 0; font-size: calc(58px * var(--m, 1)); font-weight: 700; }
+      #f-cupom p { margin: 0; font-size: calc(34px * var(--m, 1)); color: #5E5E66; }
+      #f-cupom .slot { width: calc(860px * var(--m, 1)); height: calc(34px * var(--m, 1)); border-radius: 999px; background: #2B2B30; box-shadow: inset 0 6px 10px rgba(0, 0, 0, .5); flex: none; margin-top: calc(10px * var(--m, 1)); }
+      #f-cupom .caixa { width: calc(740px * var(--m, 1)); overflow: hidden; margin-top: calc(-24px * var(--m, 1)); padding-bottom: 30px; flex: none; }
+      #f-cupom .papel { margin: 0; background: #fff; padding: calc(40px * var(--m, 1)) calc(36px * var(--m, 1)) calc(60px * var(--m, 1)); font: 400 calc(30px * var(--m, 1))/1.4 'Roboto Mono', 'Courier New', monospace; white-space: pre; text-align: left; color: #111; box-shadow: 0 14px 34px rgba(0, 0, 0, .2); clip-path: inset(0 0 100% 0); animation: lf-papel 4.2s steps(70) forwards; }
+      @keyframes lf-papel { to { clip-path: inset(0 0 0 0); } }
+      #f-cupom .mbt { width: calc(740px * var(--m, 1)); margin-top: calc(10px * var(--m, 1)); }`;
+    document.head.appendChild(st);
+  })();
+  function maqTela(o) {
+    MAQ.innerHTML = `<div class="mc"><div class="mt">${esc(o.t)}</div><div class="mv">${R$(o.v)}</div><div class="mi">${o.i}</div><div class="mm"${o.cor ? ` style="color:${o.cor}"` : ''}>${esc(o.m)}</div><div class="mb">${(o.b || []).map((b, k) => `<button type="button" class="mbt ${b[1]}" data-ma="${k}">${esc(b[0])}</button>`).join('')}</div></div>`;
+    (o.b || []).forEach((b, k) => { MAQ.querySelector(`[data-ma="${k}"]`).onclick = b[2]; });
+    abre('#f-maq');
+  }
+  // cobra no cartão e devolve { ok, cancelado, motivo, bandeira, nsu, aut, final4, simulado }
+  function cobraNaMaquina(forma, valor) {
+    const rot = forma === 'debito' ? 'Cobrança no débito' : 'Cobrança no crédito';
+    return new Promise((resolve) => {
+      let vivo = true, tm = null, id = '';
+      const sai = (res) => { vivo = false; clearTimeout(tm); resolve(res); };
+      const msgCartao = 'Aproxime, insira ou passe o cartão';
+      const espera3 = () => maqTela({ t: rot, v: valor, i: '💳', m: msgCartao, b: [['Cancelar', '', cancela]] });
+      const erro = (msg, tenta) => { clearTimeout(tm); maqTela({ t: rot, v: valor, i: '⚠️', m: msg, cor: '#DC2626', b: [].concat(tenta ? [['Tentar de novo', 'lj', inicia]] : [], [['Voltar', '', () => sai({ ok: false, cancelado: true })]]) }); };
+      const aprovado = (d) => { clearTimeout(tm); maqTela({ t: rot, v: valor, i: '✅', m: 'Pagamento aprovado!', cor: '#16A34A' }); tm = setTimeout(() => sai(Object.assign({ ok: true }, d)), 1500); };
+      function cancela() { const eraId = id; vivo = false; clearTimeout(tm); if (eraId) pPost('/live/payer-abortar', { id: eraId }); resolve({ ok: false, cancelado: true }); }
+      function inicia() {
+        vivo = true; id = '';
+        maqTela({ t: rot, v: valor, i: '💳', m: 'Preparando…', b: [['Cancelar', '', cancela]] });
+        if (!ENVIA) { // simulação local: aprova em 3,5 s; valor terminado em ,99 é recusado para mostrar a tela de erro
+          espera3();
+          tm = setTimeout(() => {
+            if (!vivo) return;
+            if (Math.round(valor * 100) % 100 === 99) return erro('Transação negada pelo banco (simulação).', true);
+            aprovado({ bandeira: 'VISA', nsu: String(100000 + Math.floor(Math.random() * 900000)), aut: Math.random().toString(16).slice(2, 8).toUpperCase(), final4: '4242', simulado: true });
+          }, 3500);
+          return;
+        }
+        pPost('/live/payer-cobrar', { valor, forma }).then((r) => {
+          if (!r.ok) { if (vivo) erro(r.mensagem || 'Não consegui falar com a maquininha.', r.erro !== 'terminal_ocupado'); return; }
+          if (!vivo) { pPost('/live/payer-abortar', { id: r.correlation_id }); return; } // o cliente cancelou enquanto a cobrança era enviada
+          id = r.correlation_id; espera3();
+          const volta = async () => {
+            if (!vivo) return;
+            const d = await pGet('/live/payer-status?id=' + encodeURIComponent(id));
+            if (!vivo) return;
+            const o = d && d.ok && d.ordem;
+            if (o) {
+              if (o.status === 'aprovada') return aprovado({ bandeira: o.bandeira, nsu: o.nsu, aut: o.aut, final4: '', simulado: PAYER.simulado });
+              if (o.status === 'recusada') return erro(o.motivo ? 'O pagamento não foi confirmado: ' + o.motivo : 'Pagamento recusado. Peça outro cartão ou outra forma de pagamento.', true);
+              if (o.status === 'erro') return erro(o.motivo || 'Erro ao falar com a maquininha.', true);
+              if (o.status === 'abortada') return erro('Cobrança cancelada. Nada foi cobrado.', true);
+              if (o.status === 'sem_resposta') return erro('A maquininha não respondeu. Chame um atendente.', false);
+            }
+            tm = setTimeout(volta, 2500);
+          };
+          tm = setTimeout(volta, 2500);
+        });
+      }
+      inicia();
+    });
+  }
+  // texto do cupom (32 colunas, como na impressora térmica de 58 mm)
+  function cupomTexto(r, forma, pg) {
+    const L = 32, tr = '-'.repeat(L), cut = (t, n) => String(t).slice(0, n);
+    const cen = (t) => ' '.repeat(Math.max(0, Math.floor((L - t.length) / 2))) + t;
+    const par = (a, b) => cut(a, L - b.length - 1) + ' '.repeat(Math.max(1, L - cut(a, L - b.length - 1).length - b.length)) + b;
+    const d = new Date(), dh = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    const linhas = [cen(cut(String(M.loja || 'LiveFood').toUpperCase(), L)), cen('AUTOATENDIMENTO'), tr, par('SENHA ' + (r.num || ''), dh), E.modo ? cen(E.modo === 'levar' ? 'Para levar' : 'Consumir aqui') : '', tr].filter((x) => x !== '');
+    E.carrinho.forEach((l) => { const p = PRODS[l.pid], ds = descLinha(l); linhas.push(par(`${l.qtd}x ${p.nome}`, R$(M.precoLinha(l)))); if (ds) linhas.push('   ' + cut(ds, L - 3)); });
+    linhas.push(tr, par('TOTAL', R$(total())), `${forma === 'debito' ? 'Débito' : 'Crédito'} ${pg.bandeira || ''} ${pg.final4 ? '**** ' + pg.final4 : ''}`.trim(), `NSU ${pg.nsu || '-'}  AUT ${pg.aut || '-'}`, tr, cen('Pagamento aprovado'), cen('Retire quando chamarem'), cen('a sua senha'));
+    if (r.teste || pg.simulado) linhas.push('', cen('*** SIMULACAO ***'), cen('nada foi cobrado de verdade'));
+    return linhas.join('\n');
+  }
+  // desenha o cupom saindo da impressora do totem; com a loja ligada à maquininha, também manda imprimir de verdade (ou simulada pelo Worker)
+  function imprimeCupom(r, forma, pg) {
+    return new Promise((resolve) => {
+      const texto = cupomTexto(r, forma, pg);
+      CUP.innerHTML = `<div class="cc"><div class="ci">🖨️</div><h2 id="cp-t">Imprimindo o seu pedido…</h2><p>Retire o comprovante embaixo do totem</p><div class="slot"></div><div class="caixa"><pre class="papel">${esc(texto)}</pre></div><button type="button" class="mbt lj" id="cp-ok">Continuar</button></div>`;
+      abre('#f-cupom');
+      let t1 = null, t2 = null;
+      const sai = () => { clearTimeout(t1); clearTimeout(t2); resolve(); };
+      $('#cp-ok').onclick = sai;
+      t1 = setTimeout(() => { const h = $('#cp-t'); if (h && !h.dataset.erro) h.textContent = 'Pedido impresso!'; }, 4400);
+      t2 = setTimeout(sai, 8500);
+      if (ENVIA && PAYER.ativa) pPost('/live/payer-imprimir', { texto }).then((d) => { if (d && d.ok === false) { const h = $('#cp-t'); if (h) { h.dataset.erro = '1'; h.textContent = 'Não consegui imprimir. Chame um atendente.'; } } });
+    });
+  }
+  // cartão: cobra primeiro; só com o pagamento aprovado o pedido entra na cozinha; depois sai o cupom e vem a senha
+  async function fluxoCartao(forma) {
+    const pg = await cobraNaMaquina(forma, total());
+    if (!pg.ok) { abrePedido(); return; }
+    carregando(true);
+    let r;
+    try {
+      if (!ENVIA) { await espera(300); r = { num: 100 + Math.floor(Math.random() * 900), teste: true, sim: true }; }
+      else {
+        const onde = E.modo === 'levar' ? ' Para levar.' : E.modo === 'aqui' ? ' Consumir no local.' : '';
+        const op = { modo: 'retirada', pagto: 'maquina', maqTipo: forma, obs: `Totem de toque.${onde} Cartão ${forma === 'debito' ? 'débito' : 'crédito'} pago na maquininha (NSU ${pg.nsu || '-'}).` };
+        if (E.nome) { op.nome = E.nome; op.obs = 'Cliente: ' + E.nome + '. ' + op.obs; }
+        r = await M.enviarPedido(E.carrinho.map((l) => ({ id: l.id, qtd: l.qtd, sab: l.sab, adds: l.adds, obs: '' })), op);
+        if (!r.ok) throw new Error(r.mensagem || 'Não consegui enviar o pedido.');
+      }
+    } catch (e) { // pagou, mas o pedido não entrou: não deixa o cliente achando que deu certo
+      carregando(false);
+      maqTela({ t: 'Pagamento aprovado', v: total(), i: '⚠️', m: `O pedido não foi registrado. Chame um atendente. NSU ${pg.nsu || '-'}`, cor: '#DC2626', b: [['Voltar ao início', 'lj', () => recomeca()]] });
+      return;
+    }
+    carregando(false);
+    await imprimeCupom(r, forma, pg);
+    fim(r, forma, pg);
+  }
   function abrePedido() {
     aquece();
     if (cobraNaTela()) { if (C.pg.length === 1) E.pagar = C.pg[0]; if (!C.pg.includes(E.pagar)) E.pagar = ''; }
@@ -572,6 +716,8 @@
     if (cobraNaTela() && !E.pagar) { const pg = $('#ped-pagar'); pg.classList.remove('chama'); void pg.offsetWidth; pg.classList.add('chama'); return; }
     if (C.pedeNome && !MESA && !E.nome) { abreNome(); return; } // a loja quer o nome: pergunta antes de enviar
     const forma = MESA ? 'mesa' : (cobraNaTela() ? E.pagar : 'caixa');
+    // cartão com maquininha (ou simulação): cobra primeiro, depois envia o pedido, imprime o cupom e mostra a senha
+    if (cobraNaTela() && cartaoNaMaquina(forma)) { E.ocupado = true; try { await fluxoCartao(forma); } finally { E.ocupado = false; } return; }
     // no mesmo instante do toque entra a tela de "enviando" (o Live e a frase) por cima de tudo; dali vai direto para a confirmação
     E.ocupado = true; $('#ped-erro').textContent = ''; carregando(true);
     try {
@@ -616,15 +762,15 @@
 
   const VOLTA_MS = 12000; // depois do pedido, a tela da senha fica 12 s e volta sozinha para a entrada (eram 25 s)
   let tFim = null;
-  function fim(r, forma) {
+  function fim(r, forma, pg) {
     // comemoração do cardápio e do atendimento: o Live animado, confete e o número do pedido bem grande (site/js/live-app.js)
     if (window.LiveApp && window.LiveMascote) {
       const valor = R$(r.total || total());
       abre(null);
       window.LiveApp.comemorar({
-        titulo: r.teste ? 'Modo teste: este pedido não foi enviado' : forma === 'mesa' ? 'Pedido enviado! Número' : E.nome ? `Pedido confirmado, ${E.nome.split(' ')[0]}! Sua senha é` : 'Pedido confirmado! Sua senha é',
-        valor: r.teste ? 'teste' : String(r.num),
-        forma: forma === 'mesa' ? 'Mesa ' + MESA : forma === 'pix' ? 'Pix confirmado' : ehCartao(forma) ? `Pague ${valor} no ${forma === 'debito' ? 'débito' : 'crédito'}, na maquininha` : `Pague ${valor} no caixa`,
+        titulo: r.teste ? (r.sim ? 'Pedido simulado, nada foi enviado. Sua senha seria' : 'Modo teste: este pedido não foi enviado') : forma === 'mesa' ? 'Pedido enviado! Número' : E.nome ? `Pedido confirmado, ${E.nome.split(' ')[0]}! Sua senha é` : 'Pedido confirmado! Sua senha é',
+        valor: r.teste && !r.sim ? 'teste' : String(r.num),
+        forma: pg ? `Pago no ${forma === 'debito' ? 'débito' : 'crédito'}${pg.bandeira ? ' · ' + pg.bandeira : ''}` : forma === 'mesa' ? 'Mesa ' + MESA : forma === 'pix' ? 'Pix confirmado' : ehCartao(forma) ? `Pague ${valor} no ${forma === 'debito' ? 'débito' : 'crédito'}, na maquininha` : `Pague ${valor} no caixa`,
         sub: forma === 'mesa' ? 'Já foi para a cozinha e o bar. Levamos até a sua mesa.' : E.modo === 'levar' ? 'Retire no balcão quando chamarem a senha.' : 'Aguarde a senha ser chamada e retire no balcão.',
         botao: { texto: 'Fazer outro pedido', acao: recomeca },
       });
@@ -634,11 +780,11 @@
     }
     const ic = (d) => `<svg viewBox="0 0 24 24" fill="none" stroke="#1C1C1E" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
     const iPag = ic('<rect x="2.5" y="6" width="19" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.8"/><path d="M6 9.5v5M18 9.5v5"/>'), iOk = ic('<path d="M5 12.5 10 17.5 19 7"/>'), iLocal = ic('<path d="M12 21s7-5.5 7-11a7 7 0 0 0-14 0c0 5.5 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/>');
-    $('#fim-num').textContent = r.teste ? 'teste' : r.num;
-    $('#fim-num').classList.toggle('pequeno', !!r.teste);
-    $('#fim-tit').textContent = r.teste ? 'Modo teste: este pedido não foi enviado' : (forma === 'mesa' ? 'Pedido enviado. Número' : 'Pedido confirmado. Sua senha é');
+    $('#fim-num').textContent = r.teste && !r.sim ? 'teste' : r.num;
+    $('#fim-num').classList.toggle('pequeno', !!r.teste && !r.sim);
+    $('#fim-tit').textContent = r.teste ? (r.sim ? 'Pedido simulado, nada foi enviado. Sua senha seria' : 'Modo teste: este pedido não foi enviado') : (forma === 'mesa' ? 'Pedido enviado. Número' : 'Pedido confirmado. Sua senha é');
     const passos = forma === 'mesa' ? [iOk + 'Seu pedido já foi para a cozinha e o bar.', iLocal + `Levamos até a mesa ${esc(MESA)}. O valor entra na conta da mesa.`]
-      : [forma === 'pix' ? iOk + 'Pagamento por Pix confirmado.'
+      : [pg ? iOk + `Pagamento no ${forma === 'debito' ? 'débito' : 'crédito'} aprovado.` : forma === 'pix' ? iOk + 'Pagamento por Pix confirmado.'
         : ehCartao(forma) ? iPag + `Pague ${R$(r.total || total())} no ${forma === 'debito' ? 'débito' : 'crédito'}, na maquininha do totem.`
         : iPag + `Pague ${R$(r.total || total())} no caixa e informe a sua senha.`,
         iLocal + (E.modo === 'levar' ? 'Retire no balcão quando chamarem a senha.' : 'Aguarde a senha ser chamada e retire no balcão.')];

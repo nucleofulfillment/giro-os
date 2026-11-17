@@ -207,6 +207,27 @@ label.l.big{font-size:14px;margin-top:16px}
 #rz .rzf{display:flex;align-items:center;gap:10px;margin:12px 0 4px;padding:12px 14px;border-radius:14px;background:var(--s1);border:1.5px solid var(--pri);font-weight:800;font-size:17px}
 #rz .rzb{position:sticky;bottom:0;background:var(--bg);padding:12px 18px calc(12px + env(safe-area-inset-bottom));max-width:560px;width:100%;margin:0 auto;box-sizing:border-box}
 #rz .rzb .bt{margin:0 0 8px}#rz .rzx{display:block;width:100%;border:0;background:none;color:var(--er);font:700 15px var(--f);padding:10px;cursor:pointer}
+/* (303) cobrar na maquininha: a mesma tela de cobrança do app da maquininha (branco, Roboto, laranja #FF5A00) */
+#pyz{position:fixed;inset:0;z-index:95;background:#fff;overflow:auto;font-family:Roboto,system-ui,sans-serif;color:#1F1A17}
+#pyz .pc{max-width:420px;margin:0 auto;padding:16px;text-align:center}
+#pyz .pt{font-size:20px;font-weight:700;color:#6B625C}
+#pyz .pv{font-size:44px;font-weight:700;color:#FF5A00;margin-top:4px}
+#pyz .pi{font-size:64px;line-height:1.15;margin-top:16px}
+#pyz .pm{font-size:22px;font-weight:700;margin-top:8px}
+#pyz .pb{margin-top:20px}
+#pyz .pbt{display:flex;align-items:center;justify-content:center;width:100%;min-height:64px;margin-top:10px;padding:0 12px;border:0;border-radius:14px;font:700 20px Roboto,system-ui,sans-serif;cursor:pointer;background:#F1F1F1;color:#1F1A17}
+#pyz .pbt.vd{background:#16A34A;color:#fff}#pyz .pbt.lj{background:#FF5A00;color:#fff}#pyz .pbt.wp{background:#1FA855;color:#fff}
+/* (305) papel saindo da impressora (modo simulação) */
+#pyp{position:fixed;inset:0;z-index:99;background:#E9E9EC;overflow:auto;font-family:Roboto,system-ui,sans-serif;color:#1F1A17}
+#pyp .ppc{max-width:420px;margin:0 auto;padding:16px;text-align:center;display:flex;flex-direction:column;align-items:center}
+#pyp .ppi{font-size:44px;line-height:1}#pyp .ppt{font-size:20px;font-weight:700;margin-top:4px}#pyp .ppn{font-size:13px;color:#6B625C;margin-top:2px}
+#pyp .pps{width:340px;max-width:100%;height:14px;border-radius:99px;background:#2B2B30;box-shadow:inset 0 4px 6px rgba(0,0,0,.5);margin-top:12px;flex:none}
+#pyp .ppx{width:320px;max-width:100%;overflow:hidden;margin-top:-8px;padding-bottom:14px;flex:none}
+#pyp .ppa{background:#fff;box-shadow:0 8px 22px rgba(0,0,0,.2);clip-path:inset(0 0 100% 0);animation:pyPapel 2.6s steps(40) forwards}
+@keyframes pyPapel{to{clip-path:inset(0 0 0 0)}}
+#pyp .ppp{margin:0;padding:18px 16px 24px;font:400 13.5px/1.4 'Roboto Mono','Courier New',monospace;white-space:pre;text-align:left;color:#111}
+#pyp .ppf{display:block;width:100%;height:540px;border:0;background:#fff}
+#pyp .pbt{display:flex;align-items:center;justify-content:center;width:100%;min-height:56px;margin-top:10px;border:0;border-radius:14px;font:700 18px Roboto,system-ui,sans-serif;cursor:pointer;background:#F1F1F1;color:#1F1A17}#pyp .pbt.lj{background:#FF5A00;color:#fff}
 @media(min-width:900px){
  .main{max-width:1400px;margin:0 auto;padding:16px 24px}
  #chip{margin:14px auto 0;max-width:1352px}
@@ -438,7 +459,7 @@ function montaApp(d){
     if(!GEST){ $('sgB').classList.add('hide'); COM.modo='mesa'; }
     /* (242) acesso Atendimento (perfil atendente): é o caixa do balcão, então só o card Balcão */
     if(d.perfil==='atendente'){ $('sgM').classList.add('hide'); $('sgB').classList.remove('hide'); COM.modo='balcao'; }
-    aba('ped'); pintaCats(); mostraMapaBtn(); mzBusca(); chamInicia(); bpBotoes(); modo(COM.modo); nfcMesaInicia();
+    aba('ped'); pintaCats(); mostraMapaBtn(); mzBusca(); chamInicia(); bpBotoes(); modo(COM.modo); nfcMesaInicia(); pyInfo();
     try{ var qm=new URLSearchParams(location.search).get('mesa'); if(qm&&d.perfil!=='atendente'&&!COM.mesa&&!$('iMesa').value){ modo('mesa'); $('iMesa').value=String(qm).replace(/[^A-Za-z0-9]/g,'').slice(0,8).toUpperCase(); } }catch(e){}
 }
 /* ── abas ── */
@@ -961,11 +982,12 @@ var FC_FORMAS={credito:['💳','Crédito','Cartão de crédito na maquininha'],d
 var POS={cb:{},seq:0,fech:{}};
 function posTem(){ return !!(window.LiveFoodPOS&&window.LiveFoodPOS.cobrar); }
 function posInfo(){ if(!POS.info){ try{ POS.info=JSON.parse(LiveFoodPOS.info())||{}; }catch(e){ POS.info={}; } } return POS.info; }   /* maquininha PAX: tudo e imprime; celular (Tap on Phone): só cartão, sem Pix e sem impressora */
-function posForma(f){ return posTem()&&(posInfo().formas||['credito','debito','cartao','pix']).indexOf(f)>=0; }
+function posForma(f){ if(posWeb()) return ['credito','debito','cartao','pix'].indexOf(f)>=0; return posTem()&&(posInfo().formas||['credito','debito','cartao','pix']).indexOf(f)>=0; }   /* (305) Payer no navegador */
 window.LiveFoodPOSRetorno=function(id,r){ var cb=POS.cb[id]; delete POS.cb[id]; if(cb) cb(r||{ok:false}); };
 /* (ATEND-50) dados para o comprovante no WhatsApp: nome da loja, celular do cliente (se tiver cadastro) e mesa/cliente */
 function posFone(joia){ if(!joia) return ''; var s=(SOCIOS||[]).filter(function(x){ return String(x.joia)===String(joia); })[0]; return (s&&s.fone)||''; }
 function posCobra(forma,valor,fim,ex){
+  if(posWeb()){ posCobraWeb(forma,valor,fim,ex); return; }   /* (305) Payer no navegador */
   var id='c'+(++POS.seq)+'_'+Date.now(); POS.cb[id]=fim; ex=ex||{};
   try{ LiveFoodPOS.cobrar(JSON.stringify({id:id,forma:forma,valor:Math.round(valor*100),loja:(D&&D.empresa)||'',fone:posFone(ex.joia),ref:ex.ref||''})); }catch(e){ delete POS.cb[id]; fim({ok:false,msg:'Não consegui abrir a maquininha.'}); }
 }
@@ -1358,6 +1380,118 @@ function fotoGrande(src){ var o=document.createElement('div'); o.style.cssText='
     try{ history.pushState({at:1},'',location.href); }catch(e){}
   });
 })();
+/* ── (303) COBRAR NA MAQUININHA (segunda opção de pagamento, pela Payer). Só aparece se o master ligou para a loja (Admin).
+   O cliente paga no aparelho; esta tela espera o resultado e só então registra o pedido ou fecha a conta, como se fosse o "Pagamento aprovado".
+   VISUAL: é a mesma tela de cobrança do app da maquininha (TELA-DE-COBRANCA.md / CobrancaActivity.kt): fundo branco, Roboto, título cinza,
+   valor laranja 44, ícone emoji 64, mensagem 22 negrito, botões de 64 de altura e cantos 14. Mesmos textos e cores, sem mascote e sem nome de provedor. ── */
+var PY={ativa:false,sim:false,terminais:[],t:null,id:'',valor:0,forma:'livre',fn:null,nao:null,ord:null};
+var PY_TIT={credito:'Cobrança no crédito',debito:'Cobrança no débito',cartao:'Cobrança no cartão',pix:'Cobrança no Pix',livre:'Cobrança na maquininha'};
+function pyInfo(){ api('/painel/payer-info').then(function(r){ if(r&&r.ok){ PY.ativa=!!r.ativa; PY.sim=!!r.simulado; PY.terminais=r.terminais||[]; } }); }
+function pyBt(t,cls,ac){ return '<button type="button" class="pbt'+(cls?' '+cls:'')+'" onclick="'+ac+'">'+t+'</button>'; }
+/* o = {i: ícone, m: mensagem, cor: cor da mensagem, h: miolo extra, b: botões, tit: título no lugar do padrão} */
+function pyTela(o){
+  var d=$('pyz'); if(!d){ d=document.createElement('div'); d.id='pyz'; document.body.appendChild(d); }
+  d.innerHTML='<div class="pc"><div class="pt">'+esc(o.tit||PY_TIT[PY.forma]||PY_TIT.livre)+'</div><div class="pv">'+brl(PY.valor)+'</div><div class="pi">'+(o.i||'💳')+'</div><div class="pm"'+(o.cor?' style="color:'+o.cor+'"':'')+'>'+o.m+'</div>'+(o.h||'')+'<div class="pb">'+(o.b||'')+'</div></div>';
+}
+function pyFecha(){ clearTimeout(PY.t); PY.t=null; var n=PY.nao; PY.nao=null; var d=$('pyz'); if(d) d.remove(); if(n) n({ok:false,cancelado:true}); }   /* sair sem concluir avisa quem pediu a cobrança (o botão da comanda volta a ficar ativo) */
+function pyCobrar(valor,forma,quando,nao){
+  PY.valor=Math.round(Number(valor)*100)/100; PY.forma=forma; PY.fn=quando; PY.nao=nao||null; PY.id=''; PY.ord=null;
+  if(PY.terminais.length>1){
+    var h=''; PY.terminais.forEach(function(t){ h+=pyBt((t.tipo==='totem'?'🖥 ':'💳 ')+esc(t.nome||t.id),'','pyEnvia(\''+esc(t.id)+'\')'); });
+    pyTela({tit:'Qual maquininha?',i:'💳',m:'Escolha onde o cliente vai pagar',b:h+pyBt('Voltar','','pyFecha()')});
+  } else pyEnvia(PY.terminais[0]?PY.terminais[0].id:'');
+}
+function pyErroTela(msg,tenta){
+  pyTela({i:'⚠️',m:esc(msg),cor:'#DC2626',b:(tenta?pyBt('Tentar de novo','lj','pyCobrar(PY.valor,PY.forma,PY.fn,PY.nao)'):'')+pyBt('Voltar','','pyFecha()')});
+}
+function pyEnvia(tid){
+  pyTela({i:PY.forma==='pix'?'▦':'💳',m:'Preparando…',b:pyBt('Cancelar','','pyFecha()')});
+  api('/painel/payer-cobrar',{terminal:tid,valor:PY.valor,forma:PY.forma,ref_tipo:'atend'}).then(function(r){
+    if(r._h===401){ pyFecha(); mostraLogin('Entre de novo.'); return; }
+    if(!r.ok){ pyErroTela(r.mensagem||'Não consegui enviar para a maquininha.',r.erro!=='terminal_ocupado'); return; }
+    PY.id=r.correlation_id; pyEspera();
+  });
+}
+function pyEspera(){
+  var msg=PY.forma==='pix'?'Peça para o cliente ler o QR Code':(PY.forma==='credito'||PY.forma==='debito'?'Aproxime, insira ou passe o cartão':'Siga as instruções na tela da maquininha');
+  pyTela({i:PY.forma==='pix'?'▦':'💳',m:msg,b:pyBt('Cancelar','','pyAborta()')});
+  pyPoll();
+}
+function pyPoll(){
+  clearTimeout(PY.t);
+  PY.t=setTimeout(function(){
+    if(!$('pyz')||!PY.id) return;
+    api('/painel/payer-status?id='+encodeURIComponent(PY.id)).then(function(r){
+      if(!$('pyz')) return;
+      if(r._h===401){ pyFecha(); mostraLogin('Entre de novo.'); return; }
+      var o=r.ok&&r.ordem; if(!o){ pyPoll(); return; }
+      if(o.status==='aprovada'){ pyAprovada(o); return; }
+      if(o.status==='recusada') { pyErroTela(o.motivo?('O pagamento não foi confirmado: '+o.motivo):'Pagamento recusado. Peça outro cartão ou outra forma de pagamento.',true); return; }
+      if(o.status==='erro') { pyErroTela(o.motivo||'Erro ao enviar para a maquininha.',true); return; }
+      if(o.status==='abortada') { pyErroTela('Cobrança cancelada. Nada foi cobrado.',true); return; }
+      if(o.status==='sem_resposta'){ pyErroTela('A maquininha não respondeu. Confira no aparelho antes de cobrar de novo.',false); return; }
+      pyPoll();
+    });
+  },2500);
+}
+/* Cancelar: manda abortar, fecha sem mostrar nada e avisa "Cobrança cancelada." (igual ao app da maquininha) */
+function pyAborta(){
+  var id=PY.id; clearTimeout(PY.t);
+  api('/painel/payer-abortar',{id:id}).then(function(r){
+    if(r._h===401){ pyFecha(); mostraLogin('Entre de novo.'); return; }
+    if(r.ok){ pyFecha(); toast('Cobrança cancelada.'); pyConfere(id,0); return; }
+    if(r.erro==='ja_resolvida'){ toast('Essa cobrança já terminou.'); pyPoll(); return; }
+    toast(r.mensagem||'Não consegui cancelar.'); pyPoll();
+  });
+}
+/* depois de cancelar, confere em segundo plano se a maquininha não aprovou no último instante */
+function pyConfere(id,n){
+  setTimeout(function(){ api('/painel/payer-status?id='+encodeURIComponent(id)).then(function(r){
+    var o=r&&r.ok&&r.ordem; if(!o) return;
+    if(o.status==='aprovada'){ toast('ATENÇÃO: o pagamento de '+brl(o.valor)+' foi aprovado na maquininha antes de cancelar. Confira o aparelho.'); return; }
+    if((o.status==='enviada'||o.status==='a_confirmar'||o.status==='aborto_enviado')&&n<6) pyConfere(id,n+1);
+  }); },3000);
+}
+function pyAprovada(o){
+  clearTimeout(PY.t); PY.ord=o;
+  pyTela({i:'✅',m:'Pagamento aprovado!',cor:'#16A34A',b:pyBt('Concluir','vd','pyConcluir()')+(o.metodo==='PIX'?'':pyBt('Imprimir via do cliente','','pyImprime()'))+pyBt('📲 Enviar comprovante no WhatsApp','wp','pyWhats()')});
+}
+/* via do cliente na impressora da maquininha (modo simulação: o cupom aparece na tela) */
+function pyImprime(){
+  var id=PY.ord&&PY.ord.id; if(!id) return; toast('Imprimindo a via do cliente…');
+  api('/painel/payer-imprimir',{id:id}).then(function(r){
+    if(r._h===401){ pyFecha(); mostraLogin('Entre de novo.'); return; }
+    if(!r.ok){ toast(r.mensagem||'Não consegui imprimir.'); return; }
+    if(r.simulado) pyPapel('Via do cliente','<pre class="ppp">'+esc(r.texto||'')+'</pre>'); else toast('Comprovante enviado para a impressora.');
+  });
+}
+/* papel saindo da impressora (só no modo simulação): mostra o cupom na tela, no lugar da impressão de verdade */
+function pyPapel(tit,corpo){
+  var d=$('pyp'); if(d) d.remove(); d=document.createElement('div'); d.id='pyp';
+  d.innerHTML='<div class="ppc"><div class="ppi">🖨️</div><div class="ppt">'+esc(tit)+'</div><div class="ppn">Impressão simulada: nada saiu no papel</div><div class="pps"></div><div class="ppx"><div class="ppa">'+corpo+'</div></div><button type="button" class="pbt lj" onclick="document.getElementById(\'pyp\').remove()">Fechar</button></div>';
+  document.body.appendChild(d);
+}
+/* o pedido que iria para a impressora da cozinha e do bar, desenhado na tela (mesmo HTML da impressão) */
+function pyPreviaPedido(p,fila){
+  var pags=[]; fila.forEach(function(x){ pags.push(slipSetor(p,x[0],x[1],x[2],x[3])); });
+  var html='<!doctype html><html><head><meta charset="utf-8"><style>*{box-sizing:border-box}body{margin:0;padding:6px 8px;width:302px;font-family:Arial,Helvetica,sans-serif;color:#000}.slip{border-bottom:2px dotted #999;padding-bottom:14px;margin-bottom:14px}'+CSS_SLIP+'</style></head><body>'+pags.map(function(s){ return '<div class="slip">'+s+'</div>'; }).join('')+'</body></html>';
+  pyPapel('Pedido '+plab(p)+' na impressora','<iframe class="ppf" srcdoc="'+esc(html)+'"></iframe>');
+}
+function pyConcluir(){ var f=PY.fn, o=PY.ord; PY.nao=null; pyFecha(); if(f) f(o); }
+/* comprovante digital: abre o WhatsApp com a mensagem pronta para o cliente */
+function pyWhats(){
+  var o=PY.ord||{}, n=String(prompt('Celular do cliente (com DDD)','')||'').replace(/\D/g,'');
+  if(n.length<10||n.length>11){ if(n) toast('Número inválido. Digite com DDD.'); return; }
+  var t='Comprovante de pagamento'+(D&&D.empresa?'\n'+D.empresa:'')+'\nValor: '+brl(PY.valor)+(o.bandeira?'\nBandeira: '+o.bandeira:'')+(o.nsu?'\nNSU: '+o.nsu:'')+(o.aut?'\nAutorização: '+o.aut:'')+'\nObrigado!';
+  try{ window.open('https://wa.me/55'+n+'?text='+encodeURIComponent(t),'_blank'); }catch(e){ toast('Não consegui abrir o WhatsApp.'); }
+}
+/* ── (305) A PAYER ENTRA NO MESMO CAMINHO DA MAQUININHA DO APP: fora do app (sem LiveFoodPOS), com a Payer ligada na loja pelo Admin (ou em modo simulação),
+   o "Cobrar na maquininha" do Fechar comanda e do Fechar conta usa esta tela. Aprovado, segue como a venda do app (tef): o pedido ou a conta fecha já pago. ── */
+function posWeb(){ return !posTem()&&PY.ativa; }
+function posCobraWeb(forma,valor,fim,ex){
+  var fm={credito:'credito',debito:'debito',pix:'pix'}[forma]||'livre';
+  pyCobrar(valor,fm,function(o){ fim({ok:true,venda:{gk:o.id_payer||o.id||'',forma:forma,valor:Math.round(valor*100),nsu:o.nsu||'',aut:o.aut||'',bandeira:o.bandeira||'',final:'',ref:(ex&&ex.ref)||'',quando:Date.now()}}); },fim);
+}
 /* ── comandas em aberto + fechamento ── */
 var COMS=[];
 /* (281) comandas aparecem NA HORA: mostra a última lista guardada e busca a nova por trás (só redesenha se mudou).
@@ -1671,6 +1805,7 @@ function imprime(p){ imprimeFila(p,filaSetor(p)); }
 /* (ATEND-37) impressão automática: manda para a fila do Worker (o programa do restaurante imprime em cada impressora); se o programa não está ligado, imprime pelo navegador como antes */
 function imprimeAuto(p){
   var fila=filaSetor(p);
+  if(PY.sim&&!posTem()){ setTimeout(function(){ pyPreviaPedido(p,fila); },2400); return; }   /* (305) loja em modo simulação: o pedido sai na impressora aqui na tela, depois da comemoração */
   api('/painel/atend-imprimir',{lab:plab(p),mesa:ehSMM(p.mesa)?'':p.mesa,modo:p.modo,joia:p.joia,nome:p.nome,atend:p.atend,criado:p.criado,obs:p.obs,reimp:p.reimp?1:0,empresa:D.empresa||'',fila:fila.map(function(x){ return {setor:x[0],l:x[1],grupo:x[2]||undefined,copos:x[3]||undefined}; })}).then(function(r){
     if(r&&r.ok&&r.agente) return;
     if(r&&r.ok){ imprimeFila(p,fila); return; }   /* o programa de impressão do restaurante está desligado: imprime pelo navegador, como antes */

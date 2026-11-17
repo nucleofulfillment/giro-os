@@ -462,6 +462,10 @@ html,body{background:var(--hx-bg)}
         <h3><span>Conexão de pagamentos</span><span class="dir"><span class="lnk" onclick="abrirPaytime()">Testar conexão</span><span class="lnk" onclick="abrirPtEventos()">Avisos recebidos</span></span></h3>
         <div class="sub2">Pagamentos na mesa e na maquininha (ambiente de teste da Vileve / PayStore).</div>
       </div>
+      <div class="card">
+        <h3><span>Payer</span><span class="dir"><span class="lnk" onclick="abrirPayer()">Configurar e testar</span><span class="lnk" onclick="abrirPyOrdens()">Últimas cobranças</span></span></h3>
+        <div class="sub2">Segunda opção de pagamento (maquininha Gertec e totem). Tem modo simulação, para demonstrar sem equipamento.</div>
+      </div>
     </section>
 
     <div class="bld">LIVEFOOD-ADMIN-03</div>
@@ -1280,6 +1284,62 @@ function abrirPaytime(){
       :'<div class="aviso">Nenhum estabelecimento no sandbox ainda. Peça à Paytime um estabelecimento de teste aprovado.</div>');
     if(es.length) ptGateways();
   }).catch(function(){ var c=el('pt-corpo'); if(c) c.textContent='Erro de conexão.'; });
+}
+/* ── (303) Payer: testa o login, cadastra a loja (companyId, storeId, automationName e terminais, que vêm do onboarding da Payer) e faz uma cobrança de teste no simulador ── */
+var PY_POLL=null;
+function abrirPayer(){
+  abrirModal('<h3>Payer · maquininha e totem</h3><p class="sub">O e-mail e a senha ficam só nos segredos do Worker (PAYER_USER e PAYER_PASS). Os dados da loja vêm do onboarding da Payer. Só funciona na loja marcada como ligada.</p><div id="py-corpo" class="sub2" style="margin:10px 0">Conectando...</div><div class="acoes"><button class="btn" onclick="abrirPyOrdens()">Últimas cobranças</button><button class="btn" onclick="fechar()">Fechar</button></div>');
+  chamar('GET','/admin/payer/teste').then(function(d){
+    var c=el('py-corpo'); if(!c) return;
+    var topo=d.ok?'✅ Login OK na Payer':'<div class="erro">'+esc(d.mensagem||'Não conectou.')+'</div>';
+    c.innerHTML=topo+'<label>Loja</label><select id="py-cli" onchange="pyCarrega()"><option value="">Escolha a loja…</option>'+CLIENTES.map(function(x){ return '<option value="'+esc(x.id)+'">'+esc(x.nome||x.id)+'</option>'; }).join('')+'</select><div id="py-loja"></div>';
+  }).catch(function(){ var c=el('py-corpo'); if(c) c.textContent='Erro de conexão.'; });
+}
+function pyCarrega(){
+  var cli=el('py-cli').value, b=el('py-loja'); if(!cli){ b.innerHTML=''; return; }
+  chamar('GET','/admin/payer/loja?cli='+encodeURIComponent(cli)).then(function(d){
+    var l=d.loja||{}, tm=(l.terminais||[]).map(function(t){ return t.id+' ; '+(t.nome||'')+' ; '+(t.tipo||'maquininha'); }).join('\n');
+    b.innerHTML='<label>companyId</label><input id="py-co" value="'+esc(l.companyId||'')+'"><label>storeId</label><input id="py-st" value="'+esc(l.storeId||'')+'"><label>automationName</label><input id="py-au" value="'+esc(l.automationName||'')+'">'
+      +'<label>Terminais (um por linha: terminalId ; nome ; maquininha ou totem)</label><textarea id="py-tm" rows="4" placeholder="T001 ; Gertec balcão ; maquininha">'+esc(tm)+'</textarea>'
+      +'<label style="display:flex;gap:8px;align-items:center;margin-top:8px"><input type="checkbox" id="py-at"'+(l.ativo?' checked':'')+' style="width:auto"> Payer ligada nesta loja (aparece o botão Cobrar na maquininha)</label>'
+      +'<label style="display:flex;gap:8px;align-items:center;margin-top:8px"><input type="checkbox" id="py-sm"'+(l.simulado?' checked':'')+' style="width:auto"> <span><b>Modo simulação</b> (sem maquininha e sem a Payer): a cobrança aprova sozinha em 3 segundos e o cupom aparece na tela. Valor terminado em ,99 é recusado de propósito. Serve para demonstrar o totem e o garçom.</span></label>'
+      +'<div class="acoes" style="justify-content:flex-start"><button class="btn pri" onclick="pySalva()">Salvar loja</button></div>'
+      +'<hr style="border:0;border-top:1px solid #e7e0d8;margin:14px 0"><div class="sub2"><b>Cobrança de teste (simulador)</b>: centavos diferentes de zero aprovam; valor redondo recusa. Salve a loja antes.</div>'
+      +'<select id="py-vl" style="margin-top:6px"><option value="10.01">R$ 10,01 · deve aprovar</option><option value="10.00">R$ 10,00 · deve recusar</option></select>'
+      +'<div class="acoes" style="justify-content:flex-start"><button class="btn" id="py-bt" onclick="pyTeste()">Cobrar de teste no 1º terminal</button></div><div id="py-res"></div>';
+  }).catch(function(){ b.textContent='Erro de conexão.'; });
+}
+function pySalva(){
+  var ts=el('py-tm').value.split('\n').map(function(s){ var p=s.split(';').map(function(x){ return x.trim(); }); return p[0]?{id:p[0],nome:p[1]||'',tipo:/totem/i.test(p[2]||'')?'totem':'maquininha'}:null; }).filter(Boolean);
+  chamar('POST','/admin/payer/loja',{cli:el('py-cli').value,ativo:el('py-at').checked,simulado:el('py-sm').checked,companyId:el('py-co').value.trim(),storeId:el('py-st').value.trim(),automationName:el('py-au').value.trim(),terminais:ts}).then(function(d){
+    if(!d.ok){ toast(d.mensagem||'Não salvou.',true); return; }
+    toast(d.completa?(el('py-sm').checked?'Loja salva em modo simulação.':'Loja salva e pronta.'):(el('py-at').checked?'Salvo, mas faltam dados para ligar (companyId, storeId, automationName e um terminal).':'Loja salva (desligada).'),el('py-at').checked&&!d.completa);
+  }).catch(function(){});
+}
+function pyTeste(){
+  var b=el('py-bt'), r=el('py-res'); b.disabled=true; clearTimeout(PY_POLL); r.innerHTML='<div class="sub2" style="margin-top:8px">Enviando...</div>';
+  chamar('POST','/admin/payer/cobrar-teste',{cli:el('py-cli').value,valor:+el('py-vl').value,forma:''}).then(function(d){
+    if(!d.ok){ b.disabled=false; r.innerHTML='<div class="erro" style="margin-top:8px">'+esc(d.mensagem||'Não enviou.')+'</div>'; return; }
+    pyAcompanha(d.correlation_id,0);
+  }).catch(function(){ b.disabled=false; });
+}
+function pyAcompanha(id,n){
+  PY_POLL=setTimeout(function(){
+    chamar('GET','/admin/payer/status?id='+encodeURIComponent(id)).then(function(d){
+      var r=el('py-res'), b=el('py-bt'); if(!r) return; var o=d.ordem||{};
+      if(o.status==='aprovada'||o.status==='recusada'||o.status==='erro'||o.status==='sem_resposta'||n>60){ if(b) b.disabled=false;
+        r.innerHTML='<div class="aviso" style="margin-top:8px">'+(o.status==='aprovada'?'✅ <b>Aprovada</b>':'<b>'+esc(o.status||'sem retorno')+'</b>')+(o.motivo?' · '+esc(o.motivo):'')+'<br>Valor '+esc(o.valor)+' · adquirente '+esc(o.adquirente||'-')+' · bandeira '+esc(o.bandeira||'-')+' · NSU '+esc(o.nsu||'-')+'<br>idPayer: '+esc(o.id_payer||'-')+'</div>'; return; }
+      r.innerHTML='<div class="sub2" style="margin-top:8px">Aguardando a Payer... ('+esc(o.status||'enviada')+')</div>'; pyAcompanha(id,n+1);
+    }).catch(function(){});
+  },3000);
+}
+function abrirPyOrdens(){
+  var cli=(el('py-cli')||{}).value||'';
+  abrirModal('<h3>Payer · últimas cobranças</h3><div id="py-ord" class="sub2">Carregando...</div><div class="acoes"><button class="btn" onclick="abrirPyOrdens()">↻ Atualizar</button><button class="btn" onclick="fechar()">Fechar</button></div>');
+  chamar('GET','/admin/payer/ordens'+(cli?'?cli='+encodeURIComponent(cli):'')).then(function(d){
+    var o=el('py-ord'); if(!o) return; var l=d.ordens||[];
+    o.innerHTML=l.length?'<div class="tabela-wrap"><table><tr><th>Quando</th><th>Valor</th><th>Situação</th><th>Adquirente</th><th>NSU</th></tr>'+l.map(function(x){ return '<tr><td>'+new Date(x.criado).toLocaleString('pt-BR')+'</td><td>'+esc(x.valor)+(x.comando==='CANCELLMENT'?' (estorno)':'')+'</td><td>'+esc(x.status)+(x.motivo?' · '+esc(x.motivo):'')+'</td><td>'+esc(x.adquirente||'-')+'</td><td>'+esc(x.nsu||'-')+'</td></tr>'; }).join('')+'</table></div>':'Nenhuma cobrança ainda.';
+  }).catch(function(){});
 }
 /* (126) gateways do estabelecimento escolhido + botão para ligar o gateway Paytime com os planos ativos */
 function ptGateways(){
