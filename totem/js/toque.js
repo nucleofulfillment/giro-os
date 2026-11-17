@@ -13,7 +13,7 @@
 
   // ----- configuração do painel -----
   const S = M.servidor || null;
-  const C = Object.assign({ ativo: 0, formato: 'v', frase: '', modo: 'ambos', cat: 'esq', capa: 1, topo: 1, rotulo: '', ofs: [], troca: 5, princ: 1, cobrar: 'totem', pg: ['caixa'], ajuda: 1, video: '', cols: 0, pgPos: 'baixo', pedeNome: 0 }, (S && S.toque) || {});
+  const C = Object.assign({ ativo: 0, formato: 'v', frase: '', modo: 'ambos', cat: 'esq', capa: 1, topo: 1, rotulo: '', ofs: [], troca: 5, princ: 1, cobrar: 'totem', pg: ['caixa'], ajuda: 1, video: '', cols: 0, pgPos: 'baixo', tkt: 'sempre', pedeNome: 0 }, (S && S.toque) || {});
   const Q = new URLSearchParams(location.search);
   if (/^[vh]$/.test(Q.get('formato') || '')) C.formato = Q.get('formato'); // para conferir o outro formato sem mexer no painel
   // pré-visualização: sem a chave do totem (ou seja, sempre em modo teste) o link aceita ...&demo={"cat":"topo","pg":["caixa","pix"]} para ver uma configuração antes de salvar no painel
@@ -22,7 +22,7 @@
   let ENVIA = !!(M.cli && S && C.ativo);     // senão: modo teste
   let EDITANDO = false;                      // dono logado com o painel de configurações aberto ao lado: nada é enviado
   const FORMAS = ['caixa', 'pix', 'credito', 'debito'];
-  function arrumaCfg() { C.pg = (Array.isArray(C.pg) ? C.pg : []).filter((p) => FORMAS.includes(p)); if (!C.pg.length) C.pg = ['caixa']; if (!Array.isArray(C.ofs)) C.ofs = []; }
+  function arrumaCfg() { if (!['sempre', 'preparo', 'nunca'].includes(C.tkt)) C.tkt = 'sempre'; C.pg = (Array.isArray(C.pg) ? C.pg : []).filter((p) => FORMAS.includes(p)); if (!C.pg.length) C.pg = ['caixa']; if (!Array.isArray(C.ofs)) C.ofs = []; }
   arrumaCfg();
   const frase = () => C.frase || (M.ehRest === false ? 'Faça seu pedido aqui' : 'Bateu a fome?');
   const rotulo = () => C.rotulo || 'Oferta de hoje';
@@ -658,17 +658,38 @@
     return linhas.join('\n');
   }
   // desenha o cupom saindo da impressora do totem; com a loja ligada à maquininha, também manda imprimir de verdade (ou simulada pelo Worker)
-  function imprimeCupom(r, forma, pg) {
+  // o pedido tem item de preparo? Cozinha sempre é preparo; bar só com a opção "preparo" (caipirinha, chope, drink). Bebida pronta (lata, long neck) não é.
+  // Sem a informação do servidor (Worker antigo ou cardápio guardado), trata como preparo: imprime o ticket, que é o lado seguro.
+  const preparoDe = (pid) => { const p = PRODS[pid], c = (M.categorias || []).find((x) => x.id === (p && p.cat)); if (!c || !c.dest) return true; return c.dest !== 'bar' || !!c.prep; };
+  const temPreparo = () => E.carrinho.some((l) => preparoDe(l.pid));
+  // recibo que a PRÓPRIA maquininha imprime (só o pagamento, sem a senha); aqui só aparece em simulação
+  function reciboTexto(r, forma, pg) {
+    const L = 32, tr = '-'.repeat(L), cen = (t) => ' '.repeat(Math.max(0, Math.floor((L - t.length) / 2))) + t;
+    const par = (a, b) => a + ' '.repeat(Math.max(1, L - a.length - b.length)) + b;
+    const d = new Date(), dh = d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    return [cen('RECIBO - VIA DO CLIENTE'), cen(String(M.loja || 'LiveFood').toUpperCase().slice(0, L)), tr, par('Valor', R$(total())), `${forma === 'debito' ? 'Débito' : 'Crédito'} ${pg.bandeira || ''} ${pg.final4 ? '**** ' + pg.final4 : ''}`.trim(), `NSU ${pg.nsu || '-'}  AUT ${pg.aut || '-'}`, dh, tr, cen('Transacao aprovada'), '', cen('*** SIMULACAO ***')].join('\n');
+  }
+  // texto da comanda que a cozinha recebe (sem preços, com a senha em destaque). Só é desenhada na tela em simulação: na loja de verdade quem imprime é o programa de impressão da cozinha
+  function comandaTexto(r) {
+    const L = 32, tr = '='.repeat(L), cut = (t, n) => String(t).slice(0, n), cen = (t) => ' '.repeat(Math.max(0, Math.floor((L - t.length) / 2))) + t;
+    const d = new Date(), dh = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    const linhas = [cen('*** COZINHA ***'), cen(cut(String(M.loja || 'LiveFood').toUpperCase(), L)), tr, cen('SENHA ' + (r.num || '')), E.modo ? cen(E.modo === 'levar' ? 'PARA LEVAR' : 'CONSUMIR AQUI') : '', E.nome ? cen('Cliente: ' + cut(E.nome, 20)) : '', tr].filter((x) => x !== '');
+    E.carrinho.forEach((l) => { const p = PRODS[l.pid], ds = descLinha(l); linhas.push(cut(`${l.qtd}x ${p.nome}`.toUpperCase(), L)); if (ds) linhas.push('   ' + cut(ds, L - 3)); });
+    linhas.push(tr, 'Pedido ' + (r.num || '') + '  ' + dh);
+    if (r.teste || PAYER.simulado) linhas.push('', cen('*** SIMULACAO ***'));
+    return linhas.join('\n');
+  }
+  function imprimeCupom(r, forma, pg, papel) {
     return new Promise((resolve) => {
-      const texto = cupomTexto(r, forma, pg);
-      CUP.innerHTML = `<div class="cc"><div class="ci">🖨️</div><h2 id="cp-t">Imprimindo o seu pedido…</h2><p>Retire o comprovante embaixo do totem</p><div class="slot"></div><div class="caixa"><pre class="papel">${esc(texto)}</pre></div><button type="button" class="mbt lj" id="cp-ok">Continuar</button></div>`;
+      const texto = papel ? papel.texto : cupomTexto(r, forma, pg);
+      CUP.innerHTML = `<div class="cc"><div class="ci">🖨️</div><h2 id="cp-t">${papel ? papel.tit : 'Imprimindo o seu ticket…'}</h2><p>${papel ? papel.sub : 'Retire o seu ticket e comprovante embaixo do totem'}</p><div class="slot"></div><div class="caixa"><pre class="papel">${esc(texto)}</pre></div><button type="button" class="mbt lj" id="cp-ok">Continuar</button></div>`;
       abre('#f-cupom');
       let t1 = null, t2 = null;
       const sai = () => { clearTimeout(t1); clearTimeout(t2); resolve(); };
       $('#cp-ok').onclick = sai;
-      t1 = setTimeout(() => { const h = $('#cp-t'); if (h && !h.dataset.erro) h.textContent = 'Pedido impresso!'; }, 4400);
-      t2 = setTimeout(sai, 8500);
-      if (ENVIA && PAYER.ativa) pPost('/live/payer-imprimir', { texto }).then((d) => { if (d && d.ok === false) { const h = $('#cp-t'); if (h) { h.dataset.erro = '1'; h.textContent = 'Não consegui imprimir. Chame um atendente.'; } } });
+      t1 = setTimeout(() => { const h = $('#cp-t'); if (h && !h.dataset.erro) h.textContent = papel ? 'Comanda impressa na cozinha!' : 'Ticket impresso!'; }, 4400);
+      t2 = setTimeout(sai, papel ? 5000 : 7500);
+      if (ENVIA && PAYER.ativa && !papel) pPost('/live/payer-imprimir', { texto }).then((d) => { if (d && d.ok === false) { const h = $('#cp-t'); if (h) { h.dataset.erro = '1'; h.textContent = 'Não consegui imprimir. Chame um atendente.'; } } });
     });
   }
   // cartão: cobra primeiro; só com o pagamento aprovado o pedido entra na cozinha; depois sai o cupom e vem a senha
@@ -692,7 +713,15 @@
       return;
     }
     carregando(false);
-    await imprimeCupom(r, forma, pg);
+    // o que sai no papel depende da loja (Configurações > Totem de toque > Impressão no totem):
+    //  - o recibo da maquininha sai sempre (é da própria maquininha; em simulação aparece aqui só para mostrar);
+    //  - o ticket do cliente, com a senha: sempre, só se o pedido tem item de preparo, ou nunca;
+    //  - a comanda da cozinha e do bar sai pelo programa de impressão da loja (em simulação aparece aqui) e só se o pedido tem preparo.
+    const sim = !ENVIA || PAYER.simulado, prep = temPreparo(), quer = C.tkt === 'sempre' || (C.tkt === 'preparo' && prep);
+    E.semTicket = !quer;
+    if (sim) await imprimeCupom(r, forma, pg, { texto: reciboTexto(r, forma, pg), tit: 'Imprimindo o recibo da maquininha…', sub: 'Simulação: a própria maquininha imprime este recibo' });
+    if (quer) await imprimeCupom(r, forma, pg);
+    if (sim && prep) await imprimeCupom(r, forma, pg, { texto: comandaTexto(r), tit: 'Imprimindo a comanda da cozinha…', sub: 'Simulação: é isto que sai na impressora da cozinha ou do bar' });
     fim(r, forma, pg);
   }
   function abrePedido() {
@@ -771,7 +800,7 @@
         titulo: r.teste ? (r.sim ? 'Pedido simulado, nada foi enviado. Sua senha seria' : 'Modo teste: este pedido não foi enviado') : forma === 'mesa' ? 'Pedido enviado! Número' : E.nome ? `Pedido confirmado, ${E.nome.split(' ')[0]}! Sua senha é` : 'Pedido confirmado! Sua senha é',
         valor: r.teste && !r.sim ? 'teste' : String(r.num),
         forma: pg ? `Pago no ${forma === 'debito' ? 'débito' : 'crédito'}${pg.bandeira ? ' · ' + pg.bandeira : ''}` : forma === 'mesa' ? 'Mesa ' + MESA : forma === 'pix' ? 'Pix confirmado' : ehCartao(forma) ? `Pague ${valor} no ${forma === 'debito' ? 'débito' : 'crédito'}, na maquininha` : `Pague ${valor} no caixa`,
-        sub: forma === 'mesa' ? 'Já foi para a cozinha e o bar. Levamos até a sua mesa.' : E.modo === 'levar' ? 'Retire no balcão quando chamarem a senha.' : 'Aguarde a senha ser chamada e retire no balcão.',
+        sub: forma === 'mesa' ? 'Já foi para a cozinha e o bar. Levamos até a sua mesa.' : (pg && E.semTicket) ? 'Retire no balcão mostrando o recibo da maquininha.' : E.modo === 'levar' ? 'Retire no balcão quando chamarem a senha.' : 'Aguarde a senha ser chamada e retire no balcão.',
         botao: { texto: 'Fazer outro pedido', acao: recomeca },
       });
       // ninguém tocou em 12 s: fecha sozinho e volta para a entrada

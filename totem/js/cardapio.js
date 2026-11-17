@@ -163,7 +163,7 @@
     // (137) restaurante ou outra loja (farmácia, mercado...): vem do botão do catálogo escolhido em Ofertas
     const cat = (d.cfg && d.cfg.menu && d.cfg.menu.catalogo) || {}, catNome = cat.nome || 'Cardápio', nCat = semAcento(catNome.toLowerCase());
     const ehRest = nCat === 'cardapio' || nCat === 'menu' || !cat.icone || cat.icone === 'cardapio';
-    const categorias = (d.cats || []).map((c) => ({ id: c.id, nome: c.nome }));
+    const categorias = (d.cats || []).map((c) => ({ id: c.id, nome: c.nome, dest: c.dest || '', prep: c.prep ? 1 : 0 })); // dest/prep: o totem de toque decide o ticket do cliente (preparo x bebida pronta)
     const nomeCat = (id) => (categorias.find((c) => c.id === id) || {}).nome || '';
     const itens = [];
     for (const p of Object.values(d.produtos || {})) {
