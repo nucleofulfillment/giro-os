@@ -647,9 +647,9 @@
   }
   // ----- o que o pedido do totem tem de PREPARO e o que sai PRONTO -----
   // Cozinha é sempre preparo; bar só com a opção "preparo" (caipirinha, chope, drink); bebida pronta (lata, long neck) o cliente retira no balcão só com o ticket.
-  // Só separamos se a loja separa pronto de preparo ("Dividir a impressão do bar" no painel, S.sepPronto): sem isso não dá para saber, e tudo é tratado como preparo.
+  // Categoria de cozinha marcada "Cozinha · pronto" (salgadinho, guloseima, sorvete) também sai pronta. No bar só separamos se a loja separa pronto de preparo ("Dividir a impressão do bar" no painel, S.sepPronto): sem isso não dá para saber, e tudo é tratado como preparo.
   const separa = () => !!((S && S.sepPronto) || C.sepPronto);
-  const preparoDe = (pid) => { if (!separa()) return true; const p = PRODS[pid], c = (M.categorias || []).find((x) => x.id === (p && p.cat)); if (!c || !c.dest) return true; return c.dest !== 'bar' || !!c.prep; };
+  const preparoDe = (pid) => { const p = PRODS[pid], c = (M.categorias || []).find((x) => x.id === (p && p.cat)); if (!c || !c.dest) return true; if (c.dest !== 'bar') return !c.pronto; return separa() ? !!c.prep : true; }; // cozinha: preparo, salvo a categoria marcada \
   const temPreparo = () => E.carrinho.some((l) => preparoDe(l.pid));
   // TICKET DO CLIENTE (32 colunas, impressora térmica de 58 mm). Sai sempre. Leva a senha (a mesma da comanda da cozinha e do bar, para o operador conferir)
   // e diz o que fazer: pedido pronto = entregar o ticket no balcão; pedido com preparo = aguardar a senha ser chamada.

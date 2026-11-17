@@ -125,7 +125,7 @@
       + nota('No tablet de mesa o pedido sempre entra na conta da mesa, sem cobrança na tela.')
       + tit('Impressão no totem')
       + nota('Todo pedido pago no cartão sai com o TICKET DO CLIENTE no totem, com a senha. Se o pedido tem item de preparo, a comanda também sai na cozinha ou no bar, com a mesma senha: quando o pedido fica pronto, o operador confere a comanda com o ticket do cliente. Se o pedido é só de produto pronto, não sai comanda: o cliente entrega o ticket no balcão e retira.')
-      + nota('Para o totem separar produto pronto de preparo, ligue em Atendimento a opção “Dividir a impressão do bar” e marque “preparo” nas categorias de bebida feita na hora (caipirinha, chope, drink). Sem isso, tudo é tratado como preparo e a cozinha e o bar imprimem todo pedido, como antes.')
+      + nota('Dividir“Dividir a impressão do bar” e marque “preparo” nas categorias de bebida feita na hora (caipirinha, chope, drink). Sem isso, tudo é tratado como preparo e a cozinha e o bar imprimem todo pedido, como antes.')
       + chk('pedeNome', 'Pedir o nome do cliente ao finalizar o pedido')
       + nota('O cliente digita o nome num teclado na tela antes de enviar. O nome vai no pedido e na observação (sai na comanda) e aparece junto da senha. No tablet de mesa o nome não é pedido.')
       + rot('Onde ficam o pagamento e o botão de confirmar') + sel('pgPos', [['baixo', 'Embaixo da lista de itens do pedido'], ['topo', 'Acima da lista de itens do pedido']])

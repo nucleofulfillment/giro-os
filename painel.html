@@ -11315,14 +11315,14 @@ function cdAbrirCats(){
     (CD.pCarga||cdCarregar()).then(function(){ if(el('sh-cats').classList.contains('on')) cdAbrirCatsLista(); }); return; }
   cdAbrirCatsLista();
 }
-function cdAbrirCatsLista(){ CD.cats=CD.cats||[]; if(CD_CAT_SUJO&&CD_CATS_ORIG) CD.cats=CD_CATS_ORIG; CD.cats.forEach(function(c){ delete c._mudou; if(c._dest0!==undefined){ c.dest=c._dest0; c.man=c._man0; c.prep=c._prep0; delete c._dest0; delete c._man0; delete c._prep0; } }); CD_CATS_ORIG=CD.cats.slice(); CD_CAT_SUJO=false; cdPintarCats(); }
+function cdAbrirCatsLista(){ CD.cats=CD.cats||[]; if(CD_CAT_SUJO&&CD_CATS_ORIG) CD.cats=CD_CATS_ORIG; CD.cats.forEach(function(c){ delete c._mudou; if(c._dest0!==undefined){ c.dest=c._dest0; c.man=c._man0; c.prep=c._prep0; c.pronto=c._pronto0; delete c._dest0; delete c._man0; delete c._prep0; delete c._pronto0; } }); CD_CATS_ORIG=CD.cats.slice(); CD_CAT_SUJO=false; cdPintarCats(); }
 function cdCatSujo(){ CD_CAT_SUJO=true; var b=el('cd-cats-ord'); if(b) b.style.display='flex'; }
 function cdPintarCats(){
   var h='', i, b=el('cd-cats-ord'); if(b) b.style.display=CD_CAT_SUJO?'flex':'none';
   for(i=0;i<CD.cats.length;i++){
     var c=CD.cats[i], n=0, j; for(j=0;j<CD.prods.length;j++) if(CD.prods[j].cat===c.id) n++;
     h+='<div class="cd-cat-row" data-id="'+esc(c.id)+'" onpointerdown="cdCatLinhaDown(event,this)" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--border);background:var(--s1);user-select:none;-webkit-user-select:none;cursor:grab"><span onpointerdown="event.stopPropagation();cdCatArrasta(event,this)" title="Arraste para mudar a ordem" style="flex:none;cursor:grab;touch-action:none;user-select:none;font-size:20px;color:var(--muted);padding:6px 2px;line-height:1">⠿</span><div onclick="cdCatFotoEsc(\''+c.id+'\')" title="Foto da categoria" style="width:46px;height:46px;border-radius:10px;flex:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;background:var(--border) center/cover'+(c.foto?' url('+c.foto+')':'')+'">'+(c.foto?'':'📷')+'</div><div style="flex:1;font-weight:700;font-size:13.5px">'+esc(c.nome)+' <span style="font-weight:500;color:var(--muted);font-size:12px">· '+n+' produto'+(n===1?'':'s')+'</span></div>'
-      +'<select class="inp cd-dest" onchange="cdCatDest(\''+c.id+'\',this.value)" title="Para onde vai o pedido desta categoria" style="width:auto;padding:6px 8px;font-size:12.5px"><option value="cozinha"'+(cdDestDe(c)==='bar'?'':' selected')+'>🍳 Cozinha</option><option value="bar"'+(cdDestDe(c)==='bar'&&!c.prep?' selected':'')+'>🍺 Bar · pronta</option><option value="bar_prep"'+(cdDestDe(c)==='bar'&&c.prep?' selected':'')+'>🍹 Bar · preparo</option></select><button class="btn sec sm" onclick="cdRenCat(\''+c.id+'\')">Renomear</button><button class="btn sec sm" onclick="cdDelCat(\''+c.id+'\')" style="color:var(--red)">Apagar</button></div>';
+      +'<select class="inp cd-dest" onchange="cdCatDest(\''+c.id+'\',this.value)" title="Para onde vai o pedido desta categoria" style="width:auto;padding:6px 8px;font-size:12.5px"><option value="cozinha"'+(cdDestDe(c)==='bar'||c.pronto?'':' selected')+'>🍳 Cozinha · preparo</option><option value="cozinha_pronto"'+(cdDestDe(c)!=='bar'&&c.pronto?' selected':'')+'>🍫 Cozinha · pronto</option><option value="bar"'+(cdDestDe(c)==='bar'&&!c.prep?' selected':'')+'>🍺 Bar · pronta</option><option value="bar_prep"'+(cdDestDe(c)==='bar'&&c.prep?' selected':'')+'>🍹 Bar · preparo</option></select><button class="btn sec sm" onclick="cdRenCat(\''+c.id+'\')">Renomear</button><button class="btn sec sm" onclick="cdDelCat(\''+c.id+'\')" style="color:var(--red)">Apagar</button></div>';
   }
   el('cd-cats-lista').innerHTML=h||'<div style="color:var(--muted);font-size:13px">Nenhuma categoria ainda.</div>';
 }
@@ -11336,7 +11336,7 @@ function cdCatFoto(inp){
       cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);
       var q=0.8, out=cv.toDataURL('image/jpeg',q); while(out.length>300000&&q>0.35){ q-=0.1; out=cv.toDataURL('image/jpeg',q); }
       el('cd-cats-erro').textContent='Salvando foto...';
-      cdSalvarApi('cat',{id:c.id,ordem:c.ordem,nome:c.nome,foto:out,dest:cdDestDe(c),man:c.man?1:0,prep:(cdDestDe(c)==='bar'&&c.prep)?1:0}).then(cdRecarregarCats).then(function(){ el('cd-cats-erro').textContent=''; }).catch(function(e){ el('cd-cats-erro').textContent='Não salvou: '+e.message; });
+      cdSalvarApi('cat',{id:c.id,ordem:c.ordem,nome:c.nome,foto:out,dest:cdDestDe(c),man:c.man?1:0,prep:(cdDestDe(c)==='bar'&&c.prep)?1:0,pronto:(cdDestDe(c)==='cozinha'&&c.pronto)?1:0}).then(cdRecarregarCats).then(function(){ el('cd-cats-erro').textContent=''; }).catch(function(e){ el('cd-cats-erro').textContent='Não salvou: '+e.message; });
     }; im.onerror=function(){ el('cd-cats-erro').textContent='Não consegui ler essa imagem.'; }; im.src=rd.result; };
   rd.readAsDataURL(f); inp.value='';
 }
@@ -11367,25 +11367,25 @@ function cdCatArrasta(ev,h){
   document.addEventListener('pointermove',mv,{capture:true,passive:false}); document.addEventListener('pointerup',fim,true); document.addEventListener('pointercancel',fim,true);
   if(sb) rolar=setInterval(function(){ var bb=sb.getBoundingClientRect(); if(ultY<bb.top+50){ sb.scrollTop-=10; move(ultY); } else if(ultY>bb.bottom-50){ sb.scrollTop+=10; move(ultY); } },30);   /* perto da borda, a lista rola */
 }
-function cdCatDesfazer(){ CD.cats=CD_CATS_ORIG.slice(); CD.cats.forEach(function(c){ if(c._dest0!==undefined){ c.dest=c._dest0; c.man=c._man0; c.prep=c._prep0; delete c._dest0; delete c._man0; delete c._prep0; } }); CD_CAT_SUJO=false; el('cd-cats-erro').textContent=''; cdPintarCats(); }
+function cdCatDesfazer(){ CD.cats=CD_CATS_ORIG.slice(); CD.cats.forEach(function(c){ if(c._dest0!==undefined){ c.dest=c._dest0; c.man=c._man0; c.prep=c._prep0; c.pronto=c._pronto0; delete c._dest0; delete c._man0; delete c._prep0; delete c._pronto0; } }); CD_CAT_SUJO=false; el('cd-cats-erro').textContent=''; cdPintarCats(); }
 /* salva a ordem (10, 20, 30… em quem mudou de lugar) e o Cozinha/Bar que foi trocado */
 function cdCatSalvar(){
   var b=el('cd-cats-ok'), er=el('cd-cats-erro');
   CD.cats.forEach(function(c,n){ var o=(n+1)*10; if(Number(c.ordem)!==o){ c.ordem=o; c._mudou=1; } if(c._dest0!==undefined) c._mudou=1; });
   var l=CD.cats.filter(function(c){ return c._mudou; }); if(!l.length){ CD_CAT_SUJO=false; cdPintarCats(); return; }
   b.disabled=true; b.textContent='Salvando…'; er.textContent='';
-  Promise.all(l.map(function(c){ return cdSalvarApi('cat',{id:c.id,ordem:c.ordem,nome:c.nome,foto:c.foto||'',dest:cdDestDe(c),man:c.man?1:0,prep:(cdDestDe(c)==='bar'&&c.prep)?1:0}); }))
+  Promise.all(l.map(function(c){ return cdSalvarApi('cat',{id:c.id,ordem:c.ordem,nome:c.nome,foto:c.foto||'',dest:cdDestDe(c),man:c.man?1:0,prep:(cdDestDe(c)==='bar'&&c.prep)?1:0,pronto:(cdDestDe(c)==='cozinha'&&c.pronto)?1:0}); }))
     .then(function(){ CD_CAT_SUJO=false; b.disabled=false; b.textContent='Salvar'; aviso('Categorias salvas'); return cdRecarregarCats().then(function(){ CD_CATS_ORIG=CD.cats.slice(); }); })
     .catch(function(e){ b.disabled=false; b.textContent='Salvar'; er.textContent='Não salvou: '+e.message; });
 }
 function cdCatDest(id,v){
   var i, c=null; for(i=0;i<CD.cats.length;i++) if(CD.cats[i].id===id) c=CD.cats[i]; if(!c) return;
-  if(c._dest0===undefined){ c._dest0=c.dest; c._man0=c.man; c._prep0=c.prep; } c.dest=v==='bar_prep'?'bar':v; c.prep=v==='bar_prep'?1:0; c.man=1; cdCatSujo();   /* (231) só grava no Salvar · (250) Bar · preparo = bar + prep */
+  if(c._dest0===undefined){ c._dest0=c.dest; c._man0=c.man; c._prep0=c.prep; c._pronto0=c.pronto; } c.dest=(v==='bar_prep')?'bar':(v==='cozinha_pronto'?'cozinha':v); c.prep=v==='bar_prep'?1:0; c.pronto=v==='cozinha_pronto'?1:0; c.man=1; cdCatSujo();   /* (231) só grava no Salvar · (250) Bar · preparo = bar + prep */
 }
 function cdRenCat(id){
   var i, c=null; for(i=0;i<CD.cats.length;i++) if(CD.cats[i].id===id) c=CD.cats[i];
   if(!c) return; var nm=window.prompt('Novo nome da categoria:',c.nome); if(!nm||!nm.trim()) return;
-  cdSalvarApi('cat',{id:c.id,ordem:c.ordem,nome:nm.trim(),foto:c.foto||'',dest:cdDestDe(c),man:c.man?1:0,prep:(cdDestDe(c)==='bar'&&c.prep)?1:0}).then(cdRecarregarCats).catch(function(e){ el('cd-cats-erro').textContent='Não salvou: '+e.message; });
+  cdSalvarApi('cat',{id:c.id,ordem:c.ordem,nome:nm.trim(),foto:c.foto||'',dest:cdDestDe(c),man:c.man?1:0,prep:(cdDestDe(c)==='bar'&&c.prep)?1:0,pronto:(cdDestDe(c)==='cozinha'&&c.pronto)?1:0}).then(cdRecarregarCats).catch(function(e){ el('cd-cats-erro').textContent='Não salvou: '+e.message; });
 }
 function cdDelCat(id){
   var i, c=null, n=0; for(i=0;i<CD.cats.length;i++) if(CD.cats[i].id===id) c=CD.cats[i];
