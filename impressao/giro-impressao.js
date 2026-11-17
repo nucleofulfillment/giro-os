@@ -1,5 +1,10 @@
 /* GIRO OS — programa de impressão do restaurante (v1)
-   Busca a fila de etiquetas no Worker e imprime direto nas impressoras de rede (porta 9100).
+   Busca a fila de etiquetas no Worker e imprime direto nas impressoras: de rede (porta 9100) ou ligadas neste
+   computador pelo cabo USB. No config.json, a impressora de cada setor é:
+     um IP (192.168.0.50)                 -> impressora de rede
+     USB:VID_0416&PID_5011#83700000000    -> impressora USB comum (o Windows mostra como "Suporte de impressão USB");
+                                             os bytes vão direto para ela, sem instalar driver nem criar impressora no Windows
+     uma porta (COM4)                     -> impressora que aparece como porta serial
    Usos:
      node giro-impressao.js              -> fica rodando e imprimindo
      node giro-impressao.js --configurar -> pede e-mail/senha do dono UMA vez e grava a chave (a senha não é guardada)
@@ -108,7 +113,78 @@ function ticketCliente(p, cfg) {
   return Buffer.from(b.b);
 }
 
+/* impressora no cabo USB: o Windows mostra como porta COM e os bytes vão direto para ela, sem passar pela rede */
+const ehCom = d => /^COM\d+$/i.test(String(d || ''));
+function enviarCom(porta, buf) {
+  return new Promise((ok, erro) => {
+    let fim = false; const f = e => { if (fim) return; fim = true; clearTimeout(t); e ? erro(e) : ok(); };
+    const t = setTimeout(() => f(new Error('tempo esgotado (impressora no cabo não aceitou)')), 8000);
+    fs.open('\\\\.\\' + String(porta).toUpperCase(), 'w', (e, fd) => {
+      if (e) return f(new Error(e.code === 'ENOENT' ? 'porta ' + porta + ' não existe (impressora desligada ou cabo solto)' : e.message));
+      fs.write(fd, buf, 0, buf.length, null, e2 => fs.close(fd, () => f(e2 || null)));
+    });
+  });
+}
+/* impressora USB comum: o Windows a expõe como um "arquivo de aparelho" e aceita os bytes direto. O Node não consegue abrir
+   esse tipo de caminho, então a escrita é feita por um ajudante em PowerShell (usb-envia.ps1, criado ao lado do programa). */
+const GUID_USB = '{28d78fad-5a12-11d1-ae5b-0000f803a8c2}';
+const ehUsb = d => /^USB:/i.test(String(d || ''));
+const AJUDANTE = path.join(__dirname, 'usb-envia.ps1');
+const AJUDANTE_TXT = [
+  'param([string]$Caminho, [string]$Arquivo)',
+  "$ErrorActionPreference = 'Stop'",
+  "Add-Type -TypeDefinition @'",
+  'using System; using System.Runtime.InteropServices; using Microsoft.Win32.SafeHandles;',
+  'public static class LfUsb {',
+  '  [DllImport("kernel32.dll", SetLastError=true, CharSet=CharSet.Unicode)]',
+  '  public static extern SafeFileHandle CreateFile(string n, uint acc, uint share, IntPtr sec, uint disp, uint flags, IntPtr tpl);',
+  '  [DllImport("kernel32.dll", SetLastError=true)]',
+  '  public static extern bool WriteFile(SafeFileHandle h, byte[] b, uint n, out uint w, IntPtr o);',
+  '  public static string Envia(string caminho, byte[] d) {',
+  '    SafeFileHandle h = CreateFile(caminho, 0x40000000, 3, IntPtr.Zero, 3, 0, IntPtr.Zero);',
+  '    if (h.IsInvalid) return "ERRO abrir " + Marshal.GetLastWin32Error();',
+  '    uint w; bool ok = WriteFile(h, d, (uint)d.Length, out w, IntPtr.Zero); int e = Marshal.GetLastWin32Error(); h.Close();',
+  '    return (ok && w == d.Length) ? "OK" : ("ERRO escrever " + e);',
+  '  }',
+  '}',
+  "'@",
+  '[LfUsb]::Envia($Caminho, [IO.File]::ReadAllBytes($Arquivo))',
+  ''].join('\r\n');
+let nUsb = 0;
+function enviarUsb(dest, buf) {
+  return new Promise((ok, erro) => {
+    const caminho = '\\\\?\\USB#' + String(dest).slice(4) + '#' + GUID_USB, tmp = path.join(os.tmpdir(), 'lf-imp-' + process.pid + '-' + (++nUsb) + '.bin');
+    try { if (!fs.existsSync(AJUDANTE) || fs.readFileSync(AJUDANTE, 'utf8') !== AJUDANTE_TXT) fs.writeFileSync(AJUDANTE, AJUDANTE_TXT); fs.writeFileSync(tmp, buf); } catch (e) { return erro(e); }
+    require('child_process').execFile('powershell', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', AJUDANTE, '-Caminho', caminho, '-Arquivo', tmp], { timeout: 20000, windowsHide: true }, (e, out) => {
+      try { fs.unlinkSync(tmp); } catch (x) {}
+      const r = String(out || '').trim();
+      if (r === 'OK') return ok();
+      erro(new Error(/abrir 2$/.test(r) ? 'impressora USB não encontrada (desligada ou cabo solto)' : (r || (e && e.message) || 'falha ao escrever na impressora USB')));
+    });
+  });
+}
+/* impressoras USB comuns ligadas agora neste computador */
+function impressorasUsb() {
+  if (process.platform !== 'win32') return [];
+  try {
+    const ps = "Get-PnpDevice -PresentOnly -ErrorAction SilentlyContinue | Where-Object { $_.Service -eq 'usbprint' } | ForEach-Object { $d=''; try { $d=(Get-PnpDeviceProperty -InstanceId $_.InstanceId -KeyName DEVPKEY_Device_BusReportedDeviceDesc -ErrorAction Stop).Data } catch {}; $_.InstanceId + '|' + $d }";
+    const out = require('child_process').execFileSync('powershell', ['-NoProfile', '-Command', ps], { encoding: 'utf8', timeout: 20000, windowsHide: true });
+    return out.split(/\r?\n/).map(l => { const m = /^USB\\([^|]+)\|(.*)$/i.exec(l.trim()); return m ? { porta: 'USB:' + m[1].replace(/\\/g, '#'), nome: (m[2] || '').trim() || 'impressora USB' } : null; }).filter(Boolean);
+  } catch (e) { return []; }
+}
+/* portas COM deste computador, com o nome que o aparelho informa (ex.: DR800) */
+function portasCom() {
+  if (process.platform !== 'win32') return [];
+  try {
+    const ps = "Get-PnpDevice -Class Ports -PresentOnly -ErrorAction SilentlyContinue | ForEach-Object { $d=''; try { $d=(Get-PnpDeviceProperty -InstanceId $_.InstanceId -KeyName DEVPKEY_Device_BusReportedDeviceDesc -ErrorAction Stop).Data } catch {}; $_.FriendlyName + '|' + $d }";
+    const out = require('child_process').execFileSync('powershell', ['-NoProfile', '-Command', ps], { encoding: 'utf8', timeout: 20000, windowsHide: true });
+    return out.split(/\r?\n/).map(l => { const m = /\((COM\d+)\)\|(.*)$/.exec(l.trim()); return m ? { porta: m[1], nome: (m[2] || '').trim() || l.split('(')[0].trim() } : null; }).filter(Boolean);
+  } catch (e) { return []; }
+}
+
 function enviar(ip, buf) {
+  if (ehUsb(ip)) return enviarUsb(ip, buf);
+  if (ehCom(ip)) return enviarCom(ip, buf);
   return new Promise((ok, erro) => {
     const s = new net.Socket(); let fim = false; const f = e => { if (fim) return; fim = true; s.destroy(); e ? erro(e) : ok(); };
     s.setTimeout(6000, () => f(new Error('tempo esgotado (impressora não respondeu)')));
@@ -127,7 +203,7 @@ async function configurar() {
   const old = lerCfg() || {};
   const impressoras = await escolherImpressoras(old.impressoras || {});
   const cfg = { api, cli: ch.cli, chave: ch.chave, intervaloSeg: 3, codepage: 3, semAcento: true, impressoras };
-  fs.writeFileSync(CFG_FILE, JSON.stringify(cfg, null, 2)); console.log('\nPronto! Gravei o config.json. IPs das impressoras:', JSON.stringify(cfg.impressoras));
+  fs.writeFileSync(CFG_FILE, JSON.stringify(cfg, null, 2)); console.log('\nPronto! Gravei o config.json. Impressoras:', JSON.stringify(cfg.impressoras));
 }
 
 /* instalador baixado no painel: a chave da loja já vem nele, então não pede login */
@@ -154,18 +230,21 @@ async function procurar() {
   return achadas;
 }
 async function escolherImpressoras(old) {
-  console.log('\nProcurando impressoras na rede...');
-  const achadas = await procurar();
-  if (achadas.length) { console.log('Impressoras encontradas:'); achadas.forEach((ip, i) => console.log('  ' + (i + 1) + ') ' + ip)); }
-  else console.log('Nenhuma encontrada. A impressora precisa estar ligada e na rede (cabo ou Wi-Fi); impressora só por USB não funciona com este programa.');
+  console.log('\nProcurando impressoras na rede e no cabo USB...');
+  const coms = impressorasUsb().concat(portasCom()), nomes = {}; coms.forEach(c => { nomes[c.porta] = c.nome; });
+  const achadas = (await procurar()).concat(coms.map(c => c.porta));
+  if (achadas.length) { console.log('Impressoras encontradas:'); achadas.forEach((ip, i) => console.log('  ' + (i + 1) + ') ' + ip + (nomes[ip] ? (ehCom(ip) ? '  (porta serial: ' : '  (no cabo USB: ') + nomes[ip] + ')' : '  (na rede)'))); }
+  else console.log('Nenhuma encontrada. A impressora precisa estar ligada: na rede (cabo ou Wi-Fi) ou neste computador pelo cabo USB.');
   const pede = async (nome, padrao) => {
     for (;;) {
-      const r = await perguntar('Impressora da ' + nome + (achadas.length ? ' (número da lista ou IP)' : ' (IP)') + (padrao ? ' [Enter = ' + padrao + ']' : '') + ': ');
+      const r = await perguntar('Impressora da ' + nome + (achadas.length ? ' (número da lista, IP ou porta COM)' : ' (IP ou porta COM)') + (padrao ? ' [Enter = ' + padrao + ']' : '') + ': ');
       if (!r && padrao) return padrao;
-      if (r.toLowerCase() === 'sair') { console.log('Instalação cancelada. Ligue a impressora na rede e rode de novo.'); process.exit(1); }
+      if (r.toLowerCase() === 'sair') { console.log('Instalação cancelada. Ligue a impressora (na rede ou no cabo USB) e rode de novo.'); process.exit(1); }
       if (/^\d+$/.test(r) && achadas[+r - 1]) return achadas[+r - 1];
       if (/^\d{1,3}(\.\d{1,3}){3}$/.test(r)) return r;
-      console.log('Não entendi. Digite o número da lista ou o IP (ex.: 192.168.0.50), ou "sair" para cancelar.');
+      if (ehCom(r)) return r.toUpperCase();
+      if (ehUsb(r)) return r;
+      console.log('Não entendi. Digite o número da lista, o IP (ex.: 192.168.0.50) ou a porta (ex.: COM4), ou "sair" para cancelar.');
     }
   };
   const cozinha = await pede('COZINHA', old.cozinha || achadas[0] || '');
@@ -207,7 +286,7 @@ async function rodar() {
   }
 }
 
-module.exports = { etiqueta, ticketCliente };
+module.exports = { etiqueta, ticketCliente, enviar, portasCom, impressorasUsb };
 if (require.main === module) {
   const a = process.argv.slice(2);
   if (a[0] === '--configurar') configurar(); else if (a[0] === '--instalar') instalar(a[1], a[2]).then(() => process.exit(0)); else if (a[0] === '--teste') teste(a[1] || 'cozinha'); else rodar();
