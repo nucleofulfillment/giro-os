@@ -12,7 +12,7 @@
   const API = M.api, HDR = { 'Content-Type': 'application/json', Authorization: 'Bearer ' + jwt };
   const el = (id) => document.getElementById(id);
   const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const PADRAO = { ativo: 0, formato: 'v', frase: '', modo: 'ambos', cat: 'esq', capa: 1, topo: 1, rotulo: '', ofs: [], troca: 5, princ: 1, cobrar: 'totem', pg: ['caixa'], ajuda: 1, video: '', cols: 0, pgPos: 'baixo', tkt: 'sempre', pedeNome: 0, chBipe: 0, chSom: 1, chVoz: 0, chMin: 10 };
+  const PADRAO = { ativo: 0, formato: 'v', frase: '', modo: 'ambos', cat: 'esq', capa: 1, topo: 1, rotulo: '', ofs: [], troca: 5, princ: 1, cobrar: 'totem', pg: ['caixa'], ajuda: 1, video: '', cols: 0, pgPos: 'baixo', pedeNome: 0, chBipe: 0, chSom: 1, chVoz: 0, chMin: 10 };
   const LADO = 400;
   let D = null, C = {}, PRODS = [], salvo = '';
 
@@ -124,8 +124,8 @@
         : '')
       + nota('No tablet de mesa o pedido sempre entra na conta da mesa, sem cobrança na tela.')
       + tit('Impressão no totem')
-      + rot('Ticket do cliente, com a senha do pedido') + sel('tkt', [['sempre', 'Sempre: imprime o ticket em todo pedido'], ['preparo', 'Só quando o pedido tem item de preparo (cozinha, ou bar com preparo)'], ['nunca', 'Nunca: vale o recibo da maquininha para retirar no balcão']])
-      + nota('O recibo da maquininha mostra só o pagamento, sem a senha. Sem o ticket, o cliente retira mostrando o recibo e a tela de chamada não tem a senha dele no papel. Use “Só quando tem preparo” se a loja vende bebida pronta: ela sai com o recibo, e o pedido de cozinha ou drink leva o ticket com a senha. A comanda da cozinha e do bar sai sozinha pelo programa de impressão da loja, para todo pedido com item de preparo.')
+      + nota('Todo pedido pago no cartão sai com o TICKET DO CLIENTE no totem, com a senha. Se o pedido tem item de preparo, a comanda também sai na cozinha ou no bar, com a mesma senha: quando o pedido fica pronto, o operador confere a comanda com o ticket do cliente. Se o pedido é só de produto pronto, não sai comanda: o cliente entrega o ticket no balcão e retira.')
+      + nota('Para o totem separar produto pronto de preparo, ligue em Atendimento a opção “Dividir a impressão do bar” e marque “preparo” nas categorias de bebida feita na hora (caipirinha, chope, drink). Sem isso, tudo é tratado como preparo e a cozinha e o bar imprimem todo pedido, como antes.')
       + chk('pedeNome', 'Pedir o nome do cliente ao finalizar o pedido')
       + nota('O cliente digita o nome num teclado na tela antes de enviar. O nome vai no pedido e na observação (sai na comanda) e aparece junto da senha. No tablet de mesa o nome não é pedido.')
       + rot('Onde ficam o pagamento e o botão de confirmar') + sel('pgPos', [['baixo', 'Embaixo da lista de itens do pedido'], ['topo', 'Acima da lista de itens do pedido']])
@@ -212,7 +212,6 @@
       if (!g) throw new Error('O servidor ainda não grava o Totem de toque. Publique o Worker 296 e salve de novo.');
       if (c.pg.some((x) => (x === 'credito' || x === 'debito') && g.pg.indexOf(x) < 0)) throw new Error('Salvei, mas o servidor ainda não aceita cartão no totem. Publique o Worker 296 e salve de novo.');
       if (c.chBipe && !g.chBipe) throw new Error('Salvei, mas o servidor ainda não guarda as opções da tela de chamada. Publique o Worker 301 e salve de novo.');
-      if (c.tkt && c.tkt !== 'sempre' && g.tkt !== c.tkt) throw new Error('Salvei, mas o servidor ainda não guarda a opção de ticket do cliente. Publique o Worker 306 e salve de novo.');
       if (c.pedeNome && !g.pedeNome) throw new Error('Salvei, mas o servidor ainda não guarda a opção de pedir o nome. Publique o Worker 300 e salve de novo.');
       if (c.pgPos === 'topo' && g.pgPos !== 'topo') throw new Error('Salvei, mas o servidor ainda não guarda a posição do pagamento. Publique o Worker 299 e salve de novo.');
       if (c.cols && !g.cols) throw new Error('Salvei, mas o servidor ainda não guarda os produtos por linha. Publique o Worker 298 e salve de novo.');
