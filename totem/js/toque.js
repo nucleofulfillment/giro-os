@@ -81,21 +81,39 @@
   // A tela foi desenhada em 1080x1920 (em pé) ou 1920x1080 (deitada). Aparelho mais comprido ou mais largo que isso
   // (celular, tablet) ficava com faixas pretas sobrando: agora a tela estica a medida que sobra, até 45% a mais,
   // e o conteúdo se acomoda (mais produtos visíveis). Só acima disso é que sobra faixa.
+  // GIRAR PELO LINK: ...&girar=90 (ou 270) desenha o totem girado, para um monitor virado fisicamente em pé quando o Windows
+  // não deixa girar a tela (ou ela volta sozinha). O Windows fica deitado; quem gira é a página. O toque continua valendo.
+  const GIRA = (() => { const g = String(new URLSearchParams(location.search).get('girar') || ''); return g === '90' ? 90 : (g === '270' || g === '-90') ? 270 : 0; })();
+  let ESC = 1, GX = 0, GY = 0; // escala e ponto de origem do totem na janela
+  if (GIRA) {
+    const st = document.createElement('style');
+    st.textContent = `
+      body.tt-gira .lfc { left: var(--tt-x); top: var(--tt-y); width: var(--tt-w); height: var(--tt-h); transform-origin: 0 0; transform: rotate(${GIRA}deg); }
+      body.tt-gira .lfc-confete { display: none; } /* o confete "cairia" de lado na tela virada */
+      body.tt-gira #lista, body.tt-gira #cats, body.tt-gira .folha .corpo, body.tt-gira #barra-itens { touch-action: pan-x pan-y; }`;
+    document.head.appendChild(st);
+    document.body.classList.add('tt-gira');
+  }
   function encaixa() {
     const deitada = totem.classList.contains('horiz'), W0 = deitada ? 1920 : 1080, H0 = deitada ? 1080 : 1920;
-    const lado = window.TOQUE_LADO || 0, larg = Math.max(50, innerWidth - lado), alt = Math.max(50, innerHeight), prop = larg / alt;
+    const lado = GIRA ? 0 : (window.TOQUE_LADO || 0);
+    // girado, a largura que o totem enxerga é a altura da janela, e vice-versa
+    const larg = Math.max(50, GIRA ? innerHeight : innerWidth - lado), alt = Math.max(50, GIRA ? innerWidth : innerHeight), prop = larg / alt;
     let W = W0, H = H0;
     if (prop < W0 / H0) H = Math.min(Math.round(W0 / prop), Math.round(H0 * 1.45)); else W = Math.min(Math.round(H0 * prop), Math.round(W0 * 1.45));
     totem.style.width = W + 'px'; totem.style.height = H + 'px';
-    const s = Math.min(larg / W, alt / H);
-    totem.style.transform = 'translate(' + (lado + (larg - W * s) / 2) + 'px, ' + ((alt - H * s) / 2) + 'px) scale(' + s + ')';
+    const s = Math.min(larg / W, alt / H); ESC = s;
+    if (GIRA === 90) { GX = (innerWidth + H * s) / 2; GY = (innerHeight - W * s) / 2; }        // 90° no sentido do relógio: a caixa fica à esquerda do ponto
+    else if (GIRA === 270) { GX = (innerWidth - H * s) / 2; GY = (innerHeight + W * s) / 2; }  // 270°: a caixa fica acima do ponto
+    else { GX = lado + (larg - W * s) / 2; GY = (alt - H * s) / 2; }
+    totem.style.transform = 'translate(' + GX + 'px, ' + GY + 'px) ' + (GIRA ? 'rotate(' + GIRA + 'deg) ' : '') + 'scale(' + s + ')';
     medeTela();
   }
   window.ajustarEscalaToque = encaixa; // o painel de configurações chama por este nome
   // lugar e escala da tela (sem a faixa do LiveFood), para a comemoração ocupar exatamente a tela do totem
   function medeTela() {
-    const r = totem.getBoundingClientRect(), W = totem.offsetWidth, H = totem.offsetHeight, s = r.width / W, d = document.documentElement.style;
-    d.setProperty('--tt-x', r.left + 'px'); d.setProperty('--tt-y', r.top + 'px'); d.setProperty('--tt-w', r.width + 'px');
+    const W = totem.offsetWidth, H = totem.offsetHeight, s = ESC, d = document.documentElement.style;
+    d.setProperty('--tt-x', GX + 'px'); d.setProperty('--tt-y', GY + 'px'); d.setProperty('--tt-w', (W * s) + 'px');
     const deitada = totem.classList.contains('horiz');
     d.setProperty('--tt-h', ((H - (deitada ? 60 : 84)) * s) + 'px'); d.setProperty('--tt-s', s);
     document.body.classList.toggle('tt-deitado', deitada);
@@ -375,11 +393,44 @@
   }
   function desenhaGrade() {
     if (!CATS.length) { $('#cat-titulo').textContent = 'Cardápio vazio'; $('#grade').innerHTML = ''; return; }
-    const semCats = C.cat === 'nao', c = CATS[E.cat] || CATS[0];
-    $('#cat-titulo').textContent = c.nome; $('#cat-titulo').style.display = semCats ? 'none' : '';
-    $('#grade').innerHTML = semCats ? CATS.map((x) => `<h2 class="sec">${esc(x.nome)}</h2>` + x.itens.map(cartao).join('')).join('') : c.itens.map(cartao).join('');
+    // ROLAGEM CONTÍNUA: a lista traz todas as categorias em sequência, cada uma com o seu título. Tocar numa categoria
+    // leva a lista até ela; rolar a lista vai trocando a categoria marcada (ver marcaCategoriaPelaRolagem).
+    $('#cat-titulo').style.display = 'none';
+    $('#grade').innerHTML = CATS.map((x, k) => `<h2 class="sec" data-sec="${k}">${esc(x.nome)}</h2>` + x.itens.map(cartao).join('')).join('');
     videosDaLista();
   }
+  (function () {
+    const st = document.createElement('style');
+    st.textContent = '#lista { position: relative; } #grade h2.sec { scroll-margin-top: 10px; }'; // position: as medidas dos títulos passam a contar a partir da lista
+    document.head.appendChild(st);
+  })();
+  let rolandoAte = 0; // enquanto a lista anda até a categoria tocada, a marcação não fica pulando pelas categorias do caminho
+  function vaiParaCategoria(k) {
+    const l = $('#lista'), h = $(`#grade h2.sec[data-sec="${k}"]`); if (!h) return;
+    E.cat = k; pintaCategoria(); rolandoAte = Date.now() + 2500; // viagem longa leva até uns 2 s
+    l.scrollTo({ top: Math.max(0, h.offsetTop - 6), behavior: 'smooth' });
+  }
+  // a lista parou de andar: a marcação volta a seguir o dedo (onde o navegador não avisa o fim da rolagem, vale o prazo acima)
+  $('#lista').addEventListener('scrollend', () => { rolandoAte = 0; });
+  function pintaCategoria() {
+    const c = $('#cats'); let ativo = null;
+    $$('#cats button').forEach((b) => { const on = +b.dataset.cat === E.cat; b.classList.toggle('on', on); if (on) ativo = b; });
+    // a categoria marcada fica sempre à vista na coluna de categorias
+    if (ativo && c.scrollHeight > c.clientHeight + 4) {
+      const alvo = ativo.offsetTop - c.offsetTop - (c.clientHeight - ativo.offsetHeight) / 2;
+      c.scrollTo({ top: Math.max(0, alvo), behavior: 'smooth' });
+    }
+  }
+  function marcaCategoriaPelaRolagem() {
+    if (Date.now() < rolandoAte) return;
+    const l = $('#lista'), hs = $$('#grade h2.sec'); if (!hs.length) return;
+    let k = 0;
+    if (l.scrollTop + l.clientHeight >= l.scrollHeight - 6) k = +hs[hs.length - 1].dataset.sec; // fim da lista: vale a última categoria
+    else hs.forEach((h) => { if (h.offsetTop <= l.scrollTop + 90) k = +h.dataset.sec; });
+    if (k !== E.cat) { E.cat = k; pintaCategoria(); }
+  }
+  let quadroRola = 0;
+  $('#lista').addEventListener('scroll', () => { if (quadroRola) return; quadroRola = requestAnimationFrame(() => { quadroRola = 0; marcaCategoriaPelaRolagem(); }); }, { passive: true });
 
   // ----- vídeo do produto rodando na lista -----
   // Cada vídeo é criado uma vez e reaproveitado: a lista é redesenhada a cada toque (quantidade, sacola), e sem isso
@@ -430,7 +481,8 @@
     $$('#grade video.vid').forEach((v) => {
       // sem vídeo carregado ainda (internet lenta), a foto fica de capa até ele chegar
       if (v.readyState < 2 && !v.poster) { const p = PRODS[(v.closest('.prod') || {}).dataset ? v.closest('.prod').dataset.prod : '']; if (p && p.foto) v.poster = p.foto; }
-      const r = v.getBoundingClientRect(), aparece = noCardapio && r.bottom > l.top + 20 && r.top < l.bottom - 20;
+      // "aparece" = o vídeo cruza a área da lista (conta nos dois eixos, para valer também com o totem girado pelo link)
+      const r = v.getBoundingClientRect(), aparece = noCardapio && r.bottom > l.top + 10 && r.top < l.bottom - 10 && r.right > l.left + 10 && r.left < l.right - 10;
       if (aparece) { if (v.paused) v.play().catch(() => {}); } else if (!v.paused) v.pause();
     });
   }
@@ -461,7 +513,7 @@
   function pulaSacola() { const sc = $('#sacola'); sc.classList.remove('pulo'); void sc.offsetWidth; sc.classList.add('pulo'); }
   // o produto "cai" na sacola
   function voa(origem, foto) {
-    if (!origem || !foto) { pulaSacola(); return; }
+    if (!origem || !foto || GIRA) { pulaSacola(); return; } // girado pelo link, a sacola só dá o pulinho (o voo usa medidas da tela sem giro)
     const tr = totem.getBoundingClientRect(), s = tr.width / totem.offsetWidth, a = origem.getBoundingClientRect(), b = $('#sacola').getBoundingClientRect();
     const c = document.createElement('img'); c.src = foto; c.className = 'voa'; c.alt = '';
     c.style.cssText = `left:${(a.left - tr.left) / s}px;top:${(a.top - tr.top) / s}px;width:${a.width / s}px;height:${a.height / s}px`;
@@ -876,7 +928,7 @@
       return;
     }
     if (d.modo) { telaCheia(); E.modo = d.modo === 'mesa' ? '' : d.modo; desenhaFixos(); totem.classList.add('em-cardapio'); tocaFundo(); window.Totem.estado.modo = 'conversa'; setas(); if (M.prepararEnvio && ENVIA) M.prepararEnvio(); }
-    else if (d.cat !== undefined) { E.cat = +d.cat; desenhaCats(); desenhaGrade(); $('#lista').scrollTop = 0; }
+    else if (d.cat !== undefined) vaiParaCategoria(+d.cat);
     else if (d.rola) $('#cats').scrollBy({ top: +d.rola * 420, behavior: 'smooth' });
     else if (d.mais) mais(d.mais);
     else if (d.menos) tira(d.menos);
@@ -913,7 +965,7 @@
     const sp = document.createElement('span'); sp.className = 'sem-foto'; sp.textContent = '🍽️'; im.replaceWith(sp);
   }, true);
   function recomeca() {
-    clearTimeout(tFim); E.carrinho = []; E.pagar = ''; E.cat = 0; E.modo = ''; E.nome = ''; E.digitando = ''; abre(null); tudo();
+    clearTimeout(tFim); E.carrinho = []; E.pagar = ''; E.cat = 0; E.modo = ''; E.nome = ''; E.digitando = ''; abre(null); tudo(); $('#lista').scrollTop = 0;
     totem.classList.remove('em-cardapio'); window.Totem.estado.modo = 'standby';
     tocaFundo();
   }
@@ -945,7 +997,7 @@
   let jwt = ''; try { jwt = localStorage.getItem('dd_jwt') || ''; } catch (e) { /* sem armazenamento */ }
   let oculto = false; try { oculto = localStorage.getItem('toque-sem-config') === '1'; } catch (e) { /* ok */ }
   const pediu = Q.get('config') === '1';
-  if (jwt && M.cli && !MESA && (pediu || (!oculto && innerWidth >= 900))) {
+  if (jwt && M.cli && !MESA && !GIRA && (pediu || (!oculto && innerWidth >= 900))) {
     const sc = document.createElement('script'); sc.src = 'js/toque-config.js?v=' + Date.now(); document.body.appendChild(sc);
   }
 
