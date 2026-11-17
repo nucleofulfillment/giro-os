@@ -12,7 +12,7 @@
   const API = M.api, HDR = { 'Content-Type': 'application/json', Authorization: 'Bearer ' + jwt };
   const el = (id) => document.getElementById(id);
   const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const PADRAO = { ativo: 0, formato: 'v', frase: '', modo: 'ambos', cat: 'esq', capa: 1, topo: 1, rotulo: '', ofs: [], troca: 5, princ: 1, cobrar: 'totem', pg: ['caixa'], ajuda: 1, video: '', cols: 0, pgPos: 'baixo', pedeNome: 0 };
+  const PADRAO = { ativo: 0, formato: 'v', frase: '', modo: 'ambos', cat: 'esq', capa: 1, topo: 1, rotulo: '', ofs: [], troca: 5, princ: 1, cobrar: 'totem', pg: ['caixa'], ajuda: 1, video: '', cols: 0, pgPos: 'baixo', pedeNome: 0, chBipe: 0, chSom: 1, chVoz: 0, chMin: 10 };
   const LADO = 400;
   let D = null, C = {}, PRODS = [], salvo = '';
 
@@ -127,9 +127,19 @@
       + nota('O cliente digita o nome num teclado na tela antes de enviar. O nome vai no pedido e na observação (sai na comanda) e aparece junto da senha. No tablet de mesa o nome não é pedido.')
       + rot('Onde ficam o pagamento e o botão de confirmar') + sel('pgPos', [['baixo', 'Embaixo da lista de itens do pedido'], ['topo', 'Acima da lista de itens do pedido']])
       + nota('Vale para a tela “Seu pedido”. Para ver na prévia, adicione um produto e toque em Ver pedido.')
+      + tit('Tela de chamada')
+      + nota('Uma TV no salão, deitada, com a fila de preparo de um lado e os pedidos prontos do outro. Entram os pedidos de retirada (balcão e totem). Quando o pedido fica pronto, a tela inteira chama o número e o nome.')
+      + chk('chBipe', 'No Preparo, bipar ou digitar o número marca o pedido como pronto')
+      + nota('O operador bipa a comanda (ou digita o número) no campo de busca do Preparo e aperta Enter. Desligado, o pedido fica pronto só pelo botão do Preparo.')
+      + chk('chSom', 'Tocar o aviso sonoro na chamada')
+      + chk('chVoz', 'Chamar em voz alta (“Pedido 128, Ana”)')
+      + rot('Tempo que o pedido pronto fica na tela (minutos)') + `<input class="inp" data-tx="chMin" type="number" min="2" max="60" value="${C.chMin || 10}" style="width:110px">`
+      + rot('Link da tela de chamada desta loja')
+      + `<div style="display:flex;gap:8px"><input class="inp" id="tq-link2" readonly value="${esc(link.replace('toque.html', 'chamada.html'))}" style="flex:1;font-size:12px"><button type="button" class="btn" data-copia="tq-link2">Copiar</button></div>`
+      + nota('Abra no navegador da TV, em tela cheia, e toque uma vez na tela para liberar o som. Só mostra os pedidos; não muda nada.')
       + tit('Link')
       + rot('Link do totem de toque desta loja')
-      + `<div style="display:flex;gap:8px"><input class="inp" id="tq-link" readonly value="${esc(link)}" style="flex:1;font-size:12px"><button type="button" class="btn" id="tq-copiar">Copiar</button></div>`
+      + `<div style="display:flex;gap:8px"><input class="inp" id="tq-link" readonly value="${esc(link)}" style="flex:1;font-size:12px"><button type="button" class="btn" data-copia="tq-link">Copiar</button></div>`
       + nota('Abra no navegador do totem, em tela cheia. Para tablet de mesa, acrescente <b>&amp;mesa=12</b> no fim do link (troque 12 pelo número da mesa). Não compartilhe o link.')
       + nota('No aparelho do totem não fique logado no painel: com o login do dono, estas configurações aparecem. Se aparecerem lá, toque em Ocultar.');
     f.scrollTop = rol; const li = el('tq-ofs'); if (li) li.scrollTop = rolL;
@@ -171,14 +181,16 @@
   }
   function texto(ev) {
     const k = ev.target.dataset && ev.target.dataset.tx; if (!k) return;
-    C[k] = k === 'troca' ? Math.max(2, Math.min(60, parseInt(ev.target.value, 10) || 5)) : String(ev.target.value).slice(0, k === 'frase' ? 40 : 30);
+    C[k] = k === 'troca' ? Math.max(2, Math.min(60, parseInt(ev.target.value, 10) || 5))
+      : k === 'chMin' ? Math.max(2, Math.min(60, parseInt(ev.target.value, 10) || 10))
+      : String(ev.target.value).slice(0, k === 'frase' ? 40 : 30);
     mudou();
   }
   function toque(ev) {
     const b = ev.target.closest('button'); if (!b) return;
     if (b.id === 'tq-salvar') return salvar();
     if (b.id === 'tq-vid-tira') { C.video = ''; form(); mudou(); return; }
-    if (b.id === 'tq-copiar') { const i = el('tq-link'); i.select(); (navigator.clipboard ? navigator.clipboard.writeText(i.value) : Promise.reject()).catch(() => document.execCommand('copy')).then(() => diz('Link copiado.', '#16A34A')); return; }
+    if (b.dataset.copia) { const i = el(b.dataset.copia); i.select(); (navigator.clipboard ? navigator.clipboard.writeText(i.value) : Promise.reject()).catch(() => document.execCommand('copy')).then(() => diz('Link copiado.', '#16A34A')); return; }
     if (b.id === 'tq-alterna') { document.body.classList.add('tq-ver-totem'); return; }
     if (b.id === 'tq-ocultar') {
       if (JSON.stringify(C) !== salvo && !b.dataset.certeza) { b.dataset.certeza = '1'; b.textContent = 'Ocultar sem salvar'; diz('Há mudanças não salvas. Toque de novo para ocultar sem salvar.', '#DC2626'); return; }
@@ -196,6 +208,7 @@
       const g = d.cfg && d.cfg.toque;
       if (!g) throw new Error('O servidor ainda não grava o Totem de toque. Publique o Worker 296 e salve de novo.');
       if (c.pg.some((x) => (x === 'credito' || x === 'debito') && g.pg.indexOf(x) < 0)) throw new Error('Salvei, mas o servidor ainda não aceita cartão no totem. Publique o Worker 296 e salve de novo.');
+      if (c.chBipe && !g.chBipe) throw new Error('Salvei, mas o servidor ainda não guarda as opções da tela de chamada. Publique o Worker 301 e salve de novo.');
       if (c.pedeNome && !g.pedeNome) throw new Error('Salvei, mas o servidor ainda não guarda a opção de pedir o nome. Publique o Worker 300 e salve de novo.');
       if (c.pgPos === 'topo' && g.pgPos !== 'topo') throw new Error('Salvei, mas o servidor ainda não guarda a posição do pagamento. Publique o Worker 299 e salve de novo.');
       if (c.cols && !g.cols) throw new Error('Salvei, mas o servidor ainda não guarda os produtos por linha. Publique o Worker 298 e salve de novo.');

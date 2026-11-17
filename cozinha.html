@@ -409,6 +409,29 @@ setInterval(function(){ if(!document.hidden) busca(); },3000); document.addEvent
 setInterval(pinta,30000); marcaEst();
 document.addEventListener('keydown',function(ev){ if(ev.key==='Escape'&&DET) fechaDet(); });
 try{ if(navigator.wakeLock) navigator.wakeLock.request('screen').catch(function(){}); document.addEventListener('visibilitychange',function(){ if(!document.hidden&&navigator.wakeLock) navigator.wakeLock.request('screen').catch(function(){}); }); }catch(e){}
+/* (301) TELA DE CHAMADA: com a opção ligada em Configurações > Totem de toque, bipar a comanda (ou digitar o número do pedido)
+   no campo de busca e apertar Enter marca o pedido como PRONTO na hora, e a TV do salão chama o número e o nome.
+   O leitor de código de barras digita os números e manda Enter sozinho, então serve igual ao teclado. */
+var BIPE=0;
+function bipeCfg(){ if(!TK) return; fetch(API+'/painel/chamada-cfg',{headers:hdr()}).then(function(r){ return r.json(); }).then(function(d){ BIPE=(d&&d.ok&&d.bipe)?1:0; var b=$('busca'); if(b) b.placeholder=BIPE?'Bipe ou digite o nº e Enter':'Mesa ou nº do pedido'; }).catch(function(){}); }
+function bipeAviso(t,ok){
+  var a=$('bipe-av'); if(!a){ a=document.createElement('div'); a.id='bipe-av'; a.setAttribute('role','status'); a.style.cssText='position:fixed;left:50%;top:74px;transform:translateX(-50%);z-index:9999;padding:12px 22px;border-radius:12px;font:800 15px Manrope,sans-serif;color:#fff;box-shadow:0 10px 30px rgba(0,0,0,.25)'; document.body.appendChild(a); }
+  a.textContent=t; a.style.background=ok?'#16A34A':'#DC2626'; a.style.display=''; clearTimeout(a._t); a._t=setTimeout(function(){ a.style.display='none'; },2800);
+}
+function bipar(ev){
+  if(ev.key!=='Enter'||!BIPE) return;
+  var b=$('busca'), n=parseInt(String(b.value||'').replace(/\D/g,''),10); if(!n) return;
+  ev.preventDefault();
+  var p=null,i; for(i=0;i<PED.length;i++){ if(Number(PED[i].num)===n){ p=PED[i]; break; } }
+  b.value=''; pinta(); b.focus();
+  if(!p){ bipeAviso('Não achei o pedido '+n+' na fila.',0); return; }
+  if(p.estado==='pronto'){ bipeAviso('O pedido '+n+' já está pronto.',1); return; }
+  var id=p.id; PEND[id]={e:'pronto',t:Date.now()}; p.estado='pronto'; pinta();
+  /* est "todos": o bipe vale para o pedido inteiro (cozinha e bar), mesmo com a tela filtrada num setor */
+  fetch(API+'/painel/cozinha-fase',{method:'POST',headers:hdr(),body:JSON.stringify({id:id,estado:'pronto',est:'todos'})}).then(function(r){ return r.json(); }).then(function(d){ if(!d||!d.ok) throw 0; PEND[id].t=Date.now(); bipeAviso('Pedido '+n+' pronto.',1); setTimeout(function(){ BUSY=0; busca(); },300); })
+    .catch(function(){ delete PEND[id]; bipeAviso('Não consegui marcar o pedido '+n+'. Tente de novo.',0); BUSY=0; busca(); });
+}
+$('busca').addEventListener('keydown',bipar); bipeCfg(); setInterval(bipeCfg,300000); window.addEventListener('focus',bipeCfg);
 if(TK){ $('login').classList.remove('on'); document.body.classList.remove('lgon'); busca(); somPergunta(); } else mostraLogin('');
 </script>
 </body>
