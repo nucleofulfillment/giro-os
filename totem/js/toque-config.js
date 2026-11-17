@@ -12,7 +12,7 @@
   const API = M.api, HDR = { 'Content-Type': 'application/json', Authorization: 'Bearer ' + jwt };
   const el = (id) => document.getElementById(id);
   const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const PADRAO = { ativo: 0, formato: 'v', frase: '', modo: 'ambos', cat: 'esq', capa: 1, topo: 1, rotulo: '', ofs: [], troca: 5, princ: 1, cobrar: 'totem', pg: ['caixa'], ajuda: 1, video: '', cols: 0 };
+  const PADRAO = { ativo: 0, formato: 'v', frase: '', modo: 'ambos', cat: 'esq', capa: 1, topo: 1, rotulo: '', ofs: [], troca: 5, princ: 1, cobrar: 'totem', pg: ['caixa'], ajuda: 1, video: '', cols: 0, pgPos: 'baixo' };
   const LADO = 400;
   let D = null, C = {}, PRODS = [], salvo = '';
 
@@ -123,6 +123,8 @@
           + nota('O Pix usa a conta de pagamento do cardápio da loja e é confirmado sozinho. A maquininha do totem ainda não é ligada ao sistema: no crédito e no débito o pedido entra na cozinha com a forma anotada e a equipe confere o pagamento.')
         : '')
       + nota('No tablet de mesa o pedido sempre entra na conta da mesa, sem cobrança na tela.')
+      + rot('Onde ficam o pagamento e o botão de confirmar') + sel('pgPos', [['baixo', 'Embaixo da lista de itens do pedido'], ['topo', 'Acima da lista de itens do pedido']])
+      + nota('Vale para a tela “Seu pedido”. Para ver na prévia, adicione um produto e toque em Ver pedido.')
       + tit('Link')
       + rot('Link do totem de toque desta loja')
       + `<div style="display:flex;gap:8px"><input class="inp" id="tq-link" readonly value="${esc(link)}" style="flex:1;font-size:12px"><button type="button" class="btn" id="tq-copiar">Copiar</button></div>`
@@ -192,6 +194,7 @@
       const g = d.cfg && d.cfg.toque;
       if (!g) throw new Error('O servidor ainda não grava o Totem de toque. Publique o Worker 296 e salve de novo.');
       if (c.pg.some((x) => (x === 'credito' || x === 'debito') && g.pg.indexOf(x) < 0)) throw new Error('Salvei, mas o servidor ainda não aceita cartão no totem. Publique o Worker 296 e salve de novo.');
+      if (c.pgPos === 'topo' && g.pgPos !== 'topo') throw new Error('Salvei, mas o servidor ainda não guarda a posição do pagamento. Publique o Worker 299 e salve de novo.');
       if (c.cols && !g.cols) throw new Error('Salvei, mas o servidor ainda não guarda os produtos por linha. Publique o Worker 298 e salve de novo.');
       if (c.video && !g.video) throw new Error('Salvei, mas o servidor ainda não guarda o vídeo de fundo. Publique o Worker 297 e salve de novo.');
       D.cfg = d.cfg; salvo = JSON.stringify(C);

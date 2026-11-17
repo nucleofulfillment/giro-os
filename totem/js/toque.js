@@ -13,7 +13,7 @@
 
   // ----- configuração do painel -----
   const S = M.servidor || null;
-  const C = Object.assign({ ativo: 0, formato: 'v', frase: '', modo: 'ambos', cat: 'esq', capa: 1, topo: 1, rotulo: '', ofs: [], troca: 5, princ: 1, cobrar: 'totem', pg: ['caixa'], ajuda: 1, video: '', cols: 0 }, (S && S.toque) || {});
+  const C = Object.assign({ ativo: 0, formato: 'v', frase: '', modo: 'ambos', cat: 'esq', capa: 1, topo: 1, rotulo: '', ofs: [], troca: 5, princ: 1, cobrar: 'totem', pg: ['caixa'], ajuda: 1, video: '', cols: 0, pgPos: 'baixo' }, (S && S.toque) || {});
   const Q = new URLSearchParams(location.search);
   if (/^[vh]$/.test(Q.get('formato') || '')) C.formato = Q.get('formato'); // para conferir o outro formato sem mexer no painel
   // pré-visualização: sem a chave do totem (ou seja, sempre em modo teste) o link aceita ...&demo={"cat":"topo","pg":["caixa","pix"]} para ver uma configuração antes de salvar no painel
@@ -256,9 +256,26 @@
     g.classList.toggle('folga', n === 2);
   }
 
+  // ----- tela "Seu pedido": pagamento e botão de confirmar embaixo da lista de itens ou acima dela -----
+  // Configurável no painel (pgPos). Para dar para mudar a ordem, o título "Seu pedido" sai de dentro da lista
+  // e vira uma faixa própria no alto; aí o bloco do pagamento pode ficar logo abaixo dele ou no fim.
+  (function () {
+    const f = $('#f-ped'), tit = f && f.querySelector('.corpo h2');
+    if (tit) { tit.classList.add('ped-tit'); f.insertBefore(tit, f.querySelector('.corpo')); }
+    const st = document.createElement('style');
+    st.textContent = `
+      #f-ped > h2.ped-tit { flex: none; order: 0; padding: 40px 130px 0 50px; }
+      #f-ped .corpo { order: 1; padding-top: 14px; }
+      #f-ped .pe-folha { order: 2; }
+      #f-ped.pg-topo .pe-folha { order: 1; border-top: 0; border-bottom: 2px solid var(--s4); box-shadow: 0 14px 30px rgba(0, 0, 0, .06); padding-top: 20px; padding-bottom: 26px; position: relative; z-index: 1; }
+      #f-ped.pg-topo .corpo { order: 2; padding-top: 8px; padding-bottom: 40px; }`;
+    document.head.appendChild(st);
+  })();
+
   // ----- desenho -----
   function desenhaFixos() {
     totem.classList.toggle('horiz', C.formato === 'h');
+    $('#f-ped').classList.toggle('pg-topo', C.pgPos === 'topo');
     fundoVideo(); colunas();
     if (window.pintaLogoToque) window.pintaLogoToque(M.loja);
     $('#meio').className = C.cat === 'nao' ? 'cat-topo sem-cats' : 'cat-' + C.cat;
