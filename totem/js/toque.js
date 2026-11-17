@@ -13,7 +13,7 @@
 
   // ----- configuração do painel -----
   const S = M.servidor || null;
-  const C = Object.assign({ ativo: 0, formato: 'v', frase: '', modo: 'ambos', cat: 'esq', capa: 1, topo: 1, rotulo: '', ofs: [], troca: 5, princ: 1, cobrar: 'totem', pg: ['caixa'], ajuda: 1, video: '', cols: 0, pgPos: 'baixo' }, (S && S.toque) || {});
+  const C = Object.assign({ ativo: 0, formato: 'v', frase: '', modo: 'ambos', cat: 'esq', capa: 1, topo: 1, rotulo: '', ofs: [], troca: 5, princ: 1, cobrar: 'totem', pg: ['caixa'], ajuda: 1, video: '', cols: 0, pgPos: 'baixo', pedeNome: 0 }, (S && S.toque) || {});
   const Q = new URLSearchParams(location.search);
   if (/^[vh]$/.test(Q.get('formato') || '')) C.formato = Q.get('formato'); // para conferir o outro formato sem mexer no painel
   // pré-visualização: sem a chave do totem (ou seja, sempre em modo teste) o link aceita ...&demo={"cat":"topo","pg":["caixa","pix"]} para ver uma configuração antes de salvar no painel
@@ -272,6 +272,45 @@
     document.head.appendChild(st);
   })();
 
+  // ----- nome do cliente (opcional, ligado no painel) -----
+  // Antes de enviar o pedido, o totem pergunta o nome num teclado desenhado na própria tela (totem não tem teclado,
+  // e o do sistema nem sempre abre em modo quiosque). O nome vai no pedido e na observação, e aparece com a senha.
+  (function () {
+    const f = document.createElement('section');
+    f.className = 'folha some'; f.id = 'f-nome';
+    const linhas = ['QWERTYUIOP', 'ASDFGHJKLÇ', 'ZXCVBNM'];
+    f.innerHTML = `<button class="x" type="button" id="nome-x" aria-label="Voltar ao pedido">✕</button>
+      <div class="corpo"><h2>Qual é o seu nome?</h2><p class="nm-dica">Chamamos você pelo nome quando o pedido ficar pronto.</p>
+        <div id="nome-visor" aria-live="polite"></div>
+        <div id="nome-teclas">${linhas.map((l, k) => `<div class="nm-linha">${l.split('').map((c) => `<button type="button" data-tecla="${c}">${c}</button>`).join('')}${k === 2 ? '<button type="button" class="larga" data-tecla="apaga" aria-label="Apagar">⌫</button>' : ''}</div>`).join('')}
+          <div class="nm-linha"><button type="button" class="espaco" data-tecla=" ">espaço</button></div></div></div>
+      <div class="pe-folha"><button class="acao" type="button" id="nome-ok" disabled><span>Continuar</span><span></span></button></div>`;
+    $('#f-ped').after(f);
+    const st = document.createElement('style');
+    st.textContent = `
+      #f-nome { height: 1240px; } .horiz #f-nome { height: auto; }
+      #f-nome .nm-dica { margin: 12px 0 0; font-size: 28px; font-weight: 600; color: var(--mu2); }
+      #nome-visor { margin: 30px 0 26px; height: 120px; padding: 0 34px; border-radius: 30px; background: var(--s3); border: 3px solid var(--b2); display: flex; align-items: center; font: 800 58px/1 var(--f); letter-spacing: -.5px; white-space: nowrap; overflow: hidden; }
+      #nome-visor:empty::before { content: 'Toque nas letras'; color: var(--mu); font-weight: 700; font-size: 40px; letter-spacing: 0; }
+      #nome-visor::after { content: ''; width: 4px; height: 62px; margin-left: 6px; background: var(--pri); animation: nmPisca 1s steps(1) infinite; }
+      @keyframes nmPisca { 50% { opacity: 0; } }
+      #nome-teclas { display: flex; flex-direction: column; gap: 12px; }
+      .nm-linha { display: flex; justify-content: center; gap: 10px; }
+      .nm-linha button { flex: 1 1 0; max-width: 92px; height: 112px; border-radius: 22px; background: var(--s3); font-size: 40px; font-weight: 800; }
+      .nm-linha button:active { background: var(--tx); color: #fff; }
+      .nm-linha button.larga { max-width: 150px; flex: 1.6 1 0; } .nm-linha button.espaco { max-width: 560px; font-size: 28px; font-weight: 700; color: var(--mu2); }
+      .horiz .nm-linha { gap: 7px; } .horiz .nm-linha button { height: 84px; font-size: 32px; border-radius: 18px; } .horiz #nome-visor { height: 96px; font-size: 46px; margin: 20px 0; } .horiz #nome-teclas { gap: 8px; }`;
+    document.head.appendChild(st);
+  })();
+  const nomeLimpo = (t) => t.replace(/\s+/g, ' ').trim().toLowerCase().replace(/(^|\s)(\S)/g, (m, a, b) => a + b.toUpperCase());
+  function abreNome() { E.digitando = E.nome || ''; pintaNome(); abre('#f-nome'); }
+  function pintaNome() { $('#nome-visor').textContent = E.digitando; $('#nome-ok').disabled = nomeLimpo(E.digitando).length < 2; }
+  function tecla(t) {
+    if (t === 'apaga') E.digitando = E.digitando.slice(0, -1);
+    else if (E.digitando.length < 20 && !(t === ' ' && (!E.digitando || E.digitando.endsWith(' ')))) E.digitando += t;
+    pintaNome();
+  }
+
   // ----- desenho -----
   function desenhaFixos() {
     totem.classList.toggle('horiz', C.formato === 'h');
@@ -356,7 +395,7 @@
   }
 
   // ----- folhas -----
-  const FOLHAS = ['#f-prod', '#f-ped', '#f-fim', '#f-ajuda', '#f-pix'];
+  const FOLHAS = ['#f-prod', '#f-ped', '#f-fim', '#f-ajuda', '#f-pix', '#f-nome'];
   function abre(id) {
     FOLHAS.forEach((f) => $(f).classList.toggle('some', f !== id)); $('#veu').classList.toggle('some', !id);
     if (id !== '#f-prod') $('#fp-vid').pause();
@@ -448,6 +487,7 @@
   async function confirma() {
     if (E.ocupado) return;
     if (cobraNaTela() && !E.pagar) { const pg = $('#ped-pagar'); pg.classList.remove('chama'); void pg.offsetWidth; pg.classList.add('chama'); return; }
+    if (C.pedeNome && !MESA && !E.nome) { abreNome(); return; } // a loja quer o nome: pergunta antes de enviar
     const forma = MESA ? 'mesa' : (cobraNaTela() ? E.pagar : 'caixa');
     const bt = $('#ped-confirmar'), rot = $('#ped-rot'), rotAntes = rot.textContent;
     E.ocupado = true; bt.disabled = true; rot.textContent = 'Enviando…'; $('#ped-erro').textContent = '';
@@ -458,6 +498,7 @@
         : forma === 'pix' ? { modo: 'retirada', pagto: 'pix', obs: 'Totem de toque.' + onde }
         : ehCartao(forma) ? { modo: 'retirada', pagto: 'maquina', maqTipo: forma, obs: 'Totem de toque.' + onde + ' Pagar na maquininha do totem.' }
         : { modo: 'retirada', pagto: 'dinheiro', obs: 'Totem de toque.' + onde + ' Pagar no caixa.' };
+      if (E.nome && !MESA) { op.nome = E.nome; op.obs = 'Cliente: ' + E.nome + '. ' + op.obs; } // no nome do pedido e na observação (sai na comanda)
       const r = await M.enviarPedido(E.carrinho.map((l) => ({ id: l.id, qtd: l.qtd, sab: l.sab, adds: l.adds, obs: '' })), op);
       if (!r.ok) throw new Error(r.mensagem || 'Não consegui enviar o pedido.');
       if (forma === 'pix') return abrePix(r);
@@ -490,6 +531,7 @@
     }, 3000);
   }
 
+  const VOLTA_MS = 12000; // depois do pedido, a tela da senha fica 12 s e volta sozinha para a entrada (eram 25 s)
   let tFim = null;
   function fim(r, forma) {
     // comemoração do cardápio e do atendimento: o Live animado, confete e o número do pedido bem grande (site/js/live-app.js)
@@ -497,14 +539,14 @@
       const valor = R$(r.total || total());
       abre(null);
       window.LiveApp.comemorar({
-        titulo: r.teste ? 'Modo teste: este pedido não foi enviado' : forma === 'mesa' ? 'Pedido enviado! Número' : 'Pedido confirmado! Sua senha é',
+        titulo: r.teste ? 'Modo teste: este pedido não foi enviado' : forma === 'mesa' ? 'Pedido enviado! Número' : E.nome ? `Pedido confirmado, ${E.nome.split(' ')[0]}! Sua senha é` : 'Pedido confirmado! Sua senha é',
         valor: r.teste ? 'teste' : String(r.num),
         forma: forma === 'mesa' ? 'Mesa ' + MESA : forma === 'pix' ? 'Pix confirmado' : ehCartao(forma) ? `Pague ${valor} no ${forma === 'debito' ? 'débito' : 'crédito'}, na maquininha` : `Pague ${valor} no caixa`,
         sub: forma === 'mesa' ? 'Já foi para a cozinha e o bar. Levamos até a sua mesa.' : E.modo === 'levar' ? 'Retire no balcão quando chamarem a senha.' : 'Aguarde a senha ser chamada e retire no balcão.',
         botao: { texto: 'Fazer outro pedido', acao: recomeca },
       });
-      // ninguém tocou em 25 s: fecha sozinho e volta para a entrada
-      clearTimeout(tFim); tFim = setTimeout(() => { const b = document.querySelector('.lfc .lfc-bt'); if (b) b.click(); else recomeca(); }, 25000);
+      // ninguém tocou em 12 s: fecha sozinho e volta para a entrada
+      clearTimeout(tFim); tFim = setTimeout(() => { const b = document.querySelector('.lfc .lfc-bt'); if (b) b.click(); else recomeca(); }, VOLTA_MS);
       return;
     }
     const ic = (d) => `<svg viewBox="0 0 24 24" fill="none" stroke="#1C1C1E" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
@@ -519,7 +561,7 @@
         iLocal + (E.modo === 'levar' ? 'Retire no balcão quando chamarem a senha.' : 'Aguarde a senha ser chamada e retire no balcão.')];
     $('#fim-passos').innerHTML = passos.map((x) => `<div>${x}</div>`).join('');
     abre('#f-fim');
-    clearTimeout(tFim); tFim = setTimeout(recomeca, 25000); // volta sozinho para a entrada
+    clearTimeout(tFim); tFim = setTimeout(recomeca, VOLTA_MS); // volta sozinho para a entrada
   }
 
   // ----- ajuda com opções prontas (sem voz: funciona em totem sem alto-falante) -----
@@ -585,6 +627,9 @@
     else if (d.p) { E.pagar = d.p; abrePedido(); }
     else if (b.id === 'ped-confirmar') confirma();
     else if (b.id === 'pix-cancelar') { pararPix(); abrePedido(); }
+    else if (d.tecla !== undefined) tecla(d.tecla);
+    else if (b.id === 'nome-x') abrePedido();
+    else if (b.id === 'nome-ok') { E.nome = nomeLimpo(E.digitando); abrePedido(); confirma(); }
     else if (b.id === 'fim-novo' || b.id === 'btn-recomecar') recomeca();
     else if (b.id === 'btn-modo') { E.modo = E.modo === 'aqui' ? 'levar' : 'aqui'; b.textContent = nomeModo(E.modo); }
     else if (d.fecha !== undefined) abre(null);
@@ -600,7 +645,7 @@
     const sp = document.createElement('span'); sp.className = 'sem-foto'; sp.textContent = '🍽️'; im.replaceWith(sp);
   }, true);
   function recomeca() {
-    clearTimeout(tFim); E.carrinho = []; E.pagar = ''; E.cat = 0; E.modo = ''; abre(null); tudo();
+    clearTimeout(tFim); E.carrinho = []; E.pagar = ''; E.cat = 0; E.modo = ''; E.nome = ''; E.digitando = ''; abre(null); tudo();
     totem.classList.remove('em-cardapio'); window.Totem.estado.modo = 'standby';
     tocaFundo();
   }
