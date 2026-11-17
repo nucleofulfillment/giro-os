@@ -228,6 +228,7 @@
     tocaFundo();
   }
   function tocaFundo() {
+    try { tocaVideos(); } catch (e) { /* a lista ainda não foi desenhada */ } // os vídeos da lista seguem a mesma regra: só tocam no cardápio
     const v = $('#inicio-video'); if (!v) return;
     if (totem.classList.contains('em-cardapio')) v.pause(); else v.play().catch(() => {});
   }
@@ -366,7 +367,8 @@
   }
   function cartao(p) {
     const q = qtdDe(p.pid);
-    return `<div class="prod ${q ? 'tem' : ''}" data-prod="${esc(p.pid)}">${fotoOuEmoji(p)}${p.video ? '<span class="tem-video"><svg viewBox="0 0 24 24" fill="#fff"><path d="M7 4.5v15l12-7.5Z"/></svg>Vídeo</span>' : ''}<div class="txt"><b class="nome">${esc(p.nome)}</b><p>${esc(p.desc)}</p>
+    // produto com vídeo: o vídeo roda no próprio cartão da lista (o lugar é preenchido depois, em videosDaLista)
+    return `<div class="prod ${q ? 'tem' : ''}" data-prod="${esc(p.pid)}">${p.video ? `<span class="vid-lugar" data-vid="${esc(p.pid)}"></span>` : fotoOuEmoji(p)}<div class="txt"><b class="nome">${esc(p.nome)}</b><p>${esc(p.desc)}</p>
       <span class="preco">${precoTxt(p)}</span><div class="pe">${q
         ? `<span class="qt"><button type="button" data-menos="${esc(p.pid)}" aria-label="Tirar um ${esc(p.nome)}">−</button><b>${q}</b><button type="button" data-mais="${esc(p.pid)}" aria-label="Mais um ${esc(p.nome)}">+</button></span>`
         : `<button type="button" class="mais" data-mais="${esc(p.pid)}" aria-label="Adicionar ${esc(p.nome)}"><i>+</i>Adicionar</button>`}</div></div></div>`;
@@ -376,7 +378,64 @@
     const semCats = C.cat === 'nao', c = CATS[E.cat] || CATS[0];
     $('#cat-titulo').textContent = c.nome; $('#cat-titulo').style.display = semCats ? 'none' : '';
     $('#grade').innerHTML = semCats ? CATS.map((x) => `<h2 class="sec">${esc(x.nome)}</h2>` + x.itens.map(cartao).join('')).join('') : c.itens.map(cartao).join('');
+    videosDaLista();
   }
+
+  // ----- vídeo do produto rodando na lista -----
+  // Cada vídeo é criado uma vez e reaproveitado: a lista é redesenhada a cada toque (quantidade, sacola), e sem isso
+  // o vídeo recomeçaria do zero toda hora. Só toca o que está aparecendo na tela; o resto fica pausado e nem é baixado.
+  (function () {
+    const st = document.createElement('style');
+    st.textContent = '.prod video.vid, .prod .vid-lugar { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; display: block; background: #111; }';
+    document.head.appendChild(st);
+  })();
+  const VIDS = {};
+  function videosDaLista() {
+    const usados = {};
+    $$('#grade .vid-lugar').forEach((lugar) => {
+      const pid = lugar.dataset.vid, p = PRODS[pid]; if (!p) return;
+      usados[pid] = (usados[pid] || 0) + 1;
+      const chave = pid + '#' + usados[pid]; // o mesmo produto pode aparecer duas vezes (Ofertas e a categoria dele)
+      const v = VIDS[chave] || criaVideo(p, chave);
+      if (p.videoRuim) { lugar.outerHTML = fotoOuEmoji(p); return; }
+      lugar.replaceWith(v);
+    });
+    tocaVideos();
+  }
+  function criaVideo(p, chave) {
+    const v = VIDS[chave] = document.createElement('video');
+    v.className = 'vid'; v.muted = true; v.loop = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.setAttribute('aria-hidden', 'true');
+    v.preload = 'auto'; v.src = p.video;
+    // a foto só entra de capa se o vídeo ainda não tiver chegado quando o cartão aparecer (internet lenta); com o vídeo já carregado ela nunca aparece
+    v.addEventListener('loadeddata', () => { v.removeAttribute('poster'); });
+    // vídeo que não carrega: entra a foto no lugar
+    v.addEventListener('error', () => { delete VIDS[chave]; p.videoRuim = true; if (v.isConnected) v.outerHTML = fotoOuEmoji(p); });
+    try { v.load(); } catch (e) { /* ok */ }
+    return v;
+  }
+  // Os vídeos começam a ser baixados assim que o totem abre, enquanto o cliente ainda está na tela de entrada:
+  // quando ele chega na lista, o vídeo já está pronto e começa na hora, sem a foto aparecer antes. Até 8 vídeos, um depois do outro.
+  function aqueceVideos() {
+    const fila = ORDEM.filter((p) => p.video && !p.videoRuim).slice(0, 8);
+    (function proximo() {
+      const p = fila.shift(); if (!p) return;
+      const chave = p.pid + '#1', v = VIDS[chave] || criaVideo(p, chave);
+      if (v.readyState >= 3) return proximo();
+      let foi = false; const segue = () => { if (foi) return; foi = true; proximo(); };
+      v.addEventListener('canplaythrough', segue, { once: true }); v.addEventListener('error', segue, { once: true }); setTimeout(segue, 8000);
+    })();
+  }
+  function tocaVideos() {
+    const noCardapio = totem.classList.contains('em-cardapio'), l = $('#lista').getBoundingClientRect();
+    $$('#grade video.vid').forEach((v) => {
+      // sem vídeo carregado ainda (internet lenta), a foto fica de capa até ele chegar
+      if (v.readyState < 2 && !v.poster) { const p = PRODS[(v.closest('.prod') || {}).dataset ? v.closest('.prod').dataset.prod : '']; if (p && p.foto) v.poster = p.foto; }
+      const r = v.getBoundingClientRect(), aparece = noCardapio && r.bottom > l.top + 20 && r.top < l.bottom - 20;
+      if (aparece) { if (v.paused) v.play().catch(() => {}); } else if (!v.paused) v.pause();
+    });
+  }
+  let tRolaVid = null;
+  $('#lista').addEventListener('scroll', () => { clearTimeout(tRolaVid); tRolaVid = setTimeout(tocaVideos, 120); }, { passive: true });
   function desenhaBarra() {
     const n = E.carrinho.reduce((s, l) => s + l.qtd, 0);
     $('#sacola-n').textContent = n; $('#sacola-n').style.display = n ? '' : 'none';
@@ -413,7 +472,7 @@
   function mais(pid, origem) {
     const p = PRODS[pid]; if (!p) return;
     if (!p.simples) return abreProd(pid);                                  // tem tamanho, sabor ou adicional: abre para escolher
-    voa(origem || $(`.prod[data-prod="${CSS.escape(pid)}"] img`), p.foto); // sem opções: vai direto para a sacola
+    voa(origem || $(`.prod[data-prod="${CSS.escape(pid)}"] img, .prod[data-prod="${CSS.escape(pid)}"] video`), p.foto); // sem opções: vai direto para a sacola
     poe(pid, p.vars[0].id, 1);
   }
 
@@ -708,4 +767,5 @@
 
   tudo(); mexeu();
   totem.classList.add('pronto');
+  setTimeout(aqueceVideos, 600);
 })();
