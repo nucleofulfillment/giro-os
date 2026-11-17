@@ -12,7 +12,7 @@
   const API = M.api, HDR = { 'Content-Type': 'application/json', Authorization: 'Bearer ' + jwt };
   const el = (id) => document.getElementById(id);
   const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const PADRAO = { ativo: 0, formato: 'v', frase: '', modo: 'ambos', cat: 'esq', capa: 1, topo: 1, rotulo: '', ofs: [], troca: 5, princ: 1, cobrar: 'totem', pg: ['caixa'], ajuda: 1, video: '', cols: 0, pgPos: 'baixo', pedeNome: 0, chBipe: 0, chSom: 1, chVoz: 0, chMin: 10 };
+  const PADRAO = { ativo: 0, formato: 'v', frase: '', modo: 'ambos', cat: 'esq', capa: 1, topo: 1, rotulo: '', ofs: [], troca: 5, princ: 1, cobrar: 'totem', pg: ['caixa'], ajuda: 1, video: '', cols: 0, pgPos: 'baixo', tktVia: 'maquininha', pedeNome: 0, chBipe: 0, chSom: 1, chVoz: 0, chMin: 10 };
   const LADO = 400;
   let D = null, C = {}, PRODS = [], salvo = '';
 
@@ -124,6 +124,8 @@
         : '')
       + nota('No tablet de mesa o pedido sempre entra na conta da mesa, sem cobrança na tela.')
       + tit('Impressão no totem')
+      + rot('Onde imprime o ticket do cliente') + sel('tktVia', [['maquininha', 'Na impressora da maquininha ou do totem (Payer)'], ['loja', 'Na impressora da loja (programa de impressão, setor Caixa)']])
+      + nota('No setor Caixa o ticket sai na mesma impressora da cozinha, a não ser que no instalador do programa de impressão você aponte o Caixa para outra impressora: no teste use a mesma e, em produção, separe rodando o instalador de novo. Com a impressora da loja, o ticket sai também nos pedidos pagos no Pix e no caixa. O programa de impressão precisa estar na versão nova: baixe e rode o instalador de novo.')
       + nota('Todo pedido pago no cartão sai com o TICKET DO CLIENTE no totem, com a senha. Se o pedido tem item de preparo, a comanda também sai na cozinha ou no bar, com a mesma senha: quando o pedido fica pronto, o operador confere a comanda com o ticket do cliente. Se o pedido é só de produto pronto, não sai comanda: o cliente entrega o ticket no balcão e retira.')
       + nota('Dividir“Dividir a impressão do bar” e marque “preparo” nas categorias de bebida feita na hora (caipirinha, chope, drink). Sem isso, tudo é tratado como preparo e a cozinha e o bar imprimem todo pedido, como antes.')
       + chk('pedeNome', 'Pedir o nome do cliente ao finalizar o pedido')
@@ -212,6 +214,7 @@
       if (!g) throw new Error('O servidor ainda não grava o Totem de toque. Publique o Worker 296 e salve de novo.');
       if (c.pg.some((x) => (x === 'credito' || x === 'debito') && g.pg.indexOf(x) < 0)) throw new Error('Salvei, mas o servidor ainda não aceita cartão no totem. Publique o Worker 296 e salve de novo.');
       if (c.chBipe && !g.chBipe) throw new Error('Salvei, mas o servidor ainda não guarda as opções da tela de chamada. Publique o Worker 301 e salve de novo.');
+      if (c.tktVia === 'loja' && g.tktVia !== 'loja') throw new Error('Salvei, mas o servidor ainda não guarda onde imprimir o ticket. Publique o Worker 309 e salve de novo.');
       if (c.pedeNome && !g.pedeNome) throw new Error('Salvei, mas o servidor ainda não guarda a opção de pedir o nome. Publique o Worker 300 e salve de novo.');
       if (c.pgPos === 'topo' && g.pgPos !== 'topo') throw new Error('Salvei, mas o servidor ainda não guarda a posição do pagamento. Publique o Worker 299 e salve de novo.');
       if (c.cols && !g.cols) throw new Error('Salvei, mas o servidor ainda não guarda os produtos por linha. Publique o Worker 298 e salve de novo.');

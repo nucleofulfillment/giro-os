@@ -71,6 +71,43 @@ function etiqueta(p, cfg) {
   return Buffer.from(b.b);
 }
 
+/* (309) TICKET DO CLIENTE (setor caixa, vindo do totem): senha grande, itens com preço (pronto x preparo separados quando o pedido é misto), total, pagamento e o que o cliente deve fazer.
+   Leva o mesmo código de barras da comanda da cozinha, para o operador conferir um papel com o outro. Programa instalado antes do 309 não conhece este formato e imprime a ficha CAIXA comum. */
+function ticketCliente(p, cfg) {
+  const b = new Buf(cfg), tr = '-'.repeat(COLS), par = (a, d) => a + ' '.repeat(Math.max(1, COLS - a.length - d.length)) + d;
+  b.raw(0x1B, 0x40, 0x1B, 0x74, cfg.codepage == null ? 3 : cfg.codepage);
+  b.align(1).bold(true).size(1, 2); quebra(p.empresa || '', COLS).forEach(l => b.ln(l)); b.size(1, 1);
+  b.ln('T I C K E T   D O   C L I E N T E').bold(false).align(0).ln(tr);
+  b.align(1).inv(true).bold(true).size(2, 3).ln(' SENHA ' + p.lab + ' ').size(1, 1).inv(false).bold(false).align(0);
+  b.ln(par(p.modo === 'levar' ? 'Para levar' : (p.modo === 'aqui' ? 'Consumir aqui' : ''), dataHora(p.criado)));
+  if (p.cliente) b.bold(true).ln('Cliente: ' + p.cliente).bold(false);
+  b.ln(tr);
+  const item = l => {
+    const pre = l.qty + 'x ', preco = l.preco || '', nm = quebra(String(l.nome), COLS - pre.length - preco.length - 1);
+    b.bold(true).ln(par(pre + nm[0], preco)).bold(false); nm.slice(1).forEach(x => b.ln(' '.repeat(pre.length) + x));
+    if (l.desc) quebra(l.desc, COLS - 3).forEach(x => b.ln('   ' + x));
+  };
+  const itens = p.l || [];
+  if (p.misto) {
+    const pro = itens.filter(l => l.grupo === 'pronto'), prep = itens.filter(l => l.grupo !== 'pronto');
+    if (pro.length) { b.align(1).bold(true).ln('== PRONTO PARA RETIRAR ==').bold(false).align(0); pro.forEach(item); }
+    if (prep.length) { b.align(1).bold(true).ln('== EM PREPARO ==').bold(false).align(0); prep.forEach(item); }
+  } else itens.forEach(item);
+  b.ln(tr).bold(true).size(1, 2).ln(par('TOTAL', p.total || '')).size(1, 1).bold(false);
+  if (p.pagto) b.ln(p.pagto);
+  if (p.nsu || p.aut) b.ln('NSU ' + (p.nsu || '-') + '  AUT ' + (p.aut || '-'));
+  b.ln(tr).align(1).bold(true);
+  if (p.soPronto) b.size(1, 2).ln('PEDIDO PRONTO').size(1, 1).ln('Entregue este ticket no balcao').ln('para retirar');
+  else { b.size(1, 2).ln('AGUARDE A SUA SENHA').size(1, 1).ln('Retire no balcao quando for chamada'); if (p.misto) b.ln('Itens prontos: retire ja'); b.ln('Guarde este ticket'); }
+  b.bold(false);
+  if (p.sim) b.raw(10).ln('*** SIMULACAO - nada foi cobrado ***');
+  const cod = String(p.lab).replace(/[^0-9A-Za-z-]/g, '');
+  b.raw(10, 0x1D, 0x68, 70, 0x1D, 0x77, 2, 0x1D, 0x48, 0, 0x1D, 0x6B, 73, cod.length + 2, 0x7B, 0x42, ...bytesTxt(cod, cfg)).raw(10);
+  b.bold(true).size(1, 2).ln(String(p.lab)).size(1, 1).bold(false);
+  b.raw(10, 10, 10, 0x1D, 0x56, 66, 3);   /* avança e corta */
+  return Buffer.from(b.b);
+}
+
 function enviar(ip, buf) {
   return new Promise((ok, erro) => {
     const s = new net.Socket(); let fim = false; const f = e => { if (fim) return; fim = true; s.destroy(); e ? erro(e) : ok(); };
@@ -150,7 +187,7 @@ async function rodar() {
   const feitos = new Set(); let semNet = false;
   for (;;) {
     try {
-      const r = await http(cfg.api + '/imp/fila?cli=' + encodeURIComponent(cfg.cli) + '&key=' + encodeURIComponent(cfg.chave) + '&v=250');   /* (250) versão: o servidor manda grupo e copos em campos próprios */
+      const r = await http(cfg.api + '/imp/fila?cli=' + encodeURIComponent(cfg.cli) + '&key=' + encodeURIComponent(cfg.chave) + '&v=309');   /* (250) versão: o servidor manda grupo e copos em campos próprios */
       if (!r.ok) { log('Fila recusou: ' + (r.mensagem || r._h)); }
       else {
         if (semNet) { log('Conexão voltou.'); semNet = false; }
@@ -159,7 +196,7 @@ async function rodar() {
           if (feitos.has(j.id)) { baixa.push(j.id); continue; }
           const ip = cfg.impressoras[j.setor];
           if (!ip) { log('Sem impressora para o setor ' + j.setor + ' (pedido ' + j.lab + ') — dando baixa.'); baixa.push(j.id); continue; }
-          try { await enviar(ip, etiqueta(Object.assign({}, j.p, { setor: j.setor, lab: j.lab }), cfg)); feitos.add(j.id); baixa.push(j.id); log('Impresso ' + j.setor.toUpperCase() + ' pedido ' + j.lab + ' em ' + ip); }
+          try { await enviar(ip, (j.p && j.p.tipo === 'ticket') ? ticketCliente(Object.assign({}, j.p, { lab: j.lab }), cfg) : etiqueta(Object.assign({}, j.p, { setor: j.setor, lab: j.lab }), cfg)); feitos.add(j.id); baixa.push(j.id); log('Impresso ' + j.setor.toUpperCase() + ' pedido ' + j.lab + ' em ' + ip); }
           catch (e) { log('ERRO ao imprimir ' + j.setor + ' pedido ' + j.lab + ' em ' + ip + ': ' + e.message + ' (tento de novo)'); }
         }
         if (baixa.length) await http(cfg.api + '/imp/ok', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cli: cfg.cli, key: cfg.chave, ids: baixa }) });
@@ -170,7 +207,7 @@ async function rodar() {
   }
 }
 
-module.exports = { etiqueta };
+module.exports = { etiqueta, ticketCliente };
 if (require.main === module) {
   const a = process.argv.slice(2);
   if (a[0] === '--configurar') configurar(); else if (a[0] === '--instalar') instalar(a[1], a[2]).then(() => process.exit(0)); else if (a[0] === '--teste') teste(a[1] || 'cozinha'); else rodar();

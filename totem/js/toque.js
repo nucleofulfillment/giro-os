@@ -680,6 +680,13 @@
     if (r.teste || PAYER.simulado) linhas.push('', cen('*** SIMULACAO ***'));
     return linhas.join('\n');
   }
+  // dados do ticket para a impressora da loja (programa de impressão, setor Caixa). Vão como dados; o programa monta as colunas.
+  function ticketDados(r, forma, pg) {
+    const prepL = E.carrinho.filter((l) => preparoDe(l.pid)), proL = E.carrinho.filter((l) => !preparoDe(l.pid));
+    const pagto = pg ? `${forma === 'debito' ? 'Débito' : 'Crédito'} ${pg.bandeira || ''} ${pg.final4 ? '**** ' + pg.final4 : ''}`.trim() : forma === 'pix' ? 'Pix pago' : 'PAGAR NO CAIXA';
+    return { lab: r.num, modo: E.modo, nome: E.nome || '', total: R$(r.total || total()), pagto, nsu: (pg && pg.nsu) || '', aut: (pg && pg.aut) || '', soPronto: prepL.length ? 0 : 1, misto: prepL.length && proL.length ? 1 : 0, sim: (r.teste || (pg && pg.simulado)) ? 1 : 0,
+      itens: E.carrinho.map((l) => ({ qty: l.qtd, nome: PRODS[l.pid].nome, desc: descLinha(l), preco: R$(M.precoLinha(l)), grupo: preparoDe(l.pid) ? 'preparo' : 'pronto' })) };
+  }
   // desenha o papel saindo da impressora do totem; o ticket do cliente também é mandado para a impressora da maquininha (ou simulado pelo Worker)
   function imprimeCupom(r, forma, pg, papel) {
     return new Promise((resolve) => {
@@ -691,7 +698,8 @@
       $('#cp-ok').onclick = sai;
       t1 = setTimeout(() => { const h = $('#cp-t'); if (h && !h.dataset.erro) h.textContent = papel ? 'Comanda impressa na cozinha!' : 'Ticket impresso!'; }, 4400);
       t2 = setTimeout(sai, papel ? 5000 : 7500);
-      if (ENVIA && PAYER.ativa && !papel) pPost('/live/payer-imprimir', { texto }).then((d) => { if (d && d.ok === false) { const h = $('#cp-t'); if (h) { h.dataset.erro = '1'; h.textContent = 'Não consegui imprimir. Chame um atendente.'; } } });
+      const via = !ENVIA || papel ? null : C.tktVia === 'loja' ? pPost('/live/ticket', ticketDados(r, forma, pg)) : PAYER.ativa ? pPost('/live/payer-imprimir', { texto }) : null; // onde sai o ticket: impressora da loja (programa de impressão) ou da maquininha (Payer)
+      if (via) via.then((d) => { if (d && d.ok === false) { const h = $('#cp-t'); if (h) { h.dataset.erro = '1'; h.textContent = 'Não consegui imprimir. Chame um atendente.'; } } });
     });
   }
   // cartão: cobra primeiro; só com o pagamento aprovado o pedido entra na cozinha; depois sai o ticket do cliente e vem a senha
@@ -792,6 +800,7 @@
   const VOLTA_MS = 12000; // depois do pedido, a tela da senha fica 12 s e volta sozinha para a entrada (eram 25 s)
   let tFim = null;
   function fim(r, forma, pg) {
+    if (!pg && ENVIA && !r.teste && C.tktVia === 'loja' && forma !== 'mesa') pPost('/live/ticket', ticketDados(r, forma, null)); // Pix e caixa: o ticket também sai na impressora da loja (o cartão já mandou o dele)
     // comemoração do cardápio e do atendimento: o Live animado, confete e o número do pedido bem grande (site/js/live-app.js)
     if (window.LiveApp && window.LiveMascote) {
       const valor = R$(r.total || total());
