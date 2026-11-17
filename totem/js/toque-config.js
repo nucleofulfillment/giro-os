@@ -91,6 +91,7 @@
     f.innerHTML = (D.cfg && D.cfg.toque ? '' : '<div style="background:#FEF3C7;color:#92400E;border-radius:10px;padding:10px 12px;font-size:12.5px;margin-bottom:12px">O servidor ainda não conhece o Totem de toque. Publique o Worker 296 (ou mais novo) para conseguir salvar.</div>')
       + chk('ativo', 'Totem de toque ligado nesta loja', true)
       + nota('Desligado = modo teste: a tela abre com o cardápio, mas os pedidos não vão para a cozinha.')
+      + blocoLink(link)
       + tit('Tela')
       + rot('Formato da tela') + sel('formato', [['v', 'Em pé (vertical)'], ['h', 'Deitada (horizontal)']])
       + rot('Frase da tela de entrada')
@@ -143,14 +144,17 @@
       + `<div style="display:flex;gap:8px"><input class="inp" id="tq-link2" readonly value="${esc(link.replace('toque.html', 'chamada.html'))}" style="flex:1;font-size:12px"><button type="button" class="btn" data-copia="tq-link2">Copiar</button></div>`
       + '<div style="margin-top:8px"><button type="button" class="btn" data-instala="chamada">Baixar instalador da TV (Windows)</button></div>'
       + nota('Abra no navegador da TV, em tela cheia, e toque uma vez na tela para liberar o som. Só mostra os pedidos; não muda nada. Num computador com Windows, o instalador cria o atalho que já abre em tela cheia.')
-      + tit('Link')
+      + nota('O link e o instalador do totem ficam no começo desta lista, em “Link e instalador”.');
+    f.scrollTop = rol; const li = el('tq-ofs'); if (li) li.scrollTop = rolL;
+  }
+  function blocoLink(link) {
+    return tit('Link e instalador')
       + rot('Link do totem de toque desta loja')
       + `<div style="display:flex;gap:8px"><input class="inp" id="tq-link" readonly value="${esc(link)}" style="flex:1;font-size:12px"><button type="button" class="btn" data-copia="tq-link">Copiar</button></div>`
       + '<div style="margin-top:8px"><button type="button" class="btn" data-instala="totem">Baixar instalador do totem (Windows)</button></div>'
       + nota('No totem com Windows, baixe o instalador e dê dois cliques: ele cria o atalho “Totem LiveFood”, que abre o totem em tela cheia (sem barra nem abas), e pergunta se deve abrir sozinho quando o Windows ligar. O arquivo já leva o link desta loja; não compartilhe.')
       + nota('Em outros aparelhos, abra o link no navegador, em tela cheia. Para tablet de mesa, acrescente <b>&amp;mesa=12</b> no fim do link (troque 12 pelo número da mesa). Não compartilhe o link.')
       + nota('No aparelho do totem não fique logado no painel: com o login do dono, estas configurações aparecem. Se aparecerem lá, toque em Ocultar.');
-    f.scrollTop = rol; const li = el('tq-ofs'); if (li) li.scrollTop = rolL;
   }
   function diz(tx, cor) { const m = el('tq-m'); m.textContent = tx || ''; m.style.color = cor || '#8E8E93'; }
   function mudou() { T.aplica(C); diz(JSON.stringify(C) === salvo ? '' : 'Mudanças ainda não salvas.'); }
