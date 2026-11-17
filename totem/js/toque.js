@@ -302,6 +302,29 @@
       .horiz .nm-linha { gap: 7px; } .horiz .nm-linha button { height: 84px; font-size: 32px; border-radius: 18px; } .horiz #nome-visor { height: 96px; font-size: 46px; margin: 20px 0; } .horiz #nome-teclas { gap: 8px; }`;
     document.head.appendChild(st);
   })();
+  // ----- "enviando o pedido": aparece na hora do toque, por cima de tudo, até a confirmação chegar -----
+  (function () {
+    const d = document.createElement('div');
+    d.id = 'enviando'; d.className = 'some'; d.setAttribute('role', 'status');
+    d.innerHTML = LIVE + '<b>Enviando o seu pedido<i>.</i><i>.</i><i>.</i></b>';
+    $('#tela').appendChild(d);
+    const st = document.createElement('style');
+    st.textContent = `
+      #enviando { position: absolute; inset: 0; z-index: 25; background: rgba(244, 244, 245, .97); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 34px; }
+      #enviando.some { display: none; }
+      #enviando svg { width: 300px; overflow: visible; animation: envPula .9s ease-in-out infinite; }
+      #enviando b { font-size: 46px; font-weight: 800; }
+      #enviando b i { font-style: normal; animation: envPonto 1.2s infinite; } #enviando b i:nth-child(2) { animation-delay: .2s; } #enviando b i:nth-child(3) { animation-delay: .4s; }
+      .horiz #enviando svg { width: 220px; } .horiz #enviando b { font-size: 38px; }
+      @keyframes envPula { 50% { transform: translateY(-22px); } }
+      @keyframes envPonto { 0%, 60%, 100% { opacity: .2; } 30% { opacity: 1; } }`;
+    document.head.appendChild(st);
+  })();
+  function carregando(ligado) { $('#enviando').classList.toggle('some', !ligado); }
+  // esquenta a ligação com o servidor quando o cliente abre o pedido: o envio de logo depois não paga a abertura da conexão
+  let aqueceu = 0;
+  function aquece() { if (!ENVIA || Date.now() - aqueceu < 60000) return; aqueceu = Date.now(); fetch(M.api + '/', { cache: 'no-store' }).catch(() => {}); if (M.prepararEnvio) M.prepararEnvio(); }
+
   const nomeLimpo = (t) => t.replace(/\s+/g, ' ').trim().toLowerCase().replace(/(^|\s)(\S)/g, (m, a, b) => a + b.toUpperCase());
   function abreNome() { E.digitando = E.nome || ''; pintaNome(); abre('#f-nome'); }
   function pintaNome() { $('#nome-visor').textContent = E.digitando; $('#nome-ok').disabled = nomeLimpo(E.digitando).length < 2; }
@@ -470,6 +493,7 @@
   const ehCartao = (f) => f === 'credito' || f === 'debito';
   const cobraNaTela = () => !MESA && C.cobrar === 'totem';
   function abrePedido() {
+    aquece();
     if (cobraNaTela()) { if (C.pg.length === 1) E.pagar = C.pg[0]; if (!C.pg.includes(E.pagar)) E.pagar = ''; }
     const rol = $('#f-ped .corpo').scrollTop;
     $('#ped-itens').innerHTML = E.carrinho.map((l, k) => { const p = PRODS[l.pid], d = descLinha(l); return `<div class="item">${fotoOuEmoji(p)}<div><b class="n">${esc(p.nome)}</b>${d ? `<small>${esc(d)}</small>` : ''}<em>${R$(M.precoLinha(l))}</em></div>
@@ -489,10 +513,10 @@
     if (cobraNaTela() && !E.pagar) { const pg = $('#ped-pagar'); pg.classList.remove('chama'); void pg.offsetWidth; pg.classList.add('chama'); return; }
     if (C.pedeNome && !MESA && !E.nome) { abreNome(); return; } // a loja quer o nome: pergunta antes de enviar
     const forma = MESA ? 'mesa' : (cobraNaTela() ? E.pagar : 'caixa');
-    const bt = $('#ped-confirmar'), rot = $('#ped-rot'), rotAntes = rot.textContent;
-    E.ocupado = true; bt.disabled = true; rot.textContent = 'Enviando…'; $('#ped-erro').textContent = '';
+    // no mesmo instante do toque entra a tela de "enviando" (o Live e a frase) por cima de tudo; dali vai direto para a confirmação
+    E.ocupado = true; $('#ped-erro').textContent = ''; carregando(true);
     try {
-      if (!ENVIA) { await espera(700); return fim({ num: 0, teste: true }, forma === 'pix' ? 'pix' : forma); }
+      if (!ENVIA) { await espera(250); return fim({ num: 0, teste: true }, forma === 'pix' ? 'pix' : forma); }
       const onde = E.modo === 'levar' ? ' Para levar.' : E.modo === 'aqui' ? ' Consumir no local.' : '';
       const op = MESA ? { modo: 'mesa', mesa: MESA, pagto: 'conta', obs: 'Pedido feito no tablet da mesa.' }
         : forma === 'pix' ? { modo: 'retirada', pagto: 'pix', obs: 'Totem de toque.' + onde }
@@ -504,8 +528,8 @@
       if (forma === 'pix') return abrePix(r);
       fim(r, forma);
     } catch (e) {
-      $('#ped-erro').textContent = String((e && e.message) || e); bt.disabled = false; rot.textContent = rotAntes;
-    } finally { E.ocupado = false; }
+      carregando(false); abrePedido(); $('#ped-erro').textContent = String((e && e.message) || e); // não deu: volta para o pedido com o motivo
+    } finally { E.ocupado = false; setTimeout(() => carregando(false), 350); } // some depois que a confirmação já cobriu a tela (sem piscar o cardápio)
   }
 
   // Pix na tela: mostra o QR Code e pergunta ao servidor a cada 3 s se o pagamento caiu (desiste em 6 min)
@@ -629,7 +653,7 @@
     else if (b.id === 'pix-cancelar') { pararPix(); abrePedido(); }
     else if (d.tecla !== undefined) tecla(d.tecla);
     else if (b.id === 'nome-x') abrePedido();
-    else if (b.id === 'nome-ok') { E.nome = nomeLimpo(E.digitando); abrePedido(); confirma(); }
+    else if (b.id === 'nome-ok') { E.nome = nomeLimpo(E.digitando); confirma(); } // do nome vai direto para o "enviando" e a confirmação
     else if (b.id === 'fim-novo' || b.id === 'btn-recomecar') recomeca();
     else if (b.id === 'btn-modo') { E.modo = E.modo === 'aqui' ? 'levar' : 'aqui'; b.textContent = nomeModo(E.modo); }
     else if (d.fecha !== undefined) abre(null);
