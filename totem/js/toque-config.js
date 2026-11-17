@@ -141,11 +141,14 @@
       + rot('Tempo que o pedido pronto fica na tela (minutos)') + `<input class="inp" data-tx="chMin" type="number" min="2" max="60" value="${C.chMin || 10}" style="width:110px">`
       + rot('Link da tela de chamada desta loja')
       + `<div style="display:flex;gap:8px"><input class="inp" id="tq-link2" readonly value="${esc(link.replace('toque.html', 'chamada.html'))}" style="flex:1;font-size:12px"><button type="button" class="btn" data-copia="tq-link2">Copiar</button></div>`
-      + nota('Abra no navegador da TV, em tela cheia, e toque uma vez na tela para liberar o som. Só mostra os pedidos; não muda nada.')
+      + '<div style="margin-top:8px"><button type="button" class="btn" data-instala="chamada">Baixar instalador da TV (Windows)</button></div>'
+      + nota('Abra no navegador da TV, em tela cheia, e toque uma vez na tela para liberar o som. Só mostra os pedidos; não muda nada. Num computador com Windows, o instalador cria o atalho que já abre em tela cheia.')
       + tit('Link')
       + rot('Link do totem de toque desta loja')
       + `<div style="display:flex;gap:8px"><input class="inp" id="tq-link" readonly value="${esc(link)}" style="flex:1;font-size:12px"><button type="button" class="btn" data-copia="tq-link">Copiar</button></div>`
-      + nota('Abra no navegador do totem, em tela cheia. Para tablet de mesa, acrescente <b>&amp;mesa=12</b> no fim do link (troque 12 pelo número da mesa). Não compartilhe o link.')
+      + '<div style="margin-top:8px"><button type="button" class="btn" data-instala="totem">Baixar instalador do totem (Windows)</button></div>'
+      + nota('No totem com Windows, baixe o instalador e dê dois cliques: ele cria o atalho “Totem LiveFood”, que abre o totem em tela cheia (sem barra nem abas), e pergunta se deve abrir sozinho quando o Windows ligar. O arquivo já leva o link desta loja; não compartilhe.')
+      + nota('Em outros aparelhos, abra o link no navegador, em tela cheia. Para tablet de mesa, acrescente <b>&amp;mesa=12</b> no fim do link (troque 12 pelo número da mesa). Não compartilhe o link.')
       + nota('No aparelho do totem não fique logado no painel: com o login do dono, estas configurações aparecem. Se aparecerem lá, toque em Ocultar.');
     f.scrollTop = rol; const li = el('tq-ofs'); if (li) li.scrollTop = rolL;
   }
@@ -191,11 +194,69 @@
       : String(ev.target.value).slice(0, k === 'frase' ? 40 : 30);
     mudou();
   }
+  // ---------------------------------------------------------------------------
+  // Instalador para Windows (totem e TV da tela de chamada)
+  // Um arquivo .bat já com o link da loja. Ao rodar, cria o atalho que abre o Chrome (ou o Edge) em modo quiosque:
+  // tela cheia, sem barra de endereço nem abas. Usa uma pasta de navegador só dele, então abre em tela cheia mesmo com
+  // outro Chrome aberto e nunca carrega o login do dono (as configurações não aparecem no totem).
+  // Só letras sem acento dentro do arquivo: o Windows lê .bat em outra tabela de caracteres.
+  // ---------------------------------------------------------------------------
+  function textoInstalador(tipo) {
+    const tv = tipo === 'chamada';
+    const url = el(tv ? 'tq-link2' : 'tq-link').value;
+    const nome = tv ? 'Tela de chamada LiveFood' : 'Totem LiveFood', pasta = tv ? 'LiveFoodChamada' : 'LiveFoodTotem';
+    return [
+      '@echo off',
+      'title Instalador - ' + nome,
+      'set "LF_URL=' + url + '"',
+      'set "LF_NOME=' + nome + '"',
+      'set "LF_PERFIL=' + pasta + '"',
+      'powershell -NoProfile -ExecutionPolicy Bypass -Command "$t=[IO.File]::ReadAllText($env:LF_ARQ); iex $t.Substring($t.LastIndexOf(\'#PS1#INICIO\'))"',
+      'echo.',
+      'if not defined LF_SEM_PERGUNTAR pause',
+      'exit /b',
+      '#PS1#INICIO',
+      '$url = $env:LF_URL; $nome = $env:LF_NOME',
+      "Write-Host ''",
+      "Write-Host ('=== ' + $nome + ' ===')",
+      "$onde = @(\"$env:ProgramFiles\\Google\\Chrome\\Application\\chrome.exe\", \"${env:ProgramFiles(x86)}\\Google\\Chrome\\Application\\chrome.exe\", \"$env:LOCALAPPDATA\\Google\\Chrome\\Application\\chrome.exe\", \"${env:ProgramFiles(x86)}\\Microsoft\\Edge\\Application\\msedge.exe\", \"$env:ProgramFiles\\Microsoft\\Edge\\Application\\msedge.exe\")",
+      '$nav = $onde | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1',
+      "if (-not $nav) { Write-Host 'Nao achei o Google Chrome nem o Microsoft Edge neste computador. Instale o Chrome e rode este arquivo de novo.'; return }",
+      "$perfil = Join-Path $env:LOCALAPPDATA $env:LF_PERFIL",
+      "$arg = '--kiosk \"' + $url + '\" --user-data-dir=\"' + $perfil + '\" --no-first-run --no-default-browser-check --disable-pinch --overscroll-history-navigation=0 --disable-session-crashed-bubble --autoplay-policy=no-user-gesture-required'",
+      "if ($nav -like '*msedge.exe') { $arg += ' --edge-kiosk-type=fullscreen' }",
+      '$ws = New-Object -ComObject WScript.Shell',
+      "function Atalho($dir) { $a = $ws.CreateShortcut((Join-Path $dir ($nome + '.lnk'))); $a.TargetPath = $nav; $a.Arguments = $arg; $a.WorkingDirectory = (Split-Path $nav); $a.IconLocation = ($nav + ',0'); $a.Description = ($nome + ' em tela cheia'); $a.Save() }",
+      "$mesa = if ($env:LF_PASTA) { $env:LF_PASTA } else { [Environment]::GetFolderPath('Desktop') }",
+      'Atalho $mesa',
+      "Write-Host ('Pronto: criei o atalho \"' + $nome + '\" na area de trabalho. Navegador: ' + (Split-Path $nav -Leaf))",
+      "if ($env:LF_SEM_PERGUNTAR) { return }",
+      "$inicio = [Environment]::GetFolderPath('Startup')",
+      "$r = Read-Host 'Abrir sozinho, em tela cheia, toda vez que o Windows ligar? (S/N)'",
+      "if ($r -match '^[sS]') { Atalho $inicio; Write-Host 'Combinado: vai abrir sozinho quando o Windows ligar.' } else { $velho = Join-Path $inicio ($nome + '.lnk'); if (Test-Path $velho) { Remove-Item $velho -Confirm:$false }; Write-Host 'Certo: so abre pelo atalho.' }",
+      "Write-Host 'Para sair da tela cheia: Alt+F4 (com um teclado ligado).'",
+      "$r = Read-Host 'Abrir agora? (S/N)'",
+      "if ($r -match '^[sS]') { Start-Process -FilePath $nav -ArgumentList $arg }",
+      '',
+    ].join('\r\n');
+  }
+  function baixaInstalador(tipo) {
+    // o .bat lê a si mesmo para achar a parte em PowerShell: a primeira linha útil guarda o próprio caminho
+    const txt = textoInstalador(tipo).replace('set "LF_URL=', 'set "LF_ARQ=%~f0"\r\nset "LF_URL=');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([txt], { type: 'application/octet-stream' }));
+    a.download = (tipo === 'chamada' ? 'instalar-tela-de-chamada-' : 'instalar-totem-') + String(D.cli).replace(/[^A-Za-z0-9_-]/g, '') + '.bat';
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    diz('Instalador baixado. Leve o arquivo para o computador do ' + (tipo === 'chamada' ? 'salão' : 'totem') + ' e dê dois cliques.', '#16A34A');
+  }
+  window.ToqueInstalador = { texto: (tipo) => textoInstalador(tipo).replace('set "LF_URL=', 'set "LF_ARQ=%~f0"\r\nset "LF_URL=') }; // para conferência e testes
+
   function toque(ev) {
     const b = ev.target.closest('button'); if (!b) return;
     if (b.id === 'tq-salvar') return salvar();
     if (b.id === 'tq-vid-tira') { C.video = ''; form(); mudou(); return; }
     if (b.dataset.copia) { const i = el(b.dataset.copia); i.select(); (navigator.clipboard ? navigator.clipboard.writeText(i.value) : Promise.reject()).catch(() => document.execCommand('copy')).then(() => diz('Link copiado.', '#16A34A')); return; }
+    if (b.dataset.instala) { baixaInstalador(b.dataset.instala); return; }
     if (b.id === 'tq-alterna') { document.body.classList.add('tq-ver-totem'); return; }
     if (b.id === 'tq-ocultar') {
       if (JSON.stringify(C) !== salvo && !b.dataset.certeza) { b.dataset.certeza = '1'; b.textContent = 'Ocultar sem salvar'; diz('Há mudanças não salvas. Toque de novo para ocultar sem salvar.', '#DC2626'); return; }
