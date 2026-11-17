@@ -86,9 +86,9 @@
   #chama.on b { animation: sobe .6s .5s cubic-bezier(.2, .9, .3, 1) backwards; }
   @keyframes sobe { from { opacity: 0; transform: translateY(50px); } }
   #chama > span { margin-top: 30px; font-size: 44px; font-weight: 700; opacity: .92; }
-  /* o Live oficial, numa placa branca para aparecer sobre o laranja */
-  #chama .placa { position: absolute; right: 100px; bottom: 70px; width: 300px; height: 300px; border-radius: 50%; background: #fff; display: grid; place-items: center; box-shadow: 0 20px 50px rgba(120, 40, 0, .35); }
-  #chama .placa .lv { width: 190px; }
+  /* o Live oficial, direto sobre o laranja (sem placa atrás) */
+  #chama .placa { position: absolute; right: 90px; bottom: 60px; width: 290px; }
+  #chama .placa .lv { width: 290px; }
   #chama.on .placa { animation: placaC .7s .35s cubic-bezier(.3, 1.6, .5, 1) backwards; }
   @keyframes placaC { from { transform: translateY(420px) rotate(18deg); } }
   .conf { position: absolute; top: -40px; width: 22px; height: 22px; border-radius: 6px; background: #fff; animation: cai linear forwards; }
@@ -156,11 +156,18 @@
     if (liberado) return; liberado = true;
     try { ctx = new (window.AudioContext || window.webkitAudioContext)(); ctx.resume(); } catch (e) { /* sem áudio */ }
     try { if (window.speechSynthesis) speechSynthesis.speak(new SpeechSynthesisUtterance(' ')); } catch (e) { /* ok */ }
-    try { if (!document.fullscreenElement && document.documentElement.requestFullscreen) document.documentElement.requestFullscreen({ navigationUI: 'hide' }).catch(() => {}); } catch (e) { /* ok */ }
     try { if (navigator.wakeLock) navigator.wakeLock.request('screen').catch(() => {}); } catch (e) { /* ok */ }
     avisa();
   }
-  ['pointerdown', 'keydown'].forEach((ev) => addEventListener(ev, libera));
+  // Tela cheia: entra em qualquer toque ou tecla e, se sair, entra de novo no toque seguinte. Com a tela cheia ligada, o Esc
+  // fica "preso" (no Chrome e no Edge é preciso segurar o Esc para sair), para um toque sem querer não tirar a TV da tela cheia.
+  function telaCheia() {
+    try {
+      if (document.fullscreenElement || !document.documentElement.requestFullscreen) return;
+      document.documentElement.requestFullscreen({ navigationUI: 'hide' }).then(() => { try { if (navigator.keyboard && navigator.keyboard.lock) navigator.keyboard.lock(['Escape']).catch(() => {}); } catch (e) { /* ok */ } }).catch(() => {});
+    } catch (e) { /* sem suporte */ }
+  }
+  ['pointerdown', 'keydown'].forEach((ev) => addEventListener(ev, (e) => { libera(); if (e.key !== 'Escape') telaCheia(); }));
   function avisa() { $('#aviso').textContent = (!liberado && (cfg.som || cfg.voz)) ? 'Toque na tela para ligar o som e a tela cheia' : ''; }
   function som() {
     if (!cfg.som || !ctx) return;
@@ -172,10 +179,59 @@
       });
     } catch (e) { /* sem áudio */ }
   }
-  function voz(p) {
-    if (!cfg.voz || !liberado || !window.speechSynthesis) return;
-    try { const u = new SpeechSynthesisUtterance('Pedido ' + String(p.num).split('').join(' ') + (p.nome ? ', ' + p.nome : '') + '. Pronto para retirar.'); u.lang = 'pt-BR'; u.rate = .95; setTimeout(() => speechSynthesis.speak(u), 700); } catch (e) { /* ok */ }
+  // número falado como número (128 = "cento e vinte e oito"), não dígito por dígito
+  function extenso(n) {
+    n = Math.floor(Number(n));
+    if (!(n >= 0) || n > 9999) return String(n);
+    const U = ['zero', 'um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove', 'dez', 'onze', 'doze', 'treze', 'quatorze', 'quinze', 'dezesseis', 'dezessete', 'dezoito', 'dezenove'];
+    const D = ['', '', 'vinte', 'trinta', 'quarenta', 'cinquenta', 'sessenta', 'setenta', 'oitenta', 'noventa'];
+    const C = ['', 'cento', 'duzentos', 'trezentos', 'quatrocentos', 'quinhentos', 'seiscentos', 'setecentos', 'oitocentos', 'novecentos'];
+    const ate999 = (x) => {
+      if (x === 100) return 'cem';
+      const p = [], c = Math.floor(x / 100), r = x % 100;
+      if (c) p.push(C[c]);
+      if (r) p.push(r < 20 ? U[r] : D[Math.floor(r / 10)] + (r % 10 ? ' e ' + U[r % 10] : ''));
+      return p.join(' e ');
+    };
+    if (n < 1000) return n === 0 ? 'zero' : ate999(n);
+    const m = Math.floor(n / 1000), r = n % 1000, mil = (m === 1 ? '' : U[m] + ' ') + 'mil';
+    return r ? mil + (r < 100 || r % 100 === 0 ? ' e ' : ' ') + ate999(r) : mil;
   }
+  const fala = (p) => 'Pedido ' + extenso(p.num) + '.' + (p.nome ? ' ' + p.nome + '.' : '');
+
+  // Voz do Live (a mesma do totem de voz, pelo servidor). Se ela não estiver disponível, usa a voz do navegador.
+  // Devolve uma função que fala UMA vez e avisa quando terminou; a chamada usa duas vezes, com pausa.
+  let audioEl = null;
+  async function preparaVoz(p) {
+    if (!cfg.voz || !liberado) return null;
+    const texto = fala(p);
+    if (LOJA && CHAVE) {
+      try {
+        const r = await fetch(API + '/live/voz', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ loja: LOJA, k: CHAVE, texto, velocidade: 0.92 }) });
+        const d = await r.json();
+        if (r.ok && d && d.audio_base64) {
+          const src = 'data:audio/mpeg;base64,' + d.audio_base64;
+          return () => new Promise((fim) => {
+            audioEl = audioEl || new Audio(); audioEl.src = src;
+            const acaba = () => { audioEl.onended = audioEl.onerror = null; fim(); };
+            audioEl.onended = acaba; audioEl.onerror = acaba;
+            audioEl.play().catch(acaba);
+            setTimeout(acaba, 9000); // nunca prende a tela
+          });
+        }
+      } catch (e) { /* cai para a voz do navegador */ }
+    }
+    if (!window.speechSynthesis) return null;
+    return () => new Promise((fim) => {
+      try {
+        const u = new SpeechSynthesisUtterance(texto); u.lang = 'pt-BR'; u.rate = .9;
+        const v = speechSynthesis.getVoices().find((x) => /pt[-_]BR/i.test(x.lang)); if (v) u.voice = v;
+        u.onend = u.onerror = () => fim();
+        speechSynthesis.speak(u); setTimeout(fim, 9000);
+      } catch (e) { fim(); }
+    });
+  }
+  const espera = (ms) => new Promise((r) => setTimeout(r, ms));
 
   // ---------------------------------------------------------------------------
   // A chamada (um pedido de cada vez)
@@ -189,9 +245,19 @@
     c.className = dig(p.num).trim(); void c.offsetWidth; c.classList.add('on');
     const live = poeLive($('#lv-chama'), 'animado');
     if (live) setTimeout(() => { try { live.gesto('comemorar'); } catch (e) { /* ok */ } }, 700);
-    som(); voz(p);
-    setTimeout(() => { delete esperando[p.num]; desenha(p.num); c.classList.remove('on'); c.classList.add('sai'); }, 3000);
-    setTimeout(() => { c.className = ''; c.innerHTML = ''; limpaLives(); chamando = false; chamaProximo(); }, 3550);
+    // Com calma: o aviso toca, a tela fica, a voz diz o número e o nome, pausa, repete, e só então a tela volta.
+    // Sem voz, a chamada fica 6 segundos na tela.
+    (async () => {
+      const t0 = Date.now(), vozPronta = preparaVoz(p); // a voz já vem sendo buscada enquanto a tela abre
+      som();
+      await espera(1500);
+      const dizer = await Promise.race([vozPronta, espera(4000).then(() => null)]);
+      if (dizer) { await dizer(); await espera(1100); await dizer(); await espera(1300); }
+      const falta = 6000 - (Date.now() - t0); if (falta > 0) await espera(falta);
+      delete esperando[p.num]; desenha(p.num); c.classList.remove('on'); c.classList.add('sai');
+      await espera(550);
+      c.className = ''; c.innerHTML = ''; limpaLives(); chamando = false; chamaProximo();
+    })();
   }
 
   function recebe(d) {

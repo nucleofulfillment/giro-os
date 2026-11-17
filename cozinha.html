@@ -413,23 +413,60 @@ try{ if(navigator.wakeLock) navigator.wakeLock.request('screen').catch(function(
    no campo de busca e apertar Enter marca o pedido como PRONTO na hora, e a TV do salão chama o número e o nome.
    O leitor de código de barras digita os números e manda Enter sozinho, então serve igual ao teclado. */
 var BIPE=0;
-function bipeCfg(){ if(!TK) return; fetch(API+'/painel/chamada-cfg',{headers:hdr()}).then(function(r){ return r.json(); }).then(function(d){ BIPE=(d&&d.ok&&d.bipe)?1:0; var b=$('busca'); if(b) b.placeholder=BIPE?'Bipe ou digite o nº e Enter':'Mesa ou nº do pedido'; }).catch(function(){}); }
+function bipeCfg(){ if(!TK) return; fetch(API+'/painel/chamada-cfg',{headers:hdr()}).then(function(r){ return r.json(); }).then(function(d){ BIPE=(d&&d.ok&&d.bipe)?1:0; var b=$('busca'); if(b) b.placeholder=BIPE?'Bipe ou digite o nº e Enter':'Mesa ou nº do pedido'; bipeBotao(); }).catch(function(){}); }
 function bipeAviso(t,ok){
   var a=$('bipe-av'); if(!a){ a=document.createElement('div'); a.id='bipe-av'; a.setAttribute('role','status'); a.style.cssText='position:fixed;left:50%;top:74px;transform:translateX(-50%);z-index:9999;padding:12px 22px;border-radius:12px;font:800 15px Manrope,sans-serif;color:#fff;box-shadow:0 10px 30px rgba(0,0,0,.25)'; document.body.appendChild(a); }
   a.textContent=t; a.style.background=ok?'#16A34A':'#DC2626'; a.style.display=''; clearTimeout(a._t); a._t=setTimeout(function(){ a.style.display='none'; },2800);
 }
 function bipar(ev){
   if(ev.key!=='Enter'||!BIPE) return;
-  var b=$('busca'), n=parseInt(String(b.value||'').replace(/\D/g,''),10); if(!n) return;
-  ev.preventDefault();
+  var b=$('busca'), n=bipeNum(b.value); if(!n) return;
+  ev.preventDefault(); bipeMarca(n);
+}
+/* o código de barras da comanda traz o rótulo do pedido (128, ou 128-2 numa segunda etiqueta): vale o primeiro número */
+function bipeNum(v){ var m=/\d+/.exec(String(v||'')); return m?parseInt(m[0],10):0; }
+function bipeMarca(n){
+  var b=$('busca');
   var p=null,i; for(i=0;i<PED.length;i++){ if(Number(PED[i].num)===n){ p=PED[i]; break; } }
-  b.value=''; pinta(); b.focus();
+  b.value=''; pinta(); if(!BIPE_CAM) b.focus();   /* com a câmera aberta, não chama o teclado do celular */
   if(!p){ bipeAviso('Não achei o pedido '+n+' na fila.',0); return; }
   if(p.estado==='pronto'){ bipeAviso('O pedido '+n+' já está pronto.',1); return; }
   var id=p.id; PEND[id]={e:'pronto',t:Date.now()}; p.estado='pronto'; pinta();
   /* est "todos": o bipe vale para o pedido inteiro (cozinha e bar), mesmo com a tela filtrada num setor */
   fetch(API+'/painel/cozinha-fase',{method:'POST',headers:hdr(),body:JSON.stringify({id:id,estado:'pronto',est:'todos'})}).then(function(r){ return r.json(); }).then(function(d){ if(!d||!d.ok) throw 0; PEND[id].t=Date.now(); bipeAviso('Pedido '+n+' pronto.',1); setTimeout(function(){ BUSY=0; busca(); },300); })
     .catch(function(){ delete PEND[id]; bipeAviso('Não consegui marcar o pedido '+n+'. Tente de novo.',0); BUSY=0; busca(); });
+}
+/* (302) leitor pela câmera do celular: aponta para o código de barras da comanda e o pedido vira pronto, sem digitar.
+   Usa o leitor de códigos do próprio navegador (Chrome no Android). Onde não existe (iPhone), avisa e fica o campo de digitar. */
+var BIPE_CAM=null;
+function bipeBotao(){
+  var lb=document.querySelector('.busca'); if(!lb) return; var bt=$('bipe-cam');
+  if(!BIPE){ if(bt) bt.style.display='none'; return; }
+  if(!bt){ bt=document.createElement('button'); bt.id='bipe-cam'; bt.type='button'; bt.setAttribute('aria-label','Ler o código de barras com a câmera'); bt.textContent='📷'; bt.style.cssText='border:0;background:none;font-size:20px;cursor:pointer;padding:4px 2px;line-height:1'; bt.addEventListener('click',function(e){ e.preventDefault(); bipeCamera(); }); lb.appendChild(bt); }
+  bt.style.display='';
+}
+function bipeCamFecha(){ if(!BIPE_CAM) return; try{ BIPE_CAM.fluxo.getTracks().forEach(function(x){ x.stop(); }); }catch(e){} clearInterval(BIPE_CAM.t); if(BIPE_CAM.el) BIPE_CAM.el.remove(); BIPE_CAM=null; }
+function bipeCamera(){
+  if(BIPE_CAM) return;
+  if(!('BarcodeDetector' in window)||!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){ bipeAviso('Este navegador não lê código pela câmera. Digite o número do pedido.',0); return; }
+  var el=document.createElement('div'); el.style.cssText='position:fixed;inset:0;z-index:9998;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center';
+  el.innerHTML='<video playsinline muted style="width:100%;height:100%;object-fit:cover"></video><div style="position:absolute;left:8%;right:8%;top:50%;height:120px;margin-top:-60px;border:3px solid #FF5A00;border-radius:16px;box-shadow:0 0 0 2000px rgba(0,0,0,.45)"></div><div style="position:absolute;left:0;right:0;top:18px;text-align:center;color:#fff;font:800 16px Manrope,sans-serif;text-shadow:0 1px 6px #000">Aponte para o código de barras da comanda</div><button type="button" id="bipe-cam-x" style="position:absolute;bottom:26px;left:50%;transform:translateX(-50%);border:0;border-radius:14px;padding:14px 28px;background:#fff;font:800 16px Manrope,sans-serif">Fechar</button>';
+  document.body.appendChild(el); el.querySelector('#bipe-cam-x').addEventListener('click',bipeCamFecha);
+  navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false}).then(function(fluxo){
+    var v=el.querySelector('video'); v.srcObject=fluxo; v.play().catch(function(){});
+    var det; try{ det=new BarcodeDetector({formats:['code_128','code_39','ean_13','ean_8','itf','qr_code']}); }catch(e){ det=new BarcodeDetector(); }
+    var lendo=false, ultimo=0, quando=0;
+    BIPE_CAM={el:el,fluxo:fluxo,t:setInterval(function(){
+      if(lendo||v.readyState<2) return; lendo=true;
+      det.detect(v).then(function(cs){
+        lendo=false; if(!cs||!cs.length) return;
+        var n=bipeNum(cs[0].rawValue); if(!n) return;
+        if(n===ultimo&&Date.now()-quando<4000) return;   /* a mesma comanda parada na frente da câmera não repete */
+        ultimo=n; quando=Date.now(); try{ if(navigator.vibrate) navigator.vibrate(80); }catch(e){}
+        bipeMarca(n);   /* a câmera continua aberta para a próxima comanda */
+      }).catch(function(){ lendo=false; });
+    },280)};
+  }).catch(function(){ el.remove(); bipeAviso('Não consegui abrir a câmera. Libere a câmera para este site e tente de novo.',0); });
 }
 $('busca').addEventListener('keydown',bipar); bipeCfg(); setInterval(bipeCfg,300000); window.addEventListener('focus',bipeCfg);
 if(TK){ $('login').classList.remove('on'); document.body.classList.remove('lgon'); busca(); somPergunta(); } else mostraLogin('');

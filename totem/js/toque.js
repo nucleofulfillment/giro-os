@@ -617,7 +617,8 @@
   function telaCheia() {
     if (EDITANDO || window.top !== window.self) return;
     const d = document.documentElement;
-    try { if (!document.fullscreenElement && d.requestFullscreen) d.requestFullscreen({ navigationUI: 'hide' }).catch(() => {}); } catch (e) { /* sem suporte (iPhone): segue normal */ }
+    // com a tela cheia ligada o Esc fica "preso": no Chrome e no Edge é preciso segurar o Esc para sair (um toque sem querer não tira)
+    try { if (!document.fullscreenElement && d.requestFullscreen) d.requestFullscreen({ navigationUI: 'hide' }).then(() => { try { if (navigator.keyboard && navigator.keyboard.lock) navigator.keyboard.lock(['Escape']).catch(() => {}); } catch (e) { /* ok */ } }).catch(() => {}); } catch (e) { /* sem suporte (iPhone): segue normal */ }
     manterAcesa();
   }
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && document.fullscreenElement) manterAcesa(); });
