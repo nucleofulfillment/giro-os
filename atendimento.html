@@ -623,7 +623,7 @@ function modo(m){ COM.modo=m; try{ nfcChipPinta(); }catch(e){} mostraMapaBtn(); 
 function balLivre(){ return !!(D&&D.cfg&&(D.cfg.balcao_livre||D.cfg.balcao_nfc)); }
 function ehBalM(m){ return /^BAL\d+$/.test(String(m||'')); }
 /* (238) garçom sem mesa e sem cliente (quem está em pé ou é visitante): ligado no painel, em Configurações clientes. A comanda fica como "Sem mesa #<número>" (mesa SM<número>) */
-function garLivre(){ return !!(D&&D.cfg&&D.cfg.garcom_livre); }
+function garLivre(){ return !!(D&&D.cfg&&(D.cfg.garcom_livre||D.cfg.balcao_nfc)); }   /* (321) com o Balcão com cartão NFC, o garçom também pega o cartão sem mesa e sem cliente */
 function ehSMM(m){ return /^SM\d+$/.test(String(m||'')); }
 function smTit(m){ return 'Sem mesa #'+String(m).slice(2); }
 function comTit(c){ return c.cartao&&ehSMM(c.mesa)?'Cartão ····'+esc(String(c.cartao).slice(-4)):ehBalM(c.mesa)?'Cliente Balcão':ehSMM(c.mesa)?smTit(c.mesa):(c.mesa?'Mesa '+esc(c.mesa):''); }
@@ -979,14 +979,14 @@ function copoOk(fn){
    (321) BALCÃO COM CARTÃO NFC (Configurações clientes): o Balcão monta o pedido sem mesa e sem cliente e, ao gravar, o pedido vai para a comanda do cartão (cada cartão é uma comanda aberta, sem cadastro); na saída, encosta o cartão e fecha a conta. */
 var NFCG=null;   /* null = o padrão da loja (ligado quando a loja usa o Balcão com cartão NFC) */
 function nfcNew(){ return !!(D&&D.cfg&&D.cfg.balcao_nfc); }
-function nfcOk(){ return COM.modo==='balcao'&&(nfcNew()||(cobraHora()&&ccpLigado())); }
+function nfcOk(){ if(nfcNew()) return !COM.mesa&&!COM.joia; return COM.modo==='balcao'&&cobraHora()&&ccpLigado(); }   /* (321) Balcão com cartão NFC vale para o Balcão e para o garçom, quando o pedido não é de mesa nem de cliente */
 function nfcOn(){ return NFCG===null?nfcNew():!!NFCG; }
-function nfcGrav(){ return nfcNew()&&COM.modo==='balcao'&&nfcOn(); }
+function nfcGrav(){ return nfcNew()&&!COM.mesa&&!COM.joia&&nfcOn(); }
 function nfcLinha(){
-  if(!nfcOk()) return ''; var on=nfcOn();
+  if(!nfcOk()||nfcNew()) return '';   /* (321) com o Balcão com cartão NFC ligado, grava sempre no cartão: sem seletor */ var on=nfcOn();
   return '<label style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:1.5px solid '+(on?'var(--pri)':'var(--s3)')+';border-radius:14px;margin-bottom:10px;font-weight:800;cursor:pointer"><input type="checkbox" id="nfcG" style="width:20px;height:20px" onchange="nfcToggle(this.checked)"'+(on?' checked':'')+'><span>💳 Gravar no cartão NFC<br><small style="font-weight:600;color:var(--mu2)">'+(nfcNew()?'O pedido fica na comanda do cartão. Paga na saída.':'Ao finalizar, o sistema pede para encostar o cartão')+'</small></span></label>';
 }
-function nfcChipPinta(){ var b=$('nfcChip'); if(b){ var ok=nfcOk(), on=nfcOn(); b.classList.toggle('hide',!ok); if(ok){ b.textContent='💳 Cartão NFC: '+(on?'ligado':'desligado'); b.style.background=on?'var(--pri)':''; b.style.color=on?'#fff':''; } } var q=$('nfbBtn'); if(q) q.classList.toggle('hide',!nfcNew()); }
+function nfcChipPinta(){ var b=$('nfcChip'); if(b){ var ok=nfcOk()&&!nfcNew(), on=nfcOn(); b.classList.toggle('hide',!ok); if(ok){ b.textContent='💳 Cartão NFC: '+(on?'ligado':'desligado'); b.style.background=on?'var(--pri)':''; b.style.color=on?'#fff':''; } } var q=$('nfbBtn'); if(q) q.classList.toggle('hide',!nfcNew()); }
 function nfcChipToggle(){ NFCG=!nfcOn(); nfcChipPinta(); var l=$('nfcG'); if(l) l.checked=nfcOn(); toast(nfcOn()?(nfcNew()?'O pedido será gravado no cartão':'Ao finalizar, o sistema pede o cartão NFC'):'Cartão NFC desligado'); }
 function nfcToggle(on){
   NFCG=!!on; try{ nfcChipPinta(); }catch(e){}
@@ -1027,10 +1027,10 @@ function nfcGravar(){
 }
 function nfcEnvia(uid){
   var m=$('nfbMsg'); if(m) m.textContent='Gravando o pedido…';
-  api('/painel/atend-pedido',comEnvio({modo:'balcao',nfc:uid,obs:FC.obs,copos:FC.copos||undefined,itens:CART.map(function(i){ return {p:i.p,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs,qty:i.qty}; })})).then(function(r){
+  api('/painel/atend-pedido',comEnvio({modo:COM.modo,nfc:uid,obs:FC.obs,copos:FC.copos||undefined,itens:CART.map(function(i){ return {p:i.p,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs,qty:i.qty}; })})).then(function(r){
     if(r.ok){
       envioOk();
-      var ped={num:r.num,sub:r.sub||0,mesa:r.mesa||'',joia:'',nome:'Cartão ····'+uid.slice(-4),atend:D.usuario,criado:Date.now(),obs:FC.obs,modo:'balcao',copos:FC.copos,l:CART.map(function(i){ return {p:i.p,nome:i.nome,qty:i.qty,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs}; })};
+      var ped={num:r.num,sub:r.sub||0,mesa:r.mesa||'',joia:'',nome:'Cartão ····'+uid.slice(-4),atend:D.usuario,criado:Date.now(),obs:FC.obs,modo:COM.modo,copos:FC.copos,l:CART.map(function(i){ return {p:i.p,nome:i.nome,qty:i.qty,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs}; })};
       fecha(); CART=[]; COPOS=null; FC.copos=0; cartBar(); if(FC.imp) imprimeAuto(ped);
       zeraComanda();
       if(window.LiveApp) LiveApp.comemorar({titulo:'Pedido #'+plab(r)+' gravado no cartão!',valor:brl(r.total),forma:'💳 Cartão ····'+uid.slice(-4),sub:'Já foi para a cozinha 🍳 · paga na saída',ms:2200}); else toast('Pedido #'+plab(r)+' gravado no cartão ····'+uid.slice(-4));
