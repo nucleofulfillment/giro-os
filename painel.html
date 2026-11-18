@@ -1661,6 +1661,8 @@ html.loja-p .cd-dest{display:none!important}
         <input class="inp" id="cd-preco" inputmode="decimal" placeholder="0,00" style="margin:4px 0 10px">
         <label style="font-size:12px;font-weight:700;color:var(--muted2)">Código de barras <span style="font-weight:500">(opcional)</span></label>
         <div style="display:flex;gap:8px;margin-top:4px"><input class="inp" id="cd-barras" maxlength="32" autocomplete="off" placeholder="Bipe ou digite" style="flex:1"><button type="button" class="btn sec" title="Bipar pela câmera" onclick="cdBiparBarras()" style="flex:none">📷</button></div>
+        <label style="font-size:12px;font-weight:700;color:var(--muted2);display:block;margin-top:10px">NCM <span style="font-weight:500">(8 dígitos, para a nota fiscal)</span></label>
+        <input class="inp" id="cd-ncm" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="Ex.: 2202.10.00" style="margin:4px 0 0">
       </div>
     </div>
     <div style="margin:0 0 14px;padding:10px 12px;border:1px solid var(--border);border-radius:12px">
@@ -8684,13 +8686,23 @@ function cdClbTag(p){
   if(no&&c.valor>0) return '<span style="'+st+'" title="Entra no desconto do Clube">💎 Clube '+(c.tipo==='pct'?String(c.valor).replace('.',',')+'% OFF':br(c.valor)+' OFF')+'</span>';
   return '';
 }
+/* (317) NCM: guarda só os 8 números; mostra 0000.00.00 */
+function cdNcmFmt(v){ var d=String(v||'').replace(/\D/g,'').slice(0,8); return d.length===8?d.slice(0,4)+'.'+d.slice(4,6)+'.'+d.slice(6):d; }
+/* (317) etiqueta de NCM na lista: verde quando tem; "Sem NCM" só aparece se a loja já usa NCM em algum produto (quem não usa fiscal não vê aviso) */
+function cdNcmTag(p){
+  var tem=String(p&&p.ncm||'').replace(/\D/g,'').length===8;
+  if(tem) return '<span title="NCM '+cdNcmFmt(p.ncm)+'" style="font-size:10.5px;font-weight:800;border-radius:6px;padding:2px 7px;white-space:nowrap;background:#dcfce7;color:#166534;border:1px solid #86efac">✓ NCM</span>';
+  if(CD.temNcm===undefined) CD.temNcm=(CD.prods||[]).some(function(x){ return String(x.ncm||'').replace(/\D/g,'').length===8; });
+  return CD.temNcm?'<span style="font-size:10.5px;font-weight:800;border-radius:6px;padding:2px 7px;white-space:nowrap;background:#fef3c7;color:#92400e;border:1px solid #fcd34d">Sem NCM</span>':'';
+}
 function cdTags(p){
-  var t=cdDscTag(p)+cdClbTag(p)+(p.delivery===false?'<span style="font-size:10.5px;font-weight:800;border-radius:6px;padding:2px 7px;white-space:nowrap;background:#e5e7eb;color:#4b5563;border:1px solid #d1d5db">🚫 Fora do delivery</span>':'')+(p.destaque?'<span style="font-size:10.5px;font-weight:800;border-radius:6px;padding:2px 7px;white-space:nowrap;background:#ffedd5;color:#c2410c;border:1px solid #fdba74">🔥 Destaque</span>':'');
+  var t=cdDscTag(p)+cdClbTag(p)+cdNcmTag(p)+(p.delivery===false?'<span style="font-size:10.5px;font-weight:800;border-radius:6px;padding:2px 7px;white-space:nowrap;background:#e5e7eb;color:#4b5563;border:1px solid #d1d5db">🚫 Fora do delivery</span>':'')+(p.destaque?'<span style="font-size:10.5px;font-weight:800;border-radius:6px;padding:2px 7px;white-space:nowrap;background:#ffedd5;color:#c2410c;border:1px solid #fdba74">🔥 Destaque</span>':'');
   return t?'<div style="display:flex;flex-wrap:wrap;gap:4px;margin:3px 0 2px">'+t+'</div>':'';
 }
 /* configuração do Clube para as tags (carrega uma vez) */
 function cdClbCarrega(){ if(CLB.c||CLB.carregando) return; CLB.carregando=1; fetch(DELTADIS_API+'/painel/clube-config',{headers:cdHdr()}).then(function(r){ return r.json(); }).then(function(d){ if(d&&d.ok&&d.clube){ CLB.c=d.clube; cdPintar(); } }).catch(function(){}).then(function(){ CLB.carregando=0; }); }
 function cdPintar(){
+  CD.temNcm=undefined;
   cdClbCarrega();
   var fc=el('cd-fcat'), atual=fc.value, h='<option value="">Todas as categorias</option>', i;
   for(i=0;i<CD.cats.length;i++) h+='<option value="'+esc(CD.cats[i].id)+'">'+esc(CD.cats[i].nome)+'</option>';
@@ -8754,7 +8766,7 @@ document.addEventListener('paste', function(ev){
 function cdAbrirForm(p){
   CD.edit=p?p.id:null; CD.foto=(p&&p.foto)||''; CD.vid=(p&&p.vid)||''; CD.vtipo=(p&&p.vtipo)||'video/mp4'; cdPVPinta();
   el('cd-tit').textContent=p?'Editar produto':'Novo produto';
-  el('cd-nome').value=p?p.nome:''; el('cd-barras').value=(p&&p.barras)||''; el('cd-preco').value=(p&&p.preco)?String(p.preco).replace('.',','):'';
+  el('cd-nome').value=p?p.nome:''; el('cd-barras').value=(p&&p.barras)||''; el('cd-ncm').value=cdNcmFmt((p&&p.ncm)||''); el('cd-preco').value=(p&&p.preco)?String(p.preco).replace('.',','):'';
   el('cd-desc').value=(p&&p.desc)||''; el('cd-des').value=(p&&p.desenho)||''; var dq=(p&&p.desconto)||{}; el('cd-dsc-t').value=dq.tipo||''; el('cd-dsc-v').value=dq.valor?String(dq.valor).replace('.',','):''; el('cd-dsc-de').value=dq.de||''; el('cd-dsc-ate').value=dq.ate||''; cdDscMostra(); el('cd-clb').value=(p&&p.clube&&p.clube.preco)?String(p.clube.preco).replace('.',','):''; el('cd-ativo').checked=!p||p.ativo!==false; el('cd-del').checked=!p||p.delivery!==false; el('cd-dsq').checked=!!(p&&p.destaque); el('cd-erro').textContent='';
   cdOpcoesCat(p&&p.cat); cdFotoBox();
   el('cd-ads').innerHTML=''; var ad=(p&&p.adicionais)||[], i; for(i=0;i<ad.length;i++) cdAdLinha(ad[i]);
@@ -8899,7 +8911,7 @@ function cdColher(){
   var tms=[], sbs=[], j;
   for(j=0;j<CD.tam.length;j++){ var t=CD.tam[j]; if((t.nome||'').trim()) tms.push({id:t.id,nome:t.nome.trim(),preco:cdPreco(t.preco),med:(t.med||'').trim(),max:parseInt(t.max,10)||1}); }
   for(j=0;j<CD.sab.length;j++){ var sb=CD.sab[j]; if((sb.nome||'').trim()){ var pr={},k; for(k in (sb.precos||{})){ var pv=cdPreco(sb.precos[k]); if(pv>0) pr[k]=pv; } sbs.push({id:sb.id,nome:sb.nome.trim(),desc:(sb.desc||'').trim(),grupo:(sb.grupo||'').trim(),extra4:cdPreco(sb.extra4),novidade:!!sb.novidade,balcao:!!sb.balcao,foto:sb._mud?(sb.foto||''):(sb.foto?'1':''),precos:pr}); } }
-  return {nome:el('cd-nome').value.trim(),barras:el('cd-barras').value.replace(/[^0-9A-Za-z-]/g,''),preco:cdPreco(el('cd-preco').value),cat:el('cd-cat').value,desc:el('cd-desc').value.trim(),desenho:el('cd-des').value,desconto:cdDscLer(),clube:(cdPreco(el('cd-clb').value)>0?{preco:cdPreco(el('cd-clb').value)}:null),foto:CD.foto,vid:CD.vid||'',vtipo:CD.vtipo||'video/mp4',adicionais:ads,tamanhos:tms,sabores:sbs,ativo:el('cd-ativo').checked,delivery:el('cd-del').checked,destaque:el('cd-dsq').checked};
+  return {nome:el('cd-nome').value.trim(),barras:el('cd-barras').value.replace(/[^0-9A-Za-z-]/g,''),ncm:String(el('cd-ncm').value||'').replace(/\D/g,'').slice(0,8),preco:cdPreco(el('cd-preco').value),cat:el('cd-cat').value,desc:el('cd-desc').value.trim(),desenho:el('cd-des').value,desconto:cdDscLer(),clube:(cdPreco(el('cd-clb').value)>0?{preco:cdPreco(el('cd-clb').value)}:null),foto:CD.foto,vid:CD.vid||'',vtipo:CD.vtipo||'video/mp4',adicionais:ads,tamanhos:tms,sabores:sbs,ativo:el('cd-ativo').checked,delivery:el('cd-del').checked,destaque:el('cd-dsq').checked};
 }
 function cdSalvar(){
   var it=cdColher(); if(!it.nome){ el('cd-erro').textContent='Falta o nome do produto.'; return; }
@@ -11379,7 +11391,7 @@ function cdLerPlanilha(inp){
     for(i=0;i<pr.length;i++){
       var nm=String(cdCol(pr[i],['produto','nome'])).trim(); if(!nm) continue; var kk=cdNorm(nm);
       if(mp[kk]){ av.push('Produto repetido na aba Produtos: '+nm+' (usei a primeira linha).'); continue; }
-      var at=cdCol(pr[i],['ativo']); var o={nome:nm.slice(0,80),cat:String(cdCol(pr[i],['categoria'])).trim().slice(0,60),preco:cdPreco(cdCol(pr[i],['preco'])),desc:String(cdCol(pr[i],['descricao'])).trim().slice(0,300),barras:String(cdCol(pr[i],['codigo de barras','barras','ean'])).replace(/[^0-9A-Za-z-]/g,'').slice(0,32),des:cdDes(cdCol(pr[i],['desenho'])),ativo:at===''?true:cdSim(at),del:String(cdCol(pr[i],['delivery'])).trim()===''?null:cdSim(cdCol(pr[i],['delivery'])),tams:[],sabs:[],ads:[]};
+      var at=cdCol(pr[i],['ativo']); var o={nome:nm.slice(0,80),cat:String(cdCol(pr[i],['categoria'])).trim().slice(0,60),preco:cdPreco(cdCol(pr[i],['preco'])),desc:String(cdCol(pr[i],['descricao'])).trim().slice(0,300),barras:String(cdCol(pr[i],['codigo de barras','barras','ean'])).replace(/[^0-9A-Za-z-]/g,'').slice(0,32),des:cdDes(cdCol(pr[i],['desenho'])),ativo:at===''?true:cdSim(at),del:String(cdCol(pr[i],['delivery'])).trim()===''?null:cdSim(cdCol(pr[i],['delivery'])),ncm:String(cdCol(pr[i],['ncm'])).replace(/\D/g,'').slice(0,8),tams:[],sabs:[],ads:[]};
       o.sabs=cdCelSabores(cdCol(pr[i],['sabores'])); o.tams=cdCelTamanhos(cdCol(pr[i],['tamanhos']),o.sabs.length>0); o.ads=cdCelAdicionais(cdCol(pr[i],['adicionais']));
       mp[kk]=o; lista.push(o);
     }
@@ -11442,7 +11454,7 @@ function cdImportar(){
         var pr={}; if(e&&e.precos){ tams.forEach(function(t){ if(tmap[t.id]&&e.precos[t.id]) pr[t.id]=e.precos[t.id]; }); if(!tams.length&&e.precos['_']) pr['_']=e.precos['_']; }
         sabs.push({id:id,nome:sx.nome,desc:sx.desc,grupo:sx.grupo,extra4:sx.extra4,novidade:sx.novidade,balcao:sx.balcao,foto:(e&&e.foto)?'1':'',precos:pr});
       });
-      var it={nome:o.nome,barras:o.barras||(ex&&ex.barras)||'',preco:o.preco,cat:cid,desc:o.desc,desenho:o.des||(ex&&ex.desenho)||'',desconto:(ex&&ex.desconto)||null,foto:(ex&&ex.foto)||'',adicionais:o.ads,tamanhos:tams,sabores:sabs,ativo:o.ativo,delivery:(o.del===null||o.del===undefined)?!(ex&&ex.delivery===false):o.del};
+      var it={nome:o.nome,barras:o.barras||(ex&&ex.barras)||'',preco:(o.preco>0||o.tams.length||!ex)?o.preco:(ex.preco||0),cat:cid,desc:o.desc,desenho:o.des||(ex&&ex.desenho)||'',desconto:(ex&&ex.desconto)||null,foto:(ex&&ex.foto)||'',adicionais:o.ads,tamanhos:tams,sabores:sabs,ativo:o.ativo,delivery:(o.del===null||o.del===undefined)?!(ex&&ex.delivery===false):o.del,ncm:o.ncm||(ex&&ex.ncm)||'',destaque:!!(ex&&ex.destaque),clube:(ex&&ex.clube)||null,vid:(ex&&ex.vid)||'',vtipo:(ex&&ex.vtipo)||'video/mp4'};   /* (317) NCM da planilha; atualizar por planilha não apaga mais destaque, preço do clube e vídeo */
       if(ex){ it.id=ex.id; it.ordem=ex.ordem; }
       return cdSalvarApi('prod',it).then(function(){ feitos++; });
     }).then(function(){ return um(i+1); });
