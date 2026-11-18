@@ -44,7 +44,7 @@
       S.cats = d.cats; S.itens = d.itens; S.prods = d.prods; return;
     }
     // dono: o painel (mesmo navegador) deixa o login guardado; a rota do painel devolve TODAS as fotos, inclusive as sem cadastro
-    if (TOKEN) {
+    if (TOKEN && Q.get('visitante') !== '1') {
       try {
         const r = await fetch(API + '/painel/biblioteca', { headers: hdr(), cache: 'no-store' }), d = await r.json();
         if (d && d.ok && (!LOJA || d.cli === LOJA || String(d.cli) === String(S.cli))) { S.dono = true; S.cli = d.cli; S.itens = d.itens; S.cats = d.cats; S.prods = d.prods; S.video = d.video || ''; }
@@ -141,7 +141,7 @@
       return;
     }
     const vinc = it.prodId ? S.prods.find((x) => x.id === it.prodId) : null, opcs = '<option value="">Sem categoria</option>' + S.cats.map((c) => `<option value="${esc(c.id)}"${c.id === it.cat ? ' selected' : ''}>${esc(c.nome)}</option>`).join('') + '<option value="__nova">+ Nova categoria…</option>';
-    p.innerHTML = `<div class="cab" style="display:flex;align-items:center;justify-content:space-between;gap:8px"><h2>${reg(it) ? 'Produto' : 'Cadastrar'}</h2><div class="miniatura" style="background-image:url('${esc(fotoUrl(it))}')"></div></div><div class="corpo">
+    p.innerHTML = `<div class="cab" style="display:flex;align-items:center;justify-content:space-between;gap:8px"><h2>${reg(it) ? 'Produto' : 'Cadastrar'}</h2></div><div class="corpo">
       ${vinc ? `<div class="sub">Ligada ao produto <b>${esc(vinc.nome)}</b> do cardápio. Nome e preço mudam lá.</div>` : ''}
       <label for="f-nome">Nome do produto</label><input type="text" id="f-nome" maxlength="80" autocomplete="off" value="${esc(vinc ? vinc.nome : it.nome)}" ${vinc ? 'disabled' : ''}>
       <div class="linha2"><div><label for="f-preco">Preço</label><input type="text" id="f-preco" inputmode="decimal" autocomplete="off" placeholder="0,00" value="${(vinc ? vinc.preco : it.preco) > 0 ? String(vinc ? vinc.preco : it.preco).replace('.', ',') : ''}" ${vinc ? 'disabled' : ''}></div>
@@ -151,7 +151,7 @@
       ${vinc ? '' : `<label for="f-prod">Ou ligar a um produto que já existe</label><input type="search" id="f-busca" placeholder="Buscar no cardápio…" autocomplete="off"><select id="f-prod" size="1" style="margin-top:6px"><option value="">Criar produto novo no cardápio</option>${prodOpcoes('')}</select>`}
       ${vinc ? '' : '<label class="ck"><input type="checkbox" id="f-ativo" checked> Já entra ativo no cardápio</label>'}
       <div class="nota">${vinc ? '' : 'A foto vai para o cadastro do produto em formato quadrado, no fundo branco. Aqui na biblioteca ela continua vertical.'}</div>
-    </div><div class="rod"><div class="msg" id="f-msg"></div><button type="button" class="bt pri" id="f-ok">${reg(it) ? 'OK, salvar' : 'OK, cadastrar'}</button><button type="button" class="bt p er" id="f-del">Remover foto da biblioteca</button></div>`;
+    </div><div class="rod"><div class="msg" id="f-msg"></div><button type="button" class="bt pri" id="f-ok">${reg(it) ? 'Salvar' : 'Cadastrar'}</button><button type="button" class="bt p er" id="f-del">Remover</button></div>`;
   }
   function prodOpcoes(q) {
     const n = norm(q), usados = {}; S.itens.forEach((i) => { if (i.prodId) usados[i.prodId] = 1; });
