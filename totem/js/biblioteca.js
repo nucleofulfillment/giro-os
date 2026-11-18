@@ -250,6 +250,17 @@
   $('#ch-add').addEventListener('click', () => $('#arq').click());
   $('#b-video').addEventListener('click', () => $('#arq-video').click());
   $('#b-video-x').addEventListener('click', tirarVideo);
+  // tela cheia: botão ⛶ e, na visão do cliente, o primeiro toque na tela já entra em tela cheia (o navegador só permite depois de um toque)
+  const cheia = () => document.fullscreenElement || document.webkitFullscreenElement;
+  function tela() {
+    const el = document.documentElement;
+    try { if (cheia()) { (document.exitFullscreen || document.webkitExitFullscreen).call(document); } else { (el.requestFullscreen || el.webkitRequestFullscreen).call(el); } } catch (e) { /* sem suporte */ }
+  }
+  $('#ch-full').addEventListener('click', tela);
+  const podeCheia = !!(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen);
+  if (!podeCheia) $('#ch-full').hidden = true;
+  document.addEventListener('click', (e) => { if (!S.dono && podeCheia && !cheia() && !e.target.closest('#ch-full')) tela(); }, { once: true });
+  document.addEventListener('fullscreenchange', () => { $('#ch-full').textContent = cheia() ? '✕' : '⛶'; });
   $('#arq-video').addEventListener('change', (e) => { enviarVideo(e.target.files[0]); e.target.value = ''; });
   $('#arq').addEventListener('change', (e) => { const f = e.target.files; subir(f); e.target.value = ''; });
   $('#painel').addEventListener('click', (e) => { if (e.target.id === 'f-ok') salvar(); else if (e.target.id === 'f-del') remover(); });
