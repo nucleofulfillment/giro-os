@@ -90,7 +90,7 @@
   // "aquece" deixa a ligação dela aberta antes da primeira fala (ao ligar a tela e quando um prato encosta na balança).
   // A voz NUNCA pode ficar muda: se a voz do navegador não existir neste aparelho, ou não começar em 1,5 s, a frase sai pela
   // voz do servidor (a do totem de voz), que demora mais mas sempre funcionou.
-  function aquece() { try { if (C.voz && window.Voz && window.Voz.aquecer && !(speechSynthesis.speaking || speechSynthesis.pending)) window.Voz.aquecer(); } catch (e) { /* ok */ } }
+  function aquece() { try { if (C.voz && !vozProxy() && window.Voz && window.Voz.aquecer && !(speechSynthesis.speaking || speechSynthesis.pending)) window.Voz.aquecer(); } catch (e) { /* ok */ } }
   const vozProxy = () => (VOZ_SERVIDOR && KEY ? (texto, velocidade, signal) => fetch(API + '/live/voz', { method: 'POST', headers: { 'Content-Type': 'application/json' }, signal, body: JSON.stringify({ loja: LOJA, k: KEY, texto, velocidade }) }) : null);
   try { if (window.speechSynthesis) { speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = () => {}; } } catch (e) { /* ok */ }   // pede a lista de vozes cedo (ela chega depois)
   function vozDoNavegador() {
@@ -103,27 +103,25 @@
       return masc[0] || lista[0] || null;
     } catch (e) { return null; }
   }
+  // (18/11) No aparelho do dono a voz do navegador "começa" mas não sai som nenhum, e não há como a página perceber isso.
+  // Por isso a voz PRINCIPAL voltou a ser a do servidor (a do Live, que sempre saiu); a do navegador só entra se a loja não tem
+  // voz no servidor ou se o servidor falhar (o voz.js já faz essa troca). A demora da voz do servidor é compensada pedindo a
+  // frase mais cedo: no primeiro instante em que o peso para, enquanto os números ainda correm na tela (ver "passo").
   let falaVez = 0;
   function fala(texto) {
     if (!C.voz || !texto) return;
-    const V = window.Voz, vez = ++falaVez;
-    const servidor = () => {
-      if (vez !== falaVez) return;
-      try { const px = vozProxy(); if (V && px) V.falar(texto, { tom: 1.6, velocidade: 1.1, elevenProxy: px }).catch(() => {}); } catch (e) { /* sem voz: a tela continua */ }
-    };
+    const V = window.Voz, vez = ++falaVez, px = vozProxy();
+    if (V && px) { try { V.falar(texto, { tom: 1.6, velocidade: 1.1, elevenProxy: px }).catch(() => {}); } catch (e) { /* sem voz: a tela continua */ } return; }
+    // loja sem voz no servidor (ou demonstração aberta sem o link da loja): voz do próprio navegador
     try {
       const synth = window.speechSynthesis, v = synth ? vozDoNavegador() : null;
-      if (!v) return servidor();   // este aparelho não tem voz em português: usa a do servidor
+      if (!v) return;   // sem voz no servidor e sem voz em português neste aparelho: a tela segue muda
       try { V && V.parar && V.parar(); } catch (e) { /* ok */ }
       const u = new SpeechSynthesisUtterance(V && V.paraFala ? V.paraFala(texto) : texto);
       u.voice = v; u.lang = v.lang || 'pt-BR'; u.rate = 1.1; u.pitch = /Natural/i.test(v.name) ? 1.6 : 1.1; u.volume = 1;
-      let saiu = false;
-      u.onstart = u.onboundary = () => { saiu = true; };
-      u.onerror = () => { if (!saiu) { saiu = true; servidor(); } };
       // falar logo depois de um "cancelar" faz alguns navegadores engolirem a frase: dá um respiro antes
-      if (synth.speaking || synth.pending) { synth.cancel(); setTimeout(() => { try { synth.speak(u); } catch (e) { servidor(); } }, 120); } else synth.speak(u);
-      setTimeout(() => { if (!saiu) { saiu = true; try { synth.cancel(); } catch (e) { /* ok */ } servidor(); } }, 1500);
-    } catch (e) { servidor(); }
+      if (synth.speaking || synth.pending) { synth.cancel(); setTimeout(() => { try { if (vez === falaVez) synth.speak(u); } catch (e) { /* ok */ } }, 120); } else synth.speak(u);
+    } catch (e) { /* sem voz: a tela continua */ }
   }
   function pesoFalado(kg) {
     const g = Math.round(kg * 1000), q = Math.floor(g / 1000), r = g % 1000;
@@ -154,7 +152,7 @@
     $('#ligar').hidden = f !== 'ligar';
     $('#pergunta').hidden = f !== 'pergunta';
     if (f === 'espera') { E.beb = {}; E.fixo = 0; E.resp = null; E.env = ''; $('#erro').hidden = true; }
-    if (f === 'pesando') { mostraPeso = 0; alvoPeso = 0; ultAvanco = performance.now(); }   // cada pesagem começa do zero
+    if (f === 'pesando') { mostraPeso = 0; alvoPeso = 0; ultAvanco = performance.now(); E.falouKg = null; }   // cada pesagem começa do zero
     pinta();
     if (cena === 'c-peso') roda();
   }
@@ -312,7 +310,7 @@
       if (!d.ok) throw new Error(d.mensagem || 'Não consegui registrar a pesagem.');
       if (!d.linhas) d.linhas = [];   // envio repetido: o servidor devolve só o número e o total
       E.resp = d; pintaFim(); fase('fim');
-      fala((C.bebida ? 'Prontinho! ' : frasePeso(liquido(E.fixo)) + ' ') + 'Retire a sua comanda e bom apetite!');
+      if (C.bebida) fala('Prontinho! Retire a sua comanda e bom apetite!');   // sem a pergunta da bebida, essa frase já foi dita junto com o peso
     } catch (e) {
       $('#erro-m').textContent = (e && e.message) || 'Sem conexão com o sistema.'; $('#erro').hidden = false;
       E.fase = 'erro';
@@ -335,12 +333,18 @@
         break;
       case 'pesando':
         if (fora) { fase('espera'); break; }
+        // a frase é pedida no primeiro instante em que o peso para (a voz do servidor leva uns 2 s para chegar): ela sai
+        // mais ou menos junto com os números terminando de correr, em vez de 2 s depois
+        if (tem && estaveis >= 1 && liquido(E.kg) * 1000 >= C.minG && E.falouKg !== E.kg) {
+          E.falouKg = E.kg;
+          fala(frasePeso(liquido(E.kg)) + (C.bebida ? ' Deseja uma bebida?' : ' Retire a sua comanda e bom apetite!'));
+        }
         // "estavel" do programa já são 3 leituras iguais seguidas; o 1,1 s dá tempo de ver os números correndo
         if (tem && estaveis >= 1 && agora - E.desde >= 1100 && liquido(E.kg) * 1000 >= C.minG) {
           E.fixo = E.kg; const liq = liquido(E.fixo);
           // com a pergunta da bebida, o Live fala o peso e pergunta; sem ela, a comanda já sai, então o peso é dito junto com o "retire a comanda"
           // (duas frases seguidas se atropelam: a segunda corta a primeira)
-          if (C.bebida) fala(frasePeso(liq) + ' Deseja uma bebida?');
+          // (a frase deste peso já foi pedida logo acima, no primeiro instante parado)
           if (C.bebida) fase('pergunta'); else concluir();
         }
         break;
