@@ -13,7 +13,7 @@
 <title>Cardápio · LiveFood</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
-<!-- LIVEFOOD-23 --><meta name="versao" content="LIVEFOOD-23">
+<!-- LIVEFOOD-24 --><meta name="versao" content="LIVEFOOD-24">
 <style>
 :root{--bg:#0b0b0d;--tx:#fff;--mut:rgba(255,255,255,.68);--pri:#FF5A00;--pri2:#FF5A00;--glass:rgba(18,18,22,.62);--line:rgba(255,255,255,.16)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -735,7 +735,13 @@ html:not(.claro) .tq-prod .ft.sf{background:var(--q-s3)}html.claro .tq-prod .ft.
 .tq-inf{right:6px;top:6px;width:26px;height:26px;background:rgba(255,255,255,.82);color:#8E8E93;box-shadow:0 1px 4px rgba(0,0,0,.1);opacity:.9}
 .tq-inf svg{width:15px;height:15px;fill:currentColor;stroke:none}
 @media (min-width:430px){.tq-cats{width:92px}.tq-prod .pr{font-size:16.5px}.tq-prod.tem .pr{font-size:15px}}
-@media (max-width:340px){.tq-cats{width:72px}.tq-lista{padding-left:8px}.tq-grade{gap:6px}}</style>
+@media (max-width:340px){.tq-cats{width:72px}.tq-lista{padding-left:8px}.tq-grade{gap:6px}}/* (LIVEFOOD-24) nome um pouco menor; etiqueta do Clube embaixo do preço, no meio do cartão */
+.tq-prod .nm{font-size:13px}
+.tq-clb{display:flex;justify-content:center;align-items:center;margin-top:7px;min-width:0}
+.tq-clb .tg{margin:0;font-size:10px;padding:3px 9px;white-space:nowrap}
+.tq-clb .clb-ln{margin:0;justify-content:center}
+.tq-clb .clb-pill{margin-left:9px}
+@media (min-width:430px){.tq-prod .nm{font-size:14px}}</style>
 </head>
 <body>
 <!-- abertura com o Live (fundo branco + logo laranja); some quando o cardápio da loja carrega -->
@@ -3089,14 +3095,16 @@ function tqPe(p){
   return '<button class="tq-mais" type="button" aria-label="Escolher" onclick="event.stopPropagation();tqAbre(\''+id+'\')">+'+(n?'<i>'+n+'</i>':'')+'</button>';
 }
 function tqCartao(p,fz){
-  var pr=minPreco(p), id=esc(p.id);
+  var pr=minPreco(p), id=esc(p.id), pc=pr.orig>pr.min?Math.round((1-pr.min/pr.orig)*100):0;
+  /* a etiqueta do Clube (ou o preço de assinante) fica embaixo do preço, no meio do cartão; o desconto em % continua embaixo do nome */
+  var clb=clbTagLista(p)+clbLinhaMembro(p,fz);
   return '<div class="tq-prod'+(tqQtd(p.id)?' tem':'')+'" data-tq="'+id+'" data-n="'+esc(semAc(p.nome+' '+(p.desc||'')))+'" onclick="tqToca(\''+id+'\',this)">'
     +'<div class="ft'+(p.foto?'':' sf')+'">'+(p.foto?'<img loading="lazy" alt="" src="'+fotoUrl(p)+'">':icone(tipoDesenho(p),44))+'</div>'
     +(p.destaque?'<span class="tq-fg" title="Destaque">🔥</span>':'')
     +((p.desc||p.foto)?'<button class="tq-inf" type="button" aria-label="Ver detalhes" onclick="event.stopPropagation();tqAbre(\''+id+'\')"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg></button>':'')
-    +'<div class="tx"><div class="nm">'+esc(p.nome)+'</div>'+promoTag(p)+clbLinhaMembro(p,fz)
+    +'<div class="tx"><div class="nm">'+esc(p.nome)+'</div>'+(pc>0?'<div class="tgs"><span class="tg tgp">-'+pc+'% OFF</span></div>':'')
     /* preço e o + na mesma linha, embaixo do cartão (o + vira − 1 + depois de adicionar) */
-    +'<div class="pl"><div class="pr">'+(pr.de?'<small>a partir de</small>':'')+(pr.orig>pr.min?'<s>'+brl(pr.orig)+'</s>':'')+(pr.min>0?'<b>'+brl(pr.min)+'</b>':'')+'</div><div class="pe">'+tqPe(p)+'</div></div></div></div>';
+    +'<div class="pl"><div class="pr">'+(pr.de?'<small>a partir de</small>':'')+(pr.orig>pr.min?'<s>'+brl(pr.orig)+'</s>':'')+(pr.min>0?'<b>'+brl(pr.min)+'</b>':'')+'</div><div class="pe">'+tqPe(p)+'</div></div>'+(clb?'<div class="tq-clb">'+clb+'</div>':'')+'</div></div>';
 }
 function tqCatIm(g){
   if(g.id==='_promo') return '<span class="im">'+promoIco()+'</span>';
