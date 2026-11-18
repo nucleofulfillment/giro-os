@@ -101,7 +101,7 @@
   }
   function filtrados() {
     return S.itens.filter((i) => {
-      if (S.filtro === 'todos') return S.dono ? true : reg(i);
+      if (S.filtro === 'todos') return true;
       if (S.filtro === 'pend') return !reg(i);
       if (S.filtro === 'sem') return reg(i) && !i.cat;
       return reg(i) && i.cat === S.filtro;
@@ -109,7 +109,7 @@
   }
   const catNome = (id) => (S.cats.find((c) => c.id === id) || {}).nome || '';
   function pinta() {
-    const pend = S.itens.filter((i) => !reg(i)).length, tot = S.dono ? S.itens.length : S.itens.filter(reg).length;
+    const pend = S.itens.filter((i) => !reg(i)).length, tot = S.itens.length;
     $('#ch-n').innerHTML = `<b>${tot}</b> fotos`;
     $('#ch-add').hidden = !S.dono; $('#ch-pend').hidden = !S.dono; $('#ch-pend').innerHTML = `Sem cadastro <b>${pend}</b>`; $('#ch-pend').classList.toggle('on', S.filtro === 'pend');
     $('#selo-teste').hidden = !S.demo;
@@ -120,14 +120,14 @@
     if (S.dono && semCat) h += `<button type="button" class="cat${S.filtro === 'sem' ? ' on' : ''}" data-f="sem">Sem categoria</button>`;
     $('#cats').innerHTML = h;
     const l = filtrados();
-    const cartao = (i) => `<button type="button" class="beb${i.id === S.sel ? ' tem' : ''}" data-id="${esc(i.id)}"><span class="ft" style="background-image:url('${esc(fotoUrl(i))}')"></span>${reg(i) ? '' : '<span class="pend">Falta cadastrar</span>'}${i.cod ? `<em>Cód. ${esc(i.cod)}</em>` : ''}<b>${esc(i.nome || (S.dono ? 'Sem nome' : ''))}</b><span>${reg(i) && i.preco > 0 ? real(i.preco) : ''}</span><i>+</i></button>`;
+    const cartao = (i) => `<button type="button" class="beb${i.id === S.sel ? ' tem' : ''}" data-id="${esc(i.id)}"><span class="ft" style="background-image:url('${esc(fotoUrl(i))}')"></span>${reg(i) || !S.dono ? '' : '<span class="pend">Falta cadastrar</span>'}${i.cod ? `<em>Cód. ${esc(i.cod)}</em>` : ''}<b>${esc(i.nome || (S.dono ? 'Sem nome' : ''))}</b><span>${reg(i) && i.preco > 0 ? real(i.preco) : ''}</span><i>+</i></button>`;
     let hl = '';
     if (!l.length) hl = `<div class="vazio">${S.dono ? (S.itens.length ? 'Nenhuma foto neste grupo.' : 'Nenhuma foto ainda. Toque em “+ Adicionar fotos”.') : 'A biblioteca ainda não tem fotos cadastradas.'}</div>`;
     else if (S.filtro === 'todos') {
       // lista contínua, com o título de cada categoria (como as bebidas da balança)
       const grupos = S.cats.map((c) => ({ nome: c.nome, it: l.filter((i) => reg(i) && i.cat === c.id) })), resto = l.filter((i) => !reg(i) || !S.cats.find((c) => c.id === i.cat));
-      grupos.push({ nome: resto.some(reg) ? 'Sem categoria' : 'Sem cadastro', it: resto });
-      hl = grupos.filter((g) => g.it.length).map((g) => `<h4>${esc(g.nome)}</h4><div class="gr4">${g.it.map(cartao).join('')}</div>`).join('');
+      grupos.push({ nome: S.dono ? (resto.some(reg) ? 'Sem categoria' : 'Sem cadastro') : '', it: resto });
+      hl = grupos.filter((g) => g.it.length).map((g) => `<div class="gr4">${g.it.map(cartao).join('')}</div>`).join('');
     } else hl = `<h4>${esc(S.filtro === 'pend' ? 'Sem cadastro' : S.filtro === 'sem' ? 'Sem categoria' : catNome(S.filtro))}</h4><div class="gr4">${l.map(cartao).join('')}</div>`;
     $('#lista').innerHTML = hl;    pintaPainel();
   }
