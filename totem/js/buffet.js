@@ -74,12 +74,12 @@
     $('#selo-teste').hidden = !TESTE;
     const tela = $('#tela'), antigo = $('#fundo');
     const url = C.video && CLI ? `${API}/food/video/${encodeURIComponent(CLI)}/${C.video}` : '';
-    if (!url) { if (antigo) antigo.remove(); tela.classList.remove('com-video'); }
+    if (!url) { if (antigo) antigo.remove(); if (tela.classList.contains('com-video')) { tela.classList.remove('com-video'); pintaLogo(); } }
     else if (!antigo || antigo.dataset.u !== url) {
       if (antigo) antigo.remove();
       const v = document.createElement('video'); v.id = 'fundo'; v.dataset.u = url; v.muted = true; v.loop = true; v.autoplay = true; v.playsInline = true; v.preload = 'auto'; v.src = url;
-      v.addEventListener('playing', () => tela.classList.add('com-video'), { once: true });
-      v.addEventListener('error', () => { v.remove(); tela.classList.remove('com-video'); });
+      v.addEventListener('playing', () => { tela.classList.add('com-video'); pintaLogo(); }, { once: true });
+      v.addEventListener('error', () => { v.remove(); tela.classList.remove('com-video'); pintaLogo(); });
       tela.prepend(v); v.play().catch(() => {});
     }
   }
@@ -123,6 +123,7 @@
       if (synth.speaking || synth.pending) { synth.cancel(); setTimeout(() => { try { if (vez === falaVez) synth.speak(u); } catch (e) { /* ok */ } }, 120); } else synth.speak(u);
     } catch (e) { /* sem voz: a tela continua */ }
   }
+  function calaFala() { falaVez++; try { window.Voz && window.Voz.parar && window.Voz.parar(); } catch (e) { /* ok */ } try { window.speechSynthesis && speechSynthesis.cancel(); } catch (e) { /* ok */ } }
   function pesoFalado(kg) {
     const g = Math.round(kg * 1000), q = Math.floor(g / 1000), r = g % 1000;
     if (!q) return g + ' gramas';
@@ -135,6 +136,58 @@
 
   // frase curta do peso e do valor (frase longa demora a terminar e é cortada pela próxima)
   const frasePeso = (liq) => 'Deu ' + pesoFalado(liq) + '. ' + (noLivre(liq) ? 'Passou do buffet livre, você paga o livre: ' : '') + valorFalado(valorDe(liq)) + '.';
+
+  // ----- comemoração do final: o Live animado e o confete dos outros módulos (site/js/live-mascote.js e live-app.js) -----
+  let festa = null;
+  const esperaMs = (ms) => new Promise((r) => setTimeout(r, ms));
+  const mola = (p) => 1 + 2.70158 * Math.pow(p - 1, 3) + 1.70158 * Math.pow(p - 1, 2);
+  function paraFesta() { if (festa) { festa.vivo = false; try { festa.live.destruir(); } catch (e) { /* ok */ } festa = null; } }
+  function comemora(alvo) {
+    paraFesta(); alvo.innerHTML = '';
+    if (!window.LiveMascote) { alvo.innerHTML = LIVE; return; }   // sem o personagem animado: fica o Live parado
+    const live = window.LiveMascote.criar(alvo, { sombra: true, expressao: 'animado' }), eu = festa = { live, vivo: true };
+    (async () => {
+      try {
+        Object.assign(live.P, { y: 140, sx: 0.5, sy: 0.5 });
+        await live.animar({ y: 0, sx: 1, sy: 1 }, 520, mola);
+        if (!eu.vivo) return;
+        const r = alvo.getBoundingClientRect();
+        if (window.LiveApp && window.LiveApp.confete) window.LiveApp.confete(r.left + r.width / 2, r.top + r.height / 2, 36);
+        await live.gesto('comemorar');
+        if (eu.vivo) await live.gesto('piscadinha');
+        const gestos = ['comemorar', 'piscadinha', 'boas_vindas', 'piscadinha'];
+        for (let k = 0; eu.vivo; k++) {
+          await esperaMs(1800); if (!eu.vivo) break;
+          await live.animar({ y: -18, sx: 1.04, sy: 0.97 }, 260, mola); await live.animar({ y: 0, sx: 1, sy: 1 }, 380, mola);
+          if (!eu.vivo) break;
+          await live.gesto(gestos[k % gestos.length]);
+        }
+      } catch (e) { /* a comemoração nunca pode travar a tela */ }
+    })();
+  }
+
+  // ----- logo da loja -----
+  // A loja tem duas logos no cadastro: a principal do cardápio (/_logo, a que costuma ser branca, feita para fundo escuro) e a do
+  // painel (/_logop, escura). Sobre o vídeo de fundo vai a principal, solta, sem moldura; sem vídeo (fundo claro) vai a do painel.
+  const LOGO = { painel: '', nome: '', branca: '', brancaOk: false };
+  function pintaLogo() {
+    const comVideo = $('#tela').classList.contains('com-video'), src = comVideo && LOGO.brancaOk ? LOGO.branca : LOGO.painel;
+    document.querySelectorAll('.loja-logo').forEach((el) => {
+      el.textContent = '';
+      if (src) { const i = new Image(); i.src = src; i.alt = LOGO.nome; if (comVideo && !LOGO.brancaOk) i.className = 'placa'; el.appendChild(i); } else el.textContent = LOGO.nome;
+    });
+  }
+  (function () {
+    const ja = document.querySelector('.loja-logo img');   // o que o cardapio.js já pintou antes deste arquivo carregar
+    if (ja) { LOGO.painel = ja.src; LOGO.nome = ja.alt || ''; } else LOGO.nome = (document.querySelector('.loja-logo') || {}).textContent || M.loja || '';
+    window.LIVE_LOGO = (src, clara, alt) => { LOGO.painel = src || ''; if (alt) LOGO.nome = alt; pintaLogo(); };
+    const cli = M.cli || CRU.cli;
+    if (cli && CRU.cfg && CRU.cfg.logo) {
+      const u = `${API}/food/foto/${encodeURIComponent(cli)}/_logo?v=${CRU.cfg.v || 0}`, t = new Image();
+      t.onload = () => { LOGO.branca = u; LOGO.brancaOk = true; pintaLogo(); };
+      t.src = u;
+    }
+  })();
 
   // ----- estado -----
   const E = { fase: 'ligar', kg: 0, estavel: false, online: false, msgBal: '', fixo: 0, beb: {}, env: '', desde: 0, mexeu: 0, semPrato: 0, contagem: 0, resp: null, simKg: null };
@@ -149,6 +202,8 @@
     window.Totem.estado.modo = f === 'espera' ? 'standby' : 'conversa';
     const cena = { espera: 'c-espera', pesando: 'c-peso', pergunta: 'c-peso', bebida: 'c-beb', enviando: f === 'enviando' && $('#c-beb').classList.contains('on') ? 'c-beb' : 'c-peso', fim: 'c-fim', retire: 'c-fim', pix: 'c-pix', pago: 'c-pix' }[f];
     document.querySelectorAll('.cena').forEach((c) => c.classList.toggle('on', c.id === cena));
+    $('#tela').classList.toggle('em-beb', cena === 'c-beb');   // na lista de bebidas a logo da loja sai, para as categorias subirem
+    if (f !== 'fim' && f !== 'pago') paraFesta();
     $('#ligar').hidden = f !== 'ligar';
     $('#pergunta').hidden = f !== 'pergunta';
     if (f === 'espera') { E.beb = {}; E.fixo = 0; E.resp = null; E.env = ''; $('#erro').hidden = true; }
@@ -198,14 +253,14 @@
     $('#beb-cats').innerHTML = grupos.length > 1 ? grupos.map((g, i) => `<button type="button" data-cat="${esc(g.id)}"${i ? '' : ' class="on"'}>${esc(g.nome)}</button>`).join('') : '';
     $('#beb-cats').hidden = grupos.length < 2;
     $('#grade').innerHTML = grupos.map((g) => (grupos.length > 1 ? `<h4 data-cat-t="${esc(g.id)}">${esc(g.nome)}</h4>` : '') + '<div class="gr4">'
-      + g.itens.map((p) => `<button type="button" class="beb" data-add="${esc(p.id)}">${p.foto ? `<img loading="lazy" alt="" src="${API}/food/foto/${encodeURIComponent(CLI)}/${encodeURIComponent(p.id)}">` : '<div class="sem">🥤</div>'}<b>${esc(p.nome)}</b><span>${real(p.preco)}</span><em hidden></em></button>`).join('') + '</div>').join('');
+      + g.itens.map((p) => `<button type="button" class="beb" data-add="${esc(p.id)}">${p.foto ? `<img loading="lazy" alt="" src="${API}/food/foto/${encodeURIComponent(CLI)}/${encodeURIComponent(p.id)}">` : '<div class="sem">🥤</div>'}<b>${esc(p.nome)}</b><span>${real(p.preco)}</span><em hidden></em><i aria-hidden="true">+</i></button>`).join('') + '</div>').join('');
     $('#grade').scrollTop = 0;
     return grupos.length;
   }
   function pintaBebidas() {
     const n = montaGrade(), liq = liquido(E.fixo), v = valorDe(liq);
     document.querySelectorAll('#grade .beb').forEach((b) => { const q = E.beb[b.dataset.add] || 0, em = b.querySelector('em'); b.classList.toggle('tem', q > 0); em.hidden = !q; em.textContent = q || ''; });
-    if (!$('#beb-dica').dataset.erro) $('#beb-dica').textContent = n ? 'Toque na bebida ou passe a lata no leitor' : 'Passe o código de barras da bebida no leitor';
+    if (!$('#beb-dica').dataset.erro) $('#beb-dica').textContent = n ? '' : 'Passe o código de barras da bebida no leitor';   // com a lista na tela não precisa de explicação
     const ids = Object.keys(E.beb), env0 = E.fase === 'enviando', marcaC = JSON.stringify([E.beb, liq, v, env0]);
     if (marcaC === comandaFeita) return;
     comandaFeita = marcaC;
@@ -260,7 +315,7 @@
         if (paga) {
           $('#pix-caixa').hidden = true; $('#pix-live').hidden = false; $('#b-pix-voltar').hidden = true;   // pago: sai o QR, entra o Live comemorando
           $('#pix-titulo').textContent = 'Pagamento confirmado!'; $('#pix-sub').textContent = 'Comanda ' + r.num + ' paga. Obrigado e bom apetite!'; $('#pix-estado').textContent = '';
-          bip(880); fala('Pagamento confirmado. Obrigado e bom apetite!'); fase('pago'); return;
+          bip(880); fala('Pagamento confirmado. Obrigado e bom apetite!'); fase('pago'); comemora($('#pix-live')); return;
         }
         setTimeout(confere, 3000);
       };
@@ -309,7 +364,7 @@
       }
       if (!d.ok) throw new Error(d.mensagem || 'Não consegui registrar a pesagem.');
       if (!d.linhas) d.linhas = [];   // envio repetido: o servidor devolve só o número e o total
-      E.resp = d; pintaFim(); fase('fim');
+      E.resp = d; pintaFim(); fase('fim'); comemora($('#fim-live'));
       if (C.bebida) fala('Prontinho! Retire a sua comanda e bom apetite!');   // sem a pergunta da bebida, essa frase já foi dita junto com o peso
     } catch (e) {
       $('#erro-m').textContent = (e && e.message) || 'Sem conexão com o sistema.'; $('#erro').hidden = false;
@@ -444,7 +499,7 @@
     if (b.dataset.add) return void soma(b.dataset.add, 1);
     if (b.dataset.menos) return void soma(b.dataset.menos, -1);
     if (b.dataset.t) return void tecla(b.dataset.t);
-    if (b.id === 'b-sim') { E.mexeu = Date.now(); fase('bebida'); }
+    if (b.id === 'b-sim') { calaFala(); E.mexeu = Date.now(); fase('bebida'); }   // vai escolher a bebida: a narração para
     else if (b.id === 'b-nao' || b.id === 'b-concluir' || b.id === 'b-de-novo') { $('#erro').hidden = true; if (E.fase === 'erro') E.fase = 'pergunta'; concluir(); }
     else if (b.id === 'b-cancelar' || b.id === 'b-desistir') cancelar();
     else if (b.id === 'prato-chip') abreTeclado();
