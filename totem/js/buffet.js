@@ -106,7 +106,7 @@
   function fase(f) {
     E.fase = f; E.desde = Date.now(); E.mexeu = Date.now(); E.contagem = 0;
     window.Totem.estado.modo = f === 'espera' ? 'standby' : 'conversa';
-    const cena = { espera: 'c-espera', pesando: 'c-peso', pergunta: 'c-peso', bebida: 'c-beb', enviando: f === 'enviando' && $('#c-beb').classList.contains('on') ? 'c-beb' : 'c-peso', fim: 'c-fim', retire: 'c-fim' }[f];
+    const cena = { espera: 'c-espera', pesando: 'c-peso', pergunta: 'c-peso', bebida: 'c-beb', enviando: f === 'enviando' && $('#c-beb').classList.contains('on') ? 'c-beb' : 'c-peso', fim: 'c-fim', retire: 'c-fim', pix: 'c-pix', pago: 'c-pix' }[f];
     document.querySelectorAll('.cena').forEach((c) => c.classList.toggle('on', c.id === cena));
     $('#ligar').hidden = f !== 'ligar';
     $('#pergunta').hidden = f !== 'pergunta';
@@ -179,7 +179,50 @@
     $('#fim-itens').innerHTML = (r.linhas || []).map((l) => `<div class="ln"><div class="n">${l.qty > 1 ? l.qty + 'x ' : ''}${esc(l.nome)}${l.desc ? `<small>${esc(l.desc)}</small>` : ''}</div><div class="v">${esc(l.preco)}</div></div>`).join('');
     $('#fim-total').textContent = real(r.total);
     $('#fim-titulo').textContent = r.impressora === 0 && !TESTE ? 'Comanda ' + r.num + ' registrada' : 'Prontinho! Retire a sua comanda';
-    $('#fim-aviso').textContent = r.impressora === 0 && !TESTE ? 'A impressora está desligada. Informe o número ' + r.num + ' no caixa.' : 'Pague no caixa ao sair. Bom apetite!';
+    const pix = !!(r.pix && r.conta);
+    $('#fim-aviso').textContent = r.impressora === 0 && !TESTE ? 'A impressora está desligada. Informe o número ' + r.num + ' no caixa.' : pix ? 'Pague agora por Pix, pelo QR da comanda no celular, ou no caixa ao sair.' : 'Pague no caixa ao sair. Bom apetite!';
+    $('#fim-pagar').hidden = !pix;
+  }
+
+  // ----- pagar agora com Pix (opcional): gera o Pix da comanda, mostra o QR e espera a confirmação -----
+  let pixVez = 0;
+  function voltaInicio() { pixVez++; E.travado = E.online && E.kg >= NA_BALANCA; fase('espera'); }
+  async function abrePix() {
+    const r = E.resp; if (!r || !r.conta) return;
+    const vez = ++pixVez, c = r.conta;
+    $('#pix-img').removeAttribute('src'); $('#pix-ok').hidden = true; $('#b-pix-voltar').hidden = false;
+    $('#pix-titulo').textContent = 'Pague com Pix'; $('#pix-sub').textContent = 'Abra o aplicativo do seu banco e leia o QR Code';
+    $('#pix-total').textContent = real(r.total); $('#pix-estado').textContent = 'Gerando o Pix…';
+    fase('pix');
+    try {
+      let d;
+      if (TESTE) { await new Promise((ok) => setTimeout(ok, 800)); d = { ok: true, conta: { pix_qr: '' } }; }
+      else d = await fetch(API + '/live/conta-pix', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ l: c.l, n: c.n, t: c.t }) }).then((x) => x.json());
+      if (vez !== pixVez) return;
+      if (!d.ok) throw new Error(d.mensagem || 'Não consegui gerar o Pix.');
+      if (d.conta.pix_qr) $('#pix-img').src = /^data:/.test(d.conta.pix_qr) ? d.conta.pix_qr : 'data:image/png;base64,' + d.conta.pix_qr;
+      $('#pix-estado').textContent = TESTE ? 'Teste: o pagamento será confirmado sozinho em instantes' : 'Aguardando o pagamento…';
+      const inicio = Date.now();
+      const confere = async () => {
+        if (vez !== pixVez || E.fase !== 'pix') return;
+        let paga = false;
+        try {
+          if (TESTE) paga = Date.now() - inicio > 5000;
+          else { const s = await fetch(`${API}/live/conta?l=${encodeURIComponent(c.l)}&n=${c.n}&t=${c.t}`, { cache: 'no-store' }).then((x) => x.json()); paga = !!(s.ok && (s.paga || !s.aberta)); }
+        } catch (e) { /* sem rede agora: tenta de novo */ }
+        if (vez !== pixVez || E.fase !== 'pix') return;
+        if (paga) {
+          $('#pix-ok').hidden = false; $('#b-pix-voltar').hidden = true;
+          $('#pix-titulo').textContent = 'Pagamento confirmado!'; $('#pix-sub').textContent = 'Comanda ' + r.num + ' paga. Obrigado e bom apetite!'; $('#pix-estado').textContent = '';
+          bip(880); fala('Pagamento confirmado. Obrigado e bom apetite!'); fase('pago'); return;
+        }
+        setTimeout(confere, 3000);
+      };
+      setTimeout(confere, 3000);
+    } catch (e) {
+      if (vez !== pixVez) return;
+      $('#pix-estado').textContent = ((e && e.message) || 'Não consegui gerar o Pix.') + ' Pague no caixa.';
+    }
   }
 
   // ----- ações -----
@@ -212,7 +255,7 @@
       if (TESTE) {
         await new Promise((r) => setTimeout(r, 700));
         const liq = liquido(E.fixo), v = valorDe(liq);
-        d = { ok: true, num: 100 + Math.floor(Math.random() * 900), total: r2(v + totalBeb()), impressora: 1,
+        d = { ok: true, num: 100 + Math.floor(Math.random() * 900), total: r2(v + totalBeb()), impressora: 1, pix: 1, conta: { l: 'teste', n: 1, t: 'x' },
           linhas: [{ qty: 1, nome: 'Buffet por quilo', desc: kgTxt(liq) + ' kg x ' + real(AGORA.preco) + '/kg', preco: real(v) }].concat(bebidas.map((b) => ({ qty: b.qty, nome: PRODS[b.p].nome, desc: '', preco: real(PRODS[b.p].preco * b.qty) }))) };
       } else {
         const r = await fetch(API + '/live/balanca-pedido', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ loja: LOJA, k: KEY, kg: E.fixo, bebidas, env: E.env }) });
@@ -260,7 +303,9 @@
           if (parado > 1200) { const falta = CONTAGEM - Math.floor((parado - 1200) / 1000); if (falta <= 0) { concluir(); return; } E.contagem = falta; } else E.contagem = 0;
         } else if (agora - E.mexeu > 90000) { concluir(); return; }   // esqueceu a tela das bebidas aberta: fecha com o que escolheu
         break;
-      case 'fim': if (agora - E.desde > VOLTA_MS) { E.travado = !fora; fase('espera'); } break;   // volta sozinha para a tela inicial
+      case 'fim': if (agora - E.desde > (E.resp && E.resp.pix && E.resp.conta ? VOLTA_MS + 7000 : VOLTA_MS)) voltaInicio(); break;   // volta sozinha para a tela inicial (com o botão do Pix, espera um pouco mais)
+      case 'pix': if (agora - E.desde > 5 * 60000) voltaInicio(); break;   // ninguém pagou: a comanda segue aberta para o caixa ou para o QR
+      case 'pago': if (agora - E.desde > 6000) voltaInicio(); break;
       case 'retire': if (fora || agora - E.desde > 5000) { E.travado = !fora; fase('espera'); } break;
     }
     pinta();
@@ -328,6 +373,8 @@
     else if (b.id === 'b-nao' || b.id === 'b-concluir' || b.id === 'b-de-novo') { $('#erro').hidden = true; if (E.fase === 'erro') E.fase = 'pergunta'; concluir(); }
     else if (b.id === 'b-cancelar' || b.id === 'b-desistir') cancelar();
     else if (b.id === 'prato-chip') abreTeclado();
+    else if (b.id === 'b-pix') abrePix();
+    else if (b.id === 'b-depois' || b.id === 'b-pix-voltar') voltaInicio();
   });
   // a categoria acesa acompanha a rolagem da lista (e rolar conta como o cliente mexendo na tela)
   $('#grade').addEventListener('scroll', () => {
@@ -343,7 +390,7 @@
     const t = Date.now();
     if (ev.key === 'Enter') { if (buf.length >= 6 && t - ultima < 150) { ev.preventDefault(); bipou(buf); } buf = ''; return; }
     if (ev.key.length === 1 && /[0-9A-Za-z-]/.test(ev.key)) { if (t - ultima > 100) buf = ''; buf += ev.key; ultima = t; }
-    if (TESTE && !E.online || E.simKg !== null) { if (ev.key === 'p' || ev.key === 'P') E.simKg = r3(0.3 + Math.random() * 0.6 + prato().g / 1000); if (ev.key === 'r' || ev.key === 'R') E.simKg = 0; }
+    if (TESTE) {   /* no teste, P põe um prato de mentira e R retira (vale mesmo com a balança ligada) */ if (ev.key === 'p' || ev.key === 'P') E.simKg = r3(0.3 + Math.random() * 0.6 + prato().g / 1000); if (ev.key === 'r' || ev.key === 'R') E.simKg = 0; }
   }, true);
 
   // ----- começa -----

@@ -131,7 +131,18 @@ function comandaBuffet(p, cfg) {
   b.ln(tr).bold(true).size(1, 2).ln(par('TOTAL', p.total || '')).size(1, 1).bold(false);
   b.ln(tr).align(1).bold(true).size(1, 2).ln('PAGUE NO CAIXA AO SAIR').size(1, 1).bold(false);
   b.ln('Quer mais uma bebida? Apresente esta comanda.').ln('Guarde este papel.');
-  const cod = String(p.lab).replace(/[^0-9A-Za-z-]/g, '');
+  /* (311) QR da conta: o cliente aponta a câmera do celular, vê a comanda e paga por Pix (quando a loja recebe Pix pelo sistema) */
+  if (p.qr) {
+    const d = Buffer.from(String(p.qr), 'latin1'), n = d.length + 3;
+    b.raw(10).bold(true).ln(p.pix ? 'PAGUE PELO CELULAR COM PIX' : 'VEJA A SUA CONTA NO CELULAR').bold(false).ln('Aponte a camera para o codigo abaixo');
+    b.raw(0x1D, 0x28, 0x6B, 4, 0, 0x31, 0x41, 0x32, 0);          /* QR modelo 2 */
+    b.raw(0x1D, 0x28, 0x6B, 3, 0, 0x31, 0x43, 6);                /* tamanho do ponto */
+    b.raw(0x1D, 0x28, 0x6B, 3, 0, 0x31, 0x45, 0x31);             /* correção de erro M */
+    b.raw(0x1D, 0x28, 0x6B, n & 255, n >> 8, 0x31, 0x50, 0x30, ...d);   /* guarda o texto */
+    b.raw(0x1D, 0x28, 0x6B, 3, 0, 0x31, 0x51, 0x30).raw(10);     /* imprime */
+  }
+  /* código de barras com zeros à esquerda (000123): o leitor do caixa precisa de pelo menos 6 números para reconhecer a comanda */
+  const cod = /^\d+$/.test(String(p.lab)) ? String(p.lab).padStart(6, '0') : String(p.lab).replace(/[^0-9A-Za-z-]/g, '');
   b.raw(10, 0x1D, 0x68, 70, 0x1D, 0x77, 2, 0x1D, 0x48, 0, 0x1D, 0x6B, 73, cod.length + 2, 0x7B, 0x42, ...bytesTxt(cod, cfg)).raw(10);
   b.bold(true).size(1, 2).ln(String(p.lab)).size(1, 1).bold(false);
   b.raw(10, 10, 10, 0x1D, 0x56, 66, 3);   /* avança e corta */

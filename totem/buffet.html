@@ -145,6 +145,17 @@
   #fim-num small { display: block; font: 800 calc(var(--u) * 1)/1.4 var(--f); letter-spacing: .14em; color: #8E8E93; }
   #fim-aviso { margin-top: calc(var(--u) * 1.4); font-size: calc(var(--u) * 1.45); font-weight: 700; color: var(--mu2); min-height: 1.5em; }
 
+  #fim-pagar { margin-top: calc(var(--u) * 1.4); }
+  /* Pix na tela: QR grande num cartão branco; pago, vira um selo verde */
+  #pix-caixa { position: relative; margin-top: calc(var(--u) * 1.6); width: calc(var(--u) * 21); height: calc(var(--u) * 21); border-radius: calc(var(--u) * 2); background: #fff; display: grid; place-items: center; box-shadow: 0 calc(var(--u) * 1) calc(var(--u) * 3) rgba(0, 0, 0, .16); }
+  #pix-img { width: 88%; height: 88%; image-rendering: pixelated; }
+  #pix-img:not([src]) { visibility: hidden; }
+  #pix-ok { position: absolute; inset: 0; border-radius: inherit; background: var(--ok); color: #fff; display: grid; place-items: center; animation: surge .35s cubic-bezier(.2, .9, .3, 1.4); }
+  #pix-ok svg { width: 46%; height: 46%; }
+  @keyframes surge { from { transform: scale(.6); opacity: 0; } }
+  #pix-total { margin-top: calc(var(--u) * 1.2); font: 800 calc(var(--u) * 4.4)/1 var(--ft); letter-spacing: -1px; font-variant-numeric: tabular-nums; }
+  #pix-estado { margin: calc(var(--u) * .6) 0 calc(var(--u) * 1.4); font-size: calc(var(--u) * 1.35); font-weight: 700; color: var(--mu2); min-height: 1.5em; }
+
   /* camadas: ligar a tela, teclado do prato, erro */
   .camada { position: absolute; inset: 0; z-index: 30; display: grid; place-items: center; background: rgba(15, 15, 17, .72); backdrop-filter: blur(10px); color: #fff; text-align: center; }
   .cx { background: #fff; color: #1C1C1E; border-radius: calc(var(--u) * 2.4); padding: calc(var(--u) * 2.4); width: calc(var(--u) * 34); max-width: 92vw; }
@@ -246,6 +257,16 @@
       <div class="tot"><span>Total</span><b id="fim-total"></b></div>
     </div>
     <div id="fim-aviso" aria-live="polite"></div>
+    <div class="botoes" id="fim-pagar" hidden><button type="button" class="bt pri" id="b-pix">Pagar agora com Pix</button><button type="button" class="bt" id="b-depois">Pagar depois no caixa</button></div>
+  </section>
+
+  <section class="cena" id="c-pix">
+    <h2 id="pix-titulo">Pague com Pix</h2>
+    <p class="sub" id="pix-sub">Abra o aplicativo do seu banco e leia o QR Code</p>
+    <div id="pix-caixa"><img id="pix-img" alt="QR Code do Pix"><div id="pix-ok" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div></div>
+    <div id="pix-total"></div>
+    <div id="pix-estado" aria-live="polite"></div>
+    <button type="button" class="bt p" id="b-pix-voltar">Pagar depois no caixa</button>
   </section>
 
   <div class="camada" id="ligar" hidden>

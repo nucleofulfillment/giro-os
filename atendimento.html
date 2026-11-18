@@ -875,6 +875,7 @@ function bpComanda(){
 }
 function bpCodigo(cod){
   var n=bpNorm(cod), p=n?(D.prods||[]).filter(function(x){ return x.barras&&bpNorm(x.barras)===n; })[0]:null;
+  if(!p&&comBipFecha(cod)) return;   /* (311) não é produto: pode ser a comanda impressa do buffet (código de barras = número da comanda) */
   if(!p){ bpSom(false); toast('Código '+cod+' não cadastrado.'); return; }
   if(BP.it&&BP.it.p.id===p.id){ bpSom(true); bpQtd(1); return; }
   if(BP.it) bpGuarda();
@@ -883,6 +884,19 @@ function bpCodigo(cod){
     if((p.tamanhos||[]).length||(p.sabores||[]).length){ bpPara(); BP.camOn=false; itemSheet(p.id); return; }
     bpPara(); bpMostra(p);
   });
+}
+/* (311) CAIXA: bipou a comanda impressa (buffet por quilo e qualquer pedido) → abre direto o fechamento da conta dela.
+   A comanda do buffet imprime o número com zeros à esquerda (000123) para o leitor reconhecer; código só de números com até 8 dígitos é tratado como comanda. */
+function comBipFecha(cod){
+  var s=String(cod||'').trim(); if(!/^\d{1,8}$/.test(s)) return false; var n=parseInt(s,10); if(!n) return false;
+  var acha=function(){ for(var i=0;i<COMS.length;i++){ if(COMS[i].pedidos.some(function(p){ return Number(p.num)===n; })) return i; } return -1; };
+  comBusca().then(function(d){
+    if(d&&d._h===401){ mostraLogin('Entre de novo.'); return; }
+    if(d&&d.ok) comPinta(d);
+    var i=acha(); if(i<0){ bpSom(false); toast('Comanda '+n+' não está aberta (já foi paga ou fechada).'); return; }
+    bpSom(true); fechaForm(i);
+  });
+  return true;
 }
 function bpMostra(p){
   clearTimeout(toast._t); $('toast').style.display='none';   /* o aviso não pode cobrir a quantidade */
