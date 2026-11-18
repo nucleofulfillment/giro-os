@@ -11565,11 +11565,11 @@ function cdNovaCatRapida(){
 </script>
 <!-- CADASTRAR FÁCIL (celular): botão do Live + modal em passos. Só mexe no cadastro pela mesma rota do painel (cdSalvarApi). -->
 <style>
-#cf-fab{position:fixed;right:14px;bottom:122px;z-index:69;display:none;flex-direction:column;align-items:center;gap:2px;width:auto;border:0;background:none;padding:0;cursor:pointer;filter:drop-shadow(0 6px 12px rgba(0,0,0,.25));transition:transform .2s;font-family:inherit}
-#cf-fab.on{display:flex}#cf-fab:hover{transform:scale(1.06)}
+#cf-fab{position:fixed;right:18px;bottom:18px;z-index:69;display:none;flex-direction:column;align-items:center;gap:2px;width:auto;border:0;background:none;padding:0;cursor:pointer;filter:drop-shadow(0 6px 12px rgba(0,0,0,.25));transition:transform .2s;font-family:inherit}
+#cf-fab.on{display:flex}body.cf-cardapio #aj-fab,body.cf-cardapio #aj-dica{display:none!important}#cf-fab:hover{transform:scale(1.06)}
 #cf-fab .cf-lv{width:62px;height:52px;display:flex;align-items:center;justify-content:center;font-size:34px}
 #cf-fab .cf-tx{background:#FF5A00;color:#fff;font-size:11px;font-weight:800;padding:3px 9px;border-radius:99px;white-space:nowrap;line-height:1.3}
-@media (max-width:859px){#cf-fab{right:8px;bottom:136px}#cf-fab .cf-lv{width:54px;height:46px}}
+@media (max-width:859px){#cf-fab{right:8px;bottom:72px}#cf-fab .cf-lv{width:54px;height:46px}}
 #sh-cf .cf-p{font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px;letter-spacing:.3px}
 #sh-cf .cf-q{font-size:19px;font-weight:800;margin:2px 0 12px;line-height:1.25}
 #sh-cf .cf-big{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:56px;border-radius:14px;border:0;background:#FF5A00;color:#fff;font:inherit;font-size:16px;font-weight:800;cursor:pointer;margin:0 0 10px}
@@ -11675,7 +11675,7 @@ function cfSugerir(nome){
   for(i=0;i<CF_NCM.length;i++){ if(CF_NCM[i][0].test(n)){ r.ncm=CF_NCM[i][1].replace(/\D/g,''); r.aviso=(par?'Parece variação de <b>'+esc(par.nome)+'</b> (ele ainda está sem NCM). ':'')+'NCM sugerido pelo tipo (<b>'+CF_NCM[i][2]+'</b>). <b>Conferir com o contador.</b>'; return r; } }
   r.aviso=(par?'Parece variação de <b>'+esc(par.nome)+'</b> (ele ainda está sem NCM). ':'')+'Não consegui sugerir o NCM deste produto. Digite se souber, ou deixe vazio e <b>confira com o contador</b>.'; r.cls='ruim'; return r;
 }
-function cfFab(p){ var b=el('cf-fab'); if(!b) return; var on=(p==='cardapio'); b.classList.toggle('on',on); if(on&&!b._lv){ b._lv=1; try{ mpLiveCarregar(function(){ try{ var c=el('cf-lv'); c.textContent=''; c.style.fontSize='0'; LiveMascote.criar(c,{sombra:false,rotulo:'Cadastrar fácil'}); }catch(e){} }); }catch(e){} } }
+function cfFab(p){ var b=el('cf-fab'); if(!b) return; var on=(p==='cardapio'); b.classList.toggle('on',on); document.body.classList.toggle('cf-cardapio',on); if(on&&!b._lv){ b._lv=1; try{ mpLiveCarregar(function(){ try{ var c=el('cf-lv'); c.textContent=''; c.style.fontSize='0'; LiveMascote.criar(c,{sombra:false,rotulo:'Cadastrar fácil'}); }catch(e){} }); }catch(e){} } }
 function cfAbrir(){ CF.modo=''; CF.passo='menu'; CF.seq=false; CF.feitos=0; cfReset(); abrir('sh-cf'); cfPintar(); }
 function cfFechar(){ fecharTudo(); }
 function cfReset(){ CF.foto=''; CF.barras=''; CF.nome=''; CF.preco=''; CF.ncm=''; CF.cat=''; CF.sug=null; CF.alvo=null; CF.busca=''; CF.salvando=false; }
