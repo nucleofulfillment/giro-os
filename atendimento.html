@@ -337,7 +337,7 @@ label.l.big{font-size:14px;margin-top:16px}
 
 <div id="app" class="hide">
   <div id="top" data-versao="ATEND-52"><div style="flex:1;min-width:0;display:flex;align-items:center;gap:12px"><b id="emp" style="flex:none">Atendimento</b><small id="usu"></small></div><!-- "Atender via mapa" (mpAbre) fora do ar enquanto evolui; o código do mapa continua abaixo --><button id="btPos" style="display:none;flex:none;font-size:17px;padding:6px 10px" title="Maquininha" aria-label="Maquininha" onclick="try{LiveFoodPOS.menu()}catch(e){}">💳</button><a class="bt-hub" href="hub.html" title="Voltar ao Hub" aria-label="Voltar ao Hub"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></a><button onclick="sair()">Sair</button></div>
-  <div id="chip" class="hide"><div class="t"><b id="chipT"></b><small id="chipS"></small></div><button onclick="trocaComanda()">Trocar</button></div>
+  <div id="chip" class="hide"><div class="t"><b id="chipT"></b><small id="chipS"></small></div><button id="nfcChip" class="hide" onclick="nfcChipToggle()" title="Gravar o pedido no cartão NFC do cliente">💳 Cartão NFC: desligado</button><button onclick="trocaComanda()">Trocar</button></div>
 
   <!-- PEDIDO -->
   <div id="v-ped" class="main">
@@ -690,10 +690,10 @@ function abreComanda(){
 }
 function mostraComanda(){
   var t=[]; if(COM.sm) t.push('Sem mesa'); else if(ehSMM(COM.mesa)) t.push(smTit(COM.mesa)); else if(COM.avulso||ehBalM(COM.mesa)) t.push('Balcão'); else if(COM.mesa) t.push((COM.modo==='balcao'?'Balcão ':'Mesa ')+esc(COM.mesa)); if(COM.joia) t.push(pill(COM.joia));
-  $('chipT').innerHTML=t.join(' · '); $('chipS').textContent=COM.sm||ehSMM(COM.mesa)?'Sem cliente':(COM.nome||'Comanda aberta'); $('chip').classList.remove('hide');
+  try{ nfcChipPinta(); }catch(e){} $('chipT').innerHTML=t.join(' · '); $('chipS').textContent=COM.sm||ehSMM(COM.mesa)?'Sem cliente':(COM.nome||'Comanda aberta'); $('chip').classList.remove('hide');
 }
 function trocaComanda(){ if(CART.length&&!confirm('Há itens no pedido que ainda não foram enviados. Trocar de comanda mesmo assim?')) return; zeraComanda(); }
-function zeraComanda(){ COPOS=null; NFCG=false;   /* (250) */ _ab=0; AUTOJ=''; AUTOM=''; carregaAbertas(); COM={mesa:'',joia:'',nome:'',modo:COM.modo,dev:0,bloq:false,liberar:false}; modo(COM.modo); CART=[]; $('chip').classList.add('hide'); $('iMesa').value=''; $('iJoia').value=''; $('joiaInfo').innerHTML=''; $('sugs').innerHTML=''; $('idErr').textContent=''; limpaBusca(); ['p-cats','p-prods'].forEach(function(i){ $(i).classList.add('hide'); }); $('p-ident').classList.remove('hide'); cartBar(); window.scrollTo(0,0); if(JOIA_ABC) joiaTeclado(true); foco('#iJoia'); }   /* (228) começa pelo cliente */
+function zeraComanda(){ COPOS=null; NFCG=false; try{ nfcChipPinta(); }catch(e){}   /* (250) */ _ab=0; AUTOJ=''; AUTOM=''; carregaAbertas(); COM={mesa:'',joia:'',nome:'',modo:COM.modo,dev:0,bloq:false,liberar:false}; modo(COM.modo); CART=[]; $('chip').classList.add('hide'); $('iMesa').value=''; $('iJoia').value=''; $('joiaInfo').innerHTML=''; $('sugs').innerHTML=''; $('idErr').textContent=''; limpaBusca(); ['p-cats','p-prods'].forEach(function(i){ $(i).classList.add('hide'); }); $('p-ident').classList.remove('hide'); cartBar(); window.scrollTo(0,0); if(JOIA_ABC) joiaTeclado(true); foco('#iJoia'); }   /* (228) começa pelo cliente */
 function ativaComanda(c){ COM={mesa:c.mesa||'',joia:c.joia||'',nome:c.nome||'',modo:(c.joia&&!c.mesa)||ehBalM(c.mesa)?'balcao':'mesa',dev:0,bloq:false,liberar:false}; modo(COM.modo); CART=[]; mostraComanda(); $('p-ident').classList.add('hide'); aba('ped'); verCats(); }
 /* ── cardápio: categorias em cards ── */
 function fotoProd(p){ return p.foto?API+'/food/foto/'+encodeURIComponent(CLI)+'/'+encodeURIComponent(p.id):''; }
@@ -982,8 +982,10 @@ function nfcLinha(){
   if(!nfcOk()) return '';
   return '<label style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:1.5px solid '+(NFCG?'var(--pri)':'var(--s3)')+';border-radius:14px;margin-bottom:10px;font-weight:800;cursor:pointer"><input type="checkbox" id="nfcG" style="width:20px;height:20px" onchange="nfcToggle(this.checked)"'+(NFCG?' checked':'')+'><span>💳 Gravar no cartão NFC<br><small style="font-weight:600;color:var(--mu2)">Ao finalizar, o sistema pede para encostar o cartão</small></span></label>';
 }
+function nfcChipPinta(){ var b=$('nfcChip'); if(!b) return; var ok=nfcOk(); b.classList.toggle('hide',!ok); if(!ok) return; b.textContent='💳 Cartão NFC: '+(NFCG?'ligado':'desligado'); b.style.background=NFCG?'var(--pri)':''; b.style.color=NFCG?'#fff':''; }
+function nfcChipToggle(){ NFCG=!NFCG; nfcChipPinta(); var l=$('nfcG'); if(l) l.checked=NFCG; toast(NFCG?'Ao finalizar, o sistema pede o cartão NFC':'Cartão NFC desligado'); }
 function nfcToggle(on){
-  NFCG=!!on; var b=$('pBt'); if(!b) return; var tot=Math.round((cartTot()+srvVal(cartTot()))*100)/100;
+  NFCG=!!on; try{ nfcChipPinta(); }catch(e){} var b=$('pBt'); if(!b) return; var tot=Math.round((cartTot()+srvVal(cartTot()))*100)/100;
   b.setAttribute('onclick','copoOk('+(NFCG?'fcCartaoNfc':'fcEscolher')+')'); b.textContent=(NFCG?'Gravar no cartão':'Fechar comanda')+' · '+brl(tot);
   var l=$('nfcG'); if(l&&l.parentNode) l.parentNode.style.borderColor=NFCG?'var(--pri)':'var(--s3)';
 }
