@@ -127,7 +127,7 @@
       // lista contínua, com o título de cada categoria (como as bebidas da balança)
       const grupos = S.cats.map((c) => ({ nome: c.nome, it: l.filter((i) => reg(i) && i.cat === c.id) })), resto = l.filter((i) => !reg(i) || !S.cats.find((c) => c.id === i.cat));
       grupos.push({ nome: S.dono ? (resto.some(reg) ? 'Sem categoria' : 'Sem cadastro') : '', it: resto });
-      hl = grupos.filter((g) => g.it.length).map((g) => `<div class="gr4">${g.it.map(cartao).join('')}</div>`).join('');
+      hl = grupos.filter((g) => g.it.length).map((g) => `${g.nome ? '<h4>' + esc(g.nome) + '</h4>' : ''}<div class="gr4">${g.it.map(cartao).join('')}</div>`).join('');
     } else hl = `<h4>${esc(S.filtro === 'pend' ? 'Sem cadastro' : S.filtro === 'sem' ? 'Sem categoria' : catNome(S.filtro))}</h4><div class="gr4">${l.map(cartao).join('')}</div>`;
     $('#lista').innerHTML = hl;    pintaPainel();
   }
