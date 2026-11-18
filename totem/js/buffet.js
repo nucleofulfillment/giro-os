@@ -86,13 +86,42 @@
   // A fala tem de sair na hora em que o peso para. A voz do servidor (a do totem de voz) leva 2 a 3 segundos para gerar cada frase,
   // e aqui a frase muda a cada prato (não dá para deixar pronta). Por isso o Buffet fala com a voz do próprio navegador, que é imediata;
   // "aquece" deixa a ligação dela aberta antes da primeira fala (ao ligar a tela e quando um prato encosta na balança).
-  function aquece() { try { if (C.voz && window.Voz && window.Voz.aquecer) window.Voz.aquecer(); } catch (e) { /* ok */ } }
+  // A voz NUNCA pode ficar muda: se a voz do navegador não existir neste aparelho, ou não começar em 1,5 s, a frase sai pela
+  // voz do servidor (a do totem de voz), que demora mais mas sempre funcionou.
+  function aquece() { try { if (C.voz && window.Voz && window.Voz.aquecer && !(speechSynthesis.speaking || speechSynthesis.pending)) window.Voz.aquecer(); } catch (e) { /* ok */ } }
+  const vozProxy = () => (VOZ_SERVIDOR && KEY ? (texto, velocidade, signal) => fetch(API + '/live/voz', { method: 'POST', headers: { 'Content-Type': 'application/json' }, signal, body: JSON.stringify({ loja: LOJA, k: KEY, texto, velocidade }) }) : null);
+  try { if (window.speechSynthesis) { speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = () => {}; } } catch (e) { /* ok */ }   // pede a lista de vozes cedo (ela chega depois)
+  function vozDoNavegador() {
+    try {
+      const todas = speechSynthesis.getVoices().filter((v) => /^pt/i.test(v.lang || ''));
+      const br = todas.filter((v) => /pt[-_]BR/i.test(v.lang)), lista = br.length ? br : todas;
+      const femininas = /Maria|Francisca|Thalita|Leticia|Brenda|Elza|Giovanna|Leila|Manuela|Yara|Luciana|Camila|Vitoria|Heloisa/i;
+      const masc = lista.filter((v) => !femininas.test(v.name));
+      for (const re of [/Ant[oô]nio.*Natural/i, /Natural/i, /Daniel/i, /Google/i]) { const v = masc.find((x) => re.test(x.name)); if (v) return v; }
+      return masc[0] || lista[0] || null;
+    } catch (e) { return null; }
+  }
+  let falaVez = 0;
   function fala(texto) {
     if (!C.voz || !texto) return;
+    const V = window.Voz, vez = ++falaVez;
+    const servidor = () => {
+      if (vez !== falaVez) return;
+      try { const px = vozProxy(); if (V && px) V.falar(texto, { tom: 1.6, velocidade: 1.1, elevenProxy: px }).catch(() => {}); } catch (e) { /* sem voz: a tela continua */ }
+    };
     try {
-      if (window.Voz) { window.Voz.falar(texto, { tom: 1.6, velocidade: 1.1 }).catch(() => {}); return; }
-      if (window.speechSynthesis) { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(texto); u.lang = 'pt-BR'; speechSynthesis.speak(u); }
-    } catch (e) { /* sem voz: a tela continua */ }
+      const synth = window.speechSynthesis, v = synth ? vozDoNavegador() : null;
+      if (!v) return servidor();   // este aparelho não tem voz em português: usa a do servidor
+      try { V && V.parar && V.parar(); } catch (e) { /* ok */ }
+      const u = new SpeechSynthesisUtterance(V && V.paraFala ? V.paraFala(texto) : texto);
+      u.voice = v; u.lang = v.lang || 'pt-BR'; u.rate = 1.1; u.pitch = /Natural/i.test(v.name) ? 1.6 : 1.1; u.volume = 1;
+      let saiu = false;
+      u.onstart = u.onboundary = () => { saiu = true; };
+      u.onerror = () => { if (!saiu) { saiu = true; servidor(); } };
+      // falar logo depois de um "cancelar" faz alguns navegadores engolirem a frase: dá um respiro antes
+      if (synth.speaking || synth.pending) { synth.cancel(); setTimeout(() => { try { synth.speak(u); } catch (e) { servidor(); } }, 120); } else synth.speak(u);
+      setTimeout(() => { if (!saiu) { saiu = true; try { synth.cancel(); } catch (e) { /* ok */ } servidor(); } }, 1500);
+    } catch (e) { servidor(); }
   }
   function pesoFalado(kg) {
     const g = Math.round(kg * 1000), q = Math.floor(g / 1000), r = g % 1000;
@@ -294,7 +323,7 @@
       case 'espera':
         // depois de uma pesagem a tela volta sozinha para o início; se o prato ainda está na balança, só aceita outro depois que ele sair
         if (E.travado) { if (fora || !E.online) E.travado = false; }
-        else if (tem) { aquece(); fase('pesando'); }
+        else if (tem) fase('pesando');
         break;
       case 'pesando':
         if (fora) { fase('espera'); break; }
