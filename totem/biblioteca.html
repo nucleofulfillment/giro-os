@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Biblioteca de fotos · LiveFood</title>
+<!-- Biblioteca de fotos dos produtos (galeria vertical), no mesmo visual da balança do buffet.
+     Abre com o link do painel (Cardápio > Biblioteca): biblioteca.html?loja=<código>&k=<chave>
+     Logado como dono no painel (mesmo navegador): aparecem "+ Adicionar fotos" e o painel da direita para cadastrar cada foto.
+     Sem login de dono: só visualização, e só das fotos já cadastradas. Teste sem servidor: ?teste=1 (dono) ou ?teste=1&visitante=1 -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { --bg: #F4F4F5; --s1: #fff; --s4: #E8E8EB; --b2: #DFDFE4; --tx: #1C1C1E; --mu: #8E8E93; --mu2: #5E5E66; --pri: #FF5A00; --ok: #16A34A; --er: #DC2626; --f: 'Manrope', system-ui, sans-serif; --ft: 'Baloo 2', 'Manrope', system-ui, sans-serif;
+    --u: min(1vw, 1.78vh); }
+  @media (max-width: 800px) { :root { --u: min(2.3vw, 1.5vh); } }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--pri); color: var(--tx); font-family: var(--f); -webkit-font-smoothing: antialiased; }
+  button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; padding: 0; }
+  button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid var(--tx); outline-offset: 2px; }
+  [hidden] { display: none !important; }
+  #assinatura { position: fixed; left: 0; right: 0; bottom: 0; height: calc(var(--u) * 3.2); display: grid; place-items: center; }
+  #assinatura img { height: calc(var(--u) * 1.6); }
+  #tela { position: fixed; left: 0; right: 0; top: 0; bottom: calc(var(--u) * 3.2); background: var(--bg); border-radius: 0 0 calc(var(--u) * 2.4) calc(var(--u) * 2.4); overflow: hidden; isolation: isolate; }
+  #fundo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; }
+  #tela.com-video::after { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(rgba(0, 0, 0, .58), rgba(0, 0, 0, .38) 45%, rgba(0, 0, 0, .66)); }
+  #tela.com-video { color: #fff; --mu: rgba(255, 255, 255, .72); --mu2: rgba(255, 255, 255, .86); --vidro: rgba(20, 20, 22, .46); --borda: rgba(255, 255, 255, .22); }
+  #tela { --vidro: rgba(255, 255, 255, .86); --borda: var(--s4); }
+  #selo-teste { position: absolute; left: 50%; bottom: calc(var(--u) * .6); transform: translateX(-50%); z-index: 6; padding: calc(var(--u) * .3) calc(var(--u) * 1); border-radius: 99px; background: #1C1C1E; color: #fff; font-size: calc(var(--u) * 1); font-weight: 800; white-space: nowrap; }
+
+  /* barra: categorias (menores, como as da balança) e, na mesma linha, a contagem e as ações do dono */
+  #esq { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  #barra { flex: none; display: flex; align-items: center; gap: calc(var(--u) * 1.2); }
+  #cats { flex: 1; min-width: 45%; display: flex; flex-wrap: wrap; gap: calc(var(--u) * .7); padding: 2px; }
+  .cat { flex: none; height: calc(var(--u) * 3.6); padding: 0 calc(var(--u) * 1.5); border-radius: 99px; background: var(--vidro); border: 2px solid var(--borda); backdrop-filter: blur(14px); font-size: calc(var(--u) * 1.25); font-weight: 800; white-space: nowrap; color: inherit; }
+  .cat.on { background: var(--pri); border-color: var(--pri); color: #fff; }  .chips { flex: none; display: flex; gap: calc(var(--u) * .8); align-items: center; }
+  .chip { display: flex; align-items: baseline; gap: calc(var(--u) * .5); padding: calc(var(--u) * .7) calc(var(--u) * 1.3); border-radius: 99px; background: var(--vidro); border: 1.5px solid var(--borda); backdrop-filter: blur(14px); font-size: calc(var(--u) * 1.05); font-weight: 700; color: var(--mu2); white-space: nowrap; }
+  .chip b { font: 800 calc(var(--u) * 1.5)/1 var(--ft); color: inherit; }
+  #tela:not(.com-video) .chip b { color: var(--tx); }
+  .chip { padding: calc(var(--u) * .4) calc(var(--u) * .9); font-size: calc(var(--u) * .95); } .chip.bt { font-weight: 800; } .chip b { font-size: calc(var(--u) * 1.2); }
+  .chip.bt { cursor: pointer; align-items: center; height: calc(var(--u) * 3.6); }
+  .chip.pri { background: var(--pri); border-color: var(--pri); color: #fff; } .chip.pri b { color: #fff !important; }
+  .chip.on { background: var(--tx); border-color: var(--tx); color: #fff; } .chip.on b { color: #fff !important; }
+  .ic { position: absolute; top: calc(var(--u) * 1.1); right: calc(var(--u) * 1.1); z-index: 6; display: flex; gap: calc(var(--u) * .4); }
+  .ic button { width: calc(var(--u) * 3); height: calc(var(--u) * 3); border-radius: 50%; background: var(--s4); font-size: calc(var(--u) * 1.5); line-height: 1; display: grid; place-items: center; color: var(--mu2); }
+  .ic button:hover { background: var(--b2); }
+  /* corpo: lista de fotos à esquerda, painel (como a "Sua comanda") à direita. Cartões, "+" e grade iguais aos das bebidas da balança */
+  #corpo { position: absolute; left: calc(var(--u) * 4); right: calc(var(--u) * 4); top: calc(var(--u) * 2); bottom: calc(var(--u) * 2.2); display: flex; gap: calc(var(--u) * 2); }
+  #lista { flex: 1; min-width: 0; min-height: 0; margin-top: calc(var(--u) * 1); overflow-y: auto; padding: 2px calc(var(--u) * .4) calc(var(--u) * 1) 2px; scrollbar-width: none; }
+  #lista::-webkit-scrollbar { display: none; }
+  #lista h4 { margin: calc(var(--u) * 1.4) 0 calc(var(--u) * .8); font: 800 calc(var(--u) * 1.9)/1 var(--ft); }
+  #lista h4:first-child { margin-top: calc(var(--u) * .4); }
+  .gr4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: calc(var(--u) * 1.1); }
+  body:not(.dono) .gr4 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .beb { position: relative; display: block; width: 100%; background: #fff; color: #1C1C1E; border-radius: calc(var(--u) * 1.6); border: 2px solid var(--s4); overflow: hidden; text-align: left; transition: transform .12s, border-color .15s; }
+  body.dono .beb:active { transform: scale(.97); }
+  body:not(.dono) .beb { cursor: default; }
+  .beb.tem { border-color: var(--pri); }
+  .beb .ft { display: block; width: 100%; aspect-ratio: 3 / 4; background: #F3F3F5 center / cover no-repeat; }
+  .beb i { position: absolute; right: calc(var(--u) * .6); bottom: calc(var(--u) * .6); width: calc(var(--u) * 2.5); height: calc(var(--u) * 2.5); border-radius: 50%; background: var(--pri); color: #fff; display: grid; place-items: center; font: 800 calc(var(--u) * 1.8)/1 var(--ft); font-style: normal; padding-top: .08em; box-shadow: 0 calc(var(--u) * .3) calc(var(--u) * .8) rgba(255, 90, 0, .35); }
+  .beb b, .beb span { padding-right: calc(var(--u) * 3.4) !important; }
+  .beb b { display: block; padding: calc(var(--u) * .6) calc(var(--u) * .8) 0; font-size: calc(var(--u) * 1.15); font-weight: 800; line-height: 1.2; min-height: calc(var(--u) * 2.4 + var(--u) * .6); }
+  .beb span { display: block; padding: calc(var(--u) * .2) calc(var(--u) * .8) calc(var(--u) * .7); font-size: calc(var(--u) * 1.15); font-weight: 800; color: #E04A00; min-height: calc(var(--u) * 2.1); }
+  .beb .pend { position: absolute; left: calc(var(--u) * .6); top: calc(var(--u) * .6); background: #1C1C1E; color: #fff; font-weight: 800; font-size: calc(var(--u) * 1); padding: calc(var(--u) * .3) calc(var(--u) * .8); border-radius: 99px; }
+  .beb em { position: absolute; right: calc(var(--u) * .5); top: calc(var(--u) * .5); height: calc(var(--u) * 2.4); padding: 0 calc(var(--u) * .8); border-radius: 99px; background: rgba(255, 255, 255, .94); color: #1C1C1E; font: 800 calc(var(--u) * 1.1)/calc(var(--u) * 2.4) var(--f); font-style: normal; }
+  .vazio { padding: calc(var(--u) * 6); text-align: center; font-size: calc(var(--u) * 1.5); font-weight: 700; color: var(--mu2); }
+  /* painel da direita */
+  #painel { position: relative; flex: none; width: calc(var(--u) * 30); background: #fff; color: var(--tx); border-radius: calc(var(--u) * 2); border: 2px solid var(--s4); box-shadow: 0 calc(var(--u) * 1) calc(var(--u) * 3) rgba(0, 0, 0, .12); display: flex; flex-direction: column; overflow: hidden; }
+  body:not(.dono) #painel { display: none; }
+  #painel .cab { padding: calc(var(--u) * 1.8) calc(var(--u) * 2) calc(var(--u) * 1); } body.dono #painel .cab { padding-right: calc(var(--u) * 7.4); }
+  #painel h2 { margin: 0; font: 800 calc(var(--u) * 1.9)/1 var(--ft); }
+  #painel .corpo { flex: 1; overflow-y: auto; padding: 0 calc(var(--u) * 2) calc(var(--u) * 1); scrollbar-width: thin; }
+  #painel .rod { padding: calc(var(--u) * 1.2) calc(var(--u) * 2) calc(var(--u) * 1.6); border-top: 1px solid var(--s4); display: flex; flex-direction: column; gap: calc(var(--u) * .8); }
+  #painel .grande { width: 100%; border-radius: calc(var(--u) * 1.4); background: var(--s4) center / contain no-repeat; aspect-ratio: 9 / 11; margin-bottom: calc(var(--u) * 1.2); }
+  #painel .miniatura { flex: none; width: calc(var(--u) * 5.6); aspect-ratio: 9 / 13; border-radius: calc(var(--u) * 1); background: var(--s4) center / cover no-repeat; }
+  #painel .nome-g { font: 800 calc(var(--u) * 2.8)/1.05 var(--ft); margin: 0 0 calc(var(--u) * .6); }
+  #painel .preco-g { font: 800 calc(var(--u) * 3.6)/1 var(--ft); color: var(--pri); }
+  #painel .sub { font-size: calc(var(--u) * 1.4); font-weight: 600; color: var(--mu2); margin: calc(var(--u) * .6) 0; }
+  #painel label { display: block; font-size: calc(var(--u) * 1.2); font-weight: 800; color: var(--mu2); margin: calc(var(--u) * 1.1) 0 calc(var(--u) * .4); }
+  #painel input[type=text], #painel input[type=search], #painel select { width: 100%; height: calc(var(--u) * 4.8); border-radius: calc(var(--u) * 1.2); border: 2px solid var(--b2); padding: 0 calc(var(--u) * 1.2); font: 700 calc(var(--u) * 1.7)/1 var(--f); background: #fff; color: var(--tx); }
+  #painel input:focus, #painel select:focus { border-color: var(--pri); outline: none; }
+  #painel input:disabled { background: var(--s4); color: var(--mu2); }
+  #painel .linha2 { display: flex; gap: calc(var(--u) * .8); } #painel .linha2 > * { flex: 1; min-width: 0; }
+  #painel .nota { font-size: calc(var(--u) * 1.15); color: var(--mu2); margin-top: calc(var(--u) * .5); font-weight: 600; line-height: 1.35; }
+  #painel .ck { display: flex; align-items: center; gap: calc(var(--u) * .8); margin-top: calc(var(--u) * 1.2); font-size: calc(var(--u) * 1.5); font-weight: 700; }
+  #painel .ck input { width: calc(var(--u) * 2.2); height: calc(var(--u) * 2.2); }
+  #painel .msg { font-size: calc(var(--u) * 1.3); font-weight: 700; color: var(--er); min-height: 1em; }
+  #painel .msg.ok { color: var(--ok); }
+  .bt { height: calc(var(--u) * 5.6); border-radius: calc(var(--u) * 1.6); font: 800 calc(var(--u) * 2.1)/1 var(--ft); padding-top: .12em; background: var(--s4); transition: transform .1s; }
+  .bt:active { transform: scale(.97); } .bt:disabled { opacity: .5; }
+  .bt.pri { background: var(--pri); color: #fff; box-shadow: 0 calc(var(--u) * .6) calc(var(--u) * 1.6) rgba(255, 90, 0, .35); }
+  .bt.p { height: calc(var(--u) * 4.4); font-size: calc(var(--u) * 1.6); }
+  .bt.er { color: var(--er); background: #fff; border: 2px solid var(--s4); }
+  .vazio-p { height: 100%; display: grid; place-items: center; text-align: center; padding: calc(var(--u) * 3); font-size: calc(var(--u) * 1.8); font-weight: 700; color: var(--mu2); }
+  #carregando { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; background: var(--pri); color: #fff; font: 800 calc(var(--u) * 3)/1 var(--ft); }
+  #prog { position: absolute; left: 50%; top: calc(var(--u) * 1); transform: translateX(-50%); z-index: 8; background: #1C1C1E; color: #fff; padding: calc(var(--u) * .8) calc(var(--u) * 2); border-radius: 99px; font-weight: 800; font-size: calc(var(--u) * 1.5); }
+
+  @media (max-width: 800px) {
+    #corpo { flex-direction: column; top: calc(var(--u) * 1.4); }
+    #painel { width: 100%; flex: none; height: 52%; }
+    #ch-n { display: none; } #barra { flex-wrap: wrap; } .ic { top: calc(48% + var(--u) * 1.4); }
+    #lista { flex: 1; } #painel .rod { flex-direction: row; flex-wrap: wrap; padding-top: calc(var(--u) * .8); padding-bottom: calc(var(--u) * 1); } #painel .rod .msg { width: 100%; min-height: 0; } #painel .rod .bt { flex: 1; height: calc(var(--u) * 4.4); font-size: calc(var(--u) * 1.6); } #selo-teste { display: none; }
+    
+  }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<div id="assinatura"><img src="img/logo-livefood-branca.png" alt="livefood"></div>
+<div id="tela">
+  <div id="selo-teste" hidden>DEMONSTRAÇÃO · nada é salvo</div>
+  <div id="prog" hidden></div>
+  <div id="corpo">
+    <div id="esq">
+      <div id="barra">
+        <div id="cats"></div>
+        <div class="chips">
+          <div class="chip" id="ch-n"><b>0</b> fotos</div>
+          <button type="button" class="chip bt" id="ch-pend" hidden>Sem cadastro <b>0</b></button>
+          <button type="button" class="chip bt pri" id="ch-add" hidden>+ Fotos</button>
+        </div>
+      </div>
+      <div id="lista"></div>
+    </div>
+    <aside id="painel"></aside>
+    <div class="ic" id="ic-video" hidden><button type="button" id="b-video" title="Vídeo de fundo: enviar ou trocar" aria-label="Vídeo de fundo">🎬</button><button type="button" id="b-video-x" title="Tirar o vídeo de fundo" aria-label="Tirar o vídeo" hidden>✕</button></div>
+  </div>
+</div>
+<input type="file" id="arq-video" accept="video/mp4,video/webm,video/quicktime" hidden><input type="file" id="arq" accept="image/*" multiple hidden>
+<div id="carregando">Carregando…</div>
+
+<script>
+  window.LIVE_SCRIPTS = ['js/biblioteca.js'];
+  window.Totem = { estado: { modo: 'standby' } };
+  (function () {
+    var logo = { src: '', nome: '' };
+    function pinta() { document.querySelectorAll('.loja-logo').forEach(function (el) { el.textContent = ''; if (logo.src) { var i = new Image(); i.src = logo.src; i.alt = logo.nome; el.appendChild(i); } else el.textContent = logo.nome; }); }
+    window.LIVE_LOGO = function (src, clara, alt) { logo.src = src || ''; if (alt) logo.nome = alt; pinta(); };
+  })();
+</script>
+<script src="js/cardapio-exemplo.js"></script>
+<script>document.write('<script src="js/cardapio.js?v=' + Date.now() + '"><\/script>');</script>
+</body>
+</html>
