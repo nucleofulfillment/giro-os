@@ -480,7 +480,7 @@ function nfcMesaInicia(){
 function nfcMesaLiga(manual){
   if(NFM.on||!('NDEFReader' in window)) return; var rd, ctl;
   try{ rd=new NDEFReader(); ctl=new AbortController(); }catch(e){ return; }
-  rd.onreading=function(ev){ if(NFB.on){ nfbLeu(ev.serialNumber); return; } if(nfcNew()&&!CCP.on&&!nfcTemMesa(ev.message)&&sh&&sh.style.display!=='flex'&&D){ nfbComanda(String(ev.serialNumber||'').replace(/[^0-9A-Fa-f]/g,'').toUpperCase()); return; } if(CCP.on){ ccpLeu(ev.serialNumber); return; } if(ccpLigado()&&!nfcTemMesa(ev.message)){ ccpIdentifica(ev.serialNumber); return; } nfcMesaLeu(ev.message); };   /* (276) com a tela "Cliente Crédito" aberta, o toque é o cartão do cliente, não a etiqueta da mesa */
+  rd.onreading=function(ev){ if(NFB.on){ nfbLeu(ev.serialNumber); return; } if(nfcNew()&&!CCP.on&&$('sh')&&$('sh').style.display!=='flex'&&D){ var msgN=ev.message; nfbComanda(String(ev.serialNumber||'').replace(/[^0-9A-Fa-f]/g,'').toUpperCase(),nfcTemMesa(msgN)?function(){ nfcMesaLeu(msgN); }:null); return; }   /* (321) o cartão com comanda aberta abre a conta dele; cartão com mesa gravada e sem comanda segue como etiqueta de mesa */ if(CCP.on){ ccpLeu(ev.serialNumber); return; } if(ccpLigado()&&!nfcTemMesa(ev.message)){ ccpIdentifica(ev.serialNumber); return; } nfcMesaLeu(ev.message); };   /* (276) com a tela "Cliente Crédito" aberta, o toque é o cartão do cliente, não a etiqueta da mesa */
   rd.onreadingerror=function(){ toast('Não consegui ler a etiqueta. Encoste de novo e segure parado.'); };
   rd.scan({signal:ctl.signal}).then(function(){ NFM.on=true; NFM.ctl=ctl; nfcMesaBx('on'); }).catch(function(e){
     NFM.on=false; var n=e&&e.name;
@@ -1042,11 +1042,11 @@ function nfcEnvia(uid){
 }
 /* na saída: encosta o cartão, abre a conta da comanda dele e cobra */
 function nfbAbreComanda(){ nfbAbrir('Comanda do cartão',function(uid){ fecha(); nfbComanda(uid); },fecha); }
-function nfbComanda(uid){
+function nfbComanda(uid,sem){
   api('/painel/atend-cartao-comanda',{uid:uid}).then(function(r){
     if(r._h===401){ mostraLogin('Entre de novo.'); return; }
-    if(!r.ok){ toast(r.erro==='rota_nao_encontrada'?'Publique o Worker 321 para usar o Balcão com cartão.':(r._h===0?SEM_REDE:(r.mensagem||'Não consegui ler o cartão.'))); return; }
-    if(!r.aberta){ toast('Este cartão não tem comanda aberta.'); return; }
+    if(!r.ok){ if(sem){ sem(); return; } toast(r.erro==='rota_nao_encontrada'?'Publique o Worker 321 para usar o Balcão com cartão.':(r._h===0?SEM_REDE:(r.mensagem||'Não consegui ler o cartão.'))); return; }
+    if(!r.aberta){ if(sem){ sem(); return; } toast('Este cartão não tem comanda aberta.'); return; }
     comBusca().then(function(d){
       if(!d||!d.ok) return; comPinta(d); var k=-1; COMS.forEach(function(c,n){ if(c.mesa===r.mesa) k=n; });
       if(k<0){ toast('Não achei a comanda deste cartão.'); return; } aba('com'); fechaForm(k);
