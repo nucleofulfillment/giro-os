@@ -123,7 +123,30 @@
       if (synth.speaking || synth.pending) { synth.cancel(); setTimeout(() => { try { if (vez === falaVez) synth.speak(u); } catch (e) { /* ok */ } }, 120); } else synth.speak(u);
     } catch (e) { /* sem voz: a tela continua */ }
   }
-  function calaFala() { falaVez++; try { window.Voz && window.Voz.parar && window.Voz.parar(); } catch (e) { /* ok */ } try { window.speechSynthesis && speechSynthesis.cancel(); } catch (e) { /* ok */ } }
+  function calaFala() { falaVez++; try { window.Voz && window.Voz.parar && window.Voz.parar(); } catch (e) { /* ok */ } try { window.speechSynthesis && speechSynthesis.cancel(); } catch (e) { /* ok */ } try { somClipe && somClipe.pause(); } catch (e) { /* ok */ } }
+  // FRASES FIXAS SEM DEMORA: "Prontinho! Retire a sua comanda..." e "Pagamento confirmado..." são sempre iguais. Em vez de pedir ao
+  // servidor na hora (2 a 3 s de espera), a tela pede as duas uma vez, ao ligar, guarda o áudio e toca na hora em que precisa.
+  const FIXAS = { fim: 'Prontinho! Retire a sua comanda e bom apetite!', pago: 'Pagamento confirmado. Obrigado e bom apetite!' }, CLIPES = {};
+  let somClipe = null;
+  function ligaSom() {   // chamado no toque de "ligar": o navegador só deixa tocar áudio que nasceu de um toque
+    try {
+      const n = 400, b = new Uint8Array(44 + n), dv = new DataView(b.buffer), t = (o, s) => { for (let i = 0; i < s.length; i++) b[o + i] = s.charCodeAt(i); };
+      t(0, 'RIFF'); dv.setUint32(4, 36 + n, true); t(8, 'WAVEfmt '); dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, 1, true); dv.setUint32(24, 8000, true); dv.setUint32(28, 8000, true); dv.setUint16(32, 1, true); dv.setUint16(34, 8, true); t(36, 'data'); dv.setUint32(40, n, true); b.fill(128, 44);
+      somClipe = somClipe || new Audio(); somClipe.src = URL.createObjectURL(new Blob([b], { type: 'audio/wav' })); somClipe.play().catch(() => {});
+    } catch (e) { /* sem áudio: a tela continua */ }
+  }
+  function preparaClipes() {
+    const px = vozProxy(), V = window.Voz; if (!C.voz || !px) return;
+    Object.keys(FIXAS).forEach(async (k) => {
+      if (CLIPES[k]) return;
+      try { const r = await px(V && V.paraFala ? V.paraFala(FIXAS[k]) : FIXAS[k], 1.1); const d = await r.json(); if (r.ok && d && d.audio_base64) CLIPES[k] = d.audio_base64; } catch (e) { /* fica para a fala normal */ }
+    });
+  }
+  function falaFixa(k) {
+    if (!C.voz) return;
+    if (CLIPES[k] && somClipe) { calaFala(); try { somClipe.src = 'data:audio/mpeg;base64,' + CLIPES[k]; somClipe.play().catch(() => fala(FIXAS[k])); return; } catch (e) { /* cai na fala normal */ } }
+    fala(FIXAS[k]);
+  }
   function pesoFalado(kg) {
     const g = Math.round(kg * 1000), q = Math.floor(g / 1000), r = g % 1000;
     if (!q) return g + ' gramas';
@@ -205,7 +228,8 @@
     $('#tela').classList.toggle('em-beb', cena === 'c-beb');   // na lista de bebidas a logo da loja sai, para as categorias subirem
     if (f !== 'fim' && f !== 'pago') paraFesta();
     $('#ligar').hidden = f !== 'ligar';
-    $('#pergunta').hidden = f !== 'pergunta';
+    // a pergunta da bebida guarda o lugar dela durante a pesagem (invisível), para o peso não pular quando os botões aparecem
+    $('#pergunta').classList.toggle('fora', !C.bebida); $('#pergunta').classList.toggle('espera', f !== 'pergunta');
     if (f === 'espera') { E.beb = {}; E.fixo = 0; E.resp = null; E.env = ''; $('#erro').hidden = true; }
     if (f === 'pesando') { mostraPeso = 0; alvoPeso = 0; ultAvanco = performance.now(); E.falouKg = null; }   // cada pesagem começa do zero
     pinta();
@@ -268,13 +292,18 @@
       + ids.map((id) => `<div class="ln"><div class="qt"><button type="button" data-menos="${esc(id)}" aria-label="Tirar uma">−</button><b>${E.beb[id]}</b><button type="button" data-add="${esc(id)}" aria-label="Mais uma">+</button></div><div class="n">${esc(PRODS[id].nome)}</div><div class="v">${real(PRODS[id].preco * E.beb[id])}</div></div>`).join('');
     $('#beb-total').textContent = real(v + totalBeb());
     const env = E.fase === 'enviando';
-    $('#b-concluir').textContent = env ? 'Registrando…' : 'Concluir e imprimir'; $('#b-concluir').disabled = env; $('#b-cancelar').hidden = env;
+    $('#b-concluir').textContent = env ? 'Registrando…' : 'Concluir e imprimir'; $('#b-concluir').disabled = env; $('#b-cancelar').classList.toggle('guarda-lugar', env);   // some sem tirar o lugar: o botão de cima não se mexe
   }
   function pintaFim() {
     const r = E.resp;
     $('#fim-num').innerHTML = '<small>COMANDA</small>' + esc(r.num);
     $('#fim-itens').innerHTML = (r.linhas || []).map((l) => `<div class="ln"><div class="n">${l.qty > 1 ? l.qty + 'x ' : ''}${esc(l.nome)}${l.desc ? `<small>${esc(l.desc)}</small>` : ''}</div><div class="v">${esc(l.preco)}</div></div>`).join('');
     $('#fim-total').textContent = real(r.total);
+    // resumo: comida e bebida separadas antes do total
+    const lin = r.linhas || [], comida = r.valor != null ? Number(r.valor) : valorDe(liquido(E.fixo)), beb = Math.max(0, r2(r.total - comida)), nBeb = lin.slice(1).reduce((s, l) => s + (Number(l.qty) || 1), 0);
+    $('#fim-resumo').hidden = !lin.length;
+    $('#fim-comida').textContent = real(comida); $('#fim-bebidas').textContent = real(beb);
+    $('#fim-beb-rot').textContent = nBeb ? 'Bebidas (' + nBeb + (nBeb === 1 ? ' item)' : ' itens)') : 'Bebidas';
     $('#fim-titulo').textContent = r.impressora === 0 && !TESTE ? 'Comanda ' + r.num + ' registrada' : 'Prontinho! Retire a sua comanda';
     const pix = !!(r.pix && r.conta);
     $('#fim-aviso').textContent = r.impressora === 0 && !TESTE ? 'A impressora está desligada. Informe o número ' + r.num + ' no caixa.' : pix ? 'Pague agora por Pix, pelo QR da comanda no celular, ou no caixa ao sair.' : 'Pague no caixa ao sair. Bom apetite!';
@@ -315,7 +344,7 @@
         if (paga) {
           $('#pix-caixa').hidden = true; $('#pix-live').hidden = false; $('#b-pix-voltar').hidden = true;   // pago: sai o QR, entra o Live comemorando
           $('#pix-titulo').textContent = 'Pagamento confirmado!'; $('#pix-sub').textContent = 'Comanda ' + r.num + ' paga. Obrigado e bom apetite!'; $('#pix-estado').textContent = '';
-          bip(880); fala('Pagamento confirmado. Obrigado e bom apetite!'); fase('pago'); comemora($('#pix-live')); return;
+          bip(880); falaFixa('pago'); fase('pago'); comemora($('#pix-live')); return;
         }
         setTimeout(confere, 3000);
       };
@@ -356,7 +385,7 @@
       if (TESTE) {
         await new Promise((r) => setTimeout(r, 700));
         const liq = liquido(E.fixo), v = valorDe(liq);
-        d = { ok: true, num: 100 + Math.floor(Math.random() * 900), total: r2(v + totalBeb()), impressora: 1, pix: C.pagTela === 0 ? 0 : 1, conta: { l: 'teste', n: 1, t: 'x' },
+        d = { ok: true, num: 100 + Math.floor(Math.random() * 900), total: r2(v + totalBeb()), valor: v, impressora: 1, pix: C.pagTela === 0 ? 0 : 1, conta: { l: 'teste', n: 1, t: 'x' },
           linhas: [{ qty: 1, nome: noLivre(liq) ? 'Buffet livre' : 'Buffet por quilo', desc: noLivre(liq) ? kgTxt(liq) + ' kg - passou do livre, vale o livre' : kgTxt(liq) + ' kg x ' + real(AGORA.preco) + '/kg', preco: real(v) }].concat(bebidas.map((b) => ({ qty: b.qty, nome: PRODS[b.p].nome, desc: '', preco: real(PRODS[b.p].preco * b.qty) }))) };
       } else {
         const r = await fetch(API + '/live/balanca-pedido', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ loja: LOJA, k: KEY, kg: E.fixo, bebidas, env: E.env }) });
@@ -365,13 +394,13 @@
       if (!d.ok) throw new Error(d.mensagem || 'Não consegui registrar a pesagem.');
       if (!d.linhas) d.linhas = [];   // envio repetido: o servidor devolve só o número e o total
       E.resp = d; pintaFim(); fase('fim'); comemora($('#fim-live'));
-      if (C.bebida) fala('Prontinho! Retire a sua comanda e bom apetite!');   // sem a pergunta da bebida, essa frase já foi dita junto com o peso
+      if (C.bebida) falaFixa('fim');   // sem a pergunta da bebida, essa frase já foi dita junto com o peso
     } catch (e) {
       $('#erro-m').textContent = (e && e.message) || 'Sem conexão com o sistema.'; $('#erro').hidden = false;
       E.fase = 'erro';
     }
   }
-  function cancelar() { $('#erro').hidden = true; E.resp = null; if (TESTE && E.simKg > 0) { E.simKg = 0; E.kg = 0; } if (E.kg >= NA_BALANCA) { $('#fim-titulo').textContent = 'Pesagem cancelada'; $('#fim-num').innerHTML = ''; $('#fim-itens').innerHTML = ''; $('#fim-total').textContent = ''; $('#fim-aviso').textContent = 'Retire o prato da balança.'; fase('retire'); } else fase('espera'); }
+  function cancelar() { $('#erro').hidden = true; E.resp = null; if (TESTE && E.simKg > 0) { E.simKg = 0; E.kg = 0; } if (E.kg >= NA_BALANCA) { $('#fim-titulo').textContent = 'Pesagem cancelada'; $('#fim-num').innerHTML = ''; $('#fim-itens').innerHTML = ''; $('#fim-total').textContent = ''; $('#fim-resumo').hidden = true; $('#fim-pagar').hidden = true; $('#fim-aviso').textContent = 'Retire o prato da balança.'; fase('retire'); } else fase('espera'); }
 
   // ----- o passo de cada leitura da balança -----
   let estaveis = 0;
@@ -484,7 +513,7 @@
     if (b.id === 'ligar') {
       try { window.Voz && window.Voz.destravar && window.Voz.destravar(); } catch (e) { /* ok */ }
       try { const el = document.documentElement; if (!document.fullscreenElement && el.requestFullscreen) el.requestFullscreen().catch(() => {}); } catch (e) { /* ok */ }
-      bip(660); aquece(); fase('espera'); return;
+      bip(660); aquece(); ligaSom(); preparaClipes(); fase('espera'); return;
     }
     if (b.dataset.cat) {   // categoria: leva a lista até ela
       const g = $('#grade'), t = g.querySelector(`[data-cat-t="${CSS.escape(b.dataset.cat)}"]`);

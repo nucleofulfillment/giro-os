@@ -32,6 +32,8 @@
 
   /* topo: logo da loja à esquerda; preço do quilo e prato em uso à direita */
   #topo { position: absolute; left: 0; right: 0; top: 0; padding: calc(var(--u) * 1.8) calc(var(--u) * 2.6); display: flex; align-items: center; justify-content: space-between; gap: calc(var(--u) * 1.5); z-index: 5; }
+  /* a faixa do topo fica por cima das cenas: ela não pode engolir os toques (as categorias das bebidas ficam logo abaixo dela) */
+  #topo { pointer-events: none; } #topo .chips { pointer-events: auto; }
   .loja-logo { display: flex; align-items: center; font: 800 calc(var(--u) * 3.2)/1 var(--ft); letter-spacing: -.5px; min-height: calc(var(--u) * 7); }
   .loja-logo img { height: calc(var(--u) * 7); max-width: calc(var(--u) * 30); object-fit: contain; }
   /* sobre o vídeo: a logo principal da loja (a branca, do cadastro do cardápio) vai solta, sem moldura.
@@ -108,7 +110,17 @@
   #estado i { width: calc(var(--u) * .9); height: calc(var(--u) * .9); border-radius: 50%; background: var(--pri); animation: pisca 1s ease-in-out infinite; }
   #estado.ok i { background: var(--ok); animation: none; }
   @keyframes pisca { 50% { opacity: .25; } }
-  #pergunta { margin-top: calc(var(--u) * 2.6); display: flex; flex-direction: column; align-items: center; }
+  /* a pergunta ocupa o lugar dela desde o começo da pesagem (só fica invisível): o peso e o valor não pulam quando os botões aparecem */
+  #pergunta { margin-top: calc(var(--u) * 2.6); display: flex; flex-direction: column; align-items: center; transition: opacity .3s; }
+  #pergunta.espera { visibility: hidden; opacity: 0; }
+  #pergunta.fora { display: none; }
+  /* botão que some sem tirar o lugar (o "Concluir e imprimir" não muda de posição enquanto registra) */
+  .guarda-lugar { visibility: hidden; }
+  /* resumo do final: comida e bebida separadas antes do total */
+  .resumo { margin-top: calc(var(--u) * .6); padding-top: calc(var(--u) * .7); border-top: 1.5px dashed #DFDFE4; }
+  .resumo div { display: flex; justify-content: space-between; padding: calc(var(--u) * .25) 0; font-size: calc(var(--u) * 1.2); font-weight: 700; color: #5E5E66; }
+  .resumo b { color: #1C1C1E; font-variant-numeric: tabular-nums; }
+  .resumo + .tot { margin-top: calc(var(--u) * .5); }
   .botoes { display: flex; gap: calc(var(--u) * 1.4); margin-top: calc(var(--u) * 1.6); }
   .bt { height: calc(var(--u) * 6.2); min-width: calc(var(--u) * 19); padding: 0 calc(var(--u) * 2.6); border-radius: calc(var(--u) * 2); font: 800 calc(var(--u) * 2.2)/1 var(--ft); padding-top: .12em; background: var(--vidro); border: 2px solid var(--borda); backdrop-filter: blur(14px); transition: transform .12s; }
   .bt:active { transform: scale(.97); }
@@ -254,7 +266,7 @@
         <div id="estado"><i></i><span id="estado-t">Pesando…</span></div>
       </div>
     </div>
-    <div id="pergunta" hidden>
+    <div id="pergunta" class="espera">
       <h2>Deseja uma bebida?</h2>
       <div class="botoes"><button type="button" class="bt pri" id="b-sim">Sim, quero</button><button type="button" class="bt" id="b-nao">Não, obrigado</button></div>
       <div id="conta-reg" aria-live="polite"></div>
@@ -283,6 +295,7 @@
       <div class="papel" style="margin-top:0">
         <div id="fim-num"></div>
         <div id="fim-itens"></div>
+        <div class="resumo" id="fim-resumo"><div><span>Comida</span><b id="fim-comida"></b></div><div><span id="fim-beb-rot">Bebidas</span><b id="fim-bebidas"></b></div></div>
         <div class="tot"><span>Total</span><b id="fim-total"></b></div>
       </div>
     </div>
