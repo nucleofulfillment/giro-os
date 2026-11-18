@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Buffet por quilo · LiveFood</title>
+<!-- Tela da balança do buffet por quilo. Abre com o link do painel (menu Balança): buffet.html?loja=<código>&k=<chave>
+     Fica no computador ao lado da balança; o peso vem do programa de impressão deste computador (http://127.0.0.1:17865).
+     Mesmo visual do totem de toque: fontes, cores, personagem Live e vídeo de fundo. Teste sem servidor: &teste=1 -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { --bg: #F4F4F5; --s1: #fff; --s4: #E8E8EB; --b2: #DFDFE4; --tx: #1C1C1E; --mu: #8E8E93; --mu2: #5E5E66; --pri: #FF5A00; --pri-esc: #E04A00; --ok: #16A34A; --f: 'Manrope', system-ui, sans-serif; --ft: 'Baloo 2', system-ui, sans-serif;
+    --u: min(1vw, 1.78vh); /* unidade da tela: 1920x1080 => 19.2px */ }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--pri); color: var(--tx); font-family: var(--f); -webkit-font-smoothing: antialiased; user-select: none; }
+  button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; padding: 0; }
+  button:focus-visible { outline: 3px solid var(--tx); outline-offset: 2px; }
+  [hidden] { display: none !important; }
+
+  /* assinatura do LiveFood: faixa laranja no rodapé, a tela termina arredondada sobre ela (igual ao totem) */
+  #assinatura { position: fixed; left: 0; right: 0; bottom: 0; height: calc(var(--u) * 3.2); display: grid; place-items: center; }
+  #assinatura img { height: calc(var(--u) * 1.6); }
+  #tela { position: fixed; left: 0; right: 0; top: 0; bottom: calc(var(--u) * 3.2); background: var(--bg); border-radius: 0 0 calc(var(--u) * 2.4) calc(var(--u) * 2.4); overflow: hidden; isolation: isolate; }
+
+  /* vídeo de fundo cadastrado no painel + véu escuro; com vídeo o texto fica branco */
+  #fundo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; }
+  #tela.com-video::after { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(rgba(0, 0, 0, .58), rgba(0, 0, 0, .38) 45%, rgba(0, 0, 0, .66)); }
+  #tela.com-video { color: #fff; --mu: rgba(255, 255, 255, .72); --mu2: rgba(255, 255, 255, .86); --vidro: rgba(20, 20, 22, .46); --borda: rgba(255, 255, 255, .22); }
+  #tela { --vidro: rgba(255, 255, 255, .86); --borda: var(--s4); }
+
+  /* topo: logo da loja à esquerda; preço do quilo e prato em uso à direita */
+  #topo { position: absolute; left: 0; right: 0; top: 0; padding: calc(var(--u) * 1.8) calc(var(--u) * 2.6); display: flex; align-items: center; justify-content: space-between; gap: calc(var(--u) * 1.5); z-index: 5; }
+  .loja-logo { display: flex; align-items: center; font: 800 calc(var(--u) * 2.2)/1 var(--ft); letter-spacing: -.5px; min-height: calc(var(--u) * 4); }
+  .loja-logo img { height: calc(var(--u) * 4); max-width: calc(var(--u) * 18); object-fit: contain; }
+  #tela.com-video .loja-logo img { background: #fff; border-radius: calc(var(--u) * .9); padding: calc(var(--u) * .4) calc(var(--u) * .8); }
+  .chips { display: flex; gap: calc(var(--u) * .8); }
+  .chip { display: flex; align-items: baseline; gap: calc(var(--u) * .5); padding: calc(var(--u) * .7) calc(var(--u) * 1.3); border-radius: 99px; background: var(--vidro); border: 1.5px solid var(--borda); backdrop-filter: blur(14px); font-size: calc(var(--u) * 1.05); font-weight: 700; color: var(--mu2); }
+  .chip b { font: 800 calc(var(--u) * 1.5)/1 var(--ft); color: inherit; }
+  #tela:not(.com-video) .chip b { color: var(--tx); }
+
+  /* cenas: uma por vez, com entrada suave */
+  .cena { position: absolute; inset: 0; padding: calc(var(--u) * 7.5) calc(var(--u) * 4) calc(var(--u) * 3); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; opacity: 0; pointer-events: none; transform: translateY(calc(var(--u) * 1.5)) scale(.985); transition: opacity .35s, transform .45s cubic-bezier(.2, .9, .3, 1); }
+  .cena.on { opacity: 1; pointer-events: auto; transform: none; }
+  h1 { margin: 0; font: 800 calc(var(--u) * 6.4)/.98 var(--ft); letter-spacing: -1.5px; text-wrap: balance; }
+  h2 { margin: 0; font: 800 calc(var(--u) * 3.6)/1 var(--ft); letter-spacing: -.8px; text-wrap: balance; }
+  .sub { margin: calc(var(--u) * 1) 0 0; font-size: calc(var(--u) * 1.7); font-weight: 600; color: var(--mu2); }
+
+  /* Live oficial: flutua, balança, mexe a antena, pisca e olha para os lados (mesmos ritmos do totem) */
+  .lv { overflow: visible; display: block; height: 100%; }
+  .lv-corpo { animation: lv-giro 5.7s ease-in-out infinite; }
+  .lv-antena { transform-origin: 0 -76px; animation: lv-antena 2.4s ease-in-out infinite; }
+  .lv-rosto { animation: lv-olhar 11s ease-in-out infinite; }
+  .lv-olhos { transform-origin: 0 -8.5px; animation: lv-pisca 4.3s linear infinite; }
+  .visual { display: flex; justify-content: center; height: calc(var(--u) * 15); margin-bottom: calc(var(--u) * 2); animation: lv-flutua 3.5s ease-in-out infinite; }
+  .visual.p { height: calc(var(--u) * 8.5); margin-bottom: calc(var(--u) * 1); }
+  @keyframes lv-flutua { 0%, 100% { transform: translateY(5px); } 50% { transform: translateY(-9px); } }
+  @keyframes lv-giro { 0%, 100% { transform: rotate(-2.5deg); } 50% { transform: rotate(2.5deg); } }
+  @keyframes lv-antena { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+  @keyframes lv-pisca { 0%, 95%, 100% { transform: scaleY(1); } 97.5% { transform: scaleY(.12); } }
+  @keyframes lv-olhar { 0%, 52%, 100% { transform: translate(0, 0); } 58%, 70% { transform: translate(5px, -1.5px); } 78%, 90% { transform: translate(-5px, 0); } }
+
+  /* espera: seta pulsando para a balança + aviso de balança desligada */
+  #seta { margin-top: calc(var(--u) * 2.2); width: calc(var(--u) * 4.4); height: calc(var(--u) * 4.4); border-radius: 50%; background: var(--pri); color: #fff; display: grid; place-items: center; animation: seta 1.4s ease-in-out infinite; }
+  #seta svg { width: 52%; height: 52%; }
+  @keyframes seta { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(calc(var(--u) * .9)); } }
+  .alerta { margin-top: calc(var(--u) * 2); padding: calc(var(--u) * .9) calc(var(--u) * 1.6); border-radius: calc(var(--u) * 1.2); background: #FFF4D6; border: 2px solid #F5C542; color: #6B4E00; font-size: calc(var(--u) * 1.25); font-weight: 700; max-width: calc(var(--u) * 60); }
+
+  /* pesagem: mostrador em anel com o peso ao vivo, valor grande ao lado e a pergunta da bebida embaixo */
+  #c-peso .linha { display: flex; align-items: center; justify-content: center; gap: calc(var(--u) * 5); }
+  .anel { position: relative; width: calc(var(--u) * 27); height: calc(var(--u) * 27); flex: none; }
+  .anel svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .anel circle { fill: none; stroke-width: 7; }
+  .anel .tr { stroke: var(--borda); }
+  .anel .pg { stroke: var(--pri); stroke-linecap: round; stroke-dasharray: 565.5; stroke-dashoffset: 565.5; transition: stroke-dashoffset .35s ease-out, stroke .3s; filter: drop-shadow(0 0 6px rgba(255, 90, 0, .55)); }
+  .anel.ok .pg { stroke: var(--ok); filter: drop-shadow(0 0 6px rgba(22, 163, 74, .55)); }
+  .anel.vivo::before { content: ''; position: absolute; inset: 9%; border-radius: 50%; border: 2px dashed var(--borda); animation: gira 9s linear infinite; }
+  @keyframes gira { to { transform: rotate(360deg); } }
+  .anel .meio { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .anel small { font-size: calc(var(--u) * 1.15); font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--mu); }
+  #peso-num { font: 800 calc(var(--u) * 7.2)/1 var(--ft); letter-spacing: -2px; font-variant-numeric: tabular-nums; margin-top: calc(var(--u) * .3); }
+  .anel .un { font: 800 calc(var(--u) * 1.9)/1 var(--ft); color: var(--mu2); }
+  .lado { text-align: left; min-width: calc(var(--u) * 26); }
+  .lado small { display: block; font-size: calc(var(--u) * 1.15); font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--mu); }
+  #valor { font: 800 calc(var(--u) * 8.4)/1 var(--ft); letter-spacing: -2.5px; font-variant-numeric: tabular-nums; color: var(--pri); margin-top: calc(var(--u) * .2); }
+  #tela.com-video #valor { color: #fff; }
+  #conta { margin-top: calc(var(--u) * .6); font-size: calc(var(--u) * 1.3); font-weight: 600; color: var(--mu2); line-height: 1.5; }
+  #estado { margin-top: calc(var(--u) * 1.2); display: inline-flex; align-items: center; gap: calc(var(--u) * .6); font-size: calc(var(--u) * 1.3); font-weight: 800; color: var(--mu2); }
+  #estado i { width: calc(var(--u) * .9); height: calc(var(--u) * .9); border-radius: 50%; background: var(--pri); animation: pisca 1s ease-in-out infinite; }
+  #estado.ok i { background: var(--ok); animation: none; }
+  @keyframes pisca { 50% { opacity: .25; } }
+  #pergunta { margin-top: calc(var(--u) * 2.6); display: flex; flex-direction: column; align-items: center; }
+  .botoes { display: flex; gap: calc(var(--u) * 1.4); margin-top: calc(var(--u) * 1.6); }
+  .bt { height: calc(var(--u) * 6.2); min-width: calc(var(--u) * 19); padding: 0 calc(var(--u) * 2.6); border-radius: calc(var(--u) * 2); font: 800 calc(var(--u) * 2.2)/1 var(--ft); padding-top: .12em; background: var(--vidro); border: 2px solid var(--borda); backdrop-filter: blur(14px); transition: transform .12s; }
+  .bt:active { transform: scale(.97); }
+  .bt.pri { background: var(--pri); border-color: var(--pri); color: #fff; box-shadow: 0 calc(var(--u) * .6) calc(var(--u) * 1.8) rgba(255, 90, 0, .35); }
+  .bt.p { height: calc(var(--u) * 4.6); min-width: 0; font-size: calc(var(--u) * 1.6); border-radius: calc(var(--u) * 1.4); }
+  #conta-reg { margin-top: calc(var(--u) * 1.2); font-size: calc(var(--u) * 1.2); font-weight: 700; color: var(--mu2); min-height: 1.4em; }
+
+  /* bebidas: grade à esquerda, comanda à direita */
+  #c-beb { flex-direction: row; align-items: stretch; gap: calc(var(--u) * 2); text-align: left; padding-top: calc(var(--u) * 8); }
+  #beb-esq { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  #grade { flex: 1; margin-top: calc(var(--u) * 1.4); overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(var(--u) * 13.5), 1fr)); gap: calc(var(--u) * 1.1); align-content: start; padding: 2px calc(var(--u) * .4) calc(var(--u) * 1) 2px; scrollbar-width: none; }
+  #grade::-webkit-scrollbar { display: none; }
+  .beb { position: relative; background: #fff; color: #1C1C1E; border-radius: calc(var(--u) * 1.6); border: 2px solid var(--s4); overflow: hidden; text-align: left; display: flex; flex-direction: column; transition: transform .12s, border-color .15s; }
+  .beb:active { transform: scale(.97); }
+  .beb.tem { border-color: var(--pri); }
+  .beb img, .beb .sem { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; background: #F3F3F5; display: grid; place-items: center; font-size: calc(var(--u) * 3); }
+  .beb b { display: block; padding: calc(var(--u) * .6) calc(var(--u) * .8) 0; font-size: calc(var(--u) * 1.15); font-weight: 800; line-height: 1.2; }
+  .beb span { display: block; padding: calc(var(--u) * .2) calc(var(--u) * .8) calc(var(--u) * .7); font-size: calc(var(--u) * 1.15); font-weight: 800; color: #E04A00; }
+  .beb em { position: absolute; right: calc(var(--u) * .5); top: calc(var(--u) * .5); min-width: calc(var(--u) * 2.4); height: calc(var(--u) * 2.4); padding: 0 calc(var(--u) * .5); border-radius: 99px; background: var(--pri); color: #fff; font: 800 calc(var(--u) * 1.3)/calc(var(--u) * 2.4) var(--ft); font-style: normal; text-align: center; }
+  #beb-vazio { margin-top: calc(var(--u) * 2); font-size: calc(var(--u) * 1.5); font-weight: 700; color: var(--mu2); }
+  .comanda { width: calc(var(--u) * 30); flex: none; background: #fff; color: #1C1C1E; border-radius: calc(var(--u) * 2); border: 2px solid var(--s4); padding: calc(var(--u) * 1.6); display: flex; flex-direction: column; box-shadow: 0 calc(var(--u) * 1) calc(var(--u) * 3) rgba(0, 0, 0, .12); }
+  .comanda h3 { margin: 0 0 calc(var(--u) * .8); font: 800 calc(var(--u) * 1.9)/1 var(--ft); }
+  .comanda .itens { flex: 1; overflow-y: auto; scrollbar-width: none; }
+  .ln { display: flex; align-items: center; gap: calc(var(--u) * .6); padding: calc(var(--u) * .7) 0; border-top: 1.5px dashed #DFDFE4; font-size: calc(var(--u) * 1.2); font-weight: 700; }
+  .ln:first-child { border-top: 0; }
+  .ln .n { flex: 1; min-width: 0; } .ln .n small { display: block; font-size: calc(var(--u) * .95); font-weight: 600; color: #8E8E93; }
+  .ln .v { font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .ln .qt { display: flex; align-items: center; gap: calc(var(--u) * .3); }
+  .ln .qt button { width: calc(var(--u) * 2.6); height: calc(var(--u) * 2.6); border-radius: 50%; background: #F3F3F5; font: 800 calc(var(--u) * 1.5)/1 var(--ft); }
+  .ln .qt b { min-width: calc(var(--u) * 1.6); text-align: center; }
+  .tot { display: flex; justify-content: space-between; align-items: baseline; padding-top: calc(var(--u) * 1); margin-top: calc(var(--u) * .4); border-top: 2.5px solid #1C1C1E; font: 800 calc(var(--u) * 1.5)/1 var(--ft); }
+  .tot b { font-size: calc(var(--u) * 2.9); letter-spacing: -1px; font-variant-numeric: tabular-nums; }
+  .comanda .bt { width: 100%; margin-top: calc(var(--u) * 1.2); }
+  .comanda .bt.sec { background: #F3F3F5; border-color: #F3F3F5; height: calc(var(--u) * 4); font-size: calc(var(--u) * 1.4); margin-top: calc(var(--u) * .7); }
+
+  /* fim: a comanda "sai" da impressora */
+  #c-fim .papel { width: calc(var(--u) * 30); background: #fff; color: #1C1C1E; border-radius: calc(var(--u) * .6) calc(var(--u) * .6) 0 0; padding: calc(var(--u) * 1.6) calc(var(--u) * 1.8) calc(var(--u) * 2.4); text-align: left; margin-top: calc(var(--u) * 1.6); box-shadow: 0 calc(var(--u) * 1) calc(var(--u) * 3) rgba(0, 0, 0, .16);
+    -webkit-mask: linear-gradient(#000 0 0) top / 100% calc(100% - 12px) no-repeat, radial-gradient(circle at 8px 0, #000 7.5px, #0000 8px) bottom / 16px 12px repeat-x; mask: linear-gradient(#000 0 0) top / 100% calc(100% - 12px) no-repeat, radial-gradient(circle at 8px 0, #000 7.5px, #0000 8px) bottom / 16px 12px repeat-x; }
+  #c-fim.on .papel { animation: sai .9s cubic-bezier(.2, .9, .3, 1) both; }
+  @keyframes sai { from { clip-path: inset(0 0 100% 0); transform: translateY(calc(var(--u) * -2)); } to { clip-path: inset(0); transform: none; } }
+  #fim-num { font: 800 calc(var(--u) * 3)/1 var(--ft); text-align: center; padding-bottom: calc(var(--u) * .8); }
+  #fim-num small { display: block; font: 800 calc(var(--u) * 1)/1.4 var(--f); letter-spacing: .14em; color: #8E8E93; }
+  #fim-aviso { margin-top: calc(var(--u) * 1.4); font-size: calc(var(--u) * 1.45); font-weight: 700; color: var(--mu2); min-height: 1.5em; }
+
+  /* camadas: ligar a tela, teclado do prato, erro */
+  .camada { position: absolute; inset: 0; z-index: 30; display: grid; place-items: center; background: rgba(15, 15, 17, .72); backdrop-filter: blur(10px); color: #fff; text-align: center; }
+  .cx { background: #fff; color: #1C1C1E; border-radius: calc(var(--u) * 2.4); padding: calc(var(--u) * 2.4); width: calc(var(--u) * 34); max-width: 92vw; }
+  .cx h3 { margin: 0; font: 800 calc(var(--u) * 2.2)/1.1 var(--ft); }
+  .cx p { margin: calc(var(--u) * .6) 0 0; font-size: calc(var(--u) * 1.2); font-weight: 600; color: #5E5E66; line-height: 1.45; }
+  #tc-visor { margin: calc(var(--u) * 1.2) 0; height: calc(var(--u) * 5); border-radius: calc(var(--u) * 1.2); background: #F3F3F5; font: 800 calc(var(--u) * 3.2)/calc(var(--u) * 5.2) var(--ft); letter-spacing: .2em; }
+  #tc-teclas { display: grid; grid-template-columns: repeat(3, 1fr); gap: calc(var(--u) * .7); }
+  #tc-teclas button { height: calc(var(--u) * 4.6); border-radius: calc(var(--u) * 1.2); background: #F3F3F5; font: 800 calc(var(--u) * 2.2)/1 var(--ft); padding-top: .12em; }
+  #tc-teclas button.ok { background: var(--pri); color: #fff; }
+  #tc-lista { margin-top: calc(var(--u) * 1); font-size: calc(var(--u) * 1.1); font-weight: 700; color: #5E5E66; line-height: 1.6; text-align: left; }
+  #tc-m { min-height: 1.4em; margin-top: calc(var(--u) * .6); font-size: calc(var(--u) * 1.1); font-weight: 800; color: #C2410C; }
+  #prato-chip { cursor: pointer; }
+  #selo-teste { position: absolute; left: 50%; top: calc(var(--u) * .6); transform: translateX(-50%); z-index: 6; padding: calc(var(--u) * .3) calc(var(--u) * 1); border-radius: 99px; background: #1C1C1E; color: #fff; font-size: calc(var(--u) * .95); font-weight: 800; letter-spacing: .08em; }
+  #carregando { position: fixed; inset: 0; display: grid; place-items: center; background: var(--bg); font-size: 22px; font-weight: 700; color: var(--mu2); z-index: 50; }
+  body.pronto #carregando { display: none; }
+
+  /* tela em pé (monitor virado): a pesagem e as bebidas empilham */
+  @media (orientation: portrait) {
+    :root { --u: min(1.78vw, 1vh); }
+    #c-peso .linha { flex-direction: column; gap: calc(var(--u) * 2.4); } .lado { text-align: center; }
+    #c-beb { flex-direction: column; } .comanda { width: 100%; max-height: 42%; }
+  }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="lv-cab" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF8A33"/><stop offset=".5" stop-color="#FF5A00"/><stop offset="1" stop-color="#E64800"/></linearGradient>
+    <linearGradient id="lv-cab-lado" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity=".2"/><stop offset=".25" stop-color="#fff" stop-opacity="0"/><stop offset=".8" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#6a2400" stop-opacity=".3"/></linearGradient>
+    <linearGradient id="lv-moldura" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF9F0"/><stop offset="1" stop-color="#E5D0B5"/></linearGradient>
+    <radialGradient id="lv-tela" cx=".5" cy=".5" r=".7"><stop offset=".08" stop-color="#241D1B"/><stop offset="1" stop-color="#100C0B"/></radialGradient>
+    <filter id="lv-brilho" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="0" stdDeviation="1.7" flood-color="#69D7FF" flood-opacity=".95"/></filter>
+  </defs>
+</svg>
+
+<div id="assinatura"><img src="img/logo-livefood-branca.png" alt="livefood"></div>
+<div id="tela">
+  <div id="selo-teste" hidden>TESTE · nada é registrado</div>
+  <div id="topo">
+    <div class="loja-logo"></div>
+    <div class="chips">
+      <div class="chip" id="preco-chip" hidden><b id="preco-v"></b> o quilo</div>
+      <button type="button" class="chip" id="prato-chip" hidden aria-label="Trocar o prato em uso">prato <b id="prato-v"></b></button>
+    </div>
+  </div>
+
+  <section class="cena" id="c-espera">
+    <div class="visual"><span class="lv-aqui"></span></div>
+    <h1 id="frase"></h1>
+    <p class="sub">O peso e o valor aparecem na hora</p>
+    <div id="seta" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v15M5 13l7 7 7-7"/></svg></div>
+    <div class="alerta" id="aviso-bal" hidden></div>
+  </section>
+
+  <section class="cena" id="c-peso">
+    <div class="linha">
+      <div class="anel vivo" id="anel">
+        <svg viewBox="0 0 200 200" aria-hidden="true"><circle class="tr" cx="100" cy="100" r="90"/><circle class="pg" id="anel-pg" cx="100" cy="100" r="90"/></svg>
+        <div class="meio"><small>peso da comida</small><div id="peso-num">0,000</div><div class="un">kg</div></div>
+      </div>
+      <div class="lado">
+        <small>valor do prato</small>
+        <div id="valor">R$ 0,00</div>
+        <div id="conta"></div>
+        <div id="estado"><i></i><span id="estado-t">Pesando…</span></div>
+      </div>
+    </div>
+    <div id="pergunta" hidden>
+      <h2>Deseja uma bebida?</h2>
+      <div class="botoes"><button type="button" class="bt pri" id="b-sim">Sim, quero</button><button type="button" class="bt" id="b-nao">Não, obrigado</button></div>
+      <div id="conta-reg" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <section class="cena" id="c-beb">
+    <div id="beb-esq">
+      <h2>Escolha a bebida</h2>
+      <p class="sub" id="beb-dica">Toque na bebida ou passe a lata no leitor</p>
+      <div id="grade"></div>
+    </div>
+    <div class="comanda">
+      <h3>Sua comanda</h3>
+      <div class="itens" id="beb-itens"></div>
+      <div class="tot"><span>Total</span><b id="beb-total"></b></div>
+      <button type="button" class="bt pri" id="b-concluir">Concluir e imprimir</button>
+      <button type="button" class="bt sec" id="b-cancelar">Cancelar pesagem</button>
+    </div>
+  </section>
+
+  <section class="cena" id="c-fim">
+    <div class="visual p"><span class="lv-aqui"></span></div>
+    <h2 id="fim-titulo">Prontinho! Retire a sua comanda</h2>
+    <div class="papel">
+      <div id="fim-num"></div>
+      <div id="fim-itens"></div>
+      <div class="tot"><span>Total</span><b id="fim-total"></b></div>
+    </div>
+    <div id="fim-aviso" aria-live="polite"></div>
+  </section>
+
+  <div class="camada" id="ligar" hidden>
+    <div><div class="visual" style="margin:0 auto"><span class="lv-aqui"></span></div><h1 style="margin-top:calc(var(--u)*2)">Toque para ligar</h1><p class="sub" style="color:rgba(255,255,255,.8)">Liga a tela cheia e a voz do Live</p></div>
+  </div>
+  <div class="camada" id="teclado" hidden>
+    <div class="cx"><h3>Trocar o prato</h3><p>Digite o número do prato que está no buffet agora.</p>
+      <div id="tc-visor"></div><div id="tc-teclas"></div><div id="tc-m"></div><div id="tc-lista"></div></div>
+  </div>
+  <div class="camada" id="erro" hidden>
+    <div class="cx"><h3>Não consegui registrar</h3><p id="erro-m"></p>
+      <div class="botoes" style="justify-content:center"><button type="button" class="bt pri p" id="b-de-novo">Tentar de novo</button><button type="button" class="bt p" id="b-desistir">Cancelar</button></div></div>
+  </div>
+</div>
+<div id="carregando">Carregando…</div>
+
+<script>
+  // o cardapio.js carrega o cardápio e a chave da loja e depois só os scripts abaixo (a voz é a mesma do totem de voz)
+  window.LIVE_SCRIPTS = ['js/voz.js', 'js/buffet.js'];
+  window.Totem = { estado: { modo: 'standby' } };   // a tela só recarrega (versão nova, mudança no painel) quando está parada na espera
+  (function () {
+    var logo = { src: '', nome: '' };
+    function pinta() { document.querySelectorAll('.loja-logo').forEach(function (el) { el.textContent = ''; if (logo.src) { var i = new Image(); i.src = logo.src; i.alt = logo.nome; el.appendChild(i); } else el.textContent = logo.nome; }); }
+    window.LIVE_LOGO = function (src, clara, alt) { logo.src = src || ''; if (alt) logo.nome = alt; pinta(); };
+  })();
+</script>
+<script src="js/cardapio-exemplo.js"></script>
+<script>document.write('<script src="js/cardapio.js?v=' + Date.now() + '"><\/script>');</script>
+</body>
+</html>

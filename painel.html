@@ -1140,6 +1140,22 @@ html.loja-p .cd-dest{display:none!important}
       </section>
 
       <!-- (218) GARÇONS: cadastro, vendas por garçom, regra de comissão e fechamento (vai para o Fluxo de Caixa) -->
+      <!-- (310) BALANÇA: buffet por quilo. Nada grava sozinho: só no botão Salvar -->
+      <section class="page" id="pg-balanca">
+        <style>
+          .bz-dia{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--b2,#DFDFE4);background:transparent;font:800 12.5px inherit;color:var(--muted);cursor:pointer;padding:0}
+          .bz-dia.on{background:#FF5A00;border-color:#FF5A00;color:#fff}
+          .bz-ln{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 0;border-top:1px solid var(--b2,#E8E8EB)}
+          .bz-ln:first-child{border-top:0}
+          .bz-x{border:0;background:transparent;color:var(--muted);font-size:17px;cursor:pointer;padding:6px 8px}
+          .bz-peso{font:800 34px/1 inherit;font-variant-numeric:tabular-nums;letter-spacing:-.5px}
+          .bz-rot{font-size:12px;font-weight:700;color:var(--muted)}
+          .bz-dica{margin:10px 0 0;font-size:12.5px;line-height:1.5;color:var(--muted)}
+        </style>
+        <div class="pghd"><div><h1>Balança</h1><div class="sub">buffet por quilo · <span id="bz-sub">—</span></div></div>
+          <div id="bz-barra" style="display:none;gap:8px;align-items:center;flex-wrap:wrap"><span style="font-size:12.5px;font-weight:700;color:var(--muted)">Mudanças não salvas</span><button class="btn sec sm" onclick="bzDesfazer()">Desfazer</button><button class="btn pri sm" onclick="bzSalvar()">Salvar</button></div></div>
+        <div id="bz-corpo"><div class="card" style="font-size:13px;color:var(--muted)">Carregando…</div></div>
+      </section>
       <section class="page" id="pg-garcons">
         <div class="pghd"><div><h1>Garçons</h1><div class="sub">equipe do salão, vendas e comissão · <span id="ga-total">—</span></div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sec" onclick="gcAbrir()">🍽 Mesas de cada garçom</button><button class="btn pri" onclick="gaNovo()">+ Novo garçom</button></div></div>
         <!-- (219) taxa do garçom paga pelo cliente: linha separada na conta e vira a comissão do garçom -->
@@ -3985,6 +4001,7 @@ var NAV_DESKTOP=[
   {id:'cardapio',   lb:'Cardápio',   ic:'<path d="M6 3v8a2 2 0 002 2v8M10 3v8M8 3v8M16 21V3c-2 1-3 4-3 8h3"/>'},
   {id:'mesas',      lb:'Mesas',      ic:'<circle cx="6" cy="6" r="2.3"/><circle cx="12" cy="6" r="2.3"/><circle cx="18" cy="6" r="2.3"/><circle cx="6" cy="12" r="2.3"/><circle cx="12" cy="12" r="2.3"/><circle cx="18" cy="12" r="2.3"/><circle cx="6" cy="18" r="2.3"/><circle cx="12" cy="18" r="2.3"/><circle cx="18" cy="18" r="2.3"/>'},
   {id:'garcons',    lb:'Garçons',    ic:'<circle cx="12" cy="6.5" r="3"/><path d="M6 21v-3.5c0-3 2.7-5 6-5s6 2 6 5V21M9.5 13.2l2.5 2.3 2.5-2.3M12 15.5V21"/>'},
+  {id:'balanca',    lb:'Balança',    ic:'<path d="M4 20h16M6 20l1.5-9h9L18 20M8 11V8h8v3M5 5h14M12 5v3"/><path d="M10 15.5h4"/>'},
   {id:'clientes',   lb:'Clientes',   ic:'<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5M16 5.2a3.2 3.2 0 010 5.6M18 14.8c2 .6 3.5 2.4 3.5 5.2"/>'},
   {id:'motoristas', lb:'Entregadores', ic:'<rect x="1" y="7" width="15" height="10" rx="1.5"/><path d="M16 10h3l3 3v4h-6z"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="19" r="2"/>'},
   {id:'veiculos',   lb:'Veículos',   ic:'<path d="M5 17h14M5 17a2 2 0 110-4M19 17a2 2 0 100-4M3 13l2-6h14l2 6M7 10h10"/>'},
@@ -4003,7 +4020,7 @@ var NAV_MOBILE=[
 ];
 var PAG='dashboard';
 /* menu suspenso do celular: mostra todas as telas que o perfil pode abrir, por grupo. O botão voltar do celular fecha o menu. */
-var MM_GRUPOS=[['Vendas',['pedidos','cardapio','mesas','garcons','clientes','mensagens']],['Operação',['dashboard','mesa','mapeamento','motoristas','veiculos']],['Gestão',['financeiro','config']]], MM_HIST=false;
+var MM_GRUPOS=[['Vendas',['pedidos','cardapio','mesas','garcons','balanca','clientes','mensagens']],['Operação',['dashboard','mesa','mapeamento','motoristas','veiculos']],['Gestão',['financeiro','config']]], MM_HIST=false;
 function mmPinta(){
   var usados={}, h='', it=function(n){ usados[n.id]=1; return '<button class="it'+(n.id===PAG?' on':'')+'" type="button" data-p="'+n.id+'" onclick="mmVai(\''+n.id+'\')"'+(n.id===PAG?' aria-current="page"':'')+'><span class="ic">'+svgIco(n.ic)+'</span><span class="nm">'+esc(n.lb)+planoCad(n.id)+'</span><span class="sg" aria-hidden="true">›</span></button>'; }, ok=function(n){ return n&&pagOk(n.id)&&!navOculto(n.id); };
   MM_GRUPOS.forEach(function(g){ var l=g[1].map(function(id){ return NAV_DESKTOP.filter(function(n){ return n.id===id; })[0]; }).filter(ok); if(l.length) h+='<div class="gr">'+g[0]+'</div>'+l.map(it).join(''); });
@@ -4340,6 +4357,7 @@ function ir(p){
   if(p==='clientes') clCarregar();
   if(p==='mesas') mzCarregar();
   if(p==='garcons') gaCarregar();
+  if(p==='balanca') bzCarregar();
   if(p==='mapeamento'&&VIVO_ON) setTimeout(function(){ vivoBuscar(); },800);
   if(p==='mensagens') msgAbrirTela(); else clearInterval(MSG.timer);
   if(p==='cte') cteAbrirTela();
@@ -10078,6 +10096,123 @@ function cdCfgClientesSalvar(){
     aviso('Configurações salvas'); fecharTudo();
   }).catch(function(e){ var m=el('cc-m'); if(m){ m.style.color='#f87171'; m.textContent=e.message||'Não salvou'; } });
 }
+/* ── (310) BALANÇA — buffet por quilo ──
+   Configuração da loja em /painel/balanca-config (Worker 310). O peso ao vivo vem do programa de impressão deste computador
+   (http://127.0.0.1:17865), então "Pesar este prato" e o teste só funcionam com o painel aberto no computador da balança.
+   Nada grava sozinho: tudo fica em BZ.c e só vai para o servidor no botão Salvar. */
+var BZ={c:null,salvo:'',cli:'',chave:'',cats:[],t:null,agora:null}, BZ_LOCAL='http://127.0.0.1:17865', BZ_DIAS=['D','S','T','Q','Q','S','S'], BZ_DIASN=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+function bzNum(v){ var s=String(v==null?'':v).trim(); if(s.indexOf(',')>=0) s=s.replace(/\./g,'').replace(',','.'); var x=Math.round((parseFloat(s)||0)*100)/100; return x<0?0:x; }
+function bzFmt(v){ return v>0?Number(v).toFixed(2).replace('.',','):''; }
+function bzCarregar(){
+  el('bz-corpo').innerHTML='<div class="card" style="font-size:13px;color:var(--muted)">Carregando…</div>';
+  mzApi('/painel/balanca-config').then(function(d){
+    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'A Balança precisa do Worker 310 publicado.');
+    BZ.cli=d.cli; BZ.chave=d.chave; BZ.agora=d.agora; BZ.c=d.bal;
+    return fetch(DELTADIS_API+'/food/cardapio/'+encodeURIComponent(d.cli)).then(function(r){ return r.json(); }).catch(function(){ return {}; }).then(function(m){ BZ.cats=(m&&m.cats)||[]; bzPintar(); bzLe(); BZ.salvo=JSON.stringify(BZ.c); bzBarra(); clearInterval(BZ.t); BZ.t=setInterval(bzPeso,700); bzPeso(); });
+  }).catch(function(e){ el('bz-corpo').innerHTML='<div class="card" style="color:var(--red);font-size:13px">'+esc(e.message||'Não carregou')+'</div>'; });
+}
+function bzLink(){ return 'https://livefood.tec.br/totem/buffet.html?loja='+encodeURIComponent(BZ.cli)+'&k='+encodeURIComponent(BZ.chave); }
+function bzPintar(){
+  var c=BZ.c, ag=BZ.agora||{}, h='', sw=function(id,on){ return '<label class="wa-sw"><input type="checkbox" id="'+id+'"'+(on?' checked':'')+' onchange="bzMudou()"><span class="wa-bl"></span></label>'; };
+  el('bz-sub').textContent=c.ativo?('ligada · agora R$ '+bzFmt(ag.preco||c.precoKg||0)+' o quilo'+(ag.faixa?' ('+ag.faixa+')':'')):'desligada';
+  /* situação + tela + balança ao vivo */
+  h+='<div class="card" style="margin-bottom:16px"><h3><span class="lft">Tela do Buffet</span></h3>'
+    +'<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'+sw('bz-ativo',c.ativo)+'<span style="font-weight:700">Balança do buffet ligada</span></div>'
+    +'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px"><input class="inp" readonly value="'+esc(bzLink())+'" style="flex:1;min-width:220px" onclick="this.select()"><button class="btn sec" onclick="bzCopiar()">Copiar link</button><a class="btn pri" href="'+esc(bzLink())+'" target="_blank" rel="noopener" style="text-decoration:none">Abrir a tela</a></div>'
+    +'<p class="bz-dica">Abra esse link no computador que fica ao lado da balança e aperte F11 para a tela cheia. O link leva a chave da loja: não envie para outras pessoas.</p>'
+    +'<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px solid var(--b2,#E8E8EB)"><div><div class="bz-rot">Balança agora</div><div class="bz-peso" id="bz-peso">—</div></div><div id="bz-peso-m" style="flex:1;min-width:200px;font-size:12.5px;line-height:1.5;color:var(--muted)"></div><button class="btn sec" onclick="bzProcurar()">Procurar balança</button></div></div>';
+  /* preço do quilo */
+  h+='<div class="card" style="margin-bottom:16px"><h3><span class="lft">Preço do quilo</span></h3>'
+    +'<div style="display:flex;gap:14px;flex-wrap:wrap"><label><div class="bz-rot">Preço padrão (R$ por quilo)</div><input class="inp" id="bz-preco" inputmode="decimal" placeholder="69,90" value="'+bzFmt(c.precoKg)+'" style="width:130px" oninput="bzMudou()"></label>'
+    +'<label><div class="bz-rot">Valor máximo por prato (opcional)</div><input class="inp" id="bz-max" inputmode="decimal" placeholder="sem máximo" value="'+bzFmt(c.max)+'" style="width:130px" oninput="bzMudou()"></label></div>'
+    +'<div class="bz-rot" style="margin-top:16px">Preço diferente por dia e horário</div><div id="bz-faixas">'
+    +(c.faixas.length?c.faixas.map(function(f,i){ return '<div class="bz-ln bz-fx"><span style="display:flex;gap:4px">'+BZ_DIAS.map(function(l,d){ return '<button type="button" class="bz-dia'+(f.dias.indexOf(d)>=0?' on':'')+'" data-d="'+d+'" title="'+BZ_DIASN[d]+'" onclick="this.classList.toggle(\'on\');bzMudou()">'+l+'</button>'; }).join('')+'</span>'
+      +'<span style="display:flex;gap:6px;align-items:center;font-size:12.5px;color:var(--muted)">das <input class="inp bz-de" type="time" value="'+esc(f.de)+'" style="width:112px" oninput="bzMudou()"> às <input class="inp bz-ate" type="time" value="'+esc(f.ate)+'" style="width:112px" oninput="bzMudou()"></span>'
+      +'<span style="display:flex;gap:6px;align-items:center;font-size:12.5px;color:var(--muted)">R$ <input class="inp bz-fp" inputmode="decimal" placeholder="79,90" value="'+bzFmt(f.preco)+'" style="width:100px" oninput="bzMudou()"></span>'
+      +'<button type="button" class="bz-x" title="Tirar esta faixa" onclick="bzFxTira('+i+')">✕</button></div>'; }).join(''):'<div style="font-size:12.5px;color:var(--muted);padding:8px 0">Nenhuma faixa: vale sempre o preço padrão.</div>')
+    +'</div><button class="btn sec sm" style="margin-top:8px" onclick="bzFxNova()">+ Nova faixa</button>'
+    +'<p class="bz-dica">Exemplo: almoço de segunda a sexta num preço, sábado em outro, jantar em outro. A tela usa sozinha a faixa do momento; fora das faixas vale o preço padrão.</p></div>';
+  /* pratos */
+  h+='<div class="card" style="margin-bottom:16px"><h3><span class="lft">Pratos (peso que a balança desconta)</span></h3><div id="bz-pratos">'
+    +(c.pratos.length?c.pratos.map(function(p,i){ return '<div class="bz-ln bz-pr"><label style="display:flex;gap:6px;align-items:center;font-size:12.5px;font-weight:700" title="Prato em uso agora"><input type="radio" name="bz-ativo-pr" class="bz-pa"'+(p.n===c.prato?' checked':'')+' onchange="bzMudou()"> em uso</label>'
+      +'<span style="display:flex;gap:6px;align-items:center;font-size:12.5px;color:var(--muted)">nº <input class="inp bz-pn" inputmode="numeric" value="'+('0'+p.n).slice(-2)+'" style="width:62px" oninput="bzMudou()"></span>'
+      +'<input class="inp bz-pnome" placeholder="Nome (ex.: Prato raso)" value="'+esc(p.nome)+'" style="flex:1;min-width:150px" oninput="bzMudou()">'
+      +'<span style="display:flex;gap:6px;align-items:center;font-size:12.5px;color:var(--muted)"><input class="inp bz-pg" inputmode="numeric" value="'+(p.g||'')+'" placeholder="0" style="width:84px" oninput="bzMudou()"> g</span>'
+      +'<button type="button" class="btn sec sm" onclick="bzPrPesar('+i+')">Pesar este prato</button><button type="button" class="bz-x" title="Tirar este prato" onclick="bzPrTira('+i+')">✕</button></div>'; }).join(''):'<div style="font-size:12.5px;color:var(--muted);padding:8px 0">Nenhum prato cadastrado: a balança cobra o peso inteiro.</div>')
+    +'</div><button class="btn sec sm" style="margin-top:8px" onclick="bzPrNovo()">+ Novo prato</button>'
+    +'<p class="bz-dica">Para cadastrar: ponha o prato vazio na balança e toque em Pesar este prato. Para trocar o prato no meio do almoço, toque no canto de cima da tela do Buffet e digite o número (01, 02).</p></div>';
+  /* bebida */
+  h+='<div class="card" style="margin-bottom:16px"><h3><span class="lft">Bebida</span></h3><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'+sw('bz-bebida',c.bebida)+'<span style="font-weight:700">Perguntar se o cliente deseja uma bebida</span></div>'
+    +'<div class="bz-rot" style="margin-top:14px">Categorias que aparecem na pergunta</div><div style="display:flex;gap:6px 14px;flex-wrap:wrap;margin-top:6px">'
+    +(BZ.cats.length?BZ.cats.map(function(k){ return '<label style="display:flex;gap:6px;align-items:center;font-size:13px"><input type="checkbox" class="bz-cat" value="'+esc(k.id)+'"'+(c.bebCats.indexOf(k.id)>=0?' checked':'')+' onchange="bzMudou()"> '+esc(k.nome)+'</label>'; }).join(''):'<span style="font-size:12.5px;color:var(--muted)">Cadastre as bebidas no Cardápio.</span>')
+    +'</div><p class="bz-dica">O cliente toca na bebida ou passa o código de barras da lata no leitor (cadastre o código no produto). Sem categoria marcada, a tela aceita só o código de barras.</p></div>';
+  /* aparência */
+  h+='<div class="card" style="margin-bottom:16px"><h3><span class="lft">Aparência da tela</span></h3>'
+    +'<label><div class="bz-rot">Frase inicial (até 40 letras)</div><input class="inp" id="bz-frase" maxlength="40" placeholder="Coloque seu prato na balança" value="'+esc(c.frase)+'" style="width:100%;max-width:420px" oninput="bzMudou()"></label>'
+    +'<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px">'+sw('bz-voz',c.voz)+'<span style="font-weight:700">O personagem fala o peso e o valor</span></div>'
+    +'<div class="bz-rot" style="margin-top:14px">Vídeo de fundo</div><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:6px">'
+    +(c.video?'<video src="'+DELTADIS_API+'/food/video/'+esc(BZ.cli)+'/'+esc(c.video)+'" muted loop autoplay playsinline style="width:120px;height:68px;object-fit:cover;border-radius:8px;background:#000"></video><button class="btn sec sm" onclick="bzVideoTira()">Tirar o vídeo</button>':'')
+    +'<label class="btn sec sm" style="cursor:pointer">'+(c.video?'Trocar o vídeo':'Enviar vídeo')+'<input type="file" accept="video/mp4,video/webm" style="display:none" onchange="bzVideo(this)"></label><span id="bz-vid-m" style="font-size:12.5px;font-weight:700;color:var(--muted)"></span></div>'
+    +'<p class="bz-dica">Vídeo MP4 de até 90 MB, sem som, que fica passando atrás da tela. Sem vídeo a tela usa o fundo padrão.</p></div>';
+  el('bz-corpo').innerHTML=h;
+}
+/* lê os campos da tela para BZ.c (sempre no mesmo formato, para comparar com o que está salvo) */
+function bzLe(){
+  var c=BZ.c, q=function(s,r){ return Array.prototype.slice.call((r||document).querySelectorAll(s)); }; if(!c||!el('bz-ativo')) return;
+  c.ativo=el('bz-ativo').checked?1:0; c.precoKg=bzNum(el('bz-preco').value); c.max=bzNum(el('bz-max').value);
+  c.faixas=q('#bz-faixas .bz-fx').map(function(r){ return { dias:q('.bz-dia.on',r).map(function(b){ return +b.getAttribute('data-d'); }), de:r.querySelector('.bz-de').value, ate:r.querySelector('.bz-ate').value, preco:bzNum(r.querySelector('.bz-fp').value) }; });
+  var at=0; c.pratos=q('#bz-pratos .bz-pr').map(function(r){ var p={ n:Math.max(0,Math.min(99,parseInt(r.querySelector('.bz-pn').value,10)||0)), nome:r.querySelector('.bz-pnome').value.trim(), g:Math.max(0,Math.round(bzNum(r.querySelector('.bz-pg').value))) }; if(r.querySelector('.bz-pa').checked) at=p.n; return p; });
+  c.prato=at||(c.pratos[0]?c.pratos[0].n:0);
+  c.bebida=el('bz-bebida').checked?1:0; c.bebCats=q('.bz-cat').filter(function(x){ return x.checked; }).map(function(x){ return x.value; });
+  c.frase=el('bz-frase').value.trim(); c.voz=el('bz-voz').checked?1:0;
+}
+function bzBarra(){ var b=el('bz-barra'); if(b) b.style.display=(BZ.c&&JSON.stringify(BZ.c)!==BZ.salvo)?'flex':'none'; }
+function bzMudou(){ bzLe(); bzBarra(); }
+function bzDesfazer(){ BZ.c=JSON.parse(BZ.salvo); bzPintar(); bzLe(); bzBarra(); }
+function bzFxNova(){ bzLe(); BZ.c.faixas.push({dias:[1,2,3,4,5],de:'11:00',ate:'15:00',preco:BZ.c.precoKg||0}); bzPintar(); bzBarra(); }
+function bzFxTira(i){ bzLe(); BZ.c.faixas.splice(i,1); bzPintar(); bzBarra(); }
+function bzPrNovo(){ bzLe(); var n=1; while(BZ.c.pratos.some(function(p){ return p.n===n; })) n++; BZ.c.pratos.push({n:n,nome:'',g:0}); if(!BZ.c.prato) BZ.c.prato=n; bzPintar(); bzBarra(); var r=document.querySelectorAll('#bz-pratos .bz-pnome'); if(r.length) r[r.length-1].focus(); }
+function bzPrTira(i){ bzLe(); var p=BZ.c.pratos.splice(i,1)[0]; if(p&&p.n===BZ.c.prato) BZ.c.prato=BZ.c.pratos[0]?BZ.c.pratos[0].n:0; bzPintar(); bzBarra(); }
+function bzLocal(path,post){ return fetch(BZ_LOCAL+path,post?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(post)}:{cache:'no-store'}).then(function(r){ return r.json(); }); }
+function bzPrPesar(i){
+  bzLocal('/balanca/peso').then(function(d){
+    if(!d.ok){ aviso(esc(d.mensagem||'A balança não respondeu.')); return; }
+    if(!d.estavel){ aviso('O peso ainda está variando. Espere parar e toque de novo.'); return; }
+    if(!(d.kg>0)){ aviso('Ponha o prato vazio na balança.'); return; }
+    bzLe(); BZ.c.pratos[i].g=Math.round(d.kg*1000); bzPintar(); bzBarra(); aviso('Prato com '+BZ.c.pratos[i].g+' g. Toque em Salvar.');
+  }).catch(function(){ aviso('Abra o painel no computador da balança, com o programa de impressão ligado.'); });
+}
+function bzPeso(){
+  if(PAG!=='balanca'){ clearInterval(BZ.t); BZ.t=null; return; }
+  var p=el('bz-peso'), m=el('bz-peso-m'); if(!p) return;
+  bzLocal('/balanca/peso').then(function(d){
+    if(d.ok){ p.textContent=Number(d.kg).toFixed(3).replace('.',',')+' kg'; m.textContent=(d.estavel?'Peso parado. ':'Peso variando… ')+'Balança na porta '+d.porta+'.'; }
+    else { p.textContent='—'; m.textContent=d.mensagem||'A balança não respondeu.'; }
+  }).catch(function(){ p.textContent='—'; m.textContent='Não achei o programa de impressão neste computador. O peso só aparece no computador da balança, com o programa de impressão instalado e ligado (Configurações > Impressoras).'; });
+}
+function bzProcurar(){ aviso('Procurando a balança…'); bzLocal('/balanca/procurar',{}).then(function(d){ aviso(d.ok?'Balança encontrada na porta '+esc(d.porta):esc(d.mensagem||'Não encontrei a balança.')); }).catch(function(){ aviso('Abra o painel no computador da balança, com o programa de impressão ligado.'); }); }
+function bzCopiar(){ try{ navigator.clipboard.writeText(bzLink()).then(function(){ aviso('Link copiado'); }); }catch(e){ aviso('Selecione o link e copie.'); } }
+function bzVideo(inp){
+  var f=inp.files&&inp.files[0], m=el('bz-vid-m'); if(!f) return;
+  if(f.size>90*1024*1024){ m.textContent='Vídeo grande demais (máximo 90 MB).'; return; }
+  var x=new XMLHttpRequest(); x.open('POST',DELTADIS_API+'/painel/video-upload'); x.setRequestHeader('Authorization','Bearer '+DD_TOKEN); x.setRequestHeader('Content-Type',f.type||'video/mp4');
+  x.upload.onprogress=function(e){ if(e.lengthComputable) m.textContent='Enviando… '+Math.round(e.loaded/e.total*100)+'%'; };
+  x.onload=function(){ var j={}; try{ j=JSON.parse(x.responseText); }catch(e){} if(!j.ok){ m.textContent=j.mensagem||'Não enviou.'; return; } bzLe(); BZ.c.video=j.vid; bzPintar(); bzBarra(); aviso('Vídeo enviado. Toque em Salvar.'); };
+  x.onerror=function(){ m.textContent='Sem conexão.'; }; x.send(f);
+}
+function bzVideoTira(){ bzLe(); BZ.c.video=''; bzPintar(); bzBarra(); }
+function bzSalvar(){
+  bzLe(); var c=BZ.c;
+  if(c.ativo&&!(c.precoKg>0)){ aviso('Informe o preço padrão do quilo.'); return; }
+  if(c.faixas.some(function(f){ return !f.dias.length||!f.de||!f.ate||f.de===f.ate||!(f.preco>0); })){ aviso('Complete as faixas: dias, horário e preço.'); return; }
+  if(c.pratos.some(function(p){ return !p.n||!p.nome; })){ aviso('Dê número e nome a cada prato.'); return; }
+  if(c.pratos.some(function(p,i){ return c.pratos.some(function(o,j){ return j!==i&&o.n===p.n; }); })){ aviso('Dois pratos estão com o mesmo número.'); return; }
+  mzApi('/painel/balanca-config',c).then(function(d){
+    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'Não salvou');
+    BZ.c=d.bal; BZ.agora=d.agora; bzPintar(); bzLe(); BZ.salvo=JSON.stringify(BZ.c); bzBarra(); aviso('Balança salva');
+  }).catch(function(e){ aviso(esc(e.message||'Não salvou')); });
+}
+
 /* ── (145) IMPRESSORAS: instalador já com a chave da loja + situação do programa no computador do restaurante ── */
 var IMP_JS='https://livefood.tec.br/impressao/giro-impressao.js', IMP_NODE='https://nodejs.org/dist/v22.20.0/node-v22.20.0-win-x64.zip';
 function impAbrir(){
