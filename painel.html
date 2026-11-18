@@ -10114,7 +10114,7 @@ function bzCarregar(){
 function bzLink(){ return 'https://livefood.tec.br/totem/buffet.html?loja='+encodeURIComponent(BZ.cli)+'&k='+encodeURIComponent(BZ.chave); }
 function bzPintar(){
   var c=BZ.c, ag=BZ.agora||{}, h='', sw=function(id,on){ return '<label class="wa-sw"><input type="checkbox" id="'+id+'"'+(on?' checked':'')+' onchange="bzMudou()"><span class="wa-bl"></span></label>'; };
-  el('bz-sub').textContent=c.ativo?('ligada · agora R$ '+bzFmt(ag.preco||c.precoKg||0)+' o quilo'+(ag.faixa?' ('+ag.faixa+')':'')):'desligada';
+  el('bz-sub').textContent=c.ativo?('ligada · agora R$ '+bzFmt(ag.preco||c.precoKg||0)+' o quilo'+(ag.faixa?' ('+ag.faixa+')':'')+(ag.livre>0?' · livre R$ '+bzFmt(ag.livre):'')):'desligada';
   /* situação + tela + balança ao vivo */
   h+='<div class="card" style="margin-bottom:16px"><h3><span class="lft">Tela do Buffet</span></h3>'
     +'<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'+sw('bz-ativo',c.ativo)+'<span style="font-weight:700">Balança do buffet ligada</span></div>'
@@ -10124,14 +10124,16 @@ function bzPintar(){
   /* preço do quilo */
   h+='<div class="card" style="margin-bottom:16px"><h3><span class="lft">Preço do quilo</span></h3>'
     +'<div style="display:flex;gap:14px;flex-wrap:wrap"><label><div class="bz-rot">Preço padrão (R$ por quilo)</div><input class="inp" id="bz-preco" inputmode="decimal" placeholder="69,90" value="'+bzFmt(c.precoKg)+'" style="width:130px" oninput="bzMudou()"></label>'
-    +'<label><div class="bz-rot">Valor máximo por prato (opcional)</div><input class="inp" id="bz-max" inputmode="decimal" placeholder="sem máximo" value="'+bzFmt(c.max)+'" style="width:130px" oninput="bzMudou()"></label></div>'
+    +'<label><div class="bz-rot">Buffet livre (R$, opcional)</div><input class="inp" id="bz-max" inputmode="decimal" placeholder="não uso" value="'+bzFmt(c.max)+'" style="width:130px" oninput="bzMudou()"></label></div>'
+    +'<p class="bz-dica">Buffet livre: se o prato pelo peso passar desse valor, o cliente paga o valor do livre e a comanda sai como Buffet livre. Em branco, cobra só pelo peso.</p><div style="display:none"></div>'
     +'<div class="bz-rot" style="margin-top:16px">Preço diferente por dia e horário</div><div id="bz-faixas">'
     +(c.faixas.length?c.faixas.map(function(f,i){ return '<div class="bz-ln bz-fx"><span style="display:flex;gap:4px">'+BZ_DIAS.map(function(l,d){ return '<button type="button" class="bz-dia'+(f.dias.indexOf(d)>=0?' on':'')+'" data-d="'+d+'" title="'+BZ_DIASN[d]+'" onclick="this.classList.toggle(\'on\');bzMudou()">'+l+'</button>'; }).join('')+'</span>'
       +'<span style="display:flex;gap:6px;align-items:center;font-size:12.5px;color:var(--muted)">das <input class="inp bz-de" type="time" value="'+esc(f.de)+'" style="width:112px" oninput="bzMudou()"> às <input class="inp bz-ate" type="time" value="'+esc(f.ate)+'" style="width:112px" oninput="bzMudou()"></span>'
-      +'<span style="display:flex;gap:6px;align-items:center;font-size:12.5px;color:var(--muted)">R$ <input class="inp bz-fp" inputmode="decimal" placeholder="79,90" value="'+bzFmt(f.preco)+'" style="width:100px" oninput="bzMudou()"></span>'
+      +'<span style="display:flex;gap:6px;align-items:center;font-size:12.5px;color:var(--muted)">quilo R$ <input class="inp bz-fp" inputmode="decimal" placeholder="79,90" value="'+bzFmt(f.preco)+'" style="width:100px" oninput="bzMudou()"></span>'
+      +'<span style="display:flex;gap:6px;align-items:center;font-size:12.5px;color:var(--muted)">livre R$ <input class="inp bz-fl" inputmode="decimal" placeholder="o padrão" value="'+bzFmt(f.livre)+'" style="width:100px" oninput="bzMudou()"></span>'
       +'<button type="button" class="bz-x" title="Tirar esta faixa" onclick="bzFxTira('+i+')">✕</button></div>'; }).join(''):'<div style="font-size:12.5px;color:var(--muted);padding:8px 0">Nenhuma faixa: vale sempre o preço padrão.</div>')
     +'</div><button class="btn sec sm" style="margin-top:8px" onclick="bzFxNova()">+ Nova faixa</button>'
-    +'<p class="bz-dica">Exemplo: almoço de segunda a sexta num preço, sábado em outro, jantar em outro. A tela usa sozinha a faixa do momento; fora das faixas vale o preço padrão.</p></div>';
+    +'<p class="bz-dica">Exemplo: almoço de segunda a sexta num preço, sábado em outro, jantar em outro. A tela usa sozinha a faixa do momento; fora das faixas vale o preço padrão. O campo livre de cada faixa é opcional: em branco, vale o valor do buffet livre lá de cima.</p></div>';
   /* pratos */
   h+='<div class="card" style="margin-bottom:16px"><h3><span class="lft">Pratos (peso que a balança desconta)</span></h3><div id="bz-pratos">'
     +(c.pratos.length?c.pratos.map(function(p,i){ return '<div class="bz-ln bz-pr"><label style="display:flex;gap:6px;align-items:center;font-size:12.5px;font-weight:700" title="Prato em uso agora"><input type="radio" name="bz-ativo-pr" class="bz-pa"'+(p.n===c.prato?' checked':'')+' onchange="bzMudou()"> em uso</label>'
@@ -10167,7 +10169,7 @@ function bzPintar(){
 function bzLe(){
   var c=BZ.c, q=function(s,r){ return Array.prototype.slice.call((r||document).querySelectorAll(s)); }; if(!c||!el('bz-ativo')) return;
   c.ativo=el('bz-ativo').checked?1:0; c.precoKg=bzNum(el('bz-preco').value); c.max=bzNum(el('bz-max').value);
-  c.faixas=q('#bz-faixas .bz-fx').map(function(r){ return { dias:q('.bz-dia.on',r).map(function(b){ return +b.getAttribute('data-d'); }), de:r.querySelector('.bz-de').value, ate:r.querySelector('.bz-ate').value, preco:bzNum(r.querySelector('.bz-fp').value) }; });
+  c.faixas=q('#bz-faixas .bz-fx').map(function(r){ return { dias:q('.bz-dia.on',r).map(function(b){ return +b.getAttribute('data-d'); }), de:r.querySelector('.bz-de').value, ate:r.querySelector('.bz-ate').value, preco:bzNum(r.querySelector('.bz-fp').value), livre:bzNum(r.querySelector('.bz-fl').value) }; });
   var at=0; c.pratos=q('#bz-pratos .bz-pr').map(function(r){ var p={ n:Math.max(0,Math.min(99,parseInt(r.querySelector('.bz-pn').value,10)||0)), nome:r.querySelector('.bz-pnome').value.trim(), g:Math.max(0,Math.round(bzNum(r.querySelector('.bz-pg').value))) }; if(r.querySelector('.bz-pa').checked) at=p.n; return p; });
   c.prato=at||(c.pratos[0]?c.pratos[0].n:0);
   c.bebida=el('bz-bebida').checked?1:0; c.bebCats=q('.bz-cat').filter(function(x){ return x.checked; }).map(function(x){ return x.value; });
@@ -10177,7 +10179,7 @@ function bzLe(){
 function bzBarra(){ var b=el('bz-barra'); if(b) b.style.display=(BZ.c&&JSON.stringify(BZ.c)!==BZ.salvo)?'flex':'none'; }
 function bzMudou(){ bzLe(); bzBarra(); }
 function bzDesfazer(){ BZ.c=JSON.parse(BZ.salvo); bzPintar(); bzLe(); bzBarra(); }
-function bzFxNova(){ bzLe(); BZ.c.faixas.push({dias:[1,2,3,4,5],de:'11:00',ate:'15:00',preco:BZ.c.precoKg||0}); bzPintar(); bzBarra(); }
+function bzFxNova(){ bzLe(); BZ.c.faixas.push({dias:[1,2,3,4,5],de:'11:00',ate:'15:00',preco:BZ.c.precoKg||0,livre:0}); bzPintar(); bzBarra(); }
 function bzFxTira(i){ bzLe(); BZ.c.faixas.splice(i,1); bzPintar(); bzBarra(); }
 function bzPrNovo(){ bzLe(); var n=1; while(BZ.c.pratos.some(function(p){ return p.n===n; })) n++; BZ.c.pratos.push({n:n,nome:'',g:0}); if(!BZ.c.prato) BZ.c.prato=n; bzPintar(); bzBarra(); var r=document.querySelectorAll('#bz-pratos .bz-pnome'); if(r.length) r[r.length-1].focus(); }
 function bzPrTira(i){ bzLe(); var p=BZ.c.pratos.splice(i,1)[0]; if(p&&p.n===BZ.c.prato) BZ.c.prato=BZ.c.pratos[0]?BZ.c.pratos[0].n:0; bzPintar(); bzBarra(); }

@@ -48,7 +48,7 @@
   let TEM_SENHA = false, SERVIDOR_312 = false;
   async function carregaConfig() {
     // demonstração aberta sem o link da loja: cardápio de exemplo e preços de exemplo
-    if (TESTE && !(LOJA && KEY)) { BARRAS = {}; C.bebCats = (CRU.cats || []).filter((k) => /bebid|refri|suco|cervej|[aá]gua|drink/i.test(k.nome || '')).map((k) => k.id); Object.keys(PRODS).forEach((id) => { if (PRODS[id].barras) BARRAS[id] = PRODS[id].barras; }); return true; }
+    if (TESTE && !(LOJA && KEY)) { const lv0 = parseFloat(String(Q.get('livre') || '').replace(',', '.')); if (lv0 > 0) AGORA.livre = lv0; BARRAS = {}; C.bebCats = (CRU.cats || []).filter((k) => /bebid|refri|suco|cervej|[aá]gua|drink/i.test(k.nome || '')).map((k) => k.id); Object.keys(PRODS).forEach((id) => { if (PRODS[id].barras) BARRAS[id] = PRODS[id].barras; }); return true; }
     // tela de verdade e demonstração pelo link da loja: a aparência, os preços, os pratos e as bebidas são os do painel
     const r = await fetch(`${API}/live/balanca?loja=${encodeURIComponent(LOJA)}&k=${encodeURIComponent(KEY)}`, { cache: 'no-store' });
     const d = await r.json().catch(() => ({}));
@@ -56,6 +56,7 @@
     C = d.bal; AGORA = d.agora || { preco: C.precoKg, faixa: '' }; BARRAS = d.barras || {}; VOZ_SERVIDOR = !!d.voz; CLI = d.cli || CLI;
     SERVIDOR_312 = d.temSenha !== undefined; TEM_SENHA = !!d.temSenha;
     if (TESTE && !(AGORA.preco > 0)) AGORA.preco = 69.9;   // demonstração de loja que ainda não informou o preço
+    const lv = parseFloat(String(Q.get('livre') || '').replace(',', '.')); if (TESTE && lv > 0) AGORA.livre = lv;   // demonstração: ...&livre=49,90 mostra o buffet livre sem mexer na loja
     return true;
   }
   // bebidas por categoria, na ordem do cadastro (categorias na ordem do cardápio; produtos na ordem em que o cardápio os entrega)
@@ -68,6 +69,7 @@
   function pintaFixos() {
     $('#frase').textContent = C.frase || 'Coloque seu prato na balança';
     $('#preco-chip').hidden = !(AGORA.preco > 0); $('#preco-v').textContent = real(AGORA.preco);
+    $('#livre-chip').hidden = !(livre() > 0); $('#livre-v').textContent = real(livre());
     const p = prato(); $('#prato-chip').hidden = !C.pratos.length; $('#prato-v').textContent = p.n ? ('0' + p.n).slice(-2) + ' · ' + p.nome : '';
     $('#selo-teste').hidden = !TESTE;
     const tela = $('#tela'), antigo = $('#fundo');
@@ -136,7 +138,10 @@
   // ----- estado -----
   const E = { fase: 'ligar', kg: 0, estavel: false, online: false, msgBal: '', fixo: 0, beb: {}, env: '', desde: 0, mexeu: 0, semPrato: 0, contagem: 0, resp: null, simKg: null };
   const liquido = (kg) => Math.max(0, r3(kg - prato().g / 1000));
-  const valorDe = (liq) => { let v = r2(liq * AGORA.preco); if (C.max > 0 && v > C.max) v = C.max; return v; };
+  // BUFFET LIVRE (opcional): valor do livre que vale agora (o da faixa de horário, senão o padrão da loja). Passou dele, vale ele.
+  const livre = () => (AGORA.livre > 0 ? AGORA.livre : (C.max > 0 ? C.max : 0));
+  const noLivre = (liq) => livre() > 0 && r2(liq * AGORA.preco) > livre();
+  const valorDe = (liq) => (noLivre(liq) ? livre() : r2(liq * AGORA.preco));
   const totalBeb = () => Object.keys(E.beb).reduce((s, id) => s + (PRODS[id] ? PRODS[id].preco * E.beb[id] : 0), 0);
   function fase(f) {
     E.fase = f; E.desde = Date.now(); E.mexeu = Date.now(); E.contagem = 0;
@@ -174,7 +179,7 @@
     if (E.fase === 'pesando' || E.fase === 'pergunta' || (E.fase === 'enviando' && $('#c-peso').classList.contains('on'))) {
       const kg = E.fase === 'pesando' ? E.kg : E.fixo, liq = liquido(kg), v = valorDe(liq), p = prato();
       alvoPeso = liq; avanca();   // os números e o anel correm até o peso (ver "avanca")
-      $('#conta').innerHTML = real(AGORA.preco) + ' o quilo' + (p.g ? '<br>já descontado o prato (' + p.g + ' g)' : '') + (C.max > 0 && v >= C.max ? '<br>valor máximo por prato' : '');
+      $('#conta').innerHTML = real(AGORA.preco) + ' o quilo' + (p.g ? '<br>já descontado o prato (' + p.g + ' g)' : '') + (noLivre(liq) ? '<br><b class="selo-livre">Buffet livre</b> passou do valor do livre: você paga o livre' : '');
       const ok = E.fase !== 'pesando';
       $('#anel').classList.toggle('ok', ok); $('#anel').classList.toggle('vivo', !ok);
       $('#estado').classList.toggle('ok', ok);
@@ -203,7 +208,7 @@
     const ids = Object.keys(E.beb), env0 = E.fase === 'enviando', marcaC = JSON.stringify([E.beb, liq, v, env0]);
     if (marcaC === comandaFeita) return;
     comandaFeita = marcaC;
-    $('#beb-itens').innerHTML = `<div class="ln"><div class="n">Buffet por quilo<small>${kgTxt(liq)} kg x ${real(AGORA.preco)}</small></div><div class="v">${real(v)}</div></div>`
+    $('#beb-itens').innerHTML = `<div class="ln"><div class="n">${noLivre(liq) ? 'Buffet livre' : 'Buffet por quilo'}<small>${noLivre(liq) ? kgTxt(liq) + ' kg · passou do livre' : kgTxt(liq) + ' kg x ' + real(AGORA.preco)}</small></div><div class="v">${real(v)}</div></div>`
       + ids.map((id) => `<div class="ln"><div class="qt"><button type="button" data-menos="${esc(id)}" aria-label="Tirar uma">−</button><b>${E.beb[id]}</b><button type="button" data-add="${esc(id)}" aria-label="Mais uma">+</button></div><div class="n">${esc(PRODS[id].nome)}</div><div class="v">${real(PRODS[id].preco * E.beb[id])}</div></div>`).join('');
     $('#beb-total').textContent = real(v + totalBeb());
     const env = E.fase === 'enviando';
@@ -296,7 +301,7 @@
         await new Promise((r) => setTimeout(r, 700));
         const liq = liquido(E.fixo), v = valorDe(liq);
         d = { ok: true, num: 100 + Math.floor(Math.random() * 900), total: r2(v + totalBeb()), impressora: 1, pix: C.pagTela === 0 ? 0 : 1, conta: { l: 'teste', n: 1, t: 'x' },
-          linhas: [{ qty: 1, nome: 'Buffet por quilo', desc: kgTxt(liq) + ' kg x ' + real(AGORA.preco) + '/kg', preco: real(v) }].concat(bebidas.map((b) => ({ qty: b.qty, nome: PRODS[b.p].nome, desc: '', preco: real(PRODS[b.p].preco * b.qty) }))) };
+          linhas: [{ qty: 1, nome: noLivre(liq) ? 'Buffet livre' : 'Buffet por quilo', desc: noLivre(liq) ? kgTxt(liq) + ' kg - passou do livre, vale o livre' : kgTxt(liq) + ' kg x ' + real(AGORA.preco) + '/kg', preco: real(v) }].concat(bebidas.map((b) => ({ qty: b.qty, nome: PRODS[b.p].nome, desc: '', preco: real(PRODS[b.p].preco * b.qty) }))) };
       } else {
         const r = await fetch(API + '/live/balanca-pedido', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ loja: LOJA, k: KEY, kg: E.fixo, bebidas, env: E.env }) });
         d = await r.json().catch(() => ({ ok: false, mensagem: 'Resposta inválida do servidor (' + r.status + ').' }));
@@ -330,7 +335,7 @@
         // "estavel" do programa já são 3 leituras iguais seguidas; o 1,1 s dá tempo de ver os números correndo
         if (tem && estaveis >= 1 && agora - E.desde >= 1100 && liquido(E.kg) * 1000 >= C.minG) {
           E.fixo = E.kg; const liq = liquido(E.fixo);
-          fala('Seu prato deu ' + pesoFalado(liq) + '. ' + valorFalado(valorDe(liq)) + '.' + (C.bebida ? ' Deseja uma bebida?' : ''));
+          fala('Seu prato deu ' + pesoFalado(liq) + '. ' + (noLivre(liq) ? 'Passou do buffet livre, então você paga o livre: ' : '') + valorFalado(valorDe(liq)) + '.' + (C.bebida ? ' Deseja uma bebida?' : ''));
           if (C.bebida) fase('pergunta'); else concluir();
         }
         break;
