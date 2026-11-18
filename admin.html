@@ -1020,6 +1020,7 @@ function abrirCliente(id){
   '<div style="margin-top:14px;padding:12px;border:1px solid #F3D9C9;border-radius:12px;background:#FFF8F3"><b style="font-size:14px">Dados de outra conta no painel?</b><p class="sub" style="margin:4px 0 8px">Se o painel desta loja mostra pedidos ou cadastros de outra conta (vieram de um navegador usado por outra loja), tire aqui. Fica uma cópia de segurança.</p><button type="button" class="btn peq" onclick="limparPainelPrevia(\''+esc(c.id)+'\')">Ver o que sairia</button><div id="lp-res" class="sub" style="margin-top:8px"></div></div>'+
   '</div><div data-aba="plano2">'+
   '<div class="linha2"><div><label>Dia do vencimento (1 a 31)</label><input id="ec-dia" inputmode="numeric" maxlength="2" value="'+esc(c.dia_venc||10)+'"></div><div></div></div>'+
+  stHtml()+
   '<div style="margin-top:20px"><b>Cobrança no fluxo</b></div><p class="sub" style="margin:2px 0 8px">A mensalidade e a taxa entram sozinhas no fluxo. Se você excluiu uma por engano, lance de novo aqui.</p><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input type="month" id="ec-mes" style="width:auto" value="'+hojeIso().slice(0,7)+'"><button class="btn peq" onclick="relancarCobranca(\''+esc(c.id)+'\')">Lançar no fluxo</button></div>'+
   '</div><div data-aba="acesso">'+
   '<div style="margin-top:14px"><b>Acesso do dono ao painel</b></div><div id="ec-dono"><div class="vazio">Carregando...</div></div>'+
@@ -1036,7 +1037,68 @@ function abrirCliente(id){
   el('cd-abas').innerHTML=ABAS.map(function(x){ return '<button type="button" data-a="'+x[0]+'" onclick="cdAba(\''+x[0]+'\')">'+x[1]+'</button>'; }).join('');
   cdAba(abaAntes);
   cdFicha(c);
-  carregarDono(c.id);planoDoCliente();
+  carregarDono(c.id);planoDoCliente();stCarregar(c.id);
+}
+/* ── SETUP do cliente: valor, parcelas e 1º vencimento. As parcelas vão para o fluxo ("Lançar parcelas no fluxo"); a mensalidade só começa 30 dias depois do 1º vencimento.
+   O campo "Asaas" de cada parcela é só um texto (id ou link da cobrança) para a integração futura: aqui nada chama o Asaas. ── */
+var SETUP_ST={};
+function stHtml(){
+  var ns=''; for(var i=1;i<=12;i++) ns+='<option value="'+i+'">'+i+'x</option>';
+  return '<div style="margin-top:20px"><b>Setup (implantação)</b></div><p class="sub" style="margin:2px 0 8px">Valor cobrado uma vez, em parcelas mensais. Quem tem setup só começa a pagar a mensalidade 30 dias depois do 1º vencimento do setup.</p>'+
+  '<div class="linha2"><div><label>Valor do setup (R$)</label><input id="st-val" inputmode="decimal" placeholder="0,00" oninput="stPrever()"></div><div><label>Parcelas</label><select id="st-n" onchange="stPrever()">'+ns+'</select></div></div>'+
+  '<div class="linha2"><div><label>Vencimento da 1ª parcela</label><input type="date" id="st-v1" onchange="stPrever()"></div><div></div></div>'+
+  '<p class="sub" id="st-inicio" style="margin:8px 0 0"></p><div id="st-lista"></div><div class="erro" id="st-erro"></div>'+
+  '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button type="button" class="btn peq" id="st-salvar" onclick="stSalvar()">Salvar setup</button><button type="button" class="btn peq" id="st-lancar" onclick="stLancar()">Lançar parcelas no fluxo</button></div>';
+}
+function stMais(iso,n){ return new Date(Date.parse(iso+'T12:00:00Z')+n*86400000).toISOString().slice(0,10); }
+function stSomaMes(iso,k){ var a=+iso.slice(0,4),m=+iso.slice(5,7)-1+k,d=+iso.slice(8,10); a+=Math.floor(m/12); m=((m%12)+12)%12; var u=new Date(Date.UTC(a,m+1,0)).getUTCDate(); d=Math.min(d,u); return a+'-'+('0'+(m+1)).slice(-2)+'-'+('0'+d).slice(-2); }
+/* primeira data com o dia de vencimento em 'ini' ou depois (igual ao servidor) */
+function stPrimeiroVenc(ini,dia){ dia=Math.min(31,Math.max(1,parseInt(dia,10)||10)); var a=+ini.slice(0,4),m=+ini.slice(5,7); for(var i=0;i<4;i++){ var u=new Date(Date.UTC(a,m,0)).getUTCDate(),c=a+'-'+('0'+m).slice(-2)+'-'+('0'+Math.min(dia,u)).slice(-2); if(c>=ini) return c; m++; if(m>12){m=1;a++;} } return ini; }
+function stPrever(){
+  var v1=el('st-v1')?el('st-v1').value:'', inf=el('st-inicio'); if(!inf) return;
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(v1)){ inf.innerHTML='Informe o vencimento da 1ª parcela para ver quando a mensalidade começa.'; return; }
+  var ini=stMais(v1,30), dia=el('ec-dia')?el('ec-dia').value:10, pv=stPrimeiroVenc(ini,dia);
+  inf.innerHTML='<b>A mensalidade começa em '+fmtData(ini)+'</b> (30 dias depois): a 1ª vence em <b>'+fmtData(pv)+'</b>, dia '+(parseInt(dia,10)||10)+' de cada mês.'+(pv!==ini?' <button type="button" class="btn peq" onclick="stUsarDia(\''+ini.slice(8,10)+'\')">Vencer em '+fmtData(ini)+' (usar dia '+parseInt(ini.slice(8,10),10)+')</button>':'');
+}
+function stUsarDia(d){ var i=el('ec-dia'); if(i){ i.value=parseInt(d,10); stPrever(); toast('Dia do vencimento mudou para '+parseInt(d,10)+'. Toque em "Salvar dados" para valer.'); } }
+function stCarregar(id){
+  chamar('GET','/admin/clientes/'+encodeURIComponent(id)+'/setup').then(function(d){
+    if(CLI_ABERTO!==id||!el('st-val')) return;
+    SETUP_ST[id]=d.ok?d.setup:null; stDesenhar(id);
+  }).catch(function(){});
+}
+function stDesenhar(id){
+  var s=SETUP_ST[id];
+  if(s){ el('st-val').value=deCentavos(s.valor_centavos); el('st-n').value=String(s.n); el('st-v1').value=s.venc1; }
+  stPrever();
+  var L=el('st-lista'); if(!L) return;
+  if(!s){ L.innerHTML=''; return; }
+  var tem=s.parcelas.some(function(p){ return p.no_fluxo; }), stx={pago:'Paga',pendente:'No fluxo',nao_lancada:'Não lançada'};
+  L.innerHTML='<div style="margin-top:8px;display:grid;gap:6px">'+s.parcelas.map(function(p){
+    return '<div style="display:grid;grid-template-columns:34px 1fr 92px minmax(120px,1.4fr);gap:8px;align-items:center;font-size:13px"><b>'+p.n+'/'+s.n+'</b><span>'+reais(p.valor_centavos)+' · vence '+fmtData(p.venc)+'</span><span class="tag '+(p.status==='pago'?'on':'off')+'">'+stx[p.status]+'</span><input class="st-asaas" placeholder="Asaas: id ou link" value="'+esc(p.asaas)+'" style="padding:6px 8px;font-size:12px"></div>';
+  }).join('')+'</div>'+(tem?'':'<p class="sub" style="margin:6px 0 0">As parcelas ainda não estão no fluxo. Toque em "Lançar parcelas no fluxo".</p>');
+}
+function stSalvar(){
+  var id=CLI_ABERTO, er=el('st-erro'); er.textContent='';
+  var corpo={valor_centavos:paraCentavos(el('st-val').value),parcelas:parseInt(el('st-n').value,10)||1,venc1:el('st-v1').value};
+  if(corpo.valor_centavos&&!corpo.venc1){ er.textContent='Informe o vencimento da 1ª parcela.'; return; }
+  var as=document.querySelectorAll('.st-asaas'); if(as.length&&corpo.valor_centavos&&SETUP_ST[id]&&SETUP_ST[id].n===corpo.parcelas) corpo.asaas=[].map.call(as,function(i){ return i.value.trim(); });
+  chamar('PUT','/admin/clientes/'+encodeURIComponent(id)+'/setup',corpo).then(function(d){
+    if(!d.ok){ er.textContent=d.mensagem||d.erro||'Erro ao salvar o setup.'; return; }
+    SETUP_ST[id]=d.setup; if(!d.setup){ el('st-val').value=''; el('st-v1').value=''; }
+    stDesenhar(id); toast(d.setup?'Setup salvo.':'Setup removido.'); carregarFluxo();
+    chamar('GET','/admin/clientes').then(function(r){ if(r.ok){ CLIENTES=r.clientes||[]; desenharClientes(); var c=CLIENTES.filter(function(x){return x.id===id;})[0]; if(c) cdFicha(c); } }).catch(function(){});
+  }).catch(function(){});
+}
+function stLancar(){
+  var id=CLI_ABERTO, er=el('st-erro'); er.textContent='';
+  if(!SETUP_ST[id]){ er.textContent='Salve o setup antes de lançar no fluxo.'; return; }
+  chamar('POST','/admin/clientes/'+encodeURIComponent(id)+'/setup',{}).then(function(d){
+    if(!d.ok){ er.textContent=d.mensagem||d.erro||'Erro ao lançar.'; return; }
+    SETUP_ST[id]=d.setup; stDesenhar(id);
+    var p=d.setup.venc1; if(p<FC.ini||d.setup.parcelas[d.setup.parcelas.length-1].venc>FC.fim){ FC.ini=p<FC.ini?p.slice(0,8)+'01':FC.ini; var u=d.setup.parcelas[d.setup.parcelas.length-1].venc; if(u>FC.fim) FC.fim=ultDia(u.slice(0,7)); }
+    toast('Parcelas do setup lançadas no fluxo.'); carregarFluxo();
+  }).catch(function(){});
 }
 function ecTeste(d){ var i=el('ec-teste'); if(!d){ i.value=''; return; } var t=new Date(hojeIso()+'T12:00:00'); t.setDate(t.getDate()+d); i.value=t.toISOString().slice(0,10); }
 function planoDoCliente(){
@@ -1573,7 +1635,7 @@ function cdAba(k){ CD_ABA=k; document.querySelectorAll('#cd-abas button').forEac
 function cdFicha(c){
   var s=situacao(c), pn=planoNome(c.plano_id);
   el('cd-ficha').innerHTML='<div class="a" style="background:'+(c.ativo?corAv(c.nome):'#8A8A92')+'">'+esc((c.nome||'?').charAt(0).toUpperCase())+'</div><h2>'+esc(c.nome)+'</h2><div class="hx-mu">'+(c.slug?'<a href="https://livefood.tec.br/'+esc(c.slug)+'" target="_blank" rel="noopener" style="color:inherit">livefood.tec.br/'+esc(c.slug)+'</a>':esc(c.id))+'</div><span class="st '+s.cls+'">'+s.txt+'</span>'+
-    '<dl><div><dt>Plano</dt><dd>'+(pn?esc(pn):'Sem plano (valores manuais)')+'</dd></div><div><dt>Mensalidade</dt><dd>'+reais(c.mensalidade_centavos)+' · dia '+(c.dia_venc||10)+'</dd></div><div><dt>Taxa por motorista</dt><dd>'+reais(c.taxa_app_centavos)+'</dd></div><div><dt>Equipe</dt><dd>'+(c.equipe||0)+' no painel · '+(c.motoristas_ativos||0)+' motorista'+((c.motoristas_ativos||0)===1?'':'s')+'</dd></div><div id="cd-dono-fic"></div></dl>';
+    '<dl><div><dt>Plano</dt><dd>'+(pn?esc(pn):'Sem plano (valores manuais)')+'</dd></div><div><dt>Mensalidade</dt><dd>'+reais(c.mensalidade_centavos)+' · dia '+(c.dia_venc||10)+'</dd></div><div><dt>Taxa por motorista</dt><dd>'+reais(c.taxa_app_centavos)+'</dd></div>'+(c.mens_inicio?'<div><dt>Setup</dt><dd>'+reais(c.setup_centavos)+' em '+(c.setup_parcelas||1)+'x</dd></div><div><dt>Mensalidade começa</dt><dd>'+fmtData(c.mens_inicio)+' · 1ª vence '+fmtData(c.mens_primeiro_venc)+'</dd></div>':'')+'<div><dt>Equipe</dt><dd>'+(c.equipe||0)+' no painel · '+(c.motoristas_ativos||0)+' motorista'+((c.motoristas_ativos||0)===1?'':'s')+'</dd></div><div id="cd-dono-fic"></div></dl>';
 }
 /* dados do dono na ficha (vêm junto com o acesso ao painel) */
 function cdDonoFicha(cid){
