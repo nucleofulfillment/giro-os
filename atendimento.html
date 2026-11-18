@@ -693,7 +693,7 @@ function mostraComanda(){
   $('chipT').innerHTML=t.join(' · '); $('chipS').textContent=COM.sm||ehSMM(COM.mesa)?'Sem cliente':(COM.nome||'Comanda aberta'); $('chip').classList.remove('hide');
 }
 function trocaComanda(){ if(CART.length&&!confirm('Há itens no pedido que ainda não foram enviados. Trocar de comanda mesmo assim?')) return; zeraComanda(); }
-function zeraComanda(){ COPOS=null;   /* (250) */ _ab=0; AUTOJ=''; AUTOM=''; carregaAbertas(); COM={mesa:'',joia:'',nome:'',modo:COM.modo,dev:0,bloq:false,liberar:false}; modo(COM.modo); CART=[]; $('chip').classList.add('hide'); $('iMesa').value=''; $('iJoia').value=''; $('joiaInfo').innerHTML=''; $('sugs').innerHTML=''; $('idErr').textContent=''; limpaBusca(); ['p-cats','p-prods'].forEach(function(i){ $(i).classList.add('hide'); }); $('p-ident').classList.remove('hide'); cartBar(); window.scrollTo(0,0); if(JOIA_ABC) joiaTeclado(true); foco('#iJoia'); }   /* (228) começa pelo cliente */
+function zeraComanda(){ COPOS=null; NFCG=false;   /* (250) */ _ab=0; AUTOJ=''; AUTOM=''; carregaAbertas(); COM={mesa:'',joia:'',nome:'',modo:COM.modo,dev:0,bloq:false,liberar:false}; modo(COM.modo); CART=[]; $('chip').classList.add('hide'); $('iMesa').value=''; $('iJoia').value=''; $('joiaInfo').innerHTML=''; $('sugs').innerHTML=''; $('idErr').textContent=''; limpaBusca(); ['p-cats','p-prods'].forEach(function(i){ $(i).classList.add('hide'); }); $('p-ident').classList.remove('hide'); cartBar(); window.scrollTo(0,0); if(JOIA_ABC) joiaTeclado(true); foco('#iJoia'); }   /* (228) começa pelo cliente */
 function ativaComanda(c){ COM={mesa:c.mesa||'',joia:c.joia||'',nome:c.nome||'',modo:(c.joia&&!c.mesa)||ehBalM(c.mesa)?'balcao':'mesa',dev:0,bloq:false,liberar:false}; modo(COM.modo); CART=[]; mostraComanda(); $('p-ident').classList.add('hide'); aba('ped'); verCats(); }
 /* ── cardápio: categorias em cards ── */
 function fotoProd(p){ return p.foto?API+'/food/foto/'+encodeURIComponent(CLI)+'/'+encodeURIComponent(p.id):''; }
@@ -975,15 +975,32 @@ function copoOk(fn){
   if(coposPede()&&COPOS==null){ var e=$('pErr'); if(e) e.textContent='Informe quantos copos (ou Sem copo).'; var l=$('cpsL'); if(l){ l.classList.add('falta'); l.scrollIntoView({block:'center',behavior:'smooth'}); } try{ navigator.vibrate&&navigator.vibrate(120); }catch(x){} return; }
   fn();
 }
+/* (320) GRAVAR NO CARTÃO NFC: no Balcão com a cobrança na hora e o cartão do cliente ligado, uma chave no topo do pedido faz o fechamento pedir o cartão (Cliente Crédito) em vez de listar as formas de pagamento */
+var NFCG=false;
+function nfcOk(){ return COM.modo==='balcao'&&cobraHora()&&ccpLigado(); }
+function nfcLinha(){
+  if(!nfcOk()) return '';
+  return '<label style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:1.5px solid '+(NFCG?'var(--pri)':'var(--s3)')+';border-radius:14px;margin-bottom:10px;font-weight:800;cursor:pointer"><input type="checkbox" id="nfcG" style="width:20px;height:20px" onchange="nfcToggle(this.checked)"'+(NFCG?' checked':'')+'><span>💳 Gravar no cartão NFC<br><small style="font-weight:600;color:var(--mu2)">Ao finalizar, o sistema pede para encostar o cartão</small></span></label>';
+}
+function nfcToggle(on){
+  NFCG=!!on; var b=$('pBt'); if(!b) return; var tot=Math.round((cartTot()+srvVal(cartTot()))*100)/100;
+  b.setAttribute('onclick','copoOk('+(NFCG?'fcCartaoNfc':'fcEscolher')+')'); b.textContent=(NFCG?'Gravar no cartão':'Fechar comanda')+' · '+brl(tot);
+  var l=$('nfcG'); if(l&&l.parentNode) l.parentNode.style.borderColor=NFCG?'var(--pri)':'var(--s3)';
+}
+function fcCartaoNfc(){
+  if($('pObs')){ FC.obs=$('pObs').value; FC.copos=coposVal(); }
+  FC.imp=true;
+  ccpAbrir(function(c){ FC.cartao=c.uid; FC.cartaoInfo=c; fcResumo('cartao_cliente'); },abreCarrinho);
+}
 function abreCarrinho(){
-  var h=''; CART.forEach(function(i,k){ h+='<div class="opt"><span class="n"><b>'+i.qty+'x '+esc(i.nome)+'</b><small>'+descItem(i,1)+'</small></span><span class="p">'+brl(i.unit*i.qty)+'</span><button onclick="tiraItem('+k+')" style="border:0;background:var(--s3);border-radius:8px;width:32px;height:32px;font-weight:800">×</button></div>'; });
+  var h=nfcLinha(); CART.forEach(function(i,k){ h+='<div class="opt"><span class="n"><b>'+i.qty+'x '+esc(i.nome)+'</b><small>'+descItem(i,1)+'</small></span><span class="p">'+brl(i.unit*i.qty)+'</span><button onclick="tiraItem('+k+')" style="border:0;background:var(--s3);border-radius:8px;width:32px;height:32px;font-weight:800">×</button></div>'; });
   h+=srvLinha(srvVal(cartTot()),srvPct());
   h+=coposHtml();
   if(PRAIA) h+='<div id="pFotoBx"></div><label class="l">📍 Observação do local (opcional)</label><input class="inp" id="pRef" maxlength="140" placeholder="Ex.: guarda-sol azul, 2ª fileira" value="'+esc(GEO.ref||'')+'" oninput="GEO.ref=this.value">';
   h+='<label class="l">Observação do pedido (cozinha)</label><input class="inp" id="pObs" maxlength="300">'+(PRAIA?'<div id="pGps" style="margin-top:12px">'+praiaGpsTxt()+'</div>':'')+'<div class="er" id="pErr"></div>';
   var totC=Math.round((cartTot()+srvVal(cartTot()))*100)/100, hj=cobraHora();
   var smP2=PRAIA&&COM.sm, pd=PRAIA&&hj&&(!COM.avulso||COM.sm);   /* entrega na praia: primeiro gera o pedido, cobra depois na comanda */
-  folha('Pedido · '+(COM.sm?'Sem mesa':ehSMM(COM.mesa)?smTit(COM.mesa):COM.avulso||ehBalM(COM.mesa)?'Cliente Balcão':[(COM.mesa?(COM.modo==='balcao'?'Balcão ':'Mesa ')+COM.mesa:''),COM.joia].filter(Boolean).join(' · ')),h,'<button class="bt" id="pBt" style="margin:0" onclick="'+(hj&&!pd?'copoOk(fcEscolher)':'copoOk(enviaPedido)')+'">'+(hj&&!pd?'Fechar comanda':(COM.avulso&&!smP2?'Finalizar pedido':'Enviar para a cozinha'))+' · '+brl(totC)+'</button>'+(pd?'<button class="bt s" style="margin:8px 0 0;width:100%" onclick="copoOk(fcEscolher)">Cobrar agora</button>':'')+(PRAIA&&(!COM.avulso||COM.sm)?'<button class="bt s" style="margin:8px 0 0;width:100%" onclick="fotoLocalTirar(\'cart\')">📷 Foto do local</button>':'')); foco('#pBt'); fotoLocalBx();
+  folha('Pedido · '+(COM.sm?'Sem mesa':ehSMM(COM.mesa)?smTit(COM.mesa):COM.avulso||ehBalM(COM.mesa)?'Cliente Balcão':[(COM.mesa?(COM.modo==='balcao'?'Balcão ':'Mesa ')+COM.mesa:''),COM.joia].filter(Boolean).join(' · ')),h,'<button class="bt" id="pBt" style="margin:0" onclick="'+(hj&&!pd?'copoOk('+(NFCG&&nfcOk()?'fcCartaoNfc':'fcEscolher')+')':'copoOk(enviaPedido)')+'">'+(hj&&!pd?(NFCG&&nfcOk()?'Gravar no cartão':'Fechar comanda'):(COM.avulso&&!smP2?'Finalizar pedido':'Enviar para a cozinha'))+' · '+brl(totC)+'</button>'+(pd?'<button class="bt s" style="margin:8px 0 0;width:100%" onclick="copoOk(fcEscolher)">Cobrar agora</button>':'')+(PRAIA&&(!COM.avulso||COM.sm)?'<button class="bt s" style="margin:8px 0 0;width:100%" onclick="fotoLocalTirar(\'cart\')">📷 Foto do local</button>':'')); foco('#pBt'); fotoLocalBx();
 }
 /* ── (228) COBRAR NA HORA (opção da loja, no painel em Configurações clientes): o garçom fecha a comanda, escolhe a forma de pagamento,
    mostra o resumo para o cliente e só depois do pagamento aprovado o pedido vai para a cozinha. Cancelar não cria pedido nenhum. ── */
