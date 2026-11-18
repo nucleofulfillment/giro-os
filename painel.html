@@ -10118,8 +10118,8 @@ function bzPintar(){
   /* situação + tela + balança ao vivo */
   h+='<div class="card" style="margin-bottom:16px"><h3><span class="lft">Tela do Buffet</span></h3>'
     +'<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'+sw('bz-ativo',c.ativo)+'<span style="font-weight:700">Balança do buffet ligada</span></div>'
-    +'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px"><input class="inp" readonly value="'+esc(bzLink())+'" style="flex:1;min-width:220px" onclick="this.select()"><button class="btn sec" onclick="bzCopiar()">Copiar link</button><a class="btn pri" href="'+esc(bzLink())+'" target="_blank" rel="noopener" style="text-decoration:none">Abrir a tela</a></div>'
-    +'<p class="bz-dica">Abra esse link no computador que fica ao lado da balança e aperte F11 para a tela cheia. O link leva a chave da loja: não envie para outras pessoas.</p>'
+    +'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px"><input class="inp" readonly value="'+esc(bzLink())+'" style="flex:1;min-width:220px" onclick="this.select()"><button class="btn sec" onclick="bzCopiar()">Copiar link</button><a class="btn pri" href="'+esc(bzLink())+'" target="_blank" rel="noopener" style="text-decoration:none">Abrir a tela</a><a class="btn sec" href="'+esc(bzLink()+'&teste=1')+'" target="_blank" rel="noopener" style="text-decoration:none">Abrir demonstração</a></div>'
+    +'<p class="bz-dica">Abra esse link no computador que fica ao lado da balança e aperte F11 para a tela cheia. O link leva a chave da loja: não envie para outras pessoas.<br><b>Demonstração:</b> funciona sem balança, em qualquer computador ou tablet. Um botão na tela simula o prato; nada é registrado nem impresso. Serve para mostrar a clientes e treinar a equipe.</p>'
     +'<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px solid var(--b2,#E8E8EB)"><div><div class="bz-rot">Balança agora</div><div class="bz-peso" id="bz-peso">—</div></div><div id="bz-peso-m" style="flex:1;min-width:200px;font-size:12.5px;line-height:1.5;color:var(--muted)"></div><button class="btn sec" onclick="bzProcurar()">Procurar balança</button></div></div>';
   /* preço do quilo */
   h+='<div class="card" style="margin-bottom:16px"><h3><span class="lft">Preço do quilo</span></h3>'
@@ -10140,7 +10140,14 @@ function bzPintar(){
       +'<span style="display:flex;gap:6px;align-items:center;font-size:12.5px;color:var(--muted)"><input class="inp bz-pg" inputmode="numeric" value="'+(p.g||'')+'" placeholder="0" style="width:84px" oninput="bzMudou()"> g</span>'
       +'<button type="button" class="btn sec sm" onclick="bzPrPesar('+i+')">Pesar este prato</button><button type="button" class="bz-x" title="Tirar este prato" onclick="bzPrTira('+i+')">✕</button></div>'; }).join(''):'<div style="font-size:12.5px;color:var(--muted);padding:8px 0">Nenhum prato cadastrado: a balança cobra o peso inteiro.</div>')
     +'</div><button class="btn sec sm" style="margin-top:8px" onclick="bzPrNovo()">+ Novo prato</button>'
-    +'<p class="bz-dica">Para cadastrar: ponha o prato vazio na balança e toque em Pesar este prato. Para trocar o prato no meio do almoço, toque no canto de cima da tela do Buffet e digite o número (01, 02).</p></div>';
+    +'<p class="bz-dica">Para cadastrar: ponha o prato vazio na balança e toque em Pesar este prato. Para trocar o prato no meio do almoço, toque no canto de cima da tela do Buffet e digite o número (01, 02).</p>'
+    +'<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--b2,#E8E8EB)"><label><div class="bz-rot">Senha para trocar o prato na tela (só números)</div><input class="inp" id="bz-senha" inputmode="numeric" maxlength="8" autocomplete="off" placeholder="sem senha" value="'+esc(c.senha||'')+'" style="width:150px" oninput="this.value=this.value.replace(/\\D/g,\'\');bzMudou()"></label>'
+    +'<p class="bz-dica">Com senha, a tela do Buffet pede a senha antes de aceitar o número do prato. Em branco, qualquer pessoa troca.</p></div></div>';
+  /* pagamento (312) */
+  h+='<div class="card" style="margin-bottom:16px"><h3><span class="lft">Pagamento</span></h3>'
+    +'<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'+sw('bz-pagtela',c.pagTela!==0)+'<span style="font-weight:700">Oferecer Pix na tela depois da comanda</span></div>'
+    +'<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px">'+sw('bz-pagqr',c.pagQr!==0)+'<span style="font-weight:700">Imprimir na comanda o QR para ver a conta e pagar pelo celular</span></div>'
+    +'<p class="bz-dica">Pagar no caixa vale sempre: o operador bipa a comanda no Atendimento e a conta dela já abre. O Pix na tela e no celular só aparece se a loja recebe Pix pelo sistema (Configurações, Formas de pagamento) e a conta for de R$ 5,00 ou mais.</p></div>';
   /* bebida */
   h+='<div class="card" style="margin-bottom:16px"><h3><span class="lft">Bebida</span></h3><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'+sw('bz-bebida',c.bebida)+'<span style="font-weight:700">Perguntar se o cliente deseja uma bebida</span></div>'
     +'<div class="bz-rot" style="margin-top:14px">Categorias que aparecem na pergunta</div><div style="display:flex;gap:6px 14px;flex-wrap:wrap;margin-top:6px">'
@@ -10165,6 +10172,7 @@ function bzLe(){
   c.prato=at||(c.pratos[0]?c.pratos[0].n:0);
   c.bebida=el('bz-bebida').checked?1:0; c.bebCats=q('.bz-cat').filter(function(x){ return x.checked; }).map(function(x){ return x.value; });
   c.frase=el('bz-frase').value.trim(); c.voz=el('bz-voz').checked?1:0;
+  c.senha=el('bz-senha').value.replace(/\D/g,'').slice(0,8); c.pagTela=el('bz-pagtela').checked?1:0; c.pagQr=el('bz-pagqr').checked?1:0;   /* (312) */
 }
 function bzBarra(){ var b=el('bz-barra'); if(b) b.style.display=(BZ.c&&JSON.stringify(BZ.c)!==BZ.salvo)?'flex':'none'; }
 function bzMudou(){ bzLe(); bzBarra(); }
@@ -10209,7 +10217,8 @@ function bzSalvar(){
   if(c.pratos.some(function(p,i){ return c.pratos.some(function(o,j){ return j!==i&&o.n===p.n; }); })){ aviso('Dois pratos estão com o mesmo número.'); return; }
   mzApi('/painel/balanca-config',c).then(function(d){
     if(!d||!d.ok) throw new Error((d&&d.mensagem)||'Não salvou');
-    BZ.c=d.bal; BZ.agora=d.agora; bzPintar(); bzLe(); BZ.salvo=JSON.stringify(BZ.c); bzBarra(); aviso('Balança salva');
+    var velho=d.bal&&d.bal.pagTela===undefined;   /* servidor anterior ao 312 não guarda a senha nem as opções de pagamento */
+    BZ.c=d.bal; BZ.agora=d.agora; bzPintar(); bzLe(); BZ.salvo=JSON.stringify(BZ.c); bzBarra(); aviso(velho?'Salvo, menos a senha e o pagamento: publique o Worker 312.':'Balança salva');
   }).catch(function(e){ aviso(esc(e.message||'Não salvou')); });
 }
 

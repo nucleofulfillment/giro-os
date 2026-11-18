@@ -44,12 +44,18 @@
   const prato = () => C.pratos.find((p) => p.n === C.prato) || { n: 0, nome: '', g: 0 };
   const normBarra = (c) => String(c || '').replace(/[^0-9A-Za-z]/g, '').replace(/^0+/, '').toUpperCase();
 
+  // TEM_SENHA: a loja cadastrou senha para trocar o prato (a senha em si fica no servidor). SERVIDOR_312: o servidor já confere senha e aceita "teste".
+  let TEM_SENHA = false, SERVIDOR_312 = false;
   async function carregaConfig() {
-    if (TESTE) { BARRAS = {}; C.bebCats = (CRU.cats || []).filter((k) => /bebid|refri|suco|cervej|[aá]gua|drink/i.test(k.nome || '')).map((k) => k.id); Object.keys(PRODS).forEach((id) => { if (PRODS[id].barras) BARRAS[id] = PRODS[id].barras; }); return true; }
+    // demonstração aberta sem o link da loja: cardápio de exemplo e preços de exemplo
+    if (TESTE && !(LOJA && KEY)) { BARRAS = {}; C.bebCats = (CRU.cats || []).filter((k) => /bebid|refri|suco|cervej|[aá]gua|drink/i.test(k.nome || '')).map((k) => k.id); Object.keys(PRODS).forEach((id) => { if (PRODS[id].barras) BARRAS[id] = PRODS[id].barras; }); return true; }
+    // tela de verdade e demonstração pelo link da loja: a aparência, os preços, os pratos e as bebidas são os do painel
     const r = await fetch(`${API}/live/balanca?loja=${encodeURIComponent(LOJA)}&k=${encodeURIComponent(KEY)}`, { cache: 'no-store' });
     const d = await r.json().catch(() => ({}));
     if (!d.ok) throw new Error(d.mensagem || (r.status === 404 ? 'O servidor ainda não conhece a balança (publique o Worker 310).' : 'Não consegui carregar a configuração da balança.'));
     C = d.bal; AGORA = d.agora || { preco: C.precoKg, faixa: '' }; BARRAS = d.barras || {}; VOZ_SERVIDOR = !!d.voz; CLI = d.cli || CLI;
+    SERVIDOR_312 = d.temSenha !== undefined; TEM_SENHA = !!d.temSenha;
+    if (TESTE && !(AGORA.preco > 0)) AGORA.preco = 69.9;   // demonstração de loja que ainda não informou o preço
     return true;
   }
   // bebidas por categoria, na ordem do cadastro (categorias na ordem do cardápio; produtos na ordem em que o cardápio os entrega)
@@ -132,6 +138,7 @@
   }
   function roda() { cancelAnimationFrame(quadro); const f = () => { if (!$('#c-peso').classList.contains('on')) return; avanca(); quadro = requestAnimationFrame(f); }; quadro = requestAnimationFrame(f); }
   function pinta() {
+    if (TESTE) { const tem = E.simKg > 0; $('#demo').hidden = E.fase === 'ligar'; $('#b-demo-poe').hidden = tem || E.fase !== 'espera'; $('#b-demo-tira').hidden = !tem; }
     $('#aviso-bal').hidden = E.online || E.fase !== 'espera'; $('#aviso-bal').textContent = E.msgBal;
     $('#seta').style.visibility = E.online ? 'visible' : 'hidden';
     if (E.fase === 'espera' && E.travado && E.online) { $('#aviso-bal').hidden = false; $('#aviso-bal').textContent = 'Retire o prato da balança para a próxima pesagem.'; $('#seta').style.visibility = 'hidden'; }
@@ -186,11 +193,15 @@
 
   // ----- pagar agora com Pix (opcional): gera o Pix da comanda, mostra o QR e espera a confirmação -----
   let pixVez = 0;
-  function voltaInicio() { pixVez++; E.travado = E.online && E.kg >= NA_BALANCA; fase('espera'); }
+  function voltaInicio() {
+    pixVez++;
+    if (TESTE && E.simKg > 0) { E.simKg = 0; E.kg = 0; }   // demonstração: o prato de mentira sai sozinho, pronto para a próxima
+    E.travado = E.online && E.kg >= NA_BALANCA; fase('espera');
+  }
   async function abrePix() {
     const r = E.resp; if (!r || !r.conta) return;
     const vez = ++pixVez, c = r.conta;
-    $('#pix-img').removeAttribute('src'); $('#pix-ok').hidden = true; $('#b-pix-voltar').hidden = false;
+    $('#pix-img').removeAttribute('src'); $('#pix-ok').hidden = true; $('#b-pix-voltar').hidden = false; $('#pix-live').hidden = true; $('#pix-caixa').hidden = false; $('#pix-total').hidden = false;
     $('#pix-titulo').textContent = 'Pague com Pix'; $('#pix-sub').textContent = 'Abra o aplicativo do seu banco e leia o QR Code';
     $('#pix-total').textContent = real(r.total); $('#pix-estado').textContent = 'Gerando o Pix…';
     fase('pix');
@@ -212,7 +223,7 @@
         } catch (e) { /* sem rede agora: tenta de novo */ }
         if (vez !== pixVez || E.fase !== 'pix') return;
         if (paga) {
-          $('#pix-ok').hidden = false; $('#b-pix-voltar').hidden = true;
+          $('#pix-caixa').hidden = true; $('#pix-live').hidden = false; $('#b-pix-voltar').hidden = true;   // pago: sai o QR, entra o Live comemorando
           $('#pix-titulo').textContent = 'Pagamento confirmado!'; $('#pix-sub').textContent = 'Comanda ' + r.num + ' paga. Obrigado e bom apetite!'; $('#pix-estado').textContent = '';
           bip(880); fala('Pagamento confirmado. Obrigado e bom apetite!'); fase('pago'); return;
         }
@@ -255,7 +266,7 @@
       if (TESTE) {
         await new Promise((r) => setTimeout(r, 700));
         const liq = liquido(E.fixo), v = valorDe(liq);
-        d = { ok: true, num: 100 + Math.floor(Math.random() * 900), total: r2(v + totalBeb()), impressora: 1, pix: 1, conta: { l: 'teste', n: 1, t: 'x' },
+        d = { ok: true, num: 100 + Math.floor(Math.random() * 900), total: r2(v + totalBeb()), impressora: 1, pix: C.pagTela === 0 ? 0 : 1, conta: { l: 'teste', n: 1, t: 'x' },
           linhas: [{ qty: 1, nome: 'Buffet por quilo', desc: kgTxt(liq) + ' kg x ' + real(AGORA.preco) + '/kg', preco: real(v) }].concat(bebidas.map((b) => ({ qty: b.qty, nome: PRODS[b.p].nome, desc: '', preco: real(PRODS[b.p].preco * b.qty) }))) };
       } else {
         const r = await fetch(API + '/live/balanca-pedido', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ loja: LOJA, k: KEY, kg: E.fixo, bebidas, env: E.env }) });
@@ -270,7 +281,7 @@
       E.fase = 'erro';
     }
   }
-  function cancelar() { $('#erro').hidden = true; E.resp = null; if (E.kg >= NA_BALANCA) { $('#fim-titulo').textContent = 'Pesagem cancelada'; $('#fim-num').innerHTML = ''; $('#fim-itens').innerHTML = ''; $('#fim-total').textContent = ''; $('#fim-aviso').textContent = 'Retire o prato da balança.'; fase('retire'); } else fase('espera'); }
+  function cancelar() { $('#erro').hidden = true; E.resp = null; if (TESTE && E.simKg > 0) { E.simKg = 0; E.kg = 0; } if (E.kg >= NA_BALANCA) { $('#fim-titulo').textContent = 'Pesagem cancelada'; $('#fim-num').innerHTML = ''; $('#fim-itens').innerHTML = ''; $('#fim-total').textContent = ''; $('#fim-aviso').textContent = 'Retire o prato da balança.'; fase('retire'); } else fase('espera'); }
 
   // ----- o passo de cada leitura da balança -----
   let estaveis = 0;
@@ -321,14 +332,24 @@
       E.online = false; E.kg = 0; E.estavel = false;
       E.msgBal = 'Não achei o programa de impressão neste computador. Ele precisa estar instalado e ligado (painel, Configurações, Impressoras).';
     }
+    // demonstração: sem balança por perto a tela funciona igual, com o prato de mentira do botão
+    if (TESTE && !E.online) { E.online = true; E.kg = 0; E.estavel = true; E.msgBal = ''; }
   }
   async function ciclo() { await lePeso(); if (E.fase !== 'ligar' && E.fase !== 'enviando' && E.fase !== 'erro') passo(); else pinta(); setTimeout(ciclo, 300); }
 
   // ----- teclado do prato (funcionário toca no "prato" lá em cima e digita o número) -----
-  let digitos = '';
+  // Com senha cadastrada no painel, o teclado pede primeiro a senha (conferida no servidor) e só depois o número do prato.
+  let digitos = '', tcModo = 'prato', tcSenha = '';
+  function tcVisor() { $('#tc-visor').textContent = tcModo === 'senha' ? '•'.repeat(digitos.length) : digitos; }
+  function tcPasso(modo) {
+    tcModo = modo; digitos = ''; $('#tc-m').textContent = ''; tcVisor();
+    $('#tc-titulo').textContent = modo === 'senha' ? 'Senha' : 'Trocar o prato';
+    $('#tc-texto').textContent = modo === 'senha' ? 'Digite a senha para trocar o prato.' : 'Digite o número do prato que está no buffet agora.';
+    $('#tc-lista').hidden = modo === 'senha';
+  }
   function abreTeclado() {
     if (E.fase !== 'espera' || !C.pratos.length) return;
-    digitos = ''; $('#tc-m').textContent = ''; $('#tc-visor').textContent = '';
+    tcSenha = ''; tcPasso(TEM_SENHA ? 'senha' : 'prato');
     $('#tc-teclas').innerHTML = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'Fechar', '0', 'OK'].map((t) => `<button type="button" data-t="${t}"${t === 'OK' ? ' class="ok"' : ''}${t === 'Fechar' ? ' style="font-size:calc(var(--u)*1.3)"' : ''}>${t}</button>`).join('');
     $('#tc-lista').innerHTML = C.pratos.map((p) => `<div>${('0' + p.n).slice(-2)} · ${esc(p.nome)} · ${p.g} g${p.n === C.prato ? ' (em uso)' : ''}</div>`).join('');
     $('#teclado').hidden = false; window.Totem.estado.modo = 'conversa';
@@ -336,12 +357,23 @@
   function fechaTeclado() { $('#teclado').hidden = true; if (E.fase === 'espera') window.Totem.estado.modo = 'standby'; }
   async function tecla(t) {
     if (t === 'Fechar') return fechaTeclado();
-    if (t !== 'OK') { digitos = (digitos + t).slice(-2); $('#tc-visor').textContent = digitos; $('#tc-m').textContent = ''; return; }
+    if (t !== 'OK') { digitos = tcModo === 'senha' ? (digitos + t).slice(0, 8) : (digitos + t).slice(-2); tcVisor(); $('#tc-m').textContent = ''; return; }
+    const prato_ = (corpo) => fetch(API + '/live/balanca-prato', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ loja: LOJA, k: KEY }, corpo)) }).then((r) => r.json());
+    if (tcModo === 'senha') {
+      if (!digitos) return;
+      try {
+        const d = await prato_({ soSenha: 1, senha: digitos });
+        if (!d.ok) { bip(220); digitos = ''; tcVisor(); $('#tc-m').textContent = d.mensagem || 'Senha incorreta.'; return; }
+        tcSenha = digitos; tcPasso('prato');
+      } catch (e) { $('#tc-m').textContent = 'Sem conexão.'; }
+      return;
+    }
     const n = parseInt(digitos, 10) || 0, p = C.pratos.find((x) => x.n === n);
-    if (!p) { $('#tc-m').textContent = 'Não existe prato com esse número.'; digitos = ''; $('#tc-visor').textContent = ''; return; }
+    if (!p) { $('#tc-m').textContent = 'Não existe prato com esse número.'; digitos = ''; tcVisor(); return; }
     try {
-      if (!TESTE) {
-        const d = await fetch(API + '/live/balanca-prato', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ loja: LOJA, k: KEY, n }) }).then((r) => r.json());
+      // tela de verdade: grava no servidor. Demonstração: só confere (no servidor novo) e troca nesta tela, sem mexer na loja
+      if (!TESTE || (SERVIDOR_312 && TEM_SENHA)) {
+        const d = await prato_({ n, senha: tcSenha, teste: TESTE ? 1 : undefined });
         if (!d.ok) throw new Error(d.mensagem || 'Não troquei o prato.');
       }
       C.prato = n; pintaFixos(); fechaTeclado(); bip(880);
@@ -373,6 +405,8 @@
     else if (b.id === 'b-nao' || b.id === 'b-concluir' || b.id === 'b-de-novo') { $('#erro').hidden = true; if (E.fase === 'erro') E.fase = 'pergunta'; concluir(); }
     else if (b.id === 'b-cancelar' || b.id === 'b-desistir') cancelar();
     else if (b.id === 'prato-chip') abreTeclado();
+    else if (b.id === 'b-demo-poe') { if (E.fase === 'espera') { E.travado = false; E.simKg = r3(0.35 + Math.random() * 0.5 + prato().g / 1000); pinta(); } }
+    else if (b.id === 'b-demo-tira') { E.simKg = 0; pinta(); }
     else if (b.id === 'b-pix') abrePix();
     else if (b.id === 'b-depois' || b.id === 'b-pix-voltar') voltaInicio();
   });

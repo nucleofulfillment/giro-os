@@ -32,8 +32,8 @@
 
   /* topo: logo da loja à esquerda; preço do quilo e prato em uso à direita */
   #topo { position: absolute; left: 0; right: 0; top: 0; padding: calc(var(--u) * 1.8) calc(var(--u) * 2.6); display: flex; align-items: center; justify-content: space-between; gap: calc(var(--u) * 1.5); z-index: 5; }
-  .loja-logo { display: flex; align-items: center; font: 800 calc(var(--u) * 2.2)/1 var(--ft); letter-spacing: -.5px; min-height: calc(var(--u) * 4); }
-  .loja-logo img { height: calc(var(--u) * 4); max-width: calc(var(--u) * 18); object-fit: contain; }
+  .loja-logo { display: flex; align-items: center; font: 800 calc(var(--u) * 3.2)/1 var(--ft); letter-spacing: -.5px; min-height: calc(var(--u) * 7); }
+  .loja-logo img { height: calc(var(--u) * 7); max-width: calc(var(--u) * 30); object-fit: contain; }
   #tela.com-video .loja-logo img { background: #fff; border-radius: calc(var(--u) * .9); padding: calc(var(--u) * .4) calc(var(--u) * .8); }
   .chips { display: flex; gap: calc(var(--u) * .8); }
   .chip { display: flex; align-items: baseline; gap: calc(var(--u) * .5); padding: calc(var(--u) * .7) calc(var(--u) * 1.3); border-radius: 99px; background: var(--vidro); border: 1.5px solid var(--borda); backdrop-filter: blur(14px); font-size: calc(var(--u) * 1.05); font-weight: 700; color: var(--mu2); }
@@ -41,7 +41,7 @@
   #tela:not(.com-video) .chip b { color: var(--tx); }
 
   /* cenas: uma por vez, com entrada suave */
-  .cena { position: absolute; inset: 0; padding: calc(var(--u) * 7.5) calc(var(--u) * 4) calc(var(--u) * 3); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; opacity: 0; pointer-events: none; transform: translateY(calc(var(--u) * 1.5)) scale(.985); transition: opacity .35s, transform .45s cubic-bezier(.2, .9, .3, 1); }
+  .cena { position: absolute; inset: 0; padding: calc(var(--u) * 10.5) calc(var(--u) * 4) calc(var(--u) * 2.4); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; opacity: 0; pointer-events: none; transform: translateY(calc(var(--u) * 1.5)) scale(.985); transition: opacity .35s, transform .45s cubic-bezier(.2, .9, .3, 1); }
   .cena.on { opacity: 1; pointer-events: auto; transform: none; }
   h1 { margin: 0; font: 800 calc(var(--u) * 6.4)/.98 var(--ft); letter-spacing: -1.5px; text-wrap: balance; }
   h2 { margin: 0; font: 800 calc(var(--u) * 3.6)/1 var(--ft); letter-spacing: -.8px; text-wrap: balance; }
@@ -55,6 +55,15 @@
   .lv-olhos { transform-origin: 0 -8.5px; animation: lv-pisca 4.3s linear infinite; }
   .visual { display: flex; justify-content: center; height: calc(var(--u) * 15); margin-bottom: calc(var(--u) * 2); animation: lv-flutua 3.5s ease-in-out infinite; }
   .visual.p { height: calc(var(--u) * 8.5); margin-bottom: calc(var(--u) * 1); }
+  /* tela final: o Live aparece ao lado da comanda, comemorando */
+  #c-fim .fim-linha { display: flex; align-items: center; justify-content: center; gap: calc(var(--u) * 4); margin-top: calc(var(--u) * 1.4); }
+  #c-fim .visual.g { height: calc(var(--u) * 17); margin: 0; animation: lv-festa 1.1s ease-in-out infinite; }
+  #c-pix .visual.g { height: calc(var(--u) * 13); margin: 0 0 calc(var(--u) * 1); animation: lv-festa 1.1s ease-in-out infinite; }
+  @keyframes lv-festa { 0%, 100% { transform: translateY(6px) rotate(-3deg); } 50% { transform: translateY(-12px) rotate(3deg); } }
+  /* demonstração: botão que simula o prato na balança */
+  #demo { position: absolute; left: calc(var(--u) * 2.2); bottom: calc(var(--u) * 1.8); z-index: 25; display: flex; gap: calc(var(--u) * .7); }
+  #demo button { height: calc(var(--u) * 4.4); padding: 0 calc(var(--u) * 1.8); border-radius: 99px; background: #1C1C1E; color: #fff; font: 800 calc(var(--u) * 1.35)/1 var(--ft); padding-top: .12em; box-shadow: 0 calc(var(--u) * .5) calc(var(--u) * 1.4) rgba(0, 0, 0, .28); }
+  #demo button.sai { background: #fff; color: #1C1C1E; }
   @keyframes lv-flutua { 0%, 100% { transform: translateY(5px); } 50% { transform: translateY(-9px); } }
   @keyframes lv-giro { 0%, 100% { transform: rotate(-2.5deg); } 50% { transform: rotate(2.5deg); } }
   @keyframes lv-antena { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
@@ -177,6 +186,7 @@
     :root { --u: min(1.78vw, 1vh); }
     #c-peso .linha { flex-direction: column; gap: calc(var(--u) * 2.4); } .lado { text-align: center; }
     #c-beb { flex-direction: column; } .comanda { width: 100%; max-height: 42%; } .gr4 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    #c-fim .fim-linha { flex-direction: column; gap: calc(var(--u) * 1.6); } #c-fim .visual.g { height: calc(var(--u) * 12); }
   }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 </style>
@@ -195,7 +205,8 @@
 
 <div id="assinatura"><img src="img/logo-livefood-branca.png" alt="livefood"></div>
 <div id="tela">
-  <div id="selo-teste" hidden>TESTE · nada é registrado</div>
+  <div id="selo-teste" hidden>DEMONSTRAÇÃO · nada é registrado</div>
+  <div id="demo" hidden><button type="button" id="b-demo-poe">Colocar prato</button><button type="button" class="sai" id="b-demo-tira" hidden>Retirar prato</button></div>
   <div id="topo">
     <div class="loja-logo"></div>
     <div class="chips">
@@ -249,18 +260,21 @@
   </section>
 
   <section class="cena" id="c-fim">
-    <div class="visual p"><span class="lv-aqui"></span></div>
     <h2 id="fim-titulo">Prontinho! Retire a sua comanda</h2>
-    <div class="papel">
-      <div id="fim-num"></div>
-      <div id="fim-itens"></div>
-      <div class="tot"><span>Total</span><b id="fim-total"></b></div>
+    <div class="fim-linha">
+      <div class="visual g"><span class="lv-aqui"></span></div>
+      <div class="papel" style="margin-top:0">
+        <div id="fim-num"></div>
+        <div id="fim-itens"></div>
+        <div class="tot"><span>Total</span><b id="fim-total"></b></div>
+      </div>
     </div>
     <div id="fim-aviso" aria-live="polite"></div>
     <div class="botoes" id="fim-pagar" hidden><button type="button" class="bt pri" id="b-pix">Pagar agora com Pix</button><button type="button" class="bt" id="b-depois">Pagar depois no caixa</button></div>
   </section>
 
   <section class="cena" id="c-pix">
+    <div class="visual g" id="pix-live" hidden><span class="lv-aqui"></span></div>
     <h2 id="pix-titulo">Pague com Pix</h2>
     <p class="sub" id="pix-sub">Abra o aplicativo do seu banco e leia o QR Code</p>
     <div id="pix-caixa"><img id="pix-img" alt="QR Code do Pix"><div id="pix-ok" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div></div>
@@ -273,7 +287,7 @@
     <div><div class="visual" style="margin:0 auto"><span class="lv-aqui"></span></div><h1 style="margin-top:calc(var(--u)*2)">Toque para ligar</h1><p class="sub" style="color:rgba(255,255,255,.8)">Liga a tela cheia e a voz do Live</p></div>
   </div>
   <div class="camada" id="teclado" hidden>
-    <div class="cx"><h3>Trocar o prato</h3><p>Digite o número do prato que está no buffet agora.</p>
+    <div class="cx"><h3 id="tc-titulo">Trocar o prato</h3><p id="tc-texto">Digite o número do prato que está no buffet agora.</p>
       <div id="tc-visor"></div><div id="tc-teclas"></div><div id="tc-m"></div><div id="tc-lista"></div></div>
   </div>
   <div class="camada" id="erro" hidden>
