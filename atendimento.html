@@ -353,7 +353,7 @@ label.l.big{font-size:14px;margin-top:16px}
         <div id="joiaInfo"></div>
         <label class="l big" id="lbMesa">Número da mesa</label><div class="mrow"><input class="inp big" id="iMesa" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="off" oninput="linkMesa()" onfocus="carregaAbertas()"><button type="button" class="mpick hide" id="bMapa" onclick="abreMapa()" title="Escolher no mapa de mesas"><svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.4"/><circle cx="12" cy="6" r="2.4"/><circle cx="18" cy="6" r="2.4"/><circle cx="6" cy="12" r="2.4"/><circle cx="12" cy="12" r="2.4"/><circle cx="18" cy="12" r="2.4"/><circle cx="6" cy="18" r="2.4"/><circle cx="12" cy="18" r="2.4"/><circle cx="18" cy="18" r="2.4"/></svg></button></div>
         <div class="er" id="idErr"></div>
-        <button class="bt big" onclick="abreComanda()">Continuar para o cardápio</button><button class="bt s bp-bt bpOn hide" type="button" onclick="bpCam()">▮▯▮▮ Bipar produto</button></div>
+        <button class="bt big" onclick="abreComanda()">Continuar para o cardápio</button><button class="bt s bp-bt bpOn hide" type="button" onclick="bpCam()">▮▯▮▮ Bipar produto</button><button class="bt s hide" id="nfbBtn" type="button" onclick="nfbAbreComanda()" style="margin-top:10px">💳 Comanda do cartão (fechar conta)</button></div>
       </div>
     </div>
 
@@ -480,7 +480,7 @@ function nfcMesaInicia(){
 function nfcMesaLiga(manual){
   if(NFM.on||!('NDEFReader' in window)) return; var rd, ctl;
   try{ rd=new NDEFReader(); ctl=new AbortController(); }catch(e){ return; }
-  rd.onreading=function(ev){ if(CCP.on){ ccpLeu(ev.serialNumber); return; } if(ccpLigado()&&!nfcTemMesa(ev.message)){ ccpIdentifica(ev.serialNumber); return; } nfcMesaLeu(ev.message); };   /* (276) com a tela "Cliente Crédito" aberta, o toque é o cartão do cliente, não a etiqueta da mesa */
+  rd.onreading=function(ev){ if(NFB.on){ nfbLeu(ev.serialNumber); return; } if(nfcNew()&&!CCP.on&&!nfcTemMesa(ev.message)&&sh&&sh.style.display!=='flex'&&D){ nfbComanda(String(ev.serialNumber||'').replace(/[^0-9A-Fa-f]/g,'').toUpperCase()); return; } if(CCP.on){ ccpLeu(ev.serialNumber); return; } if(ccpLigado()&&!nfcTemMesa(ev.message)){ ccpIdentifica(ev.serialNumber); return; } nfcMesaLeu(ev.message); };   /* (276) com a tela "Cliente Crédito" aberta, o toque é o cartão do cliente, não a etiqueta da mesa */
   rd.onreadingerror=function(){ toast('Não consegui ler a etiqueta. Encoste de novo e segure parado.'); };
   rd.scan({signal:ctl.signal}).then(function(){ NFM.on=true; NFM.ctl=ctl; nfcMesaBx('on'); }).catch(function(e){
     NFM.on=false; var n=e&&e.name;
@@ -618,15 +618,15 @@ function linkJoia(j){
   /* (236) não preenche mais a mesa sozinho: ao continuar, o garçom escolhe manter a mesa ou trocar (perguntaMesa) */
 }
 function plab(p){ return p.sub?p.num+'-'+p.sub:String(p.num); }
-function modo(m){ COM.modo=m; mostraMapaBtn(); $('sgM').classList.toggle('on',m==='mesa'); $('sgB').classList.toggle('on',m==='balcao'); $('lbMesa').textContent=m==='mesa'?'Número da mesa':'Número da comanda do balcão (opcional)'; var liv=m==='balcao'&&balLivre(), gl=m==='mesa'&&garLivre(); $('lbCli').textContent=liv||gl?'Cliente (opcional)':'Cliente'; if(gl) $('lbMesa').textContent='Número da mesa (opcional)'; if(!JOIA_ABC) $('iJoia').placeholder=liv?'Sem cliente: toque em Continuar':'Digite o número do cliente'; }   /* (238) garçom: mesa e cliente opcionais */
+function modo(m){ COM.modo=m; try{ nfcChipPinta(); }catch(e){} mostraMapaBtn(); $('sgM').classList.toggle('on',m==='mesa'); $('sgB').classList.toggle('on',m==='balcao'); $('lbMesa').textContent=m==='mesa'?'Número da mesa':'Número da comanda do balcão (opcional)'; var liv=m==='balcao'&&balLivre(), gl=m==='mesa'&&garLivre(); $('lbCli').textContent=liv||gl?'Cliente (opcional)':'Cliente'; if(gl) $('lbMesa').textContent='Número da mesa (opcional)'; if(!JOIA_ABC) $('iJoia').placeholder=liv?'Sem cliente: toque em Continuar':'Digite o número do cliente'; }   /* (238) garçom: mesa e cliente opcionais */
 /* (153) balcão sem cliente: ligado no painel, em Configurações clientes */
-function balLivre(){ return !!(D&&D.cfg&&D.cfg.balcao_livre); }
+function balLivre(){ return !!(D&&D.cfg&&(D.cfg.balcao_livre||D.cfg.balcao_nfc)); }
 function ehBalM(m){ return /^BAL\d+$/.test(String(m||'')); }
 /* (238) garçom sem mesa e sem cliente (quem está em pé ou é visitante): ligado no painel, em Configurações clientes. A comanda fica como "Sem mesa #<número>" (mesa SM<número>) */
 function garLivre(){ return !!(D&&D.cfg&&D.cfg.garcom_livre); }
 function ehSMM(m){ return /^SM\d+$/.test(String(m||'')); }
 function smTit(m){ return 'Sem mesa #'+String(m).slice(2); }
-function comTit(c){ return ehBalM(c.mesa)?'Cliente Balcão':ehSMM(c.mesa)?smTit(c.mesa):(c.mesa?'Mesa '+esc(c.mesa):''); }
+function comTit(c){ return c.cartao&&ehSMM(c.mesa)?'Cartão ····'+esc(String(c.cartao).slice(-4)):ehBalM(c.mesa)?'Cliente Balcão':ehSMM(c.mesa)?smTit(c.mesa):(c.mesa?'Mesa '+esc(c.mesa):''); }
 var SUGS=[], _dj=0, CLIS=null;
 function digJoia(){
   clearTimeout(_dj); COM.nome=''; COM.bloq=false; COM.liberar=false; $('joiaInfo').innerHTML=''; var q=$('iJoia').value.trim(); if(!q){ $('sugs').innerHTML=''; AUTOJ=''; linkJoia(''); return; }
@@ -693,7 +693,7 @@ function mostraComanda(){
   try{ nfcChipPinta(); }catch(e){} $('chipT').innerHTML=t.join(' · '); $('chipS').textContent=COM.sm||ehSMM(COM.mesa)?'Sem cliente':(COM.nome||'Comanda aberta'); $('chip').classList.remove('hide');
 }
 function trocaComanda(){ if(CART.length&&!confirm('Há itens no pedido que ainda não foram enviados. Trocar de comanda mesmo assim?')) return; zeraComanda(); }
-function zeraComanda(){ COPOS=null; NFCG=false; try{ nfcChipPinta(); }catch(e){}   /* (250) */ _ab=0; AUTOJ=''; AUTOM=''; carregaAbertas(); COM={mesa:'',joia:'',nome:'',modo:COM.modo,dev:0,bloq:false,liberar:false}; modo(COM.modo); CART=[]; $('chip').classList.add('hide'); $('iMesa').value=''; $('iJoia').value=''; $('joiaInfo').innerHTML=''; $('sugs').innerHTML=''; $('idErr').textContent=''; limpaBusca(); ['p-cats','p-prods'].forEach(function(i){ $(i).classList.add('hide'); }); $('p-ident').classList.remove('hide'); cartBar(); window.scrollTo(0,0); if(JOIA_ABC) joiaTeclado(true); foco('#iJoia'); }   /* (228) começa pelo cliente */
+function zeraComanda(){ COPOS=null; NFCG=null; try{ nfcChipPinta(); }catch(e){}   /* (250) */ _ab=0; AUTOJ=''; AUTOM=''; carregaAbertas(); COM={mesa:'',joia:'',nome:'',modo:COM.modo,dev:0,bloq:false,liberar:false}; modo(COM.modo); CART=[]; $('chip').classList.add('hide'); $('iMesa').value=''; $('iJoia').value=''; $('joiaInfo').innerHTML=''; $('sugs').innerHTML=''; $('idErr').textContent=''; limpaBusca(); ['p-cats','p-prods'].forEach(function(i){ $(i).classList.add('hide'); }); $('p-ident').classList.remove('hide'); cartBar(); window.scrollTo(0,0); if(JOIA_ABC) joiaTeclado(true); foco('#iJoia'); }   /* (228) começa pelo cliente */
 function ativaComanda(c){ COM={mesa:c.mesa||'',joia:c.joia||'',nome:c.nome||'',modo:(c.joia&&!c.mesa)||ehBalM(c.mesa)?'balcao':'mesa',dev:0,bloq:false,liberar:false}; modo(COM.modo); CART=[]; mostraComanda(); $('p-ident').classList.add('hide'); aba('ped'); verCats(); }
 /* ── cardápio: categorias em cards ── */
 function fotoProd(p){ return p.foto?API+'/food/foto/'+encodeURIComponent(CLI)+'/'+encodeURIComponent(p.id):''; }
@@ -975,24 +975,83 @@ function copoOk(fn){
   if(coposPede()&&COPOS==null){ var e=$('pErr'); if(e) e.textContent='Informe quantos copos (ou Sem copo).'; var l=$('cpsL'); if(l){ l.classList.add('falta'); l.scrollIntoView({block:'center',behavior:'smooth'}); } try{ navigator.vibrate&&navigator.vibrate(120); }catch(x){} return; }
   fn();
 }
-/* (320) GRAVAR NO CARTÃO NFC: no Balcão com a cobrança na hora e o cartão do cliente ligado, uma chave no topo do pedido faz o fechamento pedir o cartão (Cliente Crédito) em vez de listar as formas de pagamento */
-var NFCG=false;
-function nfcOk(){ return COM.modo==='balcao'&&cobraHora()&&ccpLigado(); }
+/* (320) GRAVAR NO CARTÃO NFC (Cliente Crédito): no Balcão com a cobrança na hora e o cartão do cliente ligado, a chave faz o fechamento pedir o cartão em vez de listar as formas de pagamento.
+   (321) BALCÃO COM CARTÃO NFC (Configurações clientes): o Balcão monta o pedido sem mesa e sem cliente e, ao gravar, o pedido vai para a comanda do cartão (cada cartão é uma comanda aberta, sem cadastro); na saída, encosta o cartão e fecha a conta. */
+var NFCG=null;   /* null = o padrão da loja (ligado quando a loja usa o Balcão com cartão NFC) */
+function nfcNew(){ return !!(D&&D.cfg&&D.cfg.balcao_nfc); }
+function nfcOk(){ return COM.modo==='balcao'&&(nfcNew()||(cobraHora()&&ccpLigado())); }
+function nfcOn(){ return NFCG===null?nfcNew():!!NFCG; }
+function nfcGrav(){ return nfcNew()&&COM.modo==='balcao'&&nfcOn(); }
 function nfcLinha(){
-  if(!nfcOk()) return '';
-  return '<label style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:1.5px solid '+(NFCG?'var(--pri)':'var(--s3)')+';border-radius:14px;margin-bottom:10px;font-weight:800;cursor:pointer"><input type="checkbox" id="nfcG" style="width:20px;height:20px" onchange="nfcToggle(this.checked)"'+(NFCG?' checked':'')+'><span>💳 Gravar no cartão NFC<br><small style="font-weight:600;color:var(--mu2)">Ao finalizar, o sistema pede para encostar o cartão</small></span></label>';
+  if(!nfcOk()) return ''; var on=nfcOn();
+  return '<label style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:1.5px solid '+(on?'var(--pri)':'var(--s3)')+';border-radius:14px;margin-bottom:10px;font-weight:800;cursor:pointer"><input type="checkbox" id="nfcG" style="width:20px;height:20px" onchange="nfcToggle(this.checked)"'+(on?' checked':'')+'><span>💳 Gravar no cartão NFC<br><small style="font-weight:600;color:var(--mu2)">'+(nfcNew()?'O pedido fica na comanda do cartão. Paga na saída.':'Ao finalizar, o sistema pede para encostar o cartão')+'</small></span></label>';
 }
-function nfcChipPinta(){ var b=$('nfcChip'); if(!b) return; var ok=nfcOk(); b.classList.toggle('hide',!ok); if(!ok) return; b.textContent='💳 Cartão NFC: '+(NFCG?'ligado':'desligado'); b.style.background=NFCG?'var(--pri)':''; b.style.color=NFCG?'#fff':''; }
-function nfcChipToggle(){ NFCG=!NFCG; nfcChipPinta(); var l=$('nfcG'); if(l) l.checked=NFCG; toast(NFCG?'Ao finalizar, o sistema pede o cartão NFC':'Cartão NFC desligado'); }
+function nfcChipPinta(){ var b=$('nfcChip'); if(b){ var ok=nfcOk(), on=nfcOn(); b.classList.toggle('hide',!ok); if(ok){ b.textContent='💳 Cartão NFC: '+(on?'ligado':'desligado'); b.style.background=on?'var(--pri)':''; b.style.color=on?'#fff':''; } } var q=$('nfbBtn'); if(q) q.classList.toggle('hide',!nfcNew()); }
+function nfcChipToggle(){ NFCG=!nfcOn(); nfcChipPinta(); var l=$('nfcG'); if(l) l.checked=nfcOn(); toast(nfcOn()?(nfcNew()?'O pedido será gravado no cartão':'Ao finalizar, o sistema pede o cartão NFC'):'Cartão NFC desligado'); }
 function nfcToggle(on){
-  NFCG=!!on; try{ nfcChipPinta(); }catch(e){} var b=$('pBt'); if(!b) return; var tot=Math.round((cartTot()+srvVal(cartTot()))*100)/100;
-  b.setAttribute('onclick','copoOk('+(NFCG?'fcCartaoNfc':'fcEscolher')+')'); b.textContent=(NFCG?'Gravar no cartão':'Fechar comanda')+' · '+brl(tot);
+  NFCG=!!on; try{ nfcChipPinta(); }catch(e){}
+  var b=$('pBt'); if(!b) return; var tot=Math.round((cartTot()+srvVal(cartTot()))*100)/100, ac, tx;
+  if(nfcGrav()){ ac='nfcGravar'; tx='Gravar no cartão'; }
+  else if(NFCG&&nfcOk()){ ac='fcCartaoNfc'; tx='Gravar no cartão'; }
+  else if(cobraHora()){ ac='fcEscolher'; tx='Fechar comanda'; }
+  else { ac='enviaPedido'; tx=COM.avulso?'Finalizar pedido':'Enviar para a cozinha'; }
+  b.setAttribute('onclick','copoOk('+ac+')'); b.textContent=tx+' · '+brl(tot);
   var l=$('nfcG'); if(l&&l.parentNode) l.parentNode.style.borderColor=NFCG?'var(--pri)':'var(--s3)';
 }
 function fcCartaoNfc(){
   if($('pObs')){ FC.obs=$('pObs').value; FC.copos=coposVal(); }
   FC.imp=true;
   ccpAbrir(function(c){ FC.cartao=c.uid; FC.cartaoInfo=c; fcResumo('cartao_cliente'); },abreCarrinho);
+}
+/* (321) tela "Encoste o cartão": lê só o número do cartão (o cartão não precisa estar cadastrado) */
+var NFB={on:0,cb:null,v:null,busy:0};
+function nfbAbrir(titulo,cb,voltar,msg){
+  NFB.cb=cb; NFB.v=voltar; NFB.on=1; NFB.busy=0; var tem=('NDEFReader' in window);
+  folha(titulo||'Cartão NFC','<div style="text-align:center;padding:6px 0 2px"><div style="font-size:54px;line-height:1">💳</div><div id="nfbMsg" style="font-size:17px;font-weight:800;margin:8px 0 4px">'+(tem?'Encoste o cartão do cliente':'Digite o número do cartão')+'</div><div style="font-size:13px;color:var(--mu2)">'+(tem?'Encoste o cartão atrás do celular e segure parado.':'Este aparelho não lê NFC. Use o leitor USB ou digite.')+'</div></div><label class="l">Ou digite o número do cartão</label><input class="inp" id="nfbIn" autocomplete="off" autocapitalize="characters" onkeydown="if(event.key===\'Enter\')nfbDigitado()"><div class="er" id="nfbEr">'+esc(msg||'')+'</div>','<button class="bt" style="margin:0 0 8px" onclick="nfbDigitado()">Ler cartão</button><button class="bt s" style="margin:0" onclick="nfbVolta()">Voltar</button>');
+  if(tem&&!NFM.on) nfcMesaLiga(true);
+  foco('#nfbIn');
+}
+function nfbVolta(){ NFB.on=0; var v=NFB.v; NFB.cb=null; if(v) v(); else fecha(); }
+function nfbDigitado(){ var i=$('nfbIn'); if(i) nfbLeu(i.value); }
+function nfbLeu(raw){
+  if(!NFB.on||NFB.busy||!$('nfbIn')) return;
+  var uid=String(raw||'').replace(/[^0-9A-Fa-f]/g,'').toUpperCase();
+  if(uid.length<4){ $('nfbEr').textContent='Número do cartão inválido.'; return; }
+  NFB.busy=1; NFB.on=0; $('nfbMsg').textContent='Cartão lido ✓'; try{ bpSom(true); }catch(e){}
+  var cb=NFB.cb; NFB.cb=null; if(cb) cb(uid);
+}
+function nfcGravar(){
+  if($('pObs')){ FC.obs=$('pObs').value; FC.copos=coposVal(); }
+  FC.imp=true;
+  nfbAbrir('Gravar no cartão',nfcEnvia,abreCarrinho);
+}
+function nfcEnvia(uid){
+  var m=$('nfbMsg'); if(m) m.textContent='Gravando o pedido…';
+  api('/painel/atend-pedido',comEnvio({modo:'balcao',nfc:uid,obs:FC.obs,copos:FC.copos||undefined,itens:CART.map(function(i){ return {p:i.p,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs,qty:i.qty}; })})).then(function(r){
+    if(r.ok){
+      envioOk();
+      var ped={num:r.num,sub:r.sub||0,mesa:r.mesa||'',joia:'',nome:'Cartão ····'+uid.slice(-4),atend:D.usuario,criado:Date.now(),obs:FC.obs,modo:'balcao',copos:FC.copos,l:CART.map(function(i){ return {p:i.p,nome:i.nome,qty:i.qty,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs}; })};
+      fecha(); CART=[]; COPOS=null; FC.copos=0; cartBar(); if(FC.imp) imprimeAuto(ped);
+      zeraComanda();
+      if(window.LiveApp) LiveApp.comemorar({titulo:'Pedido #'+plab(r)+' gravado no cartão!',valor:brl(r.total),forma:'💳 Cartão ····'+uid.slice(-4),sub:'Já foi para a cozinha 🍳 · paga na saída',ms:2200}); else toast('Pedido #'+plab(r)+' gravado no cartão ····'+uid.slice(-4));
+      return;
+    }
+    if(r._h===401){ mostraLogin('Entre de novo.'); return; }
+    nfbAbrir('Gravar no cartão',nfcEnvia,abreCarrinho,r.erro==='rota_nao_encontrada'?'Publique o Worker 321 para usar o Balcão com cartão.':(r._h===0?SEM_REDE:(r.mensagem||'Não consegui gravar.')));
+  });
+}
+/* na saída: encosta o cartão, abre a conta da comanda dele e cobra */
+function nfbAbreComanda(){ nfbAbrir('Comanda do cartão',function(uid){ fecha(); nfbComanda(uid); },fecha); }
+function nfbComanda(uid){
+  api('/painel/atend-cartao-comanda',{uid:uid}).then(function(r){
+    if(r._h===401){ mostraLogin('Entre de novo.'); return; }
+    if(!r.ok){ toast(r.erro==='rota_nao_encontrada'?'Publique o Worker 321 para usar o Balcão com cartão.':(r._h===0?SEM_REDE:(r.mensagem||'Não consegui ler o cartão.'))); return; }
+    if(!r.aberta){ toast('Este cartão não tem comanda aberta.'); return; }
+    comBusca().then(function(d){
+      if(!d||!d.ok) return; comPinta(d); var k=-1; COMS.forEach(function(c,n){ if(c.mesa===r.mesa) k=n; });
+      if(k<0){ toast('Não achei a comanda deste cartão.'); return; } aba('com'); fechaForm(k);
+    });
+  });
 }
 function abreCarrinho(){
   var h=nfcLinha(); CART.forEach(function(i,k){ h+='<div class="opt"><span class="n"><b>'+i.qty+'x '+esc(i.nome)+'</b><small>'+descItem(i,1)+'</small></span><span class="p">'+brl(i.unit*i.qty)+'</span><button onclick="tiraItem('+k+')" style="border:0;background:var(--s3);border-radius:8px;width:32px;height:32px;font-weight:800">×</button></div>'; });
@@ -1002,7 +1061,7 @@ function abreCarrinho(){
   h+='<label class="l">Observação do pedido (cozinha)</label><input class="inp" id="pObs" maxlength="300">'+(PRAIA?'<div id="pGps" style="margin-top:12px">'+praiaGpsTxt()+'</div>':'')+'<div class="er" id="pErr"></div>';
   var totC=Math.round((cartTot()+srvVal(cartTot()))*100)/100, hj=cobraHora();
   var smP2=PRAIA&&COM.sm, pd=PRAIA&&hj&&(!COM.avulso||COM.sm);   /* entrega na praia: primeiro gera o pedido, cobra depois na comanda */
-  folha('Pedido · '+(COM.sm?'Sem mesa':ehSMM(COM.mesa)?smTit(COM.mesa):COM.avulso||ehBalM(COM.mesa)?'Cliente Balcão':[(COM.mesa?(COM.modo==='balcao'?'Balcão ':'Mesa ')+COM.mesa:''),COM.joia].filter(Boolean).join(' · ')),h,'<button class="bt" id="pBt" style="margin:0" onclick="'+(hj&&!pd?'copoOk('+(NFCG&&nfcOk()?'fcCartaoNfc':'fcEscolher')+')':'copoOk(enviaPedido)')+'">'+(hj&&!pd?(NFCG&&nfcOk()?'Gravar no cartão':'Fechar comanda'):(COM.avulso&&!smP2?'Finalizar pedido':'Enviar para a cozinha'))+' · '+brl(totC)+'</button>'+(pd?'<button class="bt s" style="margin:8px 0 0;width:100%" onclick="copoOk(fcEscolher)">Cobrar agora</button>':'')+(PRAIA&&(!COM.avulso||COM.sm)?'<button class="bt s" style="margin:8px 0 0;width:100%" onclick="fotoLocalTirar(\'cart\')">📷 Foto do local</button>':'')); foco('#pBt'); fotoLocalBx();
+  folha('Pedido · '+(COM.sm?'Sem mesa':ehSMM(COM.mesa)?smTit(COM.mesa):COM.avulso||ehBalM(COM.mesa)?'Cliente Balcão':[(COM.mesa?(COM.modo==='balcao'?'Balcão ':'Mesa ')+COM.mesa:''),COM.joia].filter(Boolean).join(' · ')),h,'<button class="bt" id="pBt" style="margin:0" onclick="'+(nfcGrav()?'copoOk(nfcGravar)':hj&&!pd?'copoOk('+(nfcOn()&&nfcOk()?'fcCartaoNfc':'fcEscolher')+')':'copoOk(enviaPedido)')+'">'+(nfcGrav()?'Gravar no cartão':hj&&!pd?(nfcOn()&&nfcOk()?'Gravar no cartão':'Fechar comanda'):(COM.avulso&&!smP2?'Finalizar pedido':'Enviar para a cozinha'))+' · '+brl(totC)+'</button>'+(pd?'<button class="bt s" style="margin:8px 0 0;width:100%" onclick="copoOk(fcEscolher)">Cobrar agora</button>':'')+(PRAIA&&(!COM.avulso||COM.sm)?'<button class="bt s" style="margin:8px 0 0;width:100%" onclick="fotoLocalTirar(\'cart\')">📷 Foto do local</button>':'')); foco('#pBt'); fotoLocalBx();
 }
 /* ── (228) COBRAR NA HORA (opção da loja, no painel em Configurações clientes): o garçom fecha a comanda, escolhe a forma de pagamento,
    mostra o resumo para o cliente e só depois do pagamento aprovado o pedido vai para a cozinha. Cancelar não cria pedido nenhum. ── */
