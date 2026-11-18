@@ -51,9 +51,12 @@
     C = d.bal; AGORA = d.agora || { preco: C.precoKg, faixa: '' }; BARRAS = d.barras || {}; VOZ_SERVIDOR = !!d.voz; CLI = d.cli || CLI;
     return true;
   }
-  function bebidasDaGrade() {
-    return Object.keys(PRODS).map((id) => Object.assign({ id }, PRODS[id]))
-      .filter((p) => C.bebCats.indexOf(p.cat) >= 0 && p.preco > 0 && !(p.tamanhos && p.tamanhos.length) && !(p.sabores && p.sabores.length));
+  // bebidas por categoria, na ordem do cadastro (categorias na ordem do cardápio; produtos na ordem em que o cardápio os entrega)
+  function bebidasPorCategoria() {
+    const todos = Object.keys(PRODS).map((id, i) => Object.assign({ id, _i: i }, PRODS[id]))
+      .filter((p) => C.bebCats.indexOf(p.cat) >= 0 && p.preco > 0 && !(p.tamanhos && p.tamanhos.length) && !(p.sabores && p.sabores.length))
+      .sort((a, b) => ((a.ordem == null ? a._i : a.ordem) - (b.ordem == null ? b._i : b.ordem)) || a._i - b._i);
+    return (CRU.cats || []).filter((k) => C.bebCats.indexOf(k.id) >= 0).map((k) => ({ id: k.id, nome: k.nome, itens: todos.filter((p) => p.cat === k.id) })).filter((g) => g.itens.length);
   }
   function pintaFixos() {
     $('#frase').textContent = C.frase || 'Coloque seu prato na balança';
@@ -73,11 +76,14 @@
   }
 
   // ----- voz do Live -----
-  const vozProxy = () => (VOZ_SERVIDOR && KEY ? (texto, velocidade, signal) => fetch(API + '/live/voz', { method: 'POST', headers: { 'Content-Type': 'application/json' }, signal, body: JSON.stringify({ loja: LOJA, k: KEY, texto, velocidade }) }) : null);
+  // A fala tem de sair na hora em que o peso para. A voz do servidor (a do totem de voz) leva 2 a 3 segundos para gerar cada frase,
+  // e aqui a frase muda a cada prato (não dá para deixar pronta). Por isso o Buffet fala com a voz do próprio navegador, que é imediata;
+  // "aquece" deixa a ligação dela aberta antes da primeira fala (ao ligar a tela e quando um prato encosta na balança).
+  function aquece() { try { if (C.voz && window.Voz && window.Voz.aquecer) window.Voz.aquecer(); } catch (e) { /* ok */ } }
   function fala(texto) {
     if (!C.voz || !texto) return;
     try {
-      if (window.Voz) { window.Voz.falar(texto, { tom: 1.6, velocidade: 1.1, elevenProxy: vozProxy() }).catch(() => {}); return; }
+      if (window.Voz) { window.Voz.falar(texto, { tom: 1.6, velocidade: 1.1 }).catch(() => {}); return; }
       if (window.speechSynthesis) { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(texto); u.lang = 'pt-BR'; speechSynthesis.speak(u); }
     } catch (e) { /* sem voz: a tela continua */ }
   }
@@ -127,11 +133,26 @@
     }
     if (E.fase === 'bebida' || (E.fase === 'enviando' && $('#c-beb').classList.contains('on'))) pintaBebidas();
   }
+  // a grade é montada uma vez (só refaz se o cardápio mudar); a cada leitura da balança só os números mudam, para não piscar nem perder a rolagem
+  let gradeFeita = '', comandaFeita = '';
+  function montaGrade() {
+    const grupos = bebidasPorCategoria(), marca = JSON.stringify(grupos.map((g) => [g.id, g.itens.map((p) => p.id + p.preco)]));
+    if (marca === gradeFeita) return grupos.length;
+    gradeFeita = marca;
+    $('#beb-cats').innerHTML = grupos.length > 1 ? grupos.map((g, i) => `<button type="button" data-cat="${esc(g.id)}"${i ? '' : ' class="on"'}>${esc(g.nome)}</button>`).join('') : '';
+    $('#beb-cats').hidden = grupos.length < 2;
+    $('#grade').innerHTML = grupos.map((g) => (grupos.length > 1 ? `<h4 data-cat-t="${esc(g.id)}">${esc(g.nome)}</h4>` : '') + '<div class="gr4">'
+      + g.itens.map((p) => `<button type="button" class="beb" data-add="${esc(p.id)}">${p.foto ? `<img loading="lazy" alt="" src="${API}/food/foto/${encodeURIComponent(CLI)}/${encodeURIComponent(p.id)}">` : '<div class="sem">🥤</div>'}<b>${esc(p.nome)}</b><span>${real(p.preco)}</span><em hidden></em></button>`).join('') + '</div>').join('');
+    $('#grade').scrollTop = 0;
+    return grupos.length;
+  }
   function pintaBebidas() {
-    const lista = bebidasDaGrade(), liq = liquido(E.fixo), v = valorDe(liq);
-    $('#grade').innerHTML = lista.map((p) => `<button type="button" class="beb${E.beb[p.id] ? ' tem' : ''}" data-add="${esc(p.id)}">${p.foto ? `<img loading="lazy" alt="" src="${API}/food/foto/${encodeURIComponent(CLI)}/${encodeURIComponent(p.id)}">` : '<div class="sem">🥤</div>'}<b>${esc(p.nome)}</b><span>${real(p.preco)}</span>${E.beb[p.id] ? `<em>${E.beb[p.id]}</em>` : ''}</button>`).join('');
-    $('#beb-dica').textContent = lista.length ? 'Toque na bebida ou passe a lata no leitor' : 'Passe o código de barras da bebida no leitor';
-    const ids = Object.keys(E.beb);
+    const n = montaGrade(), liq = liquido(E.fixo), v = valorDe(liq);
+    document.querySelectorAll('#grade .beb').forEach((b) => { const q = E.beb[b.dataset.add] || 0, em = b.querySelector('em'); b.classList.toggle('tem', q > 0); em.hidden = !q; em.textContent = q || ''; });
+    if (!$('#beb-dica').dataset.erro) $('#beb-dica').textContent = n ? 'Toque na bebida ou passe a lata no leitor' : 'Passe o código de barras da bebida no leitor';
+    const ids = Object.keys(E.beb), env0 = E.fase === 'enviando', marcaC = JSON.stringify([E.beb, liq, v, env0]);
+    if (marcaC === comandaFeita) return;
+    comandaFeita = marcaC;
     $('#beb-itens').innerHTML = `<div class="ln"><div class="n">Buffet por quilo<small>${kgTxt(liq)} kg x ${real(AGORA.preco)}</small></div><div class="v">${real(v)}</div></div>`
       + ids.map((id) => `<div class="ln"><div class="qt"><button type="button" data-menos="${esc(id)}" aria-label="Tirar uma">−</button><b>${E.beb[id]}</b><button type="button" data-add="${esc(id)}" aria-label="Mais uma">+</button></div><div class="n">${esc(PRODS[id].nome)}</div><div class="v">${real(PRODS[id].preco * E.beb[id])}</div></div>`).join('');
     $('#beb-total').textContent = real(v + totalBeb());
@@ -160,7 +181,9 @@
     if (E.fase !== 'pergunta' && E.fase !== 'bebida') return;
     if (!C.bebida) return;
     const n = normBarra(cod), id = Object.keys(BARRAS).find((k) => normBarra(BARRAS[k]) === n && PRODS[k]);
-    if (id) { soma(id, 1); bip(880); } else { bip(220); $('#beb-dica').textContent = 'Não achei esse código. Chame um atendente.'; }
+    const dica = $('#beb-dica');
+    if (id) { delete dica.dataset.erro; soma(id, 1); bip(880); }
+    else { bip(220); if (E.fase === 'pergunta') fase('bebida'); dica.dataset.erro = '1'; dica.textContent = 'Não achei esse código. Chame um atendente.'; setTimeout(() => { delete dica.dataset.erro; }, 5000); }
   }
   let actx = null;
   function bip(f) { try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); const o = actx.createOscillator(), g = actx.createGain(); o.frequency.value = f; g.gain.value = .08; o.connect(g); g.connect(actx.destination); o.start(); o.stop(actx.currentTime + .12); } catch (e) { /* sem som */ } }
@@ -200,10 +223,10 @@
     if (tem) E.semPrato = 0; else if (!E.semPrato) E.semPrato = agora;
     const fora = E.semPrato && agora - E.semPrato > 1200;   // o prato saiu de verdade (não foi só uma leitura ruim)
     switch (E.fase) {
-      case 'espera': if (tem) fase('pesando'); break;
+      case 'espera': if (tem) { aquece(); fase('pesando'); } break;
       case 'pesando':
         if (fora) { fase('espera'); break; }
-        if (tem && estaveis >= 2 && liquido(E.kg) * 1000 >= C.minG) {
+        if (tem && estaveis >= 1 && liquido(E.kg) * 1000 >= C.minG) {   // "estavel" do programa já são 3 leituras iguais seguidas
           E.fixo = E.kg; const liq = liquido(E.fixo);
           fala('Seu prato deu ' + pesoFalado(liq) + '. ' + valorFalado(valorDe(liq)) + '.' + (C.bebida ? ' Deseja uma bebida?' : ''));
           if (C.bebida) fase('pergunta'); else concluir();
@@ -267,7 +290,17 @@
     if (b.id === 'ligar') {
       try { window.Voz && window.Voz.destravar && window.Voz.destravar(); } catch (e) { /* ok */ }
       try { const el = document.documentElement; if (!document.fullscreenElement && el.requestFullscreen) el.requestFullscreen().catch(() => {}); } catch (e) { /* ok */ }
-      bip(660); fase('espera'); return;
+      bip(660); aquece(); fase('espera'); return;
+    }
+    if (b.dataset.cat) {   // categoria: leva a lista até ela
+      const g = $('#grade'), t = g.querySelector(`[data-cat-t="${CSS.escape(b.dataset.cat)}"]`);
+      if (t) {
+        const alvo = Math.min(t.offsetTop - g.offsetTop - 4, g.scrollHeight - g.clientHeight), de = g.scrollTop;
+        g.scrollTo({ top: alvo, behavior: 'smooth' });
+        setTimeout(() => { if (Math.abs(g.scrollTop - de) < 2 && Math.abs(alvo - de) > 2) g.scrollTo({ top: alvo, behavior: 'instant' }); }, 500);   // a rolagem suave não andou: vai direto
+      }
+      document.querySelectorAll('#beb-cats button').forEach((x) => x.classList.toggle('on', x === b));
+      E.mexeu = Date.now(); return;
     }
     if (b.dataset.add) return void soma(b.dataset.add, 1);
     if (b.dataset.menos) return void soma(b.dataset.menos, -1);
@@ -277,6 +310,14 @@
     else if (b.id === 'b-cancelar' || b.id === 'b-desistir') cancelar();
     else if (b.id === 'prato-chip') abreTeclado();
   });
+  // a categoria acesa acompanha a rolagem da lista (e rolar conta como o cliente mexendo na tela)
+  $('#grade').addEventListener('scroll', () => {
+    const g = $('#grade'); let atual = '';
+    g.querySelectorAll('[data-cat-t]').forEach((t) => { if (t.offsetTop - g.offsetTop <= g.scrollTop + 40) atual = t.dataset.catT; });
+    if (g.scrollTop + g.clientHeight >= g.scrollHeight - 4) { const ts = g.querySelectorAll('[data-cat-t]'); if (ts.length) atual = ts[ts.length - 1].dataset.catT; }
+    document.querySelectorAll('#beb-cats button').forEach((b, i) => b.classList.toggle('on', atual ? b.dataset.cat === atual : i === 0));
+    E.mexeu = Date.now();
+  }, { passive: true });
   // leitor de código de barras (funciona como um teclado muito rápido que termina com Enter)
   let buf = '', ultima = 0;
   document.addEventListener('keydown', (ev) => {
@@ -293,6 +334,6 @@
     if (!TESTE && !C.ativo) { $('#carregando').textContent = 'A balança do buffet está desligada. Ligue no painel, no menu Balança.'; setTimeout(() => location.reload(), 30000); return; }
     pintaFixos(); document.body.classList.add('pronto'); fase('ligar'); ciclo();
     // o preço do quilo muda com o horário e o prato pode ser trocado no painel: confere a cada minuto, só com a tela parada
-    setInterval(async () => { if (E.fase !== 'espera' || !$('#teclado').hidden) return; try { await carregaConfig(); pintaFixos(); } catch (e) { /* tenta de novo no próximo minuto */ } }, 60000);
+    setInterval(async () => { if (E.fase !== 'espera' || !$('#teclado').hidden) return; aquece(); try { await carregaConfig(); pintaFixos(); } catch (e) { /* tenta de novo no próximo minuto */ } }, 60000);
   })();
 })();

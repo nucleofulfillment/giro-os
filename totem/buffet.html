@@ -100,13 +100,23 @@
 
   /* bebidas: grade à esquerda, comanda à direita */
   #c-beb { flex-direction: row; align-items: stretch; gap: calc(var(--u) * 2); text-align: left; padding-top: calc(var(--u) * 8); }
-  #beb-esq { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-  #grade { flex: 1; margin-top: calc(var(--u) * 1.4); overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(var(--u) * 13.5), 1fr)); gap: calc(var(--u) * 1.1); align-content: start; padding: 2px calc(var(--u) * .4) calc(var(--u) * 1) 2px; scrollbar-width: none; }
+  #beb-esq { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+  /* categorias no topo (como no totem): tocar leva a lista até a categoria; a lista é uma só, contínua */
+  #beb-cats { flex: none; display: flex; gap: calc(var(--u) * .7); margin-top: calc(var(--u) * 1.2); overflow-x: auto; scrollbar-width: none; padding: 2px; }
+  #beb-cats::-webkit-scrollbar { display: none; }
+  #beb-cats button { flex: none; height: calc(var(--u) * 3.6); padding: 0 calc(var(--u) * 1.5); border-radius: 99px; background: var(--vidro); border: 2px solid var(--borda); backdrop-filter: blur(14px); font-size: calc(var(--u) * 1.25); font-weight: 800; white-space: nowrap; }
+  #beb-cats button.on { background: var(--pri); border-color: var(--pri); color: #fff; }
+  #grade { flex: 1; min-height: 0; margin-top: calc(var(--u) * 1); overflow-y: auto; padding: 2px calc(var(--u) * .4) calc(var(--u) * 1) 2px; scrollbar-width: none; scroll-behavior: smooth; }
   #grade::-webkit-scrollbar { display: none; }
-  .beb { position: relative; background: #fff; color: #1C1C1E; border-radius: calc(var(--u) * 1.6); border: 2px solid var(--s4); overflow: hidden; text-align: left; display: flex; flex-direction: column; transition: transform .12s, border-color .15s; }
+  #grade h4 { margin: calc(var(--u) * 1.4) 0 calc(var(--u) * .8); font: 800 calc(var(--u) * 1.9)/1 var(--ft); }
+  #grade h4:first-child { margin-top: calc(var(--u) * .4); }
+  .gr4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: calc(var(--u) * 1.1); }
+  .beb { position: relative; display: block; width: 100%; background: #fff; color: #1C1C1E; border-radius: calc(var(--u) * 1.6); border: 2px solid var(--s4); overflow: hidden; text-align: left; transition: transform .12s, border-color .15s; }
   .beb:active { transform: scale(.97); }
   .beb.tem { border-color: var(--pri); }
-  .beb img, .beb .sem { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; background: #F3F3F5; display: grid; place-items: center; font-size: calc(var(--u) * 3); }
+  .beb img, .beb .sem { display: block; width: 100%; aspect-ratio: 1 / 1; object-fit: cover; background: #F3F3F5; }
+  .beb .sem { display: grid; place-items: center; font-size: calc(var(--u) * 3); }
+  .beb em[hidden] { display: none; }
   .beb b { display: block; padding: calc(var(--u) * .6) calc(var(--u) * .8) 0; font-size: calc(var(--u) * 1.15); font-weight: 800; line-height: 1.2; }
   .beb span { display: block; padding: calc(var(--u) * .2) calc(var(--u) * .8) calc(var(--u) * .7); font-size: calc(var(--u) * 1.15); font-weight: 800; color: #E04A00; }
   .beb em { position: absolute; right: calc(var(--u) * .5); top: calc(var(--u) * .5); min-width: calc(var(--u) * 2.4); height: calc(var(--u) * 2.4); padding: 0 calc(var(--u) * .5); border-radius: 99px; background: var(--pri); color: #fff; font: 800 calc(var(--u) * 1.3)/calc(var(--u) * 2.4) var(--ft); font-style: normal; text-align: center; }
@@ -155,7 +165,7 @@
   @media (orientation: portrait) {
     :root { --u: min(1.78vw, 1vh); }
     #c-peso .linha { flex-direction: column; gap: calc(var(--u) * 2.4); } .lado { text-align: center; }
-    #c-beb { flex-direction: column; } .comanda { width: 100%; max-height: 42%; }
+    #c-beb { flex-direction: column; } .comanda { width: 100%; max-height: 42%; } .gr4 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 </style>
@@ -215,6 +225,7 @@
     <div id="beb-esq">
       <h2>Escolha a bebida</h2>
       <p class="sub" id="beb-dica">Toque na bebida ou passe a lata no leitor</p>
+      <div id="beb-cats"></div>
       <div id="grade"></div>
     </div>
     <div class="comanda">
