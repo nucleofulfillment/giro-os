@@ -18,6 +18,7 @@
   const NA_BALANCA = 0.03;      // acima disso há alguma coisa em cima da balança
   const ESPERA_RESPOSTA = 40000; // sem resposta na pergunta da bebida: fecha sozinho
   const CONTAGEM = 6;            // segundos da contagem antes de fechar sozinho
+  const VOLTA_MS = 8000;         // depois da comanda, a tela volta sozinha para o início
 
   // ----- Live oficial (a mesma cabeça do totem) -----
   const LIVE = `<svg class="lv" viewBox="-110 -125 220 215" aria-hidden="true"><g class="lv-corpo">
@@ -110,21 +111,34 @@
     $('#ligar').hidden = f !== 'ligar';
     $('#pergunta').hidden = f !== 'pergunta';
     if (f === 'espera') { E.beb = {}; E.fixo = 0; E.resp = null; E.env = ''; $('#erro').hidden = true; }
+    if (f === 'pesando') { mostraPeso = 0; alvoPeso = 0; ultAvanco = performance.now(); }   // cada pesagem começa do zero
     pinta();
+    if (cena === 'c-peso') roda();
   }
 
   // ----- desenho -----
+  // Evolução da pesagem: o peso, o valor e o anel não pulam para o número final; correm até ele (uns 0,8 s), como um mostrador.
+  // "avanca" é chamada a cada quadro da tela enquanto a pesagem está aberta e também a cada leitura da balança.
+  let alvoPeso = 0, mostraPeso = 0, ultAvanco = 0, quadro = 0;
+  function avanca() {
+    const t = performance.now(), dt = Math.min(0.3, Math.max(0, (t - ultAvanco) / 1000)); ultAvanco = t;
+    mostraPeso += (alvoPeso - mostraPeso) * (1 - Math.exp(-dt * 4.5));
+    if (Math.abs(alvoPeso - mostraPeso) < 0.0006) mostraPeso = alvoPeso;
+    $('#peso-num').textContent = kgTxt(mostraPeso);
+    $('#valor').textContent = real(valorDe(mostraPeso));
+    // o anel enche até 1 kg e dá a volta de novo a cada quilo
+    const fr = mostraPeso <= 0 ? 0 : ((mostraPeso % 1) || 1);
+    $('#anel-pg').style.strokeDashoffset = String(565.5 * (1 - fr));
+  }
+  function roda() { cancelAnimationFrame(quadro); const f = () => { if (!$('#c-peso').classList.contains('on')) return; avanca(); quadro = requestAnimationFrame(f); }; quadro = requestAnimationFrame(f); }
   function pinta() {
     $('#aviso-bal').hidden = E.online || E.fase !== 'espera'; $('#aviso-bal').textContent = E.msgBal;
     $('#seta').style.visibility = E.online ? 'visible' : 'hidden';
+    if (E.fase === 'espera' && E.travado && E.online) { $('#aviso-bal').hidden = false; $('#aviso-bal').textContent = 'Retire o prato da balança para a próxima pesagem.'; $('#seta').style.visibility = 'hidden'; }
     if (E.fase === 'pesando' || E.fase === 'pergunta' || (E.fase === 'enviando' && $('#c-peso').classList.contains('on'))) {
       const kg = E.fase === 'pesando' ? E.kg : E.fixo, liq = liquido(kg), v = valorDe(liq), p = prato();
-      $('#peso-num').textContent = kgTxt(liq);
-      $('#valor').textContent = real(v);
+      alvoPeso = liq; avanca();   // os números e o anel correm até o peso (ver "avanca")
       $('#conta').innerHTML = real(AGORA.preco) + ' o quilo' + (p.g ? '<br>já descontado o prato (' + p.g + ' g)' : '') + (C.max > 0 && v >= C.max ? '<br>valor máximo por prato' : '');
-      // o anel enche até 1 kg e dá a volta de novo a cada quilo
-      const fr = liq <= 0 ? 0 : ((liq % 1) || 1);
-      $('#anel-pg').style.strokeDashoffset = String(565.5 * (1 - fr));
       const ok = E.fase !== 'pesando';
       $('#anel').classList.toggle('ok', ok); $('#anel').classList.toggle('vivo', !ok);
       $('#estado').classList.toggle('ok', ok);
@@ -223,10 +237,15 @@
     if (tem) E.semPrato = 0; else if (!E.semPrato) E.semPrato = agora;
     const fora = E.semPrato && agora - E.semPrato > 1200;   // o prato saiu de verdade (não foi só uma leitura ruim)
     switch (E.fase) {
-      case 'espera': if (tem) { aquece(); fase('pesando'); } break;
+      case 'espera':
+        // depois de uma pesagem a tela volta sozinha para o início; se o prato ainda está na balança, só aceita outro depois que ele sair
+        if (E.travado) { if (fora || !E.online) E.travado = false; }
+        else if (tem) { aquece(); fase('pesando'); }
+        break;
       case 'pesando':
         if (fora) { fase('espera'); break; }
-        if (tem && estaveis >= 1 && liquido(E.kg) * 1000 >= C.minG) {   // "estavel" do programa já são 3 leituras iguais seguidas
+        // "estavel" do programa já são 3 leituras iguais seguidas; o 1,1 s dá tempo de ver os números correndo
+        if (tem && estaveis >= 1 && agora - E.desde >= 1100 && liquido(E.kg) * 1000 >= C.minG) {
           E.fixo = E.kg; const liq = liquido(E.fixo);
           fala('Seu prato deu ' + pesoFalado(liq) + '. ' + valorFalado(valorDe(liq)) + '.' + (C.bebida ? ' Deseja uma bebida?' : ''));
           if (C.bebida) fase('pergunta'); else concluir();
@@ -241,8 +260,8 @@
           if (parado > 1200) { const falta = CONTAGEM - Math.floor((parado - 1200) / 1000); if (falta <= 0) { concluir(); return; } E.contagem = falta; } else E.contagem = 0;
         } else if (agora - E.mexeu > 90000) { concluir(); return; }   // esqueceu a tela das bebidas aberta: fecha com o que escolheu
         break;
-      case 'fim': if ((fora && agora - E.desde > 7000) || agora - E.desde > 45000) { if (fora) fase('espera'); else { $('#fim-aviso').textContent = 'Retire o prato da balança.'; fase('retire'); } } break;
-      case 'retire': if (fora) fase('espera'); break;
+      case 'fim': if (agora - E.desde > VOLTA_MS) { E.travado = !fora; fase('espera'); } break;   // volta sozinha para a tela inicial
+      case 'retire': if (fora || agora - E.desde > 5000) { E.travado = !fora; fase('espera'); } break;
     }
     pinta();
   }
