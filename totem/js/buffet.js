@@ -135,6 +135,9 @@
     return (re ? re + (re === 1 ? ' real' : ' reais') : '') + (re && ce ? ' e ' : '') + (ce ? ce + (ce === 1 ? ' centavo' : ' centavos') : '') || 'zero';
   }
 
+  // frase curta do peso e do valor (frase longa demora a terminar e é cortada pela próxima)
+  const frasePeso = (liq) => 'Deu ' + pesoFalado(liq) + '. ' + (noLivre(liq) ? 'Passou do buffet livre, você paga o livre: ' : '') + valorFalado(valorDe(liq)) + '.';
+
   // ----- estado -----
   const E = { fase: 'ligar', kg: 0, estavel: false, online: false, msgBal: '', fixo: 0, beb: {}, env: '', desde: 0, mexeu: 0, semPrato: 0, contagem: 0, resp: null, simKg: null };
   const liquido = (kg) => Math.max(0, r3(kg - prato().g / 1000));
@@ -309,7 +312,7 @@
       if (!d.ok) throw new Error(d.mensagem || 'Não consegui registrar a pesagem.');
       if (!d.linhas) d.linhas = [];   // envio repetido: o servidor devolve só o número e o total
       E.resp = d; pintaFim(); fase('fim');
-      fala('Prontinho! Comanda ' + d.num + '. Retire o seu papel e bom apetite!');
+      fala((C.bebida ? 'Prontinho! ' : frasePeso(liquido(E.fixo)) + ' ') + 'Retire a sua comanda e bom apetite!');
     } catch (e) {
       $('#erro-m').textContent = (e && e.message) || 'Sem conexão com o sistema.'; $('#erro').hidden = false;
       E.fase = 'erro';
@@ -335,7 +338,9 @@
         // "estavel" do programa já são 3 leituras iguais seguidas; o 1,1 s dá tempo de ver os números correndo
         if (tem && estaveis >= 1 && agora - E.desde >= 1100 && liquido(E.kg) * 1000 >= C.minG) {
           E.fixo = E.kg; const liq = liquido(E.fixo);
-          fala('Seu prato deu ' + pesoFalado(liq) + '. ' + (noLivre(liq) ? 'Passou do buffet livre, então você paga o livre: ' : '') + valorFalado(valorDe(liq)) + '.' + (C.bebida ? ' Deseja uma bebida?' : ''));
+          // com a pergunta da bebida, o Live fala o peso e pergunta; sem ela, a comanda já sai, então o peso é dito junto com o "retire a comanda"
+          // (duas frases seguidas se atropelam: a segunda corta a primeira)
+          if (C.bebida) fala(frasePeso(liq) + ' Deseja uma bebida?');
           if (C.bebida) fase('pergunta'); else concluir();
         }
         break;
