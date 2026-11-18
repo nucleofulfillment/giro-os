@@ -297,13 +297,13 @@
   function pintaFim() {
     const r = E.resp;
     $('#fim-num').innerHTML = '<small>COMANDA</small>' + esc(r.num);
-    $('#fim-itens').innerHTML = (r.linhas || []).map((l) => `<div class="ln"><div class="n">${l.qty > 1 ? l.qty + 'x ' : ''}${esc(l.nome)}${l.desc ? `<small>${esc(l.desc)}</small>` : ''}</div><div class="v">${esc(l.preco)}</div></div>`).join('');
-    $('#fim-total').textContent = real(r.total);
-    // resumo: comida e bebida separadas antes do total
+    // o recibo da tela é um resumo: a comida (com o peso) e as bebidas (com a quantidade), sem repetir item por item.
+    // Os itens um a um já saem na comanda impressa.
     const lin = r.linhas || [], comida = r.valor != null ? Number(r.valor) : valorDe(liquido(E.fixo)), beb = Math.max(0, r2(r.total - comida)), nBeb = lin.slice(1).reduce((s, l) => s + (Number(l.qty) || 1), 0);
-    $('#fim-resumo').hidden = !lin.length;
-    $('#fim-comida').textContent = real(comida); $('#fim-bebidas').textContent = real(beb);
-    $('#fim-beb-rot').textContent = nBeb ? 'Bebidas (' + nBeb + (nBeb === 1 ? ' item)' : ' itens)') : 'Bebidas';
+    const pr = lin[0] || { nome: 'Buffet por quilo', desc: '' };
+    $('#fim-itens').innerHTML = `<div class="ln"><div class="n">${esc(pr.nome)}${pr.desc ? `<small>${esc(pr.desc)}</small>` : ''}</div><div class="v">${real(comida)}</div></div>`
+      + (nBeb ? `<div class="ln"><div class="n">Bebidas<small>${nBeb} ${nBeb === 1 ? 'item' : 'itens'}</small></div><div class="v">${real(beb)}</div></div>` : '');
+    $('#fim-total').textContent = real(r.total);
     $('#fim-titulo').textContent = r.impressora === 0 && !TESTE ? 'Comanda ' + r.num + ' registrada' : 'Prontinho! Retire a sua comanda';
     const pix = !!(r.pix && r.conta);
     $('#fim-aviso').textContent = r.impressora === 0 && !TESTE ? 'A impressora está desligada. Informe o número ' + r.num + ' no caixa.' : pix ? 'Pague agora por Pix, pelo QR da comanda no celular, ou no caixa ao sair.' : 'Pague no caixa ao sair. Bom apetite!';
@@ -400,7 +400,7 @@
       E.fase = 'erro';
     }
   }
-  function cancelar() { $('#erro').hidden = true; E.resp = null; if (TESTE && E.simKg > 0) { E.simKg = 0; E.kg = 0; } if (E.kg >= NA_BALANCA) { $('#fim-titulo').textContent = 'Pesagem cancelada'; $('#fim-num').innerHTML = ''; $('#fim-itens').innerHTML = ''; $('#fim-total').textContent = ''; $('#fim-resumo').hidden = true; $('#fim-pagar').hidden = true; $('#fim-aviso').textContent = 'Retire o prato da balança.'; fase('retire'); } else fase('espera'); }
+  function cancelar() { $('#erro').hidden = true; E.resp = null; if (TESTE && E.simKg > 0) { E.simKg = 0; E.kg = 0; } if (E.kg >= NA_BALANCA) { $('#fim-titulo').textContent = 'Pesagem cancelada'; $('#fim-num').innerHTML = ''; $('#fim-itens').innerHTML = ''; $('#fim-total').textContent = ''; $('#fim-pagar').hidden = true; $('#fim-aviso').textContent = 'Retire o prato da balança.'; fase('retire'); } else fase('espera'); }
 
   // ----- o passo de cada leitura da balança -----
   let estaveis = 0;
