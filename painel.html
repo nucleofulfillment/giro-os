@@ -4357,6 +4357,7 @@ function ir(p){
   for(i=0;i<bs.length;i++) bs[i].classList.toggle('on', bs[i].getAttribute('data-p')===p);
   if(p==='veiculos') veCarregar();
   if(p==='cardapio') cdCarregar();
+  try{ cfFab(p); }catch(e){}
   if(p==='clientes') clCarregar();
   if(p==='mesas') mzCarregar();
   if(p==='garcons') gaCarregar();
@@ -11562,6 +11563,280 @@ function cdNovaCatRapida(){
     .catch(function(e){ el('cd-erro').textContent='Não criou a categoria: '+e.message; });
 }
 </script>
+<!-- CADASTRAR FÁCIL (celular): botão do Live + modal em passos. Só mexe no cadastro pela mesma rota do painel (cdSalvarApi). -->
+<style>
+#cf-fab{position:fixed;right:14px;bottom:122px;z-index:69;display:none;flex-direction:column;align-items:center;gap:2px;width:auto;border:0;background:none;padding:0;cursor:pointer;filter:drop-shadow(0 6px 12px rgba(0,0,0,.25));transition:transform .2s;font-family:inherit}
+#cf-fab.on{display:flex}#cf-fab:hover{transform:scale(1.06)}
+#cf-fab .cf-lv{width:62px;height:52px;display:flex;align-items:center;justify-content:center;font-size:34px}
+#cf-fab .cf-tx{background:#FF5A00;color:#fff;font-size:11px;font-weight:800;padding:3px 9px;border-radius:99px;white-space:nowrap;line-height:1.3}
+@media (max-width:859px){#cf-fab{right:8px;bottom:136px}#cf-fab .cf-lv{width:54px;height:46px}}
+#sh-cf .cf-p{font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px;letter-spacing:.3px}
+#sh-cf .cf-q{font-size:19px;font-weight:800;margin:2px 0 12px;line-height:1.25}
+#sh-cf .cf-big{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:56px;border-radius:14px;border:0;background:#FF5A00;color:#fff;font:inherit;font-size:16px;font-weight:800;cursor:pointer;margin:0 0 10px}
+#sh-cf .cf-big.sec{background:var(--s3);color:var(--text)}
+#sh-cf .cf-big:disabled{opacity:.5}
+#sh-cf .cf-opt{display:block;width:100%;text-align:left;padding:16px;border-radius:16px;border:1.5px solid var(--border2,#DFDFE4);background:var(--s1);font:inherit;cursor:pointer;margin-bottom:12px;color:var(--text)}
+#sh-cf .cf-opt b{display:block;font-size:17px;margin-bottom:3px}#sh-cf .cf-opt span{font-size:13px;color:var(--muted)}
+#sh-cf .cf-in{width:100%;box-sizing:border-box;min-height:56px;border-radius:14px;border:2px solid var(--border2,#DFDFE4);padding:0 14px;font:inherit;font-size:20px;font-weight:700;background:var(--s1);color:var(--text);outline:none}
+#sh-cf .cf-in:focus{border-color:#FF5A00}
+#sh-cf .cf-foto{width:100%;aspect-ratio:4/3;max-height:260px;border-radius:16px;border:2px dashed var(--border2,#DFDFE4);background:var(--s2) center/contain no-repeat;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px;font-weight:700;margin-bottom:12px}
+#sh-cf .cf-aviso{font-size:13px;line-height:1.45;border-radius:12px;padding:10px 12px;margin:8px 0;background:#FFF4E5;color:#7A3E00;font-weight:600}
+#sh-cf .cf-aviso.ok{background:#ECFDF3;color:#14532D}#sh-cf .cf-aviso.ruim{background:#FEF2F2;color:#991B1B}
+#sh-cf .cf-li{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--border);border-radius:12px;margin-bottom:8px;cursor:pointer;background:var(--s1);width:100%;font:inherit;text-align:left;color:var(--text)}
+#sh-cf .cf-li i{flex:none;width:44px;height:44px;border-radius:10px;background:var(--s3) center/cover no-repeat}
+#sh-cf .cf-li b{display:block;font-size:14px}#sh-cf .cf-li span{font-size:12px;color:var(--muted)}
+#sh-cf .cf-lbl{font-size:12px;font-weight:700;color:var(--muted2);display:block;margin:12px 0 4px}
+#sh-cf .cf-vol{background:none;border:0;color:var(--muted2);font:inherit;font-weight:700;font-size:14px;cursor:pointer;padding:10px 4px}
+</style>
+<button type="button" id="cf-fab" onclick="cfAbrir()" aria-label="Cadastrar fácil"><span class="cf-lv" id="cf-lv">📺</span><span class="cf-tx">Cadastrar fácil</span></button>
+<div class="sheet" id="sh-cf">
+  <div class="sh-hd"><h3 id="cf-tit">Cadastrar fácil</h3><button type="button" onclick="cfFechar()">✕</button></div>
+  <div class="sh-bd" id="cf-bd"></div>
+  <input type="file" id="cf-arq-foto" accept="image/*" capture="environment" style="display:none" onchange="cfFotoArq(this)">
+  <input type="file" id="cf-arq-barras" accept="image/*" capture="environment" style="display:none" onchange="cfBarrasArq(this)">
+</div>
+<script>
+/* ═══ CADASTRAR FÁCIL ═══ */
+var CF={modo:'',passo:'',foto:'',barras:'',nome:'',preco:'',ncm:'',cat:'',sug:null,alvo:null,busca:'',seq:false,salvando:false,feitos:0};
+
+/* tabela de NCM por tipo de produto (só sugestão: o contador confirma) */
+var CF_NCM=[
+ [/\b(agua mineral|agua sem gas|agua com gas|agua)\b/,'2201.10.00','água'],
+ [/\b(refrigerante|coca|guarana|fanta|sprite|pepsi|soda|tonica|h2oh)\b/,'2202.10.00','refrigerante'],
+ [/\b(energetico|red bull|monster)\b/,'2202.99.00','energético'],
+ [/\b(suco|nectar|refresco|agua de coco|cha gelado|cha pronto|isotonico|gatorade)\b/,'2202.99.00','suco / bebida pronta'],
+ [/\b(cerveja|chopp|chope|pilsen|heineken|brahma|skol|stella|amstel|budweiser|corona|eisenbahn)\b/,'2203.00.00','cerveja'],
+ [/\b(vinho|espumante|prosecco|champagne)\b/,'2204.21.00','vinho'],
+ [/\b(whisky|whiskey|uisque)\b/,'2208.30.20','whisky'],
+ [/\b(vodka|vodca)\b/,'2208.60.00','vodka'],
+ [/\b(cachaca|pinga)\b/,'2208.40.00','cachaça'],
+ [/\b(gin|rum|licor|aperol|campari|tequila|conhaque)\b/,'2208.90.00','destilado / licor'],
+ [/\b(cafe soluvel|nescafe|cafe instantaneo)\b/,'2101.11.10','café solúvel'],
+ [/\b(cafe|capuccino|cappuccino|espresso|expresso)\b/,'0901.21.00','café'],
+ [/\b(chocolate|bombom|trufa|brigadeiro|nutella|ovo de pascoa|barra de chocolate)\b/,'1806.90.00','chocolate'],
+ [/\b(chiclete|goma de mascar|trident)\b/,'1704.10.00','goma de mascar'],
+ [/\b(bala|balas|pirulito|drops|bombons de acucar|jujuba|marshmallow)\b/,'1704.90.20','bala / confeito'],
+ [/\b(sorvete|picole|gelato|acai)\b/,'2105.00.10','sorvete'],
+ [/\b(biscoito|bolacha|cookie|wafer|rosquinha)\b/,'1905.31.00','biscoito'],
+ [/\b(bolo|torta|pao de mel|brownie|donut|rosca|sonho)\b/,'1905.90.20','bolo / doce de padaria'],
+ [/\b(pao|baguete|brioche|croissant|pao de queijo|pao frances)\b/,'1905.90.90','pão'],
+ [/\b(salgado|coxinha|pastel|empada|esfiha|kibe|risole|enroladinho|folhado|quibe)\b/,'1905.90.90','salgado'],
+ [/\b(salgadinho|chips|doritos|ruffles|cheetos|pipoca)\b/,'1905.90.90','salgadinho'],
+ [/\b(batata frita|batata palha)\b/,'2004.10.00','batata'],
+ [/\b(amendoim|castanha|amendoa|noz|nozes|pistache)\b/,'2008.19.00','oleaginosas'],
+ [/\b(pizza)\b/,'1901.90.90','pizza'],
+ [/\b(hamburguer|hambúrguer|burger|x salada|x burger|x bacon|lanche|sanduiche|hot dog|cachorro quente)\b/,'2106.90.90','lanche'],
+ [/\b(queijo|mussarela|muçarela|mucarela|parmesao|requeijao|cream cheese|cheddar)\b/,'0406.90.90','queijo'],
+ [/\b(presunto|apresuntado)\b/,'1602.41.00','presunto'],
+ [/\b(linguica|salsicha|mortadela|salame|bacon|calabresa)\b/,'1601.00.00','embutido'],
+ [/\b(leite condensado)\b/,'0402.99.10','leite condensado'],
+ [/\b(leite)\b/,'0401.10.10','leite'],
+ [/\b(iogurte|yogurte|danone|coalhada)\b/,'0403.10.00','iogurte'],
+ [/\b(manteiga)\b/,'0405.10.00','manteiga'],
+ [/\b(margarina)\b/,'1517.10.00','margarina'],
+ [/\b(ovo|ovos)\b/,'0407.21.00','ovos'],
+ [/\b(acucar)\b/,'1701.99.00','açúcar'],
+ [/\b(arroz)\b/,'1006.30.21','arroz'],
+ [/\b(feijao)\b/,'0713.33.19','feijão'],
+ [/\b(macarrao|massa|espaguete|lasanha|penne)\b/,'1902.19.00','massa'],
+ [/\b(oleo|azeite)\b/,'1509.10.00','óleo / azeite'],
+ [/\b(sal)\b/,'2501.00.20','sal'],
+ [/\b(ketchup|catchup)\b/,'2103.20.10','ketchup'],
+ [/\b(maionese)\b/,'2103.90.11','maionese'],
+ [/\b(mostarda|molho)\b/,'2103.90.21','molho'],
+ [/\b(cigarro|tabaco)\b/,'2402.20.00','cigarro'],
+ [/\b(gelo)\b/,'2201.90.00','gelo'],
+ [/\b(cha|mate)\b/,'0902.10.00','chá']
+];
+function cfNorm(s){ return String(s==null?'':s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim(); }
+var CF_RUIDO={de:1,da:1,do:1,com:1,sem:1,e:1,a:1,o:1,ao:1,em:1,para:1,pet:1,lata:1,garrafa:1,long:1,neck:1,un:1,und:1,unidade:1,pct:1,pacote:1,cx:1,caixa:1,kit:1,combo:1,ml:1,lt:1,l:1,g:1,gr:1,kg:1,mg:1,tradicional:1,original:1,zero:1,diet:1,light:1,
+  morango:1,chocolate:1,baunilha:1,limao:1,laranja:1,uva:1,maracuja:1,abacaxi:1,manga:1,coco:1,menta:1,caramelo:1,leite:1,branco:1,preto:1,amargo:1,pessego:1,goiaba:1,tangerina:1,melancia:1,cereja:1,frutas:1,
+  pequeno:1,medio:1,grande:1,mini:1,gigante:1,pequena:1,media:1,broto:1};
+function cfNucleo(nome){ var t=cfNorm(nome).split(' '), o=[]; t.forEach(function(w){ if(!w||CF_RUIDO[w]||/^\d/.test(w)||/^\d+(ml|l|g|kg|lt|un|mg)$/.test(w)) return; if(o.indexOf(w)<0) o.push(w); }); return o; }
+/* produto parecido no próprio cadastro (variação de sabor/tamanho) */
+function cfParecido(nome){
+  var a=cfNucleo(nome); if(!a.length) return null; var melhor=null, sc=0;
+  (CD.prods||[]).forEach(function(p){
+    if(!p||p.id===(CF.alvo&&CF.alvo.id)) return; var b=cfNucleo(p.nome); if(!b.length) return;
+    var inter=a.filter(function(w){ return b.indexOf(w)>=0; }).length, min=Math.min(a.length,b.length); if(!inter) return;
+    if(min===1&&!(a.length===1&&b.length===1)) return; if(min>1&&inter<2) return;
+    var r=inter/Math.max(a.length,b.length)+(inter/min), tem=String(p.ncm||'').replace(/\D/g,'').length===8; if(tem) r+=.5;
+    if(inter/min>=0.6&&r>sc){ sc=r; melhor=p; }
+  });
+  return melhor;
+}
+function cfSugerir(nome){
+  var par=cfParecido(nome), n=cfNorm(nome), i, r={ncm:'',cat:'',aviso:'',cls:''};
+  var ncmP=par?String(par.ncm||'').replace(/\D/g,''):'';
+  if(par){
+    r.cat=par.cat||'';
+    if(ncmP.length===8){ r.ncm=ncmP; r.aviso='Parece variação de <b>'+esc(par.nome)+'</b>. Usei o mesmo NCM e a mesma categoria dele.'; r.cls='ok'; return r; }
+  }
+  for(i=0;i<CF_NCM.length;i++){ if(CF_NCM[i][0].test(n)){ r.ncm=CF_NCM[i][1].replace(/\D/g,''); r.aviso=(par?'Parece variação de <b>'+esc(par.nome)+'</b> (ele ainda está sem NCM). ':'')+'NCM sugerido pelo tipo (<b>'+CF_NCM[i][2]+'</b>). <b>Conferir com o contador.</b>'; return r; } }
+  r.aviso=(par?'Parece variação de <b>'+esc(par.nome)+'</b> (ele ainda está sem NCM). ':'')+'Não consegui sugerir o NCM deste produto. Digite se souber, ou deixe vazio e <b>confira com o contador</b>.'; r.cls='ruim'; return r;
+}
+function cfFab(p){ var b=el('cf-fab'); if(!b) return; var on=(p==='cardapio'); b.classList.toggle('on',on); if(on&&!b._lv){ b._lv=1; try{ mpLiveCarregar(function(){ try{ var c=el('cf-lv'); c.textContent=''; c.style.fontSize='0'; LiveMascote.criar(c,{sombra:false,rotulo:'Cadastrar fácil'}); }catch(e){} }); }catch(e){} } }
+function cfAbrir(){ CF.modo=''; CF.passo='menu'; CF.seq=false; CF.feitos=0; cfReset(); abrir('sh-cf'); cfPintar(); }
+function cfFechar(){ fecharTudo(); }
+function cfReset(){ CF.foto=''; CF.barras=''; CF.nome=''; CF.preco=''; CF.ncm=''; CF.cat=''; CF.sug=null; CF.alvo=null; CF.busca=''; CF.salvando=false; }
+function cfIr(p){ CF.passo=p; cfPintar(); }
+function cfBarraSup(n,t){ return '<div class="cf-p">PASSO '+n+' DE 5</div><div class="cf-q">'+t+'</div>'; }
+function cfVoltar(p){ return '<button type="button" class="cf-vol" onclick="cfIr(\''+p+'\')">← Voltar</button>'; }
+function cfPintar(){
+  var b=el('cf-bd'), h='', P=CF.passo; el('cf-tit').textContent='Cadastrar fácil';
+  if(P==='menu'){
+    h='<div class="cf-q">O que você quer fazer?</div><button type="button" class="cf-opt" onclick="cfNovo()"><b>➕ Cadastrar produto novo</b><span>Foto, código de barras, nome e preço. Ele já entra no cardápio.</span></button>'
+     +'<button type="button" class="cf-opt" onclick="cfAtualizar()"><b>🔄 Atualizar produto existente</b><span>Grava o código de barras (e, se quiser, preço ou foto) num produto que já existe.</span></button>';
+  } else if(P==='foto'){
+    h=cfBarraSup(1,'Tire a foto do produto')+'<div class="cf-foto" id="cf-fv" style="'+(CF.foto?'background-image:url('+CF.foto+')':'')+'">'+(CF.foto?'':'Nenhuma foto ainda')+'</div>'
+     +'<button type="button" class="cf-big" onclick="el(\'cf-arq-foto\').click()">📷 '+(CF.foto?'Tirar outra foto':'Abrir a câmera')+'</button>'
+     +(CF.foto?'<button type="button" class="cf-big" onclick="cfIr(\'barras\')">Continuar →</button>':'<button type="button" class="cf-big sec" onclick="cfIr(\'barras\')">Pular a foto</button>')
+     +'<div style="font-size:12px;color:var(--muted)">A foto entra como está. Depois, se quiser trocar, abra o produto e cole outra com Ctrl+V.</div>'+cfVoltar('menu');
+  } else if(P==='barras'){
+    h=cfBarraSup(2,'Código de barras')+(CF.barras?'<div class="cf-aviso ok">Código lido: <b>'+esc(CF.barras)+'</b></div>':'')
+     +'<button type="button" class="cf-big" onclick="cfLerCamera()">📷 Apontar a câmera para o código</button>'
+     +'<button type="button" class="cf-big sec" onclick="el(\'cf-arq-barras\').click()">🖼️ Ler de uma foto do código</button>'
+     +'<label class="cf-lbl">Ou digite o código</label><input class="cf-in" id="cf-bar" inputmode="numeric" maxlength="32" autocomplete="off" value="'+esc(CF.barras)+'" oninput="CF.barras=this.value.replace(/[^0-9A-Za-z-]/g,\'\')">'
+     +'<div id="cf-e" class="cf-aviso ruim" style="display:none"></div>'
+     +'<button type="button" class="cf-big" style="margin-top:12px" onclick="cfBarrasOk()">'+(CF.barras?'Continuar →':'Pular, sem código')+'</button>'+cfVoltar('foto');
+  } else if(P==='nome'){
+    h=cfBarraSup(3,'Digite o nome do produto')+'<input class="cf-in" id="cf-nome" maxlength="80" autocomplete="off" placeholder="Ex.: Suco Del Valle Uva 1L" value="'+esc(CF.nome)+'" oninput="CF.nome=this.value" onkeydown="if(event.key===\'Enter\'){event.preventDefault();cfNomeOk();}">'
+     +'<div id="cf-e" class="cf-aviso ruim" style="display:none"></div><button type="button" class="cf-big" style="margin-top:12px" onclick="cfNomeOk()">Continuar →</button>'+cfVoltar('barras');
+    setTimeout(function(){ var i=el('cf-nome'); if(i) i.focus(); },60);
+  } else if(P==='preco'){
+    h=cfBarraSup(4,'Qual o preço?')+'<input class="cf-in" id="cf-preco" inputmode="decimal" autocomplete="off" placeholder="R$ 0,00" value="'+esc(CF.preco)+'" oninput="CF.preco=this.value" onkeydown="if(event.key===\'Enter\'){event.preventDefault();cfPrecoOk();}">'
+     +'<div id="cf-e" class="cf-aviso ruim" style="display:none"></div><button type="button" class="cf-big" style="margin-top:12px" onclick="cfPrecoOk()">Continuar →</button>'+cfVoltar('nome');
+    setTimeout(function(){ var i=el('cf-preco'); if(i) i.focus(); },60);
+  } else if(P==='conf'){
+    var s=CF.sug||{}; var cats='<option value="">Sem categoria</option>'; (CD.cats||[]).forEach(function(c){ cats+='<option value="'+esc(c.id)+'"'+(c.id===CF.cat?' selected':'')+'>'+esc(c.nome)+'</option>'; });
+    h=cfBarraSup(5,'Confira e salve')
+     +'<div style="display:flex;gap:12px;align-items:center;margin-bottom:8px"><div class="cf-foto" style="width:90px;height:90px;aspect-ratio:1;margin:0;flex:none;'+(CF.foto?'background-image:url('+CF.foto+')':'')+'">'+(CF.foto?'':'sem foto')+'</div><div><div style="font-size:17px;font-weight:800">'+esc(CF.nome)+'</div><div style="font-size:15px;font-weight:700;color:#FF5A00">R$ '+esc(cfPrecoFmt())+'</div><div style="font-size:12px;color:var(--muted)">Código: '+(CF.barras?esc(CF.barras):'sem')+'</div></div></div>'
+     +'<label class="cf-lbl">NCM (8 números)</label><input class="cf-in" id="cf-ncm" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="0000.00.00" value="'+esc(cdNcmFmt(CF.ncm))+'" oninput="CF.ncm=this.value.replace(/\\D/g,\'\').slice(0,8)">'
+     +'<div class="cf-aviso '+(s.cls||'')+'">'+(s.aviso||'')+'</div>'
+     +'<label class="cf-lbl">Categoria</label><select class="cf-in" style="font-size:16px" id="cf-cat" onchange="CF.cat=this.value">'+cats+'</select>'
+     +'<div id="cf-e" class="cf-aviso ruim" style="display:none"></div><button type="button" class="cf-big" id="cf-ok" style="margin-top:14px" onclick="cfSalvarNovo()">✅ Cadastrar produto</button>'+cfVoltar('preco');
+  } else if(P==='pronto'){
+    h='<div style="text-align:center;padding:18px 0"><div style="font-size:46px">✅</div><div class="cf-q">'+esc(CF.nome)+' está no cardápio!</div></div>'
+     +'<button type="button" class="cf-big" onclick="cfNovo()">➕ Cadastrar outro</button><button type="button" class="cf-big sec" onclick="cfFechar()">Fechar</button>';
+  } else if(P==='lista'){
+    var q=cfNorm(CF.busca), l=(CD.prods||[]).filter(function(p){ return !q||cfNorm(p.nome).indexOf(q)>=0||(p.barras||'').indexOf(q)>=0; });
+    l.sort(function(a,b){ return (a.barras?1:0)-(b.barras?1:0)||String(a.nome).localeCompare(String(b.nome),'pt-BR'); });
+    var tot=l.length; l=l.slice(0,60);
+    h='<div class="cf-q">Qual produto?</div><input class="cf-in" style="min-height:48px;font-size:16px" id="cf-busca" placeholder="🔎 buscar pelo nome" autocomplete="off" value="'+esc(CF.busca)+'" oninput="CF.busca=this.value;cfListaPinta()">'
+     +'<button type="button" class="cf-big" style="margin-top:12px" onclick="cfSeqIniciar()">⚡ Ir passando um por um (só bipar o código)</button><div id="cf-lst">'+cfListaHtml(l,tot)+'</div>'+cfVoltar('menu');
+  } else if(P==='alvo'){
+    var a=CF.alvo; h='<div class="cf-li" style="cursor:default"><i style="'+(a.foto&&a.foto!=='1'?'background-image:url('+a.foto+')':'')+'"></i><div><b>'+esc(a.nome)+'</b><span>R$ '+esc(String(a.preco||0).replace('.',','))+' · código: '+(a.barras?esc(a.barras):'sem')+'</span></div></div>'
+     +(CF.barras&&CF.barras!==(a.barras||'')?'<div class="cf-aviso ok">Novo código: <b>'+esc(CF.barras)+'</b></div>':'')
+     +'<button type="button" class="cf-big" onclick="cfLerCamera()">📷 Apontar a câmera para o código</button><button type="button" class="cf-big sec" onclick="el(\'cf-arq-barras\').click()">🖼️ Ler de uma foto do código</button>'
+     +'<label class="cf-lbl">Ou digite o código</label><input class="cf-in" id="cf-bar" inputmode="numeric" maxlength="32" autocomplete="off" value="'+esc(CF.barras)+'" oninput="CF.barras=this.value.replace(/[^0-9A-Za-z-]/g,\'\')">'
+     +'<label class="cf-lbl">Preço <span style="font-weight:500">(deixe como está se não for mudar)</span></label><input class="cf-in" id="cf-preco" inputmode="decimal" value="'+esc(CF.preco)+'" oninput="CF.preco=this.value">'
+     +'<div class="cf-foto" id="cf-fv" style="margin-top:12px;max-height:150px;'+(CF.foto?'background-image:url('+CF.foto+')':'')+'">'+(CF.foto?'':'Foto: sem mudança')+'</div><button type="button" class="cf-big sec" onclick="el(\'cf-arq-foto\').click()">📷 Trocar a foto</button>'
+     +'<div id="cf-e" class="cf-aviso ruim" style="display:none"></div><button type="button" class="cf-big" id="cf-ok" onclick="cfSalvarAlvo()">💾 Salvar neste produto</button>'+cfVoltar(CF.seq?'seq':'lista');
+  } else if(P==='seq'){
+    h='<div class="cf-q">Um por um</div><div class="cf-aviso ok">Bipe o código de cada produto. Se o código já estiver no cadastro, mostro o produto; se não, você escolhe de qual produto é.</div>'
+     +'<div style="font-size:13px;color:var(--muted);margin:6px 0">Já gravados agora: <b>'+CF.feitos+'</b></div>'
+     +'<button type="button" class="cf-big" onclick="cfSeqCamera()">📷 Começar a bipar</button>'+cfVoltar('lista');
+  }
+  b.innerHTML=h; b.scrollTop=0;
+}
+function cfPrecoFmt(){ var n=cdPreco(CF.preco); return n.toFixed(2).replace('.',','); }
+function cfErro(t){ var e=el('cf-e'); if(!e) return; e.style.display=t?'block':'none'; e.textContent=t||''; }
+/* foto: entra como está (só reduzida para caber) */
+function cfFotoArq(inp){
+  var f=inp.files&&inp.files[0]; if(!f) return; inp.value='';
+  var rd=new FileReader(); rd.onload=function(){ cdRedimUrl(rd.result).then(function(u){ CF.foto=u; if(CF.passo==='foto') cfPintar(); else if(CF.passo==='alvo'){ cfPintar(); } }).catch(function(){ aviso('Não consegui ler essa foto.'); }); }; rd.readAsDataURL(f);
+}
+document.addEventListener('paste',function(ev){
+  var sh=el('sh-cf'); if(!sh||!sh.classList.contains('on')||(CF.passo!=='foto'&&CF.passo!=='alvo')) return;
+  var its=(ev.clipboardData&&ev.clipboardData.items)||[], f=null, i; for(i=0;i<its.length;i++){ if(its[i].kind==='file'&&/^image\//.test(its[i].type)){ f=its[i].getAsFile(); break; } }
+  if(!f) return; ev.preventDefault(); var rd=new FileReader(); rd.onload=function(){ cdRedimUrl(rd.result).then(function(u){ CF.foto=u; cfPintar(); }); }; rd.readAsDataURL(f);
+});
+/* leitura do código: câmera ao vivo (Bipador) ou foto do código (leitor do navegador, ou ZXing) */
+function cfLerCamera(){
+  if(!window.Bipador){ aviso('Leitor não carregou. Digite o código.'); return; }
+  Bipador.abrir({titulo:'Código de barras',aoLer:function(c){ c=Bipador.norm(c); CF.barras=c; cfPintar(); return true; }});
+}
+function cfLerImagem(url){
+  return new Promise(function(ok,no){
+    var im=new Image(); im.onload=function(){
+      var viaZx=function(){ var vai=function(){ try{ var r=new ZXing.BrowserMultiFormatReader(); r.decodeFromImageUrl(url).then(function(x){ ok(x.getText()); }).catch(function(){ no(); }); }catch(e){ no(); } };
+        if(window.ZXing){ vai(); return; } var s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js'; s.onload=vai; s.onerror=function(){ no(); }; document.head.appendChild(s); };
+      if('BarcodeDetector' in window){ BarcodeDetector.getSupportedFormats().then(function(sf){ var d=new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e','code_128','code_39','itf'].filter(function(f){ return sf.indexOf(f)>=0; })}); return d.detect(im); }).then(function(r){ if(r&&r[0]&&r[0].rawValue) ok(r[0].rawValue); else viaZx(); }).catch(viaZx); }
+      else viaZx();
+    }; im.onerror=no; im.src=url;
+  });
+}
+function cfBarrasArq(inp){
+  var f=inp.files&&inp.files[0]; if(!f) return; inp.value='';
+  var rd=new FileReader(); rd.onload=function(){ aviso('Lendo o código…'); cfLerImagem(rd.result).then(function(c){ CF.barras=Bipador.norm(c); cfPintar(); }).catch(function(){ cfErro('Não consegui ler o código nessa foto. Tente de novo mais de perto, bem focada, ou use "Apontar a câmera", ou digite.'); }); }; rd.readAsDataURL(f);
+}
+function cfBarrasDup(c,exceto){ return c?(CD.prods||[]).filter(function(x){ return x.barras===c&&x.id!==exceto; })[0]:null; }
+function cfBarrasOk(){
+  var c=(el('cf-bar')&&el('cf-bar').value||CF.barras).replace(/[^0-9A-Za-z-]/g,''); CF.barras=c;
+  var d=cfBarrasDup(c); if(d){ cfErro('Esse código já está no produto "'+d.nome+'". Use "Atualizar produto existente" para mudar aquele, ou digite outro código.'); return; }
+  cfIr('nome');
+}
+function cfNomeOk(){ var n=(CF.nome||'').trim(); if(!n){ cfErro('Digite o nome do produto.'); return; } CF.nome=n; cfIr('preco'); }
+function cfPrecoOk(){
+  if(!(cdPreco(CF.preco)>0)){ cfErro('Digite o preço, por exemplo 12,90.'); return; }
+  CF.sug=cfSugerir(CF.nome); CF.ncm=CF.sug.ncm; CF.cat=CF.sug.cat||''; cfIr('conf');
+}
+function cfNovo(){ cfReset(); CF.modo='novo'; cfIr('foto'); }
+function cfSalvarNovo(){
+  if(CF.salvando) return; var n=String(CF.ncm||'').replace(/\D/g,'');
+  if(n&&n.length!==8){ cfErro('O NCM tem 8 números. Corrija ou deixe vazio.'); return; }
+  var d=cfBarrasDup(CF.barras); if(d){ cfErro('Esse código já está em "'+d.nome+'".'); return; }
+  CF.salvando=true; var b=el('cf-ok'); b.disabled=true; b.textContent='Salvando…';
+  var it={nome:CF.nome.trim(),barras:CF.barras,ncm:n,preco:cdPreco(CF.preco),cat:CF.cat||'',foto:CF.foto||'',desc:'',desenho:'',desconto:null,clube:null,vid:'',vtipo:'video/mp4',adicionais:[],tamanhos:[],sabores:[],ativo:true,delivery:true,destaque:false};
+  cdSalvarApi('prod',it).then(function(){ CF.salvando=false; cdCarregar(); CF.passo='pronto'; cfPintar(); })
+    .catch(function(e){ CF.salvando=false; b.disabled=false; b.textContent='✅ Cadastrar produto'; cfErro('Não salvou: '+e.message); });
+}
+/* atualizar existente */
+function cfAtualizar(){ cfReset(); CF.modo='atualizar'; CF.seq=false; cfIr('lista'); }
+function cfListaHtml(l,tot){
+  var h=''; l.forEach(function(p){ h+='<button type="button" class="cf-li" onclick="cfEscolher(\''+esc(p.id)+'\')"><i style="'+(p.foto&&p.foto!=='1'?'background-image:url('+p.foto+')':'')+'"></i><div><b>'+esc(p.nome)+'</b><span>R$ '+esc(String(p.preco||0).replace('.',','))+' · '+(p.barras?'código '+esc(p.barras):'<b style="color:#B45309">sem código</b>')+'</span></div></button>'; });
+  if(!l.length) h='<div style="padding:18px;text-align:center;color:var(--muted)">Nenhum produto encontrado.</div>'; else if(tot>l.length) h+='<div style="font-size:12px;color:var(--muted);text-align:center">Mostrando '+l.length+' de '+tot+'. Digite para filtrar.</div>';
+  return h;
+}
+function cfListaPinta(){ var q=cfNorm(CF.busca), l=(CD.prods||[]).filter(function(p){ return !q||cfNorm(p.nome).indexOf(q)>=0||(p.barras||'').indexOf(q)>=0; }); l.sort(function(a,b){ return (a.barras?1:0)-(b.barras?1:0)||String(a.nome).localeCompare(String(b.nome),'pt-BR'); }); var t=l.length; el('cf-lst').innerHTML=cfListaHtml(l.slice(0,60),t); }
+function cfEscolher(id){ var p=cdProd(id); if(!p) return; CF.alvo=p; CF.barras=''; CF.foto=''; CF.preco=''; cfIr('alvo'); }
+function cfSalvarAlvo(){
+  if(CF.salvando) return; var a=CF.alvo, c=(CF.barras||'').replace(/[^0-9A-Za-z-]/g,''), pr=String(CF.preco||'').trim();
+  if(pr&&!(cdPreco(pr)>0)){ cfErro('Preço inválido.'); return; }
+  var d=cfBarrasDup(c,a.id); if(d){ cfErro('Esse código já está em "'+d.nome+'".'); return; }
+  if(!c&&!pr&&!CF.foto){ cfErro('Nada para salvar: bipe o código, mude o preço ou troque a foto.'); return; }
+  var it=JSON.parse(JSON.stringify(a)); if(c) it.barras=c; if(pr) it.preco=cdPreco(pr); if(CF.foto) it.foto=CF.foto;
+  CF.salvando=true; var b=el('cf-ok'); b.disabled=true; b.textContent='Salvando…';
+  cdSalvarApi('prod',it).then(function(){ a.barras=it.barras; a.preco=it.preco; a.foto=it.foto; CF.salvando=false; CF.feitos++; aviso('Salvo: '+esc(a.nome)); cdPintar(); if(CF.seq){ CF.alvo=null; CF.barras=''; CF.foto=''; CF.preco=''; CF.passo='seq'; cfPintar(); setTimeout(cfSeqCamera,500); } else { CF.passo='lista'; CF.alvo=null; CF.barras=''; CF.foto=''; CF.preco=''; cfPintar(); } })
+    .catch(function(e){ CF.salvando=false; b.disabled=false; b.textContent='💾 Salvar neste produto'; cfErro('Não salvou: '+e.message); });
+}
+/* modo em sequência: bipa, acha o produto pelo código (ou pergunta de qual é) e segue */
+function cfSeqIniciar(){ CF.seq=true; CF.feitos=0; cfIr('seq'); }
+function cfSeqCamera(){
+  if(!window.Bipador){ aviso('Leitor não carregou.'); return; }
+  Bipador.abrir({titulo:'Bipe o código do produto',aoLer:function(c){
+    c=Bipador.norm(c); var p=cfBarrasDup(c,''); CF.barras=c;
+    if(p){ CF.alvo=p; CF.barras=''; CF.foto=''; CF.preco=''; aviso('Esse código já é de <b>'+esc(p.nome)+'</b>. Próximo!'); CF.passo='seq'; cfPintar(); setTimeout(cfSeqCamera,900); return true; }
+    CF.busca=''; cfSeqEscolhe(); return true; }});
+}
+function cfSeqEscolhe(){
+  var b=el('cf-bd'); CF.passo='seqesc';
+  b.innerHTML='<div class="cf-aviso ok">Código lido: <b>'+esc(CF.barras)+'</b>. De qual produto é?</div><input class="cf-in" style="min-height:48px;font-size:16px" id="cf-busca" placeholder="🔎 buscar pelo nome" autocomplete="off" oninput="CF.busca=this.value;cfSeqLista()"><div id="cf-lst"></div><button type="button" class="cf-vol" onclick="cfIr(\'seq\')">← Cancelar este</button>';
+  cfSeqLista(); setTimeout(function(){ var i=el('cf-busca'); if(i) i.focus(); },60);
+}
+function cfSeqLista(){
+  var q=cfNorm(CF.busca), l=(CD.prods||[]).filter(function(p){ return !p.barras&&(!q||cfNorm(p.nome).indexOf(q)>=0); }).sort(function(a,b){ return String(a.nome).localeCompare(String(b.nome),'pt-BR'); }), t=l.length, h='';
+  l.slice(0,40).forEach(function(p){ h+='<button type="button" class="cf-li" onclick="cfSeqGrava(\''+esc(p.id)+'\')"><i style="'+(p.foto&&p.foto!=='1'?'background-image:url('+p.foto+')':'')+'"></i><div><b>'+esc(p.nome)+'</b><span>R$ '+esc(String(p.preco||0).replace('.',','))+' · sem código</span></div></button>'; });
+  if(!l.length) h='<div style="padding:14px;text-align:center;color:var(--muted)">Nenhum produto sem código com esse nome.</div>'; else if(t>40) h+='<div style="font-size:12px;color:var(--muted);text-align:center">Mostrando 40 de '+t+'. Digite para filtrar.</div>';
+  el('cf-lst').innerHTML=h;
+}
+function cfSeqGrava(id){
+  var p=cdProd(id); if(!p||CF.salvando) return; CF.salvando=true; var it=JSON.parse(JSON.stringify(p)); it.barras=CF.barras;
+  cdSalvarApi('prod',it).then(function(){ p.barras=it.barras; CF.salvando=false; CF.feitos++; aviso('Código gravado em <b>'+esc(p.nome)+'</b>'); cdPintar(); CF.barras=''; CF.passo='seq'; cfPintar(); setTimeout(cfSeqCamera,500); })
+    .catch(function(e){ CF.salvando=false; aviso('Não salvou: '+esc(e.message)); });
+}
+</script>
+
 <script src="live-ajuda.js?v=237"></script>
 <script src="bipador.js?v=1"></script>
 <script src="lojas.js"></script>
