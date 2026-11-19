@@ -120,7 +120,7 @@
     if (S.dono && semCat) h += `<button type="button" class="cat${S.filtro === 'sem' ? ' on' : ''}" data-f="sem">Sem categoria</button>`;
     $('#cats').innerHTML = h;
     const l = filtrados();
-    const cartao = (i) => `<button type="button" class="beb${i.id === S.sel ? ' tem' : ''}" data-id="${esc(i.id)}"><span class="ft" style="background-image:url('${esc(fotoUrl(i))}')"></span>${reg(i) || !S.dono ? '' : '<span class="pend">Falta cadastrar</span>'}${i.cod ? `<em>Cód. ${esc(i.cod)}</em>` : ''}<b>${esc(i.nome || (S.dono ? 'Sem nome' : ''))}</b><span>${reg(i) && i.preco > 0 ? real(i.preco) : ''}</span><i>+</i></button>`;
+    const cartao = (i) => `<button type="button" class="beb${i.id === S.sel ? ' tem' : ''}" data-id="${esc(i.id)}"><span class="ft${i.prod ? ' sq' : ''}" style="background-image:url('${esc(fotoUrl(i))}')"></span>${reg(i) || !S.dono ? '' : '<span class="pend">Falta cadastrar</span>'}${i.cod ? `<em>Cód. ${esc(i.cod)}</em>` : ''}<b>${esc(i.nome || (S.dono ? 'Sem nome' : ''))}</b><span>${reg(i) && i.preco > 0 ? real(i.preco) : ''}</span><i>+</i></button>`;
     let hl = '';
     if (!l.length) hl = `<div class="vazio">${S.dono ? (S.itens.length ? 'Nenhuma foto neste grupo.' : 'Nenhuma foto ainda. Toque em “+ Adicionar fotos”.') : 'A biblioteca ainda não tem fotos cadastradas.'}</div>`;
     else if (S.filtro === 'todos') {
@@ -140,6 +140,7 @@
       p.innerHTML = `<div class="cab"><h2>Detalhes</h2></div><div class="corpo"><div class="grande" style="background-image:url('${esc(fotoUrl(it))}')"></div><div class="nome-g">${esc(it.nome)}</div>${it.preco > 0 ? `<div class="preco-g">${real(it.preco)}</div>` : ''}${it.cat ? `<div class="sub">${esc(catNome(it.cat))}</div>` : ''}${it.cod ? `<div class="sub">Código ${esc(it.cod)}</div>` : ''}</div>`;
       return;
     }
+    if (it.prod) { p.innerHTML = `<div class="cab"><h2>Produto</h2></div><div class="corpo"><div class="sub"><b>${esc(it.nome)}</b> · ${real(it.preco)}</div><div class="nota">Este produto vem do cardápio (a opção Biblioteca está ligada no cadastro dele). Para mudar nome, preço, categoria ou foto, edite o produto no painel, em Cardápio. Para tirar daqui, desligue a opção Biblioteca no cadastro.</div></div>`; return; }
     const vinc = it.prodId ? S.prods.find((x) => x.id === it.prodId) : null, opcs = '<option value="">Sem categoria</option>' + S.cats.map((c) => `<option value="${esc(c.id)}"${c.id === it.cat ? ' selected' : ''}>${esc(c.nome)}</option>`).join('') + '<option value="__nova">+ Nova categoria…</option>';
     p.innerHTML = `<div class="cab" style="display:flex;align-items:center;justify-content:space-between;gap:8px"><h2>${reg(it) ? 'Produto' : 'Cadastrar'}</h2></div><div class="corpo">
       ${vinc ? `<div class="sub">Ligada ao produto <b>${esc(vinc.nome)}</b> do cardápio. Nome e preço mudam lá.</div>` : ''}
@@ -201,7 +202,7 @@
       if (!prodId) {
         if (S.demo) prodId = 'p' + Date.now();
         else {
-          const d = await api('/painel/cardapio-salvar', { tipo: 'prod', item: { nome: nm, preco: vl, cat: cat === '__nova' ? '' : cat, foto: fotoProd, desc: '', adicionais: [], tamanhos: [], sabores: [], ativo: !$('#f-ativo') || $('#f-ativo').checked, delivery: true, destaque: false } });
+          const d = await api('/painel/cardapio-salvar', { tipo: 'prod', item: { nome: nm, preco: vl, cat: cat === '__nova' ? '' : cat, foto: fotoProd, desc: '', adicionais: [], tamanhos: [], sabores: [], ativo: !$('#f-ativo') || $('#f-ativo').checked, delivery: true, destaque: false, biblioteca: true } });
           prodId = d.id;
         }
       } else if (!vinc) { const x = S.prods.find((z) => z.id === prodId); if (x) { nm = x.nome; vl = Number(x.preco) || 0; } }
