@@ -120,7 +120,7 @@
     if (S.dono && semCat) h += `<button type="button" class="cat${S.filtro === 'sem' ? ' on' : ''}" data-f="sem">Sem categoria</button>`;
     $('#cats').innerHTML = h;
     const l = filtrados();
-    const cartao = (i) => `<button type="button" class="beb${i.id === S.sel ? ' tem' : ''}" data-id="${esc(i.id)}"><span class="ft${i.prod ? ' sq' : ''}" style="background-image:url('${esc(fotoUrl(i))}')"></span>${reg(i) || !S.dono ? '' : '<span class="pend">Falta cadastrar</span>'}${i.cod ? `<em>Cód. ${esc(i.cod)}</em>` : ''}<b>${esc(i.nome || (S.dono ? 'Sem nome' : ''))}</b><span>${reg(i) && i.preco > 0 ? real(i.preco) : ''}</span><i>+</i></button>`;
+    const cartao = (i) => `<button type="button" class="beb${i.id === S.sel ? ' tem' : ''}" data-id="${esc(i.id)}"><span class="ft${i.prod ? ' sq' : ''}" style="background-image:url('${esc(fotoUrl(i))}')"></span>${reg(i) || !S.dono ? (S.dono && i.oculto ? '<span class="pend" style="background:#B45309">Oculto ao cliente</span>' : '') : '<span class="pend">Falta cadastrar</span>'}${i.cod ? `<em>Cód. ${esc(i.cod)}</em>` : ''}<b>${esc(i.nome || (S.dono ? 'Sem nome' : ''))}</b><span>${reg(i) && i.preco > 0 ? real(i.preco) : ''}</span><i>+</i></button>`;
     let hl = '';
     if (!l.length) hl = `<div class="vazio">${S.dono ? (S.itens.length ? 'Nenhuma foto neste grupo.' : 'Nenhuma foto ainda. Toque em “+ Adicionar fotos”.') : 'A biblioteca ainda não tem fotos cadastradas.'}</div>`;
     else if (S.filtro === 'todos') {
