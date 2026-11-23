@@ -2079,7 +2079,7 @@ function mesaContaTela(sem){
   ctApi('/food/pedidos-mesa?mesa='+encodeURIComponent(MESA),null,true).then(function(r){
     if(r._http===401){ CT.tok=''; CT.conta=null; ctLogin(); return; }
     if(!r.ok){ abreFolha(ctCab('Fechar conta','fechaSheet()')+'<div class="wb"><div class="nt" style="margin-top:14px">'+esc(r.mensagem||'Não consegui abrir a conta. Tente de novo.')+'</div></div>',true); return; }
-    MC.d=r; if(r.conta&&r.conta.status==='aguardando_caixa'&&sem!==true) return mesaCaixaMsg(r.conta);
+    MC.d=r; /* (331) conta já fechada no caixa não pula mais a escolha: mostra as formas, com aviso */
     if(r.conta&&r.conta.status==='aguardando_pagto'&&sem!==true) return mesaPix(r.conta);
     mesaContaMonta();
   });
@@ -2092,6 +2092,7 @@ function mesaContaMonta(){
   if(!d.pedidos.length){ abreFolha(h+'<div class="nt" style="margin-top:14px;font-size:14.5px;color:#fff">Sua mesa não tem pedidos em aberto no momento.</div></div><div class="rod"><button class="bt c" onclick="fechaSheet();mesaInit(true)">Voltar ao início</button></div>',true); return; }
   /* (330) formas de pagamento no topo, em cartões (mesmo visual do pedido pelo link da loja) */
   var mfs=mesaFormas(); if(mfs.indexOf(MC.forma)<0) MC.forma=mfs[0];
+  if(d.conta&&d.conta.status==='aguardando_caixa') h+='<div class="nt" style="margin-top:6px;font-size:13.5px;color:#fff">Você já pediu para fechar esta conta. Escolha a forma abaixo para confirmar de novo (o valor inclui os pedidos novos).</div>';
   var mop=function(m,tit){ return '<button type="button" class="'+(MC.forma===m?'on':'')+'" onclick="mesaForma(\''+m+'\')">'+PG_IC[m]+'<span>'+tit+'</span></button>'; };
   h+='<div class="ckt" style="margin-top:6px">Como você quer pagar?</div><div class="pgt">'+(mfs.indexOf('pix')>=0?mop('pix','Pix'):'')+(mfs.indexOf('cartao')>=0?mop('cartao','Cartão'):'')+(mfs.indexOf('dinheiro')>=0?mop('dinheiro','Dinheiro'):'')+'</div>';
   h+='<div class="pgx">'+(MC.forma==='pix'?'Pix · pague agora pelo celular, aprovação na hora':MC.forma==='cartao'?'Cartão · pague no caixa ou chame o garçom até a mesa':'Dinheiro · pague no caixa ou chame o garçom até a mesa')+'</div>';
