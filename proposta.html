@@ -143,6 +143,9 @@ function desenhar(){
   var total=so+sl,mensal=sm+(p.plano?p.plano.preco:0);
   /* parte do LiveFood paga no Pix: serviços com desconto no Pix entram com o valor menor */
   var pgLf='';PGD=0;p.itens.forEach(function(i){if(!pgLf&&i.t==='s'&&i.pg){pgLf=pgTxt(i.pg);PGD=i.pg.pix&&Number(i.pg.desc)>0?Number(i.pg.desc):0}});   /* forma de pagamento do serviço (a da implantação vem primeiro) */
+  /* a prazo: serviço com preço a prazo entra com ele; o resto pelo preço normal; parcelas do primeiro serviço com cartão */
+  var slPz=0,nPz=1,pzDif=false,pzOk=false;p.itens.forEach(function(i){if(i.t!=='s'&&i.t!=='p')return;var v=i.t==='s'&&i.pg&&i.pg.vprazo>0?i.pg.vprazo:i.preco;if(v>i.preco)pzDif=true;slPz+=v*i.q;if(i.t==='s'&&i.pg&&(i.pg.cartao||i.pg.boleto)&&!pzOk){pzOk=true;nPz=i.pg.cartao?(i.pg.parc||1):1}});
+  var temPz=sl>0&&(pzDif||nPz>1);
   var temPix=PGD>0&&sl>0,slPix=temPix?cent(sl*(1-PGD/100)):sl,pct=String(PGD).replace('.',',')+'%';
   function linhas(t){return p.itens.filter(function(i){return i.t===t}).map(function(i){var k=ORD.push(i)-1;
     return '<li tabindex="0" role="button" onclick="abrir('+k+')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();abrir('+k+')}"><span class="ic">'+ico(i)+'</span><span class="d"><b>'+esc(i.nome)+(i.usado?' <span class="us">USADO</span>':'')+'</b><small>'+(i.q>1?'<span class="qx">'+i.q+'x</span>'+R(i.preco)+mes(i)+' cada':esc(i.det))+(pixDe(i)!=null?'<span class="pix">'+(i.q>1||i.det?' · ':'')+R(pixDe(i))+' no Pix</span>':'')+'</small></span><span class="p">'+R(i.preco*i.q)+(i.t==='a'?'<small>/mês</small>':'')+'</span></li>'}).join('')}
@@ -161,8 +164,9 @@ function desenhar(){
     (so?'<div><span>Equipamentos<small>você paga e parcela no Mercado Livre</small></span><b>'+R(so)+'</b></div>':'')+
     /* sem equipamentos a linha LiveFood repetiria o Total: fica só o Total, com a forma de pagamento embaixo */
     (sl&&so?'<div><span>LiveFood'+(pgLf?'<small>'+esc(pgLf)+'</small>':'')+'</span><b>'+R(sl)+'</b></div>':'')+
-    '<div class="tt"><span>Total'+(!so&&pgLf?'<small style="font-weight:600">'+esc(pgLf)+'</small>':'')+'</span><b>'+R(total)+'</b></div>'+
+    '<div class="tt"><span>Total'+(temPz?' à vista':'')+(!so&&pgLf?'<small style="font-weight:600">'+esc(pgLf)+'</small>':'')+'</span><b>'+R(total)+'</b></div>'+
     (temPix?'<div class="pix"><span>'+(so?'Pagando o LiveFood no Pix':'No Pix')+' com '+pct+' de desconto<small>'+(so?pct+' sobre '+R(sl)+' do LiveFood: ':'')+'economia de '+R(sl-slPix)+'</small></span><b>'+R(so+slPix)+'</b></div>':'')+
+   (temPz?'<div class="pz"><span>'+(so?'LiveFood a prazo':'A prazo')+'<small>'+(nPz>1?'até '+nPz+'x de '+R(slPz/nPz)+(pzDif?' · total '+R(slPz):' sem juros'):'total a prazo')+'</small></span><b>'+R(so+slPz)+'</b></div>':'')+
    '</div>'+
    /* a mensalidade vem depois da soma dos itens: é o que o cliente paga todo mês, separado do projeto */
    hMes+(mensal&&hMes?'<div class="res" style="margin-top:8px"><div class="tt"><span>Todo mês'+(planoVar(p.plano)?'<small style="font-weight:600">'+esc(planoVar(p.plano))+'</small>':'')+'</span><b>'+R(mensal)+'/mês</b></div></div>':'')+
@@ -177,6 +181,7 @@ function abrir(k){
    (i.det?'<span style="font-size:13.5px;font-weight:600;color:var(--muted2)">'+esc(i.det)+'</span>':'')+
    '<ol>'+(i.desc||[]).map(function(d){return '<li>'+esc(d)+'</li>'}).join('')+'</ol>'+
    '<div class="preco"><span>'+(i.t==='o'?'No Mercado Livre<br>'+parc(i):i.t==='p'?'Produto LiveFood<br>'+R(i.preco)+' por '+esc(i.un||'unidade'):i.t==='a'?'Aluguel mensal'+(i.min?'<br>contrato mínimo de '+i.min+' meses':''):'Serviço LiveFood'+(pgTxt(i.pg)?'<br>'+esc(pgTxt(i.pg)):''))+'</span><strong>'+R(i.preco*i.q)+mes(i)+'</strong></div>'+
+   (i.t==='s'&&i.pg&&i.pg.vprazo>i.preco?'<div class="preco"><span>A prazo'+((i.pg.cartao&&i.pg.parc>1)?'<br>até '+i.pg.parc+'x de '+R(i.pg.vprazo*i.q/i.pg.parc):'')+'</span><strong>'+R(i.pg.vprazo*i.q)+'</strong></div>':'')+
    (pixDe(i)!=null?'<div class="preco" style="background:#ECFDF3;border-color:#BBF7D0"><span style="color:#166534">No Pix<br>'+String(PGD).replace('.',',')+'% de desconto</span><strong style="color:#166534">'+R(pixDe(i))+'</strong></div>':'')+'</div></div>';
   el('fundo').classList.add('on');el('fx').focus();
 }

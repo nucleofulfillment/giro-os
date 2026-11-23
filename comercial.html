@@ -780,6 +780,8 @@ function aprovaAviso(){
 /* desconto total no Pix dos serviços da lista (forma de pagamento configurada no serviço) */
 /* mesma regra da proposta: vale o desconto do primeiro serviço com forma de pagamento e pega tudo do LiveFood (produtos e serviços) */
 function pixDesc(itens){var pc=null,sl=0;itens.forEach(function(i){if(i.t!=='s'&&i.t!=='p')return;var x=item(i);if(!x)return;sl+=x.preco*i.q;if(pc===null&&i.t==='s'&&x.pg)pc=x.pg.pix&&Number(x.pg.desc)>0?Number(x.pg.desc):0});return pc>0?sl-Math.round(sl*(1-pc/100)*100)/100:0}
+/* LiveFood a prazo: serviço com preço a prazo entra com ele; o resto, pelo preço normal. n = parcelas do primeiro serviço com cartão ou boleto */
+function prazoLf(itens){var t=0,n=1,ok=false,d=false;itens.forEach(function(i){if(i.t!=='s'&&i.t!=='p')return;var x=item(i);if(!x)return;var v=i.t==='s'&&x.pg&&x.pg.vprazo>0?x.pg.vprazo:x.preco;if(v>x.preco)d=true;t+=v*i.q;if(i.t==='s'&&x.pg&&(x.pg.cartao||x.pg.boleto)&&!ok){ok=true;n=x.pg.cartao?x.pg.parc||1:1}});return {t:t,n:n,dif:d||n>1}}
 function resHtml(){
   if(!rasc.aprovar){var pa='';try{pa=localStorage.getItem('lf_com_aprovar')||''}catch(e){}rasc.aprovar=pa==='rep'?'rep':'auto'}
   var s=somas(rasc.itens);
@@ -789,7 +791,7 @@ function resHtml(){
    '<div class="planobox'+(plano(rasc.plano)?'':' falta')+'" id="m-plano"><label>Plano LiveFood (obrigatório)</label><select onchange="rasc.plano=this.value;refMontar()"><option value="">Escolha o plano…</option>'+PLANOS.map(function(x){return '<option value="'+esc(x.id)+'"'+(String(rasc.plano)===String(x.id)?' selected':'')+'>'+esc(x.nome)+(x.excl?' (só proposta)':'')+' · '+R(x.preco)+'/mês'+(planoVar(x)?' '+planoVar(x):'')+'</option>'}).join('')+'</select><p class="sub2" style="margin:8px 0 0">Planos do cadastro do admin: os do site e os marcados como só para proposta.</p></div>'+
    (perfil==='admin'?'<div class="planobox"><label>Representante responsável</label><select onchange="rasc.resp=this.value;refMontar()">'+respOpts(rasc.resp||rasc.dono||EU.uid)+'</select><p class="sub2" style="margin:8px 0 0">A proposta aparece na lista dele e ele pode alterar.</p></div>':'')+
    '<div class="planobox"><label>O botão Aprovar abre o WhatsApp de</label><select onchange="rasc.aprovar=this.value;try{localStorage.setItem(\'lf_com_aprovar\',this.value)}catch(e){}refMontar()"><option value="auto">LiveFood: aprova sozinho e envia os links</option><option value="rep"'+(rasc.aprovar==='rep'?' selected':'')+'>Representante responsável</option></select>'+(rasc.aprovar==='rep'?'<p class="sub2" style="margin:8px 0 0">'+aprovaAviso()+'</p>':'')+'</div>'+
-   '<div style="margin-top:10px"><div class="tot"><span>Produtos · Mercado Livre</span><span>'+R(s.p)+'</span></div><div class="tot"><span>Produtos e serviços LiveFood</span><span>'+R(s.s)+'</span></div><div class="tot g"><span>Total (uma vez)</span><span>'+R(s.t)+'</span></div>'+(pixDesc(rasc.itens)>0?'<div class="tot" style="color:var(--green)"><span>Pagando o LiveFood no Pix</span><span>'+R(s.t-pixDesc(rasc.itens))+'</span></div>':'')+(s.m?'<div class="tot"><span>+ Aluguel de equipamentos</span><span>'+R(s.m)+'/mês</span></div>':'')+(plano(rasc.plano)?'<div class="tot"><span>+ '+esc(plano(rasc.plano).nome)+'</span><span>'+R(plano(rasc.plano).preco)+'/mês</span></div>'+(planoVar(plano(rasc.plano))?'<div class="tot" style="padding-top:0"><span></span><span>'+planoVar(plano(rasc.plano))+'</span></div>':''):'')+'</div>'+
+   '<div style="margin-top:10px"><div class="tot"><span>Produtos · Mercado Livre</span><span>'+R(s.p)+'</span></div><div class="tot"><span>Produtos e serviços LiveFood</span><span>'+R(s.s)+'</span></div><div class="tot g"><span>Total (uma vez)</span><span>'+R(s.t)+'</span></div>'+(pixDesc(rasc.itens)>0?'<div class="tot" style="color:var(--green)"><span>Pagando o LiveFood no Pix</span><span>'+R(s.t-pixDesc(rasc.itens))+'</span></div>':'')+(function(){var z=prazoLf(rasc.itens);return z.dif&&z.t>0?'<div class="tot"><span>LiveFood a prazo'+(z.n>1?' (até '+z.n+'x de '+R(z.t/z.n)+')':'')+'</span><span>'+R(z.t)+'</span></div>':''})()+(s.m?'<div class="tot"><span>+ Aluguel de equipamentos</span><span>'+R(s.m)+'/mês</span></div>':'')+(plano(rasc.plano)?'<div class="tot"><span>+ '+esc(plano(rasc.plano).nome)+'</span><span>'+R(plano(rasc.plano).preco)+'/mês</span></div>'+(planoVar(plano(rasc.plano))?'<div class="tot" style="padding-top:0"><span></span><span>'+planoVar(plano(rasc.plano))+'</span></div>':''):'')+'</div>'+
    '<div class="acoes"><button class="btn pri" onclick="salvarProp()">Salvar proposta</button></div>';
 }
 function temPlano(){if(plano(rasc.plano))return true;toast('Escolha o plano do LiveFood para seguir com a proposta.');var b=el('m-plano');if(b){b.scrollIntoView({block:'center'});b.querySelector('select').focus()}return false}
@@ -944,7 +946,7 @@ function pgTxt(pg){
   if(pg.pix)f.push('Pix'+(pg.desc>0?' com '+String(pg.desc).replace('.',',')+'% de desconto':''));
   if(pg.boleto)f.push('boleto');
   if(pg.cartao)f.push('cartão'+(pg.parc>1?' em até '+pg.parc+'x':''));
-  return f.length>1?f.slice(0,-1).join(', ')+' ou '+f[f.length-1]:(f[0]||'');
+  return (f.length>1?f.slice(0,-1).join(', ')+' ou '+f[f.length-1]:(f[0]||''))+(pg.vprazo>0?' · a prazo '+R(pg.vprazo):'');
 }
 function novoServ(id){
   var s=id?acha(SERVICOS,id):null;
@@ -952,12 +954,21 @@ function novoServ(id){
    '<label>Nome</label><input id="sv-nome" value="'+esc(s?s.nome:'')+'" placeholder="ex.: Implantação">'+
    '<label>Resumo (aparece na proposta)</label><input id="sv-det" value="'+esc(s?s.det:'')+'" placeholder="ex.: instalação e treinamento">'+
    '<label>O que inclui (uma linha por item)</label><textarea id="sv-desc">'+esc(s?s.desc.join('\n'):'')+'</textarea>'+
-   '<div class="linha3"><div><label>Preço (R$)</label><input id="sv-preco" type="number" min="0" step="0.01" value="'+(s?s.preco:'')+'"></div><div><label>Tipo</label><select id="sv-tipo"><option value="impl">Implantação</option><option value="serv"'+(s&&s.tipo!=='impl'?' selected':'')+'>Serviço avulso</option></select></div><div><label>Situação</label><select id="sv-ativo"><option value="1">Ativo</option><option value="0"'+(s&&!s.ativo?' selected':'')+'>Pausado</option></select></div></div>'+
+   '<div class="linha3"><div><label>Preço à vista (R$)</label><input id="sv-preco" type="number" min="0" step="0.01" value="'+(s?s.preco:'')+'" oninput="pgPrevia()"></div><div><label>Tipo</label><select id="sv-tipo"><option value="impl">Implantação</option><option value="serv"'+(s&&s.tipo!=='impl'?' selected':'')+'>Serviço avulso</option></select></div><div><label>Situação</label><select id="sv-ativo"><option value="1">Ativo</option><option value="0"'+(s&&!s.ativo?' selected':'')+'>Pausado</option></select></div></div>'+
    (function(){var g=(s&&s.pg)||{pix:1,boleto:1,cartao:1,parc:1,desc:0};
      return '<label>Formas de pagamento aceitas</label><div class="chk-l" id="sv-pg" style="display:flex;flex-wrap:wrap;gap:4px 18px"><label><input type="checkbox" value="pix"'+(g.pix?' checked':'')+'>Pix</label><label><input type="checkbox" value="boleto"'+(g.boleto?' checked':'')+'>Boleto</label><label><input type="checkbox" value="cartao"'+(g.cartao?' checked':'')+'>Cartão de crédito</label></div>'+
-      '<div class="linha2"><div><label>Parcelas no cartão (até)</label><input id="sv-parc" type="number" min="1" max="12" value="'+(g.parc||1)+'"></div><div><label>Desconto no Pix (%)</label><input id="sv-desc-pix" type="number" min="0" max="50" step="0.5" value="'+(g.desc||0)+'"></div></div>'})()+
+      '<div class="linha2"><div><label>Desconto no Pix à vista (%)</label><input id="sv-desc-pix" type="number" min="0" max="50" step="0.5" value="'+(g.desc||0)+'"></div><div><label>Parcelar em até (x)</label><input id="sv-parc" type="number" min="1" max="12" value="'+(g.parc||1)+'" oninput="pgPrevia()"></div></div>'+
+      '<div class="linha2"><div><label>Preço a prazo (R$, total)</label><input id="sv-vprazo" type="number" min="0" step="0.01" value="'+(g.vprazo||'')+'" placeholder="vazio = igual ao à vista" oninput="pgPrevia()"></div><div></div></div><p class="sub2" id="sv-previa" style="margin:6px 0 0"></p>'})()+
    necChecks('s',s?s.id:0)+
    '<div class="acoes"><button class="btn" onclick="fechar()">Cancelar</button><button class="btn pri" onclick="salvarServ('+(s?s.id:0)+')">Salvar serviço</button></div>');
+  pgPrevia();
+}
+/* resumo ao vivo no cadastro: o que o cliente vê à vista e a prazo */
+function pgPrevia(){
+  var a=+el('sv-preco').value||0,vp=+el('sv-vprazo').value||0,n=Math.min(12,Math.max(1,Math.round(+el('sv-parc').value||1)));
+  var tot=vp>0?vp:a,d=+el('sv-desc-pix').value||0,t='À vista: <b>'+R(a)+'</b>'+(d>0?' ('+R(Math.round(a*(1-d/100)*100)/100)+' no Pix)':'');
+  t+=' · A prazo: <b>'+(n>1?'até '+n+'x de '+R(tot/n)+' (total '+R(tot)+')':R(tot))+'</b>';
+  el('sv-previa').innerHTML=t;
 }
 function salvarServ(id){
   var n=el('sv-nome').value.trim();if(!n){toast('Informe o nome do serviço.');return}
@@ -965,6 +976,9 @@ function salvarServ(id){
   var pg={pix:0,boleto:0,cartao:0,parc:Math.min(12,Math.max(1,Math.round(+el('sv-parc').value||1))),desc:Math.min(50,Math.max(0,+el('sv-desc-pix').value||0))};
   [].forEach.call(document.querySelectorAll('#sv-pg input:checked'),function(c){pg[c.value]=1});
   if(!pg.pix&&!pg.boleto&&!pg.cartao){toast('Marque ao menos uma forma de pagamento.');return}
+  pg.vprazo=Math.max(0,+el('sv-vprazo').value||0);
+  if(pg.vprazo>0&&pg.vprazo<d.preco){toast('O preço a prazo não pode ser menor que o preço à vista.');return}
+  if(pg.vprazo===d.preco)pg.vprazo=0;
   d.pg=pg;
   if(id){var s=acha(SERVICOS,id);for(var k in d)s[k]=d[k]}else{d.id=++seq;SERVICOS.push(d)}
   necSalva('s',id||d.id);fechar();toast('Salvo.');desenhar();
