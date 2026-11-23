@@ -4404,6 +4404,31 @@ function lgPintar(){
 /* (122) vindo do site depois de assinar: abre direto na tela do código */
 window.addEventListener('load',function(){ var mh=/^#cod=(.+)$/.exec(location.hash||''); if(!mh) return; try{ LG.modo='codigo'; LG.etapa=2; el('lg-email').value=decodeURIComponent(mh[1]); lgPintar(); var mm=el('lg-msg'); mm.style.color='#2e7d32'; mm.textContent='Enviamos um código para o seu WhatsApp e e-mail. Digite abaixo (vale 10 minutos).'; history.replaceState(null,'',location.pathname); }catch(e){} });
 function lgAlternar(){ LG.modo=(LG.modo==='senha')?'codigo':'senha'; LG.etapa=1; el('lg-senha').value=''; el('lg-msg').textContent=''; lgPintar(); }
+/* (326) e-mail com mais de uma loja no grupo: depois do login pergunta qual empresa abrir. Uma loja só: entra direto como antes. */
+function lgEscolherLoja(d){
+  var ls=d&&d.lojas; if(!ls||ls.length<2){ abrirApp(); return; }
+  var old=el('lg-lojas'); if(old) old.remove();
+  var bg=document.createElement('div'); bg.id='lg-lojas'; bg.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(20,16,36,.72);display:flex;align-items:center;justify-content:center;padding:16px';
+  var bx=document.createElement('div'); bx.style.cssText='background:#fff;border-radius:18px;max-width:420px;width:100%;max-height:90vh;overflow:auto;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.35);font-family:inherit';
+  var h=document.createElement('div'); h.style.cssText='font-size:19px;font-weight:800;margin-bottom:4px'; h.textContent='Qual empresa você quer abrir?'; bx.appendChild(h);
+  var sb=document.createElement('div'); sb.style.cssText='font-size:13px;color:#6B6B73;margin-bottom:14px'; sb.textContent='Você pode trocar de empresa depois, pelo nome da loja no topo.'; bx.appendChild(sb);
+  var msg=document.createElement('div'); msg.style.cssText='color:#c0392b;font-weight:700;font-size:13px;min-height:16px;margin-top:8px'; 
+  ls.forEach(function(l){
+    var bt=document.createElement('button'); bt.type='button'; bt.style.cssText='display:block;width:100%;text-align:left;padding:14px 16px;margin-bottom:8px;border:1.5px solid #E3D9F2;border-radius:12px;background:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit';
+    bt.textContent=(l.nome||l.id)+(l.principal?'  ·  conta principal':'');
+    bt.onclick=function(){
+      if(l.id===(d.usuario&&d.usuario.cliente_id)){ bg.remove(); abrirApp(); return; }
+      bt.disabled=true; msg.textContent='';
+      fetch(DELTADIS_API+'/painel/trocar-loja',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+DD_TOKEN},body:JSON.stringify({loja:l.id})})
+        .then(function(r){ return r.json().catch(function(){ return {ok:false}; }); }).then(function(r){
+          if(!r||!r.ok){ bt.disabled=false; msg.textContent=(r&&r.mensagem)||'Não foi possível abrir essa empresa.'; return; }
+          ddGuardar(r.token,r.usuario); bg.remove(); abrirApp();
+        }).catch(function(){ bt.disabled=false; msg.textContent='Sem conexão com o servidor. Tente de novo.'; });
+    };
+    bx.appendChild(bt);
+  });
+  bx.appendChild(msg); bg.appendChild(bx); document.body.appendChild(bg);
+}
 function entrarCodigo(){
   var ct=el('lg-email').value.trim(), m=el('lg-msg'), b=el('lg-btn'); m.style.color='#c0392b'; m.textContent='';
   if(!ct){ m.textContent='Digite o e-mail ou o celular cadastrado.'; return; }
@@ -4425,7 +4450,7 @@ function entrarCodigo(){
       if(!d||!d.ok){ m.textContent=(d&&d.mensagem)||'Código inválido. Tente de novo.'; return; }
       if(d.usuario.perfil==='master'){ m.textContent='Este acesso é do administrador. Use a página admin.'; return; }
       if(d.usuario.perfil==='garcom'||d.usuario.perfil==='atendente'){ ddGuardar(d.token,d.usuario); location.href='atendimento.html'; return; }
-      LG.modo='senha'; LG.etapa=1; lgPintar(); ddGuardar(d.token,d.usuario); el('lg-senha').value=''; abrirApp();
+      LG.modo='senha'; LG.etapa=1; lgPintar(); ddGuardar(d.token,d.usuario); el('lg-senha').value=''; lgEscolherLoja(d);
     }).catch(function(){ b.disabled=false; m.textContent='Sem conexão com o servidor. Tente de novo.'; });
 }
 function entrar(){
@@ -4441,7 +4466,7 @@ function entrar(){
       if(!d||!d.ok){ m.textContent=(d&&d.mensagem)||'Não foi possível entrar. Tente de novo.'; return; }
       if(d.usuario.perfil==='master'){ m.textContent='Este acesso é do administrador. Use a página admin.'; return; }
       if(d.usuario.perfil==='garcom'||d.usuario.perfil==='atendente'){ ddGuardar(d.token,d.usuario); location.href='atendimento.html'; return; }
-      ddGuardar(d.token,d.usuario); el('lg-senha').value=''; abrirApp();
+      ddGuardar(d.token,d.usuario); el('lg-senha').value=''; lgEscolherLoja(d);
     }).catch(function(){ b.disabled=false; b.textContent='Entrar'; m.textContent='Sem conexão com o servidor. Tente de novo.'; });
 }
 /* ══ menu do avatar: meus dados, trocar senha, sair ══ */
