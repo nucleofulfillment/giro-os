@@ -12,6 +12,16 @@ Registro das orientações da Vileve e do que já está pronto do nosso lado.
 - O app de produção (`livefood-vileve-oficial.apk`) foi montado com essas credenciais e com o ícone novo.
   Falta a Vileve devolver o arquivo assinado pelo fabricante.
 
+## Atualização (23/11/2026)
+
+- A maquininha chegou. Ao ligar, a tela da PayStore pede o **token de configuração**.
+- A Vileve confirmou pela foto que o terminal é de **produção** (não tem o aviso "userdebug" no canto da tela).
+- O arquivo zip com os aplicativos de teste (debug) da Phoebus **não serve** para este terminal. Não instalar.
+- Decisão: **seguir direto em produção, sem terminal de teste**. O primeiro teste do app será com
+  cobrança de verdade, em valor baixo.
+- Próximo passo: **credenciar o terminal no portal** para obter o token de configuração
+  (perguntado à Vileve quem faz e onde o token aparece).
+
 ## Orientações da Vileve para a chegada do terminal
 
 1. **Vincular o terminal a um lojista** (isso é feito com a Vileve).
