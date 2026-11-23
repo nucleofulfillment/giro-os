@@ -1116,7 +1116,7 @@ html.loja-p .cd-dest{display:none!important}
         <div class="pghd"><div><h1>Cardápio</h1><div class="sub">produtos do seu restaurante <span style="opacity:.6">· GIRO-OS-081</span></div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn sec" onclick="cdFotoCardapio()" title="Só no celular">📷 Cardápio por foto</button><button class="btn sec" onclick="cdAbrirCats()">Categorias</button><button class="btn sec" onclick="cdLinkCardapio()">🔗 Link da loja</button><button class="btn sec" onclick="cdEtiquetas()">Etiquetas</button><button class="btn sec" onclick="cdAparencia()">🎨 Marca e cores</button><button class="btn sec" onclick="cdHorario()">🕒 Horário</button><button class="btn sec" onclick="cdFrete()">🛵 Entrega</button><button class="btn sec" onclick="cdGeo()">📍 Mesa</button><button class="btn sec" onclick="cdMesas()" style="display:none" title="(116) oculto: as mesas agora ficam no Hub">🍽️ Mesas <span id="ms-bd" style="display:none;background:#ef4444;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px"></span></button><button class="btn sec" onclick="planoAtendimento()">🧾 Atendimento (garçom/balcão)</button><button class="btn sec" onclick="cdAbrirOfertas()">▶ Ofertas</button><button class="btn sec" onclick="clbAbrir()">💎 Clube de assinatura</button><button class="btn sec" onclick="cdAbrirImport()">Importar planilha</button><button class="btn sec" onclick="cdFotosLote()">📷 Fotos em lote</button><button class="btn sec" onclick="bibAbrir()" title="Galeria vertical de fotos dos produtos">🖼️ Biblioteca de fotos</button><button class="btn sec" onclick="cdFotosIaLote()">✨ Fotos com IA</button><button class="btn sec" onclick="cimpAbrir()" title="Monta o cardápio para a gráfica e baixa o PDF">🖨 + Cardápio impresso</button><button class="btn pri" onclick="cdNovo()">+ Novo produto</button></div></div>
         <div class="card">
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px"><input class="inp" id="cd-busca" placeholder="Buscar produto" oninput="cdPintar()" style="flex:1;min-width:200px"><select class="inp" id="cd-fcat" onchange="cdPintar()" style="width:210px;max-width:100%"></select></div>
-          <div id="cd-selbar" style="display:none;align-items:center;gap:10px;flex-wrap:wrap;background:var(--s2);border-radius:12px;padding:8px 12px;margin-bottom:10px;font-size:13px"><span id="cd-seltxt" style="font-weight:700"></span><button class="btn pri sm" onclick="cdExibirOferta()">▶ Exibir oferta</button><button class="btn sec sm" onclick="cdFotosRefazer()">🔎 Refazer fotos</button><button class="btn sec sm" onclick="cdLimparSel()">Limpar</button></div>
+          <div id="cd-selbar" style="display:none;align-items:center;gap:10px;flex-wrap:wrap;background:var(--s2);border-radius:12px;padding:8px 12px;margin-bottom:10px;font-size:13px"><span id="cd-seltxt" style="font-weight:700"></span><button class="btn pri sm" onclick="cdExibirOferta()">▶ Exibir oferta</button><button class="btn sec sm" onclick="cdFotosRefazer()">🔎 Refazer fotos</button><button class="btn sec sm" onclick="cdSelTodos()" title="Marca todos os produtos que aparecem na lista (respeita a busca e a categoria)">☑ Marcar todos</button><button class="btn sec sm" id="cd-selapagar" onclick="cdApagarSel()" style="color:#c0392b;border-color:#e8b4ad" title="Apaga os produtos marcados">🗑 Excluir</button><button class="btn sec sm" onclick="cdLimparSel()">Limpar</button></div>
           <div id="cd-lista"></div>
         </div>
       </section>
@@ -11040,6 +11040,28 @@ function etPagina(){
 /* ── ofertas com vídeo (1B) ── */
 function cdSelProd(id,on){ if(on) CD.sel[id]=1; else delete CD.sel[id]; cdBarraSel(); }
 function cdLimparSel(){ CD.sel={}; cdPintar(); }
+/* marca todos os produtos que aparecem na lista agora (respeita a busca e a categoria escolhidas) */
+function cdSelTodos(){
+  var q=(el('cd-busca').value||'').toLowerCase().trim(), cat=el('cd-fcat').value, i, p;
+  for(i=0;i<CD.prods.length;i++){ p=CD.prods[i]; if(q&&(p.nome||'').toLowerCase().indexOf(q)<0) continue; if(cat&&p.cat!==cat) continue; CD.sel[p.id]=1; }
+  cdPintar();
+}
+/* apaga em lote os produtos marcados (um por vez, no mesmo endpoint do botão Apagar do produto) */
+function cdApagarSel(){
+  var ids=Object.keys(CD.sel||{}), ps=(CD.prods||[]).filter(function(p){ return ids.indexOf(p.id)>=0; }); if(!ps.length) return;
+  var ex=ps.slice(0,6).map(function(p){ return '• '+p.nome; }).join('\n')+(ps.length>6?'\n… e mais '+(ps.length-6):'');
+  if(!window.confirm('Apagar '+ps.length+' produto'+(ps.length==1?'':'s')+' do cardápio?\n\n'+ex+'\n\nIsso não dá pra desfazer.')) return;
+  var b=el('cd-selapagar'), feitos=0, falhou=0, k=0;
+  if(b) b.disabled=true;
+  (function prox(){
+    if(k>=ps.length){
+      CD.sel={}; if(b){ b.disabled=false; b.textContent='🗑 Excluir'; }
+      aviso(falhou?('Apaguei '+feitos+' e '+falhou+' não deu certo. Tente de novo.'):(feitos+' produto'+(feitos==1?'':'s')+' apagado'+(feitos==1?'':'s'))); cdCarregar(); return;
+    }
+    var p=ps[k++]; if(b) b.textContent='Apagando '+k+' de '+ps.length+'…';
+    fetch(DELTADIS_API+'/painel/cardapio-apagar',{method:'POST',headers:cdHdr(),body:JSON.stringify({tipo:'prod',id:p.id})}).then(function(r){ return r.json(); }).then(function(d){ if(d&&d.ok) feitos++; else falhou++; }).catch(function(){ falhou++; }).then(prox);
+  })();
+}
 function cdBarraSel(){ var n=Object.keys(CD.sel).length, b=el('cd-selbar'); if(!b) return; b.style.display=n?'flex':'none'; el('cd-seltxt').textContent=n+' produto'+(n==1?'':'s')+' selecionado'+(n==1?'':'s'); }
 function cdExibirOferta(){
   var ids=Object.keys(CD.sel); if(!ids.length) return;
