@@ -1878,17 +1878,17 @@ function mpPesN(d){ var n=Math.max(2,Math.min(12,MP.n+d)); while(MP.pes.length<n
 function mpIgualTela(){
   var f=MP.d.estado.falta, c=Math.floor(f*100/MP.n)/100, eu=Math.round((f-c*(MP.n-1))*100)/100;
   var h=ctCab('Rachar por igual','mpPay()')+'<div class="wb"><div class="tt" style="padding:14px 0 6px;font-size:16px;align-items:center"><span>Quantas pessoas?</span><span style="display:flex;align-items:center;gap:12px"><button class="lk" style="width:36px;height:36px;border:1px solid var(--line);border-radius:10px;font-size:20px;color:#fff;text-decoration:none" onclick="mpPesN(-1)">−</button><b id="mp-n">'+MP.n+'</b><button class="lk" style="width:36px;height:36px;border:1px solid var(--line);border-radius:10px;font-size:20px;color:#fff;text-decoration:none" onclick="mpPesN(1)">+</button></span></div>';
-  h+='<div class="nt" style="font-size:14px;color:#fff">Cada pessoa paga <b>'+brl(c)+'</b>.'+(eu!==c?' Os centavos que sobram ficam com você.':'')+'</div>';
+  h+='<div class="nt" style="font-size:14px;color:#fff">Cada pessoa paga <b>'+brl(c)+'</b>.'+(eu!==c?' Os centavos que sobram ficam com você.':'')+'</div><div class="nt" style="font-size:13px;margin-top:8px">Depois de criar, toque em <b>Compartilhar</b> ao lado de cada nome e mande o link pelo seu WhatsApp. O WhatsApp da pessoa é opcional.</div>';
   h+='<div class="rsm" style="margin-top:10px"><div class="tx"><b>'+esc((CT.conta||{}).nome||'Você')+' (você)</b></div><div class="vl">'+brl(eu)+'</div></div>';
-  MP.pes.forEach(function(p,i){ h+='<div style="border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-top:10px"><div style="display:flex;justify-content:space-between;font-size:13px;color:var(--mut)"><span>Pessoa '+(i+2)+'</span><span>'+brl(c)+'</span></div><input class="cin" placeholder="Nome" maxlength="60" autocomplete="off" value="'+esc(p.nome)+'" oninput="MP.pes['+i+'].nome=this.value" style="margin-top:6px"><input class="cin" type="tel" inputmode="numeric" placeholder="WhatsApp (47) 99999-9999" maxlength="16" value="'+esc(p.fone)+'" oninput="ctMask(this);MP.pes['+i+'].fone=this.value" style="margin-top:6px"></div>'; });
-  abreFolha(h+'<div class="ce" id="ct-erro"></div></div><div class="rod"><button class="bt c" id="ct-bt" onclick="mpEnviaIgual()">Enviar os links</button></div>',true);
+  MP.pes.forEach(function(p,i){ h+='<div style="border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-top:10px"><div style="display:flex;justify-content:space-between;font-size:13px;color:var(--mut)"><span>Pessoa '+(i+2)+'</span><span>'+brl(c)+'</span></div><input class="cin" placeholder="Nome" maxlength="60" autocomplete="off" value="'+esc(p.nome)+'" oninput="MP.pes['+i+'].nome=this.value" style="margin-top:6px"><input class="cin" type="tel" inputmode="numeric" placeholder="WhatsApp (opcional)" maxlength="16" value="'+esc(p.fone)+'" oninput="ctMask(this);MP.pes['+i+'].fone=this.value" style="margin-top:6px"></div>'; });
+  abreFolha(h+'<div class="ce" id="ct-erro"></div></div><div class="rod"><button class="bt c" id="ct-bt" onclick="mpEnviaIgual()">Criar a divisão</button></div>',true);
 }
-function mpChecaPes(l,ini){ for(var i=0;i<l.length;i++){ if(String(l[i].nome||'').trim().length<2){ ctErro('Preencha o nome da pessoa '+(i+ini)+'.'); return false; } var d=String(l[i].fone||'').replace(/\D/g,''); if(d.length<10||d.length>11){ ctErro('Confira o WhatsApp da pessoa '+(i+ini)+'.'); return false; } } return true; }
+function mpChecaPes(l,ini){ for(var i=0;i<l.length;i++){ if(String(l[i].nome||'').trim().length<2){ ctErro('Preencha o nome da pessoa '+(i+ini)+'.'); return false; } var d=String(l[i].fone||'').replace(/\D/g,''); if(d&&(d.length<10||d.length>11)){ ctErro('Confira o WhatsApp da pessoa '+(i+ini)+'.'); return false; } } return true; }
 function mpEnviaIgual(){ if(!mpChecaPes(MP.pes,2)) return; mpCria('igual',MP.pes); }
 function mpCria(modo,pessoas){
   var b=$('ct-bt'); b.disabled=true; b.textContent='Enviando…'; ctErro('');
   ctApi('/food/pedidos-mesa-racha',{mesa:MESA,modo:modo,pessoas:pessoas}).then(function(r){
-    if(!r.ok){ b.disabled=false; b.textContent='Enviar os links'; if(r.erro==='login'){ return mpReal(modo==='igual'?mpIgual:mpValor); } ctErro(r.mensagem||'Não consegui enviar.'); return; }
+    if(!r.ok){ b.disabled=false; b.textContent='Criar a divisão'; if(r.erro==='login'){ return mpReal(modo==='igual'?mpIgual:mpValor); } ctErro(r.mensagem||'Não consegui enviar.'); return; }
     MP.d.estado=r.estado; mpDonoAnota(r.estado); (r.envio||[]).forEach(function(x){ MP.envio[x.id]=x; }); MP.pes=[]; MP.val=[]; mpAcomp();
   });
 }
@@ -1899,9 +1899,9 @@ function mpValorSobra(){ var s=0; MP.val.forEach(function(x){ s+=mpNum(x.valor);
 function mpValorPinta(){ var e=$('mp-sobra'); if(!e) return; var s=mpValorSobra(); e.innerHTML=s>=0?'<span>Fica aberto na mesa</span><span>'+brl(s)+'</span>':'<span style="color:#f87171">Passou do que falta</span><span style="color:#f87171">'+brl(-s)+'</span>'; }
 function mpValorTela(){
   var tem=MP.d.estado.partes.length>0, h=ctCab('Valor específico',tem?'mpAcomp()':'mpPay()')+'<div class="wb"><div class="nt" style="margin-top:12px;font-size:13.5px">Preencha quem vai pagar agora. Digite o valor ou escolha os itens. Se só uma pessoa está indo embora, preencha só ela: o resto continua aberto na mesa.</div>';
-  MP.val.forEach(function(p,i){ h+='<div style="border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-top:10px"><div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--mut)"><span>Pessoa '+(i+1)+'</span><span><button class="lk" onclick="mpSouEu('+i+')">Sou eu</button>'+(MP.val.length>1?' · <button class="lk" onclick="MP.val.splice('+i+',1);mpValorTela()">Tirar</button>':'')+'</span></div><input class="cin" placeholder="Nome" maxlength="60" autocomplete="off" value="'+esc(p.nome)+'" oninput="MP.val['+i+'].nome=this.value" style="margin-top:6px"><input class="cin" type="tel" inputmode="numeric" placeholder="WhatsApp (47) 99999-9999" maxlength="16" value="'+esc(p.fone)+'" oninput="ctMask(this);MP.val['+i+'].fone=this.value" style="margin-top:6px"><input class="cin" inputmode="decimal" placeholder="Valor R$ 0,00" maxlength="10" value="'+esc(p.valor)+'" oninput="MP.val['+i+'].valor=this.value;MP.val['+i+'].itens=null;var q=$(\'mp-it'+i+'\');if(q)q.textContent=\'\';mpValorPinta()" style="margin-top:6px"><div id="mp-it'+i+'" style="font-size:12.5px;color:var(--mut);margin-top:6px;line-height:1.4">'+esc(mpItensTxt(p.itens))+'</div><button class="lk" style="margin-top:6px;font-size:14px" onclick="mpItensAbre('+i+')">'+(p.itens?'Mudar os itens':'Escolher os itens')+'</button></div>'; });
+  MP.val.forEach(function(p,i){ h+='<div style="border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-top:10px"><div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--mut)"><span>Pessoa '+(i+1)+'</span><span><button class="lk" onclick="mpSouEu('+i+')">Sou eu</button>'+(MP.val.length>1?' · <button class="lk" onclick="MP.val.splice('+i+',1);mpValorTela()">Tirar</button>':'')+'</span></div><input class="cin" placeholder="Nome" maxlength="60" autocomplete="off" value="'+esc(p.nome)+'" oninput="MP.val['+i+'].nome=this.value" style="margin-top:6px"><input class="cin" type="tel" inputmode="numeric" placeholder="WhatsApp (opcional)" maxlength="16" value="'+esc(p.fone)+'" oninput="ctMask(this);MP.val['+i+'].fone=this.value" style="margin-top:6px"><input class="cin" inputmode="decimal" placeholder="Valor R$ 0,00" maxlength="10" value="'+esc(p.valor)+'" oninput="MP.val['+i+'].valor=this.value;MP.val['+i+'].itens=null;var q=$(\'mp-it'+i+'\');if(q)q.textContent=\'\';mpValorPinta()" style="margin-top:6px"><div id="mp-it'+i+'" style="font-size:12.5px;color:var(--mut);margin-top:6px;line-height:1.4">'+esc(mpItensTxt(p.itens))+'</div><button class="lk" style="margin-top:6px;font-size:14px" onclick="mpItensAbre('+i+')">'+(p.itens?'Mudar os itens':'Escolher os itens')+'</button></div>'; });
   h+='<button class="lk" style="margin-top:12px;font-size:14px" onclick="MP.val.push({nome:\'\',fone:\'\',valor:\'\'});mpValorTela()">+ Adicionar pessoa</button><div class="tt" id="mp-sobra" style="padding:12px 0 0;font-size:16px"></div>';
-  abreFolha(h+'<div class="ce" id="ct-erro"></div></div><div class="rod"><button class="bt c" id="ct-bt" onclick="mpEnviaValor()">Enviar os links</button></div>',true); mpValorPinta();
+  abreFolha(h+'<div class="ce" id="ct-erro"></div></div><div class="rod"><button class="bt c" id="ct-bt" onclick="mpEnviaValor()">Criar a divisão</button></div>',true); mpValorPinta();
 }
 /* (161) escolher os itens que a pessoa vai pagar: o valor sai da soma, e cada unidade só pode ter um dono */
 function mpSouEu(i){ var c=CT.conta||{}, d=String(c.fone||'').replace(/\D/g,'').replace(/^55(?=\d{10,11}$)/,''); MP.val[i].nome=c.nome||''; MP.val[i].fone=ctFoneFmt(d); mpValorTela(); }
@@ -1932,9 +1932,8 @@ function mpAcompTela(){
     var pago=p.status==='paga', lado='', bar='';
     if(pago) lado='<span style="color:#16a34a;font-size:13px;font-weight:800">Pago</span>';
     else if(p.minha) lado='<span style="flex:none;color:var(--pri2,var(--pri));font-size:13px;font-weight:800">Sua parte</span>';
-    else if(p.id){ var x=MP.envio[p.id];
-      bar=((x&&!p.enviado)?'<a class="mp-ch pri" target="_blank" rel="noopener" href="'+esc(mpWaHref(x))+'">Enviar pelo WhatsApp</a>':'<button class="mp-ch pri" onclick="mpReenvia(\''+esc(p.id)+'\')">Reenviar</button>')
-        +'<button class="mp-ch" onclick="mpCopia(\''+esc(p.id)+'\')">Copiar link</button><button class="mp-ch" onclick="mpEdita(\''+esc(p.id)+'\')">Editar</button><button class="mp-ch" onclick="mpRemove(\''+esc(p.id)+'\')">Remover</button>'; }
+    else if(p.id){ lado='<button class="mp-ch pri" style="flex:none" onclick="mpCompartilha(\''+esc(p.id)+'\')">↗ Compartilhar</button>';
+      bar='<button class="mp-ch" onclick="mpCopia(\''+esc(p.id)+'\')">Copiar link</button><button class="mp-ch" onclick="mpEdita(\''+esc(p.id)+'\')">Editar</button><button class="mp-ch" onclick="mpRemove(\''+esc(p.id)+'\')">Remover</button>'; }
     else lado='<span style="color:var(--mut);font-size:12.5px">Aguardando</span>';
     h+='<div class="rsm" style="display:block"><div style="display:flex;align-items:center;gap:10px"><div class="tx" style="flex:1;min-width:0"><b>'+esc(p.nome)+'</b><small>'+brl(p.valor)+(pago&&p.forma?' · '+(p.forma==='pix'?'Pix':'Cartão'):'')+'</small>'+(p.itens?'<small>'+esc(p.itens)+'</small>':'')+'</div>'+lado+'</div>'+((!pago&&MP.envio[p.id]&&MP.envio[p.id].erro)?'<div style="color:#dc2626;font-size:12.5px;margin-top:6px;line-height:1.35">Mensagem não enviada: '+esc(MP.envio[p.id].erro)+'</div>':'')+(bar?'<div class="mp-bar">'+bar+'</div>':'')+'</div>';
   });
@@ -1952,11 +1951,11 @@ function mpRemove(id){
 }
 function mpEdita(id){
   var p=mpParte(id); if(!p) return; clearInterval(MP.tmr);
-  abreFolha(ctCab('Editar '+esc(p.nome),'mpAcomp()')+'<div class="wb"><label class="cl">Nome</label><input class="cin" id="mp-ed-n" maxlength="60" autocomplete="off" value="'+esc(p.nome)+'"><label class="cl">WhatsApp</label><input class="cin" id="mp-ed-f" type="tel" inputmode="numeric" maxlength="16" value="'+esc(ctFoneFmt(p.fone))+'" oninput="ctMask(this)"><label class="cl">Valor</label><input class="cin" id="mp-ed-v" inputmode="decimal" maxlength="10" value="'+esc(Number(p.valor).toFixed(2).replace('.',','))+'"><div class="nt" style="margin-top:10px">Se o valor diminuir, a diferença volta para a sua parte. Mudando o valor ou o WhatsApp, a pessoa recebe a mensagem de novo.</div><div class="ce" id="ct-erro"></div></div><div class="rod"><button class="bt c" id="ct-bt" onclick="mpEditaOk(\''+esc(id)+'\')">Salvar</button></div>',true);
+  abreFolha(ctCab('Editar '+esc(p.nome),'mpAcomp()')+'<div class="wb"><label class="cl">Nome</label><input class="cin" id="mp-ed-n" maxlength="60" autocomplete="off" value="'+esc(p.nome)+'"><label class="cl">WhatsApp (opcional)</label><input class="cin" id="mp-ed-f" type="tel" inputmode="numeric" maxlength="16" value="'+esc(ctFoneFmt(p.fone))+'" oninput="ctMask(this)"><label class="cl">Valor</label><input class="cin" id="mp-ed-v" inputmode="decimal" maxlength="10" value="'+esc(Number(p.valor).toFixed(2).replace('.',','))+'"><div class="nt" style="margin-top:10px">Se o valor diminuir, a diferença volta para a sua parte. Mudando o valor, toque em Compartilhar de novo para mandar o link.</div><div class="ce" id="ct-erro"></div></div><div class="rod"><button class="bt c" id="ct-bt" onclick="mpEditaOk(\''+esc(id)+'\')">Salvar</button></div>',true);
 }
 function mpEditaOk(id){
   var nm=$('mp-ed-n').value.trim(), fo=$('mp-ed-f').value.replace(/\D/g,''), vl=mpNum($('mp-ed-v').value);
-  if(nm.length<2){ ctErro('Preencha o nome.'); return; } if(fo.length<10||fo.length>13){ ctErro('Confira o WhatsApp.'); return; } if(vl<5){ ctErro('O valor mínimo é R$ 5,00.'); return; }
+  if(nm.length<2){ ctErro('Preencha o nome.'); return; } if(fo&&(fo.length<10||fo.length>13)){ ctErro('Confira o WhatsApp.'); return; } if(vl<5){ ctErro('O valor mínimo é R$ 5,00.'); return; }
   var b=$('ct-bt'); b.disabled=true; b.textContent='Salvando…'; ctErro('');
   ctApi('/food/pedidos-parte-editar',{id:id,nome:nm,fone:fo,valor:String(vl)}).then(function(r){
     if(!r.ok){ b.disabled=false; b.textContent='Salvar'; ctErro(r.mensagem||'Não consegui salvar.'); return; }
@@ -2008,6 +2007,13 @@ function mpReenvia(id){
     if(r.ok||r.texto){ MP.d.estado.partes.forEach(function(p){ if(p.id===id&&!r.enviado) p.enviado=0; }); mpAcompTela(); toast(r.erro==='aguarde'?(r.mensagem||'Aguarde alguns segundos.'):'Não enviei pelo sistema. Toque em Enviar pelo meu WhatsApp.'); return; }
     toast(r.mensagem||'Não consegui reenviar.');
   });
+}
+/* (329) o racha não manda mais WhatsApp pelo sistema (custo na Meta): quem criou a divisão compartilha o link da pessoa pelo próprio WhatsApp */
+function mpCompartilha(id){
+  var p=mpParte(id); if(!p) return; var u=mpLink(id), pn=String(p.nome||'').split(' ')[0]||'', loja=(D&&D.empresa)||'restaurante';
+  var tx='Oi'+(pn?', '+pn:'')+'! Segue o link da sua parte da conta no '+loja+': '+brl(p.valor)+(p.itens?' ('+p.itens+')':'')+'.\nPara pagar, é só abrir:\n'+u;
+  if(navigator.share){ navigator.share({text:tx}).catch(function(){}); return; }
+  window.open('https://wa.me/?text='+encodeURIComponent(tx),'_blank','noopener');
 }
 function mpCopia(id){ var u=mpLink(id), ok=function(){ toast('Link copiado'); }; try{ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(u).then(ok,function(){ prompt('Copie o link:',u); }); return; } }catch(e){} prompt('Copie o link:',u); }
 /* ── link de quem recebeu o racha: livefood.tec.br/<loja>/r/<código> ── */
