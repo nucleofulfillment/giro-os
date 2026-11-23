@@ -1351,7 +1351,7 @@ function wAdd2(){
   sacGrava(); sacPos();
 }
 /* (140) ADICIONAR PELA LISTA: produto sem opções obrigatórias (sem tamanhos e sem sabores) entra direto na sacola; com opções, abre o produto */
-function rapPode(p){ return p&&!(p.tamanhos||[]).length&&!(p.sabores||[]).length&&(p.preco||0)>0; }
+function rapPode(p){ return p&&!(p.tamanhos||[]).length&&!(p.sabores||[]).length&&!(p.adicionais||[]).length&&(p.preco||0)>0; }   /* produto com adicionais abre a folha de opções (antes entrava direto na sacola e o cliente não via os adicionais) */
 function rapK(p){ return JSON.stringify([p.id,'',[],'',[],'']); }
 function rapQtd(p){ var k=rapK(p), it=SAC.filter(function(x){ return x.k===k; })[0]; return it?it.qty:0; }
 function rapHtml(p){
