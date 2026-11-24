@@ -9862,15 +9862,16 @@ function mzQrLib(cb){ if(window.QRCode) return cb(); var sc=document.createEleme
 function mzEmp(){ return (window.DD_USER&&(DD_USER.empresa||DD_USER.cliente))||''; }
 function mzQrData(u){ var box=document.createElement('div'); box.style.cssText='position:absolute;left:-9999px'; document.body.appendChild(box); new QRCode(box,{text:u,width:480,height:480,correctLevel:QRCode.CorrectLevel.M}); var cv=box.querySelector('canvas'), s=''; try{ s=cv.toDataURL('image/png'); }catch(e){} box.remove(); return s; }
 /* cartão da mesa (nome da loja, QR, "Mesa N" e o endereço) desenhado num canvas, pronto para baixar */
-function mzCartao(n,u,qr,cb){
+function mzCartao(n,u,qr,cb,gr){
   var c=document.createElement('canvas'); c.width=900; c.height=1200; var g=c.getContext('2d'), im=new Image();
   im.onload=function(){
     g.fillStyle='#fff'; g.fillRect(0,0,900,1200); g.fillStyle='#FF5A00'; g.fillRect(0,0,900,18);
     g.textAlign='center'; g.fillStyle='#1C1C1E'; g.font='bold 46px Arial'; g.fillText(mzEmp()||'Cardápio digital',450,110);
     g.drawImage(im,150,170,600,600);
-    g.font='bold 110px Arial'; g.fillText('Mesa '+n,450,910);
-    g.fillStyle='#5E5E66'; g.font='34px Arial'; g.fillText('Aponte a câmera do celular para pedir',450,980);
-    g.fillStyle='#FF5A00'; g.font='bold 32px Arial'; g.fillText(u.replace(/^https?:\/\//,''),450,1060);
+    if(gr){ g.font='bold 50px Arial'; g.fillText(String(gr).toUpperCase(),450,846); g.font='bold 150px Arial'; g.fillText(String(n),450,950); }   /* (336) grupo da mesa */
+    else { g.font='bold 110px Arial'; g.fillText('Mesa '+n,450,910); }
+    g.fillStyle='#5E5E66'; g.font='34px Arial'; g.fillText('Aponte a câmera do celular para pedir',450,1010);
+    g.fillStyle='#FF5A00'; g.font='bold 32px Arial'; g.fillText(u.replace(/^https?:\/\//,''),450,1075);
     g.fillStyle='#B5ACA5'; g.font='bold 26px Arial'; g.fillText('livefood',450,1150);
     cb(c.toDataURL('image/png'));
   };
@@ -9879,14 +9880,14 @@ function mzCartao(n,u,qr,cb){
 function mzQr(n){
   if(!mzCliOk()) return;
   mzSlug(function(){ mzQrLib(function(){
-    var u=mzLink(n), qr=mzQrData(u);
-    el('sh-import').querySelector('h3').textContent='QR code da mesa '+n;
-    el('cd-imp-corpo').innerHTML='<div style="text-align:center"><img src="'+qr+'" alt="QR code da mesa '+esc(n)+'" style="width:240px;max-width:100%;border:1px solid var(--border);border-radius:14px;padding:10px;background:#fff"><div style="font-size:22px;font-weight:800;margin-top:8px">Mesa '+esc(n)+'</div><div style="font-size:13px;color:var(--muted);margin:4px 0 14px;word-break:break-all">'+esc(u)+'</div>'
+    var u=mzLink(n), qr=mzQrData(u), gr=((MZ.lista.filter(function(x){ return String(x.num)===String(n); })[0])||{}).grupo||'';
+    el('sh-import').querySelector('h3').textContent='QR code da '+(gr?gr+' ':'mesa ')+n;
+    el('cd-imp-corpo').innerHTML='<div style="text-align:center"><img src="'+qr+'" alt="QR code da mesa '+esc(n)+'" style="width:240px;max-width:100%;border:1px solid var(--border);border-radius:14px;padding:10px;background:#fff"><div style="font-size:22px;font-weight:800;margin-top:8px">'+(gr?esc(gr)+' ':'Mesa ')+esc(n)+'</div><div style="font-size:13px;color:var(--muted);margin:4px 0 14px;word-break:break-all">'+esc(u)+'</div>'
       +'<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn pri" id="mzq-comp">📤 Compartilhar</button><button class="btn sec" id="mzq-baixar">⬇ Baixar imagem</button><button class="btn sec" id="mzq-imp">🖨 Imprimir</button><button class="btn sec" onclick="mzCopia(\''+esc(n)+'\')">Copiar link</button></div></div>';
     abrir('sh-import');
-    var png=''; mzCartao(n,u,qr,function(p){ png=p; });
-    el('mzq-baixar').onclick=function(){ mzCartao(n,u,qr,function(p){ var a=document.createElement('a'); a.href=p; a.download='qrcode-mesa-'+n+'.png'; document.body.appendChild(a); a.click(); a.remove(); }); };
-    el('mzq-imp').onclick=function(){ mzImprimirA4([{n:n,u:u,qr:qr}],{cm:8,nome:true,corte:true}); };
+    var png=''; mzCartao(n,u,qr,function(p){ png=p; },gr);
+    el('mzq-baixar').onclick=function(){ mzCartao(n,u,qr,function(p){ var a=document.createElement('a'); a.href=p; a.download='qrcode-mesa-'+n+'.png'; document.body.appendChild(a); a.click(); a.remove(); },gr); };
+    el('mzq-imp').onclick=function(){ mzImprimirA4([{n:n,u:u,qr:qr,g:gr}],{cm:8,nome:true,corte:true}); };
     el('mzq-comp').onclick=function(){ mzCompartilhar(n,u,png); };
   }); });
 }
@@ -9910,13 +9911,13 @@ function mzImprimirA4(L,op){
   op=op||MZA4; var k=mzA4Calc(op.cm), s=k.s, emp=esc(mzEmp()), pags='', i;
   var fM=s*0.13, fN=s*0.055, fA=s*0.045, qr=s*(op.nome?0.66:0.72);
   for(i=0;i<L.length;i+=k.pag){
-    pags+='<div class="pg">'+L.slice(i,i+k.pag).map(function(x){ return '<div class="c">'+(op.nome&&emp?'<div class="t">'+emp+'</div>':'')+'<img src="'+x.qr+'"><div class="m">Mesa '+esc(x.n)+'</div>'+(s>=45?'<div class="s">Aponte a câmera do celular</div>':'')+'</div>'; }).join('')+'</div>';
+    pags+='<div class="pg">'+L.slice(i,i+k.pag).map(function(x){ return '<div class="c">'+(op.nome&&emp?'<div class="t">'+emp+'</div>':'')+'<img src="'+x.qr+'">'+(x.g?'<div class="g">'+esc(x.g)+'</div><div class="m">'+esc(x.n)+'</div>':'<div class="m">Mesa '+esc(x.n)+'</div>')+(s>=45?'<div class="s">Aponte a câmera do celular</div>':'')+'</div>'; }).join('')+'</div>';
   }
   mzPrevia('<!doctype html><html><head><meta charset="utf-8"><title>QR codes das mesas</title><style>'
     +'@page{size:A4;margin:5mm}*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;color:#111}'
     +'.pg{width:200mm;display:grid;grid-template-columns:repeat('+k.col+','+s+'mm);grid-auto-rows:'+s+'mm;gap:'+k.gap+'mm;align-content:start;page-break-after:always;break-after:page}.pg:last-child{page-break-after:auto;break-after:auto}'
     +'.c{width:'+s+'mm;height:'+s+'mm;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;overflow:hidden;'+(op.corte?'outline:0.2mm dashed #999;outline-offset:-0.1mm;':'')+'padding:'+(s*0.04)+'mm}'
-    +'.c img{width:'+qr+'mm;height:'+qr+'mm;image-rendering:pixelated}.t{font-weight:700;font-size:'+fN+'mm;line-height:1.1;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.m{font-weight:800;font-size:'+fM+'mm;line-height:1.05}.s{font-size:'+fA+'mm;color:#555}'
+    +'.c img{width:'+qr+'mm;height:'+qr+'mm;image-rendering:pixelated}.t{font-weight:700;font-size:'+fN+'mm;line-height:1.1;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.m{font-weight:800;font-size:'+fM+'mm;line-height:1.05}.g{font-weight:800;font-size:'+(s*0.055)+'mm;line-height:1.05;letter-spacing:.08em;text-transform:uppercase;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.s{font-size:'+fA+'mm;color:#555}'
     +'@media screen{body{background:#e9e6e3;padding:14px}.pg{background:#fff;padding:5mm;width:210mm;min-height:297mm;margin:0 auto 14px;box-shadow:0 2px 12px rgba(0,0,0,.18)}}'
     +'</style></head><body>'+pags+'</body></html>', Math.ceil(L.length/k.pag));
 }
@@ -9961,7 +9962,7 @@ function mzQrTodos(){
   el('mza4-bt').onclick=function(){
     var bt=el('mza4-bt'); bt.disabled=true; bt.textContent='Montando as folhas…';
     mzSlug(function(){ mzQrLib(function(){ setTimeout(function(){
-      mzImprimirA4(MZ.lista.map(function(m){ var u=mzLink(m.num); return {n:m.num,u:u,qr:mzQrData(u)}; }),MZA4);
+      mzImprimirA4(MZ.lista.map(function(m){ var u=mzLink(m.num); return {n:m.num,u:u,qr:mzQrData(u),g:m.grupo||''}; }),MZA4);
       bt.disabled=false; bt.textContent='🖨 Gerar e imprimir'; fecharTudo();
     },30); }); });
   };
