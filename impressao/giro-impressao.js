@@ -54,7 +54,15 @@ function etiqueta(p, cfg) {
   if (p.grupo === 'pronta' || p.grupo === 'preparo') b.size(1, 2).ln(p.grupo === 'preparo' ? 'BEBIDA DE PREPARO' : 'BEBIDA PRONTA').size(1, 1);
   b.bold(false).align(0).ln(tr);
   const local = p.mesa ? ((p.modo === 'balcao' ? 'BALCAO ' : 'MESA ') + p.mesa) : (p.modo === 'balcao' ? 'BALCAO' : 'CLIENTE ' + (p.joia || ''));
-  b.align(1).inv(true).bold(true).size(2, 3).ln(' ' + local + ' ').size(1, 1).inv(false).bold(false).align(0);
+  /* (335) mesa com grupo (Mesa bistro, Mesa baixa...): número grande em bloco preto e o grupo ao lado; se não couber, o grupo vai embaixo */
+  const gMesa = (p.mesa && p.modo !== 'balcao' && p.mg) ? String(p.mg).toUpperCase().slice(0, 30) : '', nMesa = String(p.mesa || '');
+  if (gMesa && nMesa.length <= 4) {
+    const larg = (nMesa.length + 2) * 4 + 2 + gMesa.length;
+    b.align(1);
+    if (larg <= COLS) b.inv(true).bold(true).size(4, 4).txt(' ' + nMesa + ' ').inv(false).size(1, 2).txt('  ' + gMesa).size(1, 1).bold(false).raw(10);
+    else b.inv(true).bold(true).size(4, 4).ln(' ' + nMesa + ' ').inv(false).size(1, 2).ln(gMesa).size(1, 1).bold(false);
+    b.align(0);
+  } else b.align(1).inv(true).bold(true).size(2, 3).ln(' ' + local + ' ').size(1, 1).inv(false).bold(false).align(0);
   if (p.copos > 0) b.align(1).bold(true).size(2, 2).ln('COPOS: ' + p.copos).size(1, 1).bold(false).align(0);   /* (250) copos que o garçom pediu */
   const esq = 'Pedido #' + p.lab, dir = dataHora(p.criado); b.bold(true).txt(esq).bold(false).ln(' '.repeat(Math.max(1, COLS - esq.length - dir.length)) + dir);
   if (p.nome && p.joia) { b.raw(10).bold(true).size(1, 2); quebra(p.nome + ' [' + p.joia + ']', COLS).forEach(l => b.ln(l)); b.size(1, 1).bold(false); }
@@ -292,7 +300,7 @@ async function escolherImpressoras(old) {
 async function teste(setor) {
   const cfg = lerCfg() || { impressoras: {} }, ip = cfg.impressoras[setor];
   if (!ip) { console.log('Sem impressora para "' + setor + '". Rode a configuração ou use: cozinha, bar ou caixa'); return; }
-  const p = { setor, lab: 'TESTE', empresa: 'Teste de impressao', mesa: '8', modo: 'mesa', nome: 'Cliente Teste', joia: '10', atend: 'Teste', criado: Date.now(), obs: 'Etiqueta de teste', l: [{ nome: 'Agua de coco', qty: 1, adds: [], sab: [] }, { nome: 'Chicken crispy burguer', qty: 2, tam: 'Grande', obs: 'sem cebola', adds: ['Bacon'], sab: [] }] };
+  const p = { setor, lab: 'TESTE', empresa: 'Teste de impressao', mesa: '8', mg: 'Mesa bistro', modo: 'mesa', nome: 'Cliente Teste', joia: '10', atend: 'Teste', criado: Date.now(), obs: 'Etiqueta de teste', l: [{ nome: 'Agua de coco', qty: 1, adds: [], sab: [] }, { nome: 'Chicken crispy burguer', qty: 2, tam: 'Grande', obs: 'sem cebola', adds: ['Bacon'], sab: [] }] };
   try { await enviar(ip, etiqueta(p, cfg)); console.log('Enviado para ' + setor + ' (' + ip + '). Deve ter saído uma etiqueta de teste.'); } catch (e) { console.log('FALHOU em ' + ip + ': ' + e.message); }
 }
 
