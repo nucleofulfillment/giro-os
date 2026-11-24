@@ -1555,7 +1555,7 @@ function ckFrete(sub){
 function ckPg(m){ CK.pg=m; ckKeep(); }
 /* (136) formas de pagamento da loja (painel → Formas de pagamento); sem configuração, vale o de antes: Pix, dinheiro e cartão à vista */
 function pgCfg(){ return (D&&D.cfg&&D.cfg.pagto)||{salvo:0,pix:{on:1,desc:0},dinheiro:{on:1},cartao:{on:1,parcelas:1,semJuros:1,acresc:0},maquina:{on:1,descDebito:0}}; }
-function pagaApp(){ return !!(D&&D.cfg&&D.cfg.pagaApp); }   /* (333) o cliente paga na hora do pedido, só Pix ou cartão pelo celular */
+function pagaApp(){ return noLocal(); }   /* (333) pedido no local = o cliente pede e paga na hora, só Pix ou cartão pelo celular (link da loja, mesa e whats) */
 function ckPgOk(m){ var g=pgCfg(); if(pagaApp()&&m!=='pix'&&m!=='cartao') return false; return m==='pix'?!!g.pix.on:m==='dinheiro'?!!g.dinheiro.on:m==='cartao'?!!g.cartao.on:m==='maquina'?!!(g.maquina.on&&g.salvo):false; }
 function ckPgPrimeiro(){ var l=['pix','cartao','maquina','dinheiro'].filter(ckPgOk); return l[0]||'pix'; }
 function ckPct(v){ return String(v).replace('.',',')+'%'; }
