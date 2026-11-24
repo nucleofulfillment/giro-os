@@ -56,7 +56,13 @@ function etiqueta(p, cfg) {
   const local = p.mesa ? ((p.modo === 'balcao' ? 'BALCAO ' : 'MESA ') + p.mesa) : (p.modo === 'balcao' ? 'BALCAO' : 'CLIENTE ' + (p.joia || ''));
   /* (335) mesa com grupo (Mesa bistro, Mesa baixa...): número grande em bloco preto e o grupo ao lado; se não couber, o grupo vai embaixo */
   const gMesa = (p.mesa && p.modo !== 'balcao' && p.mg) ? String(p.mg).toUpperCase().slice(0, 30) : '', nMesa = String(p.mesa || '');
-  if (gMesa && nMesa.length <= 4) {
+  /* (336) morador por apartamento (link /ap): AP grande em bloco preto com a palavra ao lado e o nome de quem pediu logo abaixo */
+  const nAp = String(p.ap || '').toUpperCase();
+  if (nAp && nAp.length <= 6) {
+    b.align(1).inv(true).bold(true).size(4, 4).txt(' ' + nAp + ' ').inv(false).size(1, 2).txt('  APARTAMENTO').size(1, 1).bold(false).raw(10);
+    if (p.apNome) { b.bold(true).size(2, 2); quebra(String(p.apNome).toUpperCase(), Math.floor(COLS / 2)).forEach(l => b.ln(l)); b.size(1, 1).bold(false); }
+    b.align(0);
+  } else if (gMesa && nMesa.length <= 4) {
     const larg = (nMesa.length + 2) * 4 + 2 + gMesa.length;
     b.align(1);
     if (larg <= COLS) b.inv(true).bold(true).size(4, 4).txt(' ' + nMesa + ' ').inv(false).size(1, 2).txt('  ' + gMesa).size(1, 1).bold(false).raw(10);
