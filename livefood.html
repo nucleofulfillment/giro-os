@@ -2079,7 +2079,7 @@ function rpForma(f){
 }
 /* (332) uma tela só para fechar a conta: formas em cartões no topo; com "Pagamento na mesa" ligado o cartão é pago ali mesmo e o racha continua disponível */
 function mesaFechar(){ if(!MESA) return; if(mpOn()&&MP.d&&String(MP.d.mesa)===String(MESA)&&MP.d.estado&&MP.d.estado.partes&&MP.d.estado.partes.length) return mpAbre(); CT.ctx='mesa'; ctLer(); if(!CT.tok) return ctLogin(); MC.forma=mesaFormas()[0]; mesaContaTela(); }
-function mesaCartOn(){ var g=pgCfg(); return !!(mpOn()&&g.cartao&&g.cartao.on); }
+function mesaCartOn(){ var g=pgCfg(); return !!((mpOn()||noLocal())&&g.cartao&&g.cartao.on); }   /* (334) pedido no local: a conta da mesa também é paga pelo celular */
 function mesaCartLogin(){ mpReal(function(){ CT.ctx='mesa'; MC.forma='cartao'; mesaContaTela(true); }); }
 function mesaForma(f){ if(f==='cartao'&&mesaCartOn()&&mpAnon()) return mesaCartLogin(); MC.forma=f; mesaContaMonta(); }
 function mesaVerPeds(){ MC.open=!MC.open; var e=$('mc-peds'), b=$('mc-vp'); if(e) e.style.display=MC.open?'':'none'; if(b) b.textContent=MC.open?'− esconder':'+ ver os pedidos'; }
@@ -2107,7 +2107,7 @@ function mesaContaTela(sem){
 }
 function mesaRachaTxt(n,t){ n=parseInt(n,10)||0; if(n<2) return '<span style="opacity:.7;font-size:13px">Digite quantas pessoas vão dividir e mostramos o valor de cada uma.</span>'; var v=Math.ceil(t*100/n)/100; return 'Cada pessoa paga <b style="font-size:18px">'+brl(v)+'</b>'+((Math.round(v*n*100)!==Math.round(t*100))?'<div style="font-size:12px;opacity:.7;margin-top:2px">Valor arredondado para cima (centavos).</div>':''); }
 function mesaRacha(e){ e.value=e.value.replace(/\D/g,'').slice(0,2); MC.pes=e.value; var r=$('mc-rach'); if(r) r.innerHTML=mesaRachaTxt(MC.pes,(MC.d&&MC.d.total)||0); }
-function mesaFormas(){ var g=pgCfg(), l=[]; if(g.pix&&g.pix.on) l.push('pix'); if((g.cartao&&g.cartao.on)||(g.maquina&&g.maquina.on)) l.push('cartao'); if(g.dinheiro&&g.dinheiro.on) l.push('dinheiro'); return l.length?l:['dinheiro']; }   /* (328) só as formas que a loja ligou */
+function mesaFormas(){ var g=pgCfg(), l=[]; if(g.pix&&g.pix.on) l.push('pix'); if((g.cartao&&g.cartao.on)||(g.maquina&&g.maquina.on)) l.push('cartao'); if(noLocal()){ l=[]; if(g.pix&&g.pix.on) l.push('pix'); if(g.cartao&&g.cartao.on) l.push('cartao'); return l.length?l:['pix']; } if(g.dinheiro&&g.dinheiro.on) l.push('dinheiro'); return l.length?l:['dinheiro']; }   /* (328) só as formas que a loja ligou */
 function mesaContaMonta(){
   var d=MC.d||{pedidos:[],total:0}, c=CT.conta||{}, h=ctCab('Fechar conta','fechaSheet()')+'<div class="wb" id="mc-tela">';
   if(!d.pedidos.length){ abreFolha(h+'<div class="nt" style="margin-top:14px;font-size:14.5px;color:#fff">Sua mesa não tem pedidos em aberto no momento.</div></div><div class="rod"><button class="bt c" onclick="fechaSheet();mesaInit(true)">Voltar ao início</button></div>',true); return; }
