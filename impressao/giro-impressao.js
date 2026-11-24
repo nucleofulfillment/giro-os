@@ -59,7 +59,10 @@ function etiqueta(p, cfg) {
   /* (336) morador por apartamento (link /ap): AP grande em bloco preto com a palavra ao lado e o nome de quem pediu logo abaixo */
   const nAp = String(p.ap || '').toUpperCase();
   if (nAp && nAp.length <= 6) {
-    b.align(1).inv(true).bold(true).size(4, 4).txt(' ' + nAp + ' ').inv(false).size(1, 2).txt('  APARTAMENTO').size(1, 1).bold(false).raw(10);
+    const tAp = p.apTorre ? 'TORRE ' + String(p.apTorre).toUpperCase() : 'APARTAMENTO';   /* (337) com torre: "TORRE B" ao lado do AP */
+    b.align(1);
+    if ((nAp.length + 2) * 4 + 2 + tAp.length <= COLS) b.inv(true).bold(true).size(4, 4).txt(' ' + nAp + ' ').inv(false).size(1, 2).txt('  ' + tAp).size(1, 1).bold(false).raw(10);
+    else b.inv(true).bold(true).size(4, 4).ln(' ' + nAp + ' ').inv(false).size(1, 2).ln(tAp).size(1, 1).bold(false);
     if (p.apNome) { b.bold(true).size(2, 2); quebra(String(p.apNome).toUpperCase(), Math.floor(COLS / 2)).forEach(l => b.ln(l)); b.size(1, 1).bold(false); }
     b.align(0);
   } else if (gMesa && nMesa.length <= 4) {

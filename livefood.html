@@ -778,8 +778,10 @@ var Q=new URLSearchParams(location.search), ROTA=window.LF_ROTA||{}, CLI=(ROTA.c
 /* (109) versão do WhatsApp: livefood.tec.br/<loja>/whats (antes /cardapio, que continua abrindo) — o cliente monta a sacola e envia o pedido pelo WhatsApp da loja */
 var WA=!MESA&&!!(ROTA.wa||Q.get('wa')==='1');
 /* (336) /<loja>/ap: morador do condomínio. O pedido é entregue no apartamento (sem endereço); só vale com "Habilitar AP" ligado nas Configurações */
-var APM=!MESA&&!!(ROTA.ap||Q.get('ap')==='1'), AP_T=null, AP_V='';
+var APM=!MESA&&!!(ROTA.ap||Q.get('ap')==='1'), AP_T=null, AP_V='', AP_TR='';
 function apOn(){ return APM&&!!(D&&D.cfg&&D.cfg.apOn); }
+function apTorre(){ return apOn()&&!!(D.cfg&&D.cfg.apTorre); }
+function apFalta(){ var c=CT.conta||{}; return !c.ap||(apTorre()&&!c.torre); }
 function lfLink(mesa){ var s=(D&&D.slug)||CLI; return location.origin+'/'+encodeURIComponent(s)+(mesa?'/mesa/'+mesa:(WA?'/whats':'')); }
 function noLocal(){ return !!(D&&D.cfg&&D.cfg.noLocal); }   /* (328) pedido no local: sem entrega nem retirada; o /whats também pede e paga no cardápio */
 function waOn(){ return WA&&!!(D&&D.cfg&&D.cfg.wa)&&!noLocal(); }
@@ -1481,20 +1483,19 @@ function ctPedeCodigo(){
   });
 }
 function ctCodigo(seg){
-  abreFolha(ctCab('Código','ctLogin()')+'<div class="wb"><div class="nt" style="margin-top:12px;font-size:14px;color:#fff">Enviamos um código para o WhatsApp <b>'+esc(ctFoneFmt(CT.fone))+'</b>.</div><label class="cl">Código de 6 números</label><input class="cin" id="ct-cod" type="tel" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000" style="letter-spacing:6px;font-size:22px;text-align:center" oninput="this.value=this.value.replace(/\\D/g,\'\')">'+(CT.conhecido?'':'<label class="cl">Como podemos te chamar?</label><input class="cin" id="ct-nome" type="text" autocomplete="name" maxlength="60" placeholder="Seu nome">')+(apOn()?'<label class="cl">Número do apartamento</label><input class="cin" id="ct-ap" type="text" maxlength="8" placeholder="Ex.: 101" value="'+esc((CT.conta&&CT.conta.ap)||'')+'">':'')+'<div class="ce" id="ct-erro"></div><div style="margin-top:14px;font-size:13px"><button class="lk" id="ct-re" onclick="ctPedeCodigo()" disabled></button> · <button class="lk" onclick="ctLogin()">Trocar número</button></div></div><div class="rod"><button class="bt c" id="ct-bt" onclick="ctEntrar()">Entrar</button></div>',true);
+  abreFolha(ctCab('Código','ctLogin()')+'<div class="wb"><div class="nt" style="margin-top:12px;font-size:14px;color:#fff">Enviamos um código para o WhatsApp <b>'+esc(ctFoneFmt(CT.fone))+'</b>.</div><label class="cl">Código de 6 números</label><input class="cin" id="ct-cod" type="tel" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000" style="letter-spacing:6px;font-size:22px;text-align:center" oninput="this.value=this.value.replace(/\\D/g,\'\')">'+(CT.conhecido?'':'<label class="cl">Como podemos te chamar?</label><input class="cin" id="ct-nome" type="text" autocomplete="name" maxlength="60" placeholder="Seu nome">')+'<div class="ce" id="ct-erro"></div><div style="margin-top:14px;font-size:13px"><button class="lk" id="ct-re" onclick="ctPedeCodigo()" disabled></button> · <button class="lk" onclick="ctLogin()">Trocar número</button></div></div><div class="rod"><button class="bt c" id="ct-bt" onclick="ctEntrar()">Entrar</button></div>',true);
   clearInterval(CT.tmr); var n=seg||45; function tk(){ var b=$('ct-re'); if(!b){ clearInterval(CT.tmr); return; } if(n>0){ b.disabled=true; b.textContent='Reenviar em '+n+'s'; n--; } else { b.disabled=false; b.textContent='Reenviar código'; clearInterval(CT.tmr); } } tk(); CT.tmr=setInterval(tk,1000);
 }
 function ctEntrar(){
   var cod=$('ct-cod').value, nm=$('ct-nome')?$('ct-nome').value.trim():''; if(cod.length!==6){ ctErro('Digite os 6 números do código.'); return; } if(!CT.conhecido&&nm.length<2){ ctErro('Diga seu nome.'); return; }
-  var apE=$('ct-ap')?$('ct-ap').value.replace(/[^A-Za-z0-9 -]/g,'').trim():''; if($('ct-ap')&&!apE){ ctErro('Informe o número do apartamento.'); return; }
   var b=$('ct-bt'); b.disabled=true; b.textContent='Entrando…'; ctErro('');
-  ctApi('/food/conta/entrar',{fone:CT.fone,codigo:cod,nome:nm,ap:apE||undefined}).then(function(r){
+  ctApi('/food/conta/entrar',{fone:CT.fone,codigo:cod,nome:nm}).then(function(r){
     if(r.ok){ clearInterval(CT.tmr); CT.tok=r.token; CT.conta=r.conta; ctGrava(); ctEntrega(); if(r.importou) toast('Achamos seu cadastro. Confira o endereço de entrega.'); } else { b.disabled=false; b.textContent='Entrar'; ctErro(r.mensagem||'Não deu certo.'); }
   });
 }
 function ctEndTxt(e){ return esc(e.rua)+', '+esc(e.numero)+(e.compl?' · '+esc(e.compl):'')+'<br>'+esc(e.bairro)+' · '+esc(e.cidade)+(e.uf?'/'+esc(e.uf):''); }
 function ckKeep(){ var v={}; ['ck-cpf','ck-obs','ck-tr','ck-mg','ck-cn','ck-cnome','ck-cval','ck-ccv','ck-cmail','ck-ccep','ck-cnum'].forEach(function(i){ var e=$(i); if(e) v[i]=e.value; }); ckResumo(); Object.keys(v).forEach(function(i){ var e=$(i); if(e) e.value=v[i]; }); }
-function ctEntrega(){ if(CT.ctx==='ini'){ fechaSheet(); mesaSplashFecha(); } else if(CT.ctx==='conta') contaTela(); else if(CT.ctx==='mesa') mesaContaTela(); else if(CT.ctx==='mp') mpDepoisLogin(); else ckKeep(); }
+function ctEntrega(){ if(apOn()&&CT.ctx==='ck'&&apFalta()){ apModal(); return; } if(CT.ctx==='ini'){ fechaSheet(); mesaSplashFecha(); } else if(CT.ctx==='conta') contaTela(); else if(CT.ctx==='mesa') mesaContaTela(); else if(CT.ctx==='mp') mpDepoisLogin(); else ckKeep(); }
 function ctModo(m){ EN.modo=m; ctGrava(); ctEntrega(); }
 function ctSelEnd(id){ EN.end=id; ctGrava(); ctEntrega(); }
 function ctSegue(){
@@ -1677,9 +1678,25 @@ function lfeCarrega(cb){
 }
 var CPFN=0;   /* (060) vira 1 só se o Asaas do restaurante exigir CPF para o Pix */
 /* (336) bloco do apartamento na sacola: o número vem do cadastro e pode ser corrigido aqui (salva sozinho) */
-function apBloco(c){ return '<div class="ckt">Entrega no apartamento</div><label class="cl">Número do apartamento</label><input class="cin" id="ck-ap" type="text" maxlength="8" placeholder="Ex.: 101" value="'+esc((c&&c.ap)||'')+'" oninput="apGrava(this)"><div class="nt" style="font-size:14px;color:#fff;margin-top:8px">Levamos o pedido até o seu apartamento.</div>'; }
-function apGrava(e){ var v=e.value.replace(/[^A-Za-z0-9 -]/g,'').slice(0,8); if(v!==e.value) e.value=v; CT.conta=CT.conta||{}; CT.conta.ap=v; clearTimeout(AP_T);
-  AP_T=setTimeout(function(){ ctApi('/food/conta/salvar',{nome:CT.conta.nome||'',enderecos:CT.conta.enderecos||[],ap:v}).then(function(d){ if(d&&d.ok&&d.conta){ CT.conta.ap=d.conta.ap; ctGrava(); } }); },700); }
+function apBloco(c){ return '<div class="ckt">Entrega no apartamento</div>'+(apTorre()?'<label class="cl">Torre</label><input class="cin" id="ck-torre" type="text" maxlength="8" placeholder="Ex.: A" value="'+esc((c&&c.torre)||'')+'" oninput="apGrava(this)">':'')+'<label class="cl">Apartamento</label><input class="cin" id="ck-ap" type="text" maxlength="8" placeholder="Ex.: 101" value="'+esc((c&&c.ap)||'')+'" oninput="apGrava(this)"><div class="nt" style="font-size:14px;color:#fff;margin-top:8px">Levamos o pedido até o seu apartamento.</div>'; }
+function apLimpa(v){ return String(v||'').replace(/[^A-Za-z0-9 -]/g,'').slice(0,8); }
+function apGrava(e){ var v=apLimpa(e.value); if(v!==e.value) e.value=v; CT.conta=CT.conta||{}; if(e.id==='ck-torre') CT.conta.torre=v; else CT.conta.ap=v; clearTimeout(AP_T);
+  AP_T=setTimeout(function(){ ctApi('/food/conta/salvar',{nome:CT.conta.nome||'',enderecos:CT.conta.enderecos||[],ap:CT.conta.ap||'',torre:CT.conta.torre||''}).then(function(d){ if(d&&d.ok&&d.conta){ CT.conta.ap=d.conta.ap; CT.conta.torre=d.conta.torre; ctGrava(); } }); },700); }
+/* (337) logo depois de entrar com o WhatsApp: pergunta o apartamento (e a torre, se a loja tem torres) */
+function apModal(){
+  var c=CT.conta||{};
+  abreFolha(ctCab('Seu apartamento','fechaSheet()')+'<div class="wb"><div class="nt" style="margin-top:12px;font-size:14px;color:#fff">Para entregar o pedido, informe onde você mora'+(apTorre()?': a torre e o número do apartamento.':': o número do apartamento.')+'</div>'+(apTorre()?'<label class="cl">Torre</label><input class="cin" id="ap-torre" type="text" maxlength="8" placeholder="Ex.: A" value="'+esc(c.torre||'')+'" autocomplete="off">':'')+'<label class="cl">Apartamento</label><input class="cin" id="ap-ap" type="text" maxlength="8" placeholder="Ex.: 101" value="'+esc(c.ap||'')+'" autocomplete="off"><div class="ce" id="ct-erro"></div></div><div class="rod"><button class="bt c" id="ct-bt" onclick="apSalva()">Continuar</button></div>',true);
+}
+function apSalva(){
+  var ap=apLimpa(($('ap-ap')||{value:''}).value).trim(), tr=apTorre()?apLimpa(($('ap-torre')||{value:''}).value).trim():'';
+  if(apTorre()&&!tr){ ctErro('Informe a torre.'); return; } if(!ap){ ctErro('Informe o número do apartamento.'); return; }
+  var b=$('ct-bt'); b.disabled=true; b.textContent='Salvando…'; ctErro('');
+  ctApi('/food/conta/salvar',{nome:(CT.conta&&CT.conta.nome)||'',enderecos:(CT.conta&&CT.conta.enderecos)||[],ap:ap,torre:tr}).then(function(d){
+    if(d&&d.ok&&d.conta){ CT.conta=d.conta; ctGrava(); ctEntrega(); }
+    else if(d&&d._http===401){ CT.tok=''; CT.conta=null; ctLogin(); }
+    else { b.disabled=false; b.textContent='Continuar'; ctErro((d&&d.mensagem)||'Não consegui salvar. Tente de novo.'); }
+  });
+}
 function ckSemEnd(){
   ctErro('Cadastre ou escolha um endereço de entrega.'); toast('Falta o endereço de entrega. Toque em "Cadastrar endereço".');
   var bs=document.querySelectorAll('#sheet button'), i, alvo=null; for(i=0;i<bs.length;i++){ if((bs[i].getAttribute('onclick')||'').indexOf("ctEndForm('novo')")>=0){ alvo=bs[i]; break; } }
@@ -1698,7 +1715,7 @@ function ckChamaGar(m){ fetch(API+'/food/garcom',{method:'POST',headers:{'Conten
   if(soBalcao()){ ctErro(SOBAL_TX+'.'); return; }
   var fechado=!estaAberto(), pg=fechado?progLer():null; if(fechado&&!pg){ abreAgenda(); return; }
   if(!ckFrete(sacTotal()).ok){ ctErro('Ainda não entregamos nesse endereço. Escolha outro endereço ou retire no balcão.'); return; }
-  if(apOn()){ var apv=(($('ck-ap')||{value:(CT.conta&&CT.conta.ap)||''}).value||'').trim(); if(!apv){ ctErro('Informe o número do seu apartamento.'); return; } AP_V=apv; }
+  if(apOn()){ var apv=(($('ck-ap')||{value:(CT.conta&&CT.conta.ap)||''}).value||'').trim(), trv=apTorre()?(($('ck-torre')||{value:(CT.conta&&CT.conta.torre)||''}).value||'').trim():''; if(apTorre()&&!trv){ ctErro('Informe a torre.'); return; } if(!apv){ ctErro('Informe o número do seu apartamento.'); return; } AP_V=apv; AP_TR=trv; }
   if(EN.modo==='entrega'&&!EN.end){ ctErro('Cadastre ou escolha um endereço de entrega.'); return; } ctGrava();
   var ce=$('ck-cpf'), cpf=ce?ce.value.replace(/\D/g,''):''; if((CK.pg==='pix'||CK.pg==='cartao')&&ce&&cpf.length!==11){ ctErro('Digite os 11 números do CPF.'); return; }
   var emMaos=noLocal()&&!MESA&&(CK.pg==='dinheiro'||CK.pg==='maquina'), qm=emMaos?(CK.qm||''):'';
@@ -1720,7 +1737,7 @@ function ckChamaGar(m){ fetch(API+'/food/garcom',{method:'POST',headers:{'Conten
     }
   }
   var b=$('ct-bt'), din=CK.pg==='dinheiro'||CK.pg==='maquina'||CK.pg==='caixa'||CK.pg==='conta', trc=din&&$('ck-tr')?parseFloat($('ck-tr').value.replace(',','.')):0; b.disabled=true; b.textContent=din?(CK.pg==='conta'?'Enviando o pedido…':'Enviando o pedido…'):(CK.pg==='cartao'?'Processando o cartão…':'Gerando o Pix…'); ctErro('');
-  geoGate(function(g){ ctApi('/food/pedido',{geo:g,itens:SAC.map(function(i){ return {p:i.p,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs,qty:i.qty}; }),modo:EN.modo,ap:apOn()?AP_V:undefined,mesa:MESA||undefined,end:EN.end,obs:(($('ck-obs')||{value:''}).value+(qmTxt?' '+qmTxt:'')).trim(),cpf:cpf||undefined,prog:pg||undefined,pagto:CK.pg,troco:(trc>0&&CK.pg==='dinheiro'?trc:undefined),maqTipo:CK.pg==='maquina'?(CK.maq==='debito'?'debito':'credito'):undefined,parcelas:CK.pg==='cartao'?(CK.parc||1):undefined,cartao:cardB&&cardB.cartao,cartao_id:cardB&&cardB.cartao_id,email:cardB&&cardB.email,cep:cardB&&cardB.cep,numero_end:cardB&&cardB.numero_end,salvar:cardB&&cardB.salvar||undefined}).then(function(r){
+  geoGate(function(g){ ctApi('/food/pedido',{geo:g,itens:SAC.map(function(i){ return {p:i.p,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs,qty:i.qty}; }),modo:EN.modo,ap:apOn()?AP_V:undefined,torre:apOn()&&AP_TR?AP_TR:undefined,mesa:MESA||undefined,end:EN.end,obs:(($('ck-obs')||{value:''}).value+(qmTxt?' '+qmTxt:'')).trim(),cpf:cpf||undefined,prog:pg||undefined,pagto:CK.pg,troco:(trc>0&&CK.pg==='dinheiro'?trc:undefined),maqTipo:CK.pg==='maquina'?(CK.maq==='debito'?'debito':'credito'):undefined,parcelas:CK.pg==='cartao'?(CK.parc||1):undefined,cartao:cardB&&cardB.cartao,cartao_id:cardB&&cardB.cartao_id,email:cardB&&cardB.email,cep:cardB&&cardB.cep,numero_end:cardB&&cardB.numero_end,salvar:cardB&&cardB.salvar||undefined}).then(function(r){
     cardB=null;
     if(r.ok){ CK.ped=r.pedido; if(qm==='garcom') ckChamaGar(CK.mg); if(din) ckOk(r.pedido); else if(CK.pg==='cartao'){ if(r.pedido.status==='pago') ckOk(r.pedido); else ckAguarda(r.pedido); } else ckPix(); }
     else if(r._http===401){ CT.tok=''; ctLogin(); }
