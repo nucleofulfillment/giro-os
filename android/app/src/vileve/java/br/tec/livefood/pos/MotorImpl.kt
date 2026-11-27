@@ -12,15 +12,19 @@ import br.com.phoebus.android.payments.api.Credentials
 import br.com.phoebus.android.payments.api.ErrorData
 import br.com.phoebus.android.payments.api.PaymentClient
 import br.com.phoebus.android.payments.api.PaymentRequestV2
+import br.com.phoebus.android.payments.api.PaymentStatus
 import br.com.phoebus.android.payments.api.PaymentType
 import br.com.phoebus.android.payments.api.PaymentV2
 import br.com.phoebus.android.payments.api.ReprintReceiptRequestV2
 import br.com.phoebus.android.payments.api.ReversePayment
 import br.com.phoebus.android.payments.api.ReversePaymentRequestV2
 import br.com.phoebus.android.payments.api.client.Client
+import br.com.phoebus.android.payments.api.provider.PaymentProviderApi
+import br.com.phoebus.android.payments.api.provider.PaymentProviderRequest
 import org.json.JSONArray
 import java.io.ByteArrayOutputStream
 import java.math.BigDecimal
+import java.util.Date
 import java.util.UUID
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -77,6 +81,44 @@ class MotorImpl : Motor {
         tela.mensagem("Siga as instruções na tela da maquininha")
         ligar { ok ->
             if (!ok) { tela.erro(SEM_APP); return@ligar }
+            // venda que ficou pendente trava as próximas (erro 1099): desfaz antes de cobrar
+            desfazerPendentes(tela) { falha ->
+                if ((tela as? android.app.Activity)?.isFinishing == true) return@desfazerPendentes   // o operador saiu: não cobra
+                if (falha != null) tela.erro(falha) else iniciarCobranca(forma, valorCentavos, tela)
+            }
+        }
+    }
+
+    /**
+     * Venda PENDENTE = a maquininha aprovou, mas o LiveFood não confirmou (app fechado, queda de internet).
+     * Como o LiveFood não registrou essa venda como paga, ela é DESFEITA (o cliente não é cobrado).
+     * fim(null) = pode cobrar; senão, a mensagem de erro.
+     */
+    private fun desfazerPendentes(tela: Tela, fim: (String?) -> Unit) {
+        val pendentes = runCatching {
+            val desde = Date(System.currentTimeMillis() - 30L * 24 * 3600 * 1000)
+            val pedido = PaymentProviderRequest(app(), desde).apply { status = listOf(PaymentStatus.PENDING) }
+            PaymentProviderApi.create(ctx).findAll(pedido).orEmpty()
+                .filter { it.paymentStatus == PaymentStatus.PENDING }
+        }.getOrDefault(emptyList())   // se a consulta falhar, segue: a própria PayStore recusa se houver pendência
+        fun proxima(i: Int) {
+            if (i >= pendentes.size) { fim(null); return }
+            val p = pendentes[i]
+            val valor = p.value?.movePointRight(2)?.toLong()?.let { " de " + Ui.reais(it) } ?: ""
+            tela.mensagem("Desfazendo uma venda$valor que não foi concluída…")
+            val falhou = { motivo: String -> fim("Há uma venda$valor pendente e não consegui desfazer.\n$motivo") }
+            runCatching {
+                cliente.cancelPayment(p.paymentId, object : PaymentClient.PaymentCallback<Any?> {
+                    override fun onSuccess(r: Any?) { principal.post { proxima(i + 1) } }   // espera a biblioteca liberar a operação
+                    override fun onError(e: ErrorData) = falhou(texto(e))
+                })
+            }.onFailure { falhou(it.message ?: SEM_APP) }
+        }
+        proxima(0)
+    }
+
+    private fun iniciarCobranca(forma: Forma, valorCentavos: Long, tela: Tela) {
+            tela.mensagem("Siga as instruções na tela da maquininha")
             val ref = "LF-" + UUID.randomUUID().toString().replace("-", "").take(16)
             val pedido = PaymentRequestV2().apply {
                 value = BigDecimal(valorCentavos).movePointLeft(2)
@@ -102,7 +144,6 @@ class MotorImpl : Motor {
                     override fun onError(e: ErrorData) = tela.erro(texto(e))
                 })
             }.onFailure { tela.erro(it.message ?: SEM_APP) }
-        }
     }
 
     /** O app de pagamento só conclui a venda depois que o LiveFood confirma. */
@@ -127,7 +168,7 @@ class MotorImpl : Motor {
                     guardar(v)
                     tela.aprovado(v)
                 }
-                override fun onError(e: ErrorData) = tela.erro("O pagamento não foi confirmado: " + texto(e))
+                override fun onError(e: ErrorData) = tela.erro("O pagamento não foi confirmado e será desfeito na próxima cobrança.\n" + texto(e))
             })
         }.onFailure { tela.erro(it.message ?: "Não consegui confirmar o pagamento.") }
     }
