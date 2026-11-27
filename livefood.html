@@ -13,7 +13,7 @@
 <title>Cardápio · LiveFood</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
-<!-- LIVEFOOD-26 --><meta name="versao" content="LIVEFOOD-26">
+<!-- LIVEFOOD-27 --><meta name="versao" content="LIVEFOOD-27">
 <style>
 :root{--bg:#0b0b0d;--tx:#fff;--mut:rgba(255,255,255,.68);--pri:#FF5A00;--pri2:#FF5A00;--glass:rgba(18,18,22,.62);--line:rgba(255,255,255,.16)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -1494,7 +1494,7 @@ function ctEntrar(){
   });
 }
 function ctEndTxt(e){ return esc(e.rua)+', '+esc(e.numero)+(e.compl?' · '+esc(e.compl):'')+'<br>'+esc(e.bairro)+' · '+esc(e.cidade)+(e.uf?'/'+esc(e.uf):''); }
-function ckKeep(){ var v={}; ['ck-cpf','ck-obs','ck-tr','ck-mg','ck-cn','ck-cnome','ck-cval','ck-ccv','ck-cmail','ck-ccep','ck-cnum'].forEach(function(i){ var e=$(i); if(e) v[i]=e.value; }); ckResumo(); Object.keys(v).forEach(function(i){ var e=$(i); if(e) e.value=v[i]; }); }
+function ckKeep(){ var v={}; ['ck-cpf','ck-obs','ck-tr','ck-mg','ck-cn','ck-cnome','ck-cval','ck-ccv','ck-cmail','ck-ccep','ck-cnum'].forEach(function(i){ var e=$(i); if(e) v[i]=e.value; }); var sv=$('ck-csv'), svc=!!(sv&&sv.checked); ckResumo(); if(svc&&$('ck-csv')) $('ck-csv').checked=true; /* (LIVEFOOD-27) redesenhar a tela nao desmarca o Salvar cartao */ Object.keys(v).forEach(function(i){ var e=$(i); if(e) e.value=v[i]; }); }
 function ctEntrega(){ if(apOn()&&CT.ctx==='ck'&&apFalta()){ apModal(); return; } if(CT.ctx==='ini'){ fechaSheet(); mesaSplashFecha(); } else if(CT.ctx==='conta') contaTela(); else if(CT.ctx==='mesa') mesaContaTela(); else if(CT.ctx==='mp') mpDepoisLogin(); else ckKeep(); }
 function ctModo(m){ EN.modo=m; ctGrava(); ctEntrega(); }
 function ctSelEnd(id){ EN.end=id; ctGrava(); ctEntrega(); }
@@ -1754,6 +1754,7 @@ function ckChamaGar(m){ fetch(API+'/food/garcom',{method:'POST',headers:{'Conten
   if(quer===undefined&&svPct()&&CK.pg!=='conta'&&!apOn()&&(MESA||(noLocal()&&EN.modo!=='entrega'))){ var sb=sacTotal(), sd=ckDesc(sb,pg), base=Math.round((sb-sd.db-ckDescPg(sb-sd.db))*100)/100; svPergunta(base,function(s){ CK.sv=s; ckPaga(); }); return; }
   var b=$('ct-bt'), din=CK.pg==='dinheiro'||CK.pg==='maquina'||CK.pg==='caixa'||CK.pg==='conta', trc=din&&$('ck-tr')?parseFloat($('ck-tr').value.replace(',','.')):0; b.disabled=true; b.textContent=din?(CK.pg==='conta'?'Enviando o pedido…':'Enviando o pedido…'):(CK.pg==='cartao'?'Processando o cartão…':'Gerando o Pix…'); ctErro('');
   geoGate(function(g){ ctApi('/food/pedido',{geo:g,itens:SAC.map(function(i){ return {p:i.p,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs,qty:i.qty}; }),modo:EN.modo,ap:apOn()?AP_V:undefined,torre:apOn()&&AP_TR?AP_TR:undefined,mesa:MESA||undefined,end:EN.end,obs:(($('ck-obs')||{value:''}).value+(qmTxt?' '+qmTxt:'')).trim(),cpf:cpf||undefined,prog:pg||undefined,pagto:CK.pg,servico:quer||undefined,troco:(trc>0&&CK.pg==='dinheiro'?trc:undefined),maqTipo:CK.pg==='maquina'?(CK.maq==='debito'?'debito':'credito'):undefined,parcelas:CK.pg==='cartao'?(CK.parc||1):undefined,cartao:cardB&&cardB.cartao,cartao_id:cardB&&cardB.cartao_id,email:cardB&&cardB.email,cep:cardB&&cardB.cep,numero_end:cardB&&cardB.numero_end,salvar:cardB&&cardB.salvar||undefined}).then(function(r){
+    if(r.ok&&cardB&&cardB.salvar) ctApi('/food/conta',null,true).then(function(d){ if(d.ok){ CT.conta=d.conta; ctGrava(); } });   /* (LIVEFOOD-27) o cartao salvo ja aparece na proxima compra */
     cardB=null;
     if(r.ok){ CK.ped=r.pedido; if(qm==='garcom') ckChamaGar(CK.mg); if(!din&&r.pedido.status!=='pago') pdGrava(r.pedido); if(din) ckOk(r.pedido);else if(CK.pg==='cartao'){ if(r.pedido.status==='pago') ckOk(r.pedido); else ckAguarda(r.pedido); } else ckPix(); }
     else if(r._http===401){ CT.tok=''; ctLogin(); }
