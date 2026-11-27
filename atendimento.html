@@ -331,7 +331,7 @@ html.pos .bt-hub,html.pos .lt-bt{display:none!important}
 <!-- abertura com o Live (fundo branco + logo laranja); curta, para não atrasar o garçom -->
 <div id="lf-abertura" data-minimo="350" data-esperar="1" data-rapido="1" style="position:fixed;top:0;right:0;bottom:0;left:0;inset:0;z-index:2147483000;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px"><div class="lfa-live" style="width:140px"></div><img src="livefood-logo.png" alt="LiveFood" style="height:42px;width:auto"><div class="lfa-barra"><i></i></div></div>
 <script>setTimeout(function(){ var a=document.getElementById('lf-abertura'); if(a) a.remove(); },3500);   /* rede de segurança: a abertura nunca passa de 3,5 s */</script>
-<script src="site/js/live-mascote.js"></script><script src="site/js/live-app.js?v=2"></script><script src="lojas.js"></script><script src="bipador.js?v=2"></script>
+<script src="site/js/live-mascote.js"></script><script src="site/js/live-app.js?v=2"></script><script src="lojas.js"></script><script src="bipador.js?v=3"></script>
 
 <script>/* (ATEND-53) marca o app da maquininha (pos) e o navegador antigo (velho: sem gap no flex) */
 (function(){ var h=document.documentElement;
@@ -364,7 +364,7 @@ html.pos .bt-hub,html.pos .lt-bt{display:none!important}
 </div>
 
 <div id="app" class="hide">
-  <div id="top" data-versao="ATEND-53"><div style="flex:1;min-width:0;display:flex;align-items:center;gap:12px"><b id="emp" style="flex:none">Atendimento</b><small id="usu"></small></div><!-- "Atender via mapa" (mpAbre) fora do ar enquanto evolui; o código do mapa continua abaixo --><button id="btPos" style="display:none;flex:none;font-size:17px;padding:6px 10px" title="Maquininha" aria-label="Maquininha" onclick="try{LiveFoodPOS.menu()}catch(e){}">💳</button><a class="bt-hub" href="hub.html" title="Voltar ao Hub" aria-label="Voltar ao Hub"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></a><button onclick="sair()">Sair</button></div>
+  <div id="top" data-versao="ATEND-54"><div style="flex:1;min-width:0;display:flex;align-items:center;gap:12px"><b id="emp" style="flex:none">Atendimento</b><small id="usu"></small></div><!-- "Atender via mapa" (mpAbre) fora do ar enquanto evolui; o código do mapa continua abaixo --><button id="btPos" style="display:none;flex:none;font-size:17px;padding:6px 10px" title="Maquininha" aria-label="Maquininha" onclick="try{LiveFoodPOS.menu()}catch(e){}">💳</button><a class="bt-hub" href="hub.html" title="Voltar ao Hub" aria-label="Voltar ao Hub"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></a><button onclick="sair()">Sair</button></div>
   <div id="chip" class="hide"><div class="t"><b id="chipT"></b><small id="chipS"></small></div><button id="nfcChip" class="hide" onclick="nfcChipToggle()" title="Gravar o pedido no cartão NFC do cliente">💳 Cartão NFC: desligado</button><button onclick="trocaComanda()">Trocar</button></div>
 
   <!-- PEDIDO -->
@@ -938,20 +938,19 @@ function bpConfirma(){ var cam=BP.camOn, nome=BP.it&&BP.it.p.nome; bpGuarda(); f
 function bpCancela(){ var cam=BP.camOn; BP.it=null; fecha(); if(cam) bpCam(); }
 function bpPara(){ cancelAnimationFrame(BP.raf); BP.raf=0; try{ if(BP.zx){ BP.zx.reset(); BP.zx=null; } }catch(e){} if(BP.stream){ BP.stream.getTracks().forEach(function(t){ t.stop(); }); BP.stream=null; } }
 function bpLido(c){ if(!BP.stream&&!BP.zx) return; if(Date.now()<BP.ate) return; BP.ate=Date.now()+1500; bpCodigo(c); }
-function bpPedeCam(){
-  var md=navigator.mediaDevices, velha=navigator.webkitGetUserMedia||navigator.getUserMedia;
-  var pede=function(c){ if(md&&md.getUserMedia) return md.getUserMedia(c); return new Promise(function(ok,no){ if(!velha){ no({name:'SemCamera'}); return; } velha.call(navigator,c,ok,no); }); };
-  return pede({video:{facingMode:{ideal:'environment'}},audio:false}).catch(function(){ return pede({video:true,audio:false}); });
-}
 function bpMotivo(e){ var v=(navigator.userAgent.match(/Chrome\/(\d+)/)||[])[1]; return ' (motivo: '+((e&&e.name)||'desconhecido')+(v?', navegador '+v:'')+')'; }
-function bpCam(){
-  bpPara(); BP.camOn=true; BP.ate=0;
-  folha('Bipar produto','<div class="bp-vd"><video id="bpV0" playsinline muted autoplay></video><i></i></div><div class="er" id="bpEr"></div><label class="l">Ou digite o código</label><input class="inp" id="bpM" inputmode="numeric" autocomplete="off" onkeydown="if(event.key===\'Enter\'){ event.preventDefault(); bpManual(); }"><button class="bt" type="button" onclick="bpManual()">Buscar código</button>','<button class="bt s" style="margin:0" onclick="fecha()">Fechar</button>');
+function bpTrocaCam(){ bpPara(); bpLiga(true); }
+function bpLiga(proxima){
   var er=function(t){ var e=$('bpEr'); if(e) e.textContent=t; };
-  bpPedeCam().then(function(st){
+  Bipador.camera(proxima).then(function(st){
     if(!BP.camOn||!$('bpV0')){ st.getTracks().forEach(function(t){ t.stop(); }); return; }
     BP.stream=st; var v=$('bpV0'); v.srcObject=st; v.play().catch(function(){}); bpLe(v);
   }).catch(function(e){ er('Não consegui abrir a câmera. Libere a permissão, ou digite o código.'+bpMotivo(e)); });
+}
+function bpCam(){
+  bpPara(); BP.camOn=true; BP.ate=0;
+  folha('Bipar produto','<div class="bp-vd"><video id="bpV0" playsinline muted autoplay></video><i></i></div><button class="bt s" type="button" style="margin:8px 0 0;padding:10px" onclick="bpTrocaCam()">🔄 Trocar câmera</button><div class="er" id="bpEr"></div><label class="l">Ou digite o código</label><input class="inp" id="bpM" inputmode="numeric" autocomplete="off" onkeydown="if(event.key===\'Enter\'){ event.preventDefault(); bpManual(); }"><button class="bt" type="button" onclick="bpManual()">Buscar código</button>','<button class="bt s" style="margin:0" onclick="fecha()">Fechar</button>');
+  bpLiga(false);
 }
 function bpLe(v){
   var FM=['ean_13','ean_8','upc_a','upc_e','code_128','code_39','itf'];
