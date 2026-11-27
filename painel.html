@@ -10407,6 +10407,7 @@ function pgPintar(){
   var num=function(id,v,tit,suf,max){ return '<label style="display:flex;align-items:center;gap:8px;margin:6px 0 0 29px;font-size:13px;color:var(--muted2)">'+tit+'<input class="inp" id="'+id+'" type="number" min="0" max="'+max+'" step="'+(suf==='%'?'0.5':'1')+'" value="'+esc(String(v||0))+'" style="width:84px;margin:0">'+suf+'</label>'; };
   var c=PG.cartao||{}, h='<div style="font-size:13px;color:var(--muted2);line-height:1.5">Escolha como o cliente pode pagar. Os descontos e o acréscimo do parcelado são calculados pelo sistema nos pedidos do app e do site. O Live conta essas regras no WhatsApp e no totem.</div>';
   h+=ck('pg-pix',PG.pix&&PG.pix.on,'Pix','Pago pelo app, aprovação na hora.')+num('pg-pix-d',PG.pix&&PG.pix.desc,'Desconto no Pix','%',30);
+  h+='<div style="margin-left:29px">'+ck('pg-pix-sc',PG.pix&&PG.pix.semCpf,'Cobrar Pix sem pedir CPF','Precisa de uma chave Pix ativa na conta Asaas da loja. Sem a chave, o card\u00e1pio continua pedindo o CPF. Depois de ligar, fa\u00e7a um Pix de teste.')+'</div>';
   h+=ck('pg-din',PG.dinheiro&&PG.dinheiro.on,'Dinheiro','Pago na entrega ou na retirada, com troco.');
   h+=ck('pg-car',c.on,'Cartão de crédito pelo app','O cliente paga no app com o cartão.')+num('pg-par',c.parcelas||1,'Parcelar em até','x',12)+num('pg-sj',c.semJuros||1,'Sem juros até','x',12)+num('pg-acr',c.acresc,'Acima disso, acréscimo de','% no total',30);
   h+=ck('pg-maq',PG.maquina&&PG.maquina.on,'Cartão na maquininha','Débito ou crédito na entrega ou na retirada.')+num('pg-deb',PG.maquina&&PG.maquina.descDebito,'Desconto no débito','%',30);
@@ -10430,7 +10431,7 @@ function pgAviso(){
 function pgSalvar(){
   var v=function(id){ return Number(String(el(id).value).replace(',','.'))||0; }, on=function(id){ return el(id).checked?1:0; };
   var par=Math.max(1,Math.min(12,Math.round(v('pg-par')))), sj=Math.max(1,Math.min(par,Math.round(v('pg-sj'))));
-  var body={pagto:{mesa:on('pgt-mesa'),racha:on('pgt-mesa')&&on('pgt-racha'),pix:{on:on('pg-pix'),desc:v('pg-pix-d')},dinheiro:{on:on('pg-din')},cartao:{on:on('pg-car'),parcelas:par,semJuros:sj,acresc:v('pg-acr')},maquina:{on:on('pg-maq'),descDebito:v('pg-deb')},cashless:{pre:on('pgc-pre'),pos:on('pgc-pos'),limite:v('pgc-lim')},politica:el('pg-pol').value.trim()}};
+  var body={pagto:{mesa:on('pgt-mesa'),racha:on('pgt-mesa')&&on('pgt-racha'),pix:{on:on('pg-pix'),desc:v('pg-pix-d'),semCpf:on('pg-pix-sc')},dinheiro:{on:on('pg-din')},cartao:{on:on('pg-car'),parcelas:par,semJuros:sj,acresc:v('pg-acr')},maquina:{on:on('pg-maq'),descDebito:v('pg-deb')},cashless:{pre:on('pgc-pre'),pos:on('pgc-pos'),limite:v('pgc-lim')},politica:el('pg-pol').value.trim()}};
   var m=el('pg-m');
   fetch(DELTADIS_API+'/painel/cardapio-config',{method:'POST',headers:cdHdr(),body:JSON.stringify(body)}).then(function(r){return r.json();}).then(function(d){
     if(!d||!d.ok) throw new Error((d&&d.mensagem)||'não salvou'); aviso((body.pagto.mesa&&PG_ASAAS===false)?'Salvo. Conecte o Asaas para o pagamento na mesa aparecer':'Formas de pagamento salvas'); fecharTudo();
