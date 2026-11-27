@@ -13,7 +13,7 @@
 <title>Cardápio · LiveFood</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
-<!-- LIVEFOOD-25 --><meta name="versao" content="LIVEFOOD-25">
+<!-- LIVEFOOD-26 --><meta name="versao" content="LIVEFOOD-26">
 <style>
 :root{--bg:#0b0b0d;--tx:#fff;--mut:rgba(255,255,255,.68);--pri:#FF5A00;--pri2:#FF5A00;--glass:rgba(18,18,22,.62);--line:rgba(255,255,255,.16)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -1711,6 +1711,20 @@ function ckQmHtml(){
   else h+='<div class="nt" style="font-size:14px;margin-top:8px">Escolha uma das opções para finalizar o pedido.</div>';
   return h;
 }
+/* (LIVEFOOD-26) TAXA DO GARÇOM OPCIONAL (menu Garçons): na hora de pagar o cliente responde SIM ou NÃO. D.cfg.servPerg = porcentagem */
+function svPct(){ return Number(D&&D.cfg&&D.cfg.servPerg)||0; }
+function svPergunta(base,cb){
+  var p=svPct(), v=Math.round(base*p)/100, tx=String(p).replace('.',',')+'%'; if(!(v>0)) return cb(false);
+  var o=document.getElementById('svm'); if(o) o.remove(); o=document.createElement('div'); o.id='svm';
+  o.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:22px';
+  var bt='flex:1;border:0;border-radius:14px;padding:16px 0;font:800 17px/1 Manrope,system-ui,sans-serif;cursor:pointer';
+  o.innerHTML='<div role="dialog" aria-modal="true" style="background:#fff;color:#1c1c1e;border-radius:22px;padding:24px 20px 18px;width:100%;max-width:340px;text-align:center;font-family:Manrope,system-ui,sans-serif"><div style="font-size:21px;font-weight:800;line-height:1.3">Deseja pagar os '+tx+' do garçom?</div><div style="margin-top:10px;font-size:15px;color:#5e5e66">'+brl(v)+' · total com a taxa: <b style="color:#1c1c1e">'+brl(base+v)+'</b></div><div style="display:flex;gap:10px;margin-top:20px"><button id="sv-s" style="'+bt+';background:var(--pri,#FF5A00);color:#fff">SIM</button><button id="sv-n" style="'+bt+';background:#ececef;color:#1c1c1e">NÃO</button></div><button id="sv-x" style="border:0;background:none;color:#5e5e66;font:600 13.5px Manrope,system-ui,sans-serif;margin-top:14px;cursor:pointer">Voltar</button></div>';
+  document.body.appendChild(o);
+  var fim=function(r){ o.remove(); if(r!==null) cb(r); };
+  o.querySelector('#sv-s').onclick=function(){ fim(true); }; o.querySelector('#sv-n').onclick=function(){ fim(false); }; o.querySelector('#sv-x').onclick=function(){ fim(null); };
+}
+/* conta da mesa: a taxa só incide sobre os pedidos que ainda não têm a do garçom */
+function svBaseMesa(l){ var t=0; (l||[]).forEach(function(p){ if(!(Number(p.servico)>0)) t+=Number(p.total)||0; }); return Math.round(t*100)/100; }
 function ckChamaGar(m){ fetch(API+'/food/garcom',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cli:D.cli||CLI,mesa:String(m||'')})}).then(function(r){ return r.json(); }).then(function(d){ toast(d&&d.ok?'🛎 Garçom chamado! Já vamos até a mesa '+m+'.':((d&&d.mensagem)||'Não consegui chamar o garçom agora. Chame pessoalmente.'),true); }).catch(function(){ toast('Sem conexão. Chame o garçom pessoalmente.'); }); }function ckPaga(){
   if(soBalcao()){ ctErro(SOBAL_TX+'.'); return; }
   var fechado=!estaAberto(), pg=fechado?progLer():null; if(fechado&&!pg){ abreAgenda(); return; }
@@ -1736,8 +1750,10 @@ function ckChamaGar(m){ fetch(API+'/food/garcom',{method:'POST',headers:{'Conten
       cardB={cartao:{numero:nm,nome:gv('ck-cnome'),mes:vl[0],ano:vl[1],ccv:gv('ck-ccv')},email:mail,cep:gv('ck-ccep'),numero_end:gv('ck-cnum'),salvar:!!($('ck-csv')&&$('ck-csv').checked)};
     }
   }
+  var quer=CK.sv; CK.sv=undefined;
+  if(quer===undefined&&svPct()&&CK.pg!=='conta'&&!apOn()&&(MESA||(noLocal()&&EN.modo!=='entrega'))){ var sb=sacTotal(), sd=ckDesc(sb,pg), base=Math.round((sb-sd.db-ckDescPg(sb-sd.db))*100)/100; svPergunta(base,function(s){ CK.sv=s; ckPaga(); }); return; }
   var b=$('ct-bt'), din=CK.pg==='dinheiro'||CK.pg==='maquina'||CK.pg==='caixa'||CK.pg==='conta', trc=din&&$('ck-tr')?parseFloat($('ck-tr').value.replace(',','.')):0; b.disabled=true; b.textContent=din?(CK.pg==='conta'?'Enviando o pedido…':'Enviando o pedido…'):(CK.pg==='cartao'?'Processando o cartão…':'Gerando o Pix…'); ctErro('');
-  geoGate(function(g){ ctApi('/food/pedido',{geo:g,itens:SAC.map(function(i){ return {p:i.p,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs,qty:i.qty}; }),modo:EN.modo,ap:apOn()?AP_V:undefined,torre:apOn()&&AP_TR?AP_TR:undefined,mesa:MESA||undefined,end:EN.end,obs:(($('ck-obs')||{value:''}).value+(qmTxt?' '+qmTxt:'')).trim(),cpf:cpf||undefined,prog:pg||undefined,pagto:CK.pg,troco:(trc>0&&CK.pg==='dinheiro'?trc:undefined),maqTipo:CK.pg==='maquina'?(CK.maq==='debito'?'debito':'credito'):undefined,parcelas:CK.pg==='cartao'?(CK.parc||1):undefined,cartao:cardB&&cardB.cartao,cartao_id:cardB&&cardB.cartao_id,email:cardB&&cardB.email,cep:cardB&&cardB.cep,numero_end:cardB&&cardB.numero_end,salvar:cardB&&cardB.salvar||undefined}).then(function(r){
+  geoGate(function(g){ ctApi('/food/pedido',{geo:g,itens:SAC.map(function(i){ return {p:i.p,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs,qty:i.qty}; }),modo:EN.modo,ap:apOn()?AP_V:undefined,torre:apOn()&&AP_TR?AP_TR:undefined,mesa:MESA||undefined,end:EN.end,obs:(($('ck-obs')||{value:''}).value+(qmTxt?' '+qmTxt:'')).trim(),cpf:cpf||undefined,prog:pg||undefined,pagto:CK.pg,servico:quer||undefined,troco:(trc>0&&CK.pg==='dinheiro'?trc:undefined),maqTipo:CK.pg==='maquina'?(CK.maq==='debito'?'debito':'credito'):undefined,parcelas:CK.pg==='cartao'?(CK.parc||1):undefined,cartao:cardB&&cardB.cartao,cartao_id:cardB&&cardB.cartao_id,email:cardB&&cardB.email,cep:cardB&&cardB.cep,numero_end:cardB&&cardB.numero_end,salvar:cardB&&cardB.salvar||undefined}).then(function(r){
     cardB=null;
     if(r.ok){ CK.ped=r.pedido; if(qm==='garcom') ckChamaGar(CK.mg); if(!din&&r.pedido.status!=='pago') pdGrava(r.pedido); if(din) ckOk(r.pedido);else if(CK.pg==='cartao'){ if(r.pedido.status==='pago') ckOk(r.pedido); else ckAguarda(r.pedido); } else ckPix(); }
     else if(r._http===401){ CT.tok=''; ctLogin(); }
@@ -1748,7 +1764,7 @@ function ckChamaGar(m){ fetch(API+'/food/garcom',{method:'POST',headers:{'Conten
 }
 function ckPix(){
   var p=CK.ped; if(!p) return;
-  abreFolha(ctCab('Pagar com Pix','fechaSheet()')+'<div class="wb" style="text-align:center"><div style="margin:14px 0 4px;font-size:15px">Pedido <b>#'+p.num+'</b> · <b>'+brl(p.total)+'</b></div>'+(p.pix_qr?'<img alt="QR Code Pix" src="data:image/png;base64,'+esc(p.pix_qr)+'" style="width:220px;height:220px;background:#fff;padding:8px;border-radius:14px;margin:10px auto;display:block">':'')+'<div class="nt" style="font-size:13.5px;color:#fff">Abra o app do seu banco, escolha <b>Pix</b> e leia o QR Code, ou use o código abaixo.</div><textarea id="ck-cod" readonly rows="3" style="margin-top:12px;font-size:12px">'+esc(p.pix_copia)+'</textarea><button class="bt c" style="flex:none;width:100%;margin-top:10px" onclick="ckCopia()">Copiar código Pix</button><div id="ck-st" style="margin-top:16px;font-size:14px;color:var(--pri2)">⏳ Aguardando o pagamento… confirmamos aqui sozinho.</div></div>',true);
+  abreFolha(ctCab('Pagar com Pix','fechaSheet()')+'<div class="wb" style="text-align:center"><div style="margin:14px 0 4px;font-size:15px">Pedido <b>#'+p.num+'</b> · <b>'+brl(p.total)+'</b></div><button class="bt c" style="flex:none;width:100%;margin-top:6px" onclick="ckCopia()">Copiar código Pix</button>'+(p.pix_qr?'<img alt="QR Code Pix" src="data:image/png;base64,'+esc(p.pix_qr)+'" style="width:220px;height:220px;background:#fff;padding:8px;border-radius:14px;margin:10px auto;display:block">':'')+'<div class="nt" style="font-size:13.5px;color:#fff">Abra o app do seu banco, escolha <b>Pix</b> e cole o código copiado, ou leia o QR Code.</div><textarea id="ck-cod" readonly rows="3" style="margin-top:12px;font-size:12px">'+esc(p.pix_copia)+'</textarea><div id="ck-st" style="margin-top:16px;font-size:14px;color:var(--pri2)">⏳ Aguardando o pagamento… confirmamos aqui sozinho.</div></div>',true);
   clearInterval(CK.tmr); CK.tmr=setInterval(ckConfere,4000);
 }
 function ckCopia(){ var t=$('ck-cod'); if(!t) return; t.select(); var ok=false; try{ ok=document.execCommand('copy'); }catch(e){} if(navigator.clipboard&&!ok){ navigator.clipboard.writeText(t.value).then(function(){ toast('Código copiado'); },function(){}); return; } toast(ok?'Código copiado':'Segure e copie o código'); }
@@ -1868,7 +1884,7 @@ function mpTotal(forma){
     if(r.erro==='ja_rachada'&&r.estado){ MP.d.estado=r.estado; toast(r.mensagem); return mpAcomp(); }
     if(r._http===401){ CT.tok=''; CT.conta=null; return ctLogin(); }
     if(!r.ok){ ctErro(r.mensagem||'Não consegui abrir o pagamento.'); return; }
-    MP.d.estado=r.estado; MP.parte={id:r.minha,valor:r.estado.falta}; mpForma(forma);
+    MP.d.estado=r.estado; MP.parte={id:r.minha,valor:r.estado.falta,total:1}; mpForma(forma);
   });
 }
 /* ── tela de pagamento (Pix ou cartão), da mesa ou de quem recebeu o link ── */
@@ -1884,7 +1900,9 @@ function mpFormaTela(){
 }
 function mpPagar(){
   var f=MP.forma, ce=$('ck-cpf'), cpf=ce?ce.value.replace(/\D/g,''):''; if(ce&&cpf.length!==11){ ctErro('Digite os 11 números do CPF.'); return; }
-  var corpo={id:MP.parte.id,forma:f,cpf:cpf||undefined,consente:!!(MP.consente||($('mp-cons')&&$('mp-cons').checked))};
+  var quer=MP.sv; MP.sv=undefined;
+  if(quer===undefined&&svPct()&&MP.parte.total&&!MP.rp&&MP.d&&svBaseMesa(MP.d.estado.pedidos)>0){ var bs=svBaseMesa(MP.d.estado.pedidos), vs=Math.round(bs*svPct())/100; svPergunta(bs,function(s){ MP.sv=s; mpPagar(); }); var tt=document.querySelector('#svm b'); if(tt) tt.textContent=brl((Number(MP.parte.valor)||0)+vs); return; }
+  var corpo={id:MP.parte.id,forma:f,servico:!!quer,cpf:cpf||undefined,consente:!!(MP.consente||($('mp-cons')&&$('mp-cons').checked))};
   if(f==='cartao'){
     if(CK.cid) corpo.cartao_id=CK.cid;
     else {
@@ -1903,6 +1921,7 @@ function mpPagar(){
   ctApi('/food/pedidos-parte-pagar',corpo).then(function(r){
     if(r.ok){
       if(r.conta){ CT.conta=r.conta; ctGrava(); } if(corpo.consente){ if(!MP.consente) MP.novoCad=1; MP.consente=1; }
+      if(r.parte.cobrado) MP.parte.valor=r.parte.cobrado;
       if(r.parte.status==='paga') return mpPago();
       MP.formaTela=false; if(f==='pix') return mpPix(r.parte); return mpEspera();
     }
@@ -1913,7 +1932,7 @@ function mpPagar(){
   });
 }
 function mpPix(p){
-  abreFolha(ctCab('Pagar com Pix','mpVolta()')+'<div class="wb" style="text-align:center"><div style="margin:14px 0 4px;font-size:15px"><b>'+brl(MP.parte.valor)+'</b></div>'+(p.pix_qr?'<img alt="QR Code Pix" src="data:image/png;base64,'+esc(p.pix_qr)+'" style="width:220px;height:220px;background:#fff;padding:8px;border-radius:14px;margin:10px auto;display:block">':'')+'<div class="nt" style="font-size:13.5px;color:#fff">Abra o app do seu banco, escolha <b>Pix</b> e leia o QR Code, ou use o código abaixo.</div><textarea id="ck-cod" readonly rows="3" style="margin-top:12px;font-size:12px">'+esc(p.pix_copia)+'</textarea><button class="bt c" style="flex:none;width:100%;margin-top:10px" onclick="ckCopia()">Copiar código Pix</button><div id="mp-st" style="margin-top:16px;font-size:14px;color:var(--pri2)">⏳ Aguardando o pagamento… confirmamos aqui sozinho.</div></div>',true);
+  abreFolha(ctCab('Pagar com Pix','mpVolta()')+'<div class="wb" style="text-align:center"><div style="margin:14px 0 4px;font-size:15px"><b>'+brl(MP.parte.valor)+'</b></div><button class="bt c" style="flex:none;width:100%;margin-top:6px" onclick="ckCopia()">Copiar código Pix</button>'+(p.pix_qr?'<img alt="QR Code Pix" src="data:image/png;base64,'+esc(p.pix_qr)+'" style="width:220px;height:220px;background:#fff;padding:8px;border-radius:14px;margin:10px auto;display:block">':'')+'<div class="nt" style="font-size:13.5px;color:#fff">Abra o app do seu banco, escolha <b>Pix</b> e cole o código copiado, ou leia o QR Code.</div><textarea id="ck-cod" readonly rows="3" style="margin-top:12px;font-size:12px">'+esc(p.pix_copia)+'</textarea><div id="mp-st" style="margin-top:16px;font-size:14px;color:var(--pri2)">⏳ Aguardando o pagamento… confirmamos aqui sozinho.</div></div>',true);
   mpVigia();
 }
 function mpEspera(){ abreFolha(ctCab('Pagamento','mpVolta()')+'<div class="wb" style="text-align:center"><div id="mp-st" style="margin-top:30px;font-size:15px;color:var(--pri2)">⏳ O banco está analisando o pagamento. Confirmamos aqui sozinho.</div></div>',true); mpVigia(); }
@@ -2191,9 +2210,11 @@ function mesaQm(q){ MC.qm=q; mesaContaMonta(); }
 function mesaConfirma(){
   if(MC.forma==='cartao'&&mesaCartOn()) return mesaCartaoPaga();
   var ce=$('mc-cpf'), cpf=ce?ce.value.replace(/\D/g,''):''; if(MC.forma==='pix'&&ce&&cpf.length!==11){ ctErro('Digite os 11 números do CPF.'); return; }
+  var quer=MC.sv; MC.sv=undefined;
+  if(quer===undefined&&svPct()&&MC.forma==='pix'&&MC.d&&svBaseMesa(MC.d.pedidos)>0){ var bs=svBaseMesa(MC.d.pedidos), vs=Math.round(bs*svPct())/100; svPergunta(bs,function(s){ MC.sv=s; mesaConfirma(); }); var tt=document.querySelector('#svm b'); if(tt) tt.textContent=brl((Number(MC.d.total)||0)+vs); return; }
   var b=$('ct-bt'); b.disabled=true; b.textContent=MC.forma==='pix'?'Gerando o Pix…':'Fechando a conta…'; ctErro('');
   var mcm=MC.forma==='garcom'||MC.forma==='caixa';
-  ctApi('/food/pedidos-mesa-fechar',{mesa:MESA,forma:mcm?'cartao':MC.forma,onde:mcm?MC.forma:undefined,cpf:cpf||undefined}).then(function(r){
+  ctApi('/food/pedidos-mesa-fechar',{servico:!!quer,mesa:MESA,forma:mcm?'cartao':MC.forma,onde:mcm?MC.forma:undefined,cpf:cpf||undefined}).then(function(r){
     if(r.ok){ if(r.conta.status==='aguardando_pagto') mesaPix(r.conta); else { if(MC.qm==='garcom') ckChamaGar(MESA); mesaCaixaMsg(r.conta); } }
     else if(r._http===401){ CT.tok=''; ctLogin(); }
     else if(r.erro==='cpf_necessario'){ CPFN=1; mesaContaMonta(); ctErro(r.mensagem||'Informe o seu CPF para gerar o Pix.'); }
@@ -2206,7 +2227,7 @@ function mesaCaixaMsg(c){
   abreFolha('<div class="wb" style="text-align:center;padding:36px 20px 24px"><svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg><div style="font-size:22px;font-weight:800;margin-top:14px">Conta da mesa '+esc(MESA)+' fechada!</div><div style="margin-top:8px;color:var(--mut);font-size:14.5px;line-height:1.5">'+(gq?'O <b style="color:#fff">garçom</b> foi avisado e vai até a sua mesa para receber <b style="color:#fff">'+brl(c.total)+'</b>'+f+'.':'Vá até o <b style="color:#fff">caixa</b> e pague <b style="color:#fff">'+brl(c.total)+'</b>'+f+'.<br>Informe o número da sua mesa.')+'</div></div><div class="rod"><button class="bt c" onclick="fechaSheet();mesaInit(true)">Voltar ao início</button><button class="bt c g" style="background:transparent;border:2px solid var(--pri);color:#fff;margin-top:8px" onclick="mesaContaTela(true)">Escolher outra forma</button></div>',true);
 }
 function mesaPix(c){
-  MC.c=c; abreFolha(ctCab('Pagar com Pix','fechaSheet()')+'<div class="wb" style="text-align:center"><div style="margin:14px 0 4px;font-size:15px">Mesa <b>'+esc(MESA)+'</b> · <b>'+brl(c.total)+'</b></div>'+(c.pix_qr?'<img alt="QR Code Pix" src="data:image/png;base64,'+esc(c.pix_qr)+'" style="width:220px;height:220px;background:#fff;padding:8px;border-radius:14px;margin:10px auto;display:block">':'')+'<div class="nt" style="font-size:13.5px;color:#fff">Abra o app do seu banco, escolha <b>Pix</b> e leia o QR Code, ou use o código abaixo.</div><textarea id="ck-cod" readonly rows="3" style="margin-top:12px;font-size:12px">'+esc(c.pix_copia)+'</textarea><button class="bt c" style="flex:none;width:100%;margin-top:10px" onclick="ckCopia()">Copiar código Pix</button><div id="mc-st" style="margin-top:16px;font-size:14px;color:var(--pri2)">⏳ Aguardando o pagamento… confirmamos aqui sozinho.</div><button class="lk" style="margin-top:12px" onclick="mesaContaTela(true)">Escolher outra forma de pagamento</button></div>',true);
+  MC.c=c; abreFolha(ctCab('Pagar com Pix','fechaSheet()')+'<div class="wb" style="text-align:center"><div style="margin:14px 0 4px;font-size:15px">Mesa <b>'+esc(MESA)+'</b> · <b>'+brl(c.total)+'</b></div><button class="bt c" style="flex:none;width:100%;margin-top:6px" onclick="ckCopia()">Copiar código Pix</button>'+(c.pix_qr?'<img alt="QR Code Pix" src="data:image/png;base64,'+esc(c.pix_qr)+'" style="width:220px;height:220px;background:#fff;padding:8px;border-radius:14px;margin:10px auto;display:block">':'')+'<div class="nt" style="font-size:13.5px;color:#fff">Abra o app do seu banco, escolha <b>Pix</b> e cole o código copiado, ou leia o QR Code.</div><textarea id="ck-cod" readonly rows="3" style="margin-top:12px;font-size:12px">'+esc(c.pix_copia)+'</textarea><div id="mc-st" style="margin-top:16px;font-size:14px;color:var(--pri2)">⏳ Aguardando o pagamento… confirmamos aqui sozinho.</div><button class="lk" style="margin-top:12px" onclick="mesaContaTela(true)">Escolher outra forma de pagamento</button></div>',true);
   clearInterval(MC.tmr); MC.tmr=setInterval(mesaConfere,4000);
 }
 function mesaConfere(){
