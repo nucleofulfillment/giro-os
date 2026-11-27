@@ -1452,7 +1452,17 @@ function ctApi(rota,corpo,get){
 function ctCab(t,volta){ return '<div class="wh"><button class="bk" onclick="'+volta+'">'+BKI+'</button><b>'+t+'</b></div>'; }
 function ctFoneFmt(d){ d=String(d||'').replace(/\D/g,'').replace(/^55(?=\d{10,11}$)/,''); return d.length>=11?'('+d.slice(0,2)+') '+d.slice(2,7)+'-'+d.slice(7,11):d.length>=10?'('+d.slice(0,2)+') '+d.slice(2,6)+'-'+d.slice(6,10):d; }
 function ctMask(e){ var d=e.value.replace(/\D/g,'').slice(0,11); e.value=d.length>7?'('+d.slice(0,2)+') '+d.slice(2,d.length>10?7:6)+'-'+d.slice(d.length>10?7:6):d.length>2?'('+d.slice(0,2)+') '+d.slice(2):d; }
-function ctErro(m){ var e=$('ct-erro'); if(!e) return; e.textContent=m||''; if(m){ try{ e.scrollIntoView({block:'center',behavior:'smooth'}); }catch(x){ try{ e.scrollIntoView(); }catch(y){} } } }   /* (LIVEFOOD-33) o motivo do erro ficava escondido abaixo da tela */
+function ctErro(m){ var e=$('ct-erro'); if(e) e.textContent=m||''; if(m) erroModal(m); }
+/* (LIVEFOOD-33) o erro aparece numa janela no meio da tela: o texto no fim do formulário ficava escondido e o cliente não via o motivo */
+function erroModal(m){
+  var o=document.getElementById('errm'); if(o&&o.parentNode) o.parentNode.removeChild(o); o=document.createElement('div'); o.id='errm';
+  o.style.cssText='position:fixed;top:0;right:0;bottom:0;left:0;z-index:10000;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:22px';
+  o.innerHTML='<div role="alertdialog" aria-modal="true" aria-labelledby="errm-t" style="background:#fff;color:#1c1c1e;border-radius:22px;padding:24px 20px 18px;width:100%;max-width:340px;text-align:center;font-family:Manrope,system-ui,sans-serif"><div style="font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#b45309">Atenção</div><div id="errm-t" style="margin-top:10px;font-size:17px;font-weight:700;line-height:1.4"></div><button type="button" id="errm-ok" style="width:100%;margin-top:20px;border:0;border-radius:14px;padding:16px 0;font:800 17px/1 Manrope,system-ui,sans-serif;cursor:pointer;background:var(--pri,#FF5A00);color:#fff">Entendi</button></div>';
+  document.body.appendChild(o); o.querySelector('#errm-t').textContent=m;
+  var fim=function(){ if(o.parentNode) o.parentNode.removeChild(o); };
+  o.querySelector('#errm-ok').onclick=fim; o.onclick=function(ev){ if(ev.target===o) fim(); };
+  try{ o.querySelector('#errm-ok').focus(); }catch(x){}
+}
 function sacContinuar(){
   if(!SAC.length) return; if(soBalcao()){ soBalcaoAviso(); return; } CT.real=0; CT.ctx='ck'; ctLer(); if(!CT.tok) return ctLogin();
   if(CT.conta){ CK.anim=0; CK.open=1; ctEntrega(); ctApi('/food/conta',null,true).then(function(d){ if(d.ok){ CT.conta=d.conta; ctGrava(); } else if(d._http===401){ CT.tok=''; CT.conta=null; ctLogin(); } }); return; }
