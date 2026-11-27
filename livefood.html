@@ -13,7 +13,7 @@
 <title>Cardápio · LiveFood</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
-<!-- LIVEFOOD-24 --><meta name="versao" content="LIVEFOOD-24">
+<!-- LIVEFOOD-25 --><meta name="versao" content="LIVEFOOD-25">
 <style>
 :root{--bg:#0b0b0d;--tx:#fff;--mut:rgba(255,255,255,.68);--pri:#FF5A00;--pri2:#FF5A00;--glass:rgba(18,18,22,.62);--line:rgba(255,255,255,.16)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -813,7 +813,7 @@ function carregar(primeira){
     if(!MESA&&d.produtos){ Object.keys(d.produtos).forEach(function(k){ if(d.produtos[k]&&d.produtos[k].nodel) delete d.produtos[k]; }); }
     if(d.cfg&&d.cfg.logoTam) document.documentElement.style.setProperty('--logo-h',d.cfg.logoTam+'px');
     if(d.cfg&&d.cfg.logoBranca) document.documentElement.classList.add('lf-lgb');   /* (208) prévia com logo recortada: sai toda branca por cima do vídeo */
-    if(primeira){ D=d; CLI=d.cli||CLI; sacLer(); aplicaTema(); navOn('inicio'); temaAplica(); wizPill(); mesaInit(); document.title=(d.empresa||'Cardápio'); $('emp').innerHTML=((d.cfg&&d.cfg.logo)?'<img class="lg" src="'+API+'/food/foto/'+encodeURIComponent(d.cli||CLI)+'/_logo?v='+(d.cfg.v||0)+'" alt="'+esc(d.empresa)+'" onerror="this.outerHTML=\''+esc(d.empresa).replace(/'/g,'')+'\'">':esc(d.empresa))+'<small id="stt"></small>'; pintaStatus(); try{ if(!estaAberto()&&!sessionStorage.getItem('lf_fcm_'+(d.cli||CLI))){ sessionStorage.setItem('lf_fcm_'+(d.cli||CLI),'1'); setTimeout(abreFechado,600); } }catch(e){} manifesto(); iniciar(); clbInit(); catAplica(); try{ previaAviso(d); }catch(ePv){} var rtP=(ROTA.r||Q.get('r')||'').replace(/[^a-f0-9]/g,''); if(rtP) setTimeout(function(){ rpAbre(rtP); },300); }
+    if(primeira){ D=d; CLI=d.cli||CLI; sacLer(); setTimeout(pdVoltou,900); aplicaTema(); navOn('inicio'); temaAplica(); wizPill(); mesaInit(); document.title=(d.empresa||'Cardápio'); $('emp').innerHTML=((d.cfg&&d.cfg.logo)?'<img class="lg" src="'+API+'/food/foto/'+encodeURIComponent(d.cli||CLI)+'/_logo?v='+(d.cfg.v||0)+'" alt="'+esc(d.empresa)+'" onerror="this.outerHTML=\''+esc(d.empresa).replace(/'/g,'')+'\'">':esc(d.empresa))+'<small id="stt"></small>'; pintaStatus(); try{ if(!estaAberto()&&!sessionStorage.getItem('lf_fcm_'+(d.cli||CLI))){ sessionStorage.setItem('lf_fcm_'+(d.cli||CLI),'1'); setTimeout(abreFechado,600); } }catch(e){} manifesto(); iniciar(); clbInit(); catAplica(); try{ previaAviso(d); }catch(ePv){} var rtP=(ROTA.r||Q.get('r')||'').replace(/[^a-f0-9]/g,''); if(rtP) setTimeout(function(){ rpAbre(rtP); },300); }
     else { novoD=d; if(D&&d.cfg){ D.cfg=d.cfg; pintaStatus(); } }   /* horário salvo no painel vale sem o cliente recarregar a página */
   }).catch(function(){ if(primeira) vazio('Sem conexão','Não consegui abrir o cardápio. Tente de novo.'); });
 }
@@ -1739,7 +1739,7 @@ function ckChamaGar(m){ fetch(API+'/food/garcom',{method:'POST',headers:{'Conten
   var b=$('ct-bt'), din=CK.pg==='dinheiro'||CK.pg==='maquina'||CK.pg==='caixa'||CK.pg==='conta', trc=din&&$('ck-tr')?parseFloat($('ck-tr').value.replace(',','.')):0; b.disabled=true; b.textContent=din?(CK.pg==='conta'?'Enviando o pedido…':'Enviando o pedido…'):(CK.pg==='cartao'?'Processando o cartão…':'Gerando o Pix…'); ctErro('');
   geoGate(function(g){ ctApi('/food/pedido',{geo:g,itens:SAC.map(function(i){ return {p:i.p,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs,qty:i.qty}; }),modo:EN.modo,ap:apOn()?AP_V:undefined,torre:apOn()&&AP_TR?AP_TR:undefined,mesa:MESA||undefined,end:EN.end,obs:(($('ck-obs')||{value:''}).value+(qmTxt?' '+qmTxt:'')).trim(),cpf:cpf||undefined,prog:pg||undefined,pagto:CK.pg,troco:(trc>0&&CK.pg==='dinheiro'?trc:undefined),maqTipo:CK.pg==='maquina'?(CK.maq==='debito'?'debito':'credito'):undefined,parcelas:CK.pg==='cartao'?(CK.parc||1):undefined,cartao:cardB&&cardB.cartao,cartao_id:cardB&&cardB.cartao_id,email:cardB&&cardB.email,cep:cardB&&cardB.cep,numero_end:cardB&&cardB.numero_end,salvar:cardB&&cardB.salvar||undefined}).then(function(r){
     cardB=null;
-    if(r.ok){ CK.ped=r.pedido; if(qm==='garcom') ckChamaGar(CK.mg); if(din) ckOk(r.pedido); else if(CK.pg==='cartao'){ if(r.pedido.status==='pago') ckOk(r.pedido); else ckAguarda(r.pedido); } else ckPix(); }
+    if(r.ok){ CK.ped=r.pedido; if(qm==='garcom') ckChamaGar(CK.mg); if(!din&&r.pedido.status!=='pago') pdGrava(r.pedido); if(din) ckOk(r.pedido);else if(CK.pg==='cartao'){ if(r.pedido.status==='pago') ckOk(r.pedido); else ckAguarda(r.pedido); } else ckPix(); }
     else if(r._http===401){ CT.tok=''; ctLogin(); }
     else if(r.erro==='cpf_necessario'){ CPFN=1; ckResumo(); ctErro(r.mensagem||'Informe o seu CPF para gerar o Pix.'); }
     else { b.disabled=false; b.textContent=CK.pg==='conta'?'Fazer pedido':din?'Finalizar pedido':(CK.pg==='cartao'?'Pagar no cartão':'Pagar com Pix'); ctErro(r.mensagem||'Não consegui criar o pedido.'); }
@@ -1760,8 +1760,33 @@ function ckConfere(){
     else if(r.pedido.status==='expirado'){ clearInterval(CK.tmr); $('ck-st').innerHTML='O tempo do Pix acabou. <button class="lk" onclick="ckResumo()">Gerar um novo</button>'; }
   });
 }
+/* (LIVEFOOD-25) Pix ou cartão em análise: o pedido fica guardado no aparelho. O cliente sai para o app do banco e a página pode recarregar
+   (ou a tela do QR Code ser fechada); mesmo assim conferimos, mostramos a confirmação e esvaziamos a sacola. */
+var PD={tmr:null,busca:0,ok:''};
+function pdK(){ return 'lf_pend_'+(D.cli||CLI); }
+function pdSac(){ return JSON.stringify(SAC.map(function(i){ return [i.p,i.tam,i.sab,i.borda,i.adds,i.obs,i.qty]; })); }
+function pdLer(){ try{ return JSON.parse(localStorage.getItem(pdK())||'null'); }catch(e){ return null; } }
+function pdGrava(p){ try{ localStorage.setItem(pdK(),JSON.stringify({id:p.id,t:Date.now(),sac:pdSac(),ctk:ctk()})); }catch(e){} pdLiga(); }
+function pdSolta(){ try{ localStorage.removeItem(pdK()); }catch(e){} clearInterval(PD.tmr); PD.tmr=null; }
+function pdLiga(){ if(!PD.tmr) PD.tmr=setInterval(pdConfere,5000); }
+function pdConfere(){
+  if(!D||PD.busca||document.hidden) return;
+  var x=pdLer(); if(!x||Date.now()-x.t>3*3600000){ pdSolta(); return; }
+  var tok=''; try{ tok=(JSON.parse(localStorage.getItem(x.ctk)||'null')||{}).tok||''; }catch(e){}
+  if(!tok) return;
+  PD.busca=1;
+  fetch(API+'/food/pedido/'+encodeURIComponent(x.id),{headers:{Authorization:'Bearer '+tok}}).then(function(r){ return r.json(); }).then(function(r){
+    PD.busca=0; var y=pdLer(); if(!r||!r.ok||!y||y.id!==x.id) return;
+    if(r.pedido.status==='pago') ckOk(r.pedido); else if(r.pedido.status!=='aguardando_pagto') pdSolta();
+  }).catch(function(){ PD.busca=0; });
+}
+function pdVoltou(){ if(D&&!document.hidden&&pdLer()){ pdLiga(); pdConfere(); } }
+document.addEventListener('visibilitychange',pdVoltou); window.addEventListener('pageshow',pdVoltou); window.addEventListener('focus',pdVoltou);
 function ckOk(p){
-  SAC=[]; sacGrava(); try{ localStorage.removeItem('lf_prog_'+(D.cli||CLI)); }catch(e){}
+  if(PD.ok===p.id) return; PD.ok=p.id; clearInterval(CK.tmr);
+  var x=pdLer(), mudou=false; if(x&&x.id===p.id){ mudou=x.sac!==pdSac(); pdSolta(); }
+  if(!mudou){ SAC=[]; sacGrava(); }   /* sacola montada de novo depois do Pix: não apaga */
+  try{ localStorage.removeItem('lf_prog_'+(D.cli||CLI)); }catch(e){}
   if(window.LiveApp) LiveApp.comemorar({titulo:'Pedido #'+p.num+(p.pagto==='dinheiro'||p.pagto==='maquina'||p.pagto==='caixa'||p.pagto==='conta'?' enviado!':' confirmado!'),sub:p.modo==='mesa'?'Já estamos preparando! 🍳':ehRest()?'Já estamos preparando o seu pedido 🍳':'Já estamos separando o seu pedido 🛍️'});
   abreFolha('<div class="wb" style="text-align:center;padding:36px 20px 24px"><svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg><div style="font-size:22px;font-weight:800;margin-top:14px">Pedido #'+p.num+(p.pagto==='dinheiro'||p.pagto==='maquina'||p.pagto==='caixa'||p.pagto==='conta'?' enviado!':' confirmado!')+'</div><div style="margin-top:8px;color:var(--mut);font-size:14.5px;line-height:1.5">'+(p.lf_comanda?'Lançado na sua <b style="color:#fff">comanda '+esc(p.lf_comanda)+'</b>. Você paga na saída do evento.':p.pagto==='conta'?'Para pagar, toque em <b style="color:#fff">Fechar conta</b> quando quiser.':p.pagto==='caixa'?'Pague <b style="color:#fff">'+brl(p.total)+'</b> no caixa (cartão ou dinheiro).':p.pagto==='dinheiro'?'Pague <b style="color:#fff">'+brl(p.total)+'</b> em dinheiro '+(p.modo==='retirada'?'na retirada':'ao entregador')+'.':'Pagamento recebido: <b style="color:#fff">'+brl(p.total)+'</b>.')+'<br>'+(p.prog_dia?'Agendado para <b style="color:#fff">'+esc(progFmt({dia:p.prog_dia,hora:p.prog_hora}))+'</b>, com prioridade na fila.':(p.modo==='mesa'?'Já estamos preparando! Levamos até a sua mesa.':p.modo==='retirada'?'Avisaremos quando estiver pronto para retirar.':'Já estamos preparando o seu pedido.'))+'</div></div><div class="rod"><button class="bt c" onclick="'+(p.modo==='mesa'?'fechaSheet();mesaInit(true)':'fechaSheet()')+'">'+(p.modo==='mesa'?'Voltar ao início':(catEhCardapio()?'Voltar ao cardápio':'Voltar para '+esc(catNome())))+'</button></div>',true);
 }
