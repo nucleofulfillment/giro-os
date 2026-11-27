@@ -1113,10 +1113,10 @@ html.loja-p .cd-dest{display:none!important}
 
       <!-- CARDÁPIO (1A): produtos, categorias e adicionais do restaurante -->
       <section class="page" id="pg-cardapio">
-        <div class="pghd"><div><h1>Cardápio</h1><div class="sub">produtos do seu restaurante <span style="opacity:.6">· GIRO-OS-081</span></div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn sec" onclick="cdFotoCardapio()" title="Só no celular">📷 Cardápio por foto</button><button class="btn sec" onclick="cdAbrirCats()">Categorias</button><button class="btn sec" onclick="cdLinkCardapio()">🔗 Link da loja</button><button class="btn sec" onclick="cdEtiquetas()">Etiquetas</button><button class="btn sec" onclick="cdAparencia()">🎨 Marca e cores</button><button class="btn sec" onclick="cdHorario()">🕒 Horário</button><button class="btn sec" onclick="cdFrete()">🛵 Entrega</button><button class="btn sec" onclick="cdGeo()">📍 Mesa</button><button class="btn sec" onclick="cdMesas()" style="display:none" title="(116) oculto: as mesas agora ficam no Hub">🍽️ Mesas <span id="ms-bd" style="display:none;background:#ef4444;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px"></span></button><button class="btn sec" onclick="planoAtendimento()">🧾 Atendimento (garçom/balcão)</button><button class="btn sec" onclick="cdAbrirOfertas()">▶ Ofertas</button><button class="btn sec" onclick="clbAbrir()">💎 Clube de assinatura</button><button class="btn sec" onclick="cdAbrirImport()">Importar planilha</button><button class="btn sec" onclick="cdFotosLote()">📷 Fotos em lote</button><button class="btn sec" onclick="cdFotosIaLote()">✨ Fotos com IA</button><button class="btn sec" onclick="cimpAbrir()" title="Monta o cardápio para a gráfica e baixa o PDF">🖨 + Cardápio impresso</button><button class="btn pri" onclick="cdNovo()">+ Novo produto</button></div></div>
+        <div class="pghd"><div><h1>Cardápio</h1><div class="sub">produtos do seu restaurante <span style="opacity:.6">· GIRO-OS-081</span></div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn sec" onclick="cdFotoCardapio()" title="Só no celular">📷 Cardápio por foto</button><button class="btn sec" onclick="cdAbrirCats()">Categorias</button><button class="btn sec" onclick="cdLinkCardapio()">🔗 Link da loja</button><button class="btn sec" onclick="cdEtiquetas()">Etiquetas</button><button class="btn sec" onclick="cdAparencia()">🎨 Marca e cores</button><button class="btn sec" onclick="cdHorario()">🕒 Horário</button><button class="btn sec" onclick="cdFrete()">🛵 Entrega</button><button class="btn sec" onclick="cdGeo()">📍 Mesa</button><button class="btn sec" onclick="cdMesas()" style="display:none" title="(116) oculto: as mesas agora ficam no Hub">🍽️ Mesas <span id="ms-bd" style="display:none;background:#ef4444;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px"></span></button><button class="btn sec" onclick="planoAtendimento()">🧾 Atendimento (garçom/balcão)</button><button class="btn sec" onclick="cdAbrirOfertas()">▶ Ofertas</button><button class="btn sec" onclick="clbAbrir()">💎 Clube de assinatura</button><button class="btn sec" onclick="cdAbrirImport()">Importar planilha</button><button class="btn sec" onclick="cdFotosLote()">📷 Fotos em lote</button><button class="btn sec" onclick="bibAbrir()" title="Galeria vertical de fotos dos produtos">🖼️ Biblioteca de fotos</button><button class="btn sec" onclick="cdFotosIaLote()">✨ Fotos com IA</button><button class="btn sec" onclick="cimpAbrir()" title="Monta o cardápio para a gráfica e baixa o PDF">🖨 + Cardápio impresso</button><button class="btn pri" onclick="cdNovo()">+ Novo produto</button></div></div>
         <div class="card">
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px"><input class="inp" id="cd-busca" placeholder="Buscar produto" oninput="cdPintar()" style="flex:1;min-width:200px"><select class="inp" id="cd-fcat" onchange="cdPintar()" style="width:210px;max-width:100%"></select></div>
-          <div id="cd-selbar" style="display:none;align-items:center;gap:10px;flex-wrap:wrap;background:var(--s2);border-radius:12px;padding:8px 12px;margin-bottom:10px;font-size:13px"><span id="cd-seltxt" style="font-weight:700"></span><button class="btn pri sm" onclick="cdExibirOferta()">▶ Exibir oferta</button><button class="btn sec sm" onclick="cdFotosRefazer()">🔎 Refazer fotos</button><button class="btn sec sm" onclick="cdLimparSel()">Limpar</button></div>
+          <div id="cd-selbar" style="display:none;align-items:center;gap:10px;flex-wrap:wrap;background:var(--s2);border-radius:12px;padding:8px 12px;margin-bottom:10px;font-size:13px"><span id="cd-seltxt" style="font-weight:700"></span><button class="btn pri sm" onclick="cdExibirOferta()">▶ Exibir oferta</button><button class="btn sec sm" onclick="cdFotosRefazer()">🔎 Refazer fotos</button><button class="btn sec sm" onclick="cdSelTodos()" title="Marca todos os produtos que aparecem na lista (respeita a busca e a categoria)">☑ Marcar todos</button><button class="btn sec sm" id="cd-selapagar" onclick="cdApagarSel()" style="color:#c0392b;border-color:#e8b4ad" title="Apaga os produtos marcados">🗑 Excluir</button><button class="btn sec sm" onclick="cdLimparSel()">Limpar</button></div>
           <div id="cd-lista"></div>
         </div>
       </section>
@@ -1135,11 +1135,28 @@ html.loja-p .cd-dest{display:none!important}
           <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px"><div class="search" style="margin:0;max-width:360px;flex:1;min-width:180px"><span>🔎</span><input id="mz-busca" placeholder="buscar mesa" oninput="mzPintar()"></div>
             <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--muted)">📅 Reservas do dia <input type="date" class="inp" id="mz-dia" style="width:auto;padding:7px 9px" onchange="mzDia()"></label>
             <button class="btn sec sm" id="mz-dia-hoje" style="display:none" onclick="el('mz-dia').value='';mzDia()">Hoje</button><span id="mz-dia-info" style="font-size:12.5px;color:var(--muted)"></span></div>
+          <div id="mz-chips" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px"></div>
           <div id="mz-lista"></div>
         </div>
       </section>
 
       <!-- (218) GARÇONS: cadastro, vendas por garçom, regra de comissão e fechamento (vai para o Fluxo de Caixa) -->
+      <!-- (310) BALANÇA: buffet por quilo. Nada grava sozinho: só no botão Salvar -->
+      <section class="page" id="pg-balanca">
+        <style>
+          .bz-dia{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--b2,#DFDFE4);background:transparent;font:800 12.5px inherit;color:var(--muted);cursor:pointer;padding:0}
+          .bz-dia.on{background:#FF5A00;border-color:#FF5A00;color:#fff}
+          .bz-ln{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 0;border-top:1px solid var(--b2,#E8E8EB)}
+          .bz-ln:first-child{border-top:0}
+          .bz-x{border:0;background:transparent;color:var(--muted);font-size:17px;cursor:pointer;padding:6px 8px}
+          .bz-peso{font:800 34px/1 inherit;font-variant-numeric:tabular-nums;letter-spacing:-.5px}
+          .bz-rot{font-size:12px;font-weight:700;color:var(--muted)}
+          .bz-dica{margin:10px 0 0;font-size:12.5px;line-height:1.5;color:var(--muted)}
+        </style>
+        <div class="pghd"><div><h1>Balança</h1><div class="sub">buffet por quilo · <span id="bz-sub">—</span></div></div>
+          <div id="bz-barra" style="display:none;gap:8px;align-items:center;flex-wrap:wrap"><span style="font-size:12.5px;font-weight:700;color:var(--muted)">Mudanças não salvas</span><button class="btn sec sm" onclick="bzDesfazer()">Desfazer</button><button class="btn pri sm" onclick="bzSalvar()">Salvar</button></div></div>
+        <div id="bz-corpo"><div class="card" style="font-size:13px;color:var(--muted)">Carregando…</div></div>
+      </section>
       <section class="page" id="pg-garcons">
         <div class="pghd"><div><h1>Garçons</h1><div class="sub">equipe do salão, vendas e comissão · <span id="ga-total">—</span></div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sec" onclick="gcAbrir()">🍽 Mesas de cada garçom</button><button class="btn pri" onclick="gaNovo()">+ Novo garçom</button></div></div>
         <!-- (219) taxa do garçom paga pelo cliente: linha separada na conta e vira a comissão do garçom -->
@@ -1151,6 +1168,7 @@ html.loja-p .cd-dest{display:none!important}
             <span id="ga-serv-vbox" style="display:flex;align-items:center;gap:6px"><input class="inp" id="ga-serv-pct" inputmode="decimal" placeholder="10" style="width:90px"><span style="font-weight:700;color:var(--muted)">%</span></span>
             <button class="btn pri" id="ga-serv-bt" onclick="gaServSalvar()">Salvar</button>
           </div>
+          <label style="display:flex;gap:9px;align-items:flex-start;margin-top:12px;cursor:pointer;font-size:13.5px;line-height:1.45"><input type="checkbox" id="ga-serv-perg" onchange="gaServMuda()" style="width:18px;height:18px;flex:none;margin-top:1px"><span><b>Perguntar ao cliente na hora de pagar</b><br><span style="color:var(--muted);font-size:12.5px">No cardápio do celular (pedido na mesa ou no local e conta da mesa) abre a pergunta com SIM ou NÃO, usando a porcentagem acima. Toque em Salvar.</span></span></label>
           <p id="ga-serv-txt" style="margin:10px 0 0;font-size:12.5px;line-height:1.5;color:var(--muted)">Ligada, o pedido que o garçom lança leva essa porcentagem a mais, numa linha separada na conta, e esse valor é a comissão dele.</p>
         </div>
         <div class="card" id="ga-regra-card" style="margin-bottom:16px">
@@ -1243,6 +1261,7 @@ html.loja-p .cd-dest{display:none!important}
           <div class="cfgcard" style="cursor:pointer" onclick="cdCfgClientes()"><div class="ic">👥</div><h4>Configurações clientes</h4><p>Regras do atendimento por garçom/balcão: bloqueio de cliente inadimplente, fechamento automático da conta pendurada e mensagem da cobrança.</p><span class="badge b-in">configurar</span></div>
           <div class="cfgcard" style="cursor:pointer" onclick="pgAbrir()"><div class="ic">💳</div><h4>Formas de pagamento</h4><p>Ligue Pix, dinheiro, cartão pelo app e maquininha. Defina desconto no Pix e no débito, parcelamento e a política da loja. O Live usa essas regras.</p><span class="badge b-in">configurar</span></div>
           <div class="cfgcard" style="cursor:pointer" onclick="lvAbrir()"><div class="ic">📺</div><h4>Assistente Live</h4><p>O atendente virtual por voz do totem de autoatendimento. Ligue, escolha o cérebro, escreva o treinamento da sua loja e copie o link do totem.</p><span class="badge b-in" id="lv-badge">configurar</span></div>
+          <div class="cfgcard" style="cursor:pointer" onclick="tqAbrir()"><div class="ic">👆</div><h4>Totem de toque</h4><p>Autoatendimento por toque no totem ou no tablet da mesa, sem voz. Escolha a frase da entrada, as ofertas, onde ficam as categorias e a cobrança, e copie o link.</p><span class="badge b-in" id="tq-badge">configurar</span></div>
           <div class="cfgcard" style="cursor:pointer" onclick="impAbrir()"><div class="ic">🖨️</div><h4>Impressoras</h4><p>Imprima os pedidos direto na cozinha, no bar e no caixa. Baixe o instalador no computador do restaurante: ele já vem configurado para a sua loja e encontra as impressoras sozinho.</p><span class="badge b-in">configurar</span></div>
           <div class="cfgcard" style="cursor:pointer" onclick="slAbrir()"><div class="ic">🪑</div><h4>Salão</h4><p>Desenhe o mapa do seu salão: mesas, balcão de saída, cozinha, banheiros, entrada e saída. O garçom usa esse mapa no celular para entregar os pedidos e atender os chamados.</p><span class="badge b-in">desenhar</span></div>
           <div class="cfgcard" style="cursor:pointer" onclick="lfAbrir()"><div class="ic">🙂</div><h4>LiveFace</h4><p>Ingresso e comanda pelo rosto. Crie o evento e os ingressos, e envie o link para cada pessoa cadastrar o rosto no celular.</p><span class="badge b-in">configurar</span></div>
@@ -1644,6 +1663,8 @@ html.loja-p .cd-dest{display:none!important}
         <input class="inp" id="cd-preco" inputmode="decimal" placeholder="0,00" style="margin:4px 0 10px">
         <label style="font-size:12px;font-weight:700;color:var(--muted2)">Código de barras <span style="font-weight:500">(opcional)</span></label>
         <div style="display:flex;gap:8px;margin-top:4px"><input class="inp" id="cd-barras" maxlength="32" autocomplete="off" placeholder="Bipe ou digite" style="flex:1"><button type="button" class="btn sec" title="Bipar pela câmera" onclick="cdBiparBarras()" style="flex:none">📷</button></div>
+        <label style="font-size:12px;font-weight:700;color:var(--muted2);display:block;margin-top:10px">NCM <span style="font-weight:500">(8 dígitos, para a nota fiscal)</span></label>
+        <input class="inp" id="cd-ncm" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="Ex.: 2202.10.00" style="margin:4px 0 0">
       </div>
     </div>
     <div style="margin:0 0 14px;padding:10px 12px;border:1px solid var(--border);border-radius:12px">
@@ -1686,6 +1707,8 @@ html.loja-p .cd-dest{display:none!important}
     <div id="cd-ads" style="margin:6px 0"></div>
     <button class="btn sec sm" type="button" onclick="cdAddAd()">+ adicional</button>
     <label style="display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13px;font-weight:700;cursor:pointer"><input type="checkbox" id="cd-ativo" checked> Produto ativo (aparece no cardápio)</label>
+    <label style="display:flex;align-items:center;gap:10px;margin:10px 0 0;padding:12px;border:1px solid var(--border);border-radius:12px;cursor:pointer"><input type="checkbox" id="cd-del" checked style="width:18px;height:18px"><span><b style="font-size:13px">🛵 Aparece no delivery</b><span style="display:block;font-size:11.5px;color:var(--muted);margin-top:2px">Desmarque para o produto ficar só no salão (mesa, atendimento e totem) e sumir do cardápio de entrega e retirada.</span></span></label>
+    <label style="display:flex;align-items:center;gap:10px;margin:10px 0 0;padding:12px;border:1px solid var(--border);border-radius:12px;cursor:pointer"><input type="checkbox" id="cd-bib" style="width:18px;height:18px"><span><b>Biblioteca</b><span style="display:block;font-size:11.5px;font-weight:500;color:var(--muted)">Mostra este produto, com a foto dele, na Biblioteca de fotos (galeria do cliente).</span></span></label>
     <div id="cd-erro" style="color:var(--red);font-size:12.5px;margin-top:10px"></div>
   </div>
   <div style="flex-shrink:0;border-top:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--s1);border-radius:0 0 18px 18px"><button class="btn pri" id="cd-salvar" onclick="cdSalvar()">Salvar</button><button class="btn sec" id="cd-dup" onclick="cdDuplicarAberto()">Duplicar</button><button class="btn sec" id="cd-apagar" onclick="cdApagarAberto()" style="color:var(--red);margin-left:auto">Apagar</button></div>
@@ -1809,6 +1832,7 @@ html.loja-p .cd-dest{display:none!important}
     <div id="mz-ajuda" style="font-size:13.5px;line-height:1.5;margin-bottom:12px">Para criar várias de uma vez, preencha <b>De</b> e <b>Até</b> (ex.: 1 até 20). Para uma só, preencha apenas o <b>De</b> (aceita letras, ex.: VIP1).</div>
     <label style="font-size:12px;color:var(--muted)" id="mz-deL">De</label><input class="inp" id="mz-de" maxlength="8" style="margin-bottom:10px">
     <div id="mz-ateW"><label style="font-size:12px;color:var(--muted)">Até (opcional)</label><input class="inp" id="mz-ate" inputmode="numeric" maxlength="8" style="margin-bottom:10px"></div>
+    <div id="mz-grpW"><label style="font-size:12px;color:var(--muted)">Grupo da mesa (opcional, ex.: Mesa, Mesa bistrô, Mesa baixa)</label><input class="inp" id="mz-grp" list="mz-grp-op" maxlength="30" placeholder="nome do grupo" style="margin-bottom:10px"><datalist id="mz-grp-op"></datalist></div>
     <div id="mz-lugW"><label style="font-size:12px;color:var(--muted)">Quantas pessoas cabem na mesa (opcional)</label><input class="inp" id="mz-lug" inputmode="numeric" maxlength="2" placeholder="digite a quantidade" style="margin-bottom:10px"></div>
     <div id="mz-erro" style="color:var(--red);font-size:12.5px;margin-bottom:6px"></div><button class="btn pri wide" id="mz-bt" onclick="mzSalvar()">Criar</button>
   </div>
@@ -1822,6 +1846,19 @@ html.loja-p .cd-dest{display:none!important}
 <div class="sheet wide" id="sh-import">
   <div class="sh-hd"><h3>Importar cardápio por planilha</h3><button onclick="fecharTudo()">✕</button></div>
   <div class="sh-bd" id="cd-imp-corpo"></div>
+</div>
+
+<!-- (296) Totem de toque: a tela do totem com as configurações ao lado (totem/toque.html?config=1) -->
+<style>
+@media (min-width:860px){ #sh-totem{width:1280px;max-width:97vw;height:92vh;max-height:92vh} }
+@media (max-width:859px){ #sh-totem{height:92vh;max-height:92vh} }
+#sh-totem .tq-corpo{flex:1;min-height:0;position:relative;background:#D9D9DE;overflow:hidden;border-radius:0 0 17px 17px}
+#sh-totem iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+#sh-totem .tq-msg{padding:20px;font-size:13px;color:var(--muted)}
+</style>
+<div class="sheet" id="sh-totem">
+  <div class="sh-hd"><h3>Totem de toque</h3><button onclick="tqFechar()">✕</button></div>
+  <div class="tq-corpo" id="tq-corpo"></div>
 </div>
 
 <div class="sheet" id="sh-cats">
@@ -3971,6 +4008,7 @@ var NAV_DESKTOP=[
   {id:'cardapio',   lb:'Cardápio',   ic:'<path d="M6 3v8a2 2 0 002 2v8M10 3v8M8 3v8M16 21V3c-2 1-3 4-3 8h3"/>'},
   {id:'mesas',      lb:'Mesas',      ic:'<circle cx="6" cy="6" r="2.3"/><circle cx="12" cy="6" r="2.3"/><circle cx="18" cy="6" r="2.3"/><circle cx="6" cy="12" r="2.3"/><circle cx="12" cy="12" r="2.3"/><circle cx="18" cy="12" r="2.3"/><circle cx="6" cy="18" r="2.3"/><circle cx="12" cy="18" r="2.3"/><circle cx="18" cy="18" r="2.3"/>'},
   {id:'garcons',    lb:'Garçons',    ic:'<circle cx="12" cy="6.5" r="3"/><path d="M6 21v-3.5c0-3 2.7-5 6-5s6 2 6 5V21M9.5 13.2l2.5 2.3 2.5-2.3M12 15.5V21"/>'},
+  {id:'balanca',    lb:'Balança',    ic:'<path d="M4 20h16M6 20l1.5-9h9L18 20M8 11V8h8v3M5 5h14M12 5v3"/><path d="M10 15.5h4"/>'},
   {id:'clientes',   lb:'Clientes',   ic:'<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5M16 5.2a3.2 3.2 0 010 5.6M18 14.8c2 .6 3.5 2.4 3.5 5.2"/>'},
   {id:'motoristas', lb:'Entregadores', ic:'<rect x="1" y="7" width="15" height="10" rx="1.5"/><path d="M16 10h3l3 3v4h-6z"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="19" r="2"/>'},
   {id:'veiculos',   lb:'Veículos',   ic:'<path d="M5 17h14M5 17a2 2 0 110-4M19 17a2 2 0 100-4M3 13l2-6h14l2 6M7 10h10"/>'},
@@ -3989,7 +4027,7 @@ var NAV_MOBILE=[
 ];
 var PAG='dashboard';
 /* menu suspenso do celular: mostra todas as telas que o perfil pode abrir, por grupo. O botão voltar do celular fecha o menu. */
-var MM_GRUPOS=[['Vendas',['pedidos','cardapio','mesas','garcons','clientes','mensagens']],['Operação',['dashboard','mesa','mapeamento','motoristas','veiculos']],['Gestão',['financeiro','config']]], MM_HIST=false;
+var MM_GRUPOS=[['Vendas',['pedidos','cardapio','mesas','garcons','balanca','clientes','mensagens']],['Operação',['dashboard','mesa','mapeamento','motoristas','veiculos']],['Gestão',['financeiro','config']]], MM_HIST=false;
 function mmPinta(){
   var usados={}, h='', it=function(n){ usados[n.id]=1; return '<button class="it'+(n.id===PAG?' on':'')+'" type="button" data-p="'+n.id+'" onclick="mmVai(\''+n.id+'\')"'+(n.id===PAG?' aria-current="page"':'')+'><span class="ic">'+svgIco(n.ic)+'</span><span class="nm">'+esc(n.lb)+planoCad(n.id)+'</span><span class="sg" aria-hidden="true">›</span></button>'; }, ok=function(n){ return n&&pagOk(n.id)&&!navOculto(n.id); };
   MM_GRUPOS.forEach(function(g){ var l=g[1].map(function(id){ return NAV_DESKTOP.filter(function(n){ return n.id===id; })[0]; }).filter(ok); if(l.length) h+='<div class="gr">'+g[0]+'</div>'+l.map(it).join(''); });
@@ -4323,9 +4361,11 @@ function ir(p){
   for(i=0;i<bs.length;i++) bs[i].classList.toggle('on', bs[i].getAttribute('data-p')===p);
   if(p==='veiculos') veCarregar();
   if(p==='cardapio') cdCarregar();
+  try{ cfFab(p); }catch(e){}
   if(p==='clientes') clCarregar();
   if(p==='mesas') mzCarregar();
   if(p==='garcons') gaCarregar();
+  if(p==='balanca') bzCarregar();
   if(p==='mapeamento'&&VIVO_ON) setTimeout(function(){ vivoBuscar(); },800);
   if(p==='mensagens') msgAbrirTela(); else clearInterval(MSG.timer);
   if(p==='cte') cteAbrirTela();
@@ -4367,6 +4407,31 @@ function lgPintar(){
 /* (122) vindo do site depois de assinar: abre direto na tela do código */
 window.addEventListener('load',function(){ var mh=/^#cod=(.+)$/.exec(location.hash||''); if(!mh) return; try{ LG.modo='codigo'; LG.etapa=2; el('lg-email').value=decodeURIComponent(mh[1]); lgPintar(); var mm=el('lg-msg'); mm.style.color='#2e7d32'; mm.textContent='Enviamos um código para o seu WhatsApp e e-mail. Digite abaixo (vale 10 minutos).'; history.replaceState(null,'',location.pathname); }catch(e){} });
 function lgAlternar(){ LG.modo=(LG.modo==='senha')?'codigo':'senha'; LG.etapa=1; el('lg-senha').value=''; el('lg-msg').textContent=''; lgPintar(); }
+/* (326) e-mail com mais de uma loja no grupo: depois do login pergunta qual empresa abrir. Uma loja só: entra direto como antes. */
+function lgEscolherLoja(d){
+  var ls=d&&d.lojas; if(!ls||ls.length<2){ abrirApp(); return; }
+  var old=el('lg-lojas'); if(old) old.remove();
+  var bg=document.createElement('div'); bg.id='lg-lojas'; bg.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(20,16,36,.72);display:flex;align-items:center;justify-content:center;padding:16px';
+  var bx=document.createElement('div'); bx.style.cssText='background:#fff;border-radius:18px;max-width:420px;width:100%;max-height:90vh;overflow:auto;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.35);font-family:inherit';
+  var h=document.createElement('div'); h.style.cssText='font-size:19px;font-weight:800;margin-bottom:4px'; h.textContent='Qual empresa você quer abrir?'; bx.appendChild(h);
+  var sb=document.createElement('div'); sb.style.cssText='font-size:13px;color:#6B6B73;margin-bottom:14px'; sb.textContent='Você pode trocar de empresa depois, pelo nome da loja no topo.'; bx.appendChild(sb);
+  var msg=document.createElement('div'); msg.style.cssText='color:#c0392b;font-weight:700;font-size:13px;min-height:16px;margin-top:8px'; 
+  ls.forEach(function(l){
+    var bt=document.createElement('button'); bt.type='button'; bt.style.cssText='display:block;width:100%;text-align:left;padding:14px 16px;margin-bottom:8px;border:1.5px solid #E3D9F2;border-radius:12px;background:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit';
+    bt.textContent=(l.nome||l.id)+(l.principal?'  ·  conta principal':'');
+    bt.onclick=function(){
+      if(l.id===(d.usuario&&d.usuario.cliente_id)){ bg.remove(); abrirApp(); return; }
+      bt.disabled=true; msg.textContent='';
+      fetch(DELTADIS_API+'/painel/trocar-loja',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+DD_TOKEN},body:JSON.stringify({loja:l.id})})
+        .then(function(r){ return r.json().catch(function(){ return {ok:false}; }); }).then(function(r){
+          if(!r||!r.ok){ bt.disabled=false; msg.textContent=(r&&r.mensagem)||'Não foi possível abrir essa empresa.'; return; }
+          ddGuardar(r.token,r.usuario); bg.remove(); abrirApp();
+        }).catch(function(){ bt.disabled=false; msg.textContent='Sem conexão com o servidor. Tente de novo.'; });
+    };
+    bx.appendChild(bt);
+  });
+  bx.appendChild(msg); bg.appendChild(bx); document.body.appendChild(bg);
+}
 function entrarCodigo(){
   var ct=el('lg-email').value.trim(), m=el('lg-msg'), b=el('lg-btn'); m.style.color='#c0392b'; m.textContent='';
   if(!ct){ m.textContent='Digite o e-mail ou o celular cadastrado.'; return; }
@@ -4388,7 +4453,7 @@ function entrarCodigo(){
       if(!d||!d.ok){ m.textContent=(d&&d.mensagem)||'Código inválido. Tente de novo.'; return; }
       if(d.usuario.perfil==='master'){ m.textContent='Este acesso é do administrador. Use a página admin.'; return; }
       if(d.usuario.perfil==='garcom'||d.usuario.perfil==='atendente'){ ddGuardar(d.token,d.usuario); location.href='atendimento.html'; return; }
-      LG.modo='senha'; LG.etapa=1; lgPintar(); ddGuardar(d.token,d.usuario); el('lg-senha').value=''; abrirApp();
+      LG.modo='senha'; LG.etapa=1; lgPintar(); ddGuardar(d.token,d.usuario); el('lg-senha').value=''; lgEscolherLoja(d);
     }).catch(function(){ b.disabled=false; m.textContent='Sem conexão com o servidor. Tente de novo.'; });
 }
 function entrar(){
@@ -4404,7 +4469,7 @@ function entrar(){
       if(!d||!d.ok){ m.textContent=(d&&d.mensagem)||'Não foi possível entrar. Tente de novo.'; return; }
       if(d.usuario.perfil==='master'){ m.textContent='Este acesso é do administrador. Use a página admin.'; return; }
       if(d.usuario.perfil==='garcom'||d.usuario.perfil==='atendente'){ ddGuardar(d.token,d.usuario); location.href='atendimento.html'; return; }
-      ddGuardar(d.token,d.usuario); el('lg-senha').value=''; abrirApp();
+      ddGuardar(d.token,d.usuario); el('lg-senha').value=''; lgEscolherLoja(d);
     }).catch(function(){ b.disabled=false; b.textContent='Entrar'; m.textContent='Sem conexão com o servidor. Tente de novo.'; });
 }
 /* ══ menu do avatar: meus dados, trocar senha, sair ══ */
@@ -5592,7 +5657,7 @@ function msPedidosHtml(busca,partes){
   var h='', ped=(typeof MS!=='undefined'&&MS.ped)||[], con=(typeof MS!=='undefined'&&MS.con)||[], feito=(typeof MS!=='undefined'&&MS.feito)||[];
   var comConta={}; con.forEach(function(k){ comConta[k.mesa]=1; });
   con.forEach(function(k){ var dela=ped.filter(function(x){ return msDentroConta(x,comConta); }).filter(function(x){ return x.mesa===k.mesa; }); if(busca&&((msBal(k.mesa)?'cliente balcão':'mesa '+k.mesa)+' conta '+dela.map(function(x){ return x.num+' '+x.itens; }).join(' ')).toLowerCase().indexOf(busca)<0) return;
-    h+='<tr class="ms-conta"><td><b>'+msLocal(k.mesa)+'</b><br><span style="color:var(--muted);font-size:11.5px">conta aberta · '+k.n+(k.n>1?' pedidos':' pedido')+'</span>'+msRachaHtml(k.pessoas)+'</td><td>'+msLocal(k.mesa)+'</td><td>'+msOrigem(k.mesa)+'</td><td>—</td><td>—</td><td><div class="ms-selos">'+(k.pessoas&&k.pessoas.length?'<span style="font-size:11.5px;font-weight:800;color:#fff;background:#2563eb;border-radius:10px;padding:2px 9px">'+(k.pessoas.length>1?'Rachada entre '+k.pessoas.length:'Parte paga')+'</span>':'')+(k.pedir?'<span style="font-size:11.5px;font-weight:800;color:#fff;background:#ef4444;border-radius:10px;padding:2px 9px">Quer fechar · '+(k.pedir==='dinheiro'?'dinheiro':'cartão')+'</span>':(k.pix?'<span style="font-size:12px;color:var(--muted)">Pix em andamento</span>':((k.pessoas&&k.pessoas.length)?'':'<span style="font-size:12px;color:var(--muted)">Consumindo</span>')))+'</div></td><td>'+moeda(k.total)+'</td><td>'+(k.pago?'Falta receber '+moeda(Math.max(0,Math.round((k.total-k.pago)*100)/100)):'Conta aberta')+'</td><td style="white-space:nowrap"><button class="btn pri sm" type="button" onclick="msFechaMesa(\''+esc(k.mesa)+'\')">'+(k.pago?'Recebi o restante · fechar':'Recebi · fechar mesa')+'</button></td></tr>'+dela.map(msPedLinha).join(''); });
+    h+='<tr class="ms-conta"><td><b>'+msLocal(k.mesa)+'</b><br><span style="color:var(--muted);font-size:11.5px">conta aberta · '+k.n+(k.n>1?' pedidos':' pedido')+'</span>'+msRachaHtml(k.pessoas)+'</td><td>'+msLocal(k.mesa)+'</td><td>'+msOrigem(k.mesa)+'</td><td>—</td><td>—</td><td><div class="ms-selos">'+(k.pessoas&&k.pessoas.length?'<span style="font-size:11.5px;font-weight:800;color:#fff;background:#2563eb;border-radius:10px;padding:2px 9px">'+(k.pessoas.length>1?'Rachada entre '+k.pessoas.length:'Parte paga')+'</span>':'')+(k.pedir?'<span style="font-size:11.5px;font-weight:800;color:#fff;background:#ef4444;border-radius:10px;padding:2px 9px">Quer fechar · '+msPedirTx(k.pedir)+'</span>':(k.pix?'<span style="font-size:12px;color:var(--muted)">Pix em andamento</span>':((k.pessoas&&k.pessoas.length)?'':'<span style="font-size:12px;color:var(--muted)">Consumindo</span>')))+'</div></td><td>'+moeda(k.total)+'</td><td>'+(k.pago?'Falta receber '+moeda(Math.max(0,Math.round((k.total-k.pago)*100)/100)):'Conta aberta')+'</td><td style="white-space:nowrap"><button class="btn pri sm" type="button" onclick="msFechaMesa(\''+esc(k.mesa)+'\')">'+(k.pago?'Recebi o restante · fechar':'Recebi · fechar mesa')+'</button></td></tr>'+dela.map(msPedLinha).join(''); });
   var linha=function(x,fim){ return '<tr class="ms-ped'+(fim?' ms-feito':'')+'" style="cursor:pointer" onclick="msDetalhe(\''+esc(x.id)+'\')"><td><b>#'+x.num+'</b>'+msInfo(x)+msRachaHtml(x.racha)+'</td><td>'+msLocal(x.mesa)+'</td><td>'+msOrigem(x.mesa)+'</td><td>'+msHora(x.criado)+'</td><td>—</td><td>'+msSelo(x)+'</td><td>'+moeda(x.total)+'</td><td>'+msReceb(x)+'</td><td style="white-space:nowrap">'+(fim?'':msBt(x,'pri'))+'</td></tr>'; };
   var achou=function(x){ return !busca||(((msBal(x.mesa)?'cliente balcão':'mesa '+x.mesa)+' '+x.num+' '+x.itens+' '+(x.atend||'')+' '+(x.cli||'')).toLowerCase().indexOf(busca)>=0); };
   var novo1=function(l){ var t=function(x){ var c=x.criado, n=Number(c); return isFinite(n)&&n>0?n:(Date.parse(c)||0); }; return l.slice().sort(function(a,b){ return t(b)-t(a); }); };   /* o mais novo no topo */
@@ -8651,13 +8716,23 @@ function cdClbTag(p){
   if(no&&c.valor>0) return '<span style="'+st+'" title="Entra no desconto do Clube">💎 Clube '+(c.tipo==='pct'?String(c.valor).replace('.',',')+'% OFF':br(c.valor)+' OFF')+'</span>';
   return '';
 }
+/* (317) NCM: guarda só os 8 números; mostra 0000.00.00 */
+function cdNcmFmt(v){ var d=String(v||'').replace(/\D/g,'').slice(0,8); return d.length===8?d.slice(0,4)+'.'+d.slice(4,6)+'.'+d.slice(6):d; }
+/* (317) etiqueta de NCM na lista: verde quando tem; "Sem NCM" só aparece se a loja já usa NCM em algum produto (quem não usa fiscal não vê aviso) */
+function cdNcmTag(p){
+  var tem=String(p&&p.ncm||'').replace(/\D/g,'').length===8;
+  if(tem) return '<span title="NCM '+cdNcmFmt(p.ncm)+'" style="font-size:10.5px;font-weight:800;border-radius:6px;padding:2px 7px;white-space:nowrap;background:#dcfce7;color:#166534;border:1px solid #86efac">✓ NCM</span>';
+  if(CD.temNcm===undefined) CD.temNcm=(CD.prods||[]).some(function(x){ return String(x.ncm||'').replace(/\D/g,'').length===8; });
+  return CD.temNcm?'<span style="font-size:10.5px;font-weight:800;border-radius:6px;padding:2px 7px;white-space:nowrap;background:#fef3c7;color:#92400e;border:1px solid #fcd34d">Sem NCM</span>':'';
+}
 function cdTags(p){
-  var t=cdDscTag(p)+cdClbTag(p)+(p.destaque?'<span style="font-size:10.5px;font-weight:800;border-radius:6px;padding:2px 7px;white-space:nowrap;background:#ffedd5;color:#c2410c;border:1px solid #fdba74">🔥 Destaque</span>':'');
+  var t=cdDscTag(p)+cdClbTag(p)+cdNcmTag(p)+(p.biblioteca?'<span title="Aparece na Biblioteca de fotos" style="font-size:10.5px;font-weight:800;border-radius:6px;padding:2px 7px;white-space:nowrap;background:#ede9fe;color:#5b21b6;border:1px solid #c4b5fd">🖼️ Biblioteca</span>':'')+(p.delivery===false?'<span style="font-size:10.5px;font-weight:800;border-radius:6px;padding:2px 7px;white-space:nowrap;background:#e5e7eb;color:#4b5563;border:1px solid #d1d5db">🚫 Fora do delivery</span>':'')+(p.destaque?'<span style="font-size:10.5px;font-weight:800;border-radius:6px;padding:2px 7px;white-space:nowrap;background:#ffedd5;color:#c2410c;border:1px solid #fdba74">🔥 Destaque</span>':'');
   return t?'<div style="display:flex;flex-wrap:wrap;gap:4px;margin:3px 0 2px">'+t+'</div>':'';
 }
 /* configuração do Clube para as tags (carrega uma vez) */
 function cdClbCarrega(){ if(CLB.c||CLB.carregando) return; CLB.carregando=1; fetch(DELTADIS_API+'/painel/clube-config',{headers:cdHdr()}).then(function(r){ return r.json(); }).then(function(d){ if(d&&d.ok&&d.clube){ CLB.c=d.clube; cdPintar(); } }).catch(function(){}).then(function(){ CLB.carregando=0; }); }
 function cdPintar(){
+  CD.temNcm=undefined;
   cdClbCarrega();
   var fc=el('cd-fcat'), atual=fc.value, h='<option value="">Todas as categorias</option>', i;
   for(i=0;i<CD.cats.length;i++) h+='<option value="'+esc(CD.cats[i].id)+'">'+esc(CD.cats[i].nome)+'</option>';
@@ -8721,8 +8796,8 @@ document.addEventListener('paste', function(ev){
 function cdAbrirForm(p){
   CD.edit=p?p.id:null; CD.foto=(p&&p.foto)||''; CD.vid=(p&&p.vid)||''; CD.vtipo=(p&&p.vtipo)||'video/mp4'; cdPVPinta();
   el('cd-tit').textContent=p?'Editar produto':'Novo produto';
-  el('cd-nome').value=p?p.nome:''; el('cd-barras').value=(p&&p.barras)||''; el('cd-preco').value=(p&&p.preco)?String(p.preco).replace('.',','):'';
-  el('cd-desc').value=(p&&p.desc)||''; el('cd-des').value=(p&&p.desenho)||''; var dq=(p&&p.desconto)||{}; el('cd-dsc-t').value=dq.tipo||''; el('cd-dsc-v').value=dq.valor?String(dq.valor).replace('.',','):''; el('cd-dsc-de').value=dq.de||''; el('cd-dsc-ate').value=dq.ate||''; cdDscMostra(); el('cd-clb').value=(p&&p.clube&&p.clube.preco)?String(p.clube.preco).replace('.',','):''; el('cd-ativo').checked=!p||p.ativo!==false; el('cd-dsq').checked=!!(p&&p.destaque); el('cd-erro').textContent='';
+  el('cd-nome').value=p?p.nome:''; el('cd-barras').value=(p&&p.barras)||''; el('cd-ncm').value=cdNcmFmt((p&&p.ncm)||''); el('cd-preco').value=(p&&p.preco)?String(p.preco).replace('.',','):'';
+  el('cd-desc').value=(p&&p.desc)||''; el('cd-des').value=(p&&p.desenho)||''; var dq=(p&&p.desconto)||{}; el('cd-dsc-t').value=dq.tipo||''; el('cd-dsc-v').value=dq.valor?String(dq.valor).replace('.',','):''; el('cd-dsc-de').value=dq.de||''; el('cd-dsc-ate').value=dq.ate||''; cdDscMostra(); el('cd-clb').value=(p&&p.clube&&p.clube.preco)?String(p.clube.preco).replace('.',','):''; el('cd-ativo').checked=!p||p.ativo!==false; el('cd-del').checked=!p||p.delivery!==false; el('cd-dsq').checked=!!(p&&p.destaque); el('cd-bib').checked=!!(p&&p.biblioteca); el('cd-erro').textContent='';
   cdOpcoesCat(p&&p.cat); cdFotoBox();
   el('cd-ads').innerHTML=''; var ad=(p&&p.adicionais)||[], i; for(i=0;i<ad.length;i++) cdAdLinha(ad[i]);
   CD.tam=JSON.parse(JSON.stringify((p&&p.tamanhos)||[])); CD.sab=JSON.parse(JSON.stringify((p&&p.sabores)||[])); cdRenderTam(); el('cd-sab-busca').value=''; cdRenderSab(); cdCarregarFotos(p);
@@ -8866,7 +8941,7 @@ function cdColher(){
   var tms=[], sbs=[], j;
   for(j=0;j<CD.tam.length;j++){ var t=CD.tam[j]; if((t.nome||'').trim()) tms.push({id:t.id,nome:t.nome.trim(),preco:cdPreco(t.preco),med:(t.med||'').trim(),max:parseInt(t.max,10)||1}); }
   for(j=0;j<CD.sab.length;j++){ var sb=CD.sab[j]; if((sb.nome||'').trim()){ var pr={},k; for(k in (sb.precos||{})){ var pv=cdPreco(sb.precos[k]); if(pv>0) pr[k]=pv; } sbs.push({id:sb.id,nome:sb.nome.trim(),desc:(sb.desc||'').trim(),grupo:(sb.grupo||'').trim(),extra4:cdPreco(sb.extra4),novidade:!!sb.novidade,balcao:!!sb.balcao,foto:sb._mud?(sb.foto||''):(sb.foto?'1':''),precos:pr}); } }
-  return {nome:el('cd-nome').value.trim(),barras:el('cd-barras').value.replace(/[^0-9A-Za-z-]/g,''),preco:cdPreco(el('cd-preco').value),cat:el('cd-cat').value,desc:el('cd-desc').value.trim(),desenho:el('cd-des').value,desconto:cdDscLer(),clube:(cdPreco(el('cd-clb').value)>0?{preco:cdPreco(el('cd-clb').value)}:null),foto:CD.foto,vid:CD.vid||'',vtipo:CD.vtipo||'video/mp4',adicionais:ads,tamanhos:tms,sabores:sbs,ativo:el('cd-ativo').checked,destaque:el('cd-dsq').checked};
+  return {nome:el('cd-nome').value.trim(),barras:el('cd-barras').value.replace(/[^0-9A-Za-z-]/g,''),ncm:String(el('cd-ncm').value||'').replace(/\D/g,'').slice(0,8),preco:cdPreco(el('cd-preco').value),cat:el('cd-cat').value,desc:el('cd-desc').value.trim(),desenho:el('cd-des').value,desconto:cdDscLer(),clube:(cdPreco(el('cd-clb').value)>0?{preco:cdPreco(el('cd-clb').value)}:null),foto:CD.foto,vid:CD.vid||'',vtipo:CD.vtipo||'video/mp4',adicionais:ads,tamanhos:tms,sabores:sbs,ativo:el('cd-ativo').checked,delivery:el('cd-del').checked,destaque:el('cd-dsq').checked,biblioteca:el('cd-bib').checked};
 }
 function cdSalvar(){
   var it=cdColher(); if(!it.nome){ el('cd-erro').textContent='Falta o nome do produto.'; return; }
@@ -9117,6 +9192,7 @@ function cdHrSalvar(){
 var MS={ped:[],cha:[],con:[],vistoP:{},vistoC:{},vistoK:{},aberto:0,busy:0,init:0};
 try{ MS.vistoC=JSON.parse(localStorage.getItem('giro_ms_vistoC')||'{}')||{}; }catch(e){}
 function msBeep(){ try{ var a=new (window.AudioContext||window.webkitAudioContext)(), o=a.createOscillator(), g=a.createGain(); o.connect(g); g.connect(a.destination); o.frequency.value=880; g.gain.value=.15; o.start(); setTimeout(function(){ o.frequency.value=1175; },170); setTimeout(function(){ o.stop(); a.close(); },400); }catch(e){} }
+function msPedirTx(p){ return p==='garcom'?'garçom na mesa':p==='caixa'?'vai ao caixa':p==='dinheiro'?'dinheiro':'cartão'; }
 function msBadge(){ var n=MS.cha.length+MS.con.filter(function(x){ return x.pedir; }).length+MS.ped.filter(function(x){ return !x.fase; }).length, b=el('ms-bd'); if(!b) return; b.style.display=n?'inline-block':'none'; b.textContent=n; }
 function msPoll(){
   if(!REAL||!DD_TOKEN||document.hidden||MS.busy) return; MS.busy=1;
@@ -9127,7 +9203,7 @@ function msPoll(){
     (d.chamados||[]).forEach(function(c){ vc[c.id]=1; if(!MS.vistoC[c.id]){ MS.vistoC[c.id]=1; if(MS.init || ag-(Number(c.criado)||0) < 1800000) av.push('🛎 Mesa '+c.mesa+' chamando o garçom'); } });
     MS.vistoC=vc; try{ localStorage.setItem('giro_ms_vistoC',JSON.stringify(vc)); }catch(e){}
     (d.pedidos||[]).forEach(function(x){ if(!MS.vistoP[x.id]){ MS.vistoP[x.id]=1; if(MS.init) av.push('🍽️ '+msLocal(x.mesa)+': novo pedido #'+x.num); } });
-    (d.contas||[]).forEach(function(k){ if(k.pedir&&!MS.vistoK[k.mesa+k.pedir+k.total]){ MS.vistoK[k.mesa+k.pedir+k.total]=1; if(MS.init) av.push('🧾 Mesa '+k.mesa+' quer fechar a conta ('+(k.pedir==='dinheiro'?'dinheiro':'cartão')+')'); } });
+    (d.contas||[]).forEach(function(k){ if(k.pedir&&!MS.vistoK[k.mesa+k.pedir+k.total]){ MS.vistoK[k.mesa+k.pedir+k.total]=1; if(MS.init) av.push('🧾 Mesa '+k.mesa+' quer fechar a conta ('+msPedirTx(k.pedir)+')'); } });
     MS.ped=d.pedidos||[]; MS.cha=d.chamados||[]; MS.con=d.contas||[]; MS.feito=d.feitos||[]; MS.init=1;   /* (240) feitos: pedidos de mesa concluídos hoje (pagos e servidos) */
     if(av.length){ aviso(av.join(' · ')); msBeep(); }
     msBadge(); if(MS.aberto) msPintar();
@@ -9147,7 +9223,7 @@ function msPintar(){
   if(MS.cha.length){ h+='<div style="font-weight:800;font-size:13.5px;margin:6px 0">🛎 Chamando o garçom</div>';
     MS.cha.forEach(function(c){ h+='<div style="display:flex;align-items:center;gap:10px;border:1.5px solid #ef4444;border-radius:12px;padding:10px;margin-bottom:8px"><div style="flex:1"><b>Mesa '+esc(c.mesa)+'</b><div style="font-size:12px;color:var(--muted)">desde '+msHora(c.criado)+'</div></div><button class="btn pri sm" type="button" onclick="msChamadoOk(\''+esc(c.id)+'\')">Atendido</button></div>'; }); }
   if(MS.con.length){ h+='<div style="font-weight:800;font-size:13.5px;margin:12px 0 6px">🧾 Contas das mesas</div>';
-    MS.con.forEach(function(k){ var q=k.pedir?'<span style="font-size:12px;font-weight:800;color:#fff;background:#ef4444;border-radius:10px;padding:2px 9px">Pediu para fechar · '+(k.pedir==='dinheiro'?'dinheiro':'cartão')+'</span>':(k.pix?'<span style="font-size:12px;color:var(--muted)">Pix em andamento</span>':'<span style="font-size:12px;color:var(--muted)">Consumindo</span>');
+    MS.con.forEach(function(k){ var q=k.pedir?'<span style="font-size:12px;font-weight:800;color:#fff;background:#ef4444;border-radius:10px;padding:2px 9px">Pediu para fechar · '+msPedirTx(k.pedir)+'</span>':(k.pix?'<span style="font-size:12px;color:var(--muted)">Pix em andamento</span>':'<span style="font-size:12px;color:var(--muted)">Consumindo</span>');
       h+='<div style="display:flex;align-items:center;gap:10px;border:1.5px solid '+(k.pedir?'#ef4444':'var(--border)')+';border-radius:12px;padding:10px;margin-bottom:8px"><div style="flex:1"><b>'+msLocal(k.mesa)+'</b> · '+moeda(k.total)+'<div style="margin-top:3px">'+q+' <span style="font-size:12px;color:var(--muted)">'+k.n+(k.n>1?' pedidos':' pedido')+'</span></div></div><button class="btn pri sm" type="button" onclick="msFechaMesa(\''+esc(k.mesa)+'\')">Recebi · fechar mesa</button></div>'; }); }
   h+='<div style="font-weight:800;font-size:13.5px;margin:12px 0 6px">🍽️ Pedidos das mesas</div>';
   if(!MS.ped.length) h+='<div style="border:1px dashed var(--border);border-radius:12px;padding:14px;font-size:13px;color:var(--muted)">Nenhum pedido de mesa em andamento.</div>';
@@ -9324,7 +9400,7 @@ function clImportar(){
   prox();
 }
 /* ── (094) menu MESAS: cadastro das mesas e etiqueta NFC ── */
-var MZ={lista:[]};
+var MZ={lista:[],grp:''};
 function mzApi(path,body){ var o=body?{method:'POST',headers:cdHdr(),body:JSON.stringify(body)}:{headers:cdHdr()}; return fetch(DELTADIS_API+path,o).then(function(r){ return r.json(); }); }
 /* (152) Mesas > Garçons: quais mesas cada garçom cuida. Garçom sem mesa marcada e mesa sem garçom recebem/vão para todos */
 var GC={g:[],mesas:[]};
@@ -9390,7 +9466,7 @@ function gaPintaCfg(d){
   var rl=d.regra_loja||{tipo:'nada',valor:0};
   if(document.activeElement!==el('ga-valor')){ el('ga-tipo').value=rl.tipo||'nada'; el('ga-valor').value=rl.valor?String(rl.valor).replace('.',','):''; gaTipoMuda('ga'); }
   var sv=d.servico||{on:false,pct:0};
-  if(document.activeElement!==el('ga-serv-pct')){ el('ga-serv-on').checked=!!sv.on; el('ga-serv-pct').value=sv.pct?String(sv.pct).replace('.',','):''; gaServMuda(); }
+  if(document.activeElement!==el('ga-serv-pct')){ el('ga-serv-on').checked=!!sv.on; el('ga-serv-perg').checked=!!sv.perg; el('ga-serv-pct').value=sv.pct?String(sv.pct).replace('.',','):''; gaServMuda(); }
   el('ga-serv-txt').innerHTML=sv.on?('Ligada em <b>'+String(sv.pct).replace('.',',')+'%</b>: cada pedido que um garçom lança no Atendimento leva '+String(sv.pct).replace('.',',')+'% a mais, numa linha separada na conta (produto de '+moeda(10)+' fica '+moeda(10)+' + '+moeda(Math.round(10*sv.pct)/100)+' de serviço). Esse valor é a comissão do garçom. Não entra em pedido do QR da mesa, balcão, nem lançado pelo dono ou gerente.')
     :'Ligada, o pedido que o garçom lança leva essa porcentagem a mais, numa linha separada na conta (ex.: 10% — produto de '+moeda(10)+' fica '+moeda(11)+'), e esse valor vira a comissão dele. O preço no cardápio não muda.';
   el('ga-regra-txt').innerHTML=(sv.on?'<b style="color:#B45309">Com a taxa do garçom ligada, a regra abaixo só vale para pedidos sem a taxa</b> (lançados antes de ligar). ':'')+'Regra atual da loja: <b>'+esc(gaRegraTxt(rl))+'</b>. Vale para todos os garçons; para um garçom ter regra diferente, toque em <b>Regra</b> na linha dele.'+(rl.tipo==='dia'?' Na diária, conta cada dia em que ele lançou pelo menos um pedido de conta fechada.':'');
@@ -9544,14 +9620,15 @@ function gaRegraSalvar(){
   .catch(function(e){ b.disabled=false; aviso(esc(e.message||'Não salvou.')); });
 }
 /* (219) taxa do garçom paga pelo cliente */
-function gaServMuda(){ var on=el('ga-serv-on').checked; el('ga-serv-lbl').textContent=on?'Ligada':'Desligada'; el('ga-serv-lbl').style.color=on?'var(--green)':'var(--muted)'; el('ga-serv-vbox').style.opacity=on?'1':'.45'; el('ga-serv-pct').disabled=!on; }
+function gaServMuda(){ var on=el('ga-serv-on').checked; el('ga-serv-lbl').textContent=on?'Ligada':'Desligada'; el('ga-serv-lbl').style.color=on?'var(--green)':'var(--muted)'; var usa=on||el('ga-serv-perg').checked; el('ga-serv-vbox').style.opacity=usa?'1':'.45'; el('ga-serv-pct').disabled=!usa; }
 function gaServSalvar(){
-  var on=el('ga-serv-on').checked, v=gaNum(el('ga-serv-pct').value), b=el('ga-serv-bt');
-  if(on&&!(v>0&&v<=30)){ aviso('Coloque a porcentagem da taxa (de 0,01 a 30)'); return; }
+  var on=el('ga-serv-on').checked, pe=el('ga-serv-perg').checked, v=gaNum(el('ga-serv-pct').value), b=el('ga-serv-bt');
+  if((on||pe)&&!(v>0&&v<=30)){ aviso('Coloque a porcentagem da taxa (de 0,01 a 30)'); return; }
   b.disabled=true;
-  mzApi('/painel/garcons-servico',{on:on,pct:on?v:0}).then(function(d){ b.disabled=false;
+  mzApi('/painel/garcons-servico',{on:on,perg:pe,pct:on||pe?v:0}).then(function(d){ b.disabled=false;
     if(!d||!d.ok) throw new Error(d&&d.erro==='rota_nao_encontrada'?'Publique o Worker 219 para usar a taxa do garçom.':((d&&d.mensagem)||'Não salvou.'));
-    aviso(on?'Taxa do garçom ligada em '+String(v).replace('.',',')+'% ✅ Vale para os próximos pedidos':'Taxa do garçom desligada'); el('ga-serv-pct').blur(); gaCarregar(); })
+    if(pe&&!(d.servico&&d.servico.perg)) throw new Error('Publique o Worker 339 para perguntar ao cliente.');
+    aviso(pe&&!on?'Pronto ✅ O cliente vai ser perguntado na hora de pagar':on?'Taxa do garçom ligada em '+String(v).replace('.',',')+'% ✅ Vale para os próximos pedidos':'Taxa do garçom desligada'); el('ga-serv-pct').blur(); gaCarregar(); })
   .catch(function(e){ b.disabled=false; aviso(esc(e.message||'Não salvou.')); });
 }
 /* regra própria de um garçom */
@@ -9686,14 +9763,21 @@ function mzCarregar(){
   mzApi('/painel/atend-mesas').then(function(d){ if(!d||!d.ok) throw new Error((d&&d.mensagem)||'erro'); MZ.lista=d.mesas||[]; if(el('mz-dia')&&el('mz-dia').value&&el('mz-dia').value!==mzHoje()) mzDia(); else mzPintar(); })
   .catch(function(e){ el('mz-lista').innerHTML='<div style="padding:14px;color:var(--red)">'+esc(e.message||'Não carregou')+'</div>'; });
 }
+function mzGrupo(g){ MZ.grp=g; mzPintar(); }
 function mzLink(n){ return etUrl(n); }
 function mzCliOk(){ if(CD.cli) return true; aviso('Ainda carregando o código do restaurante. Tente de novo em 2 segundos.'); mzCliBusca(); return false; }
 function mzCliBusca(){ if(CD.cli) return; fetch(DELTADIS_API+'/painel/cardapio',{headers:cdHdr()}).then(function(r){ return r.json(); }).then(function(x){ if(x&&x.ok&&x.cli){ CD.cli=x.cli; CD.slug=x.slug||CD.slug; } }).catch(function(){}); }
 function mzPintar(){
   var q=(el('mz-busca').value||'').toLowerCase().trim(), h='', n=0;
   MZ.lista.sort(function(a,b){ var x=String(a.num), y=String(b.num), nx=/^\d+$/.test(x), ny=/^\d+$/.test(y); if(nx&&ny) return parseInt(x,10)-parseInt(y,10); if(nx!==ny) return nx?-1:1; return x<y?-1:x>y?1:0; });
-  MZ.lista.forEach(function(m){ if(q&&String(m.num).toLowerCase().indexOf(q)<0) return; n++;
-    h+='<div style="border:1px solid var(--border);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px"><div style="display:flex;align-items:center;gap:10px"><div style="width:46px;height:46px;border-radius:50%;background:'+(m.oc?'#16a34a':'var(--grad,#FF5A00)')+';color:#fff;font-weight:800;font-size:17px;display:flex;align-items:center;justify-content:center;flex:none">'+esc(m.num)+'</div><div style="min-width:0"><b>Mesa '+esc(m.num)+'</b><div style="font-size:12px;color:var(--muted)">'+(m.oc?'<span style="color:#16a34a;font-weight:700">Comanda aberta</span>':'Livre')+'</div></div>'+mzTagRsv(m)+'</div>'
+  /* (334) grupos de mesas: faixa de filtro no topo; a numeração é única na loja, o grupo é só o rótulo */
+  var gr={}, semG=0; MZ.lista.forEach(function(m){ if(m.grupo) gr[m.grupo]=(gr[m.grupo]||0)+1; else semG++; });
+  var nomesG=Object.keys(gr).sort(); if(MZ.grp&&MZ.grp!=='\u0001'&&!gr[MZ.grp]) MZ.grp='';
+  var chip=function(v,t,c){ var on=MZ.grp===v; return '<button class="btn sm '+(on?'pri':'sec')+'" data-g="'+esc(v)+'" onclick="mzGrupo(this.getAttribute(\'data-g\'))">'+esc(t)+' · '+c+'</button>'; };
+  el('mz-chips').innerHTML=nomesG.length?chip('','Todas',MZ.lista.length)+nomesG.map(function(g){ return chip(g,g,gr[g]); }).join('')+(semG?chip('\u0001','Sem grupo',semG):''):'';
+  el('mz-grp-op').innerHTML=nomesG.map(function(g){ return '<option value="'+esc(g)+'">'; }).join('');
+  MZ.lista.forEach(function(m){ if(q&&String(m.num).toLowerCase().indexOf(q)<0) return; if(MZ.grp==='\u0001'?m.grupo:(MZ.grp&&m.grupo!==MZ.grp)) return; n++;
+    h+='<div style="border:1px solid var(--border);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px"><div style="display:flex;align-items:center;gap:10px"><div style="width:46px;height:46px;border-radius:50%;background:'+(m.oc?'#16a34a':'var(--grad,#FF5A00)')+';color:#fff;font-weight:800;font-size:17px;display:flex;align-items:center;justify-content:center;flex:none">'+esc(m.num)+'</div><div style="min-width:0"><b>'+(m.grupo?esc(m.grupo)+' ':'Mesa ')+esc(m.num)+'</b><div style="font-size:12px;color:var(--muted)">'+(m.oc?'<span style="color:#16a34a;font-weight:700">Comanda aberta</span>':'Livre')+'</div></div>'+mzTagRsv(m)+'</div>'
      +'<div style="font-size:12px;color:var(--muted)">'+(m.lug?'👥 '+m.lug+(m.lug===1?' lugar':' lugares'):'👥 lugares não informados')+' · '+(m.nfc?'🏷️ NFC gravada em '+new Date(m.nfc).toLocaleDateString('pt-BR'):'sem etiqueta NFC')+'</div>'
      +'<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn sec sm"'+(m.lug>0?' style="background:#16a34a;border-color:#16a34a;color:#fff"':'')+' onclick="mzEdita(\''+esc(m.num)+'\',\'lug\')">Lugares</button><button class="btn sec sm" onclick="mzEdita(\''+esc(m.num)+'\',\'ed\')">Editar</button><button class="btn sec sm" onclick="mzNfc(\''+esc(m.num)+'\')">Gravar NFC</button><button class="btn sec sm" style="background:var(--grad,#FF5A00);border-color:var(--grad,#FF5A00);color:#fff" onclick="mzQr(\''+esc(m.num)+'\')">QR code</button><button class="btn sec sm" onclick="mzCopia(\''+esc(m.num)+'\')">Copiar link</button><button class="btn sec sm" style="color:var(--red)" onclick="mzApaga(\''+esc(m.num)+'\')">Apagar</button></div></div>'; });
   el('mz-total').textContent=MZ.lista.length+(MZ.lista.length===1?' mesa cadastrada':' mesas cadastradas');
@@ -9759,13 +9843,14 @@ function mzTagRsv(m){
   var ok=r.st==='confirmada', mais=(lst.length>1?' +'+(lst.length-1):'');
   return '<span title="'+esc(lst.map(function(x){ return x.hora+' · '+x.nome+' ('+x.pessoas+')'+(x.st==='confirmada'?' ✓':''); }).join('\n'))+'" style="margin-left:auto;align-self:flex-start;background:'+(ok?'#dcfce7':'#ede9fe')+';color:'+(ok?'#15803d':'#6d28d9')+';border:1px solid '+(ok?'#86efac':'#c4b5fd')+';font-size:11px;font-weight:800;padding:3px 8px;border-radius:999px;white-space:nowrap">🪑 Reservada '+esc(r.hora)+(ok?' ✓':'')+mais+'</span>';
 }
-function mzTela(modo){ var novo=modo==='novo', lug=modo==='lug'; el('mz-tit').textContent=novo?'Nova mesa':lug?'Lugares da mesa':'Editar mesa'; el('mz-bt').textContent=novo?'Criar':'Salvar'; el('mz-ateW').style.display=novo?'':'none'; el('mz-ajuda').style.display=novo?'':'none'; el('mz-lugW').style.display=''; el('mz-deL').textContent=novo?'De':'Número da mesa'; el('mz-de').style.display=lug?'none':''; el('mz-deL').style.display=lug?'none':''; el('mz-de').readOnly=false; MZ.modo=modo; }
-function mzNova(){ mzTela('novo'); el('mz-de').value=''; el('mz-ate').value=''; el('mz-lug').value=''; el('mz-erro').textContent=''; abrir('sh-mesa'); }
-function mzEdita(n,modo){ var m=MZ.lista.filter(function(x){ return String(x.num)===String(n); })[0]||{}; mzTela(modo||'ed'); MZ.orig=String(n); MZ.nfcEra=!!m.nfc; if(modo==='lug') el('mz-tit').textContent='Lugares da mesa '+n; el('mz-de').value=n; el('mz-ate').value=''; el('mz-lug').value=m.lug||''; el('mz-erro').textContent=''; abrir('sh-mesa'); }
+function mzTela(modo){ var novo=modo==='novo', lug=modo==='lug'; el('mz-tit').textContent=novo?'Nova mesa':lug?'Lugares da mesa':'Editar mesa'; el('mz-bt').textContent=novo?'Criar':'Salvar'; el('mz-ateW').style.display=novo?'':'none'; el('mz-ajuda').style.display=novo?'':'none'; el('mz-lugW').style.display=''; el('mz-grpW').style.display=lug?'none':''; el('mz-deL').textContent=novo?'De':'Número da mesa'; el('mz-de').style.display=lug?'none':''; el('mz-deL').style.display=lug?'none':''; el('mz-de').readOnly=false; MZ.modo=modo; }
+function mzNova(){ mzTela('novo'); el('mz-grp').value=(MZ.grp&&MZ.grp!=='\u0001')?MZ.grp:''; el('mz-de').value=''; el('mz-ate').value=''; el('mz-lug').value=''; el('mz-erro').textContent=''; abrir('sh-mesa'); }
+function mzEdita(n,modo){ var m=MZ.lista.filter(function(x){ return String(x.num)===String(n); })[0]||{}; mzTela(modo||'ed'); MZ.orig=String(n); MZ.nfcEra=!!m.nfc; if(modo==='lug') el('mz-tit').textContent='Lugares da mesa '+n; el('mz-de').value=n; el('mz-grp').value=m.grupo||''; MZ.grpEra=m.grupo||''; el('mz-ate').value=''; el('mz-lug').value=m.lug||''; el('mz-erro').textContent=''; abrir('sh-mesa'); }
 function mzSalvar(){
   var er=el('mz-erro'); er.textContent=''; var de=el('mz-de').value.trim(), ate=el('mz-ate').value.trim(), lug=el('mz-lug').value.trim(), modo=MZ.modo||'novo'; if(!de){ er.textContent='Informe o número da mesa.'; return; }
   var fim=function(d,msg){ fecharTudo(); aviso(msg); mzCarregar(); };
-  var salva=function(num,msg){ if(!lug&&modo!=='novo'){ fim(null,msg||'Mesa atualizada'); return Promise.resolve(); } return mzApi('/painel/atend-mesas-salvar',{de:num,ate:modo==='novo'?ate:'',lugares:lug}).then(function(d){ if(!d||!d.ok) throw new Error((d&&d.mensagem)||'Não salvou'); if(lug&&!d.v) throw new Error('O Worker ainda é uma versão antiga e não guarda os lugares. Suba o Worker 076.'); fim(d,modo==='novo'?(d.novas+' mesa'+(d.novas===1?'':'s')+' criada'+(d.novas===1?'':'s')):(msg||'Salvo')); }); };
+  var grp=el('mz-grp').value.trim(), mudouG=modo==='ed'&&grp!==(MZ.grpEra||'');
+  var salva=function(num,msg){ if(!lug&&modo!=='novo'&&!mudouG){ fim(null,msg||'Mesa atualizada'); return Promise.resolve(); } var corpo={de:num,ate:modo==='novo'?ate:'',lugares:lug}; if(modo!=='lug') corpo.grupo=grp; return mzApi('/painel/atend-mesas-salvar',corpo).then(function(d){ if(!d||!d.ok) throw new Error((d&&d.mensagem)||'Não salvou'); if(lug&&!d.v) throw new Error('O Worker ainda é uma versão antiga e não guarda os lugares. Suba o Worker 076.'); fim(d,modo==='novo'?(d.novas+' mesa'+(d.novas===1?'':'s')+' criada'+(d.novas===1?'':'s')):(msg||'Salvo')); }); };
   if(modo!=='novo'&&String(MZ.orig)!==de){
     mzApi('/painel/atend-mesas-renomear',{de:MZ.orig,para:de}).then(function(d){ if(!d||!d.ok||!d.v) throw new Error((d&&d.mensagem)||'Não consegui trocar o número. Suba o Worker 076.'); return salva(de,'Mesa '+MZ.orig+' agora é a mesa '+de+(MZ.nfcEra?'. Regrave a etiqueta NFC.':'')); }).catch(function(e){ er.textContent=e.message||'Não salvou'; });
     return;
@@ -9779,15 +9864,16 @@ function mzQrLib(cb){ if(window.QRCode) return cb(); var sc=document.createEleme
 function mzEmp(){ return (window.DD_USER&&(DD_USER.empresa||DD_USER.cliente))||''; }
 function mzQrData(u){ var box=document.createElement('div'); box.style.cssText='position:absolute;left:-9999px'; document.body.appendChild(box); new QRCode(box,{text:u,width:480,height:480,correctLevel:QRCode.CorrectLevel.M}); var cv=box.querySelector('canvas'), s=''; try{ s=cv.toDataURL('image/png'); }catch(e){} box.remove(); return s; }
 /* cartão da mesa (nome da loja, QR, "Mesa N" e o endereço) desenhado num canvas, pronto para baixar */
-function mzCartao(n,u,qr,cb){
+function mzCartao(n,u,qr,cb,gr){
   var c=document.createElement('canvas'); c.width=900; c.height=1200; var g=c.getContext('2d'), im=new Image();
   im.onload=function(){
     g.fillStyle='#fff'; g.fillRect(0,0,900,1200); g.fillStyle='#FF5A00'; g.fillRect(0,0,900,18);
     g.textAlign='center'; g.fillStyle='#1C1C1E'; g.font='bold 46px Arial'; g.fillText(mzEmp()||'Cardápio digital',450,110);
     g.drawImage(im,150,170,600,600);
-    g.font='bold 110px Arial'; g.fillText('Mesa '+n,450,910);
-    g.fillStyle='#5E5E66'; g.font='34px Arial'; g.fillText('Aponte a câmera do celular para pedir',450,980);
-    g.fillStyle='#FF5A00'; g.font='bold 32px Arial'; g.fillText(u.replace(/^https?:\/\//,''),450,1060);
+    if(gr){ g.font='bold 50px Arial'; g.fillText(String(gr).toUpperCase(),450,846); g.font='bold 150px Arial'; g.fillText(String(n),450,950); }   /* (336) grupo da mesa */
+    else { g.font='bold 110px Arial'; g.fillText('Mesa '+n,450,910); }
+    g.fillStyle='#5E5E66'; g.font='34px Arial'; g.fillText('Aponte a câmera do celular para pedir',450,1010);
+    g.fillStyle='#FF5A00'; g.font='bold 32px Arial'; g.fillText(u.replace(/^https?:\/\//,''),450,1075);
     g.fillStyle='#B5ACA5'; g.font='bold 26px Arial'; g.fillText('livefood',450,1150);
     cb(c.toDataURL('image/png'));
   };
@@ -9796,14 +9882,14 @@ function mzCartao(n,u,qr,cb){
 function mzQr(n){
   if(!mzCliOk()) return;
   mzSlug(function(){ mzQrLib(function(){
-    var u=mzLink(n), qr=mzQrData(u);
-    el('sh-import').querySelector('h3').textContent='QR code da mesa '+n;
-    el('cd-imp-corpo').innerHTML='<div style="text-align:center"><img src="'+qr+'" alt="QR code da mesa '+esc(n)+'" style="width:240px;max-width:100%;border:1px solid var(--border);border-radius:14px;padding:10px;background:#fff"><div style="font-size:22px;font-weight:800;margin-top:8px">Mesa '+esc(n)+'</div><div style="font-size:13px;color:var(--muted);margin:4px 0 14px;word-break:break-all">'+esc(u)+'</div>'
+    var u=mzLink(n), qr=mzQrData(u), gr=((MZ.lista.filter(function(x){ return String(x.num)===String(n); })[0])||{}).grupo||'';
+    el('sh-import').querySelector('h3').textContent='QR code da '+(gr?gr+' ':'mesa ')+n;
+    el('cd-imp-corpo').innerHTML='<div style="text-align:center"><img src="'+qr+'" alt="QR code da mesa '+esc(n)+'" style="width:240px;max-width:100%;border:1px solid var(--border);border-radius:14px;padding:10px;background:#fff"><div style="font-size:22px;font-weight:800;margin-top:8px">'+(gr?esc(gr)+' ':'Mesa ')+esc(n)+'</div><div style="font-size:13px;color:var(--muted);margin:4px 0 14px;word-break:break-all">'+esc(u)+'</div>'
       +'<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn pri" id="mzq-comp">📤 Compartilhar</button><button class="btn sec" id="mzq-baixar">⬇ Baixar imagem</button><button class="btn sec" id="mzq-imp">🖨 Imprimir</button><button class="btn sec" onclick="mzCopia(\''+esc(n)+'\')">Copiar link</button></div></div>';
     abrir('sh-import');
-    var png=''; mzCartao(n,u,qr,function(p){ png=p; });
-    el('mzq-baixar').onclick=function(){ mzCartao(n,u,qr,function(p){ var a=document.createElement('a'); a.href=p; a.download='qrcode-mesa-'+n+'.png'; document.body.appendChild(a); a.click(); a.remove(); }); };
-    el('mzq-imp').onclick=function(){ mzImprimirA4([{n:n,u:u,qr:qr}],{cm:8,nome:true,corte:true}); };
+    var png=''; mzCartao(n,u,qr,function(p){ png=p; },gr);
+    el('mzq-baixar').onclick=function(){ mzCartao(n,u,qr,function(p){ var a=document.createElement('a'); a.href=p; a.download='qrcode-mesa-'+n+'.png'; document.body.appendChild(a); a.click(); a.remove(); },gr); };
+    el('mzq-imp').onclick=function(){ mzImprimirA4([{n:n,u:u,qr:qr,g:gr}],{cm:8,nome:true,corte:true}); };
     el('mzq-comp').onclick=function(){ mzCompartilhar(n,u,png); };
   }); });
 }
@@ -9827,13 +9913,13 @@ function mzImprimirA4(L,op){
   op=op||MZA4; var k=mzA4Calc(op.cm), s=k.s, emp=esc(mzEmp()), pags='', i;
   var fM=s*0.13, fN=s*0.055, fA=s*0.045, qr=s*(op.nome?0.66:0.72);
   for(i=0;i<L.length;i+=k.pag){
-    pags+='<div class="pg">'+L.slice(i,i+k.pag).map(function(x){ return '<div class="c">'+(op.nome&&emp?'<div class="t">'+emp+'</div>':'')+'<img src="'+x.qr+'"><div class="m">Mesa '+esc(x.n)+'</div>'+(s>=45?'<div class="s">Aponte a câmera do celular</div>':'')+'</div>'; }).join('')+'</div>';
+    pags+='<div class="pg">'+L.slice(i,i+k.pag).map(function(x){ return '<div class="c">'+(op.nome&&emp?'<div class="t">'+emp+'</div>':'')+'<img src="'+x.qr+'">'+(x.g?'<div class="g">'+esc(x.g)+'</div><div class="m">'+esc(x.n)+'</div>':'<div class="m">Mesa '+esc(x.n)+'</div>')+(s>=45?'<div class="s">Aponte a câmera do celular</div>':'')+'</div>'; }).join('')+'</div>';
   }
   mzPrevia('<!doctype html><html><head><meta charset="utf-8"><title>QR codes das mesas</title><style>'
     +'@page{size:A4;margin:5mm}*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;color:#111}'
     +'.pg{width:200mm;display:grid;grid-template-columns:repeat('+k.col+','+s+'mm);grid-auto-rows:'+s+'mm;gap:'+k.gap+'mm;align-content:start;page-break-after:always;break-after:page}.pg:last-child{page-break-after:auto;break-after:auto}'
     +'.c{width:'+s+'mm;height:'+s+'mm;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;overflow:hidden;'+(op.corte?'outline:0.2mm dashed #999;outline-offset:-0.1mm;':'')+'padding:'+(s*0.04)+'mm}'
-    +'.c img{width:'+qr+'mm;height:'+qr+'mm;image-rendering:pixelated}.t{font-weight:700;font-size:'+fN+'mm;line-height:1.1;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.m{font-weight:800;font-size:'+fM+'mm;line-height:1.05}.s{font-size:'+fA+'mm;color:#555}'
+    +'.c img{width:'+qr+'mm;height:'+qr+'mm;image-rendering:pixelated}.t{font-weight:700;font-size:'+fN+'mm;line-height:1.1;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.m{font-weight:800;font-size:'+fM+'mm;line-height:1.05}.g{font-weight:800;font-size:'+(s*0.055)+'mm;line-height:1.05;letter-spacing:.08em;text-transform:uppercase;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.s{font-size:'+fA+'mm;color:#555}'
     +'@media screen{body{background:#e9e6e3;padding:14px}.pg{background:#fff;padding:5mm;width:210mm;min-height:297mm;margin:0 auto 14px;box-shadow:0 2px 12px rgba(0,0,0,.18)}}'
     +'</style></head><body>'+pags+'</body></html>', Math.ceil(L.length/k.pag));
 }
@@ -9878,7 +9964,7 @@ function mzQrTodos(){
   el('mza4-bt').onclick=function(){
     var bt=el('mza4-bt'); bt.disabled=true; bt.textContent='Montando as folhas…';
     mzSlug(function(){ mzQrLib(function(){ setTimeout(function(){
-      mzImprimirA4(MZ.lista.map(function(m){ var u=mzLink(m.num); return {n:m.num,u:u,qr:mzQrData(u)}; }),MZA4);
+      mzImprimirA4(MZ.lista.map(function(m){ var u=mzLink(m.num); return {n:m.num,u:u,qr:mzQrData(u),g:m.grupo||''}; }),MZA4);
       bt.disabled=false; bt.textContent='🖨 Gerar e imprimir'; fecharTudo();
     },30); }); });
   };
@@ -10035,7 +10121,10 @@ function cdCfgClientes(){
     if(!d||!d.ok) throw new Error((d&&d.mensagem)||'erro'); var c=d.cfg||{};
     el('cd-imp-corpo').innerHTML='<div style="font-size:13px;color:var(--muted2);line-height:1.5;margin-bottom:12px">Valem para os clientes cadastrados no <b>Atendimento</b> (garçom/balcão) que penduram a conta com <b>Marcar</b>.</div>'
       +'<label style="display:flex;gap:8px;align-items:flex-start;font-size:13.5px;font-weight:700;margin-bottom:14px;padding:10px 12px;border:1px solid var(--border);border-radius:12px"><input type="checkbox" id="cc-bal" '+(c.balcao_livre?'checked':'')+' style="width:18px;height:18px;flex:none"><span>Vender no balcão sem cliente<small style="display:block;font-weight:500;color:var(--muted);margin-top:2px">No Atendimento, o Balcão não pede número nem cliente. O pedido sai como Cliente Balcão.</small></span></label>'
-      +'<label style="display:flex;gap:8px;align-items:flex-start;font-size:13.5px;font-weight:700;margin-bottom:14px;padding:10px 12px;border:1px solid var(--border);border-radius:12px"><input type="checkbox" id="cc-garliv" '+(c.garcom_livre?'checked':'')+' style="width:18px;height:18px;flex:none"><span>Garçom vende sem mesa e sem cliente<small style="display:block;font-weight:500;color:var(--muted);margin-top:2px">Para quem está em pé ou é visitante. No Atendimento, a mesa e o cliente ficam opcionais: o pedido vai para a cozinha como <b>Sem mesa</b>, com a taxa e a comissão do garçom. Marcar na conta continua só para cliente.</small></span></label>'
++'<label style="display:flex;gap:8px;align-items:flex-start;font-size:13.5px;font-weight:700;margin-bottom:14px;padding:10px 12px;border:1px solid var(--border);border-radius:12px"><input type="checkbox" id="cc-nfc" '+(c.balcao_nfc?'checked':'')+' style="width:18px;height:18px;flex:none"><span>💳 Balcão com cartão NFC<small style="display:block;font-weight:500;color:var(--muted);margin-top:2px">No Atendimento, o Balcão monta o pedido sem mesa e sem cliente e, ao fechar, grava no cartão NFC do cliente. Cada cartão é uma comanda aberta; na saída, encosta o cartão e cobra. Não precisa cadastrar o cartão. Exige o Worker 321.</small></span></label>'
+      +'<label style="display:flex;gap:8px;align-items:flex-start;font-size:13.5px;font-weight:700;margin-bottom:14px;padding:10px 12px;border:1px solid var(--border);border-radius:12px"><input type="checkbox" id="cc-pede" '+(c.so_balcao?'':'checked')+' style="width:18px;height:18px;flex:none"><span>Cliente faz o pedido pelo celular<small style="display:block;font-weight:500;color:var(--muted);margin-top:2px">Vale para o link da loja, o QR da mesa e o link do WhatsApp. Ligado: o cliente envia o pedido e paga pelas <b>Formas de pagamento</b> (Pix e cartão no app; dinheiro ou cartão no caixa ou com o garçom). Desligado: ele só vê os produtos, monta a lista e chama o garçom, e o botão vira <b>Faça seu pedido no balcão</b>. O totem, o garçom e o balcão continuam vendendo normalmente.</small></span></label>'
+      +'<label style="display:flex;gap:8px;align-items:flex-start;font-size:13.5px;font-weight:700;margin-bottom:14px;padding:10px 12px;border:1px solid var(--border);border-radius:12px"><input type="checkbox" id="cc-noloc" '+(c.no_local?'checked':'')+' style="width:18px;height:18px;flex:none"><span>Cliente pede e paga na hora pelo celular (pedido no local)<small style="display:block;font-weight:500;color:var(--muted);margin-top:2px">Para quem pede estando no estabelecimento. O cliente faz o pedido e paga na hora com Pix ou cartão, no link da loja, na mesa e no link do WhatsApp; o pedido só vai para o preparo depois de pago. Não há entrega, retirada, dinheiro nem maquininha para o cliente: nesses casos ele chama o garçom ou vai até o balcão. Desligado, a mesa pede e paga no final, em Fechar conta.</small></span></label>'+'<label style="display:flex;gap:8px;align-items:flex-start;font-size:13.5px;font-weight:700;margin-bottom:14px;padding:10px 12px;border:1px solid var(--border);border-radius:12px"><input type="checkbox" id="cc-cmao" '+(c.conta_mao?'checked':'')+' style="width:18px;height:18px;flex:none"><span>Fechar conta só com o garçom ou no caixa<small style="display:block;font-weight:500;color:var(--muted);margin-top:2px">Para a mesa que pede pelo celular e paga no final. Ligado: ao tocar em Conta, o cliente não paga pelo celular; ele escolhe entre <b>chamar o garçom</b> (o aviso chega no Atendimento) ou <b>pagar no caixa</b>. Desligado: o cliente vê as Formas de pagamento (Pix, cartão, dinheiro). Não vale quando a opção de pagar na hora, acima, está ligada.</small></span></label>'+'<label style="display:flex;gap:8px;align-items:flex-start;font-size:13.5px;font-weight:700;margin-bottom:14px;padding:10px 12px;border:1px solid var(--border);border-radius:12px"><input type="checkbox" id="cc-ap" '+(c.ap_on?'checked':'')+' style="width:18px;height:18px;flex:none" onchange="el(\'cc-aptw\').style.display=this.checked?\'\':\'none\'"><span>Habilitar AP (morador por apartamento)<small style="display:block;font-weight:500;color:var(--muted);margin-top:2px">Para condomínios. Ligado: o endereço <b>livefood.tec.br/'+esc((CD&&CD.slug)||'sua-loja')+'/ap</b> funciona como o app de entrega, mas em vez do endereço o morador informa o <b>número do apartamento</b> no cadastro. O pedido sai na impressora com o <b>AP em destaque</b> e o nome de quem pediu. Os outros links (mesa e loja) continuam iguais.</small></span></label>'+'<label id="cc-aptw" style="display:'+(c.ap_on?'flex':'none')+';gap:8px;align-items:flex-start;font-size:13.5px;font-weight:700;margin:-6px 0 14px 18px;padding:10px 12px;border:1px solid var(--border);border-radius:12px"><input type="checkbox" id="cc-aptorre" '+(c.ap_torre?'checked':'')+' style="width:18px;height:18px;flex:none"><span>O condomínio tem torres?<small style="display:block;font-weight:500;color:var(--muted);margin-top:2px">Ligado: depois de entrar com o WhatsApp, o morador informa a <b>torre</b> e o <b>apartamento</b>, e a comanda sai com os dois. Desligado: só o número do apartamento.</small></span></label>'
+      +'<label style="display:flex;gap:8px;align-items:flex-start;font-size:13.5px;font-weight:700;margin-bottom:14px;padding:10px 12px;border:1px solid var(--border);border-radius:12px"><input type="checkbox" id="cc-garliv"'+(c.garcom_livre?'checked':'')+' style="width:18px;height:18px;flex:none"><span>Garçom vende sem mesa e sem cliente<small style="display:block;font-weight:500;color:var(--muted);margin-top:2px">Para quem está em pé ou é visitante. No Atendimento, a mesa e o cliente ficam opcionais: o pedido vai para a cozinha como <b>Sem mesa</b>, com a taxa e a comissão do garçom. Marcar na conta continua só para cliente.</small></span></label>'
       +'<label style="display:flex;gap:8px;align-items:flex-start;font-size:13.5px;font-weight:700;margin-bottom:14px;padding:10px 12px;border:1px solid var(--border);border-radius:12px"><input type="checkbox" id="cc-pronto" '+(c.pronto_direto?'checked':'')+' style="width:18px;height:18px;flex:none"><span>Pedido do Atendimento já sai pronto<small style="display:block;font-weight:500;color:var(--muted);margin-top:2px">O pedido lançado pelo garçom entra na tela de Preparo direto como Pronto, sem passar por Em preparo. Bom para bar e itens entregues na hora. A comanda continua aberta até fechar a conta.</small></span></label>'
       +'<label style="display:flex;gap:8px;align-items:flex-start;font-size:13.5px;font-weight:700;margin-bottom:14px;padding:10px 12px;border:1px solid var(--border);border-radius:12px"><input type="checkbox" id="cc-marcar" '+(c.marcar===false?'':'checked')+' style="width:18px;height:18px;flex:none"><span>Permitir Marcar na conta<small style="display:block;font-weight:500;color:var(--muted);margin-top:2px">Ligado, o garçom pode deixar o pedido na conta do cliente (pendurar) para cobrar no fechamento. Desligado, a opção Marcar some e todo pedido é pago na hora.</small></span></label>'
       +'<label style="display:flex;gap:8px;align-items:flex-start;font-size:13.5px;font-weight:700;margin-bottom:14px;padding:10px 12px;border:1px solid var(--border);border-radius:12px"><input type="checkbox" id="cc-cobra" '+(c.cobra_hora?'checked':'')+' style="width:18px;height:18px;flex:none"><span>Cobrar na hora do pedido<small style="display:block;font-weight:500;color:var(--muted);margin-top:2px">No Atendimento, o botão do carrinho vira <b>Fechar comanda</b>: o garçom escolhe a forma de pagamento, mostra o resumo para o cliente e, com o pagamento aprovado, o pedido vai para a cozinha. Se o cliente desistir, cancela sem criar pedido.</small></span></label>'
@@ -10052,10 +10141,15 @@ function cdCfgClientes(){
   }).catch(function(e){ el('cd-imp-corpo').innerHTML='<div style="color:#f87171;font-size:13px">'+esc(e.message||'Não consegui abrir.')+'</div>'; });
 }
 function cdCfgClientesSalvar(){
-  fetch(DELTADIS_API+'/painel/atend-cfg',{method:'POST',headers:cdHdr(),body:JSON.stringify({balcao_livre:el('cc-bal').checked,garcom_livre:el('cc-garliv').checked,pronto_direto:el('cc-pronto').checked,cobra_hora:el('cc-cobra').checked,marcar:el('cc-marcar').checked,copos:el('cc-copos').checked,bar_divide:el('cc-bardiv').checked,bloq_dias:el('cc-bloq').value,fecha_auto:el('cc-auto').checked,fecha_dias:el('cc-dias').value,msg:el('cc-msg').value})}).then(function(r){return r.json();}).then(function(d){
+  fetch(DELTADIS_API+'/painel/atend-cfg',{method:'POST',headers:cdHdr(),body:JSON.stringify({balcao_livre:el('cc-bal').checked,balcao_nfc:el('cc-nfc').checked,so_balcao:!el('cc-pede').checked,no_local:el('cc-noloc').checked,conta_mao:el('cc-cmao').checked,ap_on:el('cc-ap').checked,ap_torre:el('cc-aptorre').checked,garcom_livre:el('cc-garliv').checked,pronto_direto:el('cc-pronto').checked,cobra_hora:el('cc-cobra').checked,marcar:el('cc-marcar').checked,copos:el('cc-copos').checked,bar_divide:el('cc-bardiv').checked,bloq_dias:el('cc-bloq').value,fecha_auto:el('cc-auto').checked,fecha_dias:el('cc-dias').value,msg:el('cc-msg').value})}).then(function(r){return r.json();}).then(function(d){
     if(!d||!d.ok) throw new Error((d&&d.mensagem)||'não salvou');
     /* servidor antigo descarta a opção sem avisar: mostra em vez de dizer que salvou */
     if(el('cc-bal').checked&&!(d.cfg&&d.cfg.balcao_livre)) throw new Error('O servidor ainda não aceita esta opção. Publique o Worker 153 e salve de novo.');
+    if(el('cc-nfc').checked&&!(d.cfg&&d.cfg.balcao_nfc)) throw new Error('O servidor ainda não aceita o Balcão com cartão NFC. Publique o Worker 321 e salve de novo.');
+    if(!el('cc-pede').checked&&!(d.cfg&&d.cfg.so_balcao)) throw new Error('O servidor ainda não aceita "Pedido só no balcão". Publique o Worker 314 e salve de novo.');
+    if(el('cc-ap').checked&&!(d.cfg&&d.cfg.ap_on)) throw new Error('O servidor ainda não aceita "Habilitar AP". Publique o Worker 336 e salve de novo.');
+    if(el('cc-cmao').checked&&!(d.cfg&&d.cfg.conta_mao)) throw new Error('O servidor ainda não aceita "Fechar conta só com o garçom ou no caixa". Publique o Worker 333 e salve de novo.');
+    if(el('cc-noloc').checked&&!(d.cfg&&d.cfg.no_local)) throw new Error('O servidor ainda não aceita "Pedido feito no local". Publique o Worker 328 e salve de novo.');
     if(el('cc-garliv').checked&&!(d.cfg&&d.cfg.garcom_livre)) throw new Error('O servidor ainda não aceita "Garçom vende sem mesa e sem cliente". Publique o Worker 238 e salve de novo.');
     if(el('cc-pronto').checked&&!(d.cfg&&d.cfg.pronto_direto)) throw new Error('O servidor ainda não aceita esta opção. Publique o Worker 216 e salve de novo.');
     if(el('cc-cobra').checked&&!(d.cfg&&d.cfg.cobra_hora)) throw new Error('O servidor ainda não aceita "Cobrar na hora do pedido". Publique o Worker 228 e salve de novo.');
@@ -10064,6 +10158,134 @@ function cdCfgClientesSalvar(){
     aviso('Configurações salvas'); fecharTudo();
   }).catch(function(e){ var m=el('cc-m'); if(m){ m.style.color='#f87171'; m.textContent=e.message||'Não salvou'; } });
 }
+/* ── (310) BALANÇA — buffet por quilo ──
+   Configuração da loja em /painel/balanca-config (Worker 310). O peso ao vivo vem do programa de impressão deste computador
+   (http://127.0.0.1:17865), então "Pesar este prato" e o teste só funcionam com o painel aberto no computador da balança.
+   Nada grava sozinho: tudo fica em BZ.c e só vai para o servidor no botão Salvar. */
+var BZ={c:null,salvo:'',cli:'',chave:'',cats:[],t:null,agora:null}, BZ_LOCAL='http://127.0.0.1:17865', BZ_DIAS=['D','S','T','Q','Q','S','S'], BZ_DIASN=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+function bzNum(v){ var s=String(v==null?'':v).trim(); if(s.indexOf(',')>=0) s=s.replace(/\./g,'').replace(',','.'); var x=Math.round((parseFloat(s)||0)*100)/100; return x<0?0:x; }
+function bzFmt(v){ return v>0?Number(v).toFixed(2).replace('.',','):''; }
+function bzCarregar(){
+  el('bz-corpo').innerHTML='<div class="card" style="font-size:13px;color:var(--muted)">Carregando…</div>';
+  mzApi('/painel/balanca-config').then(function(d){
+    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'A Balança precisa do Worker 310 publicado.');
+    BZ.cli=d.cli; BZ.chave=d.chave; BZ.agora=d.agora; BZ.c=d.bal;
+    return fetch(DELTADIS_API+'/food/cardapio/'+encodeURIComponent(d.cli)).then(function(r){ return r.json(); }).catch(function(){ return {}; }).then(function(m){ BZ.cats=(m&&m.cats)||[]; bzPintar(); bzLe(); BZ.salvo=JSON.stringify(BZ.c); bzBarra(); clearInterval(BZ.t); BZ.t=setInterval(bzPeso,700); bzPeso(); });
+  }).catch(function(e){ el('bz-corpo').innerHTML='<div class="card" style="color:var(--red);font-size:13px">'+esc(e.message||'Não carregou')+'</div>'; });
+}
+function bzLink(){ return 'https://livefood.tec.br/totem/buffet.html?loja='+encodeURIComponent(BZ.cli)+'&k='+encodeURIComponent(BZ.chave); }
+function bzPintar(){
+  var c=BZ.c, ag=BZ.agora||{}, h='', sw=function(id,on){ return '<label class="wa-sw"><input type="checkbox" id="'+id+'"'+(on?' checked':'')+' onchange="bzMudou()"><span class="wa-bl"></span></label>'; };
+  el('bz-sub').textContent=c.ativo?('ligada · agora R$ '+bzFmt(ag.preco||c.precoKg||0)+' o quilo'+(ag.faixa?' ('+ag.faixa+')':'')+(ag.livre>0?' · livre R$ '+bzFmt(ag.livre):'')):'desligada';
+  /* situação + tela + balança ao vivo */
+  h+='<div class="card" style="margin-bottom:16px"><h3><span class="lft">Tela do Buffet</span></h3>'
+    +'<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'+sw('bz-ativo',c.ativo)+'<span style="font-weight:700">Balança do buffet ligada</span></div>'
+    +'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px"><input class="inp" readonly value="'+esc(bzLink())+'" style="flex:1;min-width:220px" onclick="this.select()"><button class="btn sec" onclick="bzCopiar()">Copiar link</button><a class="btn pri" href="'+esc(bzLink())+'" target="_blank" rel="noopener" style="text-decoration:none">Abrir a tela</a><a class="btn sec" href="'+esc(bzLink()+'&teste=1')+'" target="_blank" rel="noopener" style="text-decoration:none">Abrir demonstração</a></div>'
+    +'<p class="bz-dica">Abra esse link no computador que fica ao lado da balança e aperte F11 para a tela cheia. O link leva a chave da loja: não envie para outras pessoas.<br><b>Demonstração:</b> funciona sem balança, em qualquer computador ou tablet. Um botão na tela simula o prato; nada é registrado nem impresso. Serve para mostrar a clientes e treinar a equipe.</p>'
+    +'<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px solid var(--b2,#E8E8EB)"><div><div class="bz-rot">Balança agora</div><div class="bz-peso" id="bz-peso">—</div></div><div id="bz-peso-m" style="flex:1;min-width:200px;font-size:12.5px;line-height:1.5;color:var(--muted)"></div><button class="btn sec" onclick="bzProcurar()">Procurar balança</button></div></div>';
+  /* preço do quilo */
+  h+='<div class="card" style="margin-bottom:16px"><h3><span class="lft">Preço do quilo</span></h3>'
+    +'<div style="display:flex;gap:14px;flex-wrap:wrap"><label><div class="bz-rot">Preço padrão (R$ por quilo)</div><input class="inp" id="bz-preco" inputmode="decimal" placeholder="69,90" value="'+bzFmt(c.precoKg)+'" style="width:130px" oninput="bzMudou()"></label>'
+    +'<label><div class="bz-rot">Buffet livre (R$, opcional)</div><input class="inp" id="bz-max" inputmode="decimal" placeholder="não uso" value="'+bzFmt(c.max)+'" style="width:130px" oninput="bzMudou()"></label></div>'
+    +'<p class="bz-dica">Buffet livre: se o prato pelo peso passar desse valor, o cliente paga o valor do livre e a comanda sai como Buffet livre. Em branco, cobra só pelo peso.</p><div style="display:none"></div>'
+    +'<div class="bz-rot" style="margin-top:16px">Preço diferente por dia e horário</div><div id="bz-faixas">'
+    +(c.faixas.length?c.faixas.map(function(f,i){ return '<div class="bz-ln bz-fx"><span style="display:flex;gap:4px">'+BZ_DIAS.map(function(l,d){ return '<button type="button" class="bz-dia'+(f.dias.indexOf(d)>=0?' on':'')+'" data-d="'+d+'" title="'+BZ_DIASN[d]+'" onclick="this.classList.toggle(\'on\');bzMudou()">'+l+'</button>'; }).join('')+'</span>'
+      +'<span style="display:flex;gap:6px;align-items:center;font-size:12.5px;color:var(--muted)">das <input class="inp bz-de" type="time" value="'+esc(f.de)+'" style="width:112px" oninput="bzMudou()"> às <input class="inp bz-ate" type="time" value="'+esc(f.ate)+'" style="width:112px" oninput="bzMudou()"></span>'
+      +'<span style="display:flex;gap:6px;align-items:center;font-size:12.5px;color:var(--muted)">quilo R$ <input class="inp bz-fp" inputmode="decimal" placeholder="79,90" value="'+bzFmt(f.preco)+'" style="width:100px" oninput="bzMudou()"></span>'
+      +'<span style="display:flex;gap:6px;align-items:center;font-size:12.5px;color:var(--muted)">livre R$ <input class="inp bz-fl" inputmode="decimal" placeholder="o padrão" value="'+bzFmt(f.livre)+'" style="width:100px" oninput="bzMudou()"></span>'
+      +'<button type="button" class="bz-x" title="Tirar esta faixa" onclick="bzFxTira('+i+')">✕</button></div>'; }).join(''):'<div style="font-size:12.5px;color:var(--muted);padding:8px 0">Nenhuma faixa: vale sempre o preço padrão.</div>')
+    +'</div><button class="btn sec sm" style="margin-top:8px" onclick="bzFxNova()">+ Nova faixa</button>'
+    +'<p class="bz-dica">Exemplo: almoço de segunda a sexta num preço, sábado em outro, jantar em outro. A tela usa sozinha a faixa do momento; fora das faixas vale o preço padrão. O campo livre de cada faixa é opcional: em branco, vale o valor do buffet livre lá de cima.</p></div>';
+  /* pratos */
+  h+='<div class="card" style="margin-bottom:16px"><h3><span class="lft">Pratos (peso que a balança desconta)</span></h3><div id="bz-pratos">'
+    +(c.pratos.length?c.pratos.map(function(p,i){ return '<div class="bz-ln bz-pr"><label style="display:flex;gap:6px;align-items:center;font-size:12.5px;font-weight:700" title="Prato em uso agora"><input type="radio" name="bz-ativo-pr" class="bz-pa"'+(p.n===c.prato?' checked':'')+' onchange="bzMudou()"> em uso</label>'
+      +'<span style="display:flex;gap:6px;align-items:center;font-size:12.5px;color:var(--muted)">nº <input class="inp bz-pn" inputmode="numeric" value="'+('0'+p.n).slice(-2)+'" style="width:62px" oninput="bzMudou()"></span>'
+      +'<input class="inp bz-pnome" placeholder="Nome (ex.: Prato raso)" value="'+esc(p.nome)+'" style="flex:1;min-width:150px" oninput="bzMudou()">'
+      +'<span style="display:flex;gap:6px;align-items:center;font-size:12.5px;color:var(--muted)"><input class="inp bz-pg" inputmode="numeric" value="'+(p.g||'')+'" placeholder="0" style="width:84px" oninput="bzMudou()"> g</span>'
+      +'<button type="button" class="btn sec sm" onclick="bzPrPesar('+i+')">Pesar este prato</button><button type="button" class="bz-x" title="Tirar este prato" onclick="bzPrTira('+i+')">✕</button></div>'; }).join(''):'<div style="font-size:12.5px;color:var(--muted);padding:8px 0">Nenhum prato cadastrado: a balança cobra o peso inteiro.</div>')
+    +'</div><button class="btn sec sm" style="margin-top:8px" onclick="bzPrNovo()">+ Novo prato</button>'
+    +'<p class="bz-dica">Para cadastrar: ponha o prato vazio na balança e toque em Pesar este prato. Para trocar o prato no meio do almoço, toque no canto de cima da tela do Buffet e digite o número (01, 02).</p>'
+    +'<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--b2,#E8E8EB)"><label><div class="bz-rot">Senha para trocar o prato na tela (só números)</div><input class="inp" id="bz-senha" inputmode="numeric" maxlength="8" autocomplete="off" placeholder="sem senha" value="'+esc(c.senha||'')+'" style="width:150px" oninput="this.value=this.value.replace(/\\D/g,\'\');bzMudou()"></label>'
+    +'<p class="bz-dica">Com senha, a tela do Buffet pede a senha antes de aceitar o número do prato. Em branco, qualquer pessoa troca.</p></div></div>';
+  /* pagamento (312) */
+  h+='<div class="card" style="margin-bottom:16px"><h3><span class="lft">Pagamento</span></h3>'
+    +'<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'+sw('bz-pagtela',c.pagTela!==0)+'<span style="font-weight:700">Oferecer Pix na tela depois da comanda</span></div>'
+    +'<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px">'+sw('bz-pagqr',c.pagQr!==0)+'<span style="font-weight:700">Imprimir na comanda o QR para ver a conta e pagar pelo celular</span></div>'
+    +'<p class="bz-dica">Pagar no caixa vale sempre: o operador bipa a comanda no Atendimento e a conta dela já abre. O Pix na tela e no celular só aparece se a loja recebe Pix pelo sistema (Configurações, Formas de pagamento) e a conta for de R$ 5,00 ou mais.</p></div>';
+  /* bebida */
+  h+='<div class="card" style="margin-bottom:16px"><h3><span class="lft">Bebida</span></h3><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'+sw('bz-bebida',c.bebida)+'<span style="font-weight:700">Perguntar se o cliente deseja uma bebida</span></div>'
+    +'<div class="bz-rot" style="margin-top:14px">Categorias que aparecem na pergunta</div><div style="display:flex;gap:6px 14px;flex-wrap:wrap;margin-top:6px">'
+    +(BZ.cats.length?BZ.cats.map(function(k){ return '<label style="display:flex;gap:6px;align-items:center;font-size:13px"><input type="checkbox" class="bz-cat" value="'+esc(k.id)+'"'+(c.bebCats.indexOf(k.id)>=0?' checked':'')+' onchange="bzMudou()"> '+esc(k.nome)+'</label>'; }).join(''):'<span style="font-size:12.5px;color:var(--muted)">Cadastre as bebidas no Cardápio.</span>')
+    +'</div><p class="bz-dica">O cliente toca na bebida ou passa o código de barras da lata no leitor (cadastre o código no produto). Sem categoria marcada, a tela aceita só o código de barras.</p></div>';
+  /* aparência */
+  h+='<div class="card" style="margin-bottom:16px"><h3><span class="lft">Aparência da tela</span></h3>'
+    +'<label><div class="bz-rot">Frase inicial (até 40 letras)</div><input class="inp" id="bz-frase" maxlength="40" placeholder="Coloque seu prato na balança" value="'+esc(c.frase)+'" style="width:100%;max-width:420px" oninput="bzMudou()"></label>'
+    +'<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px">'+sw('bz-voz',c.voz)+'<span style="font-weight:700">O personagem fala o peso e o valor</span></div>'
+    +'<div class="bz-rot" style="margin-top:14px">Vídeo de fundo</div><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:6px">'
+    +(c.video?'<video src="'+DELTADIS_API+'/food/video/'+esc(BZ.cli)+'/'+esc(c.video)+'" muted loop autoplay playsinline style="width:120px;height:68px;object-fit:cover;border-radius:8px;background:#000"></video><button class="btn sec sm" onclick="bzVideoTira()">Tirar o vídeo</button>':'')
+    +'<label class="btn sec sm" style="cursor:pointer">'+(c.video?'Trocar o vídeo':'Enviar vídeo')+'<input type="file" accept="video/mp4,video/webm" style="display:none" onchange="bzVideo(this)"></label><span id="bz-vid-m" style="font-size:12.5px;font-weight:700;color:var(--muted)"></span></div>'
+    +'<p class="bz-dica">Vídeo MP4 de até 90 MB, sem som, que fica passando atrás da tela. Sem vídeo a tela usa o fundo padrão.</p></div>';
+  el('bz-corpo').innerHTML=h;
+}
+/* lê os campos da tela para BZ.c (sempre no mesmo formato, para comparar com o que está salvo) */
+function bzLe(){
+  var c=BZ.c, q=function(s,r){ return Array.prototype.slice.call((r||document).querySelectorAll(s)); }; if(!c||!el('bz-ativo')) return;
+  c.ativo=el('bz-ativo').checked?1:0; c.precoKg=bzNum(el('bz-preco').value); c.max=bzNum(el('bz-max').value);
+  c.faixas=q('#bz-faixas .bz-fx').map(function(r){ return { dias:q('.bz-dia.on',r).map(function(b){ return +b.getAttribute('data-d'); }), de:r.querySelector('.bz-de').value, ate:r.querySelector('.bz-ate').value, preco:bzNum(r.querySelector('.bz-fp').value), livre:bzNum(r.querySelector('.bz-fl').value) }; });
+  var at=0; c.pratos=q('#bz-pratos .bz-pr').map(function(r){ var p={ n:Math.max(0,Math.min(99,parseInt(r.querySelector('.bz-pn').value,10)||0)), nome:r.querySelector('.bz-pnome').value.trim(), g:Math.max(0,Math.round(bzNum(r.querySelector('.bz-pg').value))) }; if(r.querySelector('.bz-pa').checked) at=p.n; return p; });
+  c.prato=at||(c.pratos[0]?c.pratos[0].n:0);
+  c.bebida=el('bz-bebida').checked?1:0; c.bebCats=q('.bz-cat').filter(function(x){ return x.checked; }).map(function(x){ return x.value; });
+  c.frase=el('bz-frase').value.trim(); c.voz=el('bz-voz').checked?1:0;
+  c.senha=el('bz-senha').value.replace(/\D/g,'').slice(0,8); c.pagTela=el('bz-pagtela').checked?1:0; c.pagQr=el('bz-pagqr').checked?1:0;   /* (312) */
+}
+function bzBarra(){ var b=el('bz-barra'); if(b) b.style.display=(BZ.c&&JSON.stringify(BZ.c)!==BZ.salvo)?'flex':'none'; }
+function bzMudou(){ bzLe(); bzBarra(); }
+function bzDesfazer(){ BZ.c=JSON.parse(BZ.salvo); bzPintar(); bzLe(); bzBarra(); }
+function bzFxNova(){ bzLe(); BZ.c.faixas.push({dias:[1,2,3,4,5],de:'11:00',ate:'15:00',preco:BZ.c.precoKg||0,livre:0}); bzPintar(); bzBarra(); }
+function bzFxTira(i){ bzLe(); BZ.c.faixas.splice(i,1); bzPintar(); bzBarra(); }
+function bzPrNovo(){ bzLe(); var n=1; while(BZ.c.pratos.some(function(p){ return p.n===n; })) n++; BZ.c.pratos.push({n:n,nome:'',g:0}); if(!BZ.c.prato) BZ.c.prato=n; bzPintar(); bzBarra(); var r=document.querySelectorAll('#bz-pratos .bz-pnome'); if(r.length) r[r.length-1].focus(); }
+function bzPrTira(i){ bzLe(); var p=BZ.c.pratos.splice(i,1)[0]; if(p&&p.n===BZ.c.prato) BZ.c.prato=BZ.c.pratos[0]?BZ.c.pratos[0].n:0; bzPintar(); bzBarra(); }
+function bzLocal(path,post){ return fetch(BZ_LOCAL+path,post?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(post)}:{cache:'no-store'}).then(function(r){ return r.json(); }); }
+function bzPrPesar(i){
+  bzLocal('/balanca/peso').then(function(d){
+    if(!d.ok){ aviso(esc(d.mensagem||'A balança não respondeu.')); return; }
+    if(!d.estavel){ aviso('O peso ainda está variando. Espere parar e toque de novo.'); return; }
+    if(!(d.kg>0)){ aviso('Ponha o prato vazio na balança.'); return; }
+    bzLe(); BZ.c.pratos[i].g=Math.round(d.kg*1000); bzPintar(); bzBarra(); aviso('Prato com '+BZ.c.pratos[i].g+' g. Toque em Salvar.');
+  }).catch(function(){ aviso('Abra o painel no computador da balança, com o programa de impressão ligado.'); });
+}
+function bzPeso(){
+  if(PAG!=='balanca'){ clearInterval(BZ.t); BZ.t=null; return; }
+  var p=el('bz-peso'), m=el('bz-peso-m'); if(!p) return;
+  bzLocal('/balanca/peso').then(function(d){
+    if(d.ok){ p.textContent=Number(d.kg).toFixed(3).replace('.',',')+' kg'; m.textContent=(d.estavel?'Peso parado. ':'Peso variando… ')+'Balança na porta '+d.porta+'.'; }
+    else { p.textContent='—'; m.textContent=d.mensagem||'A balança não respondeu.'; }
+  }).catch(function(){ p.textContent='—'; m.textContent='Não achei o programa de impressão neste computador. O peso só aparece no computador da balança, com o programa de impressão instalado e ligado (Configurações > Impressoras).'; });
+}
+function bzProcurar(){ aviso('Procurando a balança…'); bzLocal('/balanca/procurar',{}).then(function(d){ aviso(d.ok?'Balança encontrada na porta '+esc(d.porta):esc(d.mensagem||'Não encontrei a balança.')); }).catch(function(){ aviso('Abra o painel no computador da balança, com o programa de impressão ligado.'); }); }
+function bzCopiar(){ try{ navigator.clipboard.writeText(bzLink()).then(function(){ aviso('Link copiado'); }); }catch(e){ aviso('Selecione o link e copie.'); } }
+function bzVideo(inp){
+  var f=inp.files&&inp.files[0], m=el('bz-vid-m'); if(!f) return;
+  if(f.size>90*1024*1024){ m.textContent='Vídeo grande demais (máximo 90 MB).'; return; }
+  var x=new XMLHttpRequest(); x.open('POST',DELTADIS_API+'/painel/video-upload'); x.setRequestHeader('Authorization','Bearer '+DD_TOKEN); x.setRequestHeader('Content-Type',f.type||'video/mp4');
+  x.upload.onprogress=function(e){ if(e.lengthComputable) m.textContent='Enviando… '+Math.round(e.loaded/e.total*100)+'%'; };
+  x.onload=function(){ var j={}; try{ j=JSON.parse(x.responseText); }catch(e){} if(!j.ok){ m.textContent=j.mensagem||'Não enviou.'; return; } bzLe(); BZ.c.video=j.vid; bzPintar(); bzBarra(); aviso('Vídeo enviado. Toque em Salvar.'); };
+  x.onerror=function(){ m.textContent='Sem conexão.'; }; x.send(f);
+}
+function bzVideoTira(){ bzLe(); BZ.c.video=''; bzPintar(); bzBarra(); }
+function bzSalvar(){
+  bzLe(); var c=BZ.c;
+  if(c.ativo&&!(c.precoKg>0)){ aviso('Informe o preço padrão do quilo.'); return; }
+  if(c.faixas.some(function(f){ return !f.dias.length||!f.de||!f.ate||f.de===f.ate||!(f.preco>0); })){ aviso('Complete as faixas: dias, horário e preço.'); return; }
+  if(c.pratos.some(function(p){ return !p.n||!p.nome; })){ aviso('Dê número e nome a cada prato.'); return; }
+  if(c.pratos.some(function(p,i){ return c.pratos.some(function(o,j){ return j!==i&&o.n===p.n; }); })){ aviso('Dois pratos estão com o mesmo número.'); return; }
+  mzApi('/painel/balanca-config',c).then(function(d){
+    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'Não salvou');
+    var velho=d.bal&&d.bal.pagTela===undefined;   /* servidor anterior ao 312 não guarda a senha nem as opções de pagamento */
+    BZ.c=d.bal; BZ.agora=d.agora; bzPintar(); bzLe(); BZ.salvo=JSON.stringify(BZ.c); bzBarra(); aviso(velho?'Salvo, menos a senha e o pagamento: publique o Worker 312.':'Balança salva');
+  }).catch(function(e){ aviso(esc(e.message||'Não salvou')); });
+}
+
 /* ── (145) IMPRESSORAS: instalador já com a chave da loja + situação do programa no computador do restaurante ── */
 var IMP_JS='https://livefood.tec.br/impressao/giro-impressao.js', IMP_NODE='https://nodejs.org/dist/v22.20.0/node-v22.20.0-win-x64.zip';
 function impAbrir(){
@@ -10077,7 +10299,7 @@ function impAbrir(){
       +'<button class="btn pri wide" onclick="impBaixar(\''+esc(d.cli)+'\',\''+esc(d.chave)+'\')">Baixar instalador</button>'
       +(ligado?'<button class="btn sec wide" style="margin-top:8px" onclick="impTeste()">Imprimir teste nas impressoras</button>':'')
       +'<div id="imp-m" style="font-size:12.5px;font-weight:700;margin-top:8px"></div>'
-      +'<p style="font-size:11.5px;line-height:1.5;color:var(--muted);margin:12px 0 0">Funciona com computador Windows e impressora de rede (cabo ou Wi-Fi); impressora só por USB não funciona. O instalador leva a chave da sua loja: não envie para outras pessoas. Com o programa ligado, saem sozinhos os pedidos do garçom, cardápio, WhatsApp, totem e foto da comanda.</p>';
+      +'<p style="font-size:11.5px;line-height:1.5;color:var(--muted);margin:12px 0 0">Funciona com computador Windows e impressora térmica de rede (cabo ou Wi-Fi) ou ligada neste computador pelo cabo USB, sem precisar instalar driver. O instalador leva a chave da sua loja: não envie para outras pessoas. Com o programa ligado, saem sozinhos os pedidos do garçom, cardápio, WhatsApp, totem e foto da comanda.</p>';
   }).catch(function(e){ el('cd-imp-corpo').innerHTML='<div style="color:var(--red);font-size:13px">'+esc(e.message||'Não carregou')+'</div>'; });
 }
 /* o .bat não pede login nem administrador: baixa o programa e um Node próprio na pasta do usuário e liga junto com o Windows */
@@ -10176,7 +10398,7 @@ function pgAbrir(){
   el('cd-imp-corpo').innerHTML='<div style="font-size:13px;color:var(--muted)">Carregando…</div>';
   el('sh-import').querySelector('h3').textContent='Formas de pagamento'; abrir('sh-import');
   fetch(DELTADIS_API+'/painel/cardapio-config',{headers:cdHdr()}).then(function(r){return r.json();}).then(function(d){
-    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'erro'); PG=d.pagto||{pix:{on:1,desc:0},dinheiro:{on:1},cartao:{on:1,parcelas:1,semJuros:1,acresc:0},maquina:{on:1,descDebito:0},politica:''}; pgPintar();
+    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'erro'); PG=d.pagto||{pix:{on:1,desc:0},dinheiro:{on:1},cartao:{on:1,parcelas:1,semJuros:1,acresc:0},maquina:{on:1,descDebito:0},politica:''}; PG_CARDSEM=d.cartaoSem||null; pgPintar();
     PG_ASAAS=null; fetch(DELTADIS_API+'/painel/pagamento',{headers:cdHdr()}).then(function(r){return r.json();}).then(function(p){ if(p&&p.ok){ PG_ASAAS=!!p.configurado; pgAviso(); } }).catch(function(){});
   }).catch(function(e){ el('cd-imp-corpo').innerHTML='<div style="color:#f87171;font-size:13px">'+esc(e.message||'Não consegui abrir.')+'</div>'; });
 }
@@ -10185,8 +10407,10 @@ function pgPintar(){
   var num=function(id,v,tit,suf,max){ return '<label style="display:flex;align-items:center;gap:8px;margin:6px 0 0 29px;font-size:13px;color:var(--muted2)">'+tit+'<input class="inp" id="'+id+'" type="number" min="0" max="'+max+'" step="'+(suf==='%'?'0.5':'1')+'" value="'+esc(String(v||0))+'" style="width:84px;margin:0">'+suf+'</label>'; };
   var c=PG.cartao||{}, h='<div style="font-size:13px;color:var(--muted2);line-height:1.5">Escolha como o cliente pode pagar. Os descontos e o acréscimo do parcelado são calculados pelo sistema nos pedidos do app e do site. O Live conta essas regras no WhatsApp e no totem.</div>';
   h+=ck('pg-pix',PG.pix&&PG.pix.on,'Pix','Pago pelo app, aprovação na hora.')+num('pg-pix-d',PG.pix&&PG.pix.desc,'Desconto no Pix','%',30);
+  h+='<div style="margin-left:29px">'+ck('pg-pix-sc',PG.pix&&PG.pix.semCpf,'Cobrar Pix sem pedir CPF','Precisa de uma chave Pix ativa na conta Asaas da loja. Sem a chave, o card\u00e1pio continua pedindo o CPF. Depois de ligar, fa\u00e7a um Pix de teste.')+'</div>';
   h+=ck('pg-din',PG.dinheiro&&PG.dinheiro.on,'Dinheiro','Pago na entrega ou na retirada, com troco.');
   h+=ck('pg-car',c.on,'Cartão de crédito pelo app','O cliente paga no app com o cartão.')+num('pg-par',c.parcelas||1,'Parcelar em até','x',12)+num('pg-sj',c.semJuros||1,'Sem juros até','x',12)+num('pg-acr',c.acresc,'Acima disso, acréscimo de','% no total',30);
+  if(PG_CARDSEM&&PG_CARDSEM.em) h+='<div style="margin:8px 0 2px 29px;padding:10px 12px;border:1px solid #f59e0b;background:#fffbeb;color:#92400e;border-radius:10px;font-size:12.5px;line-height:1.45"><b>O cartão de um cliente não ficou salvo</b> em '+esc(new Date(PG_CARDSEM.em).toLocaleString('pt-BR'))+'. Peça ao Asaas a <b>tokenização de cartão de crédito</b> nesta conta.<br><span style="opacity:.8">Resposta do Asaas: status '+esc(PG_CARDSEM.status||'?')+' · campos: '+esc(PG_CARDSEM.campos||'?')+'</span></div>';
   h+=ck('pg-maq',PG.maquina&&PG.maquina.on,'Cartão na maquininha','Débito ou crédito na entrega ou na retirada.')+num('pg-deb',PG.maquina&&PG.maquina.descDebito,'Desconto no débito','%',30);
   /* (276) CARTÃO DO CLIENTE (NFC): aparece como "Cliente Crédito" no fechamento do garçom e do caixa */
   var cs=PG.cashless||{};
@@ -10200,7 +10424,7 @@ function pgPintar(){
   el('pgt-mesa').onchange=function(){ if(!this.checked) el('pgt-racha').checked=false; pgAviso(); }; el('pgt-racha').onchange=function(){ if(this.checked) el('pgt-mesa').checked=true; pgAviso(); }; pgAviso();
 }
 /* (159) sem o Asaas o cliente não vê o pagamento na mesa: avisa aqui em vez de a opção ficar ligada sem efeito */
-var PG_ASAAS=null;
+var PG_ASAAS=null, PG_CARDSEM=null;
 function pgAviso(){
   var b=el('pg-asaas'), m=el('pgt-mesa'); if(!b||!m) return;
   b.innerHTML=(m.checked&&PG_ASAAS===false)?'<div style="margin:10px 0 2px;padding:10px 12px;border:1px solid #f59e0b;background:#fffbeb;color:#92400e;border-radius:10px;font-size:12.5px;line-height:1.45"><b>Conecte o Asaas para isso aparecer.</b> Sem ele, o cliente continua vendo a conta antiga, mesmo com a opção ligada.<br><button class="btn sec sm" type="button" style="margin-top:8px" onclick="cdPagamento()">Conectar o Asaas</button></div>':'';
@@ -10208,7 +10432,7 @@ function pgAviso(){
 function pgSalvar(){
   var v=function(id){ return Number(String(el(id).value).replace(',','.'))||0; }, on=function(id){ return el(id).checked?1:0; };
   var par=Math.max(1,Math.min(12,Math.round(v('pg-par')))), sj=Math.max(1,Math.min(par,Math.round(v('pg-sj'))));
-  var body={pagto:{mesa:on('pgt-mesa'),racha:on('pgt-mesa')&&on('pgt-racha'),pix:{on:on('pg-pix'),desc:v('pg-pix-d')},dinheiro:{on:on('pg-din')},cartao:{on:on('pg-car'),parcelas:par,semJuros:sj,acresc:v('pg-acr')},maquina:{on:on('pg-maq'),descDebito:v('pg-deb')},cashless:{pre:on('pgc-pre'),pos:on('pgc-pos'),limite:v('pgc-lim')},politica:el('pg-pol').value.trim()}};
+  var body={pagto:{mesa:on('pgt-mesa'),racha:on('pgt-mesa')&&on('pgt-racha'),pix:{on:on('pg-pix'),desc:v('pg-pix-d'),semCpf:on('pg-pix-sc')},dinheiro:{on:on('pg-din')},cartao:{on:on('pg-car'),parcelas:par,semJuros:sj,acresc:v('pg-acr')},maquina:{on:on('pg-maq'),descDebito:v('pg-deb')},cashless:{pre:on('pgc-pre'),pos:on('pgc-pos'),limite:v('pgc-lim')},politica:el('pg-pol').value.trim()}};
   var m=el('pg-m');
   fetch(DELTADIS_API+'/painel/cardapio-config',{method:'POST',headers:cdHdr(),body:JSON.stringify(body)}).then(function(r){return r.json();}).then(function(d){
     if(!d||!d.ok) throw new Error((d&&d.mensagem)||'não salvou'); aviso((body.pagto.mesa&&PG_ASAAS===false)?'Salvo. Conecte o Asaas para o pagamento na mesa aparecer':'Formas de pagamento salvas'); fecharTudo();
@@ -10226,6 +10450,20 @@ function lvSalvar(){
     if(body.nome&&d.cfg.nome===undefined){ aviso('Live salvo, mas o nome do atendente só fica gravado depois de publicar o Worker 220.'); fecharTudo(); return; }
     aviso(d.cfg.ativo?'Live salvo e ligado':'Live salvo (desligado)'); fecharTudo();
   }).catch(function(e){ var m=el('lv-m'); if(m){ m.style.color='#f87171'; m.textContent=e.message||'Não salvou'; } });
+}
+/* ── (295/296) TOTEM DE TOQUE: autoatendimento por toque (totem em pé ou deitado, ou tablet de mesa), sem voz.
+   As configurações ficam na própria tela do totem (totem/js/toque-config.js): com o dono logado, aparecem à esquerda
+   e o totem ao lado muda a cada clique. Aqui o painel só abre essa tela dentro de uma janela grande. ── */
+function tqAbrir(){
+  el('tq-corpo').innerHTML='<div class="tq-msg">Carregando…</div>'; abrir('sh-totem');
+  fetch(DELTADIS_API+'/painel/live-config',{headers:cdHdr()}).then(function(r){return r.json();}).then(function(d){
+    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'erro');
+    el('tq-corpo').innerHTML='<iframe title="Totem de toque: configurações e a tela do totem" src="totem/toque.html?loja='+encodeURIComponent(d.cli)+'&config=1"></iframe>';
+  }).catch(function(e){ el('tq-corpo').innerHTML='<div class="tq-msg" style="color:#DC2626">'+esc(e.message||'Não consegui abrir.')+'</div>'; });
+}
+function tqFechar(){
+  el('tq-corpo').innerHTML=''; fecharTudo();
+  fetch(DELTADIS_API+'/painel/live-config',{headers:cdHdr()}).then(function(r){return r.json();}).then(function(d){ var b=el('tq-badge'), g=d&&d.cfg&&d.cfg.toque; if(b&&g) b.textContent=g.ativo?'ligado':'desligado'; }).catch(function(){});
 }
 /* ── (120) SALÃO: desenhar a planta do restaurante (mesas, balcão, cozinha, banheiros, entrada, saída) ── */
 var SL={L:[],sel:0,drag:null,uid:1,v3:false,ang:35,areas:[],area:''};
@@ -10822,6 +11060,28 @@ function etPagina(){
 /* ── ofertas com vídeo (1B) ── */
 function cdSelProd(id,on){ if(on) CD.sel[id]=1; else delete CD.sel[id]; cdBarraSel(); }
 function cdLimparSel(){ CD.sel={}; cdPintar(); }
+/* marca todos os produtos que aparecem na lista agora (respeita a busca e a categoria escolhidas) */
+function cdSelTodos(){
+  var q=(el('cd-busca').value||'').toLowerCase().trim(), cat=el('cd-fcat').value, i, p;
+  for(i=0;i<CD.prods.length;i++){ p=CD.prods[i]; if(q&&(p.nome||'').toLowerCase().indexOf(q)<0) continue; if(cat&&p.cat!==cat) continue; CD.sel[p.id]=1; }
+  cdPintar();
+}
+/* apaga em lote os produtos marcados (um por vez, no mesmo endpoint do botão Apagar do produto) */
+function cdApagarSel(){
+  var ids=Object.keys(CD.sel||{}), ps=(CD.prods||[]).filter(function(p){ return ids.indexOf(p.id)>=0; }); if(!ps.length) return;
+  var ex=ps.slice(0,6).map(function(p){ return '• '+p.nome; }).join('\n')+(ps.length>6?'\n… e mais '+(ps.length-6):'');
+  if(!window.confirm('Apagar '+ps.length+' produto'+(ps.length==1?'':'s')+' do cardápio?\n\n'+ex+'\n\nIsso não dá pra desfazer.')) return;
+  var b=el('cd-selapagar'), feitos=0, falhou=0, k=0;
+  if(b) b.disabled=true;
+  (function prox(){
+    if(k>=ps.length){
+      CD.sel={}; if(b){ b.disabled=false; b.textContent='🗑 Excluir'; }
+      aviso(falhou?('Apaguei '+feitos+' e '+falhou+' não deu certo. Tente de novo.'):(feitos+' produto'+(feitos==1?'':'s')+' apagado'+(feitos==1?'':'s'))); cdCarregar(); return;
+    }
+    var p=ps[k++]; if(b) b.textContent='Apagando '+k+' de '+ps.length+'…';
+    fetch(DELTADIS_API+'/painel/cardapio-apagar',{method:'POST',headers:cdHdr(),body:JSON.stringify({tipo:'prod',id:p.id})}).then(function(r){ return r.json(); }).then(function(d){ if(d&&d.ok) feitos++; else falhou++; }).catch(function(){ falhou++; }).then(prox);
+  })();
+}
 function cdBarraSel(){ var n=Object.keys(CD.sel).length, b=el('cd-selbar'); if(!b) return; b.style.display=n?'flex':'none'; el('cd-seltxt').textContent=n+' produto'+(n==1?'':'s')+' selecionado'+(n==1?'':'s'); }
 function cdExibirOferta(){
   var ids=Object.keys(CD.sel); if(!ids.length) return;
@@ -11202,7 +11462,7 @@ function cdLerPlanilha(inp){
     for(i=0;i<pr.length;i++){
       var nm=String(cdCol(pr[i],['produto','nome'])).trim(); if(!nm) continue; var kk=cdNorm(nm);
       if(mp[kk]){ av.push('Produto repetido na aba Produtos: '+nm+' (usei a primeira linha).'); continue; }
-      var at=cdCol(pr[i],['ativo']); var o={nome:nm.slice(0,80),cat:String(cdCol(pr[i],['categoria'])).trim().slice(0,60),preco:cdPreco(cdCol(pr[i],['preco'])),desc:String(cdCol(pr[i],['descricao'])).trim().slice(0,300),barras:String(cdCol(pr[i],['codigo de barras','barras','ean'])).replace(/[^0-9A-Za-z-]/g,'').slice(0,32),des:cdDes(cdCol(pr[i],['desenho'])),ativo:at===''?true:cdSim(at),tams:[],sabs:[],ads:[]};
+      var at=cdCol(pr[i],['ativo']); var o={nome:nm.slice(0,80),cat:String(cdCol(pr[i],['categoria'])).trim().slice(0,60),preco:cdPreco(cdCol(pr[i],['preco'])),desc:String(cdCol(pr[i],['descricao'])).trim().slice(0,300),barras:String(cdCol(pr[i],['codigo de barras','barras','ean'])).replace(/[^0-9A-Za-z-]/g,'').slice(0,32),des:cdDes(cdCol(pr[i],['desenho'])),ativo:at===''?true:cdSim(at),del:String(cdCol(pr[i],['delivery'])).trim()===''?null:cdSim(cdCol(pr[i],['delivery'])),ncm:String(cdCol(pr[i],['ncm'])).replace(/\D/g,'').slice(0,8),tams:[],sabs:[],ads:[]};
       o.sabs=cdCelSabores(cdCol(pr[i],['sabores'])); o.tams=cdCelTamanhos(cdCol(pr[i],['tamanhos']),o.sabs.length>0); o.ads=cdCelAdicionais(cdCol(pr[i],['adicionais']));
       mp[kk]=o; lista.push(o);
     }
@@ -11265,7 +11525,7 @@ function cdImportar(){
         var pr={}; if(e&&e.precos){ tams.forEach(function(t){ if(tmap[t.id]&&e.precos[t.id]) pr[t.id]=e.precos[t.id]; }); if(!tams.length&&e.precos['_']) pr['_']=e.precos['_']; }
         sabs.push({id:id,nome:sx.nome,desc:sx.desc,grupo:sx.grupo,extra4:sx.extra4,novidade:sx.novidade,balcao:sx.balcao,foto:(e&&e.foto)?'1':'',precos:pr});
       });
-      var it={nome:o.nome,barras:o.barras||(ex&&ex.barras)||'',preco:o.preco,cat:cid,desc:o.desc,desenho:o.des||(ex&&ex.desenho)||'',desconto:(ex&&ex.desconto)||null,foto:(ex&&ex.foto)||'',adicionais:o.ads,tamanhos:tams,sabores:sabs,ativo:o.ativo};
+      var it={nome:o.nome,barras:o.barras||(ex&&ex.barras)||'',preco:(o.preco>0||o.tams.length||!ex)?o.preco:(ex.preco||0),cat:cid,desc:o.desc,desenho:o.des||(ex&&ex.desenho)||'',desconto:(ex&&ex.desconto)||null,foto:(ex&&ex.foto)||'',adicionais:o.ads,tamanhos:tams,sabores:sabs,ativo:o.ativo,delivery:(o.del===null||o.del===undefined)?!(ex&&ex.delivery===false):o.del,ncm:o.ncm||(ex&&ex.ncm)||'',destaque:!!(ex&&ex.destaque),biblioteca:!!(ex&&ex.biblioteca),clube:(ex&&ex.clube)||null,vid:(ex&&ex.vid)||'',vtipo:(ex&&ex.vtipo)||'video/mp4'};   /* (317) NCM da planilha; atualizar por planilha não apaga mais destaque, preço do clube e vídeo */
       if(ex){ it.id=ex.id; it.ordem=ex.ordem; }
       return cdSalvarApi('prod',it).then(function(){ feitos++; });
     }).then(function(){ return um(i+1); });
@@ -11287,14 +11547,14 @@ function cdAbrirCats(){
     (CD.pCarga||cdCarregar()).then(function(){ if(el('sh-cats').classList.contains('on')) cdAbrirCatsLista(); }); return; }
   cdAbrirCatsLista();
 }
-function cdAbrirCatsLista(){ CD.cats=CD.cats||[]; if(CD_CAT_SUJO&&CD_CATS_ORIG) CD.cats=CD_CATS_ORIG; CD.cats.forEach(function(c){ delete c._mudou; if(c._dest0!==undefined){ c.dest=c._dest0; c.man=c._man0; c.prep=c._prep0; delete c._dest0; delete c._man0; delete c._prep0; } }); CD_CATS_ORIG=CD.cats.slice(); CD_CAT_SUJO=false; cdPintarCats(); }
+function cdAbrirCatsLista(){ CD.cats=CD.cats||[]; if(CD_CAT_SUJO&&CD_CATS_ORIG) CD.cats=CD_CATS_ORIG; CD.cats.forEach(function(c){ delete c._mudou; if(c._dest0!==undefined){ c.dest=c._dest0; c.man=c._man0; c.prep=c._prep0; c.pronto=c._pronto0; delete c._dest0; delete c._man0; delete c._prep0; delete c._pronto0; } }); CD_CATS_ORIG=CD.cats.slice(); CD_CAT_SUJO=false; cdPintarCats(); }
 function cdCatSujo(){ CD_CAT_SUJO=true; var b=el('cd-cats-ord'); if(b) b.style.display='flex'; }
 function cdPintarCats(){
   var h='', i, b=el('cd-cats-ord'); if(b) b.style.display=CD_CAT_SUJO?'flex':'none';
   for(i=0;i<CD.cats.length;i++){
     var c=CD.cats[i], n=0, j; for(j=0;j<CD.prods.length;j++) if(CD.prods[j].cat===c.id) n++;
     h+='<div class="cd-cat-row" data-id="'+esc(c.id)+'" onpointerdown="cdCatLinhaDown(event,this)" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--border);background:var(--s1);user-select:none;-webkit-user-select:none;cursor:grab"><span onpointerdown="event.stopPropagation();cdCatArrasta(event,this)" title="Arraste para mudar a ordem" style="flex:none;cursor:grab;touch-action:none;user-select:none;font-size:20px;color:var(--muted);padding:6px 2px;line-height:1">⠿</span><div onclick="cdCatFotoEsc(\''+c.id+'\')" title="Foto da categoria" style="width:46px;height:46px;border-radius:10px;flex:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;background:var(--border) center/cover'+(c.foto?' url('+c.foto+')':'')+'">'+(c.foto?'':'📷')+'</div><div style="flex:1;font-weight:700;font-size:13.5px">'+esc(c.nome)+' <span style="font-weight:500;color:var(--muted);font-size:12px">· '+n+' produto'+(n===1?'':'s')+'</span></div>'
-      +'<select class="inp cd-dest" onchange="cdCatDest(\''+c.id+'\',this.value)" title="Para onde vai o pedido desta categoria" style="width:auto;padding:6px 8px;font-size:12.5px"><option value="cozinha"'+(cdDestDe(c)==='bar'?'':' selected')+'>🍳 Cozinha</option><option value="bar"'+(cdDestDe(c)==='bar'&&!c.prep?' selected':'')+'>🍺 Bar · pronta</option><option value="bar_prep"'+(cdDestDe(c)==='bar'&&c.prep?' selected':'')+'>🍹 Bar · preparo</option></select><button class="btn sec sm" onclick="cdRenCat(\''+c.id+'\')">Renomear</button><button class="btn sec sm" onclick="cdDelCat(\''+c.id+'\')" style="color:var(--red)">Apagar</button></div>';
+      +'<select class="inp cd-dest" onchange="cdCatDest(\''+c.id+'\',this.value)" title="Para onde vai o pedido desta categoria" style="width:auto;padding:6px 8px;font-size:12.5px"><option value="cozinha"'+(cdDestDe(c)==='bar'||c.pronto?'':' selected')+'>🍳 Cozinha · preparo</option><option value="cozinha_pronto"'+(cdDestDe(c)!=='bar'&&c.pronto?' selected':'')+'>🍫 Cozinha · pronto</option><option value="bar"'+(cdDestDe(c)==='bar'&&!c.prep?' selected':'')+'>🍺 Bar · pronta</option><option value="bar_prep"'+(cdDestDe(c)==='bar'&&c.prep?' selected':'')+'>🍹 Bar · preparo</option></select><button class="btn sec sm" onclick="cdRenCat(\''+c.id+'\')">Renomear</button><button class="btn sec sm" onclick="cdDelCat(\''+c.id+'\')" style="color:var(--red)">Apagar</button></div>';
   }
   el('cd-cats-lista').innerHTML=h||'<div style="color:var(--muted);font-size:13px">Nenhuma categoria ainda.</div>';
 }
@@ -11308,7 +11568,7 @@ function cdCatFoto(inp){
       cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);
       var q=0.8, out=cv.toDataURL('image/jpeg',q); while(out.length>300000&&q>0.35){ q-=0.1; out=cv.toDataURL('image/jpeg',q); }
       el('cd-cats-erro').textContent='Salvando foto...';
-      cdSalvarApi('cat',{id:c.id,ordem:c.ordem,nome:c.nome,foto:out,dest:cdDestDe(c),man:c.man?1:0,prep:(cdDestDe(c)==='bar'&&c.prep)?1:0}).then(cdRecarregarCats).then(function(){ el('cd-cats-erro').textContent=''; }).catch(function(e){ el('cd-cats-erro').textContent='Não salvou: '+e.message; });
+      cdSalvarApi('cat',{id:c.id,ordem:c.ordem,nome:c.nome,foto:out,dest:cdDestDe(c),man:c.man?1:0,prep:(cdDestDe(c)==='bar'&&c.prep)?1:0,pronto:(cdDestDe(c)==='cozinha'&&c.pronto)?1:0}).then(cdRecarregarCats).then(function(){ el('cd-cats-erro').textContent=''; }).catch(function(e){ el('cd-cats-erro').textContent='Não salvou: '+e.message; });
     }; im.onerror=function(){ el('cd-cats-erro').textContent='Não consegui ler essa imagem.'; }; im.src=rd.result; };
   rd.readAsDataURL(f); inp.value='';
 }
@@ -11339,25 +11599,25 @@ function cdCatArrasta(ev,h){
   document.addEventListener('pointermove',mv,{capture:true,passive:false}); document.addEventListener('pointerup',fim,true); document.addEventListener('pointercancel',fim,true);
   if(sb) rolar=setInterval(function(){ var bb=sb.getBoundingClientRect(); if(ultY<bb.top+50){ sb.scrollTop-=10; move(ultY); } else if(ultY>bb.bottom-50){ sb.scrollTop+=10; move(ultY); } },30);   /* perto da borda, a lista rola */
 }
-function cdCatDesfazer(){ CD.cats=CD_CATS_ORIG.slice(); CD.cats.forEach(function(c){ if(c._dest0!==undefined){ c.dest=c._dest0; c.man=c._man0; c.prep=c._prep0; delete c._dest0; delete c._man0; delete c._prep0; } }); CD_CAT_SUJO=false; el('cd-cats-erro').textContent=''; cdPintarCats(); }
+function cdCatDesfazer(){ CD.cats=CD_CATS_ORIG.slice(); CD.cats.forEach(function(c){ if(c._dest0!==undefined){ c.dest=c._dest0; c.man=c._man0; c.prep=c._prep0; c.pronto=c._pronto0; delete c._dest0; delete c._man0; delete c._prep0; delete c._pronto0; } }); CD_CAT_SUJO=false; el('cd-cats-erro').textContent=''; cdPintarCats(); }
 /* salva a ordem (10, 20, 30… em quem mudou de lugar) e o Cozinha/Bar que foi trocado */
 function cdCatSalvar(){
   var b=el('cd-cats-ok'), er=el('cd-cats-erro');
   CD.cats.forEach(function(c,n){ var o=(n+1)*10; if(Number(c.ordem)!==o){ c.ordem=o; c._mudou=1; } if(c._dest0!==undefined) c._mudou=1; });
   var l=CD.cats.filter(function(c){ return c._mudou; }); if(!l.length){ CD_CAT_SUJO=false; cdPintarCats(); return; }
   b.disabled=true; b.textContent='Salvando…'; er.textContent='';
-  Promise.all(l.map(function(c){ return cdSalvarApi('cat',{id:c.id,ordem:c.ordem,nome:c.nome,foto:c.foto||'',dest:cdDestDe(c),man:c.man?1:0,prep:(cdDestDe(c)==='bar'&&c.prep)?1:0}); }))
+  Promise.all(l.map(function(c){ return cdSalvarApi('cat',{id:c.id,ordem:c.ordem,nome:c.nome,foto:c.foto||'',dest:cdDestDe(c),man:c.man?1:0,prep:(cdDestDe(c)==='bar'&&c.prep)?1:0,pronto:(cdDestDe(c)==='cozinha'&&c.pronto)?1:0}); }))
     .then(function(){ CD_CAT_SUJO=false; b.disabled=false; b.textContent='Salvar'; aviso('Categorias salvas'); return cdRecarregarCats().then(function(){ CD_CATS_ORIG=CD.cats.slice(); }); })
     .catch(function(e){ b.disabled=false; b.textContent='Salvar'; er.textContent='Não salvou: '+e.message; });
 }
 function cdCatDest(id,v){
   var i, c=null; for(i=0;i<CD.cats.length;i++) if(CD.cats[i].id===id) c=CD.cats[i]; if(!c) return;
-  if(c._dest0===undefined){ c._dest0=c.dest; c._man0=c.man; c._prep0=c.prep; } c.dest=v==='bar_prep'?'bar':v; c.prep=v==='bar_prep'?1:0; c.man=1; cdCatSujo();   /* (231) só grava no Salvar · (250) Bar · preparo = bar + prep */
+  if(c._dest0===undefined){ c._dest0=c.dest; c._man0=c.man; c._prep0=c.prep; c._pronto0=c.pronto; } c.dest=(v==='bar_prep')?'bar':(v==='cozinha_pronto'?'cozinha':v); c.prep=v==='bar_prep'?1:0; c.pronto=v==='cozinha_pronto'?1:0; c.man=1; cdCatSujo();   /* (231) só grava no Salvar · (250) Bar · preparo = bar + prep */
 }
 function cdRenCat(id){
   var i, c=null; for(i=0;i<CD.cats.length;i++) if(CD.cats[i].id===id) c=CD.cats[i];
   if(!c) return; var nm=window.prompt('Novo nome da categoria:',c.nome); if(!nm||!nm.trim()) return;
-  cdSalvarApi('cat',{id:c.id,ordem:c.ordem,nome:nm.trim(),foto:c.foto||'',dest:cdDestDe(c),man:c.man?1:0,prep:(cdDestDe(c)==='bar'&&c.prep)?1:0}).then(cdRecarregarCats).catch(function(e){ el('cd-cats-erro').textContent='Não salvou: '+e.message; });
+  cdSalvarApi('cat',{id:c.id,ordem:c.ordem,nome:nm.trim(),foto:c.foto||'',dest:cdDestDe(c),man:c.man?1:0,prep:(cdDestDe(c)==='bar'&&c.prep)?1:0,pronto:(cdDestDe(c)==='cozinha'&&c.pronto)?1:0}).then(cdRecarregarCats).catch(function(e){ el('cd-cats-erro').textContent='Não salvou: '+e.message; });
 }
 function cdDelCat(id){
   var i, c=null, n=0; for(i=0;i<CD.cats.length;i++) if(CD.cats[i].id===id) c=CD.cats[i];
@@ -11373,6 +11633,282 @@ function cdNovaCatRapida(){
     .catch(function(e){ el('cd-erro').textContent='Não criou a categoria: '+e.message; });
 }
 </script>
+<!-- CADASTRAR FÁCIL (celular): botão do Live + modal em passos. Só mexe no cadastro pela mesma rota do painel (cdSalvarApi). -->
+<style>
+#cf-fab{position:fixed;right:18px;bottom:18px;z-index:69;display:none;flex-direction:column;align-items:center;gap:2px;width:auto;border:0;background:none;padding:0;cursor:pointer;filter:drop-shadow(0 6px 12px rgba(0,0,0,.25));transition:transform .2s;font-family:inherit}
+#cf-fab.on{display:flex}body.cf-cardapio #aj-fab,body.cf-cardapio #aj-dica{display:none!important}#cf-fab:hover{transform:scale(1.06)}
+#cf-fab .cf-lv{width:62px;height:52px;display:flex;align-items:center;justify-content:center;font-size:34px}
+#cf-fab .cf-tx{background:#FF5A00;color:#fff;font-size:11px;font-weight:800;padding:3px 9px;border-radius:99px;white-space:nowrap;line-height:1.3}
+@media (max-width:859px){#cf-fab{right:8px;bottom:72px}#cf-fab .cf-lv{width:54px;height:46px}}
+#sh-cf .cf-p{font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px;letter-spacing:.3px}
+#sh-cf .cf-q{font-size:19px;font-weight:800;margin:2px 0 12px;line-height:1.25}
+#sh-cf .cf-big{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:56px;border-radius:14px;border:0;background:#FF5A00;color:#fff;font:inherit;font-size:16px;font-weight:800;cursor:pointer;margin:0 0 10px}
+#sh-cf .cf-big.sec{background:var(--s3);color:var(--text)}
+#sh-cf .cf-big:disabled{opacity:.5}
+#sh-cf .cf-opt{display:block;width:100%;text-align:left;padding:16px;border-radius:16px;border:1.5px solid var(--border2,#DFDFE4);background:var(--s1);font:inherit;cursor:pointer;margin-bottom:12px;color:var(--text)}
+#sh-cf .cf-opt b{display:block;font-size:17px;margin-bottom:3px}#sh-cf .cf-opt span{font-size:13px;color:var(--muted)}
+#sh-cf .cf-in{width:100%;box-sizing:border-box;min-height:56px;border-radius:14px;border:2px solid var(--border2,#DFDFE4);padding:0 14px;font:inherit;font-size:20px;font-weight:700;background:var(--s1);color:var(--text);outline:none}
+#sh-cf .cf-in:focus{border-color:#FF5A00}
+#sh-cf .cf-foto{width:100%;aspect-ratio:4/3;max-height:260px;border-radius:16px;border:2px dashed var(--border2,#DFDFE4);background:var(--s2) center/contain no-repeat;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px;font-weight:700;margin-bottom:12px}
+#sh-cf .cf-aviso{font-size:13px;line-height:1.45;border-radius:12px;padding:10px 12px;margin:8px 0;background:#FFF4E5;color:#7A3E00;font-weight:600}
+#sh-cf .cf-aviso.ok{background:#ECFDF3;color:#14532D}#sh-cf .cf-aviso.ruim{background:#FEF2F2;color:#991B1B}
+#sh-cf .cf-li{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--border);border-radius:12px;margin-bottom:8px;cursor:pointer;background:var(--s1);width:100%;font:inherit;text-align:left;color:var(--text)}
+#sh-cf .cf-li i{flex:none;width:44px;height:44px;border-radius:10px;background:var(--s3) center/cover no-repeat}
+#sh-cf .cf-li b{display:block;font-size:14px}#sh-cf .cf-li span{font-size:12px;color:var(--muted)}
+#sh-cf .cf-lbl{font-size:12px;font-weight:700;color:var(--muted2);display:block;margin:12px 0 4px}
+#sh-cf .cf-vol{background:none;border:0;color:var(--muted2);font:inherit;font-weight:700;font-size:14px;cursor:pointer;padding:10px 4px}
+</style>
+<button type="button" id="cf-fab" onclick="cfAbrir()" aria-label="Cadastrar fácil"><span class="cf-lv" id="cf-lv">📺</span><span class="cf-tx">Cadastrar fácil</span></button>
+<div class="sheet" id="sh-cf">
+  <div class="sh-hd"><h3 id="cf-tit">Cadastrar fácil</h3><button type="button" onclick="cfFechar()">✕</button></div>
+  <div class="sh-bd" id="cf-bd"></div>
+  <input type="file" id="cf-arq-foto" accept="image/*" capture="environment" style="display:none" onchange="cfFotoArq(this)">
+  <input type="file" id="cf-arq-barras" accept="image/*" capture="environment" style="display:none" onchange="cfBarrasArq(this)">
+</div>
+<script>
+/* ═══ CADASTRAR FÁCIL ═══ */
+var CF={modo:'',passo:'',foto:'',barras:'',nome:'',preco:'',ncm:'',cat:'',sug:null,alvo:null,busca:'',seq:false,salvando:false,feitos:0};
+
+/* tabela de NCM por tipo de produto (só sugestão: o contador confirma) */
+var CF_NCM=[
+ [/\b(agua mineral|agua sem gas|agua com gas|agua)\b/,'2201.10.00','água'],
+ [/\b(refrigerante|coca|guarana|fanta|sprite|pepsi|soda|tonica|h2oh)\b/,'2202.10.00','refrigerante'],
+ [/\b(energetico|red bull|monster)\b/,'2202.99.00','energético'],
+ [/\b(suco|nectar|refresco|agua de coco|cha gelado|cha pronto|isotonico|gatorade)\b/,'2202.99.00','suco / bebida pronta'],
+ [/\b(cerveja|chopp|chope|pilsen|heineken|brahma|skol|stella|amstel|budweiser|corona|eisenbahn)\b/,'2203.00.00','cerveja'],
+ [/\b(vinho|espumante|prosecco|champagne)\b/,'2204.21.00','vinho'],
+ [/\b(whisky|whiskey|uisque)\b/,'2208.30.20','whisky'],
+ [/\b(vodka|vodca)\b/,'2208.60.00','vodka'],
+ [/\b(cachaca|pinga)\b/,'2208.40.00','cachaça'],
+ [/\b(gin|rum|licor|aperol|campari|tequila|conhaque)\b/,'2208.90.00','destilado / licor'],
+ [/\b(cafe soluvel|nescafe|cafe instantaneo)\b/,'2101.11.10','café solúvel'],
+ [/\b(cafe|capuccino|cappuccino|espresso|expresso)\b/,'0901.21.00','café'],
+ [/\b(chocolate|bombom|trufa|brigadeiro|nutella|ovo de pascoa|barra de chocolate)\b/,'1806.90.00','chocolate'],
+ [/\b(chiclete|goma de mascar|trident)\b/,'1704.10.00','goma de mascar'],
+ [/\b(bala|balas|pirulito|drops|bombons de acucar|jujuba|marshmallow)\b/,'1704.90.20','bala / confeito'],
+ [/\b(sorvete|picole|gelato|acai)\b/,'2105.00.10','sorvete'],
+ [/\b(biscoito|bolacha|cookie|wafer|rosquinha)\b/,'1905.31.00','biscoito'],
+ [/\b(bolo|torta|pao de mel|brownie|donut|rosca|sonho)\b/,'1905.90.20','bolo / doce de padaria'],
+ [/\b(pao|baguete|brioche|croissant|pao de queijo|pao frances)\b/,'1905.90.90','pão'],
+ [/\b(salgado|coxinha|pastel|empada|esfiha|kibe|risole|enroladinho|folhado|quibe)\b/,'1905.90.90','salgado'],
+ [/\b(salgadinho|chips|doritos|ruffles|cheetos|pipoca)\b/,'1905.90.90','salgadinho'],
+ [/\b(batata frita|batata palha)\b/,'2004.10.00','batata'],
+ [/\b(amendoim|castanha|amendoa|noz|nozes|pistache)\b/,'2008.19.00','oleaginosas'],
+ [/\b(pizza)\b/,'1901.90.90','pizza'],
+ [/\b(hamburguer|hambúrguer|burger|x salada|x burger|x bacon|lanche|sanduiche|hot dog|cachorro quente)\b/,'2106.90.90','lanche'],
+ [/\b(queijo|mussarela|muçarela|mucarela|parmesao|requeijao|cream cheese|cheddar)\b/,'0406.90.90','queijo'],
+ [/\b(presunto|apresuntado)\b/,'1602.41.00','presunto'],
+ [/\b(linguica|salsicha|mortadela|salame|bacon|calabresa)\b/,'1601.00.00','embutido'],
+ [/\b(leite condensado)\b/,'0402.99.10','leite condensado'],
+ [/\b(leite)\b/,'0401.10.10','leite'],
+ [/\b(iogurte|yogurte|danone|coalhada)\b/,'0403.10.00','iogurte'],
+ [/\b(manteiga)\b/,'0405.10.00','manteiga'],
+ [/\b(margarina)\b/,'1517.10.00','margarina'],
+ [/\b(ovo|ovos)\b/,'0407.21.00','ovos'],
+ [/\b(acucar)\b/,'1701.99.00','açúcar'],
+ [/\b(arroz)\b/,'1006.30.21','arroz'],
+ [/\b(feijao)\b/,'0713.33.19','feijão'],
+ [/\b(macarrao|massa|espaguete|lasanha|penne)\b/,'1902.19.00','massa'],
+ [/\b(oleo|azeite)\b/,'1509.10.00','óleo / azeite'],
+ [/\b(sal)\b/,'2501.00.20','sal'],
+ [/\b(ketchup|catchup)\b/,'2103.20.10','ketchup'],
+ [/\b(maionese)\b/,'2103.90.11','maionese'],
+ [/\b(mostarda|molho)\b/,'2103.90.21','molho'],
+ [/\b(cigarro|tabaco)\b/,'2402.20.00','cigarro'],
+ [/\b(gelo)\b/,'2201.90.00','gelo'],
+ [/\b(cha|mate)\b/,'0902.10.00','chá']
+];
+function cfNorm(s){ return String(s==null?'':s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim(); }
+var CF_RUIDO={de:1,da:1,do:1,com:1,sem:1,e:1,a:1,o:1,ao:1,em:1,para:1,pet:1,lata:1,garrafa:1,long:1,neck:1,un:1,und:1,unidade:1,pct:1,pacote:1,cx:1,caixa:1,kit:1,combo:1,ml:1,lt:1,l:1,g:1,gr:1,kg:1,mg:1,tradicional:1,original:1,zero:1,diet:1,light:1,
+  morango:1,chocolate:1,baunilha:1,limao:1,laranja:1,uva:1,maracuja:1,abacaxi:1,manga:1,coco:1,menta:1,caramelo:1,leite:1,branco:1,preto:1,amargo:1,pessego:1,goiaba:1,tangerina:1,melancia:1,cereja:1,frutas:1,
+  pequeno:1,medio:1,grande:1,mini:1,gigante:1,pequena:1,media:1,broto:1};
+function cfNucleo(nome){ var t=cfNorm(nome).split(' '), o=[]; t.forEach(function(w){ if(!w||CF_RUIDO[w]||/^\d/.test(w)||/^\d+(ml|l|g|kg|lt|un|mg)$/.test(w)) return; if(o.indexOf(w)<0) o.push(w); }); return o; }
+/* produto parecido no próprio cadastro (variação de sabor/tamanho) */
+function cfParecido(nome){
+  var a=cfNucleo(nome); if(!a.length) return null; var melhor=null, sc=0;
+  (CD.prods||[]).forEach(function(p){
+    if(!p||p.id===(CF.alvo&&CF.alvo.id)) return; var b=cfNucleo(p.nome); if(!b.length) return;
+    var inter=a.filter(function(w){ return b.indexOf(w)>=0; }).length, min=Math.min(a.length,b.length); if(!inter) return;
+    if(min===1&&!(a.length===1&&b.length===1)) return; if(min>1&&inter<2) return;
+    var r=inter/Math.max(a.length,b.length)+(inter/min), tem=String(p.ncm||'').replace(/\D/g,'').length===8; if(tem) r+=.5;
+    if(inter/min>=0.6&&r>sc){ sc=r; melhor=p; }
+  });
+  return melhor;
+}
+function cfSugerir(nome){
+  var par=cfParecido(nome), n=cfNorm(nome), i, r={ncm:'',cat:'',aviso:'',cls:''};
+  var ncmP=par?String(par.ncm||'').replace(/\D/g,''):'';
+  if(par){
+    r.cat=par.cat||'';
+    if(ncmP.length===8){ r.ncm=ncmP; r.aviso='Parece variação de <b>'+esc(par.nome)+'</b>. Usei o mesmo NCM e a mesma categoria dele.'; r.cls='ok'; return r; }
+  }
+  for(i=0;i<CF_NCM.length;i++){ if(CF_NCM[i][0].test(n)){ r.ncm=CF_NCM[i][1].replace(/\D/g,''); r.aviso=(par?'Parece variação de <b>'+esc(par.nome)+'</b> (ele ainda está sem NCM). ':'')+'NCM sugerido pelo tipo (<b>'+CF_NCM[i][2]+'</b>). <b>Conferir com o contador.</b>'; return r; } }
+  r.aviso=(par?'Parece variação de <b>'+esc(par.nome)+'</b> (ele ainda está sem NCM). ':'')+'Não consegui sugerir o NCM deste produto. Digite se souber, ou deixe vazio e <b>confira com o contador</b>.'; r.cls='ruim'; return r;
+}
+/* (318) Biblioteca de fotos: abre a galeria da loja (totem/biblioteca.html) com o link e a chave da loja */
+function bibAbrir(){ var w=window.open('','_blank'); fetch(DELTADIS_API+'/painel/biblioteca',{headers:cdHdr()}).then(function(r){ return r.json(); }).then(function(d){ if(!d||!d.ok) throw new Error((d&&d.mensagem)||'Atualize o Worker para a versão 318.'); var u=location.origin+location.pathname.replace(/[^\/]*$/,'')+'totem/biblioteca.html?loja='+encodeURIComponent(d.cli)+'&k='+encodeURIComponent(d.chave); if(w) w.location.href=u; else location.href=u; }).catch(function(e){ if(w) w.close(); aviso('Biblioteca: '+esc(e.message)); }); }
+function cfFab(p){ var b=el('cf-fab'); if(!b) return; var on=(p==='cardapio'); b.classList.toggle('on',on); document.body.classList.toggle('cf-cardapio',on); if(on&&!b._lv){ b._lv=1; try{ mpLiveCarregar(function(){ try{ var c=el('cf-lv'); c.textContent=''; c.style.fontSize='0'; LiveMascote.criar(c,{sombra:false,rotulo:'Cadastrar fácil'}); }catch(e){} }); }catch(e){} } }
+function cfAbrir(){ CF.modo=''; CF.passo='menu'; CF.seq=false; CF.feitos=0; cfReset(); abrir('sh-cf'); cfPintar(); }
+function cfFechar(){ fecharTudo(); }
+function cfReset(){ CF.foto=''; CF.barras=''; CF.nome=''; CF.preco=''; CF.ncm=''; CF.cat=''; CF.sug=null; CF.alvo=null; CF.busca=''; CF.salvando=false; }
+function cfIr(p){ CF.passo=p; cfPintar(); }
+function cfBarraSup(n,t){ return '<div class="cf-p">PASSO '+n+' DE 5</div><div class="cf-q">'+t+'</div>'; }
+function cfVoltar(p){ return '<button type="button" class="cf-vol" onclick="cfIr(\''+p+'\')">← Voltar</button>'; }
+function cfPintar(){
+  var b=el('cf-bd'), h='', P=CF.passo; el('cf-tit').textContent='Cadastrar fácil';
+  if(P==='menu'){
+    h='<div class="cf-q">O que você quer fazer?</div><button type="button" class="cf-opt" onclick="cfNovo()"><b>➕ Cadastrar produto novo</b><span>Foto, código de barras, nome e preço. Ele já entra no cardápio.</span></button>'
+     +'<button type="button" class="cf-opt" onclick="cfAtualizar()"><b>🔄 Atualizar produto existente</b><span>Grava o código de barras (e, se quiser, preço ou foto) num produto que já existe.</span></button>';
+  } else if(P==='foto'){
+    h=cfBarraSup(1,'Tire a foto do produto')+'<div class="cf-foto" id="cf-fv" style="'+(CF.foto?'background-image:url('+CF.foto+')':'')+'">'+(CF.foto?'':'Nenhuma foto ainda')+'</div>'
+     +'<button type="button" class="cf-big" onclick="el(\'cf-arq-foto\').click()">📷 '+(CF.foto?'Tirar outra foto':'Abrir a câmera')+'</button>'
+     +(CF.foto?'<button type="button" class="cf-big" onclick="cfIr(\'barras\')">Continuar →</button>':'<button type="button" class="cf-big sec" onclick="cfIr(\'barras\')">Pular a foto</button>')
+     +'<div style="font-size:12px;color:var(--muted)">A foto entra como está. Depois, se quiser trocar, abra o produto e cole outra com Ctrl+V.</div>'+cfVoltar('menu');
+  } else if(P==='barras'){
+    h=cfBarraSup(2,'Código de barras')+(CF.barras?'<div class="cf-aviso ok">Código lido: <b>'+esc(CF.barras)+'</b></div>':'')
+     +'<button type="button" class="cf-big" onclick="cfLerCamera()">📷 Apontar a câmera para o código</button>'
+     +'<button type="button" class="cf-big sec" onclick="el(\'cf-arq-barras\').click()">🖼️ Ler de uma foto do código</button>'
+     +'<label class="cf-lbl">Ou digite o código</label><input class="cf-in" id="cf-bar" inputmode="numeric" maxlength="32" autocomplete="off" value="'+esc(CF.barras)+'" oninput="CF.barras=this.value.replace(/[^0-9A-Za-z-]/g,\'\')">'
+     +'<div id="cf-e" class="cf-aviso ruim" style="display:none"></div>'
+     +'<button type="button" class="cf-big" style="margin-top:12px" onclick="cfBarrasOk()">'+(CF.barras?'Continuar →':'Pular, sem código')+'</button>'+cfVoltar('foto');
+  } else if(P==='nome'){
+    h=cfBarraSup(3,'Digite o nome do produto')+'<input class="cf-in" id="cf-nome" maxlength="80" autocomplete="off" placeholder="Ex.: Suco Del Valle Uva 1L" value="'+esc(CF.nome)+'" oninput="CF.nome=this.value" onkeydown="if(event.key===\'Enter\'){event.preventDefault();cfNomeOk();}">'
+     +'<div id="cf-e" class="cf-aviso ruim" style="display:none"></div><button type="button" class="cf-big" style="margin-top:12px" onclick="cfNomeOk()">Continuar →</button>'+cfVoltar('barras');
+    setTimeout(function(){ var i=el('cf-nome'); if(i) i.focus(); },60);
+  } else if(P==='preco'){
+    h=cfBarraSup(4,'Qual o preço?')+'<input class="cf-in" id="cf-preco" inputmode="decimal" autocomplete="off" placeholder="R$ 0,00" value="'+esc(CF.preco)+'" oninput="CF.preco=this.value" onkeydown="if(event.key===\'Enter\'){event.preventDefault();cfPrecoOk();}">'
+     +'<div id="cf-e" class="cf-aviso ruim" style="display:none"></div><button type="button" class="cf-big" style="margin-top:12px" onclick="cfPrecoOk()">Continuar →</button>'+cfVoltar('nome');
+    setTimeout(function(){ var i=el('cf-preco'); if(i) i.focus(); },60);
+  } else if(P==='conf'){
+    var s=CF.sug||{}; var cats='<option value="">Sem categoria</option>'; (CD.cats||[]).forEach(function(c){ cats+='<option value="'+esc(c.id)+'"'+(c.id===CF.cat?' selected':'')+'>'+esc(c.nome)+'</option>'; });
+    h=cfBarraSup(5,'Confira e salve')
+     +'<div style="display:flex;gap:12px;align-items:center;margin-bottom:8px"><div class="cf-foto" style="width:90px;height:90px;aspect-ratio:1;margin:0;flex:none;'+(CF.foto?'background-image:url('+CF.foto+')':'')+'">'+(CF.foto?'':'sem foto')+'</div><div><div style="font-size:17px;font-weight:800">'+esc(CF.nome)+'</div><div style="font-size:15px;font-weight:700;color:#FF5A00">R$ '+esc(cfPrecoFmt())+'</div><div style="font-size:12px;color:var(--muted)">Código: '+(CF.barras?esc(CF.barras):'sem')+'</div></div></div>'
+     +'<label class="cf-lbl">NCM (8 números)</label><input class="cf-in" id="cf-ncm" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="0000.00.00" value="'+esc(cdNcmFmt(CF.ncm))+'" oninput="CF.ncm=this.value.replace(/\\D/g,\'\').slice(0,8)">'
+     +'<div class="cf-aviso '+(s.cls||'')+'">'+(s.aviso||'')+'</div>'
+     +'<label class="cf-lbl">Categoria</label><select class="cf-in" style="font-size:16px" id="cf-cat" onchange="CF.cat=this.value">'+cats+'</select>'
+     +'<div id="cf-e" class="cf-aviso ruim" style="display:none"></div><button type="button" class="cf-big" id="cf-ok" style="margin-top:14px" onclick="cfSalvarNovo()">✅ Cadastrar produto</button>'+cfVoltar('preco');
+  } else if(P==='pronto'){
+    h='<div style="text-align:center;padding:18px 0"><div style="font-size:46px">✅</div><div class="cf-q">'+esc(CF.nome)+' está no cardápio!</div></div>'
+     +'<button type="button" class="cf-big" onclick="cfNovo()">➕ Cadastrar outro</button><button type="button" class="cf-big sec" onclick="cfFechar()">Fechar</button>';
+  } else if(P==='lista'){
+    var q=cfNorm(CF.busca), l=(CD.prods||[]).filter(function(p){ return !q||cfNorm(p.nome).indexOf(q)>=0||(p.barras||'').indexOf(q)>=0; });
+    l.sort(function(a,b){ return (a.barras?1:0)-(b.barras?1:0)||String(a.nome).localeCompare(String(b.nome),'pt-BR'); });
+    var tot=l.length; l=l.slice(0,60);
+    h='<div class="cf-q">Qual produto?</div><input class="cf-in" style="min-height:48px;font-size:16px" id="cf-busca" placeholder="🔎 buscar pelo nome" autocomplete="off" value="'+esc(CF.busca)+'" oninput="CF.busca=this.value;cfListaPinta()">'
+     +'<button type="button" class="cf-big" style="margin-top:12px" onclick="cfSeqIniciar()">⚡ Ir passando um por um (só bipar o código)</button><div id="cf-lst">'+cfListaHtml(l,tot)+'</div>'+cfVoltar('menu');
+  } else if(P==='alvo'){
+    var a=CF.alvo; h='<div class="cf-li" style="cursor:default"><i style="'+(a.foto&&a.foto!=='1'?'background-image:url('+a.foto+')':'')+'"></i><div><b>'+esc(a.nome)+'</b><span>R$ '+esc(String(a.preco||0).replace('.',','))+' · código: '+(a.barras?esc(a.barras):'sem')+'</span></div></div>'
+     +(CF.barras&&CF.barras!==(a.barras||'')?'<div class="cf-aviso ok">Novo código: <b>'+esc(CF.barras)+'</b></div>':'')
+     +'<button type="button" class="cf-big" onclick="cfLerCamera()">📷 Apontar a câmera para o código</button><button type="button" class="cf-big sec" onclick="el(\'cf-arq-barras\').click()">🖼️ Ler de uma foto do código</button>'
+     +'<label class="cf-lbl">Ou digite o código</label><input class="cf-in" id="cf-bar" inputmode="numeric" maxlength="32" autocomplete="off" value="'+esc(CF.barras)+'" oninput="CF.barras=this.value.replace(/[^0-9A-Za-z-]/g,\'\')">'
+     +'<label class="cf-lbl">Preço <span style="font-weight:500">(deixe como está se não for mudar)</span></label><input class="cf-in" id="cf-preco" inputmode="decimal" value="'+esc(CF.preco)+'" oninput="CF.preco=this.value">'
+     +'<div class="cf-foto" id="cf-fv" style="margin-top:12px;max-height:150px;'+(CF.foto?'background-image:url('+CF.foto+')':'')+'">'+(CF.foto?'':'Foto: sem mudança')+'</div><button type="button" class="cf-big sec" onclick="el(\'cf-arq-foto\').click()">📷 Trocar a foto</button>'
+     +'<div id="cf-e" class="cf-aviso ruim" style="display:none"></div><button type="button" class="cf-big" id="cf-ok" onclick="cfSalvarAlvo()">💾 Salvar neste produto</button>'+cfVoltar(CF.seq?'seq':'lista');
+  } else if(P==='seq'){
+    h='<div class="cf-q">Um por um</div><div class="cf-aviso ok">Bipe o código de cada produto. Se o código já estiver no cadastro, mostro o produto; se não, você escolhe de qual produto é.</div>'
+     +'<div style="font-size:13px;color:var(--muted);margin:6px 0">Já gravados agora: <b>'+CF.feitos+'</b></div>'
+     +'<button type="button" class="cf-big" onclick="cfSeqCamera()">📷 Começar a bipar</button>'+cfVoltar('lista');
+  }
+  b.innerHTML=h; b.scrollTop=0;
+}
+function cfPrecoFmt(){ var n=cdPreco(CF.preco); return n.toFixed(2).replace('.',','); }
+function cfErro(t){ var e=el('cf-e'); if(!e) return; e.style.display=t?'block':'none'; e.textContent=t||''; }
+/* foto: entra como está (só reduzida para caber) */
+function cfFotoArq(inp){
+  var f=inp.files&&inp.files[0]; if(!f) return; inp.value='';
+  var rd=new FileReader(); rd.onload=function(){ cdRedimUrl(rd.result).then(function(u){ CF.foto=u; if(CF.passo==='foto') cfPintar(); else if(CF.passo==='alvo'){ cfPintar(); } }).catch(function(){ aviso('Não consegui ler essa foto.'); }); }; rd.readAsDataURL(f);
+}
+document.addEventListener('paste',function(ev){
+  var sh=el('sh-cf'); if(!sh||!sh.classList.contains('on')||(CF.passo!=='foto'&&CF.passo!=='alvo')) return;
+  var its=(ev.clipboardData&&ev.clipboardData.items)||[], f=null, i; for(i=0;i<its.length;i++){ if(its[i].kind==='file'&&/^image\//.test(its[i].type)){ f=its[i].getAsFile(); break; } }
+  if(!f) return; ev.preventDefault(); var rd=new FileReader(); rd.onload=function(){ cdRedimUrl(rd.result).then(function(u){ CF.foto=u; cfPintar(); }); }; rd.readAsDataURL(f);
+});
+/* leitura do código: câmera ao vivo (Bipador) ou foto do código (leitor do navegador, ou ZXing) */
+function cfLerCamera(){
+  if(!window.Bipador){ aviso('Leitor não carregou. Digite o código.'); return; }
+  Bipador.abrir({titulo:'Código de barras',aoLer:function(c){ c=Bipador.norm(c); CF.barras=c; cfPintar(); return true; }});
+}
+function cfLerImagem(url){
+  return new Promise(function(ok,no){
+    var im=new Image(); im.onload=function(){
+      var viaZx=function(){ var vai=function(){ try{ var r=new ZXing.BrowserMultiFormatReader(); r.decodeFromImageUrl(url).then(function(x){ ok(x.getText()); }).catch(function(){ no(); }); }catch(e){ no(); } };
+        if(window.ZXing){ vai(); return; } var s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js'; s.onload=vai; s.onerror=function(){ no(); }; document.head.appendChild(s); };
+      if('BarcodeDetector' in window){ BarcodeDetector.getSupportedFormats().then(function(sf){ var d=new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e','code_128','code_39','itf'].filter(function(f){ return sf.indexOf(f)>=0; })}); return d.detect(im); }).then(function(r){ if(r&&r[0]&&r[0].rawValue) ok(r[0].rawValue); else viaZx(); }).catch(viaZx); }
+      else viaZx();
+    }; im.onerror=no; im.src=url;
+  });
+}
+function cfBarrasArq(inp){
+  var f=inp.files&&inp.files[0]; if(!f) return; inp.value='';
+  var rd=new FileReader(); rd.onload=function(){ aviso('Lendo o código…'); cfLerImagem(rd.result).then(function(c){ CF.barras=Bipador.norm(c); cfPintar(); }).catch(function(){ cfErro('Não consegui ler o código nessa foto. Tente de novo mais de perto, bem focada, ou use "Apontar a câmera", ou digite.'); }); }; rd.readAsDataURL(f);
+}
+function cfBarrasDup(c,exceto){ return c?(CD.prods||[]).filter(function(x){ return x.barras===c&&x.id!==exceto; })[0]:null; }
+function cfBarrasOk(){
+  var c=(el('cf-bar')&&el('cf-bar').value||CF.barras).replace(/[^0-9A-Za-z-]/g,''); CF.barras=c;
+  var d=cfBarrasDup(c); if(d){ cfErro('Esse código já está no produto "'+d.nome+'". Use "Atualizar produto existente" para mudar aquele, ou digite outro código.'); return; }
+  cfIr('nome');
+}
+function cfNomeOk(){ var n=(CF.nome||'').trim(); if(!n){ cfErro('Digite o nome do produto.'); return; } CF.nome=n; cfIr('preco'); }
+function cfPrecoOk(){
+  if(!(cdPreco(CF.preco)>0)){ cfErro('Digite o preço, por exemplo 12,90.'); return; }
+  CF.sug=cfSugerir(CF.nome); CF.ncm=CF.sug.ncm; CF.cat=CF.sug.cat||''; cfIr('conf');
+}
+function cfNovo(){ cfReset(); CF.modo='novo'; cfIr('foto'); }
+function cfSalvarNovo(){
+  if(CF.salvando) return; var n=String(CF.ncm||'').replace(/\D/g,'');
+  if(n&&n.length!==8){ cfErro('O NCM tem 8 números. Corrija ou deixe vazio.'); return; }
+  var d=cfBarrasDup(CF.barras); if(d){ cfErro('Esse código já está em "'+d.nome+'".'); return; }
+  CF.salvando=true; var b=el('cf-ok'); b.disabled=true; b.textContent='Salvando…';
+  var it={nome:CF.nome.trim(),barras:CF.barras,ncm:n,preco:cdPreco(CF.preco),cat:CF.cat||'',foto:CF.foto||'',desc:'',desenho:'',desconto:null,clube:null,vid:'',vtipo:'video/mp4',adicionais:[],tamanhos:[],sabores:[],ativo:true,delivery:true,destaque:false};
+  cdSalvarApi('prod',it).then(function(){ CF.salvando=false; cdCarregar(); CF.passo='pronto'; cfPintar(); })
+    .catch(function(e){ CF.salvando=false; b.disabled=false; b.textContent='✅ Cadastrar produto'; cfErro('Não salvou: '+e.message); });
+}
+/* atualizar existente */
+function cfAtualizar(){ cfReset(); CF.modo='atualizar'; CF.seq=false; cfIr('lista'); }
+function cfListaHtml(l,tot){
+  var h=''; l.forEach(function(p){ h+='<button type="button" class="cf-li" onclick="cfEscolher(\''+esc(p.id)+'\')"><i style="'+(p.foto&&p.foto!=='1'?'background-image:url('+p.foto+')':'')+'"></i><div><b>'+esc(p.nome)+'</b><span>R$ '+esc(String(p.preco||0).replace('.',','))+' · '+(p.barras?'código '+esc(p.barras):'<b style="color:#B45309">sem código</b>')+'</span></div></button>'; });
+  if(!l.length) h='<div style="padding:18px;text-align:center;color:var(--muted)">Nenhum produto encontrado.</div>'; else if(tot>l.length) h+='<div style="font-size:12px;color:var(--muted);text-align:center">Mostrando '+l.length+' de '+tot+'. Digite para filtrar.</div>';
+  return h;
+}
+function cfListaPinta(){ var q=cfNorm(CF.busca), l=(CD.prods||[]).filter(function(p){ return !q||cfNorm(p.nome).indexOf(q)>=0||(p.barras||'').indexOf(q)>=0; }); l.sort(function(a,b){ return (a.barras?1:0)-(b.barras?1:0)||String(a.nome).localeCompare(String(b.nome),'pt-BR'); }); var t=l.length; el('cf-lst').innerHTML=cfListaHtml(l.slice(0,60),t); }
+function cfEscolher(id){ var p=cdProd(id); if(!p) return; CF.alvo=p; CF.barras=''; CF.foto=''; CF.preco=''; cfIr('alvo'); }
+function cfSalvarAlvo(){
+  if(CF.salvando) return; var a=CF.alvo, c=(CF.barras||'').replace(/[^0-9A-Za-z-]/g,''), pr=String(CF.preco||'').trim();
+  if(pr&&!(cdPreco(pr)>0)){ cfErro('Preço inválido.'); return; }
+  var d=cfBarrasDup(c,a.id); if(d){ cfErro('Esse código já está em "'+d.nome+'".'); return; }
+  if(!c&&!pr&&!CF.foto){ cfErro('Nada para salvar: bipe o código, mude o preço ou troque a foto.'); return; }
+  var it=JSON.parse(JSON.stringify(a)); if(c) it.barras=c; if(pr) it.preco=cdPreco(pr); if(CF.foto) it.foto=CF.foto;
+  CF.salvando=true; var b=el('cf-ok'); b.disabled=true; b.textContent='Salvando…';
+  cdSalvarApi('prod',it).then(function(){ a.barras=it.barras; a.preco=it.preco; a.foto=it.foto; CF.salvando=false; CF.feitos++; aviso('Salvo: '+esc(a.nome)); cdPintar(); if(CF.seq){ CF.alvo=null; CF.barras=''; CF.foto=''; CF.preco=''; CF.passo='seq'; cfPintar(); setTimeout(cfSeqCamera,500); } else { CF.passo='lista'; CF.alvo=null; CF.barras=''; CF.foto=''; CF.preco=''; cfPintar(); } })
+    .catch(function(e){ CF.salvando=false; b.disabled=false; b.textContent='💾 Salvar neste produto'; cfErro('Não salvou: '+e.message); });
+}
+/* modo em sequência: bipa, acha o produto pelo código (ou pergunta de qual é) e segue */
+function cfSeqIniciar(){ CF.seq=true; CF.feitos=0; cfIr('seq'); }
+function cfSeqCamera(){
+  if(!window.Bipador){ aviso('Leitor não carregou.'); return; }
+  Bipador.abrir({titulo:'Bipe o código do produto',aoLer:function(c){
+    c=Bipador.norm(c); var p=cfBarrasDup(c,''); CF.barras=c;
+    if(p){ CF.alvo=p; CF.barras=''; CF.foto=''; CF.preco=''; aviso('Esse código já é de <b>'+esc(p.nome)+'</b>. Próximo!'); CF.passo='seq'; cfPintar(); setTimeout(cfSeqCamera,900); return true; }
+    CF.busca=''; cfSeqEscolhe(); return true; }});
+}
+function cfSeqEscolhe(){
+  var b=el('cf-bd'); CF.passo='seqesc';
+  b.innerHTML='<div class="cf-aviso ok">Código lido: <b>'+esc(CF.barras)+'</b>. De qual produto é?</div><input class="cf-in" style="min-height:48px;font-size:16px" id="cf-busca" placeholder="🔎 buscar pelo nome" autocomplete="off" oninput="CF.busca=this.value;cfSeqLista()"><div id="cf-lst"></div><button type="button" class="cf-vol" onclick="cfIr(\'seq\')">← Cancelar este</button>';
+  cfSeqLista(); setTimeout(function(){ var i=el('cf-busca'); if(i) i.focus(); },60);
+}
+function cfSeqLista(){
+  var q=cfNorm(CF.busca), l=(CD.prods||[]).filter(function(p){ return !p.barras&&(!q||cfNorm(p.nome).indexOf(q)>=0); }).sort(function(a,b){ return String(a.nome).localeCompare(String(b.nome),'pt-BR'); }), t=l.length, h='';
+  l.slice(0,40).forEach(function(p){ h+='<button type="button" class="cf-li" onclick="cfSeqGrava(\''+esc(p.id)+'\')"><i style="'+(p.foto&&p.foto!=='1'?'background-image:url('+p.foto+')':'')+'"></i><div><b>'+esc(p.nome)+'</b><span>R$ '+esc(String(p.preco||0).replace('.',','))+' · sem código</span></div></button>'; });
+  if(!l.length) h='<div style="padding:14px;text-align:center;color:var(--muted)">Nenhum produto sem código com esse nome.</div>'; else if(t>40) h+='<div style="font-size:12px;color:var(--muted);text-align:center">Mostrando 40 de '+t+'. Digite para filtrar.</div>';
+  el('cf-lst').innerHTML=h;
+}
+function cfSeqGrava(id){
+  var p=cdProd(id); if(!p||CF.salvando) return; CF.salvando=true; var it=JSON.parse(JSON.stringify(p)); it.barras=CF.barras;
+  cdSalvarApi('prod',it).then(function(){ p.barras=it.barras; CF.salvando=false; CF.feitos++; aviso('Código gravado em <b>'+esc(p.nome)+'</b>'); cdPintar(); CF.barras=''; CF.passo='seq'; cfPintar(); setTimeout(cfSeqCamera,500); })
+    .catch(function(e){ CF.salvando=false; aviso('Não salvou: '+esc(e.message)); });
+}
+</script>
+
 <script src="live-ajuda.js?v=237"></script>
 <script src="bipador.js?v=1"></script>
 <script src="lojas.js"></script>

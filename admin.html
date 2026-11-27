@@ -327,7 +327,8 @@ html,body{background:var(--hx-bg)}
           <div class="quem"><b id="ola-nome">—</b><small id="ola-mail"></small></div>
           <button onclick="menuFecha();abrirAsaasCfg()">💳 Conta Asaas</button>
           <button onclick="menuFecha();abrirWhatsPedidos()">💬 Pedidos pelo WhatsApp</button>
-          <button onclick="menuFecha();abrirTrocarSenha()">🔑 Trocar minha senha</button>
+          <button onclick="menuFecha();abrirAdmins()">👥 Usuários do admin</button>
+        <button onclick="menuFecha();abrirTrocarSenha()">🔑 Trocar minha senha</button>
           <button class="sair" onclick="menuFecha();sair()">⎋ Sair</button>
         </div>
       </div>
@@ -346,6 +347,7 @@ html,body{background:var(--hx-bg)}
         <a class="hx-card" href="#planos"><span class="hx-alerta" id="hc-pl-al" hidden></span><span class="ic c5">📦</span><h3>Planos</h3><p>Preços, pacotes inclusos, recursos de cada plano, bloqueio por falta de pagamento e pedidos de troca.</p><div class="rod"><span id="hc-pl">…</span><i>→</i></div></a>
         <a class="hx-card" href="#financeiro"><span class="ic c3">💰</span><h3>Financeiro</h3><p>Fluxo de caixa, lançamentos, saldo e extrato da conta do LiveFood.</p><div class="rod"><span id="hc-fin">…</span><i>→</i></div></a>
         <a class="hx-card" href="marketing.html"><span class="ic c2">📣</span><h3>Marketing</h3><p>Buscar estabelecimentos no Google Maps e chamar no WhatsApp com 7 dias de teste.</p><div class="rod"><span>Abrir</span><i>→</i></div></a>
+        <a class="hx-card" href="comercial.html"><span class="ic c4">🤝</span><h3>Comercial</h3><p>Agenda de visitas, atendimento, propostas e catálogo de produtos. Representantes entram por aqui.</p><div class="rod"><span>Abrir</span><i>→</i></div></a>
       </div>
       <div class="hx-sec">Operação</div>
       <div class="hx-grade">
@@ -459,6 +461,10 @@ html,body{background:var(--hx-bg)}
       <div class="card">
         <h3><span>Conexão de pagamentos</span><span class="dir"><span class="lnk" onclick="abrirPaytime()">Testar conexão</span><span class="lnk" onclick="abrirPtEventos()">Avisos recebidos</span></span></h3>
         <div class="sub2">Pagamentos na mesa e na maquininha (ambiente de teste da Vileve / PayStore).</div>
+      </div>
+      <div class="card">
+        <h3><span>Payer</span><span class="dir"><span class="lnk" onclick="abrirPayer()">Configurar e testar</span><span class="lnk" onclick="abrirPyOrdens()">Últimas cobranças</span></span></h3>
+        <div class="sub2">Segunda opção de pagamento (maquininha Gertec e totem). Tem modo simulação, para demonstrar sem equipamento.</div>
       </div>
     </section>
 
@@ -599,7 +605,7 @@ function desenharPlanos(){
   setTimeout(function(){ carregarPlanoLog(); carregarTrava(); carregarUpgrades(); },0);
   var cont={}; CLIENTES.forEach(function(c){ if(c.ativo&&c.plano_id) cont[c.plano_id]=(cont[c.plano_id]||0)+1; });
   el('lista-planos').innerHTML=(PLANOS.length?'<div class="hx-planos">'+PLANOS.map(function(p){
-    return '<div class="hx-pl'+(p.padrao?' dest':'')+(p.ativo?'':' off')+'"><div class="tp"><h3>'+esc(p.nome)+'</h3><span>'+(p.padrao?'<span class="st in">Padrão</span>':'')+'<span class="st '+(p.ativo?'ok':'of')+'">'+(p.ativo?'Ativo':'Desativado')+'</span></span></div>'+
+    return '<div class="hx-pl'+(p.padrao?' dest':'')+(p.ativo?'':' off')+'"><div class="tp"><h3>'+esc(p.nome)+'</h3><span>'+(p.padrao?'<span class="st in">Padrão</span>':'')+(p.exclusivo?'<span class="st in">Só proposta</span>':'')+'<span class="st '+(p.ativo?'ok':'of')+'">'+(p.ativo?'Ativo':'Desativado')+'</span></span></div>'+
       '<div class="pr">'+reais(p.fixo_centavos)+'<small>/mês</small></div>'+(p.descricao?'<div class="hx-mu">'+esc(p.descricao)+'</div>':'')+
       '<div class="met"><div><b>'+(cont[p.id]||0)+'</b><small>clientes</small></div><div><b>'+(p.variavel_total?'—':(p.franquia||0))+'</b><small>'+(p.variavel_total?'cobra desde o 1º':'pacotes inclusos')+'</small></div><div><b>'+reaisPac(p.pacote_centavos)+'</b><small>por pacote</small></div></div>'+
       ((p.itens||[]).length?'<ul>'+p.itens.slice(0,6).map(function(i){ return '<li>'+esc(i)+'</li>'; }).join('')+(p.itens.length>6?'<li style="list-style:none" class="hx-mu">+ '+(p.itens.length-6)+' itens</li>':'')+'</ul>':'')+
@@ -618,6 +624,7 @@ function abrirPlano(id){
   '<div class="linha2"><div><label>Fixo mensal (R$)</label><input id="pl-fixo" inputmode="decimal" value="'+esc(p?deCentavos(p.fixo_centavos):'')+'" placeholder="0,00"></div><div><label>Valor por pacote (R$)</label><input id="pl-pac" inputmode="decimal" value="'+esc(p?deCentavosPac(p.pacote_centavos):'')+'" placeholder="0,00"></div></div>'+
   '<div class="linha2"><div><label>Pacotes inclusos no fixo</label><input id="pl-fr" inputmode="numeric" value="'+esc(p?(p.franquia||0):0)+'"></div><div><label>Ordem no site (menor aparece primeiro)</label><input id="pl-ord" inputmode="numeric" value="'+esc(p?(p.ordem||0):0)+'"></div></div>'+
   '<label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-weight:700"><input type="checkbox" id="pl-vt" '+(p&&p.variavel_total?'checked':'')+' style="width:auto;margin:0"> Cobrar o valor por pacote desde o 1º pacote</label><p class="sub" style="margin:4px 0 0">Desligado: o valor por pacote só vale acima dos pacotes inclusos no fixo.</p>'+
+  '<label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-weight:700"><input type="checkbox" id="pl-excl" '+(p&&p.exclusivo?'checked':'')+' style="width:auto;margin:0"> Plano só para propostas (não aparece no site)</label><p class="sub" style="margin:4px 0 0">Fica disponível para escolher no Comercial, mas o site não mostra nem deixa assinar.</p>'+
   plRecHtml(p)+
   '<div class="erro" id="pl-erro"></div>'+
   '<div class="acoes" style="margin-top:10px;justify-content:space-between">'+(p?'<button class="btn peq '+(p.ativo?'perigo':'')+'" onclick="planoAtivo(\''+esc(p.id)+'\','+(p.ativo?0:1)+')">'+(p.ativo?'Desativar plano':'Reativar plano')+'</button>':'<span></span>')+
@@ -625,7 +632,7 @@ function abrirPlano(id){
 }
 function salvarPlano(id){
   var nome=el('pl-nome').value.trim(); if(!nome){el('pl-erro').textContent='Informe o nome do plano.';return;}
-  var corpo={nome:nome,descricao:el('pl-desc').value.trim(),itens:el('pl-itens').value,recursos:el('pl-rec-tudo').checked?null:[].map.call(document.querySelectorAll('.pl-rec:checked'),function(x){return x.value;}),padrao:el('pl-padrao').checked?1:0,fixo_centavos:paraCentavos(el('pl-fixo').value),pacote_centavos:paraCentavosPac(el('pl-pac').value),franquia:parseInt(el('pl-fr').value,10)||0,ordem:parseInt(el('pl-ord').value,10)||0,variavel_total:el('pl-vt').checked?1:0};
+  var corpo={nome:nome,descricao:el('pl-desc').value.trim(),itens:el('pl-itens').value,recursos:el('pl-rec-tudo').checked?null:[].map.call(document.querySelectorAll('.pl-rec:checked'),function(x){return x.value;}),padrao:el('pl-padrao').checked?1:0,fixo_centavos:paraCentavos(el('pl-fixo').value),pacote_centavos:paraCentavosPac(el('pl-pac').value),franquia:parseInt(el('pl-fr').value,10)||0,ordem:parseInt(el('pl-ord').value,10)||0,variavel_total:el('pl-vt').checked?1:0,exclusivo:el('pl-excl').checked?1:0};
   el('pl-btn').disabled=true; el('pl-erro').textContent='';
   chamar(id?'PATCH':'POST',id?'/admin/planos/'+encodeURIComponent(id):'/admin/planos',corpo).then(function(d){
     if(!d.ok){el('pl-erro').textContent=d.mensagem||'Erro ao salvar.';el('pl-btn').disabled=false;return;}
@@ -1011,9 +1018,12 @@ function abrirCliente(id){
   (function(){ var filhas=CLIENTES.filter(function(x){ return x.grupo===c.id; }); var ops=CLIENTES.filter(function(x){ return x.id!==c.id&&!x.grupo; });   /* (269) grupo de lojas */
     return '<label style="margin-top:14px">Faz parte do grupo de (outra loja da mesma empresa)</label>'+(filhas.length?'<p class="sub" style="margin:4px 0 0"><b>Conta principal</b> das lojas: '+filhas.map(function(f){ return esc(f.nome); }).join(', ')+'.</p><input type="hidden" id="ec-grupo" value="">':
       '<select id="ec-grupo"><option value="">— nenhum (loja independente) —</option>'+ops.map(function(x){ return '<option value="'+esc(x.id)+'"'+(c.grupo===x.id?' selected':'')+'>'+esc(x.nome)+'</option>'; }).join('')+'</select><p class="sub" style="margin:4px 0 0">Ex.: o Restaurante faz parte do grupo da Padaria. As lojas do grupo usam um LivePro só (o da principal), e o dono troca de loja pelo Hub, Painel e Atendimento. Cada loja continua com o próprio cardápio, link e pedidos.</p>'); })()+
+ (function(){ var filhas=CLIENTES.filter(function(x){ return x.grupo===c.id; }); if(!filhas.length) return ''; var gc=c.grupo_cob||{}, jn=gc.modo==='junta';   /* (326) cobrança do grupo */
+    return '<div style="margin-top:12px;padding:12px;border:1px solid #D9E3F3;border-radius:12px;background:#F5F9FF"><b style="font-size:14px">Cobrança do grupo</b><select id="ec-gcmodo" style="margin-top:6px" onchange="el(\'ec-gcval-w\').style.display=this.value===\'junta\'?\'\':\'none\'"><option value="separada"'+(jn?'':' selected')+'>Separada: cada loja paga o próprio plano</option><option value="junta"'+(jn?' selected':'')+'>Junta: uma fatura só, com valor fechado</option></select><div id="ec-gcval-w" style="margin-top:8px;'+(jn?'':'display:none')+'"><label>Valor fechado por mês do grupo (R$)</label><input id="ec-gcval" inputmode="decimal" placeholder="ex.: 899,00" value="'+esc(gc.valor_centavos?(gc.valor_centavos/100).toFixed(2).replace('.',','):'')+'"></div><p class="sub" style="margin:6px 0 0">Junta: só esta conta (a principal) recebe fatura, com o valor fechado + cardápios impressos de todas as lojas. As outras lojas ficam sem fatura e, se a conta travar, travam juntas. Escolha um plano para esta conta também.</p></div>'; })()+
   '<div style="margin-top:14px;padding:12px;border:1px solid #F3D9C9;border-radius:12px;background:#FFF8F3"><b style="font-size:14px">Dados de outra conta no painel?</b><p class="sub" style="margin:4px 0 8px">Se o painel desta loja mostra pedidos ou cadastros de outra conta (vieram de um navegador usado por outra loja), tire aqui. Fica uma cópia de segurança.</p><button type="button" class="btn peq" onclick="limparPainelPrevia(\''+esc(c.id)+'\')">Ver o que sairia</button><div id="lp-res" class="sub" style="margin-top:8px"></div></div>'+
   '</div><div data-aba="plano2">'+
   '<div class="linha2"><div><label>Dia do vencimento (1 a 31)</label><input id="ec-dia" inputmode="numeric" maxlength="2" value="'+esc(c.dia_venc||10)+'"></div><div></div></div>'+
+  stHtml()+
   '<div style="margin-top:20px"><b>Cobrança no fluxo</b></div><p class="sub" style="margin:2px 0 8px">A mensalidade e a taxa entram sozinhas no fluxo. Se você excluiu uma por engano, lance de novo aqui.</p><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input type="month" id="ec-mes" style="width:auto" value="'+hojeIso().slice(0,7)+'"><button class="btn peq" onclick="relancarCobranca(\''+esc(c.id)+'\')">Lançar no fluxo</button></div>'+
   '</div><div data-aba="acesso">'+
   '<div style="margin-top:14px"><b>Acesso do dono ao painel</b></div><div id="ec-dono"><div class="vazio">Carregando...</div></div>'+
@@ -1030,7 +1040,68 @@ function abrirCliente(id){
   el('cd-abas').innerHTML=ABAS.map(function(x){ return '<button type="button" data-a="'+x[0]+'" onclick="cdAba(\''+x[0]+'\')">'+x[1]+'</button>'; }).join('');
   cdAba(abaAntes);
   cdFicha(c);
-  carregarDono(c.id);planoDoCliente();
+  carregarDono(c.id);planoDoCliente();stCarregar(c.id);
+}
+/* ── SETUP do cliente: valor, parcelas e 1º vencimento. As parcelas vão para o fluxo ("Lançar parcelas no fluxo"); a mensalidade só começa 30 dias depois do 1º vencimento.
+   O campo "Asaas" de cada parcela é só um texto (id ou link da cobrança) para a integração futura: aqui nada chama o Asaas. ── */
+var SETUP_ST={};
+function stHtml(){
+  var ns=''; for(var i=1;i<=12;i++) ns+='<option value="'+i+'">'+i+'x</option>';
+  return '<div style="margin-top:20px"><b>Setup (implantação)</b></div><p class="sub" style="margin:2px 0 8px">Valor cobrado uma vez, em parcelas mensais. Quem tem setup só começa a pagar a mensalidade 30 dias depois do 1º vencimento do setup.</p>'+
+  '<div class="linha2"><div><label>Valor do setup (R$)</label><input id="st-val" inputmode="decimal" placeholder="0,00" oninput="stPrever()"></div><div><label>Parcelas</label><select id="st-n" onchange="stPrever()">'+ns+'</select></div></div>'+
+  '<div class="linha2"><div><label>Vencimento da 1ª parcela</label><input type="date" id="st-v1" onchange="stPrever()"></div><div></div></div>'+
+  '<p class="sub" id="st-inicio" style="margin:8px 0 0"></p><div id="st-lista"></div><div class="erro" id="st-erro"></div>'+
+  '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button type="button" class="btn peq" id="st-salvar" onclick="stSalvar()">Salvar setup</button><button type="button" class="btn peq" id="st-lancar" onclick="stLancar()">Lançar parcelas no fluxo</button></div>';
+}
+function stMais(iso,n){ return new Date(Date.parse(iso+'T12:00:00Z')+n*86400000).toISOString().slice(0,10); }
+function stSomaMes(iso,k){ var a=+iso.slice(0,4),m=+iso.slice(5,7)-1+k,d=+iso.slice(8,10); a+=Math.floor(m/12); m=((m%12)+12)%12; var u=new Date(Date.UTC(a,m+1,0)).getUTCDate(); d=Math.min(d,u); return a+'-'+('0'+(m+1)).slice(-2)+'-'+('0'+d).slice(-2); }
+/* primeira data com o dia de vencimento em 'ini' ou depois (igual ao servidor) */
+function stPrimeiroVenc(ini,dia){ dia=Math.min(31,Math.max(1,parseInt(dia,10)||10)); var a=+ini.slice(0,4),m=+ini.slice(5,7); for(var i=0;i<4;i++){ var u=new Date(Date.UTC(a,m,0)).getUTCDate(),c=a+'-'+('0'+m).slice(-2)+'-'+('0'+Math.min(dia,u)).slice(-2); if(c>=ini) return c; m++; if(m>12){m=1;a++;} } return ini; }
+function stPrever(){
+  var v1=el('st-v1')?el('st-v1').value:'', inf=el('st-inicio'); if(!inf) return;
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(v1)){ inf.innerHTML='Informe o vencimento da 1ª parcela para ver quando a mensalidade começa.'; return; }
+  var ini=stMais(v1,30), dia=el('ec-dia')?el('ec-dia').value:10, pv=stPrimeiroVenc(ini,dia);
+  inf.innerHTML='<b>A mensalidade começa em '+fmtData(ini)+'</b> (30 dias depois): a 1ª vence em <b>'+fmtData(pv)+'</b>, dia '+(parseInt(dia,10)||10)+' de cada mês.'+(pv!==ini?' <button type="button" class="btn peq" onclick="stUsarDia(\''+ini.slice(8,10)+'\')">Vencer em '+fmtData(ini)+' (usar dia '+parseInt(ini.slice(8,10),10)+')</button>':'');
+}
+function stUsarDia(d){ var i=el('ec-dia'); if(i){ i.value=parseInt(d,10); stPrever(); toast('Dia do vencimento mudou para '+parseInt(d,10)+'. Toque em "Salvar dados" para valer.'); } }
+function stCarregar(id){
+  chamar('GET','/admin/clientes/'+encodeURIComponent(id)+'/setup').then(function(d){
+    if(CLI_ABERTO!==id||!el('st-val')) return;
+    SETUP_ST[id]=d.ok?d.setup:null; stDesenhar(id);
+  }).catch(function(){});
+}
+function stDesenhar(id){
+  var s=SETUP_ST[id];
+  if(s){ el('st-val').value=deCentavos(s.valor_centavos); el('st-n').value=String(s.n); el('st-v1').value=s.venc1; }
+  stPrever();
+  var L=el('st-lista'); if(!L) return;
+  if(!s){ L.innerHTML=''; return; }
+  var tem=s.parcelas.some(function(p){ return p.no_fluxo; }), stx={pago:'Paga',pendente:'No fluxo',nao_lancada:'Não lançada'};
+  L.innerHTML='<div style="margin-top:8px;display:grid;gap:6px">'+s.parcelas.map(function(p){
+    return '<div style="display:grid;grid-template-columns:34px 1fr 92px minmax(120px,1.4fr);gap:8px;align-items:center;font-size:13px"><b>'+p.n+'/'+s.n+'</b><span>'+reais(p.valor_centavos)+' · vence '+fmtData(p.venc)+'</span><span class="tag '+(p.status==='pago'?'on':'off')+'">'+stx[p.status]+'</span><input class="st-asaas" placeholder="Asaas: id ou link" value="'+esc(p.asaas)+'" style="padding:6px 8px;font-size:12px"></div>';
+  }).join('')+'</div>'+(tem?'':'<p class="sub" style="margin:6px 0 0">As parcelas ainda não estão no fluxo. Toque em "Lançar parcelas no fluxo".</p>');
+}
+function stSalvar(){
+  var id=CLI_ABERTO, er=el('st-erro'); er.textContent='';
+  var corpo={valor_centavos:paraCentavos(el('st-val').value),parcelas:parseInt(el('st-n').value,10)||1,venc1:el('st-v1').value};
+  if(corpo.valor_centavos&&!corpo.venc1){ er.textContent='Informe o vencimento da 1ª parcela.'; return; }
+  var as=document.querySelectorAll('.st-asaas'); if(as.length&&corpo.valor_centavos&&SETUP_ST[id]&&SETUP_ST[id].n===corpo.parcelas) corpo.asaas=[].map.call(as,function(i){ return i.value.trim(); });
+  chamar('PUT','/admin/clientes/'+encodeURIComponent(id)+'/setup',corpo).then(function(d){
+    if(!d.ok){ er.textContent=d.mensagem||d.erro||'Erro ao salvar o setup.'; return; }
+    SETUP_ST[id]=d.setup; if(!d.setup){ el('st-val').value=''; el('st-v1').value=''; }
+    stDesenhar(id); toast(d.setup?'Setup salvo.':'Setup removido.'); carregarFluxo();
+    chamar('GET','/admin/clientes').then(function(r){ if(r.ok){ CLIENTES=r.clientes||[]; desenharClientes(); var c=CLIENTES.filter(function(x){return x.id===id;})[0]; if(c) cdFicha(c); } }).catch(function(){});
+  }).catch(function(){});
+}
+function stLancar(){
+  var id=CLI_ABERTO, er=el('st-erro'); er.textContent='';
+  if(!SETUP_ST[id]){ er.textContent='Salve o setup antes de lançar no fluxo.'; return; }
+  chamar('POST','/admin/clientes/'+encodeURIComponent(id)+'/setup',{}).then(function(d){
+    if(!d.ok){ er.textContent=d.mensagem||d.erro||'Erro ao lançar.'; return; }
+    SETUP_ST[id]=d.setup; stDesenhar(id);
+    var p=d.setup.venc1; if(p<FC.ini||d.setup.parcelas[d.setup.parcelas.length-1].venc>FC.fim){ FC.ini=p<FC.ini?p.slice(0,8)+'01':FC.ini; var u=d.setup.parcelas[d.setup.parcelas.length-1].venc; if(u>FC.fim) FC.fim=ultDia(u.slice(0,7)); }
+    toast('Parcelas do setup lançadas no fluxo.'); carregarFluxo();
+  }).catch(function(){});
 }
 function ecTeste(d){ var i=el('ec-teste'); if(!d){ i.value=''; return; } var t=new Date(hojeIso()+'T12:00:00'); t.setDate(t.getDate()+d); i.value=t.toISOString().slice(0,10); }
 function planoDoCliente(){
@@ -1041,7 +1112,7 @@ function planoDoCliente(){
   inf.textContent='Vale o plano: fixo '+reais(p.fixo_centavos)+' + '+reaisPac(p.pacote_centavos)+' por pacote'+(p.franquia?(p.variavel_total?'':' acima de '+p.franquia+' pacotes'):'')+(p.variavel_total?' desde o 1º pacote':'')+'. A mensalidade manual é ignorada.';
 }
 function salvarCliente(id){
-  chamar('PATCH','/admin/clientes/'+encodeURIComponent(id),{plano_id:el('ec-plano').value,teste_ate:el('ec-teste').value,slug:el('ec-slug').value.trim(),nome:el('ec-nome').value.trim(),mensalidade_centavos:paraCentavos(el('ec-men').value),taxa_app_centavos:paraCentavos(el('ec-taxa').value),dia_venc:parseInt(el('ec-dia').value,10)||10,livepro:el('ec-lp')&&el('ec-lp').checked?1:0,grupo:el('ec-grupo')?el('ec-grupo').value:undefined,lp_fluxo:el('ec-lpf')&&el('ec-lpf').checked?1:0,praia:el('ec-praia')&&el('ec-praia').checked?1:0,livebank:el('ec-lb')&&el('ec-lb').checked?1:0,lb_loja:el('ec-lbloja')?el('ec-lbloja').value.trim():undefined,lb_taxas:el('ec-tx-debito')?['debito','credito','parc2_6','parc7_12','pix','voucher'].reduce(function(o,k){ var v=el('ec-tx-'+k).value.trim().replace(',','.'); o[k]=v===''||isNaN(parseFloat(v))?'':parseFloat(v); return o; },{}):undefined}).then(function(d){
+  chamar('PATCH','/admin/clientes/'+encodeURIComponent(id),{plano_id:el('ec-plano').value,teste_ate:el('ec-teste').value,slug:el('ec-slug').value.trim(),nome:el('ec-nome').value.trim(),mensalidade_centavos:paraCentavos(el('ec-men').value),taxa_app_centavos:paraCentavos(el('ec-taxa').value),dia_venc:parseInt(el('ec-dia').value,10)||10,livepro:el('ec-lp')&&el('ec-lp').checked?1:0,grupo:el('ec-grupo')?el('ec-grupo').value:undefined,grupo_cob:el('ec-gcmodo')?{modo:el('ec-gcmodo').value,valor_centavos:paraCentavos(el('ec-gcval').value)}:undefined,lp_fluxo:el('ec-lpf')&&el('ec-lpf').checked?1:0,praia:el('ec-praia')&&el('ec-praia').checked?1:0,livebank:el('ec-lb')&&el('ec-lb').checked?1:0,lb_loja:el('ec-lbloja')?el('ec-lbloja').value.trim():undefined,lb_taxas:el('ec-tx-debito')?['debito','credito','parc2_6','parc7_12','pix','voucher'].reduce(function(o,k){ var v=el('ec-tx-'+k).value.trim().replace(',','.'); o[k]=v===''||isNaN(parseFloat(v))?'':parseFloat(v); return o; },{}):undefined}).then(function(d){
     if(!d.ok){el('ec-erro').textContent=d.mensagem||d.erro||'Erro ao salvar.';return;}
     toast('Dados salvos.');recarregarMantendo(id);
   }).catch(function(){});
@@ -1279,6 +1350,62 @@ function abrirPaytime(){
     if(es.length) ptGateways();
   }).catch(function(){ var c=el('pt-corpo'); if(c) c.textContent='Erro de conexão.'; });
 }
+/* ── (303) Payer: testa o login, cadastra a loja (companyId, storeId, automationName e terminais, que vêm do onboarding da Payer) e faz uma cobrança de teste no simulador ── */
+var PY_POLL=null;
+function abrirPayer(){
+  abrirModal('<h3>Payer · maquininha e totem</h3><p class="sub">O e-mail e a senha ficam só nos segredos do Worker (PAYER_USER e PAYER_PASS). Os dados da loja vêm do onboarding da Payer. Só funciona na loja marcada como ligada.</p><div id="py-corpo" class="sub2" style="margin:10px 0">Conectando...</div><div class="acoes"><button class="btn" onclick="abrirPyOrdens()">Últimas cobranças</button><button class="btn" onclick="fechar()">Fechar</button></div>');
+  chamar('GET','/admin/payer/teste').then(function(d){
+    var c=el('py-corpo'); if(!c) return;
+    var topo=d.ok?'✅ Login OK na Payer':'<div class="erro">'+esc(d.mensagem||'Não conectou.')+'</div>';
+    c.innerHTML=topo+'<label>Loja</label><select id="py-cli" onchange="pyCarrega()"><option value="">Escolha a loja…</option>'+CLIENTES.map(function(x){ return '<option value="'+esc(x.id)+'">'+esc(x.nome||x.id)+'</option>'; }).join('')+'</select><div id="py-loja"></div>';
+  }).catch(function(){ var c=el('py-corpo'); if(c) c.textContent='Erro de conexão.'; });
+}
+function pyCarrega(){
+  var cli=el('py-cli').value, b=el('py-loja'); if(!cli){ b.innerHTML=''; return; }
+  chamar('GET','/admin/payer/loja?cli='+encodeURIComponent(cli)).then(function(d){
+    var l=d.loja||{}, tm=(l.terminais||[]).map(function(t){ return t.id+' ; '+(t.nome||'')+' ; '+(t.tipo||'maquininha'); }).join('\n');
+    b.innerHTML='<label>companyId</label><input id="py-co" value="'+esc(l.companyId||'')+'"><label>storeId</label><input id="py-st" value="'+esc(l.storeId||'')+'"><label>automationName</label><input id="py-au" value="'+esc(l.automationName||'')+'">'
+      +'<label>Terminais (um por linha: terminalId ; nome ; maquininha ou totem)</label><textarea id="py-tm" rows="4" placeholder="T001 ; Gertec balcão ; maquininha">'+esc(tm)+'</textarea>'
+      +'<label style="display:flex;gap:8px;align-items:center;margin-top:8px"><input type="checkbox" id="py-at"'+(l.ativo?' checked':'')+' style="width:auto"> Payer ligada nesta loja (aparece o botão Cobrar na maquininha)</label>'
+      +'<label style="display:flex;gap:8px;align-items:center;margin-top:8px"><input type="checkbox" id="py-sm"'+(l.simulado?' checked':'')+' style="width:auto"> <span><b>Modo simulação</b> (sem maquininha e sem a Payer): a cobrança aprova sozinha em 3 segundos e o cupom aparece na tela. Valor terminado em ,99 é recusado de propósito. Serve para demonstrar o totem e o garçom.</span></label>'
+      +'<div class="acoes" style="justify-content:flex-start"><button class="btn pri" onclick="pySalva()">Salvar loja</button></div>'
+      +'<hr style="border:0;border-top:1px solid #e7e0d8;margin:14px 0"><div class="sub2"><b>Cobrança de teste (simulador)</b>: centavos diferentes de zero aprovam; valor redondo recusa. Salve a loja antes.</div>'
+      +'<select id="py-vl" style="margin-top:6px"><option value="10.01">R$ 10,01 · deve aprovar</option><option value="10.00">R$ 10,00 · deve recusar</option></select>'
+      +'<div class="acoes" style="justify-content:flex-start"><button class="btn" id="py-bt" onclick="pyTeste()">Cobrar de teste no 1º terminal</button></div><div id="py-res"></div>';
+  }).catch(function(){ b.textContent='Erro de conexão.'; });
+}
+function pySalva(){
+  var ts=el('py-tm').value.split('\n').map(function(s){ var p=s.split(';').map(function(x){ return x.trim(); }); return p[0]?{id:p[0],nome:p[1]||'',tipo:/totem/i.test(p[2]||'')?'totem':'maquininha'}:null; }).filter(Boolean);
+  chamar('POST','/admin/payer/loja',{cli:el('py-cli').value,ativo:el('py-at').checked,simulado:el('py-sm').checked,companyId:el('py-co').value.trim(),storeId:el('py-st').value.trim(),automationName:el('py-au').value.trim(),terminais:ts}).then(function(d){
+    if(!d.ok){ toast(d.mensagem||'Não salvou.',true); return; }
+    toast(d.completa?(el('py-sm').checked?'Loja salva em modo simulação.':'Loja salva e pronta.'):(el('py-at').checked?'Salvo, mas faltam dados para ligar (companyId, storeId, automationName e um terminal).':'Loja salva (desligada).'),el('py-at').checked&&!d.completa);
+  }).catch(function(){});
+}
+function pyTeste(){
+  var b=el('py-bt'), r=el('py-res'); b.disabled=true; clearTimeout(PY_POLL); r.innerHTML='<div class="sub2" style="margin-top:8px">Enviando...</div>';
+  chamar('POST','/admin/payer/cobrar-teste',{cli:el('py-cli').value,valor:+el('py-vl').value,forma:''}).then(function(d){
+    if(!d.ok){ b.disabled=false; r.innerHTML='<div class="erro" style="margin-top:8px">'+esc(d.mensagem||'Não enviou.')+'</div>'; return; }
+    pyAcompanha(d.correlation_id,0);
+  }).catch(function(){ b.disabled=false; });
+}
+function pyAcompanha(id,n){
+  PY_POLL=setTimeout(function(){
+    chamar('GET','/admin/payer/status?id='+encodeURIComponent(id)).then(function(d){
+      var r=el('py-res'), b=el('py-bt'); if(!r) return; var o=d.ordem||{};
+      if(o.status==='aprovada'||o.status==='recusada'||o.status==='erro'||o.status==='sem_resposta'||n>60){ if(b) b.disabled=false;
+        r.innerHTML='<div class="aviso" style="margin-top:8px">'+(o.status==='aprovada'?'✅ <b>Aprovada</b>':'<b>'+esc(o.status||'sem retorno')+'</b>')+(o.motivo?' · '+esc(o.motivo):'')+'<br>Valor '+esc(o.valor)+' · adquirente '+esc(o.adquirente||'-')+' · bandeira '+esc(o.bandeira||'-')+' · NSU '+esc(o.nsu||'-')+'<br>idPayer: '+esc(o.id_payer||'-')+'</div>'; return; }
+      r.innerHTML='<div class="sub2" style="margin-top:8px">Aguardando a Payer... ('+esc(o.status||'enviada')+')</div>'; pyAcompanha(id,n+1);
+    }).catch(function(){});
+  },3000);
+}
+function abrirPyOrdens(){
+  var cli=(el('py-cli')||{}).value||'';
+  abrirModal('<h3>Payer · últimas cobranças</h3><div id="py-ord" class="sub2">Carregando...</div><div class="acoes"><button class="btn" onclick="abrirPyOrdens()">↻ Atualizar</button><button class="btn" onclick="fechar()">Fechar</button></div>');
+  chamar('GET','/admin/payer/ordens'+(cli?'?cli='+encodeURIComponent(cli):'')).then(function(d){
+    var o=el('py-ord'); if(!o) return; var l=d.ordens||[];
+    o.innerHTML=l.length?'<div class="tabela-wrap"><table><tr><th>Quando</th><th>Valor</th><th>Situação</th><th>Adquirente</th><th>NSU</th></tr>'+l.map(function(x){ return '<tr><td>'+new Date(x.criado).toLocaleString('pt-BR')+'</td><td>'+esc(x.valor)+(x.comando==='CANCELLMENT'?' (estorno)':'')+'</td><td>'+esc(x.status)+(x.motivo?' · '+esc(x.motivo):'')+'</td><td>'+esc(x.adquirente||'-')+'</td><td>'+esc(x.nsu||'-')+'</td></tr>'; }).join('')+'</table></div>':'Nenhuma cobrança ainda.';
+  }).catch(function(){});
+}
 /* (126) gateways do estabelecimento escolhido + botão para ligar o gateway Paytime com os planos ativos */
 function ptGateways(){
   var g=el('pt-gw'), s=el('pt-estab'); if(!g||!s) return; g.textContent='Conferindo os gateways...';
@@ -1434,9 +1561,18 @@ function salvarWhatsPedidos(){
 function removerAsaas(){if(!confirm('Remover a chave do Asaas do LiveFood?'))return;chamar('POST','/admin/asaas-config',{remover:true}).then(function(d){if(d.ok){fechar();toast('Chave removida.');carregarSaldo();}}).catch(function(){});}
 
 /* ── menu do nome ── */
-function menuAv(e){e.stopPropagation();el('menu-lista').classList.toggle('on');}
+/* o topo laranja corta o que passa da borda dele (overflow:hidden). O menu abre preso à janela, logo abaixo da bolinha, para não ser cortado */
+function menuAv(e){
+  e.stopPropagation();
+  var m=el('menu-lista'), b=el('av-ini').getBoundingClientRect();
+  m.style.position='fixed'; m.style.top=Math.round(b.bottom+8)+'px'; m.style.right=Math.max(8,Math.round(window.innerWidth-b.right))+'px';
+  m.style.maxHeight=Math.max(160,window.innerHeight-b.bottom-20)+'px'; m.style.overflowY='auto';
+  m.classList.toggle('on');
+}
 function menuFecha(){el('menu-lista').classList.remove('on');}
 document.addEventListener('click',function(){var m=el('menu-lista');if(m)m.classList.remove('on');});
+window.addEventListener('scroll',function(){var m=el('menu-lista');if(m)m.classList.remove('on');},{passive:true});
+window.addEventListener('resize',function(){var m=el('menu-lista');if(m)m.classList.remove('on');});
 function abrirTrocarSenha(){
   abrirModal('<h3>Trocar minha senha</h3><label>Senha atual</label><input id="ts-a" type="password" autocomplete="current-password"><label>Nova senha (mínimo 8 caracteres)</label><input id="ts-n" type="password" autocomplete="new-password"><div class="erro" id="ts-erro"></div><div class="acoes"><button class="btn" onclick="fechar()">Cancelar</button><button class="btn pri" id="ts-btn" onclick="salvarSenha()">Trocar senha</button></div>');
 }
@@ -1444,6 +1580,55 @@ function salvarSenha(){
   var a=el('ts-a').value,n=el('ts-n').value; if(!a||!n){el('ts-erro').textContent='Preencha os dois campos.';return;}
   el('ts-btn').disabled=true;
   chamar('POST','/auth/trocar-senha',{atual:a,nova:n}).then(function(d){if(!d.ok){el('ts-erro').textContent=d.mensagem||'Erro.';el('ts-btn').disabled=false;return;}fechar();toast('Senha trocada.');}).catch(function(){el('ts-btn').disabled=false;});
+}
+/* ── Usuários do admin (Worker 291): quem entra no Admin. Todos têm acesso total. Criar, desativar ou trocar a senha de outro pede a senha de quem está fazendo ── */
+var ADMINS=[], ADM_EU='';
+function admData(t){ if(!t) return 'nunca entrou'; var d=new Date(t), z=function(n){return ('0'+n).slice(-2);}; return z(d.getDate())+'/'+z(d.getMonth()+1)+'/'+d.getFullYear()+' '+z(d.getHours())+':'+z(d.getMinutes()); }
+function abrirAdmins(){
+  abrirModal('<h3>Usuários do admin</h3><p class="sub">Quem pode entrar neste Admin. Todos têm acesso total: clientes, planos, financeiro e Comercial.</p><div id="adm-corpo"><div class="vazio">Carregando...</div></div>');
+  chamar('GET','/admin/admins').then(function(d){
+    if(!el('adm-corpo')) return;
+    if(!d||!d.ok){ el('adm-corpo').innerHTML='<div class="aviso">'+esc((d&&d.mensagem)||'Esta tela precisa do Worker 291.')+'</div><div class="acoes"><button class="btn" onclick="fechar()">Fechar</button></div>'; return; }
+    ADMINS=d.admins||[]; ADM_EU=d.eu||''; admDesenha('');
+  }).catch(function(){ if(el('adm-corpo')) el('adm-corpo').innerHTML='<div class="aviso">Sem conexão. Tente de novo.</div>'; });
+}
+function admDesenha(msg){
+  var c=el('adm-corpo'); if(!c) return;
+  c.innerHTML=ADMINS.map(function(u,k){ var eu=u.id===ADM_EU;
+    return '<div class="usr"><div class="u1"><b>'+esc(u.nome||'')+(eu?' <span class="tag per">você</span>':'')+' <span class="tag '+(u.ativo?'on':'off')+'">'+(u.ativo?'Ativo':'Desativado')+'</span></b><small>'+esc(u.email||'')+' · último acesso: '+admData(u.ultimo_acesso)+'</small></div>'+
+      (eu?'':'<button class="btn peq" onclick="admSenha('+k+')">Nova senha</button><button class="btn peq'+(u.ativo?' perigo':'')+'" onclick="admAtivo('+k+')">'+(u.ativo?'Desativar':'Ativar')+'</button>')+'</div>'; }).join('')+
+   '<div class="usr" style="display:block"><b>Novo administrador</b>'+
+    '<div class="linha2"><div><label>Nome</label><input id="adm-nome" autocomplete="off"></div><div><label>E-mail (é o login)</label><input id="adm-email" type="email" autocomplete="off"></div></div>'+
+    '<label>Senha dele (mínimo 8 caracteres)</label><input id="adm-senha" type="password" autocomplete="new-password"></div>'+
+   '<label>Sua senha, para confirmar</label><input id="adm-minha" type="password" autocomplete="current-password" placeholder="pedida para criar, desativar ou trocar senha">'+
+   '<div class="erro" id="adm-erro">'+esc(msg||'')+'</div>'+
+   '<div class="acoes"><button class="btn" onclick="fechar()">Fechar</button><button class="btn pri" id="adm-btn" onclick="admCriar()">Criar administrador</button></div>';
+}
+function admMinha(){ var s=el('adm-minha').value; if(!s){ el('adm-erro').textContent='Digite a sua senha no campo de confirmação.'; el('adm-minha').focus(); return ''; } return s; }
+function admFaz(caminho,corpo,okMsg){
+  el('adm-btn').disabled=true;
+  chamar('POST',caminho,corpo).then(function(d){
+    if(!el('adm-corpo')) return;
+    if(!d||!d.ok){ el('adm-btn').disabled=false; el('adm-erro').textContent=(d&&d.mensagem)||'Não consegui concluir.'; return; }
+    ADMINS=d.admins||ADMINS; admDesenha(''); toast(okMsg);
+  }).catch(function(){ if(el('adm-btn')){ el('adm-btn').disabled=false; el('adm-erro').textContent='Sem conexão. Tente de novo.'; } });
+}
+function admCriar(){
+  var n=el('adm-nome').value.trim(), e=el('adm-email').value.trim(), s=el('adm-senha').value;
+  if(!n||!e||!s){ el('adm-erro').textContent='Preencha nome, e-mail e senha do novo administrador.'; return; }
+  var m=admMinha(); if(!m) return;
+  admFaz('/admin/admins',{nome:n,email:e,senha:s,minha_senha:m},'Administrador criado.');
+}
+function admAtivo(k){
+  var u=ADMINS[k], m=admMinha(); if(!m) return;
+  if(u.ativo && !confirm('Desativar o acesso de '+u.nome+' ao Admin?')) return;
+  admFaz('/admin/admins-ativo',{id:u.id,ativo:u.ativo?0:1,minha_senha:m},u.ativo?'Acesso desativado.':'Acesso ativado.');
+}
+function admSenha(k){
+  var u=ADMINS[k], m=admMinha(); if(!m) return;
+  var s=prompt('Nova senha para '+u.nome+' (mínimo 8 caracteres):'); if(s===null) return;
+  if(s.length<8){ el('adm-erro').textContent='A senha precisa ter pelo menos 8 caracteres.'; return; }
+  admFaz('/admin/admins-senha',{id:u.id,senha:s,minha_senha:m},'Senha de '+u.nome+' trocada.');
 }
 
 
@@ -1453,7 +1638,7 @@ function cdAba(k){ CD_ABA=k; document.querySelectorAll('#cd-abas button').forEac
 function cdFicha(c){
   var s=situacao(c), pn=planoNome(c.plano_id);
   el('cd-ficha').innerHTML='<div class="a" style="background:'+(c.ativo?corAv(c.nome):'#8A8A92')+'">'+esc((c.nome||'?').charAt(0).toUpperCase())+'</div><h2>'+esc(c.nome)+'</h2><div class="hx-mu">'+(c.slug?'<a href="https://livefood.tec.br/'+esc(c.slug)+'" target="_blank" rel="noopener" style="color:inherit">livefood.tec.br/'+esc(c.slug)+'</a>':esc(c.id))+'</div><span class="st '+s.cls+'">'+s.txt+'</span>'+
-    '<dl><div><dt>Plano</dt><dd>'+(pn?esc(pn):'Sem plano (valores manuais)')+'</dd></div><div><dt>Mensalidade</dt><dd>'+reais(c.mensalidade_centavos)+' · dia '+(c.dia_venc||10)+'</dd></div><div><dt>Taxa por motorista</dt><dd>'+reais(c.taxa_app_centavos)+'</dd></div><div><dt>Equipe</dt><dd>'+(c.equipe||0)+' no painel · '+(c.motoristas_ativos||0)+' motorista'+((c.motoristas_ativos||0)===1?'':'s')+'</dd></div><div id="cd-dono-fic"></div></dl>';
+    '<dl><div><dt>Plano</dt><dd>'+(pn?esc(pn):'Sem plano (valores manuais)')+'</dd></div><div><dt>Mensalidade</dt><dd>'+reais(c.mensalidade_centavos)+' · dia '+(c.dia_venc||10)+'</dd></div><div><dt>Taxa por motorista</dt><dd>'+reais(c.taxa_app_centavos)+'</dd></div>'+(c.mens_inicio?'<div><dt>Setup</dt><dd>'+reais(c.setup_centavos)+' em '+(c.setup_parcelas||1)+'x</dd></div><div><dt>Mensalidade começa</dt><dd>'+fmtData(c.mens_inicio)+' · 1ª vence '+fmtData(c.mens_primeiro_venc)+'</dd></div>':'')+'<div><dt>Equipe</dt><dd>'+(c.equipe||0)+' no painel · '+(c.motoristas_ativos||0)+' motorista'+((c.motoristas_ativos||0)===1?'':'s')+'</dd></div><div id="cd-dono-fic"></div></dl>';
 }
 /* dados do dono na ficha (vêm junto com o acesso ao painel) */
 function cdDonoFicha(cid){

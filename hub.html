@@ -332,6 +332,8 @@ function entrar(){
     b.disabled=false; b.textContent='Entrar';
     if(!d||!d.ok){ $('lgM').textContent=(d&&d.mensagem)||'Não consegui entrar.'; return; }
     if(d.usuario&&d.usuario.perfil==='master'){ $('lgM').innerHTML='Esse acesso é do administrador. <a href="admin.html">Abrir o Admin</a>'; return; }
+    /* representante (perfil vendedor): não tem loja, então o Hub não serve para ele. Entra direto no Comercial, já logado */
+    if(d.usuario&&d.usuario.perfil==='vendedor'){ try{ localStorage.setItem('lf_com_jwt',d.token); }catch(x){} $('lgS').value=''; $('lgM').textContent='Abrindo o Comercial…'; location.href='comercial.html'; return; }
     guarda(d.token,d.usuario); $('lgS').value=''; mostraHub();
     if(window.LiveApp&&LiveApp.comemorar) LiveApp.comemorar({titulo:'Bem-vindo!',sub:'Escolha a tela e bora trabalhar.',ms:1600});
   }).catch(function(){ b.disabled=false; b.textContent='Entrar'; $('lgM').textContent='Sem conexão. Tente de novo.'; });

@@ -8,7 +8,8 @@
   'use strict';
 
   const API = 'https://giro-os-api.nucleofull.workers.dev';
-  const SCRIPTS = ['js/frases.js', 'js/live.js', 'js/voz.js', 'js/cerebro.js', 'js/app.js'];
+  // o totem de toque (toque.html) usa este mesmo arquivo e carrega só o js/toque.js no lugar dos scripts de voz
+  const SCRIPTS = window.LIVE_SCRIPTS || ['js/frases.js', 'js/live.js', 'js/voz.js', 'js/cerebro.js', 'js/app.js'];
   const r2 = (v) => Math.round(v * 100) / 100;
   const semAcento = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
   const ler = (k) => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } };
@@ -21,6 +22,8 @@
   // chave do totem (vem no link copiado do painel). Com ela, a IA e a voz passam pelo servidor do LiveFood
   // e as configurações (modelo, treinamento, envio de pedidos) vêm do painel da loja.
   const chaveTotem = codigo && doEndereco ? String(Q.get('k') || '').replace(/[^a-f0-9]/g, '').slice(0, 64) : '';
+  // tablet de mesa (totem de toque): ...&mesa=12 no link. O pedido entra na conta dessa mesa, não como retirada
+  const mesaTablet = String(Q.get('mesa') || '').replace(/\D/g, '').slice(0, 3);
 
   // ---------------------------------------------------------------------------
   // Abrir na hora: o cardápio e as configurações do painel ficam guardados neste aparelho.
@@ -160,7 +163,7 @@
     // (137) restaurante ou outra loja (farmácia, mercado...): vem do botão do catálogo escolhido em Ofertas
     const cat = (d.cfg && d.cfg.menu && d.cfg.menu.catalogo) || {}, catNome = cat.nome || 'Cardápio', nCat = semAcento(catNome.toLowerCase());
     const ehRest = nCat === 'cardapio' || nCat === 'menu' || !cat.icone || cat.icone === 'cardapio';
-    const categorias = (d.cats || []).map((c) => ({ id: c.id, nome: c.nome }));
+    const categorias = (d.cats || []).map((c) => ({ id: c.id, nome: c.nome, dest: c.dest || '', prep: c.prep ? 1 : 0, pronto: c.pronto ? 1 : 0 })); // dest/prep: o totem de toque decide o ticket do cliente (preparo x bebida pronta)
     const nomeCat = (id) => (categorias.find((c) => c.id === id) || {}).nome || '';
     const itens = [];
     for (const p of Object.values(d.produtos || {})) {
@@ -171,6 +174,7 @@
         bordas: ads.filter((a) => /borda/i.test(a.nome)),
         adicionais: ads.filter((a) => !/borda/i.test(a.nome)),
         foto: p.foto ? `${API}/food/foto/${encodeURIComponent(cli)}/${encodeURIComponent(p.id)}` : '',
+        video: p.vid ? `${API}/food/video/${encodeURIComponent(cli)}/${encodeURIComponent(p.vid)}` : '', // vídeo do produto (totem de toque)
         ...visual(nomeCat(p.cat), p.nome, !ehRest),
       };
       const tams = Array.isArray(p.tamanhos) ? p.tamanhos : [];
@@ -220,10 +224,12 @@
     return tokenEmCurso;
   }
   async function buscarToken(renovar) {
-    const k = 'live-token-' + M.cli, salvo = ler(k);
+    const k = 'live-token-' + M.cli + (mesaTablet ? '-m' + mesaTablet : ''), salvo = ler(k);
     if (!renovar && salvo && salvo.exp > Date.now()) return salvo.tk;
+    // tablet de mesa: entra na mesa do link, com a chave do totem (vale mesmo em loja que pede WhatsApp na mesa)
     const r = await fetch(API + '/food/conta/mesa-entrar', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cli: M.cli, mesa: 'Totem' }),
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(mesaTablet ? { cli: M.cli, mesa: mesaTablet, k: chaveTotem } : { cli: M.cli, mesa: 'Totem' }),
     });
     const j = await r.json().catch(() => ({}));
     if (!j.ok || !j.token) throw new Error(j.mensagem || 'Não consegui entrar na loja (' + r.status + ')');
@@ -231,7 +237,9 @@
     return j.token;
   }
 
-  async function enviarPedido(carrinho, { nome = '' } = {}) {
+  // op (totem de toque): { modo: 'retirada' | 'mesa', pagto: 'dinheiro' | 'pix' | 'conta', mesa, obs }. Sem op, vale o totem de voz: retirada, pago no caixa
+  // pagto 'maquina' (cartão na maquininha do totem) leva maqTipo: 'credito' | 'debito'
+  async function enviarPedido(carrinho, { nome = '', modo = 'retirada', pagto = 'dinheiro', mesa = '', obs, maqTipo = '' } = {}) {
     if (!M.cli) return { ok: false, erro: 'sem_loja', mensagem: 'Totem sem loja do LiveFood configurada.' };
     const itens = carrinho.map((l) => {
       const i = M.itens.find((x) => x.id === l.id);
@@ -240,8 +248,11 @@
       return { p: i.pid, qty: l.qtd, tam: i.tam, sab: l.sab || [], borda, adds: adds.filter((a) => a !== borda), obs: l.obs || '' };
     });
     // o nome vai no campo "nome" (o servidor usa nos pedidos do totem) e também na observação, que aparece em qualquer versão
-    const corpo = JSON.stringify({ modo: 'retirada', pagto: 'dinheiro', troco: 0, itens, nome,
-      obs: (nome ? `Cliente: ${nome}. ` : '') + 'Pedido feito no totem (Live). Pagar no caixa.' });
+    const dados = { modo, pagto, troco: 0, itens, nome,
+      obs: obs !== undefined ? obs : (nome ? `Cliente: ${nome}. ` : '') + 'Pedido feito no totem (Live). Pagar no caixa.' };
+    if (modo === 'mesa') dados.mesa = mesa;
+    if (pagto === 'maquina') dados.maqTipo = maqTipo === 'debito' ? 'debito' : 'credito';
+    const corpo = JSON.stringify(dados);
     let resp = null;
     for (const renovar of [false, true]) {
       const tk = await tokenTotem(renovar);
@@ -249,8 +260,16 @@
       resp = await r.json().catch(() => ({ ok: false, mensagem: 'Resposta inválida do servidor (' + r.status + ')' }));
       if (r.status !== 401) break; // sessão vencida: entra de novo uma vez
     }
-    if (resp && resp.ok && resp.pedido) return { ok: true, num: resp.pedido.num, id: resp.pedido.id, total: resp.pedido.total };
+    if (resp && resp.ok && resp.pedido) return { ok: true, num: resp.pedido.num, id: resp.pedido.id, total: resp.pedido.total,
+      status: resp.pedido.status || '', pixCopia: resp.pedido.pix_copia || '', pixQr: resp.pedido.pix_qr || '' }; // Pix na tela do totem de toque
     return { ok: false, erro: (resp && resp.erro) || 'falhou', mensagem: (resp && resp.mensagem) || 'Não consegui enviar o pedido.' };
+  }
+  // totem de toque com Pix: a tela pergunta de tempos em tempos se o pagamento caiu
+  async function consultarPedido(id) {
+    const tk = await tokenTotem(false);
+    const r = await fetch(API + '/food/pedido/' + encodeURIComponent(id), { headers: { Authorization: 'Bearer ' + tk }, cache: 'no-store' });
+    const j = await r.json().catch(() => ({}));
+    return j && j.ok && j.pedido ? { ok: true, status: j.pedido.status || '', num: j.pedido.num } : { ok: false, mensagem: (j && j.mensagem) || 'Sem resposta do servidor.' };
   }
 
   // ---------------------------------------------------------------------------
@@ -289,6 +308,7 @@
   const kLogo = 'live-logo-' + codigo;
   let logoNaTela = '';
   function pintarLogo(src, clara, alt) {
+    if (window.LIVE_LOGO) { window.LIVE_LOGO(src, clara, alt); return; } // totem de toque: a própria tela desenha a logo
     const img = document.getElementById('logo-loja');
     img.onload = img.onerror = null;
     img.alt = alt || '';
@@ -320,6 +340,7 @@
   function mostrarLogo() {
     const img = document.getElementById('logo-loja');
     const doLiveFood = () => {
+      if (window.LIVE_LOGO) { window.LIVE_LOGO('', false, ''); logoNaTela = ''; return; } // totem de toque sem logo: mostra o nome da loja
       img.onload = img.onerror = null;
       img.classList.remove('da-loja', 'clara'); img.alt = 'livefood'; img.src = 'img/logo-livefood.png'; img.classList.add('pronta');
       document.getElementById('rodape').classList.remove('visivel');
@@ -383,6 +404,8 @@
     M.precoUnit = precoUnit;
     M.precoLinha = (l) => precoUnit(M.itens.find((i) => i.id === l.id), l.sab || [], l.adds || []) * l.qtd;
     M.enviarPedido = enviarPedido;
+    M.consultarPedido = consultarPedido;
+    M.mesa = mesaTablet;
     // confere o servidor por trás (logo depois de abrir, sem disputar a rede com os scripts) e a cada 10 min
     setTimeout(conferirServidor, 1500);
     setInterval(conferirServidor, 10 * 60000);

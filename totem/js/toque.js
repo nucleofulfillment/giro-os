@@ -1,0 +1,1007 @@
+/* Totem de toque — autoatendimento por toque do LiveFood (sem voz).
+   Usa o mesmo cardápio e o mesmo envio de pedido do totem de voz (js/cardapio.js → window.LIVEFOOD).
+   A aparência vem do painel da loja (Configurações → Totem de toque), entregue em /live/config no campo "toque".
+   Sem a chave no link, ou com o totem de toque desligado no painel, roda em modo teste: mostra tudo, mas não envia pedido. */
+(function () {
+  'use strict';
+  const M = window.LIVEFOOD;
+  const $ = (s) => document.querySelector(s), $$ = (s) => document.querySelectorAll(s);
+  const totem = $('#totem');
+  const R$ = (v) => 'R$ ' + (Math.round(v * 100) / 100).toFixed(2).replace('.', ',');
+  const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const espera = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  // ----- configuração do painel -----
+  const S = M.servidor || null;
+  const C = Object.assign({ ativo: 0, formato: 'v', frase: '', modo: 'ambos', cat: 'esq', capa: 1, topo: 1, rotulo: '', ofs: [], troca: 5, princ: 1, cobrar: 'totem', pg: ['caixa'], ajuda: 1, video: '', cols: 0, pgPos: 'baixo', pedeNome: 0 }, (S && S.toque) || {});
+  const Q = new URLSearchParams(location.search);
+  if (/^[vh]$/.test(Q.get('formato') || '')) C.formato = Q.get('formato'); // para conferir o outro formato sem mexer no painel
+  // pré-visualização: sem a chave do totem (ou seja, sempre em modo teste) o link aceita ...&demo={"cat":"topo","pg":["caixa","pix"]} para ver uma configuração antes de salvar no painel
+  if (!S && Q.get('demo')) { try { Object.assign(C, JSON.parse(Q.get('demo')), { ativo: 0 }); if (!Array.isArray(C.pg) || !C.pg.length) C.pg = ['caixa']; if (!Array.isArray(C.ofs)) C.ofs = []; } catch (e) { /* demo inválido: fica o padrão */ } }
+  const MESA = M.mesa || '';                 // tablet de mesa: o pedido entra na conta da mesa
+  let ENVIA = !!(M.cli && S && C.ativo);     // senão: modo teste
+  let EDITANDO = false;                      // dono logado com o painel de configurações aberto ao lado: nada é enviado
+  const FORMAS = ['caixa', 'pix', 'credito', 'debito'];
+  function arrumaCfg() { C.pg = (Array.isArray(C.pg) ? C.pg : []).filter((p) => FORMAS.includes(p)); if (!C.pg.length) C.pg = ['caixa']; if (!Array.isArray(C.ofs)) C.ofs = []; }
+  arrumaCfg();
+  const frase = () => C.frase || (M.ehRest === false ? 'Faça seu pedido aqui' : 'Bateu a fome?');
+  const rotulo = () => C.rotulo || 'Oferta de hoje';
+  const nomeModo = (m) => (m === 'levar' ? 'Para levar' : 'Consumir aqui');
+  window.Totem = { estado: { modo: 'standby' } }; // o cardapio.js só recarrega a página com o totem em espera
+
+  // ----- comemoração do pedido (personagem animado + confete): garante que ela existe mesmo se a página aberta for antiga -----
+  // Um totem fica dias com a mesma página aberta. Se o toque.html guardado no aparelho for de antes da comemoração,
+  // os arquivos do personagem e os tamanhos da tela não vieram com ele: este arquivo (sempre o mais novo) completa o que faltar.
+  (function () {
+    const poe = (src, depois) => { const s = document.createElement('script'); s.src = src; s.onload = depois || null; document.body.appendChild(s); };
+    const app = () => { if (!window.LiveApp) poe('../site/js/live-app.js'); };
+    if (!window.LiveMascote) poe('../site/js/live-mascote.js', app); else app();
+    const st = document.createElement('style');
+    st.textContent = `
+      body .lfc { inset: auto; left: var(--tt-x, 0px); top: var(--tt-y, 0px); width: var(--tt-w, 100vw); height: var(--tt-h, 100vh); gap: calc(26px * var(--tt-s, 1)); padding: calc(60px * var(--tt-s, 1)); background: rgba(244, 244, 245, .97); color: #1C1C1E; border-radius: 0 0 calc(60px * var(--tt-s, 1)) calc(60px * var(--tt-s, 1)); }
+      body .lfc .lfc-live { width: calc(420px * var(--tt-s, 1)); flex: none; }
+      body .lfc b { font-size: calc(56px * var(--tt-s, 1)); }
+      body .lfc .lfc-val { font: 800 calc(300px * var(--tt-s, 1))/1 'Baloo 2', sans-serif; letter-spacing: -.03em; }
+      body .lfc .lfc-fp { font-size: calc(34px * var(--tt-s, 1)); padding: calc(18px * var(--tt-s, 1)) calc(38px * var(--tt-s, 1)); gap: calc(14px * var(--tt-s, 1)); }
+      body .lfc span { font-size: calc(34px * var(--tt-s, 1)); max-width: calc(840px * var(--tt-s, 1)); line-height: 1.3; color: #5E5E66; }
+      body .lfc .lfc-bt { margin-top: calc(34px * var(--tt-s, 1)); min-width: calc(520px * var(--tt-s, 1)); padding: calc(34px * var(--tt-s, 1)) calc(64px * var(--tt-s, 1)); border-radius: calc(36px * var(--tt-s, 1)); font-size: calc(36px * var(--tt-s, 1)); }
+      body .lfc-confete { font-size: calc(64px * var(--tt-s, 1)); }
+      body.tt-deitado .lfc { gap: calc(14px * var(--tt-s, 1)); padding: calc(30px * var(--tt-s, 1)); border-radius: 0 0 calc(44px * var(--tt-s, 1)) calc(44px * var(--tt-s, 1)); }
+      body.tt-deitado .lfc .lfc-live { width: calc(250px * var(--tt-s, 1)); }
+      body.tt-deitado .lfc b { font-size: calc(44px * var(--tt-s, 1)); }
+      body.tt-deitado .lfc .lfc-val { font-size: calc(190px * var(--tt-s, 1)); }
+      body.tt-deitado .lfc .lfc-bt { margin-top: calc(14px * var(--tt-s, 1)); padding: calc(26px * var(--tt-s, 1)) calc(56px * var(--tt-s, 1)); }`;
+    document.head.appendChild(st);
+  })();
+  // ----- rolagem por toque (iPhone e iPad) -----
+  // No Safari do iPhone, arrastar uma lista que fica dentro de uma tela fixa pode "puxar a página" em vez da lista,
+  // e o gesto se perde (a lista parece travada). Aqui a página fica proibida de rolar ou esticar e cada lista
+  // declara que rola na vertical e segura o gesto para si. De quebra, sai o zoom de dois toques e de pinça.
+  (function () {
+    const st = document.createElement('style');
+    st.textContent = `
+      html, body { overscroll-behavior: none; touch-action: manipulation; -webkit-text-size-adjust: 100%; }
+      #totem { touch-action: manipulation; -webkit-touch-callout: none; }
+      #lista, #cats, .folha .corpo, #barra-itens { -webkit-overflow-scrolling: touch; overscroll-behavior: contain; touch-action: pan-y; }
+      #tq-form, #tq-ofs { -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }`;
+    document.head.appendChild(st);
+    // o Safari antigo ignora o overscroll-behavior: barra o arrasto que não começou dentro de uma lista que rola
+    document.addEventListener('touchmove', (ev) => {
+      if (ev.touches.length > 1) { ev.preventDefault(); return; } // pinça
+      let n = ev.target;
+      while (n && n !== document.body) {
+        if (n.nodeType === 1) { const o = getComputedStyle(n).overflowY; if ((o === 'auto' || o === 'scroll') && n.scrollHeight > n.clientHeight + 1) return; }
+        n = n.parentNode;
+      }
+      ev.preventDefault();
+    }, { passive: false });
+  })();
+
+  // ----- encaixe na tela do aparelho -----
+  // A tela foi desenhada em 1080x1920 (em pé) ou 1920x1080 (deitada). Aparelho mais comprido ou mais largo que isso
+  // (celular, tablet) ficava com faixas pretas sobrando: agora a tela estica a medida que sobra, até 45% a mais,
+  // e o conteúdo se acomoda (mais produtos visíveis). Só acima disso é que sobra faixa.
+  // GIRAR PELO LINK: ...&girar=90 (ou 270) desenha o totem girado, para um monitor virado fisicamente em pé quando o Windows
+  // não deixa girar a tela (ou ela volta sozinha). O Windows fica deitado; quem gira é a página. O toque continua valendo.
+  const GIRA = (() => { const g = String(new URLSearchParams(location.search).get('girar') || ''); return g === '90' ? 90 : (g === '270' || g === '-90') ? 270 : 0; })();
+  let ESC = 1, GX = 0, GY = 0; // escala e ponto de origem do totem na janela
+  if (GIRA) {
+    const st = document.createElement('style');
+    st.textContent = `
+      body.tt-gira .lfc { left: var(--tt-x); top: var(--tt-y); width: var(--tt-w); height: var(--tt-h); transform-origin: 0 0; transform: rotate(${GIRA}deg); }
+      body.tt-gira .lfc-confete { display: none; } /* o confete "cairia" de lado na tela virada */
+      body.tt-gira #lista, body.tt-gira #cats, body.tt-gira .folha .corpo, body.tt-gira #barra-itens { touch-action: pan-x pan-y; }`;
+    document.head.appendChild(st);
+    document.body.classList.add('tt-gira');
+  }
+  function encaixa() {
+    const deitada = totem.classList.contains('horiz'), W0 = deitada ? 1920 : 1080, H0 = deitada ? 1080 : 1920;
+    const lado = GIRA ? 0 : (window.TOQUE_LADO || 0);
+    // girado, a largura que o totem enxerga é a altura da janela, e vice-versa
+    const larg = Math.max(50, GIRA ? innerHeight : innerWidth - lado), alt = Math.max(50, GIRA ? innerWidth : innerHeight), prop = larg / alt;
+    let W = W0, H = H0;
+    if (prop < W0 / H0) H = Math.min(Math.round(W0 / prop), Math.round(H0 * 1.45)); else W = Math.min(Math.round(H0 * prop), Math.round(W0 * 1.45));
+    totem.style.width = W + 'px'; totem.style.height = H + 'px';
+    const s = Math.min(larg / W, alt / H); ESC = s;
+    if (GIRA === 90) { GX = (innerWidth + H * s) / 2; GY = (innerHeight - W * s) / 2; }        // 90° no sentido do relógio: a caixa fica à esquerda do ponto
+    else if (GIRA === 270) { GX = (innerWidth - H * s) / 2; GY = (innerHeight + W * s) / 2; }  // 270°: a caixa fica acima do ponto
+    else { GX = lado + (larg - W * s) / 2; GY = (alt - H * s) / 2; }
+    totem.style.transform = 'translate(' + GX + 'px, ' + GY + 'px) ' + (GIRA ? 'rotate(' + GIRA + 'deg) ' : '') + 'scale(' + s + ')';
+    medeTela();
+  }
+  window.ajustarEscalaToque = encaixa; // o painel de configurações chama por este nome
+  // lugar e escala da tela (sem a faixa do LiveFood), para a comemoração ocupar exatamente a tela do totem
+  function medeTela() {
+    const W = totem.offsetWidth, H = totem.offsetHeight, s = ESC, d = document.documentElement.style;
+    d.setProperty('--tt-x', GX + 'px'); d.setProperty('--tt-y', GY + 'px'); d.setProperty('--tt-w', (W * s) + 'px');
+    const deitada = totem.classList.contains('horiz');
+    d.setProperty('--tt-h', ((H - (deitada ? 60 : 84)) * s) + 'px'); d.setProperty('--tt-s', s);
+    document.body.classList.toggle('tt-deitado', deitada);
+  }
+  // (a página também tem um encaixe próprio, mais antigo; este roda depois dele e é o que vale)
+  ['resize', 'orientationchange', 'fullscreenchange'].forEach((ev) => addEventListener(ev, () => setTimeout(encaixa, 0)));
+  document.addEventListener('fullscreenchange', () => setTimeout(encaixa, 60));
+
+  // ----- versão nova no ar: o totem se atualiza sozinho -----
+  // A cada 10 minutos confere se a página ou este arquivo mudaram no site; se mudaram, recarrega quando o totem estiver na tela de entrada.
+  (function () {
+    const arquivos = ['toque.html', 'js/toque.js'], marca = {};
+    let pendente = false;
+    async function confere() {
+      for (const a of arquivos) {
+        try {
+          const r = await fetch(a + '?c=' + Date.now(), { method: 'HEAD', cache: 'no-store' });
+          const m = r.ok ? (r.headers.get('etag') || r.headers.get('last-modified') || '') : '';
+          if (!m) continue;
+          if (marca[a] === undefined) marca[a] = m; else if (marca[a] !== m) pendente = true;
+        } catch (e) { /* sem rede agora: tenta na próxima */ }
+      }
+      if (pendente) recarregaLivre();
+    }
+    function recarregaLivre() {
+      const livre = window.Totem && window.Totem.estado.modo === 'standby' && !document.getElementById('tq-painel') && !document.querySelector('.lfc');
+      if (livre) location.reload(); else setTimeout(recarregaLivre, 5000);
+    }
+    setTimeout(confere, 20000); setInterval(confere, 10 * 60000);
+  })();
+
+  // ----- Live oficial (mesma cabeça do totem de voz, rosto padrão "feliz") -----
+  const LIVE = `<svg class="lv" viewBox="-110 -125 220 215" aria-hidden="true"><g class="lv-corpo">
+    <g class="lv-antena"><path d="M-4,-76 L-27,-116" stroke="#FF5A00" stroke-width="10" stroke-linecap="round"/><path d="M4,-76 L27,-116" stroke="#FF5A00" stroke-width="10" stroke-linecap="round"/><rect x="-14" y="-84" width="28" height="15" rx="6" fill="#E84E00"/></g>
+    <rect x="-30" y="64" width="60" height="18" rx="8" fill="#D44600"/>
+    <rect x="-96" y="-74" width="192" height="148" rx="38" fill="url(#lv-cab)"/>
+    <rect x="-96" y="-74" width="192" height="148" rx="38" fill="url(#lv-cab-lado)"/>
+    <ellipse cx="-34" cy="-63" rx="48" ry="6" fill="#fff" opacity=".4"/>
+    <rect x="-75" y="-59" width="150" height="118" rx="25" fill="url(#lv-moldura)"/>
+    <rect x="-64" y="-49" width="128" height="98" rx="18" fill="url(#lv-tela)"/>
+    <g class="lv-rosto" filter="url(#lv-brilho)" fill="#E9FCFF" stroke="#E9FCFF">
+      <g class="lv-olhos" stroke="none"><rect x="-25.75" y="-18.75" width="14.5" height="20.5" rx="6"/><rect x="11.25" y="-18.75" width="14.5" height="20.5" rx="6"/></g>
+      <path d="M-9,18 Q0,26 9,18" fill="none" stroke-width="3" stroke-linecap="round"/>
+    </g></g></svg>`;
+  $$('.lv-aqui').forEach((e) => { e.innerHTML = LIVE; });
+
+  // ----- cardápio: o totem de voz trabalha com um item por tamanho; aqui eles voltam a ser um produto com opções -----
+  const PRODS = {}, ORDEM = [];
+  for (const it of M.itens) {
+    const pid = it.pid || it.id;
+    let p = PRODS[pid];
+    if (!p) { p = PRODS[pid] = { pid, nome: it.produto || it.nome, desc: it.descricao || '', cat: it.categoria || '', foto: it.foto || '', video: it.video || '', emoji: it.emoji || '🍽️', vars: [] }; ORDEM.push(p); }
+    p.vars.push(it);
+  }
+  for (const p of ORDEM) {
+    const v0 = p.vars[0];
+    p.simples = p.vars.length === 1 && !v0.sabores.length && !v0.bordas.length && !v0.adicionais.length; // vai direto para a sacola
+    p.preco = Math.min.apply(null, p.vars.map((v) => v.preco));
+    p.apartir = p.vars.length > 1 || v0.sabores.length > 0;
+    p.promo = p.vars.some((v) => v.promo);
+    p.de = (p.vars.length === 1 && v0.promo && v0.base > v0.preco) ? v0.base : 0;
+  }
+  const temCat = (id) => M.categorias.some((c) => c.id === id);
+  let CATS = [];
+  function montaCats() {
+    const promo = ORDEM.filter((p) => p.promo);
+    CATS = (C.princ && promo.length ? [{ id: '_of', nome: 'Ofertas', itens: promo }] : [])
+      .concat(M.categorias.map((c) => ({ id: c.id, nome: c.nome, itens: ORDEM.filter((p) => p.cat === c.id) })).filter((c) => c.itens.length));
+    const soltos = ORDEM.filter((p) => !temCat(p.cat));
+    if (soltos.length) CATS.push({ id: '_out', nome: CATS.length ? 'Outros' : (M.catNome || 'Cardápio'), itens: soltos });
+  }
+  // banner: os produtos escolhidos no painel; sem escolha, os que estão em promoção
+  const calcOfs = () => (C.ofs.length ? C.ofs.map((id) => PRODS[id]).filter(Boolean) : ORDEM.filter((p) => p.promo).slice(0, 6));
+  let OFS = calcOfs();
+
+  const E = { cat: 0, carrinho: [], modo: '', pagar: '', aberto: null, ocupado: false };
+  const qtdDe = (pid) => E.carrinho.filter((l) => l.pid === pid).reduce((s, l) => s + l.qtd, 0);
+  const total = () => E.carrinho.reduce((s, l) => s + M.precoLinha(l), 0);
+  const fotoOuEmoji = (p, cls) => p.foto ? `<img class="${cls || ''}" src="${esc(p.foto)}" alt="" loading="lazy">` : `<span class="sem-foto ${cls || ''}">${p.emoji}</span>`;
+  const precoTxt = (p) => p.apartir ? (p.preco > 0 ? `<small>a partir de</small>${R$(p.preco)}` : '<small>Escolha as opções</small>') : R$(p.preco) + (p.de ? `<s>${R$(p.de)}</s>` : '');
+
+  // ----- banner de ofertas: um produto fica parado, vários viram carrossel -----
+  let OI = 0;
+  const ofertaAtual = () => OFS[OI % OFS.length];
+  function desenhaOfertas(anima) {
+    const p = OFS.length ? ofertaAtual() : null;
+    [['#capa', C.capa], ['#banner', C.topo]].forEach(([s, ligado]) => {
+      const el = $(s); el.classList.toggle('some-de-vez', !ligado || !p); if (!p) return;
+      el.innerHTML = `${fotoOuEmoji(p)}<div class="t"><small>${esc(rotulo())}</small><b>${esc(p.nome)}</b></div><em>${p.preco > 0 ? R$(p.preco) : 'Ver'}</em>` +
+        (OFS.length > 1 ? `<span class="pts">${OFS.map((x, k) => `<i class="${k === OI % OFS.length ? 'on' : ''}"></i>`).join('')}</span>` : '');
+      el.classList.remove('troca'); if (anima) { void el.offsetWidth; el.classList.add('troca'); }
+    });
+  }
+  let tTroca = null;
+  function ligaTroca() { clearInterval(tTroca); OI = 0; if (OFS.length > 1) tTroca = setInterval(() => { OI++; desenhaOfertas(true); }, Math.max(2, C.troca || 5) * 1000); }
+  ligaTroca();
+
+  // ----- vídeo de fundo da tela de entrada -----
+  // Enviado pelo dono nas configurações. Roda sem som e em repetição atrás da entrada, com um véu escuro por cima
+  // para a frase continuar legível (texto branco). Fica pausado enquanto o cliente está no cardápio.
+  (function () {
+    const st = document.createElement('style');
+    st.textContent = `
+      /* z-index negativo: o vídeo e o véu ficam atrás de tudo o que já existe na entrada, sem mexer na posição de nada */
+      #inicio-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1; background: #111; }
+      #inicio.com-video::after { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(rgba(0, 0, 0, .52), rgba(0, 0, 0, .34) 45%, rgba(0, 0, 0, .62)); pointer-events: none; }
+      #inicio.com-video > .loja-logo { color: #fff; }
+      #inicio.com-video > .loja-logo img { background: #fff; border-radius: 36px; padding: 16px 30px; box-sizing: content-box; } /* a logo ganha uma placa branca para aparecer sobre o vídeo */
+      #inicio.com-video > .loja-logo img.clara { filter: none; background: none; padding: 0; } /* logo branca: aparece direto sobre o vídeo escurecido */
+      #inicio.com-video h1 { color: #fff; text-shadow: 0 4px 30px rgba(0, 0, 0, .45); }
+      #inicio.com-video .sub { color: #fff; opacity: .92; }
+      #inicio.com-video .aviso { color: #fff; opacity: .85; }
+      #inicio.com-video .escolha button:not(.unico), #inicio.com-video #capa { border-color: transparent; }`;
+    document.head.appendChild(st);
+  })();
+  let videoRuim = '';
+  function fundoVideo() {
+    const ini = $('#inicio'); let v = $('#inicio-video');
+    const url = C.video && M.cli ? `${M.api}/food/video/${encodeURIComponent(M.cli)}/${encodeURIComponent(C.video)}` : '';
+    if (!url || url === videoRuim) { if (v) v.remove(); ini.classList.remove('com-video'); return; }
+    if (!v) {
+      v = document.createElement('video'); v.id = 'inicio-video';
+      v.muted = true; v.loop = true; v.autoplay = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.setAttribute('aria-hidden', 'true'); v.preload = 'auto';
+      // vídeo apagado ou que não carrega: volta ao fundo normal e não tenta de novo esse mesmo vídeo
+      v.addEventListener('error', () => { videoRuim = v.getAttribute('src') || ''; v.remove(); ini.classList.remove('com-video'); });
+      ini.prepend(v);
+    }
+    if (v.getAttribute('src') !== url) v.src = url;
+    ini.classList.add('com-video');
+    tocaFundo();
+  }
+  function tocaFundo() {
+    try { tocaVideos(); } catch (e) { /* a lista ainda não foi desenhada */ } // os vídeos da lista seguem a mesma regra: só tocam no cardápio
+    const v = $('#inicio-video'); if (!v) return;
+    if (totem.classList.contains('em-cardapio')) v.pause(); else v.play().catch(() => {});
+  }
+
+  // ----- produtos por linha -----
+  // Configurável no painel: 2 ou 3 por linha na tela em pé (na deitada viram 4 e 5). Em 0 fica o automático,
+  // que decide pela posição das categorias. Com 3 ou mais por linha o cartão usa letras um pouco menores.
+  (function () {
+    const st = document.createElement('style');
+    st.textContent = `
+      #grade.aperto .prod b.nome { font-size: 26px; }
+      #grade.aperto .prod .preco { font-size: 29px; gap: 8px; }
+      #grade.aperto .prod .preco s { font-size: 18px; }
+      #grade.aperto .prod .qt, #grade.aperto .prod .mais { height: 62px; }
+      #grade.aperto .prod .qt { gap: 4px; }
+      #grade.aperto .prod .qt button { width: 56px; height: 56px; font-size: 34px; }
+      #grade.aperto .prod .mais { font-size: 23px; }
+      #grade.aperto .prod .txt { padding: 14px 16px 16px; }
+      #grade.folga .prod b.nome { font-size: 29px; } #grade.folga .prod .preco { font-size: 34px; }`;
+    document.head.appendChild(st);
+  })();
+  function colunas() {
+    const g = $('#grade'), n = C.cols === 2 || C.cols === 3 ? (C.formato === 'h' ? C.cols + 2 : C.cols) : 0;
+    g.style.gridTemplateColumns = n ? `repeat(${n}, minmax(0, 1fr))` : '';
+    g.classList.toggle('aperto', n >= 3);
+    g.classList.toggle('folga', n === 2);
+  }
+
+  // ----- tela "Seu pedido": pagamento e botão de confirmar embaixo da lista de itens ou acima dela -----
+  // Configurável no painel (pgPos). Para dar para mudar a ordem, o título "Seu pedido" sai de dentro da lista
+  // e vira uma faixa própria no alto; aí o bloco do pagamento pode ficar logo abaixo dele ou no fim.
+  (function () {
+    const f = $('#f-ped'), tit = f && f.querySelector('.corpo h2');
+    if (tit) { tit.classList.add('ped-tit'); f.insertBefore(tit, f.querySelector('.corpo')); }
+    const st = document.createElement('style');
+    st.textContent = `
+      #f-ped > h2.ped-tit { flex: none; order: 0; padding: 40px 130px 0 50px; }
+      #f-ped .corpo { order: 1; padding-top: 14px; }
+      #f-ped .pe-folha { order: 2; }
+      #f-ped.pg-topo .pe-folha { order: 1; border-top: 0; border-bottom: 2px solid var(--s4); box-shadow: 0 14px 30px rgba(0, 0, 0, .06); padding-top: 20px; padding-bottom: 26px; position: relative; z-index: 1; }
+      #f-ped.pg-topo .corpo { order: 2; padding-top: 8px; padding-bottom: 40px; }`;
+    document.head.appendChild(st);
+  })();
+
+  // ----- nome do cliente (opcional, ligado no painel) -----
+  // Antes de enviar o pedido, o totem pergunta o nome num teclado desenhado na própria tela (totem não tem teclado,
+  // e o do sistema nem sempre abre em modo quiosque). O nome vai no pedido e na observação, e aparece com a senha.
+  (function () {
+    const f = document.createElement('section');
+    f.className = 'folha some'; f.id = 'f-nome';
+    const linhas = ['QWERTYUIOP', 'ASDFGHJKLÇ', 'ZXCVBNM'];
+    f.innerHTML = `<button class="x" type="button" id="nome-x" aria-label="Voltar ao pedido">✕</button>
+      <div class="corpo"><h2>Qual é o seu nome?</h2><p class="nm-dica">Chamamos você pelo nome quando o pedido ficar pronto.</p>
+        <div id="nome-visor" aria-live="polite"></div>
+        <div id="nome-teclas">${linhas.map((l, k) => `<div class="nm-linha">${l.split('').map((c) => `<button type="button" data-tecla="${c}">${c}</button>`).join('')}${k === 2 ? '<button type="button" class="larga" data-tecla="apaga" aria-label="Apagar">⌫</button>' : ''}</div>`).join('')}
+          <div class="nm-linha"><button type="button" class="espaco" data-tecla=" ">espaço</button></div></div></div>
+      <div class="pe-folha"><button class="acao" type="button" id="nome-ok" disabled><span>Continuar</span><span></span></button></div>`;
+    $('#f-ped').after(f);
+    const st = document.createElement('style');
+    st.textContent = `
+      #f-nome { height: 1240px; } .horiz #f-nome { height: auto; }
+      #f-nome .nm-dica { margin: 12px 0 0; font-size: 28px; font-weight: 600; color: var(--mu2); }
+      #nome-visor { margin: 30px 0 26px; height: 120px; padding: 0 34px; border-radius: 30px; background: var(--s3); border: 3px solid var(--b2); display: flex; align-items: center; font: 800 58px/1 var(--f); letter-spacing: -.5px; white-space: nowrap; overflow: hidden; }
+      #nome-visor:empty::before { content: 'Toque nas letras'; color: var(--mu); font-weight: 700; font-size: 40px; letter-spacing: 0; }
+      #nome-visor::after { content: ''; width: 4px; height: 62px; margin-left: 6px; background: var(--pri); animation: nmPisca 1s steps(1) infinite; }
+      @keyframes nmPisca { 50% { opacity: 0; } }
+      #nome-teclas { display: flex; flex-direction: column; gap: 12px; }
+      .nm-linha { display: flex; justify-content: center; gap: 10px; }
+      .nm-linha button { flex: 1 1 0; max-width: 92px; height: 112px; border-radius: 22px; background: var(--s3); font-size: 40px; font-weight: 800; }
+      .nm-linha button:active { background: var(--tx); color: #fff; }
+      .nm-linha button.larga { max-width: 150px; flex: 1.6 1 0; } .nm-linha button.espaco { max-width: 560px; font-size: 28px; font-weight: 700; color: var(--mu2); }
+      .horiz .nm-linha { gap: 7px; } .horiz .nm-linha button { height: 84px; font-size: 32px; border-radius: 18px; } .horiz #nome-visor { height: 96px; font-size: 46px; margin: 20px 0; } .horiz #nome-teclas { gap: 8px; }`;
+    document.head.appendChild(st);
+  })();
+  // ----- "enviando o pedido": aparece na hora do toque, por cima de tudo, até a confirmação chegar -----
+  (function () {
+    const d = document.createElement('div');
+    d.id = 'enviando'; d.className = 'some'; d.setAttribute('role', 'status');
+    d.innerHTML = LIVE + '<b>Enviando o seu pedido<i>.</i><i>.</i><i>.</i></b>';
+    $('#tela').appendChild(d);
+    const st = document.createElement('style');
+    st.textContent = `
+      #enviando { position: absolute; inset: 0; z-index: 25; background: rgba(244, 244, 245, .97); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 34px; }
+      #enviando.some { display: none; }
+      #enviando svg { width: 300px; overflow: visible; animation: envPula .9s ease-in-out infinite; }
+      #enviando b { font-size: 46px; font-weight: 800; }
+      #enviando b i { font-style: normal; animation: envPonto 1.2s infinite; } #enviando b i:nth-child(2) { animation-delay: .2s; } #enviando b i:nth-child(3) { animation-delay: .4s; }
+      .horiz #enviando svg { width: 220px; } .horiz #enviando b { font-size: 38px; }
+      @keyframes envPula { 50% { transform: translateY(-22px); } }
+      @keyframes envPonto { 0%, 60%, 100% { opacity: .2; } 30% { opacity: 1; } }`;
+    document.head.appendChild(st);
+  })();
+  function carregando(ligado) { $('#enviando').classList.toggle('some', !ligado); }
+  // esquenta a ligação com o servidor quando o cliente abre o pedido: o envio de logo depois não paga a abertura da conexão
+  let aqueceu = 0;
+  function aquece() { if (!ENVIA || Date.now() - aqueceu < 60000) return; aqueceu = Date.now(); fetch(M.api + '/', { cache: 'no-store' }).catch(() => {}); if (M.prepararEnvio) M.prepararEnvio(); }
+
+  const nomeLimpo = (t) => t.replace(/\s+/g, ' ').trim().toLowerCase().replace(/(^|\s)(\S)/g, (m, a, b) => a + b.toUpperCase());
+  function abreNome() { E.digitando = E.nome || ''; pintaNome(); abre('#f-nome'); }
+  function pintaNome() { $('#nome-visor').textContent = E.digitando; $('#nome-ok').disabled = nomeLimpo(E.digitando).length < 2; }
+  function tecla(t) {
+    if (t === 'apaga') E.digitando = E.digitando.slice(0, -1);
+    else if (E.digitando.length < 20 && !(t === ' ' && (!E.digitando || E.digitando.endsWith(' ')))) E.digitando += t;
+    pintaNome();
+  }
+
+  // ----- desenho -----
+  function desenhaFixos() {
+    totem.classList.toggle('horiz', C.formato === 'h');
+    $('#f-ped').classList.toggle('pg-topo', C.pgPos === 'topo');
+    fundoVideo(); colunas();
+    if (window.pintaLogoToque) window.pintaLogoToque(M.loja);
+    $('#meio').className = C.cat === 'nao' ? 'cat-topo sem-cats' : 'cat-' + C.cat;
+    desenhaOfertas();
+    $('#inicio-visual').style.display = C.ajuda ? '' : 'none';
+    $('#inicio-frase').textContent = frase();
+    const ic = { aqui: '<circle cx="26" cy="24" r="13"/><circle cx="26" cy="24" r="6.5"/><path d="M6 8v12a3 3 0 0 0 6 0V8M9 8v32"/>', levar: '<path d="M10 16h28l-3 26H13Z"/><path d="M17 16c0-6 3-10 7-10s7 4 7 10"/>' };
+    const doisModos = !MESA && C.modo === 'ambos';
+    $('#inicio-escolha').innerHTML = doisModos
+      ? ['aqui', 'levar'].map((m) => `<button type="button" data-modo="${m}"><svg viewBox="0 0 48 48" fill="none" stroke="#FF5A00" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">${ic[m]}</svg>${nomeModo(m)}</button>`).join('')
+      : `<button type="button" class="unico" data-modo="${MESA ? 'mesa' : C.modo}">Toque para começar</button>`;
+    const bm = $('#btn-modo');
+    bm.style.display = (doisModos || MESA) ? '' : 'none';
+    bm.textContent = MESA ? 'Mesa ' + MESA : nomeModo(E.modo || 'aqui'); bm.disabled = !!MESA;
+    $('#ajuda-btn').style.display = C.ajuda ? '' : 'none';
+    $('#inicio-aviso').textContent = ENVIA ? '' : EDITANDO ? 'Configurando: os pedidos feitos aqui não são enviados para a loja.' : 'Modo teste: os pedidos não são enviados para a loja.';
+  }
+  function desenhaCats() {
+    $('#cats').innerHTML = CATS.map((c, k) => `<button type="button" data-cat="${k}" class="${k === E.cat ? 'on' : ''}">${fotoOuEmoji(c.itens.find((p) => p.foto) || c.itens[0])}${esc(c.nome)}</button>`).join('');
+    setas();
+  }
+  function setas() {
+    const c = $('#cats'), w = $('#cats-wrap');
+    w.classList.toggle('mais-baixo', c.scrollTop + c.clientHeight < c.scrollHeight - 30);
+    w.classList.toggle('mais-cima', c.scrollTop > 30);
+  }
+  function cartao(p) {
+    const q = qtdDe(p.pid);
+    // produto com vídeo: o vídeo roda no próprio cartão da lista (o lugar é preenchido depois, em videosDaLista)
+    return `<div class="prod ${q ? 'tem' : ''}" data-prod="${esc(p.pid)}">${p.video ? `<span class="vid-lugar" data-vid="${esc(p.pid)}"></span>` : fotoOuEmoji(p)}<div class="txt"><b class="nome">${esc(p.nome)}</b><p>${esc(p.desc)}</p>
+      <span class="preco">${precoTxt(p)}</span><div class="pe">${q
+        ? `<span class="qt"><button type="button" data-menos="${esc(p.pid)}" aria-label="Tirar um ${esc(p.nome)}">−</button><b>${q}</b><button type="button" data-mais="${esc(p.pid)}" aria-label="Mais um ${esc(p.nome)}">+</button></span>`
+        : `<button type="button" class="mais" data-mais="${esc(p.pid)}" aria-label="Adicionar ${esc(p.nome)}"><i>+</i>Adicionar</button>`}</div></div></div>`;
+  }
+  function desenhaGrade() {
+    if (!CATS.length) { $('#cat-titulo').textContent = 'Cardápio vazio'; $('#grade').innerHTML = ''; return; }
+    // ROLAGEM CONTÍNUA: a lista traz todas as categorias em sequência, cada uma com o seu título. Tocar numa categoria
+    // leva a lista até ela; rolar a lista vai trocando a categoria marcada (ver marcaCategoriaPelaRolagem).
+    $('#cat-titulo').style.display = 'none';
+    $('#grade').innerHTML = CATS.map((x, k) => `<h2 class="sec" data-sec="${k}">${esc(x.nome)}</h2>` + x.itens.map(cartao).join('')).join('');
+    videosDaLista();
+  }
+  (function () {
+    const st = document.createElement('style');
+    st.textContent = '#lista { position: relative; } #grade h2.sec { scroll-margin-top: 10px; }'; // position: as medidas dos títulos passam a contar a partir da lista
+    document.head.appendChild(st);
+  })();
+  let rolandoAte = 0; // enquanto a lista anda até a categoria tocada, a marcação não fica pulando pelas categorias do caminho
+  function vaiParaCategoria(k) {
+    const l = $('#lista'), h = $(`#grade h2.sec[data-sec="${k}"]`); if (!h) return;
+    E.cat = k; pintaCategoria(); rolandoAte = Date.now() + 2500; // viagem longa leva até uns 2 s
+    l.scrollTo({ top: Math.max(0, h.offsetTop - 6), behavior: 'smooth' });
+  }
+  // a lista parou de andar: a marcação volta a seguir o dedo (onde o navegador não avisa o fim da rolagem, vale o prazo acima)
+  $('#lista').addEventListener('scrollend', () => { rolandoAte = 0; });
+  function pintaCategoria() {
+    const c = $('#cats'); let ativo = null;
+    $$('#cats button').forEach((b) => { const on = +b.dataset.cat === E.cat; b.classList.toggle('on', on); if (on) ativo = b; });
+    // a categoria marcada fica sempre à vista na coluna de categorias
+    if (ativo && c.scrollHeight > c.clientHeight + 4) {
+      const alvo = ativo.offsetTop - c.offsetTop - (c.clientHeight - ativo.offsetHeight) / 2;
+      c.scrollTo({ top: Math.max(0, alvo), behavior: 'smooth' });
+    }
+  }
+  function marcaCategoriaPelaRolagem() {
+    if (Date.now() < rolandoAte) return;
+    const l = $('#lista'), hs = $$('#grade h2.sec'); if (!hs.length) return;
+    let k = 0;
+    if (l.scrollTop + l.clientHeight >= l.scrollHeight - 6) k = +hs[hs.length - 1].dataset.sec; // fim da lista: vale a última categoria
+    else hs.forEach((h) => { if (h.offsetTop <= l.scrollTop + 90) k = +h.dataset.sec; });
+    if (k !== E.cat) { E.cat = k; pintaCategoria(); }
+  }
+  let quadroRola = 0;
+  $('#lista').addEventListener('scroll', () => { if (quadroRola) return; quadroRola = requestAnimationFrame(() => { quadroRola = 0; marcaCategoriaPelaRolagem(); }); }, { passive: true });
+
+  // ----- vídeo do produto rodando na lista -----
+  // Cada vídeo é criado uma vez e reaproveitado: a lista é redesenhada a cada toque (quantidade, sacola), e sem isso
+  // o vídeo recomeçaria do zero toda hora. Só toca o que está aparecendo na tela; o resto fica pausado e nem é baixado.
+  (function () {
+    const st = document.createElement('style');
+    st.textContent = '.prod video.vid, .prod .vid-lugar { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; display: block; background: #111; }';
+    document.head.appendChild(st);
+  })();
+  const VIDS = {};
+  function videosDaLista() {
+    const usados = {};
+    $$('#grade .vid-lugar').forEach((lugar) => {
+      const pid = lugar.dataset.vid, p = PRODS[pid]; if (!p) return;
+      usados[pid] = (usados[pid] || 0) + 1;
+      const chave = pid + '#' + usados[pid]; // o mesmo produto pode aparecer duas vezes (Ofertas e a categoria dele)
+      const v = VIDS[chave] || criaVideo(p, chave);
+      if (p.videoRuim) { lugar.outerHTML = fotoOuEmoji(p); return; }
+      lugar.replaceWith(v);
+    });
+    tocaVideos();
+  }
+  function criaVideo(p, chave) {
+    const v = VIDS[chave] = document.createElement('video');
+    v.className = 'vid'; v.muted = true; v.loop = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.setAttribute('aria-hidden', 'true');
+    v.preload = 'auto'; v.src = p.video;
+    // a foto só entra de capa se o vídeo ainda não tiver chegado quando o cartão aparecer (internet lenta); com o vídeo já carregado ela nunca aparece
+    v.addEventListener('loadeddata', () => { v.removeAttribute('poster'); });
+    // vídeo que não carrega: entra a foto no lugar
+    v.addEventListener('error', () => { delete VIDS[chave]; p.videoRuim = true; if (v.isConnected) v.outerHTML = fotoOuEmoji(p); });
+    try { v.load(); } catch (e) { /* ok */ }
+    return v;
+  }
+  // Os vídeos começam a ser baixados assim que o totem abre, enquanto o cliente ainda está na tela de entrada:
+  // quando ele chega na lista, o vídeo já está pronto e começa na hora, sem a foto aparecer antes. Até 8 vídeos, um depois do outro.
+  function aqueceVideos() {
+    const fila = ORDEM.filter((p) => p.video && !p.videoRuim).slice(0, 8);
+    (function proximo() {
+      const p = fila.shift(); if (!p) return;
+      const chave = p.pid + '#1', v = VIDS[chave] || criaVideo(p, chave);
+      if (v.readyState >= 3) return proximo();
+      let foi = false; const segue = () => { if (foi) return; foi = true; proximo(); };
+      v.addEventListener('canplaythrough', segue, { once: true }); v.addEventListener('error', segue, { once: true }); setTimeout(segue, 8000);
+    })();
+  }
+  function tocaVideos() {
+    const noCardapio = totem.classList.contains('em-cardapio'), l = $('#lista').getBoundingClientRect();
+    $$('#grade video.vid').forEach((v) => {
+      // sem vídeo carregado ainda (internet lenta), a foto fica de capa até ele chegar
+      if (v.readyState < 2 && !v.poster) { const p = PRODS[(v.closest('.prod') || {}).dataset ? v.closest('.prod').dataset.prod : '']; if (p && p.foto) v.poster = p.foto; }
+      // "aparece" = o vídeo cruza a área da lista (conta nos dois eixos, para valer também com o totem girado pelo link)
+      const r = v.getBoundingClientRect(), aparece = noCardapio && r.bottom > l.top + 10 && r.top < l.bottom - 10 && r.right > l.left + 10 && r.left < l.right - 10;
+      if (aparece) { if (v.paused) v.play().catch(() => {}); } else if (!v.paused) v.pause();
+    });
+  }
+  let tRolaVid = null;
+  $('#lista').addEventListener('scroll', () => { clearTimeout(tRolaVid); tRolaVid = setTimeout(tocaVideos, 120); }, { passive: true });
+  function desenhaBarra() {
+    const n = E.carrinho.reduce((s, l) => s + l.qtd, 0);
+    $('#sacola-n').textContent = n; $('#sacola-n').style.display = n ? '' : 'none';
+    $('#sacola-txt').textContent = n ? n + (n > 1 ? ' itens na sacola' : ' item na sacola') : 'Sua sacola está vazia';
+    $('#sacola-total').textContent = R$(total());
+    $('#barra-itens').innerHTML = E.carrinho.map((l) => `<div>${l.qtd}× ${esc(PRODS[l.pid].nome)}<span>${R$(M.precoLinha(l))}</span></div>`).join('');
+    $('#btn-ver').disabled = !n;
+  }
+  function tudo() { montaCats(); if (E.cat >= CATS.length) E.cat = 0; desenhaFixos(); desenhaCats(); desenhaGrade(); desenhaBarra(); encaixa(); setas(); }
+
+  // ----- sacola -----
+  function poe(pid, id, q, sab, adds) {
+    sab = sab || []; adds = adds || [];
+    const chave = JSON.stringify([id, sab, adds]);
+    const igual = E.carrinho.find((l) => l.chave === chave);
+    if (igual) igual.qtd += q; else E.carrinho.push({ chave, pid, id, qtd: q, sab, adds, obs: '' });
+    desenhaGrade(); desenhaBarra();
+  }
+  function tira(pid) {
+    for (let k = E.carrinho.length - 1; k >= 0; k--) if (E.carrinho[k].pid === pid) { if (--E.carrinho[k].qtd < 1) E.carrinho.splice(k, 1); break; }
+    desenhaGrade(); desenhaBarra();
+  }
+  function pulaSacola() { const sc = $('#sacola'); sc.classList.remove('pulo'); void sc.offsetWidth; sc.classList.add('pulo'); }
+  // o produto "cai" na sacola
+  function voa(origem, foto) {
+    if (!origem || !foto || GIRA) { pulaSacola(); return; } // girado pelo link, a sacola só dá o pulinho (o voo usa medidas da tela sem giro)
+    const tr = totem.getBoundingClientRect(), s = tr.width / totem.offsetWidth, a = origem.getBoundingClientRect(), b = $('#sacola').getBoundingClientRect();
+    const c = document.createElement('img'); c.src = foto; c.className = 'voa'; c.alt = '';
+    c.style.cssText = `left:${(a.left - tr.left) / s}px;top:${(a.top - tr.top) / s}px;width:${a.width / s}px;height:${a.height / s}px`;
+    totem.appendChild(c); c.getBoundingClientRect();
+    c.style.transform = `translate(${(b.left + b.width / 2 - a.left - a.width / 2) / s}px, ${(b.top + b.height / 2 - a.top - a.height / 2) / s}px) scale(.1)`; c.style.opacity = '.35';
+    setTimeout(() => { c.remove(); pulaSacola(); }, 600);
+  }
+  function mais(pid, origem) {
+    const p = PRODS[pid]; if (!p) return;
+    if (!p.simples) return abreProd(pid);                                  // tem tamanho, sabor ou adicional: abre para escolher
+    voa(origem || $(`.prod[data-prod="${CSS.escape(pid)}"] img, .prod[data-prod="${CSS.escape(pid)}"] video`), p.foto); // sem opções: vai direto para a sacola
+    poe(pid, p.vars[0].id, 1);
+  }
+
+  // ----- folhas -----
+  const FOLHAS = ['#f-prod', '#f-ped', '#f-fim', '#f-ajuda', '#f-pix', '#f-nome'];
+  function abre(id) {
+    FOLHAS.forEach((f) => $(f).classList.toggle('some', f !== id)); $('#veu').classList.toggle('some', !id);
+    if (id !== '#f-prod') $('#fp-vid').pause();
+    if (id !== '#f-pix') pararPix();
+  }
+
+  // produto: tamanho, sabores (pizza: até o máximo do tamanho), borda e adicionais
+  function abreProd(pid) {
+    const p = PRODS[pid]; if (!p) return;
+    E.aberto = { p, v: p.vars[0], q: 1, sab: [], adds: [] };
+    const im = $('#fp-img'), vd = $('#fp-vid'), sf = $('#fp-sem');
+    im.style.display = (!p.video && p.foto) ? '' : 'none'; vd.style.display = p.video ? '' : 'none'; sf.style.display = (!p.video && !p.foto) ? '' : 'none';
+    sf.textContent = p.emoji;
+    if (p.foto) im.src = p.foto;
+    if (p.video) { vd.poster = p.foto || ''; if (vd.getAttribute('src') !== p.video) vd.src = p.video; try { vd.currentTime = 0; } catch (e) { /* ainda carregando */ } vd.play().catch(() => {}); }
+    $('#fp-nome').textContent = p.nome; $('#fp-desc').textContent = p.desc;
+    desenhaOpcs(); abre('#f-prod'); $('#f-prod .corpo').scrollTop = 0;
+  }
+  function opc(tipo, k, nome, direita, on, sub) {
+    return `<button type="button" class="opc ${on ? 'on' : ''}" data-o="${tipo}" data-k="${k}"><i>✓</i><span class="on-n">${esc(nome)}${sub ? `<small>${esc(sub)}</small>` : ''}</span><span class="on-d">${direita}</span></button>`;
+  }
+  function desenhaOpcs() {
+    const a = E.aberto, v = a.v; let h = '';
+    if (a.p.vars.length > 1) h += '<h3>Tamanho</h3>' + a.p.vars.map((x, k) => opc('tam', k, x.tam || x.nome, x.preco > 0 ? R$(x.preco) : '', x === v)).join('');
+    if (v.sabores.length) {
+      h += `<h3>${v.maxSabores > 1 ? 'Sabores (escolha até ' + v.maxSabores + ')' : 'Sabor'}</h3>` + v.sabores.map((s, k) => {
+        const pr = s.precos && s.precos[v.tamId || '_'];
+        return opc('sab', k, s.nome, pr > 0 ? R$(pr) : '', a.sab.includes(s.nome), s.desc);
+      }).join('');
+    }
+    if (v.bordas.length) h += '<h3>Borda</h3>' + v.bordas.map((b, k) => opc('bor', k, b.nome, b.preco ? '+ ' + R$(b.preco) : 'sem custo', a.adds.includes(b.nome))).join('');
+    if (v.adicionais.length) h += '<h3>Quer mudar alguma coisa?</h3>' + v.adicionais.map((x, k) => opc('add', k, x.nome, x.preco ? '+ ' + R$(x.preco) : 'sem custo', a.adds.includes(x.nome))).join('');
+    $('#fp-opcs').innerHTML = h;
+    atualizaProd();
+  }
+  function atualizaProd() {
+    const a = E.aberto, falta = a.v.sabores.length && !a.sab.length;
+    $('#fp-qtd').textContent = a.q;
+    $('#fp-total').textContent = falta ? '' : R$(M.precoUnit(a.v, a.sab, a.adds) * a.q);
+    $('#fp-rot').textContent = falta ? 'Escolha o sabor' : 'Adicionar';
+    $('#fp-add').disabled = !!falta;
+  }
+  function tocaOpc(tipo, k) {
+    const a = E.aberto, v = a.v;
+    const alterna = (lista, nome) => { const i = lista.indexOf(nome); if (i >= 0) lista.splice(i, 1); else lista.push(nome); };
+    if (tipo === 'tam') {
+      a.v = a.p.vars[k];
+      a.sab = a.sab.filter((n) => a.v.sabores.some((s) => s.nome === n)).slice(0, Math.max(1, a.v.maxSabores));
+      a.adds = a.adds.filter((n) => a.v.bordas.concat(a.v.adicionais).some((x) => x.nome === n));
+    } else if (tipo === 'sab') {
+      const nome = v.sabores[k].nome, max = Math.max(1, v.maxSabores);
+      if (a.sab.includes(nome)) alterna(a.sab, nome); else if (max === 1) a.sab = [nome]; else if (a.sab.length < max) a.sab.push(nome);
+    } else if (tipo === 'bor') {
+      const nome = v.bordas[k].nome, tinha = a.adds.includes(nome);
+      a.adds = a.adds.filter((n) => !v.bordas.some((b) => b.nome === n)); if (!tinha) a.adds.push(nome); // só uma borda
+    } else if (tipo === 'add') alterna(a.adds, v.adicionais[k].nome);
+    const rol = $('#f-prod .corpo').scrollTop; desenhaOpcs(); $('#f-prod .corpo').scrollTop = rol;
+  }
+
+  // pedido: lista de itens (rola), pagamento e confirmar (fixos)
+  function descLinha(l) {
+    const it = M.itens.find((x) => x.id === l.id), n = l.sab.length;
+    return [it && it.tam].concat(l.sab.map((s) => (n > 1 ? '1/' + n + ' ' : '') + s), l.adds).filter(Boolean).join(', ');
+  }
+  const PGS = {
+    caixa: ['No caixa', '<rect x="2.5" y="6" width="19" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.8"/><path d="M6 9.5v5M18 9.5v5"/>'],
+    pix: ['Pix', '<path d="M12 2.8 21.2 12 12 21.2 2.8 12Z"/><path d="M7.5 7.5 12 12l4.5-4.5M7.5 16.5 12 12l4.5 4.5"/>'],
+    // crédito e débito: pagos na maquininha do totem (ela não é ligada ao sistema; o pedido entra com a forma anotada)
+    credito: ['Crédito', '<rect x="2.5" y="5" width="19" height="14" rx="3"/><path d="M2.5 10h19M6.5 15h4"/>'],
+    debito: ['Débito', '<rect x="2.5" y="5" width="19" height="14" rx="3"/><path d="M2.5 10h19M14 15h4"/>'],
+  };
+  const ehCartao = (f) => f === 'credito' || f === 'debito';
+  const cobraNaTela = () => !MESA && C.cobrar === 'totem';
+
+  // ----- cartão na maquininha do totem + cupom impresso na impressora do totem -----
+  // Visual da cobrança: a mesma tela do app da maquininha (fundo branco, Roboto, valor laranja #FF5A00, botões grandes), igual em qualquer provedor.
+  // Loja ligada à maquininha (Payer, ou o modo simulação do Admin): o Worker cobra no terminal do totem e manda imprimir.
+  // Sem isso (modo teste do totem), tudo é simulado aqui mesmo: a maquininha "aprova" em 3,5 s e o cupom é desenhado na tela.
+  const KEY = (S && S.k) || '';
+  const PAYER = { ativa: false, simulado: false };
+  if (ENVIA && KEY) fetch(`${M.api}/live/payer-info?loja=${encodeURIComponent(M.codigo)}&k=${KEY}`, { cache: 'no-store' }).then((r) => r.json()).then((d) => { if (d && d.ok) { PAYER.ativa = !!d.ativa; PAYER.simulado = !!d.simulado; } }).catch(() => {});
+  const cartaoNaMaquina = (f) => ehCartao(f) && !MESA && (!ENVIA || PAYER.ativa);
+  const pPost = (rota, c) => fetch(M.api + rota, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ loja: M.codigo, k: KEY }, c)) }).then((r) => r.json()).catch(() => ({ ok: false, mensagem: 'Sem conexão com o servidor.' }));
+  const pGet = (rota) => fetch(`${M.api}${rota}${rota.includes('?') ? '&' : '?'}loja=${encodeURIComponent(M.codigo)}&k=${KEY}`, { cache: 'no-store' }).then((r) => r.json()).catch(() => null);
+  const MAQ = document.createElement('section'), CUP = document.createElement('section');
+  MAQ.className = CUP.className = 'folha some'; MAQ.id = 'f-maq'; CUP.id = 'f-cupom';
+  { const ref = $('#f-pix'); ref.parentNode.insertBefore(MAQ, ref.nextSibling); MAQ.parentNode.insertBefore(CUP, MAQ.nextSibling); }
+  FOLHAS.push('#f-maq', '#f-cupom');
+  (function () {
+    if (!document.getElementById('lf-roboto')) { const l = document.createElement('link'); l.id = 'lf-roboto'; l.rel = 'stylesheet'; l.href = 'https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap'; document.head.appendChild(l); }
+    const st = document.createElement('style');
+    st.textContent = `
+      #f-maq, #f-cupom { top: 0 !important; left: 0 !important; right: 0 !important; width: auto !important; border-radius: 0 !important; z-index: 13; font-family: Roboto, Manrope, system-ui, sans-serif; color: #1F1A17; text-align: center; overflow-y: auto; }
+      #f-maq { background: #fff; }
+      .horiz #f-maq, .horiz #f-cupom { --m: .62; }
+      #f-maq .mc { width: 100%; max-width: 900px; margin: 0 auto; padding: calc(170px * var(--m, 1)) 40px 60px; box-sizing: border-box; }
+      #f-maq .mt { font-size: calc(46px * var(--m, 1)); font-weight: 700; color: #6B625C; }
+      #f-maq .mv { font-size: calc(170px * var(--m, 1)); font-weight: 700; color: #FF5A00; margin-top: calc(8px * var(--m, 1)); line-height: 1.1; }
+      #f-maq .mi { font-size: calc(200px * var(--m, 1)); margin-top: calc(40px * var(--m, 1)); line-height: 1.15; }
+      #f-maq .mm { font-size: calc(58px * var(--m, 1)); font-weight: 700; margin-top: calc(20px * var(--m, 1)); }
+      #f-maq .mb { margin-top: calc(70px * var(--m, 1)); }
+      .mbt { display: flex; align-items: center; justify-content: center; width: 100%; min-height: calc(150px * var(--m, 1)); margin-top: calc(26px * var(--m, 1)); padding: 0 24px; border: 0; border-radius: calc(36px * var(--m, 1)); font: 700 calc(52px * var(--m, 1)) Roboto, Manrope, system-ui, sans-serif; background: #F1F1F1; color: #1F1A17; cursor: pointer; }
+      .mbt.lj { background: #FF5A00; color: #fff; }
+      #f-cupom { background: #E9E9EC; }
+      #f-cupom .cc { display: flex; flex-direction: column; align-items: center; gap: calc(22px * var(--m, 1)); padding: calc(120px * var(--m, 1)) 50px 50px; min-height: 100%; box-sizing: border-box; }
+      #f-cupom .ci { font-size: calc(110px * var(--m, 1)); line-height: 1; }
+      #f-cupom h2 { margin: 0; font-size: calc(58px * var(--m, 1)); font-weight: 700; }
+      #f-cupom p { margin: 0; font-size: calc(34px * var(--m, 1)); color: #5E5E66; }
+      #f-cupom .slot { width: calc(860px * var(--m, 1)); height: calc(34px * var(--m, 1)); border-radius: 999px; background: #2B2B30; box-shadow: inset 0 6px 10px rgba(0, 0, 0, .5); flex: none; margin-top: calc(10px * var(--m, 1)); }
+      #f-cupom .caixa { width: calc(740px * var(--m, 1)); overflow: hidden; margin-top: calc(-24px * var(--m, 1)); padding-bottom: 30px; flex: none; }
+      #f-cupom .papel { margin: 0; background: #fff; padding: calc(40px * var(--m, 1)) calc(36px * var(--m, 1)) calc(60px * var(--m, 1)); font: 400 calc(30px * var(--m, 1))/1.4 'Roboto Mono', 'Courier New', monospace; white-space: pre; text-align: left; color: #111; box-shadow: 0 14px 34px rgba(0, 0, 0, .2); clip-path: inset(0 0 100% 0); animation: lf-papel 4.2s steps(70) forwards; }
+      @keyframes lf-papel { to { clip-path: inset(0 0 0 0); } }
+      #f-cupom .mbt { width: calc(740px * var(--m, 1)); margin-top: calc(10px * var(--m, 1)); }`;
+    document.head.appendChild(st);
+  })();
+  function maqTela(o) {
+    MAQ.innerHTML = `<div class="mc"><div class="mt">${esc(o.t)}</div><div class="mv">${R$(o.v)}</div><div class="mi">${o.i}</div><div class="mm"${o.cor ? ` style="color:${o.cor}"` : ''}>${esc(o.m)}</div><div class="mb">${(o.b || []).map((b, k) => `<button type="button" class="mbt ${b[1]}" data-ma="${k}">${esc(b[0])}</button>`).join('')}</div></div>`;
+    (o.b || []).forEach((b, k) => { MAQ.querySelector(`[data-ma="${k}"]`).onclick = b[2]; });
+    abre('#f-maq');
+  }
+  // cobra no cartão e devolve { ok, cancelado, motivo, bandeira, nsu, aut, final4, simulado }
+  function cobraNaMaquina(forma, valor) {
+    const rot = forma === 'debito' ? 'Cobrança no débito' : 'Cobrança no crédito';
+    return new Promise((resolve) => {
+      let vivo = true, tm = null, id = '';
+      const sai = (res) => { vivo = false; clearTimeout(tm); resolve(res); };
+      const msgCartao = 'Aproxime, insira ou passe o cartão';
+      const espera3 = () => maqTela({ t: rot, v: valor, i: '💳', m: msgCartao, b: [['Cancelar', '', cancela]] });
+      const erro = (msg, tenta) => { clearTimeout(tm); maqTela({ t: rot, v: valor, i: '⚠️', m: msg, cor: '#DC2626', b: [].concat(tenta ? [['Tentar de novo', 'lj', inicia]] : [], [['Voltar', '', () => sai({ ok: false, cancelado: true })]]) }); };
+      const aprovado = (d) => { clearTimeout(tm); maqTela({ t: rot, v: valor, i: '✅', m: 'Pagamento aprovado!', cor: '#16A34A' }); tm = setTimeout(() => sai(Object.assign({ ok: true }, d)), 1500); };
+      function cancela() { const eraId = id; vivo = false; clearTimeout(tm); if (eraId) pPost('/live/payer-abortar', { id: eraId }); resolve({ ok: false, cancelado: true }); }
+      function inicia() {
+        vivo = true; id = '';
+        maqTela({ t: rot, v: valor, i: '💳', m: 'Preparando…', b: [['Cancelar', '', cancela]] });
+        if (!ENVIA) { // simulação local: aprova em 3,5 s; valor terminado em ,99 é recusado para mostrar a tela de erro
+          espera3();
+          tm = setTimeout(() => {
+            if (!vivo) return;
+            if (Math.round(valor * 100) % 100 === 99) return erro('Transação negada pelo banco (simulação).', true);
+            aprovado({ bandeira: 'VISA', nsu: String(100000 + Math.floor(Math.random() * 900000)), aut: Math.random().toString(16).slice(2, 8).toUpperCase(), final4: '4242', simulado: true });
+          }, 3500);
+          return;
+        }
+        pPost('/live/payer-cobrar', { valor, forma }).then((r) => {
+          if (!r.ok) { if (vivo) erro(r.mensagem || 'Não consegui falar com a maquininha.', r.erro !== 'terminal_ocupado'); return; }
+          if (!vivo) { pPost('/live/payer-abortar', { id: r.correlation_id }); return; } // o cliente cancelou enquanto a cobrança era enviada
+          id = r.correlation_id; espera3();
+          const volta = async () => {
+            if (!vivo) return;
+            const d = await pGet('/live/payer-status?id=' + encodeURIComponent(id));
+            if (!vivo) return;
+            const o = d && d.ok && d.ordem;
+            if (o) {
+              if (o.status === 'aprovada') return aprovado({ bandeira: o.bandeira, nsu: o.nsu, aut: o.aut, final4: '', simulado: PAYER.simulado });
+              if (o.status === 'recusada') return erro(o.motivo ? 'O pagamento não foi confirmado: ' + o.motivo : 'Pagamento recusado. Peça outro cartão ou outra forma de pagamento.', true);
+              if (o.status === 'erro') return erro(o.motivo || 'Erro ao falar com a maquininha.', true);
+              if (o.status === 'abortada') return erro('Cobrança cancelada. Nada foi cobrado.', true);
+              if (o.status === 'sem_resposta') return erro('A maquininha não respondeu. Chame um atendente.', false);
+            }
+            tm = setTimeout(volta, 2500);
+          };
+          tm = setTimeout(volta, 2500);
+        });
+      }
+      inicia();
+    });
+  }
+  // ----- o que o pedido do totem tem de PREPARO e o que sai PRONTO -----
+  // Cozinha é sempre preparo; bar só com a opção "preparo" (caipirinha, chope, drink); bebida pronta (lata, long neck) o cliente retira no balcão só com o ticket.
+  // Categoria de cozinha marcada "Cozinha · pronto" (salgadinho, guloseima, sorvete) também sai pronta. No bar só separamos se a loja separa pronto de preparo ("Dividir a impressão do bar" no painel, S.sepPronto): sem isso não dá para saber, e tudo é tratado como preparo.
+  const separa = () => !!((S && S.sepPronto) || C.sepPronto);
+  const preparoDe = (pid) => { const p = PRODS[pid], c = (M.categorias || []).find((x) => x.id === (p && p.cat)); if (!c || !c.dest) return true; if (c.dest !== 'bar') return !c.pronto; return separa() ? !!c.prep : true; }; // cozinha: preparo, salvo a categoria marcada \
+  const temPreparo = () => E.carrinho.some((l) => preparoDe(l.pid));
+  // TICKET DO CLIENTE (32 colunas, impressora térmica de 58 mm). Sai sempre. Leva a senha (a mesma da comanda da cozinha e do bar, para o operador conferir)
+  // e diz o que fazer: pedido pronto = entregar o ticket no balcão; pedido com preparo = aguardar a senha ser chamada.
+  function cupomTexto(r, forma, pg) {
+    const L = 32, tr = '-'.repeat(L), cut = (t, n) => String(t).slice(0, n);
+    const cen = (t) => ' '.repeat(Math.max(0, Math.floor((L - t.length) / 2))) + t;
+    const par = (a, b) => cut(a, L - b.length - 1) + ' '.repeat(Math.max(1, L - cut(a, L - b.length - 1).length - b.length)) + b;
+    const d = new Date(), dh = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    const linhas = [cen(cut(String(M.loja || 'LiveFood').toUpperCase(), L)), cen('TICKET DO CLIENTE'), tr, par('SENHA ' + (r.num || ''), dh), E.modo ? cen(E.modo === 'levar' ? 'Para levar' : 'Consumir aqui') : '', E.nome ? cen('Cliente: ' + cut(E.nome, 20)) : '', tr].filter((x) => x !== '');
+    const item = (l) => { const p = PRODS[l.pid], ds = descLinha(l); linhas.push(par(`${l.qtd}x ${p.nome}`, R$(M.precoLinha(l)))); if (ds) linhas.push('   ' + cut(ds, L - 3)); };
+    const prepL = E.carrinho.filter((l) => preparoDe(l.pid)), proL = E.carrinho.filter((l) => !preparoDe(l.pid));
+    if (prepL.length && proL.length) { linhas.push(cen('== PRONTO PARA RETIRAR ==')); proL.forEach(item); linhas.push(cen('== EM PREPARO ==')); prepL.forEach(item); }
+    else E.carrinho.forEach(item);
+    linhas.push(tr, par('TOTAL', R$(total())), `${forma === 'debito' ? 'Débito' : 'Crédito'} ${pg.bandeira || ''} ${pg.final4 ? '**** ' + pg.final4 : ''}`.trim(), `NSU ${pg.nsu || '-'}  AUT ${pg.aut || '-'}`, tr, cen('Pagamento aprovado'));
+    if (!prepL.length) linhas.push(cen('PEDIDO PRONTO'), cen('Entregue este ticket'), cen('no balcao para retirar'));
+    else { linhas.push(cen('Aguarde a sua senha ser'), cen('chamada e retire no balcao')); if (proL.length) linhas.push(cen('Itens prontos: retire ja')); linhas.push(cen('Guarde este ticket')); }
+    if (r.teste || pg.simulado) linhas.push('', cen('*** SIMULACAO ***'), cen('nada foi cobrado de verdade'));
+    return linhas.join('\n');
+  }
+  // COMANDA que a cozinha ou o bar recebe: só o que é de preparo, com a senha em destaque. Aqui só é desenhada em simulação:
+  // na loja de verdade quem imprime é o programa de impressão da cozinha (Worker 307 já corta a bebida pronta do pedido do totem).
+  function comandaTexto(r) {
+    const L = 32, tr = '='.repeat(L), cut = (t, n) => String(t).slice(0, n), cen = (t) => ' '.repeat(Math.max(0, Math.floor((L - t.length) / 2))) + t;
+    const d = new Date(), dh = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    const linhas = [cen('*** COZINHA / BAR ***'), cen(cut(String(M.loja || 'LiveFood').toUpperCase(), L)), tr, cen('SENHA ' + (r.num || '')), E.modo ? cen(E.modo === 'levar' ? 'PARA LEVAR' : 'CONSUMIR AQUI') : '', E.nome ? cen('Cliente: ' + cut(E.nome, 20)) : '', tr].filter((x) => x !== '');
+    E.carrinho.filter((l) => preparoDe(l.pid)).forEach((l) => { const p = PRODS[l.pid], ds = descLinha(l); linhas.push(cut(`${l.qtd}x ${p.nome}`.toUpperCase(), L)); if (ds) linhas.push('   ' + cut(ds, L - 3)); });
+    linhas.push(tr, 'Pedido ' + (r.num || '') + '  ' + dh, cen('Confira com o ticket do cliente'));
+    if (r.teste || PAYER.simulado) linhas.push('', cen('*** SIMULACAO ***'));
+    return linhas.join('\n');
+  }
+  // dados do ticket para a impressora da loja (programa de impressão, setor Caixa). Vão como dados; o programa monta as colunas.
+  function ticketDados(r, forma, pg) {
+    const prepL = E.carrinho.filter((l) => preparoDe(l.pid)), proL = E.carrinho.filter((l) => !preparoDe(l.pid));
+    const pagto = pg ? `${forma === 'debito' ? 'Débito' : 'Crédito'} ${pg.bandeira || ''} ${pg.final4 ? '**** ' + pg.final4 : ''}`.trim() : forma === 'pix' ? 'Pix pago' : 'PAGAR NO CAIXA';
+    return { lab: r.num, modo: E.modo, nome: E.nome || '', total: R$(r.total || total()), pagto, nsu: (pg && pg.nsu) || '', aut: (pg && pg.aut) || '', soPronto: prepL.length ? 0 : 1, misto: prepL.length && proL.length ? 1 : 0, sim: (r.teste || (pg && pg.simulado)) ? 1 : 0,
+      itens: E.carrinho.map((l) => ({ qty: l.qtd, nome: PRODS[l.pid].nome, desc: descLinha(l), preco: R$(M.precoLinha(l)), grupo: preparoDe(l.pid) ? 'preparo' : 'pronto' })) };
+  }
+  // desenha o papel saindo da impressora do totem; o ticket do cliente também é mandado para a impressora da maquininha (ou simulado pelo Worker)
+  function imprimeCupom(r, forma, pg, papel) {
+    return new Promise((resolve) => {
+      const texto = papel ? papel.texto : cupomTexto(r, forma, pg);
+      CUP.innerHTML = `<div class="cc"><div class="ci">🖨️</div><h2 id="cp-t">${papel ? papel.tit : 'Imprimindo o seu ticket…'}</h2><p>${papel ? papel.sub : 'Retire o seu ticket embaixo do totem'}</p><div class="slot"></div><div class="caixa"><pre class="papel">${esc(texto)}</pre></div><button type="button" class="mbt lj" id="cp-ok">Continuar</button></div>`;
+      abre('#f-cupom');
+      let t1 = null, t2 = null;
+      const sai = () => { clearTimeout(t1); clearTimeout(t2); resolve(); };
+      $('#cp-ok').onclick = sai;
+      t1 = setTimeout(() => { const h = $('#cp-t'); if (h && !h.dataset.erro) h.textContent = papel ? 'Comanda impressa na cozinha!' : 'Ticket impresso!'; }, 4400);
+      t2 = setTimeout(sai, papel ? 5000 : 7500);
+      const via = !ENVIA || papel ? null : C.tktVia === 'loja' ? pPost('/live/ticket', ticketDados(r, forma, pg)) : PAYER.ativa ? pPost('/live/payer-imprimir', { texto }) : null; // onde sai o ticket: impressora da loja (programa de impressão) ou da maquininha (Payer)
+      if (via) via.then((d) => { if (d && d.ok === false) { const h = $('#cp-t'); if (h) { h.dataset.erro = '1'; h.textContent = 'Não consegui imprimir. Chame um atendente.'; } } });
+    });
+  }
+  // cartão: cobra primeiro; só com o pagamento aprovado o pedido entra na cozinha; depois sai o ticket do cliente e vem a senha
+  async function fluxoCartao(forma) {
+    const pg = await cobraNaMaquina(forma, total());
+    if (!pg.ok) { abrePedido(); return; }
+    carregando(true);
+    let r;
+    try {
+      if (!ENVIA) { await espera(300); r = { num: 100 + Math.floor(Math.random() * 900), teste: true, sim: true }; }
+      else {
+        const onde = E.modo === 'levar' ? ' Para levar.' : E.modo === 'aqui' ? ' Consumir no local.' : '';
+        const op = { modo: 'retirada', pagto: 'maquina', maqTipo: forma, obs: `Totem de toque.${onde} Cartão ${forma === 'debito' ? 'débito' : 'crédito'} pago na maquininha (NSU ${pg.nsu || '-'}).` };
+        if (E.nome) { op.nome = E.nome; op.obs = 'Cliente: ' + E.nome + '. ' + op.obs; }
+        r = await M.enviarPedido(E.carrinho.map((l) => ({ id: l.id, qtd: l.qtd, sab: l.sab, adds: l.adds, obs: '' })), op);
+        if (!r.ok) throw new Error(r.mensagem || 'Não consegui enviar o pedido.');
+      }
+    } catch (e) { // pagou, mas o pedido não entrou: não deixa o cliente achando que deu certo
+      carregando(false);
+      maqTela({ t: 'Pagamento aprovado', v: total(), i: '⚠️', m: `O pedido não foi registrado. Chame um atendente. NSU ${pg.nsu || '-'}`, cor: '#DC2626', b: [['Voltar ao início', 'lj', () => recomeca()]] });
+      return;
+    }
+    carregando(false);
+    // No papel: (1) o TICKET DO CLIENTE sai sempre, com a senha; (2) se o pedido tem item de preparo, a COMANDA sai na cozinha ou no bar com a mesma senha
+    // (pelo programa de impressão da loja; em simulação aparece aqui). Quando o pedido fica pronto, o operador confere a comanda com o ticket do cliente.
+    // Pedido só de produto pronto: não há comanda, o cliente entrega o ticket no balcão e retira.
+    const sim = !ENVIA || PAYER.simulado, prep = temPreparo();
+    E.soPronto = !prep;
+    await imprimeCupom(r, forma, pg);
+    if (sim && prep) await imprimeCupom(r, forma, pg, { texto: comandaTexto(r), tit: 'Imprimindo a comanda da cozinha…', sub: 'Simulação: é isto que sai na impressora da cozinha ou do bar' });
+    fim(r, forma, pg);
+  }
+  function abrePedido() {
+    aquece();
+    if (cobraNaTela()) { if (C.pg.length === 1) E.pagar = C.pg[0]; if (!C.pg.includes(E.pagar)) E.pagar = ''; }
+    const rol = $('#f-ped .corpo').scrollTop;
+    $('#ped-itens').innerHTML = E.carrinho.map((l, k) => { const p = PRODS[l.pid], d = descLinha(l); return `<div class="item">${fotoOuEmoji(p)}<div><b class="n">${esc(p.nome)}</b>${d ? `<small>${esc(d)}</small>` : ''}<em>${R$(M.precoLinha(l))}</em></div>
+      <span class="qt"><button type="button" data-it="${k}" data-d="-1" aria-label="Tirar um">−</button><b>${l.qtd}</b><button type="button" data-it="${k}" data-d="1" aria-label="Mais um">+</button></span>
+      <button type="button" class="tirar" data-rm="${k}" aria-label="Remover ${esc(p.nome)} do pedido">✕</button></div>`; }).join('');
+    $('#ped-pg-tit').style.display = $('#ped-pagar').style.display = cobraNaTela() ? '' : 'none';
+    $('#ped-pagar').innerHTML = C.pg.map((p) => `<button type="button" data-p="${p}" class="${p === E.pagar ? 'on' : ''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${PGS[p][1]}</svg>${PGS[p][0]}</button>`).join('');
+    $('#ped-rot').textContent = cobraNaTela() ? (E.pagar === 'pix' ? 'Pagar com Pix' : 'Confirmar pedido') : 'Enviar pedido';
+    $('#ped-total').textContent = R$(total());
+    $('#ped-confirmar').classList.toggle('espera', cobraNaTela() && !E.pagar);
+    $('#ped-confirmar').disabled = false; $('#ped-erro').textContent = '';
+    abre('#f-ped'); $('#f-ped .corpo').scrollTop = rol;
+  }
+
+  async function confirma() {
+    if (E.ocupado) return;
+    if (cobraNaTela() && !E.pagar) { const pg = $('#ped-pagar'); pg.classList.remove('chama'); void pg.offsetWidth; pg.classList.add('chama'); return; }
+    if (C.pedeNome && !MESA && !E.nome) { abreNome(); return; } // a loja quer o nome: pergunta antes de enviar
+    const forma = MESA ? 'mesa' : (cobraNaTela() ? E.pagar : 'caixa');
+    // cartão com maquininha (ou simulação): cobra primeiro, depois envia o pedido, imprime o cupom e mostra a senha
+    if (cobraNaTela() && cartaoNaMaquina(forma)) { E.ocupado = true; try { await fluxoCartao(forma); } finally { E.ocupado = false; } return; }
+    // no mesmo instante do toque entra a tela de "enviando" (o Live e a frase) por cima de tudo; dali vai direto para a confirmação
+    E.ocupado = true; $('#ped-erro').textContent = ''; carregando(true);
+    try {
+      if (!ENVIA) { await espera(250); return fim({ num: 0, teste: true }, forma === 'pix' ? 'pix' : forma); }
+      const onde = E.modo === 'levar' ? ' Para levar.' : E.modo === 'aqui' ? ' Consumir no local.' : '';
+      const op = MESA ? { modo: 'mesa', mesa: MESA, pagto: 'conta', obs: 'Pedido feito no tablet da mesa.' }
+        : forma === 'pix' ? { modo: 'retirada', pagto: 'pix', obs: 'Totem de toque.' + onde }
+        : ehCartao(forma) ? { modo: 'retirada', pagto: 'maquina', maqTipo: forma, obs: 'Totem de toque.' + onde + ' Pagar na maquininha do totem.' }
+        : { modo: 'retirada', pagto: 'dinheiro', obs: 'Totem de toque.' + onde + ' Pagar no caixa.' };
+      if (E.nome && !MESA) { op.nome = E.nome; op.obs = 'Cliente: ' + E.nome + '. ' + op.obs; } // no nome do pedido e na observação (sai na comanda)
+      const r = await M.enviarPedido(E.carrinho.map((l) => ({ id: l.id, qtd: l.qtd, sab: l.sab, adds: l.adds, obs: '' })), op);
+      if (!r.ok) throw new Error(r.mensagem || 'Não consegui enviar o pedido.');
+      if (forma === 'pix') return abrePix(r);
+      fim(r, forma);
+    } catch (e) {
+      carregando(false); abrePedido(); $('#ped-erro').textContent = String((e && e.message) || e); // não deu: volta para o pedido com o motivo
+    } finally { E.ocupado = false; setTimeout(() => carregando(false), 350); } // some depois que a confirmação já cobriu a tela (sem piscar o cardápio)
+  }
+
+  // Pix na tela: mostra o QR Code e pergunta ao servidor a cada 3 s se o pagamento caiu (desiste em 6 min)
+  let tPix = null;
+  function pararPix() { clearInterval(tPix); tPix = null; }
+  function abrePix(r) {
+    const qr = $('#pix-qr');
+    qr.src = r.pixQr ? (/^data:/.test(r.pixQr) ? r.pixQr : 'data:image/png;base64,' + r.pixQr) : '';
+    qr.style.display = r.pixQr ? '' : 'none';
+    $('#pix-total').textContent = R$(r.total || total());
+    $('#pix-estado').textContent = 'Aguardando o pagamento…';
+    abre('#f-pix');
+    const t0 = Date.now();
+    tPix = setInterval(async () => {
+      if (Date.now() - t0 > 6 * 60000) { pararPix(); abrePedido(); $('#ped-erro').textContent = 'O tempo do Pix acabou. Tente de novo.'; return; }
+      try {
+        const c = await M.consultarPedido(r.id);
+        if (!c.ok || /^aguardando/.test(c.status)) return;
+        pararPix();
+        if (c.status === 'expirado' || c.status === 'cancelado') { abrePedido(); $('#ped-erro').textContent = 'O Pix não foi pago a tempo. Tente de novo.'; return; }
+        fim(r, 'pix');
+      } catch (e) { /* rede oscilou: tenta de novo na próxima volta */ }
+    }, 3000);
+  }
+
+  const VOLTA_MS = 12000; // depois do pedido, a tela da senha fica 12 s e volta sozinha para a entrada (eram 25 s)
+  let tFim = null;
+  function fim(r, forma, pg) {
+    if (!pg && ENVIA && !r.teste && C.tktVia === 'loja' && forma !== 'mesa') pPost('/live/ticket', ticketDados(r, forma, null)); // Pix e caixa: o ticket também sai na impressora da loja (o cartão já mandou o dele)
+    // comemoração do cardápio e do atendimento: o Live animado, confete e o número do pedido bem grande (site/js/live-app.js)
+    if (window.LiveApp && window.LiveMascote) {
+      const valor = R$(r.total || total());
+      abre(null);
+      window.LiveApp.comemorar({
+        titulo: r.teste ? (r.sim ? 'Pedido simulado, nada foi enviado. Sua senha seria' : 'Modo teste: este pedido não foi enviado') : forma === 'mesa' ? 'Pedido enviado! Número' : E.nome ? `Pedido confirmado, ${E.nome.split(' ')[0]}! Sua senha é` : 'Pedido confirmado! Sua senha é',
+        valor: r.teste && !r.sim ? 'teste' : String(r.num),
+        forma: pg ? `Pago no ${forma === 'debito' ? 'débito' : 'crédito'}${pg.bandeira ? ' · ' + pg.bandeira : ''}` : forma === 'mesa' ? 'Mesa ' + MESA : forma === 'pix' ? 'Pix confirmado' : ehCartao(forma) ? `Pague ${valor} no ${forma === 'debito' ? 'débito' : 'crédito'}, na maquininha` : `Pague ${valor} no caixa`,
+        sub: forma === 'mesa' ? 'Já foi para a cozinha e o bar. Levamos até a sua mesa.' : (pg && E.soPronto) ? 'Pedido pronto: entregue o ticket no balcão para retirar.' : E.modo === 'levar' ? 'Retire no balcão quando chamarem a senha.' : 'Aguarde a senha ser chamada e retire no balcão.',
+        botao: { texto: 'Fazer outro pedido', acao: recomeca },
+      });
+      // ninguém tocou em 12 s: fecha sozinho e volta para a entrada
+      clearTimeout(tFim); tFim = setTimeout(() => { const b = document.querySelector('.lfc .lfc-bt'); if (b) b.click(); else recomeca(); }, VOLTA_MS);
+      return;
+    }
+    const ic = (d) => `<svg viewBox="0 0 24 24" fill="none" stroke="#1C1C1E" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+    const iPag = ic('<rect x="2.5" y="6" width="19" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.8"/><path d="M6 9.5v5M18 9.5v5"/>'), iOk = ic('<path d="M5 12.5 10 17.5 19 7"/>'), iLocal = ic('<path d="M12 21s7-5.5 7-11a7 7 0 0 0-14 0c0 5.5 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/>');
+    $('#fim-num').textContent = r.teste && !r.sim ? 'teste' : r.num;
+    $('#fim-num').classList.toggle('pequeno', !!r.teste && !r.sim);
+    $('#fim-tit').textContent = r.teste ? (r.sim ? 'Pedido simulado, nada foi enviado. Sua senha seria' : 'Modo teste: este pedido não foi enviado') : (forma === 'mesa' ? 'Pedido enviado. Número' : 'Pedido confirmado. Sua senha é');
+    const passos = forma === 'mesa' ? [iOk + 'Seu pedido já foi para a cozinha e o bar.', iLocal + `Levamos até a mesa ${esc(MESA)}. O valor entra na conta da mesa.`]
+      : [pg ? iOk + `Pagamento no ${forma === 'debito' ? 'débito' : 'crédito'} aprovado.` : forma === 'pix' ? iOk + 'Pagamento por Pix confirmado.'
+        : ehCartao(forma) ? iPag + `Pague ${R$(r.total || total())} no ${forma === 'debito' ? 'débito' : 'crédito'}, na maquininha do totem.`
+        : iPag + `Pague ${R$(r.total || total())} no caixa e informe a sua senha.`,
+        iLocal + (E.modo === 'levar' ? 'Retire no balcão quando chamarem a senha.' : 'Aguarde a senha ser chamada e retire no balcão.')];
+    $('#fim-passos').innerHTML = passos.map((x) => `<div>${x}</div>`).join('');
+    abre('#f-fim');
+    clearTimeout(tFim); tFim = setTimeout(recomeca, VOLTA_MS); // volta sozinho para a entrada
+  }
+
+  // ----- ajuda com opções prontas (sem voz: funciona em totem sem alto-falante) -----
+  function ajudaOps() {
+    const pagar = MESA ? 'O valor entra na conta da mesa. Você paga quando fechar a conta.'
+      : !cobraNaTela() ? 'O pagamento é feito no caixa, informando a senha do pedido.'
+      : 'Aqui no totem você escolhe: ' + C.pg.map((p) => ({ pix: 'Pix, lendo o QR Code na tela', credito: 'crédito na maquininha', debito: 'débito na maquininha', caixa: 'pagar no caixa' }[p])).join(', ').replace(/, ([^,]*)$/, ' ou $1') + '.';
+    return [
+      ['Como faço meu pedido?', 'Escolha a categoria, toque em Adicionar em cada produto e depois em “Ver pedido”.'],
+      ['Como posso pagar?', pagar],
+      [MESA ? 'Como recebo meu pedido?' : 'Onde retiro meu pedido?', MESA ? 'Levamos o pedido até a sua mesa assim que ficar pronto.' : 'No fim o totem mostra a sua senha. Retire no balcão quando ela for chamada.'],
+      ['Posso mudar meu pedido?', 'Sim. Em “Ver pedido” você muda a quantidade ou remove itens antes de confirmar.'],
+    ];
+  }
+  function abreAjuda() {
+    const r = $('#ajuda-resp'); r.textContent = 'Toque em uma das opções abaixo.'; r.className = 'vazio';
+    $('#ajuda-ops').innerHTML = ajudaOps().map((o, k) => `<button type="button" data-aj="${k}">${esc(o[0])}</button>`).join('');
+    abre('#f-ajuda');
+  }
+
+  // ----- tela cheia -----
+  // O navegador só deixa entrar em tela cheia a partir de um toque, então ela entra no toque que começa o pedido
+  // (e volta a entrar no pedido seguinte, se alguém tiver saído com Esc). Junto, pede para a tela não apagar.
+  // Não vale com as configurações do dono abertas nem dentro da janela do painel.
+  let acesa = null;
+  async function manterAcesa() {
+    try { if ('wakeLock' in navigator && !acesa) { acesa = await navigator.wakeLock.request('screen'); acesa.addEventListener('release', () => { acesa = null; }); } } catch (e) { /* o aparelho não deixa: segue sem */ }
+  }
+  function telaCheia() {
+    if (EDITANDO || window.top !== window.self) return;
+    const d = document.documentElement;
+    // com a tela cheia ligada o Esc fica "preso": no Chrome e no Edge é preciso segurar o Esc para sair (um toque sem querer não tira)
+    try { if (!document.fullscreenElement && d.requestFullscreen) d.requestFullscreen({ navigationUI: 'hide' }).then(() => { try { if (navigator.keyboard && navigator.keyboard.lock) navigator.keyboard.lock(['Escape']).catch(() => {}); } catch (e) { /* ok */ } }).catch(() => {}); } catch (e) { /* sem suporte (iPhone): segue normal */ }
+    manterAcesa();
+  }
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && document.fullscreenElement) manterAcesa(); });
+
+  // ----- toques -----
+  totem.addEventListener('click', (ev) => {
+    const b = ev.target.closest('button'), d = b ? b.dataset : {};
+    if (!b) {
+      if (ev.target.id === 'veu' && $('#f-pix').classList.contains('some') && $('#f-fim').classList.contains('some')) abre(null);
+      const card = ev.target.closest('.prod');
+      if (card) { const p = PRODS[card.dataset.prod]; if (p && p.video) abreProd(p.pid); else mais(card.dataset.prod); } // com vídeo, tocar na foto abre para mostrar
+      return;
+    }
+    if (d.modo) { telaCheia(); E.modo = d.modo === 'mesa' ? '' : d.modo; desenhaFixos(); totem.classList.add('em-cardapio'); tocaFundo(); window.Totem.estado.modo = 'conversa'; setas(); if (M.prepararEnvio && ENVIA) M.prepararEnvio(); }
+    else if (d.cat !== undefined) vaiParaCategoria(+d.cat);
+    else if (d.rola) $('#cats').scrollBy({ top: +d.rola * 420, behavior: 'smooth' });
+    else if (d.mais) mais(d.mais);
+    else if (d.menos) tira(d.menos);
+    else if (b.id === 'banner') { const p = ofertaAtual(); if (p) mais(p.pid, b.querySelector('img')); }
+    else if (d.o) tocaOpc(d.o, +d.k);
+    else if (b.id === 'fp-menos') { E.aberto.q = Math.max(1, E.aberto.q - 1); atualizaProd(); }
+    else if (b.id === 'fp-mais') { E.aberto.q++; atualizaProd(); }
+    else if (b.id === 'fp-add') { const a = E.aberto; voa(a.p.video ? $('#fp-vid') : $('#fp-img'), a.p.foto); poe(a.p.pid, a.v.id, a.q, a.sab.slice(), a.adds.slice()); abre(null); }
+    else if (b.id === 'btn-ver') abrePedido();
+    else if (d.it !== undefined || d.rm !== undefined) {
+      const k = +(d.rm !== undefined ? d.rm : d.it), l = E.carrinho[k]; if (!l) return;
+      if (d.rm !== undefined) l.qtd = 0; else l.qtd += +d.d;
+      if (l.qtd < 1) E.carrinho.splice(k, 1);
+      desenhaGrade(); desenhaBarra(); if (E.carrinho.length) abrePedido(); else abre(null);
+    }
+    else if (d.p) { E.pagar = d.p; abrePedido(); }
+    else if (b.id === 'ped-confirmar') confirma();
+    else if (b.id === 'pix-cancelar') { pararPix(); abrePedido(); }
+    else if (d.tecla !== undefined) tecla(d.tecla);
+    else if (b.id === 'nome-x') abrePedido();
+    else if (b.id === 'nome-ok') { E.nome = nomeLimpo(E.digitando); confirma(); } // do nome vai direto para o "enviando" e a confirmação
+    else if (b.id === 'fim-novo' || b.id === 'btn-recomecar') recomeca();
+    else if (b.id === 'btn-modo') { E.modo = E.modo === 'aqui' ? 'levar' : 'aqui'; b.textContent = nomeModo(E.modo); }
+    else if (d.fecha !== undefined) abre(null);
+    else if (b.id === 'ajuda-btn') abreAjuda();
+    else if (d.aj !== undefined) { const r = $('#ajuda-resp'); r.textContent = ajudaOps()[+d.aj][1]; r.className = ''; $$('#ajuda-ops button').forEach((x) => x.classList.toggle('on', x === b)); }
+  });
+  $('#cats').addEventListener('scroll', setas);
+  // foto que não carregou (apagada no painel, rede): entra o desenho no lugar, sem deixar o quadro quebrado
+  totem.addEventListener('error', (ev) => {
+    const im = ev.target;
+    if (!im || im.tagName !== 'IMG' || im.id === 'pix-qr' || im.closest('.loja-logo') || im.closest('#assinatura') || im.classList.contains('voa')) return;
+    if (im.id === 'fp-img') { im.style.display = 'none'; const sf = $('#fp-sem'); sf.style.display = ''; return; }
+    const sp = document.createElement('span'); sp.className = 'sem-foto'; sp.textContent = '🍽️'; im.replaceWith(sp);
+  }, true);
+  function recomeca() {
+    clearTimeout(tFim); E.carrinho = []; E.pagar = ''; E.cat = 0; E.modo = ''; E.nome = ''; E.digitando = ''; abre(null); tudo(); $('#lista').scrollTop = 0;
+    totem.classList.remove('em-cardapio'); window.Totem.estado.modo = 'standby';
+    tocaFundo();
+  }
+
+  // totem parado por 2 minutos no meio de um pedido: volta para a entrada (o próximo cliente não herda a sacola de ninguém)
+  let tParado = null;
+  function mexeu() {
+    clearTimeout(tParado);
+    tParado = setTimeout(() => { if (totem.classList.contains('em-cardapio') && $('#f-pix').classList.contains('some') && !E.ocupado) recomeca(); else mexeu(); }, 120000);
+  }
+  ['pointerdown', 'keydown', 'scroll'].forEach((ev) => addEventListener(ev, mexeu, true));
+
+  // ----- painel de configurações do dono (js/toque-config.js) -----
+  // Com o dono logado no painel neste navegador, as configurações aparecem à esquerda do totem e cada mudança
+  // redesenha a tela na hora. Enquanto o painel está aberto o totem não envia pedidos. Cliente nunca vê: sem login, nada carrega.
+  const enviaNormal = ENVIA;
+  window.ToqueCfg = {
+    atual: () => JSON.parse(JSON.stringify(C)),
+    produtos: () => ORDEM.map((p) => ({ id: p.pid, nome: p.nome, promo: !!p.promo })),
+    editar(ligado) { EDITANDO = !!ligado; ENVIA = EDITANDO ? false : enviaNormal; tudo(); },
+    aplica(cfg) {
+      Object.assign(C, cfg); arrumaCfg();
+      OFS = calcOfs(); ligaTroca();
+      const noPedido = !$('#f-ped').classList.contains('some');
+      tudo();
+      if (noPedido && E.carrinho.length) abrePedido();
+    },
+  };
+  let jwt = ''; try { jwt = localStorage.getItem('dd_jwt') || ''; } catch (e) { /* sem armazenamento */ }
+  let oculto = false; try { oculto = localStorage.getItem('toque-sem-config') === '1'; } catch (e) { /* ok */ }
+  const pediu = Q.get('config') === '1';
+  if (jwt && M.cli && !MESA && !GIRA && (pediu || (!oculto && innerWidth >= 900))) {
+    const sc = document.createElement('script'); sc.src = 'js/toque-config.js?v=' + Date.now(); document.body.appendChild(sc);
+  }
+
+  tudo(); mexeu();
+  totem.classList.add('pronto');
+  setTimeout(aqueceVideos, 600);
+})();

@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Totem de toque · LiveFood</title>
+<!-- Autoatendimento por toque. Abre com o link do painel (Configurações → Totem de toque): toque.html?loja=<código>&k=<chave>
+     Tablet de mesa: o mesmo link com &mesa=<número>. A aparência vem do painel; este arquivo é gerado a partir do modelo aprovado. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* mesma paleta cinza das outras telas (atendimento, painel) */
+  :root { --bg: #F4F4F5; --s1: #fff; --s3: #F3F3F5; --s4: #E8E8EB; --b2: #DFDFE4; --tx: #1C1C1E; --mu: #8E8E93; --mu2: #5E5E66; --pri: #FF5A00; --pri-esc: #E04A00; --ok: #16A34A; --f: 'Manrope', system-ui, sans-serif; --ft: 'Baloo 2', system-ui, sans-serif; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #1C1C1E; color: var(--tx); font-family: var(--f); -webkit-font-smoothing: antialiased; }
+  button, input, select { font: inherit; color: inherit; }
+  button { cursor: pointer; border: 0; background: none; padding: 0; }
+  button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid var(--tx); outline-offset: 2px; }
+  .some-de-vez { display: none !important; }
+
+  /* ================= painel de configuração (simula Hub > Painel > Totem) ================= */
+
+  /* ================= totem: 1080 x 1920 em pé, 1920 x 1080 deitado (.horiz) ================= */
+  #totem { position: fixed; left: 0; top: 0; width: 1080px; height: 1920px; transform-origin: 0 0; overflow: hidden; background: var(--pri); user-select: none; box-shadow: 0 30px 90px rgba(0, 0, 0, .22); }
+  #totem.horiz { width: 1920px; height: 1080px; }
+  /* assinatura fixa do LiveFood: faixa laranja no rodapé, a tela termina arredondada sobre ela */
+  #assinatura { position: absolute; left: 0; right: 0; bottom: 0; height: 84px; display: grid; place-items: center; }
+  #assinatura img { height: 40px; }
+  #tela { position: absolute; left: 0; right: 0; top: 0; bottom: 84px; background: var(--bg); border-radius: 0 0 60px 60px; overflow: hidden; }
+  .horiz #assinatura { height: 60px; } .horiz #assinatura img { height: 30px; }
+  .horiz #tela { bottom: 60px; border-radius: 0 0 44px 44px; }
+
+  /* Live oficial em movimento leve: flutua, balança, mexe a antena, pisca e olha para os lados (mesmos ritmos do totem de voz) */
+  .lv-aqui { display: contents; }
+  .lv { overflow: visible; display: block; }
+  .lv-corpo { animation: lv-giro 5.700s ease-in-out infinite; }
+  .lv-antena { transform-origin: 0px -76px; animation: lv-antena 2.400s ease-in-out infinite; }
+  .lv-rosto { animation: lv-olhar 11s ease-in-out infinite; }
+  .lv-olhos { transform-origin: 0px -8.500px; animation: lv-pisca 4.300s linear infinite; }
+  .visual .lv { animation: lv-flutua 3.500s ease-in-out infinite; }
+  @keyframes lv-flutua { 0%, 100% { transform: translateY(5px); } 50% { transform: translateY(-9px); } }
+  @keyframes lv-giro { 0%, 100% { transform: rotate(-2.500deg); } 50% { transform: rotate(2.500deg); } }
+  @keyframes lv-antena { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+  @keyframes lv-pisca { 0%, 95%, 100% { transform: scaleY(1); } 97.500% { transform: scaleY(.12); } }
+  @keyframes lv-olhar { 0%, 52%, 100% { transform: translate(0, 0); } 58%, 70% { transform: translate(5px, -1.500px); } 78%, 90% { transform: translate(-5px, 0); } }
+
+  .loja-logo { display: flex; align-items: center; gap: 16px; font: 800 44px/1 var(--ft); letter-spacing: -.5px; }
+  .loja-logo i { width: 76px; height: 76px; border-radius: 50%; background: var(--tx); color: #fff; display: grid; place-items: center; font: 800 40px/1 var(--ft); font-style: normal; padding-top: 4px; }
+
+  /* ---------- banner de ofertas (entrada e topo do cardápio) ---------- */
+  .oferta { position: relative; flex: none; width: 100%; height: 210px; border-radius: 40px; background: #fff; border: 2px solid var(--s4); overflow: hidden; display: flex; align-items: center; text-align: left; }
+  .oferta img { width: 330px; height: 100%; object-fit: cover; flex: none; }
+  .oferta .t { padding: 0 36px; flex: 1; min-width: 0; }
+  .oferta small { display: block; font-size: 24px; font-weight: 700; color: var(--mu2); }
+  .oferta b { display: block; font-size: 44px; font-weight: 800; line-height: 1.1; margin-top: 2px; }
+  .oferta em { flex: none; margin-right: 40px; font-style: normal; padding: 10px 28px; border-radius: 99px; background: var(--pri); color: #fff; font-size: 38px; font-weight: 800; }
+  .oferta .pts { position: absolute; left: 366px; bottom: 20px; display: flex; gap: 8px; }
+  .oferta .pts i { width: 12px; height: 12px; border-radius: 99px; background: var(--b2); }
+  .oferta .pts i.on { width: 32px; background: var(--pri); }
+  .oferta.troca img, .oferta.troca .t, .oferta.troca em { animation: entra .45s ease-out; }
+  @keyframes entra { from { opacity: 0; transform: translateX(26px); } }
+  #capa { height: 270px; } #capa img { width: 340px; } #capa .pts { left: 376px; } #capa b { font-size: 46px; }
+  .horiz #capa { height: 230px; } .horiz #capa img { width: 250px; } .horiz #capa .pts { left: 286px; } .horiz #capa b { font-size: 38px; } .horiz #capa em { font-size: 34px; margin-right: 30px; }
+  #banner { width: auto; margin: 28px 44px 0; }
+  .horiz #banner { height: 130px; margin-top: 22px; } .horiz #banner img { width: 220px; } .horiz #banner b { font-size: 34px; } .horiz #banner small { font-size: 20px; } .horiz #banner .pts { left: 256px; bottom: 12px; } .horiz #banner em { font-size: 32px; }
+
+  /* ---------- tela de entrada ---------- */
+  /* Live, frase, botões e ofertas formam um bloco só, centralizado na tela */
+  #inicio { position: absolute; inset: 0; z-index: 20; background: var(--bg); display: flex; flex-direction: column; align-items: center; padding: 150px 60px 90px; transition: opacity .4s, transform .5s cubic-bezier(.2, .9, .3, 1); }
+  #inicio::before { content: ''; flex: 1; } /* a sobra de altura divide-se igual: metade acima do Live, metade em volta do banner */
+  .em-cardapio #inicio { opacity: 0; transform: translateY(-70px); pointer-events: none; }
+  #inicio > .loja-logo { position: absolute; left: 0; right: 0; top: 56px; justify-content: center; }
+  .ini-a { width: 100%; display: flex; flex-direction: column; align-items: center; }
+  .ini-a .visual { height: 280px; }
+  .ini-a .visual svg { height: 100%; }
+  #inicio h1 { margin: 34px 0 0; max-width: 940px; font: 800 136px/.95 var(--ft); letter-spacing: -3px; text-align: center; text-wrap: balance; }
+  #inicio .sub { margin: 24px 0 0; font-size: 36px; font-weight: 700; color: var(--mu2); }
+  .ini-b { flex: 1 1 auto; margin-top: 80px; width: 100%; display: flex; flex-direction: column; gap: 28px; }
+  .ini-b #capa { margin: auto 0; } /* banner no meio do espaço entre os botões e o rodapé */
+  .escolha { display: flex; gap: 28px; }
+  .escolha button { flex: 1; height: 250px; border-radius: 48px; background: #fff; border: 2px solid var(--s4); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; font-size: 44px; font-weight: 800; }
+  .escolha svg { width: 96px; height: 96px; }
+  .escolha button.unico { height: 180px; background: var(--pri); border-color: var(--pri); color: #fff; font-size: 54px; box-shadow: 0 18px 40px rgba(255, 90, 0, .32); }
+  .escolha button:active { transform: scale(.98); }
+  #inicio .aviso { position: absolute; left: 0; right: 0; bottom: 34px; margin: 0; font-size: 22px; font-weight: 700; color: var(--mu); text-align: center; }
+  .horiz #inicio { flex-direction: row; align-items: center; gap: 80px; padding: 40px 90px; }
+  .horiz #inicio::before { display: none; }
+  .horiz #inicio > .loja-logo { top: 44px; }
+  .horiz .ini-a, .horiz .ini-b { flex: 1; width: auto; margin: 0; }
+  .horiz .ini-b { justify-content: center; } .horiz .ini-b #capa { margin: 0; }
+  .horiz .ini-a .visual { height: 230px; }
+  .horiz #inicio .aviso { bottom: 22px; }
+  .horiz #inicio h1 { font-size: 112px; }
+
+  /* ---------- cardápio ---------- */
+  #cardapio { position: absolute; inset: 0; display: flex; flex-direction: column; }
+  #topo { flex: none; height: 130px; padding: 0 44px; display: flex; align-items: center; justify-content: space-between; background: #fff; border-bottom: 2px solid var(--s4); }
+  .horiz #topo { height: 104px; }
+  #topo .dir { display: flex; gap: 12px; }
+  .chip { height: 68px; padding: 0 28px; border-radius: 99px; background: var(--s3); font-weight: 800; font-size: 26px; }
+  #corpo { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .horiz #corpo { flex-direction: row; }
+  #principal { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+
+  #meio { flex: 1; min-height: 0; display: flex; margin-top: 28px; }
+  .horiz #meio { margin-top: 22px; }
+  #meio.cat-dir { flex-direction: row-reverse; }
+  #meio.cat-topo { flex-direction: column; }
+  /* categorias na lateral: rolam, com seta e esmaecido avisando que há mais */
+  #cats-wrap { position: relative; flex: none; display: flex; min-height: 0; }
+  #cats { width: 250px; padding: 0 0 30px 44px; overflow-y: auto; scrollbar-width: none; display: flex; flex-direction: column; gap: 10px; scroll-behavior: smooth; }
+  .cat-dir #cats { padding: 0 44px 30px 0; }
+  #cats button { flex: none; width: 196px; padding: 14px 6px 12px; border-radius: 32px; display: flex; flex-direction: column; align-items: center; gap: 8px; font-weight: 700; font-size: 24px; line-height: 1.1; color: var(--mu2); border: 2px solid transparent; }
+  #cats img { width: 128px; height: 128px; border-radius: 50%; object-fit: cover; }
+  #cats button.on { background: #fff; color: var(--tx); font-weight: 800; border-color: var(--pri); }
+  #cats-wrap.mais-baixo::after, #cats-wrap.mais-cima::before { content: ''; position: absolute; left: 0; right: 0; height: 150px; pointer-events: none; z-index: 2; }
+  #cats-wrap.mais-baixo::after { bottom: 0; background: linear-gradient(rgba(244, 244, 245, 0), var(--bg) 78%); }
+  #cats-wrap.mais-cima::before { top: 0; background: linear-gradient(var(--bg) 22%, rgba(244, 244, 245, 0)); }
+  .seta { position: absolute; left: 44px; right: 10px; z-index: 3; height: 66px; border-radius: 99px; background: var(--tx); color: #fff; display: none; align-items: center; justify-content: center; gap: 8px; font-size: 22px; font-weight: 800; box-shadow: 0 8px 20px rgba(0, 0, 0, .2); }
+  .cat-dir .seta { left: 0; right: 54px; }
+  .seta svg { width: 28px; height: 28px; }
+  .seta.baixo { bottom: 16px; } .seta.cima { top: 0; }
+  .mais-baixo .seta.baixo, .mais-cima .seta.cima { display: flex; }
+  .seta.baixo svg { animation: desce 1.4s ease-in-out infinite; }
+  @keyframes desce { 50% { transform: translateY(5px); } }
+  .horiz #cats { width: 224px; } .horiz #cats button { width: 170px; } .horiz #cats img { width: 100px; height: 100px; } .horiz #cats button { font-size: 21px; }
+  /* categorias no topo: 4 por linha, maiores e sem rolagem */
+  .cat-topo #cats-wrap { display: block; }
+  .cat-topo #cats-wrap::after, .cat-topo #cats-wrap::before, .cat-topo .seta { display: none !important; }
+  .cat-topo #cats { width: auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 0 44px 20px; overflow: visible; }
+  .cat-topo #cats button { width: auto; font-size: 26px; }
+  .cat-topo #cats img { width: 150px; height: 150px; }
+  .horiz .cat-topo #cats { grid-template-columns: repeat(8, 1fr); } .horiz .cat-topo #cats img { width: 104px; height: 104px; } .horiz .cat-topo #cats button { font-size: 21px; padding: 10px 4px; }
+
+  #lista { flex: 1; min-width: 0; min-height: 0; overflow-y: auto; scrollbar-width: none; padding: 0 44px 50px 12px; }
+  .cat-dir #lista { padding: 0 12px 50px 44px; }
+  .cat-topo #lista { padding: 0 44px 50px; }
+  #lista h2 { margin: 4px 0 18px; font-size: 44px; font-weight: 800; letter-spacing: -.5px; }
+  .horiz #lista h2 { font-size: 36px; margin-bottom: 14px; }
+  #grade { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+  .cat-topo #grade { grid-template-columns: repeat(3, 1fr); }
+  .horiz #grade { grid-template-columns: repeat(4, 1fr); }
+  .horiz .cat-topo #grade { grid-template-columns: repeat(5, 1fr); }
+
+  .prod { background: #fff; border-radius: 34px; overflow: hidden; display: flex; flex-direction: column; border: 2px solid var(--s4); cursor: pointer; }
+  .prod.tem { border-color: var(--pri); }
+  /* cartão: foto quadrada, depois nome, preço e quantidade, um embaixo do outro */
+  .prod img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; display: block; }
+  .prod .txt { padding: 16px 20px 20px; display: flex; flex-direction: column; flex: 1; }
+  .prod b.nome { font-size: 29px; font-weight: 800; line-height: 1.15; }
+  .prod p { margin: 5px 0 0; font-size: 20px; font-weight: 600; color: var(--mu); line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+  .prod .preco { margin-top: 10px; font-size: 34px; font-weight: 800; white-space: nowrap; display: flex; align-items: baseline; gap: 12px; }
+  .prod .preco s { font-size: 20px; font-weight: 600; color: var(--mu); }
+  .prod .pe { margin-top: auto; padding-top: 14px; }
+  .mais { width: 100%; height: 70px; border-radius: 99px; background: var(--pri); color: #fff; font-size: 26px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .mais i { font-style: normal; font-size: 40px; font-weight: 700; line-height: 1; margin-top: -5px; }
+  .prod .qt { justify-content: space-between; height: 70px; }
+  /* quantidade igual à do garçom: − número + em botões redondos com borda */
+  .qt { display: flex; align-items: center; gap: 10px; }
+  .qt button { width: 64px; height: 64px; border-radius: 50%; border: 2.5px solid var(--b2); background: #fff; font-size: 38px; font-weight: 800; line-height: 1; padding-bottom: 5px; }
+  .qt button:active { background: var(--s3); }
+  .qt b { min-width: 40px; text-align: center; font-size: 32px; font-weight: 800; }
+  /* cartões mais estreitos (categorias no topo ou totem deitado) */
+  .cat-topo .prod b.nome, .horiz .prod b.nome { font-size: 26px; }
+  .cat-topo .prod .preco, .horiz .prod .preco { font-size: 30px; }
+  .cat-topo .prod .qt, .horiz .prod .qt, .cat-topo .prod .mais, .horiz .prod .mais { height: 62px; }
+  .cat-topo .prod .qt button, .horiz .prod .qt button { width: 58px; height: 58px; font-size: 34px; }
+  .cat-topo .prod .mais, .horiz .prod .mais { font-size: 23px; }
+  .qt.g button { width: 84px; height: 84px; font-size: 48px; }
+  .qt.g b { min-width: 60px; font-size: 44px; }
+
+  /* ---------- barra da sacola: embaixo (em pé) ou coluna à direita (deitado) ---------- */
+  #barra { flex: none; height: 210px; background: #fff; border-top: 2px solid var(--s4); display: flex; align-items: center; gap: 30px; padding: 0 44px; }
+  #ajuda-btn { flex: none; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 20px; font-weight: 800; color: var(--mu2); padding-right: 30px; border-right: 2px solid var(--s4); height: 150px; justify-content: center; }
+  #ajuda-btn svg { width: 104px; }
+  #sacola-info { flex: 1; display: flex; align-items: center; gap: 22px; min-width: 0; }
+  #sacola { position: relative; flex: none; width: 104px; height: 104px; border-radius: 30px; background: var(--s3); display: grid; place-items: center; }
+  #sacola svg { width: 56px; }
+  #sacola span { position: absolute; right: -10px; top: -10px; min-width: 48px; height: 48px; padding: 0 12px; border-radius: 99px; background: var(--pri); color: #fff; font-size: 26px; font-weight: 800; line-height: 48px; text-align: center; }
+  #sacola.pulo { animation: pulo .45s cubic-bezier(.3, 1.6, .5, 1); }
+  @keyframes pulo { 35% { transform: scale(1.22) translateY(6px); } }
+  #sacola-info small { display: block; font-size: 23px; font-weight: 700; color: var(--mu2); }
+  #sacola-info b { font-size: 52px; font-weight: 800; letter-spacing: -1px; line-height: 1.1; }
+  #barra-itens { display: none; }
+  #btn-ver { flex: none; height: 130px; padding: 0 56px; border-radius: 40px; background: var(--pri); color: #fff; font-size: 42px; font-weight: 800; }
+  #btn-ver:disabled { background: var(--s4); color: var(--mu); }
+  .horiz #barra { width: 430px; height: auto; flex-direction: column; align-items: stretch; gap: 20px; padding: 28px 30px 26px; border-top: 0; border-left: 2px solid var(--s4); }
+  .horiz #sacola-info { flex: none; order: 0; } .horiz #sacola-info b { font-size: 46px; }
+  .horiz #barra-itens { display: block; order: 1; flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: none; border-top: 2px solid var(--s4); padding-top: 12px; font-size: 23px; font-weight: 700; }
+  .horiz #barra-itens div { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; }
+  .horiz #barra-itens span { color: var(--mu2); white-space: nowrap; }
+  .horiz #btn-ver { order: 2; height: 110px; padding: 0; }
+  .horiz #ajuda-btn { order: 3; flex-direction: row; height: auto; gap: 14px; padding: 0; border: 0; justify-content: flex-start; font-size: 22px; }
+  .horiz #ajuda-btn svg { width: 70px; }
+  .voa { position: absolute; z-index: 40; object-fit: cover; border-radius: 34px; pointer-events: none; transition: transform .6s cubic-bezier(.55, -.25, .75, .55), opacity .6s ease-in; }
+
+  /* ---------- ajuda ---------- */
+  /* folha de ajuda: mesmo estilo das outras e altura fixa, a resposta nunca muda o tamanho */
+  #f-ajuda { height: 940px; }
+  .horiz #f-ajuda { height: auto; }
+  #f-ajuda .cab { display: flex; align-items: center; gap: 24px; }
+  #f-ajuda .cab svg { width: 120px; flex: none; }
+  #ajuda-resp { margin: 30px 0 0; height: 220px; padding: 0 36px; border-radius: 32px; background: var(--s3); display: flex; align-items: center; font-size: 32px; font-weight: 700; line-height: 1.35; }
+  #ajuda-resp.vazio { color: var(--mu); }
+  #f-ajuda .ops { margin-top: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  #f-ajuda .ops button { height: 150px; padding: 0 30px; border-radius: 30px; background: #fff; border: 2.5px solid var(--b2); font-size: 30px; font-weight: 800; text-align: left; line-height: 1.2; }
+  #f-ajuda .ops button.on { border-color: var(--pri); color: var(--pri-esc); }
+  .sem-cats #cats-wrap { display: none !important; }
+  #grade h2.sec { grid-column: 1 / -1; margin: 18px 0 -4px; }
+  #grade h2.sec:first-child { margin-top: 4px; }
+  .x { position: absolute; right: 28px; top: 28px; z-index: 2; width: 76px; height: 76px; border-radius: 50%; background: var(--s3); font-size: 32px; font-weight: 800; }
+
+  /* ---------- folhas: sobem de baixo (em pé) ou entram pela direita (deitado) ---------- */
+  #veu { position: absolute; inset: 0; z-index: 10; background: rgba(28, 28, 30, .5); transition: opacity .3s; }
+  #veu.some { opacity: 0; pointer-events: none; }
+  .folha { position: absolute; left: 0; right: 0; bottom: 0; z-index: 11; background: #fff; border-radius: 60px 60px 0 0; transition: transform .42s cubic-bezier(.2, .9, .3, 1); display: flex; flex-direction: column; overflow: hidden; }
+  .folha.some { transform: translateY(105%); }
+  .horiz .folha { left: auto; top: 0; width: 820px; border-radius: 50px 0 0 50px; }
+  .horiz .folha.some { transform: translateX(105%); }
+  .folha .x { background: #fff; box-shadow: 0 4px 14px rgba(0, 0, 0, .14); }
+  .folha h2 { margin: 0; font-size: 54px; font-weight: 800; letter-spacing: -1px; }
+  .folha h3 { margin: 34px 0 14px; font-size: 26px; font-weight: 800; color: var(--mu2); }
+  .folha .corpo { padding: 40px 50px 0; flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: none; }
+  .pe-folha { flex: none; display: flex; align-items: center; gap: 30px; padding: 26px 50px 40px; border-top: 2px solid var(--s4); }
+  .acao { flex: 1; height: 120px; border-radius: 38px; background: var(--pri); color: #fff; font-size: 38px; font-weight: 800; display: flex; align-items: center; justify-content: space-between; padding: 0 40px; transition: background .25s; }
+  .acao.espera { background: #48484F; } /* cinza escuro até escolher o pagamento */
+
+  #f-prod { height: 1580px; }
+  #f-prod > img, #f-prod > video { width: 100%; height: 720px; object-fit: cover; flex: none; background: #111; }
+  .horiz #f-prod { height: auto; } .horiz #f-prod > img, .horiz #f-prod > video { height: 300px; }
+  /* produto com vídeo cadastrado: selo na foto do cartão; o vídeo roda sem som no lugar da foto ao abrir */
+  .prod { position: relative; }
+  .tem-video { position: absolute; left: 14px; top: 14px; height: 48px; padding: 0 16px 0 12px; border-radius: 99px; background: rgba(28, 28, 30, .72); color: #fff; display: flex; align-items: center; gap: 8px; font-size: 19px; font-weight: 800; }
+  .tem-video svg { width: 20px; height: 20px; }
+  #f-prod .corpo p { margin: 12px 0 0; font-size: 28px; font-weight: 600; color: var(--mu2); line-height: 1.35; }
+  .opc { width: 100%; display: flex; align-items: center; gap: 20px; padding: 20px 24px; margin-bottom: 12px; border-radius: 26px; background: var(--s3); font-size: 29px; font-weight: 700; text-align: left; border: 2.5px solid transparent; }
+  .opc i { flex: none; width: 44px; height: 44px; border-radius: 13px; border: 3px solid var(--b2); background: #fff; display: grid; place-items: center; color: #fff; font-style: normal; font-size: 28px; font-weight: 800; }
+  .opc span { margin-left: auto; color: var(--mu2); font-weight: 600; }
+  .opc.on { border-color: var(--pri); background: #fff; }
+  .opc.on i { background: var(--pri); border-color: var(--pri); }
+
+  /* pedido: só a lista de itens rola; pagamento e confirmar ficam presos embaixo */
+  #f-ped { height: 1500px; }
+  .horiz #f-ped { height: auto; }
+  #f-ped .corpo { padding-bottom: 20px; }
+  .item { display: grid; grid-template-columns: 110px 1fr auto auto; gap: 20px; align-items: center; padding: 18px 0; border-bottom: 2px solid var(--s4); }
+  .item img { width: 110px; height: 110px; border-radius: 26px; object-fit: cover; }
+  .item b.n { display: block; font-size: 31px; font-weight: 800; line-height: 1.15; }
+  .item small { display: block; font-size: 22px; font-weight: 600; color: var(--mu); margin-top: 3px; }
+  .item em { display: block; font-style: normal; font-size: 27px; font-weight: 700; color: var(--mu2); margin-top: 6px; }
+  .tirar { width: 64px; height: 64px; border-radius: 50%; background: var(--s3); color: var(--mu2); font-size: 26px; font-weight: 800; }
+  .tirar:active { background: #FDE8E8; color: #DC2626; }
+  #f-ped .pe-folha { flex-direction: column; align-items: stretch; gap: 16px; padding-top: 24px; box-shadow: 0 -14px 30px rgba(0, 0, 0, .06); }
+  #f-ped .pe-folha h3 { margin: 0; }
+  #f-ped .acao { flex: none; }
+  .pagar { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; }
+  .pagar button { height: 136px; border-radius: 30px; background: var(--s3); border: 3px solid transparent; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; font-weight: 800; font-size: 25px; }
+  .pagar svg { width: 46px; height: 46px; }
+  .pagar button.on { border-color: var(--pri); background: #fff; color: var(--pri-esc); }
+  .pagar.chama button { animation: chama .5s; }
+  @keyframes chama { 40% { border-color: var(--tx); transform: scale(1.03); } }
+
+  #f-fim, .horiz #f-fim { left: 0; top: 0; width: auto; border-radius: 0; align-items: center; justify-content: center; text-align: center; padding: 0 80px; }
+  #f-fim .ok { width: 150px; height: 150px; border-radius: 50%; background: var(--ok); display: grid; place-items: center; flex: none; }
+  #f-fim .ok svg { width: 84px; }
+  #f-fim p { margin: 40px 0 0; font-size: 36px; font-weight: 700; color: var(--mu2); }
+  #f-fim .num { font: 800 300px/1 var(--ft); letter-spacing: -8px; margin: 10px 0 0; }
+  #f-fim .passos { margin-top: 30px; width: 100%; display: flex; flex-direction: column; gap: 16px; }
+  #f-fim .passos div { display: flex; align-items: center; gap: 24px; padding: 28px 34px; border-radius: 32px; background: var(--s3); font-size: 32px; font-weight: 700; text-align: left; line-height: 1.3; }
+  #f-fim .passos svg { flex: none; width: 60px; height: 60px; }
+  #f-fim > button { margin-top: 60px; height: 104px; padding: 0 56px; border-radius: 36px; background: var(--tx); color: #fff; font-weight: 800; font-size: 32px; flex: none; }
+  .horiz #f-fim .ok { width: 104px; height: 104px; } .horiz #f-fim .ok svg { width: 58px; }
+  .horiz #f-fim p { margin-top: 20px; font-size: 30px; }
+  .horiz #f-fim .num { font-size: 210px; }
+  .horiz #f-fim .passos { flex-direction: row; margin-top: 16px; } .horiz #f-fim .passos div { flex: 1; font-size: 26px; padding: 24px 28px; }
+  .horiz #f-fim > button { margin-top: 36px; height: 90px; }
+
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+  /* ===== o que o totem real tem a mais que o modelo ===== */
+  #totem { visibility: hidden; } #totem.pronto { visibility: visible; }
+  #carregando { position: fixed; inset: 0; display: grid; place-items: center; color: #fff; font: 700 20px var(--f); }
+  #totem.pronto ~ #carregando { display: none; }
+  /* logo da loja: a mesma cadastrada no painel; sem logo, o nome da loja */
+  .loja-logo img { display: block; height: 104px; max-width: 460px; object-fit: contain; }
+  #inicio > .loja-logo img { height: 210px; max-width: 780px; }
+  #inicio { padding-top: 300px; }
+  .horiz #inicio { padding-top: 40px; } .horiz #inicio > .loja-logo img { height: 130px; max-width: 520px; }
+  .horiz #topo .loja-logo img { height: 80px; }
+  /* bolinhas do carrossel: embaixo do banner, fora dele, para não ficar por cima do nome do produto */
+  .oferta { overflow: visible; }
+  .oferta > img, .oferta > .sem-foto { border-radius: 38px 0 0 38px; }
+  .oferta .pts, #capa .pts, .horiz #banner .pts, .horiz #capa .pts { left: 50%; bottom: -26px; transform: translateX(-50%); }
+  .horiz #banner .pts { bottom: -18px; }
+  .loja-logo img.clara { filter: brightness(0) opacity(.86); } /* logo branca vira escura no fundo claro */
+  /* produto sem foto: o desenho da categoria no lugar */
+  .sem-foto { display: grid; place-items: center; background: var(--s3); font-size: 110px; line-height: 1; }
+  .prod .sem-foto { width: 100%; aspect-ratio: 1 / 1; }
+  #cats .sem-foto { width: 128px; height: 128px; border-radius: 50%; font-size: 60px; }
+  .horiz #cats .sem-foto { width: 100px; height: 100px; font-size: 48px; }
+  .cat-topo #cats .sem-foto { width: 150px; height: 150px; }
+  .horiz .cat-topo #cats .sem-foto { width: 104px; height: 104px; }
+  .item .sem-foto { width: 110px; height: 110px; border-radius: 26px; font-size: 54px; }
+  .oferta .sem-foto { width: 330px; height: 100%; flex: none; }
+  #capa .sem-foto { width: 340px; } .horiz #capa .sem-foto { width: 250px; } .horiz #banner .sem-foto { width: 220px; font-size: 70px; }
+  #f-prod > .sem-foto { width: 100%; height: 420px; flex: none; font-size: 200px; }
+  .horiz #f-prod > .sem-foto { height: 240px; font-size: 130px; }
+  .prod .preco small { font-size: 18px; font-weight: 700; color: var(--mu); }
+  /* opções do produto: tamanho, sabores, borda e adicionais */
+  .opc .on-n { margin-left: 0; color: inherit; font-weight: 700; display: flex; flex-direction: column; min-width: 0; }
+  .opc .on-n small { font-size: 21px; font-weight: 600; color: var(--mu); margin-top: 2px; }
+  .opc .on-d { white-space: nowrap; padding-left: 16px; }
+  .acao:disabled { background: var(--s4); color: var(--mu); box-shadow: none; }
+  #ped-erro { margin: 0; color: #DC2626; font-size: 25px; font-weight: 700; line-height: 1.3; }
+  #ped-erro:empty { display: none; }
+  #btn-modo:disabled { opacity: 1; cursor: default; }
+  #fim-num.pequeno { font-size: 150px; letter-spacing: -3px; }
+  /* comemoração do pedido (a mesma do cardápio e do atendimento: site/js/live-app.js), no tamanho e no lugar da tela do totem.
+     --tt-x/y/w/h e --tt-s vêm do encaixe da tela; o "body" na frente garante que estas medidas valem sobre as do celular */
+  body .lfc { inset: auto; left: var(--tt-x, 0px); top: var(--tt-y, 0px); width: var(--tt-w, 100vw); height: var(--tt-h, 100vh); gap: calc(26px * var(--tt-s, 1)); padding: calc(60px * var(--tt-s, 1)); background: rgba(244, 244, 245, .97); color: #1C1C1E; border-radius: 0 0 calc(60px * var(--tt-s, 1)) calc(60px * var(--tt-s, 1)); }
+  body .lfc .lfc-live { width: calc(420px * var(--tt-s, 1)); flex: none; }
+  body .lfc b { font-size: calc(56px * var(--tt-s, 1)); }
+  body .lfc .lfc-val { font: 800 calc(300px * var(--tt-s, 1))/1 'Baloo 2', sans-serif; letter-spacing: -.03em; }
+  body .lfc .lfc-fp { font-size: calc(34px * var(--tt-s, 1)); padding: calc(18px * var(--tt-s, 1)) calc(38px * var(--tt-s, 1)); gap: calc(14px * var(--tt-s, 1)); }
+  body .lfc span { font-size: calc(34px * var(--tt-s, 1)); max-width: calc(840px * var(--tt-s, 1)); line-height: 1.3; color: #5E5E66; }
+  body .lfc .lfc-bt { margin-top: calc(34px * var(--tt-s, 1)); min-width: calc(520px * var(--tt-s, 1)); padding: calc(34px * var(--tt-s, 1)) calc(64px * var(--tt-s, 1)); border-radius: calc(36px * var(--tt-s, 1)); font-size: calc(36px * var(--tt-s, 1)); }
+  body .lfc-confete { font-size: calc(64px * var(--tt-s, 1)); }
+  body.tt-deitado .lfc { gap: calc(14px * var(--tt-s, 1)); padding: calc(30px * var(--tt-s, 1)); border-radius: 0 0 calc(44px * var(--tt-s, 1)) calc(44px * var(--tt-s, 1)); }
+  body.tt-deitado .lfc .lfc-live { width: calc(250px * var(--tt-s, 1)); }
+  body.tt-deitado .lfc b { font-size: calc(44px * var(--tt-s, 1)); }
+  body.tt-deitado .lfc .lfc-val { font-size: calc(190px * var(--tt-s, 1)); }
+  body.tt-deitado .lfc .lfc-bt { margin-top: calc(14px * var(--tt-s, 1)); padding: calc(26px * var(--tt-s, 1)) calc(56px * var(--tt-s, 1)); }
+  /* Pix na tela */
+  #f-pix, .horiz #f-pix { left: 0; top: 0; width: auto; border-radius: 0; align-items: center; justify-content: center; text-align: center; padding: 0 80px; }
+  #f-pix p { margin: 14px 0 0; font-size: 34px; font-weight: 700; color: var(--mu2); }
+  #pix-qr { width: 560px; height: 560px; margin-top: 44px; padding: 24px; border-radius: 36px; border: 2px solid var(--s4); background: #fff; }
+  #pix-total { margin-top: 30px; font: 800 96px/1 var(--ft); letter-spacing: -2px; }
+  #pix-cancelar { margin-top: 56px; height: 100px; padding: 0 56px; border-radius: 36px; background: var(--s3); font-weight: 800; font-size: 30px; flex: none; }
+  .horiz #pix-qr { width: 360px; height: 360px; margin-top: 20px; } .horiz #pix-total { font-size: 70px; margin-top: 16px; } .horiz #pix-cancelar { margin-top: 26px; height: 84px; }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- mesmas cores e degradês do Live oficial (live-totem/js/live.js) -->
+    <linearGradient id="lv-cab" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF8A33"/><stop offset=".5" stop-color="#FF5A00"/><stop offset="1" stop-color="#E64800"/></linearGradient>
+    <linearGradient id="lv-cab-lado" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity=".2"/><stop offset=".25" stop-color="#fff" stop-opacity="0"/><stop offset=".8" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#6a2400" stop-opacity=".3"/></linearGradient>
+    <linearGradient id="lv-moldura" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF9F0"/><stop offset="1" stop-color="#E5D0B5"/></linearGradient>
+    <radialGradient id="lv-tela" cx=".5" cy=".5" r=".7"><stop offset=".08" stop-color="#241D1B"/><stop offset="1" stop-color="#100C0B"/></radialGradient>
+    <filter id="lv-brilho" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="0" stdDeviation="1.700" flood-color="#69D7FF" flood-opacity=".95"/></filter>
+  </defs>
+</svg>
+
+<div id="totem">
+  <div id="assinatura"><img src="img/logo-livefood-branca.png" alt="livefood"></div>
+
+  <div id="tela">
+    <div id="cardapio">
+      <header id="topo">
+        <div class="loja-logo"></div>
+        <div class="dir">
+          <button class="chip" id="btn-modo" type="button"></button>
+          <button class="chip" id="btn-recomecar" type="button">Recomeçar</button>
+        </div>
+      </header>
+      <div id="corpo">
+        <div id="principal">
+          <button id="banner" class="oferta" type="button"></button>
+          <div id="meio">
+            <div id="cats-wrap">
+              <button class="seta cima" type="button" data-rola="-1" aria-label="Categorias acima"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.800" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg></button>
+              <nav id="cats" aria-label="Categorias"></nav>
+              <button class="seta baixo" type="button" data-rola="1"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.800" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>Mais</button>
+            </div>
+            <main id="lista"><h2 id="cat-titulo"></h2><div id="grade"></div></main>
+          </div>
+        </div>
+        <footer id="barra">
+          <button id="ajuda-btn" type="button"><span class="lv-aqui"></span>Precisa de ajuda?</button>
+          <div id="sacola-info">
+            <div id="sacola"><svg viewBox="0 0 24 24" fill="none" stroke="#1C1C1E" stroke-width="1.900" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l-1.200 12.500H6.200Z"/><path d="M8.500 8c0-3 1.500-5 3.500-5s3.500 2 3.500 5"/></svg><span id="sacola-n"></span></div>
+            <div><small id="sacola-txt"></small><b id="sacola-total"></b></div>
+          </div>
+          <div id="barra-itens"></div>
+          <button id="btn-ver" type="button">Ver pedido</button>
+        </footer>
+      </div>
+    </div>
+
+    <div id="veu" class="some"></div>
+
+    <section class="folha some" id="f-ajuda">
+      <button class="x" type="button" data-fecha aria-label="Fechar ajuda">✕</button>
+      <div class="corpo">
+        <div class="cab"><span class="lv-aqui"></span><h2>Como posso ajudar?</h2></div>
+        <p id="ajuda-resp" aria-live="polite"></p>
+        <div class="ops" id="ajuda-ops"></div>
+      </div>
+    </section>
+
+    <section class="folha some" id="f-prod">
+      <button class="x" type="button" data-fecha aria-label="Fechar">✕</button>
+      <img id="fp-img" alt="">
+      <video id="fp-vid" muted loop playsinline preload="none"></video>
+      <span class="sem-foto" id="fp-sem"></span>
+      <div class="corpo"><h2 id="fp-nome"></h2><p id="fp-desc"></p><div id="fp-opcs"></div></div>
+      <div class="pe-folha">
+        <div class="qt g"><button type="button" id="fp-menos" aria-label="Menos um">−</button><b id="fp-qtd">1</b><button type="button" id="fp-mais" aria-label="Mais um">+</button></div>
+        <button class="acao" type="button" id="fp-add"><span id="fp-rot">Adicionar</span><span id="fp-total"></span></button>
+      </div>
+    </section>
+
+    <section class="folha some" id="f-ped">
+      <button class="x" type="button" data-fecha aria-label="Fechar">✕</button>
+      <div class="corpo"><h2>Seu pedido</h2><div id="ped-itens"></div></div>
+      <div class="pe-folha">
+        <h3 id="ped-pg-tit">Como você quer pagar?</h3>
+        <div class="pagar" id="ped-pagar"></div>
+        <p id="ped-erro" role="alert"></p>
+        <button class="acao espera" type="button" id="ped-confirmar"><span id="ped-rot">Confirmar pedido</span><span id="ped-total"></span></button>
+      </div>
+    </section>
+
+    <section class="folha some" id="f-fim">
+      <div class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.200" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.500 10 17.500 19 7"/></svg></div>
+      <p id="fim-tit">Pedido confirmado. Sua senha é</p>
+      <div class="num" id="fim-num"></div>
+      <div class="passos" id="fim-passos"></div>
+      <button type="button" id="fim-novo">Fazer outro pedido</button>
+    </section>
+
+    <section class="folha some" id="f-pix">
+      <h2>Pague com Pix</h2>
+      <p>Abra o aplicativo do seu banco e leia o QR Code</p>
+      <img id="pix-qr" alt="QR Code do Pix">
+      <div id="pix-total"></div>
+      <p id="pix-estado" aria-live="polite"></p>
+      <button type="button" id="pix-cancelar">Voltar e escolher outra forma</button>
+    </section>
+
+    <section id="inicio">
+      <div class="loja-logo"></div>
+      <div class="ini-a">
+        <div class="visual" id="inicio-visual"><span class="lv-aqui"></span></div>
+        <h1 id="inicio-frase"></h1>
+        <p class="sub">Toque para fazer seu pedido</p>
+      </div>
+      <div class="ini-b">
+        <div class="escolha" id="inicio-escolha"></div>
+        <div id="capa" class="oferta"></div>
+        <p class="aviso" id="inicio-aviso"></p>
+      </div>
+    </section>
+  </div>
+</div>
+<div id="carregando">Carregando o cardápio…</div>
+
+<script>
+  // o cardapio.js carrega o cardápio da loja e depois só o js/toque.js (sem os scripts de voz)
+  window.LIVE_SCRIPTS = ['js/toque.js'];
+  (function () {
+    // logo da loja (a do painel) nos dois lugares em que aparece; sem logo, o nome da loja
+    var logo = { src: '', clara: false, nome: '' };
+    function pinta() {
+      document.querySelectorAll('.loja-logo').forEach(function (el) {
+        el.textContent = '';
+        if (logo.src) { var i = new Image(); i.src = logo.src; i.alt = logo.nome; if (logo.clara) i.className = 'clara'; el.appendChild(i); }
+        else el.textContent = logo.nome;
+      });
+    }
+    window.LIVE_LOGO = function (src, clara, alt) { logo.src = src || ''; logo.clara = !!clara; if (alt) logo.nome = alt; pinta(); };
+    window.pintaLogoToque = function (nome) { if (nome) logo.nome = nome; pinta(); };
+    // a tela (1080x1920 em pé, 1920x1080 deitada) é encaixada na janela
+    var totem = document.getElementById('totem');
+    window.ajustarEscalaToque = function () {
+      // TOQUE_LADO: largura do painel de configurações do dono, quando ele está aberto à esquerda
+      var lado = window.TOQUE_LADO || 0, larg = innerWidth - lado, W = totem.offsetWidth, H = totem.offsetHeight, s = Math.min(larg / W, innerHeight / H);
+      var x = lado + (larg - W * s) / 2, y = (innerHeight - H * s) / 2, rodape = W > H ? 60 : 84, r = document.documentElement.style;
+      totem.style.transform = 'translate(' + x + 'px, ' + y + 'px) scale(' + s + ')';
+      // lugar e escala da tela (sem a faixa do LiveFood), usados pela comemoração do pedido
+      r.setProperty('--tt-x', x + 'px'); r.setProperty('--tt-y', y + 'px'); r.setProperty('--tt-w', (W * s) + 'px'); r.setProperty('--tt-h', ((H - rodape) * s) + 'px'); r.setProperty('--tt-s', s);
+      document.body.classList.toggle('tt-deitado', W > H);
+    };
+    addEventListener('resize', window.ajustarEscalaToque); window.ajustarEscalaToque();
+  })();
+</script>
+<!-- personagem animado e comemoração do pedido: os mesmos do cardápio e do atendimento -->
+<script src="../site/js/live-mascote.js"></script>
+<script src="../site/js/live-app.js"></script>
+<script src="js/cardapio-exemplo.js"></script>
+<script>document.write('<script src="js/cardapio.js?v=' + Date.now() + '"><\/script>');</script>
+</body>
+</html>
