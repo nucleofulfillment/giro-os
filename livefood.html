@@ -13,7 +13,7 @@
 <title>Cardápio · LiveFood</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
-<!-- LIVEFOOD-30 --><meta name="versao" content="LIVEFOOD-30">
+<!-- LIVEFOOD-31 --><meta name="versao" content="LIVEFOOD-31">
 <style>
 :root{--bg:#0b0b0d;--tx:#fff;--mut:rgba(255,255,255,.68);--pri:#FF5A00;--pri2:#FF5A00;--glass:rgba(18,18,22,.62);--line:rgba(255,255,255,.16)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -1441,9 +1441,9 @@ function abreSacola(){ navOn('sac'); CK.on=0; CK.open=0; TQ.ped=0;
 var CT={tok:'',conta:null,fone:'',conhecido:false,tmr:null,edit:null,ctx:'ck'}, EN={modo:'entrega',end:''};
 function ctk(){ return (MESA?'lf_contamesa_':'lf_conta_')+(D.cli||CLI); }
 function LOGM(){ return !!(MESA&&((D&&D.cfg&&D.cfg.loginMesa)||LFE)); }   /* (178) mesa de evento LiveFace também pede o WhatsApp */
-function ctLer(){ try{ var v=JSON.parse(localStorage.getItem(ctk())||'null'); if(v&&v.tok&&!(LOGM()&&v.conta&&/^mesa/i.test(String(v.conta.fone||'')))){ CT.tok=v.tok; CT.conta=v.conta||null; } }catch(e){} try{ var e=JSON.parse(localStorage.getItem('lf_entrega_'+(D.cli||CLI))||'null'); if(e&&e.modo) EN=e; }catch(x){} }
-function ctGrava(){ try{ localStorage.setItem(ctk(),JSON.stringify({tok:CT.tok,conta:CT.conta})); localStorage.setItem('lf_entrega_'+(D.cli||CLI),JSON.stringify(EN)); }catch(e){} }
-function ctSair(){ CT.tok=''; CT.conta=null; try{ localStorage.removeItem(ctk()); }catch(e){} ctLogin(); }
+function ctLer(){ try{ var v=JSON.parse(localStorage.getItem(ctk())||'null'); if(v&&v.tok&&!(LOGM()&&v.conta&&/^mesa/i.test(String(v.conta.fone||'')))){ CT.tok=v.tok; CT.conta=v.conta||null; } }catch(e){} try{ var e=JSON.parse(localStorage.getItem('lf_entrega_'+(D.cli||CLI))||'null'); if(e&&e.modo) EN=e; }catch(x){} dvCarrega(); }
+function ctGrava(){ try{ localStorage.setItem(ctk(),JSON.stringify({tok:CT.tok,conta:CT.conta})); localStorage.setItem('lf_entrega_'+(D.cli||CLI),JSON.stringify(EN)); }catch(e){} dvCarrega(); }
+function ctSair(){ dvApaga(1); CT.tok=''; CT.conta=null; try{ localStorage.removeItem(ctk()); }catch(e){} ctLogin(); }
 function ctApi(rota,corpo,get){
   var o={method:get?'GET':'POST',headers:{'Content-Type':'application/json'}}; if(CT.tok) o.headers.Authorization='Bearer '+CT.tok;
   if(!get) o.body=JSON.stringify(Object.assign({cli:D.cli||CLI},corpo||{}));
@@ -1494,7 +1494,7 @@ function ctEntrar(){
   });
 }
 function ctEndTxt(e){ return esc(e.rua)+', '+esc(e.numero)+(e.compl?' · '+esc(e.compl):'')+'<br>'+esc(e.bairro)+' · '+esc(e.cidade)+(e.uf?'/'+esc(e.uf):''); }
-function ckKeep(){ var v={}; ['ck-cpf','ck-obs','ck-tr','ck-mg','ck-cn','ck-cnome','ck-cval','ck-ccv','ck-cmail','ck-ccep','ck-cnum'].forEach(function(i){ var e=$(i); if(e) v[i]=e.value; }); var sv=$('ck-csv'), svc=!!(sv&&sv.checked); ckResumo(); if(svc&&$('ck-csv')) $('ck-csv').checked=true; /* (LIVEFOOD-27) redesenhar a tela nao desmarca o Salvar cartao */ Object.keys(v).forEach(function(i){ var e=$(i); if(e) e.value=v[i]; }); }
+function ckKeep(){ var v={}; ['ck-cpf','ck-obs','ck-tr','ck-mg','ck-cn','ck-cnome','ck-cval','ck-ccv','ck-cmail','ck-ccep','ck-cnum'].forEach(function(i){ var e=$(i); if(e) v[i]=e.value; }); var sv=$('ck-csv'), svc=!!(sv&&sv.checked); ckResumo(); if(sv&&$('ck-csv')) $('ck-csv').checked=svc; /* (LIVEFOOD-27) redesenhar a tela nao desmarca o Salvar cartao */ Object.keys(v).forEach(function(i){ var e=$(i); if(e) e.value=v[i]; }); }
 function ctEntrega(){ if(apOn()&&CT.ctx==='ck'&&apFalta()){ apModal(); return; } if(CT.ctx==='ini'){ fechaSheet(); mesaSplashFecha(); } else if(CT.ctx==='conta') contaTela(); else if(CT.ctx==='mesa') mesaContaTela(); else if(CT.ctx==='mp') mpDepoisLogin(); else ckKeep(); }
 function ctModo(m){ EN.modo=m; ctGrava(); ctEntrega(); }
 function ctSelEnd(id){ EN.end=id; ctGrava(); ctEntrega(); }
@@ -1594,6 +1594,65 @@ function ckCid(id){ CK.cid=id; if($('mc-tela')) mesaContaMonta(); else if(MP.for
 function ckCardNum(e){ var d=e.value.replace(/\D/g,'').slice(0,19); e.value=d.replace(/(\d{4})(?=\d)/g,'$1 '); }
 function ckCardVal(e){ var d=e.value.replace(/\D/g,'').slice(0,4); e.value=d.length>2?d.slice(0,2)+'/'+d.slice(2):d; }
 function ckLuhn(n){ var s=0,alt=false,i,d; for(i=n.length-1;i>=0;i--){ d=+n[i]; if(alt){ d*=2; if(d>9) d-=9; } s+=d; alt=!alt; } return s%10===0; }
+/* (LIVEFOOD-31) enquanto o Asaas não libera o token: o cartão fica guardado SÓ NESTE APARELHO, cifrado (número, nome e validade).
+   Nunca o CVV, e nada disso vai para o servidor do LiveFood além do que o pagamento já envia. A chave fica no navegador e não pode ser copiada dele.
+   Vale só para quem entrou com o código do WhatsApp; sair da conta apaga. Quando o Asaas devolver o token, a cópia do aparelho é apagada. */
+var DV={c:null,k:null,de:''};
+function dvFone(){ var f=String((CT.conta&&CT.conta.fone)||''); return CT.tok&&f&&!/^mesa/i.test(f)?f.replace(/\D/g,''):''; }
+function dvK(){ var f=dvFone(); return f?'lf_dvc_'+(D.cli||CLI)+'_'+f:''; }
+function dvPode(){ try{ return !!(dvK()&&window.crypto&&crypto.subtle&&window.indexedDB&&window.TextEncoder&&window.TextDecoder); }catch(e){ return false; } }
+function dvB64(u){ var s='',i; for(i=0;i<u.length;i++) s+=String.fromCharCode(u[i]); return btoa(s); }
+function dvBin(t){ var s=atob(t), u=new Uint8Array(s.length), i; for(i=0;i<s.length;i++) u[i]=s.charCodeAt(i); return u; }
+function dvChave(){
+  if(DV.k) return Promise.resolve(DV.k);
+  return new Promise(function(ok,no){
+    var rq=indexedDB.open('lf_dv',1);
+    rq.onupgradeneeded=function(){ rq.result.createObjectStore('k'); };
+    rq.onerror=function(){ no(rq.error); };
+    rq.onsuccess=function(){
+      var db=rq.result, g=db.transaction('k').objectStore('k').get('a');
+      g.onerror=function(){ no(g.error); };
+      g.onsuccess=function(){
+        if(g.result){ DV.k=g.result; ok(DV.k); return; }
+        crypto.subtle.generateKey({name:'AES-GCM',length:256},false,['encrypt','decrypt']).then(function(k){
+          var t=db.transaction('k','readwrite'); t.objectStore('k').put(k,'a');
+          t.oncomplete=function(){ DV.k=k; ok(k); }; t.onerror=function(){ no(t.error); }; t.onabort=function(){ no(t.error); };
+        },no);
+      };
+    };
+  });
+}
+function dvSalva(o){
+  if(!dvPode()) return Promise.resolve(false);
+  var k=dvK();
+  try{
+    var iv=crypto.getRandomValues(new Uint8Array(12));
+    return dvChave().then(function(ch){ return crypto.subtle.encrypt({name:'AES-GCM',iv:iv},ch,new TextEncoder().encode(JSON.stringify(o))); })
+      .then(function(ct){ localStorage.setItem(k,JSON.stringify({iv:dvB64(iv),ct:dvB64(new Uint8Array(ct))})); DV.c=o; DV.de=k; return true; })
+      .catch(function(){ return false; });
+  }catch(e){ return Promise.resolve(false); }
+}
+function dvCarrega(){
+  var k=''; try{ k=dvK(); }catch(e){ return; }
+  if(k===DV.de) return; DV.de=k; DV.c=null; if(!k||!dvPode()) return;
+  var v=null; try{ v=JSON.parse(localStorage.getItem(k)||'null'); }catch(e){}
+  if(!v||!v.iv||!v.ct) return;
+  dvChave().then(function(ch){ return crypto.subtle.decrypt({name:'AES-GCM',iv:dvBin(v.iv)},ch,dvBin(v.ct)); })
+    .then(function(pl){ var o=JSON.parse(new TextDecoder().decode(pl)); if(DV.de!==k||!o||!o.numero) return; DV.c=o; dvPreenche(); })
+    .catch(function(){ try{ localStorage.removeItem(k); }catch(e){} });
+}
+function dvMasc(){ return DV.c?'•••• •••• •••• '+String(DV.c.numero).slice(-4):''; }
+function dvNum(v){ return DV.c&&v===dvMasc()?String(DV.c.numero):String(v||'').replace(/\D/g,''); }   /* campo intocado = número guardado */
+function dvPreenche(){ var n=$('ck-cn'); if(!DV.c||!n||n.value) return; n.value=dvMasc(); var a=$('ck-cnome'), b=$('ck-cval'), sv=$('ck-csv'); if(a&&DV.c.nome) a.value=DV.c.nome; if(b) b.value=DV.c.mes+'/'+DV.c.ano; if(sv) sv.checked=true; }
+function dvApaga(quieto){
+  var k=''; try{ k=DV.de||dvK(); }catch(e){}
+  try{ if(k) localStorage.removeItem(k); }catch(e){}
+  var era=DV.c?dvMasc():''; DV.c=null; if(quieto) return;
+  var fx=$('dv-fx');
+  if(fx){ fx.parentNode.removeChild(fx); var n=$('ck-cn'); if(n&&n.value===era){ n.value=''; if($('ck-cval')) $('ck-cval').value=''; } if($('ck-ccv')) $('ck-ccv').value=''; }
+  else if(CT.ctx==='conta'&&!$('ck-cn')) contaTela();
+  toast('Cartão removido deste aparelho');
+}
 function ckCartaoHtml(c){
   var cs=c.cartoes||[], h='', e=null, i;
   if(CK.cid===undefined) CK.cid=cs.length?cs[0].id:'';
@@ -1604,9 +1663,11 @@ function ckCartaoHtml(c){
   if(!CK.cid){
     var ml=''; try{ ml=localStorage.getItem('lf_mail')||''; }catch(x){}
     var cob=c.cobranca||{}; if(cob.email) ml=cob.email;   /* (LIVEFOOD-30) o que já foi preenchido numa compra volta pronto */
-    h+='<form autocomplete="on" onsubmit="return false" style="margin:6px 0 0"><input class="cin" id="ck-cn" name="cardnumber" type="tel" inputmode="numeric" autocomplete="cc-number" maxlength="23" placeholder="Número do cartão" oninput="ckCardNum(this)"><input class="cin" id="ck-cnome" name="ccname" autocomplete="cc-name" maxlength="60" placeholder="Nome como está no cartão" value="'+esc(cob.nome||'')+'" style="margin-top:8px"><div style="display:flex;gap:8px;margin-top:8px"><input class="cin" id="ck-cval" name="exp-date" type="tel" inputmode="numeric" autocomplete="cc-exp" maxlength="5" placeholder="MM/AA" oninput="ckCardVal(this)" style="flex:1"><input class="cin" id="ck-ccv" name="cvc" type="tel" inputmode="numeric" autocomplete="cc-csc" maxlength="4" placeholder="CVV" style="flex:1"></div>'
+    var dv=DV.c;   /* (LIVEFOOD-31) cartão guardado neste aparelho */
+    if(dv) h+='<div class="ad on" id="dv-fx" style="cursor:default;margin-top:6px"><div class="tx"><b>Cartão •••• '+esc(String(dv.numero).slice(-4))+'</b><small>Guardado neste aparelho · digite só o CVV</small></div><div class="ac"><button type="button" class="lk" onclick="dvApaga()">Remover</button></div></div>';
+    h+='<form autocomplete="on" onsubmit="return false" style="margin:6px 0 0"><input class="cin" id="ck-cn" name="cardnumber" type="tel" inputmode="numeric" autocomplete="cc-number" maxlength="23" placeholder="Número do cartão" value="'+esc(dv?dvMasc():'')+'" oninput="ckCardNum(this)"><input class="cin" id="ck-cnome" name="ccname" autocomplete="cc-name" maxlength="60" placeholder="Nome como está no cartão" value="'+esc((dv&&dv.nome)||cob.nome||'')+'" style="margin-top:8px"><div style="display:flex;gap:8px;margin-top:8px"><input class="cin" id="ck-cval" name="exp-date" type="tel" inputmode="numeric" autocomplete="cc-exp" maxlength="5" placeholder="MM/AA" value="'+esc(dv?dv.mes+'/'+dv.ano:'')+'" oninput="ckCardVal(this)" style="flex:1"><input class="cin" id="ck-ccv" name="cvc" type="tel" inputmode="numeric" autocomplete="cc-csc" maxlength="4" placeholder="CVV" style="flex:1"></div>'
       +'<input class="cin" id="ck-cmail" name="email" type="email" inputmode="email" autocomplete="email" maxlength="90" placeholder="Seu e-mail" value="'+esc(ml)+'" style="margin-top:8px"><div style="display:flex;gap:8px;margin-top:8px"><input class="cin" id="ck-ccep" name="postal" autocomplete="postal-code" type="tel" inputmode="numeric" maxlength="9" placeholder="CEP da fatura" value="'+esc(cob.cep||(e?e.cep:''))+'" style="flex:2"><input class="cin" id="ck-cnum" maxlength="12" placeholder="Nº" value="'+esc(cob.numero||(e?e.numero:''))+'" style="flex:1"></div>'
-      +'<label class="ck-sv" style="display:flex;align-items:center;gap:12px;margin-top:14px;padding:13px 14px;border:2px solid var(--pri);border-radius:14px;background:color-mix(in srgb,var(--pri) 13%,transparent);font-size:14.5px;font-weight:700;line-height:1.3;cursor:pointer"><input type="checkbox" id="ck-csv" style="width:24px;height:24px;flex:none;accent-color:var(--pri);margin:0"><span>Salvar este cartão para compras futuras<small style="display:block;font-weight:500;font-size:12.5px;opacity:.8;margin-top:2px">Na próxima vez você paga com um toque.</small></span></label><div class="nt" style="font-size:12.5px;margin-top:6px">Pagamento à vista no crédito. Não guardamos o número do cartão: só a bandeira e os 4 últimos dígitos.<br>Dica: guarde o cartão no seu celular (Google ou Apple) e ele preenche os campos para você.</div></form>';
+      +'<label class="ck-sv" style="display:flex;align-items:center;gap:12px;margin-top:14px;padding:13px 14px;border:2px solid var(--pri);border-radius:14px;background:color-mix(in srgb,var(--pri) 13%,transparent);font-size:14.5px;font-weight:700;line-height:1.3;cursor:pointer"><input type="checkbox" id="ck-csv"'+(dv?' checked':'')+' style="width:24px;height:24px;flex:none;accent-color:var(--pri);margin:0"><span>Salvar este cartão para compras futuras<small style="display:block;font-weight:500;font-size:12.5px;opacity:.8;margin-top:2px">Na próxima vez você paga mais rápido.</small></span></label><div class="nt" style="font-size:12.5px;margin-top:6px">Pagamento à vista no crédito. O CVV nunca fica guardado. Se o cartão não puder ser salvo na sua conta, ele fica guardado só neste aparelho, protegido, e na próxima compra você digita apenas o CVV.</div></form>';
   }
   return h;
 }
@@ -1740,7 +1801,7 @@ function ckChamaGar(m){ fetch(API+'/food/garcom',{method:'POST',headers:{'Conten
   if(CK.pg==='cartao'){
     if(CK.cid){ cardB={cartao_id:CK.cid}; }
     else {
-      var gv=function(i){ var x=$(i); return x?x.value.trim():''; }, nm=gv('ck-cn').replace(/\D/g,''), vl=gv('ck-cval').split('/'), mail=gv('ck-cmail');
+      var gv=function(i){ var x=$(i); return x?x.value.trim():''; }, nm=dvNum(gv('ck-cn')), vl=gv('ck-cval').split('/'), mail=gv('ck-cmail');
       if(nm.length<13||!ckLuhn(nm)){ ctErro('Confira o número do cartão.'); return; }
       if(gv('ck-cnome').length<3){ ctErro('Digite o nome como está no cartão.'); return; }
       if(vl.length!==2||vl[0].length!==2||vl[1].length!==2){ ctErro('Digite a validade no formato MM/AA.'); return; }
@@ -1756,14 +1817,21 @@ function ckChamaGar(m){ fetch(API+'/food/garcom',{method:'POST',headers:{'Conten
   var b=$('ct-bt'), din=CK.pg==='dinheiro'||CK.pg==='maquina'||CK.pg==='caixa'||CK.pg==='conta', trc=din&&$('ck-tr')?parseFloat($('ck-tr').value.replace(',','.')):0; b.disabled=true; b.textContent=din?(CK.pg==='conta'?'Enviando o pedido…':'Enviando o pedido…'):(CK.pg==='cartao'?'Processando o cartão…':'Gerando o Pix…'); ctErro('');
   geoGate(function(g){ ctApi('/food/pedido',{geo:g,itens:SAC.map(function(i){ return {p:i.p,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs,qty:i.qty}; }),modo:EN.modo,ap:apOn()?AP_V:undefined,torre:apOn()&&AP_TR?AP_TR:undefined,mesa:MESA||undefined,end:EN.end,obs:(($('ck-obs')||{value:''}).value+(qmTxt?' '+qmTxt:'')).trim(),cpf:cpf||undefined,prog:pg||undefined,pagto:CK.pg,servico:quer||undefined,troco:(trc>0&&CK.pg==='dinheiro'?trc:undefined),maqTipo:CK.pg==='maquina'?(CK.maq==='debito'?'debito':'credito'):undefined,parcelas:CK.pg==='cartao'?(CK.parc||1):undefined,cartao:cardB&&cardB.cartao,cartao_id:cardB&&cardB.cartao_id,email:cardB&&cardB.email,cep:cardB&&cardB.cep,numero_end:cardB&&cardB.numero_end,salvar:cardB&&cardB.salvar||undefined,consente:cardB&&cardB.salvar||undefined}).then(function(r){
     if(r.ok&&cardB&&(cardB.salvar||cardB.cartao)) ctApi('/food/conta',null,true).then(function(d){ if(d.ok){ CT.conta=d.conta; ctGrava(); } });   /* (LIVEFOOD-27) o cartao salvo ja aparece na proxima compra */
+    var dvN=r.ok&&cardB&&cardB.cartao&&cardB.salvar?{numero:cardB.cartao.numero,nome:cardB.cartao.nome,mes:cardB.cartao.mes,ano:cardB.cartao.ano}:null;
     cardB=null;
     CK.semCartao=r.ok&&r.cartaoSalvo===0;   /* (LIVEFOOD-28) pediu para salvar e o Asaas não devolveu o token */
+    CK.dvOk=0;
+    if(dvN&&r.cartaoSalvo!==1){ dvSalva(dvN).then(function(sv){ CK.dvOk=sv?1:0; ckDepois(r,din,qm,b); }); return; }   /* (LIVEFOOD-31) espera gravar para o aviso dizer a verdade */
+    if(dvN) dvApaga(1);   /* o Asaas guardou o token: a cópia do aparelho não é mais necessária */
+    ckDepois(r,din,qm,b);
+  });
+  });
+}
+function ckDepois(r,din,qm,b){
     if(r.ok){ CK.ped=r.pedido; if(qm==='garcom') ckChamaGar(CK.mg); if(!din&&r.pedido.status!=='pago') pdGrava(r.pedido); if(din) ckOk(r.pedido);else if(CK.pg==='cartao'){ if(r.pedido.status==='pago') ckOk(r.pedido); else ckAguarda(r.pedido); } else ckPix(); }
     else if(r._http===401){ CT.tok=''; ctLogin(); }
     else if(r.erro==='cpf_necessario'){ CPFN=1; ckResumo(); ctErro(r.mensagem||'Informe o seu CPF para gerar o Pix.'); }
     else { b.disabled=false; b.textContent=CK.pg==='conta'?'Fazer pedido':din?'Finalizar pedido':(CK.pg==='cartao'?'Pagar no cartão':'Pagar com Pix'); ctErro(r.mensagem||'Não consegui criar o pedido.'); }
-  });
-  });
 }
 function ckPix(){
   var p=CK.ped; if(!p) return;
@@ -1801,7 +1869,7 @@ function pdConfere(){
 }
 function pdVoltou(){ if(D&&!document.hidden&&pdLer()){ pdLiga(); pdConfere(); } }
 document.addEventListener('visibilitychange',pdVoltou); window.addEventListener('pageshow',pdVoltou); window.addEventListener('focus',pdVoltou);
-function avisoCartao(){ return '<div style="margin-top:16px;background:#fff7ed;color:#9a3412;border:1px solid #fdba74;border-radius:12px;padding:12px;font-size:13.5px;line-height:1.45"><b>Pagamento aprovado.</b> O cartão não ficou salvo no LiveFood. Guarde o cartão no seu celular (Google ou Apple) para ele preencher sozinho na próxima compra.</div>'; }
+function avisoCartao(){ return '<div style="margin-top:16px;background:#fff7ed;color:#9a3412;border:1px solid #fdba74;border-radius:12px;padding:12px;font-size:13.5px;line-height:1.45"><b>Pagamento aprovado.</b> '+(CK.dvOk?'O cartão ficou guardado neste aparelho. Na próxima compra, digite só o CVV.':'O cartão não ficou salvo no LiveFood. Guarde o cartão no seu celular (Google ou Apple) para ele preencher sozinho na próxima compra.')+'</div>'; }
 function ckOk(p){
   if(PD.ok===p.id) return; PD.ok=p.id; clearInterval(CK.tmr);
   var x=pdLer(), mudou=false; if(x&&x.id===p.id){ mudou=x.sac!==pdSac(); pdSolta(); }
@@ -1910,7 +1978,7 @@ function mpPagar(){
   if(f==='cartao'){
     if(CK.cid) corpo.cartao_id=CK.cid;
     else {
-      var gv=function(i){ var x=$(i); return x?x.value.trim():''; }, nm=gv('ck-cn').replace(/\D/g,''), vl=gv('ck-cval').split('/'), mail=gv('ck-cmail');
+      var gv=function(i){ var x=$(i); return x?x.value.trim():''; }, nm=dvNum(gv('ck-cn')), vl=gv('ck-cval').split('/'), mail=gv('ck-cmail');
       if(nm.length<13||!ckLuhn(nm)){ ctErro('Confira o número do cartão.'); return; }
       if(gv('ck-cnome').length<3){ ctErro('Digite o nome como está no cartão.'); return; }
       if(vl.length!==2||vl[0].length!==2||vl[1].length!==2){ ctErro('Digite a validade no formato MM/AA.'); return; }
@@ -1927,8 +1995,12 @@ function mpPagar(){
       if(r.conta){ CT.conta=r.conta; ctGrava(); } if(corpo.consente){ if(!MP.consente) MP.novoCad=1; MP.consente=1; }
       if(r.parte.cobrado) MP.parte.valor=r.parte.cobrado;
       MP.semCartao=r.cartaoSalvo===0;
-      if(r.parte.status==='paga') return mpPago();
-      MP.formaTela=false; if(f==='pix') return mpPix(r.parte); return mpEspera();
+      var dvM=corpo.cartao&&corpo.salvar?{numero:corpo.cartao.numero,nome:corpo.cartao.nome,mes:corpo.cartao.mes,ano:corpo.cartao.ano}:null;   /* (LIVEFOOD-31) */
+      var fim=function(){ if(r.parte.status==='paga') return mpPago(); MP.formaTela=false; if(f==='pix') return mpPix(r.parte); return mpEspera(); };
+      MP.dvOk=0;
+      if(dvM&&r.cartaoSalvo!==1) return dvSalva(dvM).then(function(sv){ MP.dvOk=sv?1:0; fim(); });
+      if(dvM) dvApaga(1);
+      return fim();
     }
     b.disabled=false; b.textContent=f==='pix'?'Gerar o Pix':'Pagar '+brl(MP.parte.valor);
     if(r.erro==='cpf_necessario'&&!ce){ MP.cpfN=true; CT.conta=CT.conta||{}; mpFormaTela(); ctErro(r.mensagem||'Informe o seu CPF.'); return; }
@@ -1955,7 +2027,7 @@ function mpVigia(){
 function mpOkSvg(){ return '<svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg>'; }
 function mpPago(){
   MP.formaTela=false; clearInterval(MP.tmr);
-  if(MP.semCartao){ MP.semCartao=0; toast('Pago! O cartão não ficou salvo no LiveFood.',true); }
+  if(MP.semCartao){ MP.semCartao=0; toast(MP.dvOk?'Pago! Cartão guardado neste aparelho: na próxima, só o CVV.':'Pago! O cartão não ficou salvo no LiveFood.',true); }
   var cad=MP.novoCad?'<div style="margin-top:16px;background:#ffffff14;border-radius:12px;padding:12px;font-size:13.5px;line-height:1.45">Cadastro feito. Na próxima vez, seus dados já estarão salvos e o pagamento é mais rápido.</div>':''; MP.novoCad=0;
   if(MP.rp){ if(window.LiveApp) LiveApp.comemorar({titulo:'Pagamento confirmado!',sub:'Obrigado pela visita!'});
     abreFolha('<div class="wb" style="text-align:center;padding:36px 20px 24px">'+mpOkSvg()+'<div style="font-size:22px;font-weight:800;margin-top:14px">Pagamento confirmado</div><div style="margin-top:8px;color:var(--mut);font-size:14.5px;line-height:1.5">Sua parte da mesa '+esc(MP.rp.parte.mesa)+' foi paga: <b style="color:#fff">'+brl(MP.parte.valor)+'</b>.<br>Quem abriu a conta já está vendo.</div>'+cad+'</div><div class="rod"><button class="bt c" onclick="fechaSheet()">Ver '+esc(catRef())+'</button></div>',true); return; }
@@ -2267,7 +2339,8 @@ function contaTela(){
   } else if(ab==='pagto'){
     h+='<div class="cl" style="margin-top:16px">Meus cartões</div>';
     var cts=c.cartoes||[];
-    if(!cts.length) h+='<div class="ad" style="cursor:default"><div class="tx"><b>Nenhum cartão salvo</b><small>No checkout, escolha Cartão de crédito e marque "Salvar este cartão". Guardamos só a bandeira e os 4 últimos números, nunca o número completo.</small></div></div>';
+    if(!cts.length&&!DV.c) h+='<div class="ad" style="cursor:default"><div class="tx"><b>Nenhum cartão salvo</b><small>No checkout, escolha Cartão de crédito e marque "Salvar este cartão". O CVV nunca fica guardado.</small></div></div>';
+    if(DV.c) h+='<div class="ad" style="cursor:default"><div class="tx"><b>Cartão •••• '+esc(String(DV.c.numero).slice(-4))+'</b><small>Guardado só neste aparelho · no pagamento você digita o CVV</small></div><div class="ac"><button class="lk" style="color:#f87171" onclick="dvApaga()">Remover</button></div></div>';
     cts.forEach(function(k){ h+='<div class="ad" style="cursor:default"><div class="tx"><b>'+esc(k.bandeira||'Cartão')+' •••• '+esc(k.final||'')+'</b><small>Crédito à vista</small></div><div class="ac"><button class="lk" style="color:#f87171" onclick="ctCartaoDel(\''+esc(k.id)+'\')">Remover</button></div></div>'; });
   } else {
     h+='<div class="cl" style="margin-top:16px">Histórico de pedidos</div><div id="cc-hist"><div class="nt" style="font-size:13px">Carregando…</div></div>';
