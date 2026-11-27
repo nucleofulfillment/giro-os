@@ -11,7 +11,7 @@ fun segredo(nome: String): String? {
     return listOf(local, System.getenv(nome)).firstOrNull { !it.isNullOrBlank() }
 }
 
-val versaoNome = "1.0.1"
+val versaoNome = "1.0.2"
 val versaoCodigo = (System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 1)
 
 android {
