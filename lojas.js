@@ -9,7 +9,7 @@ function tk(){ try{ return localStorage.getItem('dd_jwt')||''; }catch(e){ return
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 function css(){ if(document.getElementById('css-lojas')) return; var s=document.createElement('style'); s.id='css-lojas'; s.textContent=
   '.lt-bt{display:inline-flex;align-items:center;gap:6px;min-height:36px;border-radius:999px;border:1.5px solid #FF5A00;background:#FFF4EC;color:#C2410C;font:inherit;font-size:13.5px;font-weight:800;padding:0 12px;cursor:pointer;margin-left:8px;white-space:nowrap;vertical-align:middle}'+
-  '.lt-fd{position:fixed;inset:0;z-index:5000;background:rgba(20,20,22,.55);display:flex;align-items:flex-end;justify-content:center}@media(min-width:700px){.lt-fd{align-items:center}}'+
+  '.lt-fd{position:fixed;top:0;right:0;bottom:0;left:0;inset:0;z-index:5000;background:rgba(20,20,22,.55);display:flex;align-items:flex-end;justify-content:center}@media(min-width:700px){.lt-fd{align-items:center}}'+
   '.lt-c{width:100%;max-width:440px;background:#fff;border-radius:22px 22px 0 0;padding:18px 16px 22px;font-family:inherit;color:#1C1C1E;box-shadow:0 -10px 40px rgba(0,0,0,.25)}@media(min-width:700px){.lt-c{border-radius:22px}}'+
   '.lt-c h3{margin:0 0 4px;font-size:19px}.lt-c p{margin:0 0 14px;color:#71717A;font-size:14px;font-weight:600}'+
   '.lt-l{display:flex;align-items:center;gap:12px;width:100%;min-height:60px;border-radius:16px;border:2px solid #E4E4E7;background:#fff;font:inherit;font-size:16.5px;font-weight:800;color:#1C1C1E;padding:0 14px;margin-bottom:10px;cursor:pointer;text-align:left}'+
