@@ -364,7 +364,7 @@ html.pos .bt-hub,html.pos .lt-bt{display:none!important}
 </div>
 
 <div id="app" class="hide">
-  <div id="top" data-versao="ATEND-54"><div style="flex:1;min-width:0;display:flex;align-items:center;gap:12px"><b id="emp" style="flex:none">Atendimento</b><small id="usu"></small></div><!-- "Atender via mapa" (mpAbre) fora do ar enquanto evolui; o código do mapa continua abaixo --><button id="btPos" style="display:none;flex:none;font-size:17px;padding:6px 10px" title="Maquininha" aria-label="Maquininha" onclick="try{LiveFoodPOS.menu()}catch(e){}">💳</button><a class="bt-hub" href="hub.html" title="Voltar ao Hub" aria-label="Voltar ao Hub"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></a><button onclick="sair()">Sair</button></div>
+  <div id="top" data-versao="ATEND-55"><div style="flex:1;min-width:0;display:flex;align-items:center;gap:12px"><b id="emp" style="flex:none">Atendimento</b><small id="usu"></small></div><!-- "Atender via mapa" (mpAbre) fora do ar enquanto evolui; o código do mapa continua abaixo --><button id="btPos" style="display:none;flex:none;font-size:17px;padding:6px 10px" title="Maquininha" aria-label="Maquininha" onclick="try{LiveFoodPOS.menu()}catch(e){}">💳</button><a class="bt-hub" href="hub.html" title="Voltar ao Hub" aria-label="Voltar ao Hub"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></a><button onclick="sair()">Sair</button></div>
   <div id="chip" class="hide"><div class="t"><b id="chipT"></b><small id="chipS"></small></div><button id="nfcChip" class="hide" onclick="nfcChipToggle()" title="Gravar o pedido no cartão NFC do cliente">💳 Cartão NFC: desligado</button><button onclick="trocaComanda()">Trocar</button></div>
 
   <!-- PEDIDO -->
@@ -487,7 +487,7 @@ function montaApp(d){
     if(!GEST){ $('sgB').classList.add('hide'); COM.modo='mesa'; }
     /* (242) acesso Atendimento (perfil atendente): é o caixa do balcão, então só o card Balcão */
     if(d.perfil==='atendente'){ $('sgM').classList.add('hide'); $('sgB').classList.remove('hide'); COM.modo='balcao'; }
-    aba('ped'); pintaCats(); mostraMapaBtn(); mzBusca(); chamInicia(); bpBotoes(); modo(COM.modo); nfcMesaInicia(); pyInfo();
+    aba('ped'); pintaCats(); mostraMapaBtn(); mzBusca(); chamInicia(); bpBotoes(); modo(COM.modo); nfcMesaInicia(); pyInfo(); setTimeout(pendMostra,600);
     try{ var qm=new URLSearchParams(location.search).get('mesa'); if(qm&&d.perfil!=='atendente'&&!COM.mesa&&!$('iMesa').value){ modo('mesa'); $('iMesa').value=String(qm).replace(/[^A-Za-z0-9]/g,'').slice(0,8).toUpperCase(); } }catch(e){}
 }
 /* ── abas ── */
@@ -1115,6 +1115,33 @@ function posCobra(forma,valor,fim,ex){
   var id='c'+(++POS.seq)+'_'+Date.now(); POS.cb[id]=fim; ex=ex||{};
   try{ LiveFoodPOS.cobrar(JSON.stringify({id:id,forma:forma,valor:Math.round(valor*100),loja:(D&&D.empresa)||'',fone:posFone(ex.joia),ref:ex.ref||''})); }catch(e){ delete POS.cb[id]; fim({ok:false,msg:'Não consegui abrir a maquininha.'}); }
 }
+/* (ATEND-55) COBRANÇA SEM REGISTRO: o pedido é guardado ANTES de ir para a maquininha. Se a tela se perder durante a cobrança
+   (aparelho recarrega a página, app fechado, sem rede), ao voltar o app pergunta e registra a venda, sem cobrar de novo.
+   O servidor não duplica o pedido: o número do envio (env) é o mesmo. */
+var PEND='lf_pos_pend';
+function pendLer(){ try{ var p=JSON.parse(localStorage.getItem(PEND)||'null'); return p&&p.cli===CLI&&Date.now()-p.t<24*3600000?p:null; }catch(e){ return null; } }
+function pendGrava(p){ try{ localStorage.setItem(PEND,JSON.stringify(p)); }catch(e){} }
+function pendTira(){ try{ localStorage.removeItem(PEND); }catch(e){} }
+function pendTef(tef){ var p=pendLer(); if(p){ p.corpo.tef=tef; p.pago=1; pendGrava(p); } }
+function pendMostra(){
+  var p=pendLer(); if(!p||!posTem()) return;
+  var forma={credito:'Crédito',debito:'Débito',cartao:'Cartão',pix:'Pix'}[p.forma]||p.forma;
+  var h='<div style="font-size:15px;line-height:1.45">'+(p.pago?'A maquininha <b>aprovou</b> este pagamento, mas a venda não foi registrada.':'Uma cobrança foi interrompida. <b>Confira o comprovante</b> ou o painel da maquininha: o pagamento foi aprovado?')+'</div>'
+    +'<div style="font-size:30px;font-weight:800;color:var(--pri);margin:8px 0 2px">'+brl(p.valor)+'</div><div style="font-size:13.5px;color:var(--mu2);font-weight:700">'+esc(forma+' · '+hrBR(p.t)+(p.desc?' · '+p.desc:''))+'</div><div class="er" id="pdEr"></div>';
+  folha('Venda sem registro',h,'<button class="bt g" id="pdOk" style="margin:0" onclick="pendRegistra()">'+(p.pago?'Registrar a venda':'Sim, foi aprovado: registrar')+'</button>'+(p.pago?'':'<button class="bt s" style="margin:8px 0 0" onclick="pendDescarta()">Não foi aprovado</button>'));
+}
+function pendDescarta(){ if(!confirm('Apagar este pedido? Faça isso só se o pagamento NÃO foi aprovado.')) return; pendTira(); fecha(); }
+function pendRegistra(){
+  var p=pendLer(), b=$('pdOk'); if(!p||!b) return; b.disabled=true; $('pdEr').textContent='';
+  api(p.rota,p.corpo).then(function(r){
+    if(r.ok&&(p.rota!=='/painel/atend-pedido'||r.pago)){
+      pendTira(); fecha();
+      if(p.ped){ p.ped.num=r.num; p.ped.sub=r.sub||0; if(!p.ped.mesa&&!p.semMesa) p.ped.mesa=r.mesa||''; imprimeAuto(p.ped); }
+      toast('Venda registrada'+(r.num?' · pedido #'+plab(r):'')+' · '+brl(r.total)); carregaCom(); if(ABA==='com') vendasAbre(); return;
+    }
+    b.disabled=false; $('pdEr').textContent=r._h===0?'Sem rede agora. Tente de novo.':(r.mensagem||'Não consegui registrar.');
+  });
+}
 function posTef(r){ var v=r.venda||{}; return {gk:v.gk||'',forma:v.forma||'',valor:v.valor||0,nsu:v.nsu||'',aut:v.aut||'',bandeira:v.bandeira||'',final:v.final||'',ref:v.ref||'',quando:v.quando||Date.now()}; }   /* ref = número que o LiveFood mandou à maquininha (aparece nas vendas da PayStore) */
 function posVoltar(){ if($('sh')&&$('sh').style.display==='flex'){ fecha(); return true; } return false; }   /* botão "voltar" da maquininha fecha a janela aberta */
 if(posTem()){ var _bp=$('btPos'); if(_bp){ _bp.style.display=''; if(posInfo().motor==='celular') _bp.title='Celular maquininha'; } }
@@ -1154,7 +1181,7 @@ function fcResumo(forma){
 function fcFechaTela(){ var d=$('rz'); if(FC.m){ try{ FC.m.destruir(); }catch(e){} FC.m=null; } if(d) d.remove(); }
 function fcCancela(){
   if(!confirm(FC.tef?'ATENÇÃO: este pedido JÁ FOI PAGO na maquininha. Se cancelar, devolva o dinheiro em Maquininha → Vendas de hoje (cartão) ou pelo painel da Vileve (Pix). Cancelar mesmo assim?':'Cancelar este pedido? Os itens saem do carrinho e nada vai para a cozinha.')) return;
-  FC.tef=null; fcFechaTela(); CART=[]; COPOS=null; FC.partes=null; cartBar(); zeraComanda(); toast('Pedido cancelado');
+  FC.tef=null; pendTira(); fcFechaTela(); CART=[]; COPOS=null; FC.partes=null; cartBar(); zeraComanda(); toast('Pedido cancelado');
 }
 /* ── (276) CLIENTE CRÉDITO: o cartão NFC do cliente, com crédito pré-pago (a venda baixa o saldo) ou consumo para pagar no final (a venda fica na conta dele).
    O celular lê o número de série do cartão (Chrome no Android). No computador, digite o número ou use o leitor USB. Saldo e consumo ficam no servidor. ── */
@@ -1224,17 +1251,20 @@ var ENVIO={id:'',sig:''};
 function comEnvio(corpo){ var c={},k; for(k in corpo) if(k!=='liberar'&&k!=='geo') c[k]=corpo[k]; var sig=JSON.stringify(c); if(sig!==ENVIO.sig){ ENVIO.sig=sig; ENVIO.id=Date.now().toString(36)+Math.random().toString(36).slice(2,10); } corpo.env=ENVIO.id; return corpo; }
 function envioOk(){ ENVIO.id=''; ENVIO.sig=''; }
 var SEM_REDE='Sem rede agora. Quando a rede voltar, toque de novo: se o pedido já tinha chegado, ele não duplica.';
+function fcCorpo(){ return comEnvio({geo:praiaGeo(),modo:COM.modo,mesa:COM.mesa,joia:COM.joia,obs:FC.obs,liberar:COM.liberar,pagar:FC.forma,tef:FC.tef||undefined,cartao:FC.forma==='cartao_cliente'?FC.cartao:undefined,partes:FC.forma==='misto'?(FC.partes||[]).map(function(pt){ return {f:pt.f,v:pt.v}; }):undefined,copos:FC.copos||undefined,itens:CART.map(function(i){ return {p:i.p,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs,qty:i.qty}; })}); }
+function fcPed(){ return {num:0,sub:0,mesa:COM.mesa||'',joia:COM.joia,nome:COM.nome,atend:D.usuario,criado:Date.now(),obs:FC.obs,modo:COM.modo,copos:FC.copos,l:CART.map(function(i){ return {p:i.p,nome:i.nome,qty:i.qty,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs}; })}; }
 function fcConfirma(){
   var b=$('rzOk'); if(!b||b.disabled) return;
   if(posForma(FC.forma)&&!FC.tef){   /* (ATEND-49) cobra na maquininha; aprovado, envia o pedido já pago */
     var vt=Math.round((cartTot()+srvVal(cartTot()))*100)/100; b.disabled=true; $('rzErr').textContent='';
     var ref=COM.mesa&&!ehSMM(COM.mesa)&&!ehBalM(COM.mesa)?'Mesa '+COM.mesa:(COM.nome||'');
-    posCobra(FC.forma,vt,function(r){ b.disabled=false; if(r.ok){ FC.tef=posTef(r); b.textContent='Enviar o pedido (já pago ✓)'; fcConfirma(); } else $('rzErr').textContent=r.cancelado?'':(r.msg||'Pagamento não aprovado.'); },{joia:COM.joia,ref:ref});
+    pendGrava({cli:CLI,t:Date.now(),rota:'/painel/atend-pedido',forma:FC.forma,valor:vt,desc:ref,corpo:fcCorpo(),ped:FC.imp?fcPed():null,semMesa:COM.sm?1:0});
+    posCobra(FC.forma,vt,function(r){ b.disabled=false; if(r.ok){ FC.tef=posTef(r); pendTef(FC.tef); b.textContent='Enviar o pedido (já pago ✓)'; fcConfirma(); } else pendTira(), $('rzErr').textContent=r.cancelado?'':(r.msg||'Pagamento não aprovado.'); },{joia:COM.joia,ref:ref});
     return;
   }
   b.disabled=true; var tx0=b.textContent; b.textContent='Enviando…'; $('rzErr').textContent='';
-  api('/painel/atend-pedido',comEnvio({geo:praiaGeo(),modo:COM.modo,mesa:COM.mesa,joia:COM.joia,obs:FC.obs,liberar:COM.liberar,pagar:FC.forma,tef:FC.tef||undefined,cartao:FC.forma==='cartao_cliente'?FC.cartao:undefined,partes:FC.forma==='misto'?(FC.partes||[]).map(function(pt){ return {f:pt.f,v:pt.v}; }):undefined,copos:FC.copos||undefined,itens:CART.map(function(i){ return {p:i.p,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs,qty:i.qty}; })})).then(function(r){
-    if(r.ok&&r.pago){ envioOk(); FC.tef=null;
+  api('/painel/atend-pedido',fcCorpo()).then(function(r){
+    if(r.ok&&r.pago){ envioOk(); FC.tef=null; pendTira();
       var ped={num:r.num,sub:r.sub||0,mesa:COM.mesa||(COM.sm?'':r.mesa)||'',joia:COM.joia,nome:COM.nome,atend:D.usuario,criado:Date.now(),obs:FC.obs,modo:COM.modo,copos:FC.copos,l:CART.map(function(i){ return {p:i.p,nome:i.nome,qty:i.qty,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs}; })};
       var x=FC_FORMAS[FC.forma]||['','',''], tot=r.total; if(FC.forma==='misto') x=['🔀',(FC.partes||[]).map(function(pt){ return (FC_FORMAS[pt.f]||['',pt.f])[1]+' '+brl(pt.v); }).join(' + ')]; fcFechaTela(); CART=[]; COPOS=null; FC.partes=null; FC.copos=0; cartBar(); if(FC.imp) imprimeAuto(ped);
       zeraComanda();
@@ -1690,12 +1720,13 @@ function fechaFazer(i,forma,partes,cartao){
   var pk=(c.mesa||'')+'|'+(c.joia||''), pj=POS.fech[pk];   /* (ATEND-49) conta já paga na maquininha: reenviar não cobra de novo */
   if(pj&&!partes){ forma=pj.forma; }
   else if(posForma(forma)&&!partes){
-    posCobra(forma,c.total,function(r){ if(r.ok){ POS.fech[pk]={forma:forma,tef:posTef(r)}; fechaFazer(i,forma,null,cartao); } else { var e=$('fcErr'); if(e) e.textContent=r.cancelado?'':(r.msg||'Pagamento não aprovado.'); } },{joia:c.joia,ref:c.mesa&&!ehSMM(c.mesa)&&!ehBalM(c.mesa)?'Mesa '+c.mesa:(c.nome||'')});
+    pendGrava({cli:CLI,t:Date.now(),rota:'/painel/atend-fechar',forma:forma,valor:c.total,desc:c.mesa&&!ehSMM(c.mesa)&&!ehBalM(c.mesa)?'Mesa '+c.mesa:(c.nome||''),corpo:{mesa:c.mesa,joia:c.joia,forma:forma,cartao:cartao||undefined}});
+    posCobra(forma,c.total,function(r){ if(r.ok){ POS.fech[pk]={forma:forma,tef:posTef(r)}; pendTef(POS.fech[pk].tef); fechaFazer(i,forma,null,cartao); } else { pendTira(); var e=$('fcErr'); if(e) e.textContent=r.cancelado?'':(r.msg||'Pagamento não aprovado.'); } },{joia:c.joia,ref:c.mesa&&!ehSMM(c.mesa)&&!ehBalM(c.mesa)?'Mesa '+c.mesa:(c.nome||'')});
     return;
   }
   var bOk=$('dvOk'); if(bOk){ bOk.disabled=true; bOk.textContent='Fechando…'; }
   api('/painel/atend-fechar',{mesa:c.mesa,joia:c.joia,forma:forma,tef:pj&&!partes?pj.tef:undefined,cartao:cartao||undefined,partes:partes?partes.map(function(pt){ return {f:pt.f,v:pt.v}; }):undefined}).then(function(r){
-    if(r.ok){ _ab=0; fecha(); delete POS.fech[pk];
+    if(r.ok){ _ab=0; fecha(); delete POS.fech[pk]; pendTira();
       /* conta fechada: valor grande + forma de pagamento; a tela fica até tocar em NOVO PEDIDO */
       var FP={pix:'▦ Pix',cartao:'💳 Cartão',credito:'💳 Crédito',debito:'💳 Débito',dinheiro:'💵 Dinheiro',marcar:'📒 Marcado na conta',cartao_cliente:'💳 Cliente Crédito'};
       if(forma==='misto') FP.misto='🔀 '+(partes||[]).map(function(pt){ return FP[pt.f].replace(/^\S+ /,'')+' '+brl(pt.v); }).join(' + ');
