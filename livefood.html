@@ -13,7 +13,7 @@
 <title>Cardápio · LiveFood</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
-<!-- LIVEFOOD-31 --><meta name="versao" content="LIVEFOOD-31">
+<!-- LIVEFOOD-32 --><meta name="versao" content="LIVEFOOD-32">
 <style>
 :root{--bg:#0b0b0d;--tx:#fff;--mut:rgba(255,255,255,.68);--pri:#FF5A00;--pri2:#FF5A00;--glass:rgba(18,18,22,.62);--line:rgba(255,255,255,.16)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -1594,6 +1594,69 @@ function ckCid(id){ CK.cid=id; if($('mc-tela')) mesaContaMonta(); else if(MP.for
 function ckCardNum(e){ var d=e.value.replace(/\D/g,'').slice(0,19); e.value=d.replace(/(\d{4})(?=\d)/g,'$1 '); }
 function ckCardVal(e){ var d=e.value.replace(/\D/g,'').slice(0,4); e.value=d.length>2?d.slice(0,2)+'/'+d.slice(2):d; }
 function ckLuhn(n){ var s=0,alt=false,i,d; for(i=n.length-1;i>=0;i--){ d=+n[i]; if(alt){ d*=2; if(d>9) d-=9; } s+=d; alt=!alt; } return s%10===0; }
+/* (LIVEFOOD-32) Ler o cartão pela câmera: a foto é lida NO APARELHO (não é enviada nem guardada) e preenche número, validade e CVV.
+   O CVV só preenche o campo desta compra: nunca é guardado. Se a leitura falhar, o cliente digita como sempre. Biblioteca em /ocr (do próprio site). */
+var SC={ocup:0};
+function scPode(){ try{ return !!(window.WebAssembly&&window.Worker&&window.Promise&&window.URL&&URL.createObjectURL&&document.createElement('canvas').getContext); }catch(e){ return false; } }
+function scSt(t){ var e=$('sc-st'); if(e) e.textContent=t||''; }
+function scAbre(){ var i=$('sc-in'); if(i&&!SC.ocup){ i.value=''; i.click(); } }
+function scLib(){ if(window.Tesseract) return Promise.resolve(); return new Promise(function(ok,no){ var t=document.createElement('script'); t.src=location.origin+'/ocr/tesseract.min.js'; t.onload=function(){ ok(); }; t.onerror=function(){ no(new Error('lib')); }; document.head.appendChild(t); }); }
+function scImg(f){ return new Promise(function(ok,no){ var u=URL.createObjectURL(f), im=new Image(); im.onload=function(){ URL.revokeObjectURL(u); ok(im); }; im.onerror=function(){ URL.revokeObjectURL(u); no(new Error('img')); }; im.src=u; }); }
+/* foto reduzida, girada (0/90/180/270) e em tons de cinza com contraste; cartão escuro com letra clara é invertido */
+function scTela(im,giro,lado){
+  var k=Math.min(1,lado/Math.max(im.width,im.height)), w=Math.round(im.width*k), h=Math.round(im.height*k), c=document.createElement('canvas'), q=giro===90||giro===270;
+  c.width=q?h:w; c.height=q?w:h; var x=c.getContext('2d'); x.translate(c.width/2,c.height/2); x.rotate(giro*Math.PI/180); x.drawImage(im,-w/2,-h/2,w,h);
+  var d=x.getImageData(0,0,c.width,c.height), p=d.data, i, g, n=p.length/4, soma=0, mn=255, mx=0;
+  for(i=0;i<p.length;i+=4){ g=(p[i]*299+p[i+1]*587+p[i+2]*114)/1000; p[i]=g; soma+=g; if(g<mn) mn=g; if(g>mx) mx=g; }
+  var esc_=soma/n<115, f=mx>mn?255/(mx-mn):1;
+  for(i=0;i<p.length;i+=4){ g=(p[i]-mn)*f; if(esc_) g=255-g; p[i]=p[i+1]=p[i+2]=g; }
+  x.putImageData(d,0,0); return c;
+}
+/* tira número (confere pelo dígito verificador), validade e CVV do texto lido. Na dúvida deixa em branco: o cliente digita */
+function scNumOk(n){ if(!ckLuhn(n)||/^(\d)\1+$/.test(n)) return false; var l=n.length; return l===16?/^[2-6]/.test(n):l===15?/^3[47]/.test(n):l===14?/^3[068]/.test(n):false; }   /* tamanho coerente com a bandeira: um número "montado" não passa por acaso */
+function scParse(t){
+  var r={num:'',val:'',cvv:''}, bruto=String(t||''), agora=new Date(), aa=agora.getFullYear()%100, mm=agora.getMonth()+1, melhor=-1;
+  var semVal=bruto.replace(/(^|[^\d])(0[1-9]|1[0-2])\s?[\/\-]\s?(?:20)?(\d{2})(?!\d)/g,function(m,a,me,an){ var v=(+an)*12+(+me); if(v>=aa*12+mm&&+an<=aa+20&&v>melhor){ melhor=v; r.val=me+'/'+an; } return a+' / '; });
+  var tk=[]; semVal.split(/\n/).forEach(function(l,li){ (l.match(/[0-9OoIl|SsBZ]+/g)||[]).forEach(function(w){ var dg=(w.match(/\d/g)||[]).length; if(dg*2<w.length) return; tk.push({d:w.replace(/[Oo]/g,'0').replace(/[Il|]/g,'1').replace(/[Ss]/g,'5').replace(/B/g,'8').replace(/Z/g,'2'),l:li,u:0}); }); });
+  var i, j, acc, achou=null;
+  for(i=0;i<tk.length&&!(achou&&achou.n.length===16);i++){ acc=''; for(j=i;j<tk.length&&acc.length<19;j++){ acc+=tk[j].d; if(acc.length>=14&&acc.length<=16&&scNumOk(acc)){ if(!achou||acc.length===16){ achou={n:acc,a:i,b:j}; } if(acc.length===16) break; } } }
+  if(!achou){ var g4=tk.filter(function(k){ return k.d.length===4; }); for(i=0;i+3<g4.length&&!achou;i++){ acc=g4[i].d+g4[i+1].d+g4[i+2].d+g4[i+3].d; if(scNumOk(acc)){ achou={n:acc,a:0,b:-1}; for(j=i;j<i+4;j++) g4[j].u=1; } } }   /* número em 4 linhas, com outros números lidos no meio */
+  if(!achou) return r;
+  r.num=achou.n; for(i=achou.a;i<=achou.b;i++) tk[i].u=1;
+  var nc=/^3[47]/.test(r.num)?4:3, rot=bruto.match(/(?:CVV2?|CVC2?|CVN|CID|C[OÓ]D(?:IGO)?\.?\s*(?:DE\s*)?SEG\w*|SECURITY\s*CODE)\D{0,12}(\d{3,4})(?!\d)/i);
+  if(rot&&rot[1].length===nc&&r.num.indexOf(rot[1])!==r.num.length-nc) r.cvv=rot[1];
+  if(!r.cvv){ var op={}; tk.forEach(function(k){ if(!k.u&&k.d.length===nc&&/^\d+$/.test(k.d)) op[k.d]=1; }); op=Object.keys(op); if(op.length===1) r.cvv=op[0]; }
+  return r;
+}
+function scLe(f){
+  var w=null, im=null, giros=[0,90,270,180], res=null, O=location.origin+'/ocr/';
+  return scLib().then(function(){ return scImg(f); }).then(function(x){ im=x; return Tesseract.createWorker('eng',1,{workerPath:O+'worker.min.js',corePath:O,langPath:O,gzip:true}); })
+    .then(function(x){ w=x; return w.setParameters({tessedit_pageseg_mode:'11'}); })
+    .then(function(){
+      /* a leitura erra quando a letra fica grande ou pequena demais: cada giro é tentado em dois tamanhos. Em cada tentativa lê tudo e,
+         se o número não sair, lê de novo só os algarismos; os textos do mesmo giro se somam. Para em 30 s */
+      var t0=Date.now(), lados=[1800,1100], tx='', passo=function(n){
+        if(n>=giros.length*lados.length||Date.now()-t0>30000) return null; scSt('Lendo o cartão… ('+(n+1)+'/'+(giros.length*lados.length)+')');
+        if(n%lados.length===0) tx='';
+        var tela=scTela(im,giros[Math.floor(n/lados.length)],lados[n%lados.length]);
+        return w.recognize(tela).then(function(o){ tx+='\n'+((o&&o.data&&o.data.text)||''); var r=scParse(tx); if(r.num) return r;
+          return w.setParameters({tessedit_char_whitelist:'0123456789/ '}).then(function(){ return w.recognize(tela); }).then(function(o2){ tx+='\n'+((o2&&o2.data&&o2.data.text)||''); return w.setParameters({tessedit_char_whitelist:''}); }).then(function(){ var r2=scParse(tx); return r2.num?r2:passo(n+1); });
+        });
+      };
+      return passo(0);
+    }).then(function(r){ res=r; if(w) return w.terminate(); },function(e){ if(w){ try{ w.terminate(); }catch(x){} } throw e; }).then(function(){ return res; });
+}
+function scArq(inp){
+  var f=inp&&inp.files&&inp.files[0]; if(!f||SC.ocup) return; SC.ocup=1; scSt('Preparando a leitura… na primeira vez demora um pouco.');
+  scLe(f).then(function(r){
+    SC.ocup=0; try{ inp.value=''; }catch(e){}
+    if(!r||!r.num){ scSt('Não consegui ler o cartão. Tente outra foto, com boa luz e sem reflexo, ou digite os dados.'); return; }
+    var n=$('ck-cn'), v=$('ck-cval'), c=$('ck-ccv'); if(!n){ scSt(''); return; }
+    n.value=r.num.replace(/(\d{4})(?=\d)/g,'$1 '); if(v&&r.val) v.value=r.val; if(c) c.value=r.cvv||'';
+    scSt('Confira os dados lidos'+(r.val?'':', digite a validade')+(r.cvv?'':' e digite o CVV')+' antes de pagar.');
+    var falta=!r.val?v:(!r.cvv?c:null); if(falta){ try{ falta.focus(); }catch(e){} }
+  }).catch(function(){ SC.ocup=0; scSt('A leitura pela câmera não funcionou neste aparelho. Digite os dados do cartão.'); });
+}
 /* (LIVEFOOD-31) enquanto o Asaas não libera o token: o cartão fica guardado SÓ NESTE APARELHO, cifrado (número, nome e validade).
    Nunca o CVV, e nada disso vai para o servidor do LiveFood além do que o pagamento já envia. A chave fica no navegador e não pode ser copiada dele.
    Vale só para quem entrou com o código do WhatsApp; sair da conta apaga. Quando o Asaas devolver o token, a cópia do aparelho é apagada. */
@@ -1665,9 +1728,10 @@ function ckCartaoHtml(c){
     var cob=c.cobranca||{}; if(cob.email) ml=cob.email;   /* (LIVEFOOD-30) o que já foi preenchido numa compra volta pronto */
     var dv=DV.c;   /* (LIVEFOOD-31) cartão guardado neste aparelho */
     if(dv) h+='<div class="ad on" id="dv-fx" style="cursor:default;margin-top:6px"><div class="tx"><b>Cartão •••• '+esc(String(dv.numero).slice(-4))+'</b><small>Guardado neste aparelho · digite só o CVV</small></div><div class="ac"><button type="button" class="lk" onclick="dvApaga()">Remover</button></div></div>';
+    if(scPode()) h+='<button type="button" onclick="scAbre()" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:8px;padding:12px;border:2px dashed var(--pri);border-radius:14px;background:transparent;color:inherit;font:inherit;font-weight:700;font-size:14.5px;cursor:pointer">📷 Ler o cartão pela câmera</button><input type="file" id="sc-in" accept="image/*" capture="environment" style="display:none" onchange="scArq(this)"><div class="nt" id="sc-st" style="font-size:12.5px;margin-top:6px" aria-live="polite"></div>';   /* (LIVEFOOD-32) */
     h+='<form autocomplete="on" onsubmit="return false" style="margin:6px 0 0"><input class="cin" id="ck-cn" name="cardnumber" type="tel" inputmode="numeric" autocomplete="cc-number" maxlength="23" placeholder="Número do cartão" value="'+esc(dv?dvMasc():'')+'" oninput="ckCardNum(this)"><input class="cin" id="ck-cnome" name="ccname" autocomplete="cc-name" maxlength="60" placeholder="Nome como está no cartão" value="'+esc((dv&&dv.nome)||cob.nome||'')+'" style="margin-top:8px"><div style="display:flex;gap:8px;margin-top:8px"><input class="cin" id="ck-cval" name="exp-date" type="tel" inputmode="numeric" autocomplete="cc-exp" maxlength="5" placeholder="MM/AA" value="'+esc(dv?dv.mes+'/'+dv.ano:'')+'" oninput="ckCardVal(this)" style="flex:1"><input class="cin" id="ck-ccv" name="cvc" type="tel" inputmode="numeric" autocomplete="cc-csc" maxlength="4" placeholder="CVV" style="flex:1"></div>'
       +'<input class="cin" id="ck-cmail" name="email" type="email" inputmode="email" autocomplete="email" maxlength="90" placeholder="Seu e-mail" value="'+esc(ml)+'" style="margin-top:8px"><div style="display:flex;gap:8px;margin-top:8px"><input class="cin" id="ck-ccep" name="postal" autocomplete="postal-code" type="tel" inputmode="numeric" maxlength="9" placeholder="CEP da fatura" value="'+esc(cob.cep||(e?e.cep:''))+'" style="flex:2"><input class="cin" id="ck-cnum" maxlength="12" placeholder="Nº" value="'+esc(cob.numero||(e?e.numero:''))+'" style="flex:1"></div>'
-      +'<label class="ck-sv" style="display:flex;align-items:center;gap:12px;margin-top:14px;padding:13px 14px;border:2px solid var(--pri);border-radius:14px;background:color-mix(in srgb,var(--pri) 13%,transparent);font-size:14.5px;font-weight:700;line-height:1.3;cursor:pointer"><input type="checkbox" id="ck-csv"'+(dv?' checked':'')+' style="width:24px;height:24px;flex:none;accent-color:var(--pri);margin:0"><span>Salvar este cartão para compras futuras<small style="display:block;font-weight:500;font-size:12.5px;opacity:.8;margin-top:2px">Na próxima vez você paga mais rápido.</small></span></label><div class="nt" style="font-size:12.5px;margin-top:6px">Pagamento à vista no crédito. O CVV nunca fica guardado. Se o cartão não puder ser salvo na sua conta, ele fica guardado só neste aparelho, protegido, e na próxima compra você digita apenas o CVV.</div></form>';
+      +'<label class="ck-sv" style="display:flex;align-items:center;gap:12px;margin-top:14px;padding:13px 14px;border:2px solid var(--pri);border-radius:14px;background:color-mix(in srgb,var(--pri) 13%,transparent);font-size:14.5px;font-weight:700;line-height:1.3;cursor:pointer"><input type="checkbox" id="ck-csv"'+(dv?' checked':'')+' style="width:24px;height:24px;flex:none;accent-color:var(--pri);margin:0"><span>Salvar este cartão para compras futuras<small style="display:block;font-weight:500;font-size:12.5px;opacity:.8;margin-top:2px">Na próxima vez você paga mais rápido.</small></span></label><div class="nt" style="font-size:12.5px;margin-top:6px">Pagamento à vista no crédito. O CVV nunca fica guardado, e a foto do cartão é lida no seu aparelho, sem ser enviada. Se o cartão não puder ser salvo na sua conta, ele fica guardado só neste aparelho, protegido, e na próxima compra você digita apenas o CVV.</div></form>';
   }
   return h;
 }
