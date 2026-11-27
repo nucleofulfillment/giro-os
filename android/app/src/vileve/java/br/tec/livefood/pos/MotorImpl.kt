@@ -10,6 +10,7 @@ import br.com.phoebus.android.payments.api.AbortRequest
 import br.com.phoebus.android.payments.api.ApplicationInfo
 import br.com.phoebus.android.payments.api.Credentials
 import br.com.phoebus.android.payments.api.ErrorData
+import br.com.phoebus.android.payments.api.OperationMethod
 import br.com.phoebus.android.payments.api.PaymentClient
 import br.com.phoebus.android.payments.api.PaymentRequestV2
 import br.com.phoebus.android.payments.api.PaymentStatus
@@ -135,6 +136,8 @@ class MotorImpl : Motor {
                 printMerchantReceipt = true      // via da loja sai na hora
                 printCustomerReceipt = false     // via do cliente: botão "Imprimir via do cliente" ou WhatsApp
             }
+            // sem isto o app de pagamento pede o cartão também no Pix: aqui vai direto para o QR Code
+            if (forma == Forma.PIX) pedido.setOperationMethodAllowed(OperationMethod.QR_CODE_ONLY.id)
             runCatching {
                 cliente.startPaymentV2(pedido, object : PaymentClient.PaymentCallback<PaymentV2> {
                     override fun onSuccess(p: PaymentV2) {
