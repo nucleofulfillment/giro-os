@@ -13,7 +13,7 @@
 <title>Cardápio · LiveFood</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
-<!-- LIVEFOOD-27 --><meta name="versao" content="LIVEFOOD-27">
+<!-- LIVEFOOD-28 --><meta name="versao" content="LIVEFOOD-28">
 <style>
 :root{--bg:#0b0b0d;--tx:#fff;--mut:rgba(255,255,255,.68);--pri:#FF5A00;--pri2:#FF5A00;--glass:rgba(18,18,22,.62);--line:rgba(255,255,255,.16)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -1756,6 +1756,7 @@ function ckChamaGar(m){ fetch(API+'/food/garcom',{method:'POST',headers:{'Conten
   geoGate(function(g){ ctApi('/food/pedido',{geo:g,itens:SAC.map(function(i){ return {p:i.p,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs,qty:i.qty}; }),modo:EN.modo,ap:apOn()?AP_V:undefined,torre:apOn()&&AP_TR?AP_TR:undefined,mesa:MESA||undefined,end:EN.end,obs:(($('ck-obs')||{value:''}).value+(qmTxt?' '+qmTxt:'')).trim(),cpf:cpf||undefined,prog:pg||undefined,pagto:CK.pg,servico:quer||undefined,troco:(trc>0&&CK.pg==='dinheiro'?trc:undefined),maqTipo:CK.pg==='maquina'?(CK.maq==='debito'?'debito':'credito'):undefined,parcelas:CK.pg==='cartao'?(CK.parc||1):undefined,cartao:cardB&&cardB.cartao,cartao_id:cardB&&cardB.cartao_id,email:cardB&&cardB.email,cep:cardB&&cardB.cep,numero_end:cardB&&cardB.numero_end,salvar:cardB&&cardB.salvar||undefined}).then(function(r){
     if(r.ok&&cardB&&cardB.salvar) ctApi('/food/conta',null,true).then(function(d){ if(d.ok){ CT.conta=d.conta; ctGrava(); } });   /* (LIVEFOOD-27) o cartao salvo ja aparece na proxima compra */
     cardB=null;
+    CK.semCartao=r.ok&&r.cartaoSalvo===0;   /* (LIVEFOOD-28) pediu para salvar e o Asaas não devolveu o token */
     if(r.ok){ CK.ped=r.pedido; if(qm==='garcom') ckChamaGar(CK.mg); if(!din&&r.pedido.status!=='pago') pdGrava(r.pedido); if(din) ckOk(r.pedido);else if(CK.pg==='cartao'){ if(r.pedido.status==='pago') ckOk(r.pedido); else ckAguarda(r.pedido); } else ckPix(); }
     else if(r._http===401){ CT.tok=''; ctLogin(); }
     else if(r.erro==='cpf_necessario'){ CPFN=1; ckResumo(); ctErro(r.mensagem||'Informe o seu CPF para gerar o Pix.'); }
@@ -1799,13 +1800,14 @@ function pdConfere(){
 }
 function pdVoltou(){ if(D&&!document.hidden&&pdLer()){ pdLiga(); pdConfere(); } }
 document.addEventListener('visibilitychange',pdVoltou); window.addEventListener('pageshow',pdVoltou); window.addEventListener('focus',pdVoltou);
+function avisoCartao(){ return '<div style="margin-top:16px;background:#fff7ed;color:#9a3412;border:1px solid #fdba74;border-radius:12px;padding:12px;font-size:13.5px;line-height:1.45"><b>O seu cartão não foi salvo.</b> O pagamento não muda; na próxima compra será preciso digitar o cartão de novo.</div>'; }
 function ckOk(p){
   if(PD.ok===p.id) return; PD.ok=p.id; clearInterval(CK.tmr);
   var x=pdLer(), mudou=false; if(x&&x.id===p.id){ mudou=x.sac!==pdSac(); pdSolta(); }
   if(!mudou){ SAC=[]; sacGrava(); }   /* sacola montada de novo depois do Pix: não apaga */
   try{ localStorage.removeItem('lf_prog_'+(D.cli||CLI)); }catch(e){}
   if(window.LiveApp) LiveApp.comemorar({titulo:'Pedido #'+p.num+(p.pagto==='dinheiro'||p.pagto==='maquina'||p.pagto==='caixa'||p.pagto==='conta'?' enviado!':' confirmado!'),sub:p.modo==='mesa'?'Já estamos preparando! 🍳':ehRest()?'Já estamos preparando o seu pedido 🍳':'Já estamos separando o seu pedido 🛍️'});
-  abreFolha('<div class="wb" style="text-align:center;padding:36px 20px 24px"><svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg><div style="font-size:22px;font-weight:800;margin-top:14px">Pedido #'+p.num+(p.pagto==='dinheiro'||p.pagto==='maquina'||p.pagto==='caixa'||p.pagto==='conta'?' enviado!':' confirmado!')+'</div><div style="margin-top:8px;color:var(--mut);font-size:14.5px;line-height:1.5">'+(p.lf_comanda?'Lançado na sua <b style="color:#fff">comanda '+esc(p.lf_comanda)+'</b>. Você paga na saída do evento.':p.pagto==='conta'?'Para pagar, toque em <b style="color:#fff">Fechar conta</b> quando quiser.':p.pagto==='caixa'?'Pague <b style="color:#fff">'+brl(p.total)+'</b> no caixa (cartão ou dinheiro).':p.pagto==='dinheiro'?'Pague <b style="color:#fff">'+brl(p.total)+'</b> em dinheiro '+(p.modo==='retirada'?'na retirada':'ao entregador')+'.':'Pagamento recebido: <b style="color:#fff">'+brl(p.total)+'</b>.')+'<br>'+(p.prog_dia?'Agendado para <b style="color:#fff">'+esc(progFmt({dia:p.prog_dia,hora:p.prog_hora}))+'</b>, com prioridade na fila.':(p.modo==='mesa'?'Já estamos preparando! Levamos até a sua mesa.':p.modo==='retirada'?'Avisaremos quando estiver pronto para retirar.':'Já estamos preparando o seu pedido.'))+'</div></div><div class="rod"><button class="bt c" onclick="'+(p.modo==='mesa'?'fechaSheet();mesaInit(true)':'fechaSheet()')+'">'+(p.modo==='mesa'?'Voltar ao início':(catEhCardapio()?'Voltar ao cardápio':'Voltar para '+esc(catNome())))+'</button></div>',true);
+  abreFolha('<div class="wb" style="text-align:center;padding:36px 20px 24px"><svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg><div style="font-size:22px;font-weight:800;margin-top:14px">Pedido #'+p.num+(p.pagto==='dinheiro'||p.pagto==='maquina'||p.pagto==='caixa'||p.pagto==='conta'?' enviado!':' confirmado!')+'</div><div style="margin-top:8px;color:var(--mut);font-size:14.5px;line-height:1.5">'+(p.lf_comanda?'Lançado na sua <b style="color:#fff">comanda '+esc(p.lf_comanda)+'</b>. Você paga na saída do evento.':p.pagto==='conta'?'Para pagar, toque em <b style="color:#fff">Fechar conta</b> quando quiser.':p.pagto==='caixa'?'Pague <b style="color:#fff">'+brl(p.total)+'</b> no caixa (cartão ou dinheiro).':p.pagto==='dinheiro'?'Pague <b style="color:#fff">'+brl(p.total)+'</b> em dinheiro '+(p.modo==='retirada'?'na retirada':'ao entregador')+'.':'Pagamento recebido: <b style="color:#fff">'+brl(p.total)+'</b>.')+'<br>'+(p.prog_dia?'Agendado para <b style="color:#fff">'+esc(progFmt({dia:p.prog_dia,hora:p.prog_hora}))+'</b>, com prioridade na fila.':(p.modo==='mesa'?'Já estamos preparando! Levamos até a sua mesa.':p.modo==='retirada'?'Avisaremos quando estiver pronto para retirar.':'Já estamos preparando o seu pedido.'))+'</div>'+(CK.semCartao&&p.pagto==='cartao'?avisoCartao():'')+'</div><div class="rod"><button class="bt c" onclick="'+(p.modo==='mesa'?'fechaSheet();mesaInit(true)':'fechaSheet()')+'">'+(p.modo==='mesa'?'Voltar ao início':(catEhCardapio()?'Voltar ao cardápio':'Voltar para '+esc(catNome())))+'</button></div>',true);
 }
 /* ── (052) FECHAR CONTA da mesa: soma tudo que a mesa pediu; Pix paga na hora, cartão/dinheiro no caixa ── */
 var MC={forma:'pix',d:null,tmr:null};
@@ -1923,6 +1925,7 @@ function mpPagar(){
     if(r.ok){
       if(r.conta){ CT.conta=r.conta; ctGrava(); } if(corpo.consente){ if(!MP.consente) MP.novoCad=1; MP.consente=1; }
       if(r.parte.cobrado) MP.parte.valor=r.parte.cobrado;
+      MP.semCartao=r.cartaoSalvo===0;
       if(r.parte.status==='paga') return mpPago();
       MP.formaTela=false; if(f==='pix') return mpPix(r.parte); return mpEspera();
     }
@@ -1951,6 +1954,7 @@ function mpVigia(){
 function mpOkSvg(){ return '<svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg>'; }
 function mpPago(){
   MP.formaTela=false; clearInterval(MP.tmr);
+  if(MP.semCartao){ MP.semCartao=0; toast('Pago! Mas o seu cartão não foi salvo.',true); }
   var cad=MP.novoCad?'<div style="margin-top:16px;background:#ffffff14;border-radius:12px;padding:12px;font-size:13.5px;line-height:1.45">Cadastro feito. Na próxima vez, seus dados já estarão salvos e o pagamento é mais rápido.</div>':''; MP.novoCad=0;
   if(MP.rp){ if(window.LiveApp) LiveApp.comemorar({titulo:'Pagamento confirmado!',sub:'Obrigado pela visita!'});
     abreFolha('<div class="wb" style="text-align:center;padding:36px 20px 24px">'+mpOkSvg()+'<div style="font-size:22px;font-weight:800;margin-top:14px">Pagamento confirmado</div><div style="margin-top:8px;color:var(--mut);font-size:14.5px;line-height:1.5">Sua parte da mesa '+esc(MP.rp.parte.mesa)+' foi paga: <b style="color:#fff">'+brl(MP.parte.valor)+'</b>.<br>Quem abriu a conta já está vendo.</div>'+cad+'</div><div class="rod"><button class="bt c" onclick="fechaSheet()">Ver '+esc(catRef())+'</button></div>',true); return; }

@@ -10398,7 +10398,7 @@ function pgAbrir(){
   el('cd-imp-corpo').innerHTML='<div style="font-size:13px;color:var(--muted)">Carregando…</div>';
   el('sh-import').querySelector('h3').textContent='Formas de pagamento'; abrir('sh-import');
   fetch(DELTADIS_API+'/painel/cardapio-config',{headers:cdHdr()}).then(function(r){return r.json();}).then(function(d){
-    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'erro'); PG=d.pagto||{pix:{on:1,desc:0},dinheiro:{on:1},cartao:{on:1,parcelas:1,semJuros:1,acresc:0},maquina:{on:1,descDebito:0},politica:''}; pgPintar();
+    if(!d||!d.ok) throw new Error((d&&d.mensagem)||'erro'); PG=d.pagto||{pix:{on:1,desc:0},dinheiro:{on:1},cartao:{on:1,parcelas:1,semJuros:1,acresc:0},maquina:{on:1,descDebito:0},politica:''}; PG_CARDSEM=d.cartaoSem||null; pgPintar();
     PG_ASAAS=null; fetch(DELTADIS_API+'/painel/pagamento',{headers:cdHdr()}).then(function(r){return r.json();}).then(function(p){ if(p&&p.ok){ PG_ASAAS=!!p.configurado; pgAviso(); } }).catch(function(){});
   }).catch(function(e){ el('cd-imp-corpo').innerHTML='<div style="color:#f87171;font-size:13px">'+esc(e.message||'Não consegui abrir.')+'</div>'; });
 }
@@ -10410,6 +10410,7 @@ function pgPintar(){
   h+='<div style="margin-left:29px">'+ck('pg-pix-sc',PG.pix&&PG.pix.semCpf,'Cobrar Pix sem pedir CPF','Precisa de uma chave Pix ativa na conta Asaas da loja. Sem a chave, o card\u00e1pio continua pedindo o CPF. Depois de ligar, fa\u00e7a um Pix de teste.')+'</div>';
   h+=ck('pg-din',PG.dinheiro&&PG.dinheiro.on,'Dinheiro','Pago na entrega ou na retirada, com troco.');
   h+=ck('pg-car',c.on,'Cartão de crédito pelo app','O cliente paga no app com o cartão.')+num('pg-par',c.parcelas||1,'Parcelar em até','x',12)+num('pg-sj',c.semJuros||1,'Sem juros até','x',12)+num('pg-acr',c.acresc,'Acima disso, acréscimo de','% no total',30);
+  if(PG_CARDSEM&&PG_CARDSEM.em) h+='<div style="margin:8px 0 2px 29px;padding:10px 12px;border:1px solid #f59e0b;background:#fffbeb;color:#92400e;border-radius:10px;font-size:12.5px;line-height:1.45"><b>O cartão de um cliente não ficou salvo</b> em '+esc(new Date(PG_CARDSEM.em).toLocaleString('pt-BR'))+'. Peça ao Asaas a <b>tokenização de cartão de crédito</b> nesta conta.<br><span style="opacity:.8">Resposta do Asaas: status '+esc(PG_CARDSEM.status||'?')+' · campos: '+esc(PG_CARDSEM.campos||'?')+'</span></div>';
   h+=ck('pg-maq',PG.maquina&&PG.maquina.on,'Cartão na maquininha','Débito ou crédito na entrega ou na retirada.')+num('pg-deb',PG.maquina&&PG.maquina.descDebito,'Desconto no débito','%',30);
   /* (276) CARTÃO DO CLIENTE (NFC): aparece como "Cliente Crédito" no fechamento do garçom e do caixa */
   var cs=PG.cashless||{};
@@ -10423,7 +10424,7 @@ function pgPintar(){
   el('pgt-mesa').onchange=function(){ if(!this.checked) el('pgt-racha').checked=false; pgAviso(); }; el('pgt-racha').onchange=function(){ if(this.checked) el('pgt-mesa').checked=true; pgAviso(); }; pgAviso();
 }
 /* (159) sem o Asaas o cliente não vê o pagamento na mesa: avisa aqui em vez de a opção ficar ligada sem efeito */
-var PG_ASAAS=null;
+var PG_ASAAS=null, PG_CARDSEM=null;
 function pgAviso(){
   var b=el('pg-asaas'), m=el('pgt-mesa'); if(!b||!m) return;
   b.innerHTML=(m.checked&&PG_ASAAS===false)?'<div style="margin:10px 0 2px;padding:10px 12px;border:1px solid #f59e0b;background:#fffbeb;color:#92400e;border-radius:10px;font-size:12.5px;line-height:1.45"><b>Conecte o Asaas para isso aparecer.</b> Sem ele, o cliente continua vendo a conta antiga, mesmo com a opção ligada.<br><button class="btn sec sm" type="button" style="margin-top:8px" onclick="cdPagamento()">Conectar o Asaas</button></div>':'';
