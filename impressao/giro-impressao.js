@@ -88,6 +88,15 @@ function etiqueta(p, cfg) {
   if (p.obs) { b.ln(tr).bold(true); quebra('OBS: ' + p.obs, COLS).forEach(x => b.ln(x)); b.bold(false); }
   b.ln(tr).align(1);
   const cod = String(p.lab).replace(/[^0-9A-Za-z-]/g, '');
+  /* QR com o mesmo número: a câmera da maquininha lê melhor que as barras */
+  {
+    const q = bytesTxt(cod, cfg), nq = q.length + 3;
+    b.raw(0x1D, 0x28, 0x6B, 4, 0, 0x31, 0x41, 0x32, 0);          /* QR modelo 2 */
+    b.raw(0x1D, 0x28, 0x6B, 3, 0, 0x31, 0x43, 9);                /* tamanho do ponto */
+    b.raw(0x1D, 0x28, 0x6B, 3, 0, 0x31, 0x45, 0x31);             /* correção de erro M */
+    b.raw(0x1D, 0x28, 0x6B, nq & 255, nq >> 8, 0x31, 0x50, 0x30, ...q);
+    b.raw(0x1D, 0x28, 0x6B, 3, 0, 0x31, 0x51, 0x30).raw(10);
+  }
   b.raw(0x1D, 0x68, 70, 0x1D, 0x77, 2, 0x1D, 0x48, 0, 0x1D, 0x6B, 73, cod.length + 2, 0x7B, 0x42, ...bytesTxt(cod, cfg)).raw(10);
   b.bold(true).size(1, 2).ln(String(p.lab)).size(1, 1).bold(false);
   b.raw(10, 10, 10, 0x1D, 0x56, 66, 3);   /* avança e corta */
