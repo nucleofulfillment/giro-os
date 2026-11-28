@@ -13,7 +13,7 @@
 <title>Cardápio · LiveFood</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
-<!-- LIVEFOOD-42 --><meta name="versao" content="LIVEFOOD-42">
+<!-- LIVEFOOD-43 --><meta name="versao" content="LIVEFOOD-43">
 <style>
 :root{--bg:#0b0b0d;--tx:#fff;--mut:rgba(255,255,255,.68);--pri:#FF5A00;--pri2:#FF5A00;--glass:rgba(18,18,22,.62);--line:rgba(255,255,255,.16)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -1606,8 +1606,8 @@ function ckCid(id){ CK.cid=id; if($('mc-tela')) mesaContaMonta(); else if(MP.for
 function ckCardNum(e){ var d=e.value.replace(/\D/g,'').slice(0,19); e.value=d.replace(/(\d{4})(?=\d)/g,'$1 '); }
 function ckCardVal(e){ var d=e.value.replace(/\D/g,'').slice(0,4); e.value=d.length>2?d.slice(0,2)+'/'+d.slice(2):d; }
 function ckLuhn(n){ var s=0,alt=false,i,d; for(i=n.length-1;i>=0;i--){ d=+n[i]; if(alt){ d*=2; if(d>9) d-=9; } s+=d; alt=!alt; } return s%10===0; }
-/* (LIVEFOOD-32) Ler o cartão pela câmera: a foto é lida NO APARELHO (não é enviada nem guardada) e preenche número, validade e CVV.
-   O CVV só preenche o campo desta compra: nunca é guardado. Se a leitura falhar, o cliente digita como sempre. Biblioteca em /ocr (do próprio site). */
+/* (LIVEFOOD-32) Ler o cartão pela câmera: a foto é lida NO APARELHO (não é enviada nem guardada) e preenche número, validade e CVC.
+   O CVC só preenche o campo desta compra: nunca é guardado. Se a leitura falhar, o cliente digita como sempre. Biblioteca em /ocr (do próprio site). */
 var SC={ocup:0};
 function scPode(){ try{ return !!(window.WebAssembly&&window.Worker&&window.Promise&&window.URL&&URL.createObjectURL&&document.createElement('canvas').getContext); }catch(e){ return false; } }
 function scSt(t){ var e=$('sc-st'); if(e) e.textContent=t||''; }
@@ -1624,7 +1624,7 @@ function scTela(im,giro,lado,troca){
   for(i=0;i<p.length;i+=4){ g=(p[i]-mn)*f; if(esc_) g=255-g; p[i]=p[i+1]=p[i+2]=g; }
   x.putImageData(d,0,0); return c;
 }
-/* tira número (confere pelo dígito verificador), validade e CVV do texto lido. Na dúvida deixa em branco: o cliente digita */
+/* tira número (confere pelo dígito verificador), validade e CVC do texto lido. Na dúvida deixa em branco: o cliente digita */
 function scNumOk(n){ if(!ckLuhn(n)||/^(\d)\1+$/.test(n)) return false; var l=n.length; return l===16?/^([2456]|35)/.test(n):l===15?/^3[47]/.test(n):l===14?/^3[068]/.test(n):false; }   /* tamanho coerente com a bandeira: um número "montado" não passa por acaso */
 /* (LIVEFOOD-37) uma linha serve de nome? 2 a 5 palavras só de letras (maiúsculas ou Só A Inicial), que não seja rótulo, aviso, banco ou bandeira.
    Devolve o nome em maiúsculas, ou '' */
@@ -1670,7 +1670,7 @@ function scParse(t){
   r.val=voto(ls.map(function(x){ return x.val; })).v;
   var nm=[]; ls.forEach(function(x){ x.nomes.forEach(function(v){ nm.push(v); }); }); var vn=voto(nm), emp=0; vn.o.forEach(function(v){ if(v!==vn.v&&vn.c[v]===vn.n) emp=1; }); if(vn.v&&!emp) r.nome=vn.v;   /* nome: o que mais se repete; empate fica em branco */
   var nc=/^3[47]/.test(r.num)?4:3, serve=function(v){ return !!v&&v.length===nc&&r.num.indexOf(v)<0; };
-  r.cvv=voto(ls.map(function(x){ return serve(x.cvv)?x.cvv:''; })).v;   /* com o rótulo CVV ao lado */
+  r.cvv=voto(ls.map(function(x){ return serve(x.cvv)?x.cvv:''; })).v;   /* com o rótulo CVC ao lado */
   if(!r.cvv){ var todos=[]; ls.forEach(function(x){ x.ops.forEach(function(v){ if(serve(v)) todos.push(v); }); }); var vt=voto(todos), seg=0; vt.o.forEach(function(v){ if(v!==vt.v&&vt.c[v]>seg) seg=vt.c[v]; }); if(vt.v&&(vt.o.length===1||(vt.n>=2&&vt.n>seg))) r.cvv=vt.v; }
   return r;
 }
@@ -1681,19 +1681,19 @@ function scLe(f){
     .then(function(){
       /* (LIVEFOOD-34) a leitura erra quando a letra fica grande ou pequena demais: cada giro é tentado em vários tamanhos (e, por último,
          com claro e escuro trocados), e cada tentativa de dois jeitos (tudo; só algarismos). Achado o número, faz até 4 leituras a mais
-         desse giro para sair também a validade e o CVV, que têm letra menor. Para em 40 s e devolve o que tiver. */
+         desse giro para sair também a validade e o CVC, que têm letra menor. Para em 40 s e devolve o que tiver. */
       var t0=Date.now(), gde=Math.max(im.width,im.height), vars=[[1800,0],[1100,0]].concat(gde>1900?[[2600,0]]:[]).concat([[1800,1]]), tx='', melhor=null, soDig=0, extras=0, nomes=[], exNome=0;
       var completo=function(r){ return !!(r&&r.num&&r.val&&r.cvv); };
       var le=function(tela,dig){ var tinha=!!melhor, p=dig!==soDig?w.setParameters({tessedit_char_whitelist:dig?'0123456789/ ':''}).then(function(){ soDig=dig; }):Promise.resolve(); return p.then(function(){ return w.recognize(tela); }).then(function(o){ if(tinha) extras++; var d=(o&&o.data)||{}; tx+=(tx?'\f':'')+(d.text||'');
           if(!dig){ var ls=d.lines&&d.lines.length?d.lines:String(d.text||'').split(/\n/).map(function(t){ return {text:t}; }); ls.forEach(function(l){ var n=scNomeOk(l.text); if(n) nomes.push({n:n,h:l.bbox?(l.bbox.y1-l.bbox.y0)/tela.height:0,c:l.confidence}); }); }   /* (LIVEFOOD-37) linhas que podem ser o nome, com a altura da letra */
           var r=scParse(tx); if(r.num) melhor=r; return r; }); };
-      var chega=function(r){ if(Date.now()-t0>40000) return true; if(completo(r)){ if(nomes.length||exNome>=2) return true; exNome++; return false; } return !!(melhor&&extras>=4); };   /* número, validade e CVV lidos mas nenhum nome: até 2 leituras a mais, em outro tamanho */
+      var chega=function(r){ if(Date.now()-t0>40000) return true; if(completo(r)){ if(nomes.length||exNome>=2) return true; exNome++; return false; } return !!(melhor&&extras>=4); };   /* número, validade e CVC lidos mas nenhum nome: até 2 leituras a mais, em outro tamanho */
       var refs=[]; try{ refs=[CT.conta&&CT.conta.nome,CT.conta&&CT.conta.cobranca&&CT.conta.cobranca.nome]; }catch(e){}
       var passo=function(n){
         var g=Math.floor(n/vars.length), vi=n%vars.length;
         if(g>=giros.length||Date.now()-t0>40000) return melhor;
         if(vi===0){ if(melhor) return melhor; tx=''; nomes=[]; }   /* giro novo só se o anterior não achou o número */
-        scSt(melhor?'Lendo a validade e o CVV…':'Lendo o cartão… ('+(g+1)+'/'+giros.length+')');
+        scSt(melhor?'Lendo a validade e o CVC…':'Lendo o cartão… ('+(g+1)+'/'+giros.length+')');
         var tela=scTela(im,giros[g],vars[vi][0],vars[vi][1]);
         return le(tela,0).then(function(r){ if(chega(r)) return melhor; if(completo(r)) return passo(n+1); /* só falta o nome: ler só algarismos não ajuda */ return le(tela,1).then(function(r2){ if(chega(r2)) return melhor; return passo(n+1); }); });
       };
@@ -1708,13 +1708,13 @@ function scArq(inp){
     var n=$('ck-cn'), v=$('ck-cval'), c=$('ck-ccv'); if(!n){ scSt(''); return; }
     n.value=r.num.replace(/(\d{4})(?=\d)/g,'$1 '); if(v&&r.val) v.value=r.val; if(c) c.value=r.cvv||'';
     var no=$('ck-cnome'); if(no&&r.nome) no.value=r.nome;   /* (LIVEFOOD-37) o nome lido na foto vale para este cartão; sem nome lido, fica o que já estava */
-    scSt('Confira os dados lidos'+(r.val?'':', digite a validade')+(r.cvv?'':' e digite o CVV')+' antes de pagar.');
+    scSt('Confira os dados lidos'+(r.val?'':', digite a validade')+(r.cvv?'':' e digite o CVC')+' antes de pagar.');
     var falta=!r.val?v:(!r.cvv?c:((no&&!no.value.trim())?no:null)); if(falta){ try{ falta.focus(); }catch(e){} }
     if(r.val&&r.cvv&&no&&!no.value.trim()) scSt('Confira os dados lidos e digite o nome como está no cartão.');
   }).catch(function(){ SC.ocup=0; scSt('A leitura pela câmera não funcionou neste aparelho. Digite os dados do cartão.'); });
 }
 /* (LIVEFOOD-31) enquanto o Asaas não libera o token: o cartão fica guardado SÓ NESTE APARELHO, cifrado (número, nome e validade).
-   Nunca o CVV, e nada disso vai para o servidor do LiveFood além do que o pagamento já envia. A chave fica no navegador e não pode ser copiada dele.
+   Nunca o CVC, e nada disso vai para o servidor do LiveFood além do que o pagamento já envia. A chave fica no navegador e não pode ser copiada dele.
    Vale só para quem entrou com o código do WhatsApp; sair da conta apaga. Quando o Asaas devolver o token, a cópia do aparelho é apagada. */
 var DV={c:null,k:null,de:'',err:'',nova:0};
 function dvFone(){ var f=String((CT.conta&&CT.conta.fone)||''); return CT.tok&&f&&!/^mesa/i.test(f)?f.replace(/\D/g,''):''; }
@@ -1796,12 +1796,12 @@ function ckCartaoHtml(c){
     var ml=''; try{ ml=localStorage.getItem('lf_mail')||''; }catch(x){}
     var cob=c.cobranca||{}; if(cob.email) ml=cob.email;   /* (LIVEFOOD-30) o que já foi preenchido numa compra volta pronto */
     var dv=DV.c;   /* (LIVEFOOD-31) cartão guardado neste aparelho */
-    if(dv) h+='<div class="ad on" id="dv-fx" style="cursor:default;margin-top:6px"><div class="tx"><b>Cartão •••• '+esc(String(dv.numero).slice(-4))+'</b><small>Guardado neste aparelho · digite só o CVV</small></div><div class="ac"><button type="button" class="lk" onclick="dvApaga()">Remover</button></div></div>';
+    if(dv) h+='<div class="ad on" id="dv-fx" style="cursor:default;margin-top:6px"><div class="tx"><b>Cartão •••• '+esc(String(dv.numero).slice(-4))+'</b><small>Guardado neste aparelho · digite só o CVC</small></div><div class="ac"><button type="button" class="lk" onclick="dvApaga()">Remover</button></div></div>';
     h+='<div class="nt" id="dv-er" style="font-size:12.5px;margin-top:6px;color:#b45309">'+esc(dv?'':dvErroTxt())+'</div>';   /* (LIVEFOOD-41) */
     if(scPode()) h+='<button type="button" onclick="scAbre()" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:8px;padding:12px;border:2px dashed var(--pri);border-radius:14px;background:transparent;color:inherit;font:inherit;font-weight:700;font-size:14.5px;cursor:pointer">📷 Ler o cartão pela câmera</button><input type="file" id="sc-in" accept="image/*" capture="environment" style="display:none" onchange="scArq(this)"><div class="nt" id="sc-st" style="font-size:12.5px;margin-top:6px" aria-live="polite"></div>';   /* (LIVEFOOD-32) */
-    h+='<form autocomplete="on" onsubmit="return false" style="margin:6px 0 0"><input class="cin" id="ck-cn" name="cardnumber" type="tel" inputmode="numeric" autocomplete="cc-number" maxlength="23" placeholder="Número do cartão" value="'+esc(dv?dvMasc():'')+'" oninput="ckCardNum(this)"><input class="cin" id="ck-cnome" name="ccname" autocomplete="cc-name" maxlength="60" placeholder="Nome como está no cartão" value="'+esc((dv&&dv.nome)||cob.nome||'')+'" style="margin-top:8px"><div style="display:flex;gap:8px;margin-top:8px"><input class="cin" id="ck-cval" name="exp-date" type="tel" inputmode="numeric" autocomplete="cc-exp" maxlength="5" placeholder="MM/AA" value="'+esc(dv?dv.mes+'/'+dv.ano:'')+'" oninput="ckCardVal(this)" style="flex:1"><input class="cin" id="ck-ccv" name="cvc" type="tel" inputmode="numeric" autocomplete="cc-csc" maxlength="4" placeholder="CVV" style="flex:1"></div>'
+    h+='<form autocomplete="on" onsubmit="return false" style="margin:6px 0 0"><input class="cin" id="ck-cn" name="cardnumber" type="tel" inputmode="numeric" autocomplete="cc-number" maxlength="23" placeholder="Número do cartão" value="'+esc(dv?dvMasc():'')+'" oninput="ckCardNum(this)"><input class="cin" id="ck-cnome" name="ccname" autocomplete="cc-name" maxlength="60" placeholder="Nome como está no cartão" value="'+esc((dv&&dv.nome)||cob.nome||'')+'" style="margin-top:8px"><div style="display:flex;gap:8px;margin-top:8px"><input class="cin" id="ck-cval" name="exp-date" type="tel" inputmode="numeric" autocomplete="cc-exp" maxlength="5" placeholder="MM/AA" value="'+esc(dv?dv.mes+'/'+dv.ano:'')+'" oninput="ckCardVal(this)" style="flex:1"><input class="cin" id="ck-ccv" name="cvc" type="tel" inputmode="numeric" autocomplete="cc-csc" maxlength="4" placeholder="CVC" style="flex:1"></div>'
       +'<input class="cin" id="ck-cmail" name="email" type="email" inputmode="email" autocomplete="email" maxlength="90" placeholder="Seu e-mail" value="'+esc(ml)+'" style="margin-top:8px"><div style="display:flex;gap:8px;margin-top:8px"><input class="cin" id="ck-ccep" name="postal" autocomplete="postal-code" type="tel" inputmode="numeric" maxlength="9" placeholder="CEP da fatura" value="'+esc(cob.cep||(e?e.cep:''))+'" style="flex:2"><input class="cin" id="ck-cnum" maxlength="12" placeholder="Nº" value="'+esc(cob.numero||(e?e.numero:''))+'" style="flex:1"></div>'
-      +'<label class="ck-sv" style="display:flex;align-items:center;gap:12px;margin-top:14px;padding:13px 14px;border:2px solid var(--pri);border-radius:14px;background:color-mix(in srgb,var(--pri) 13%,transparent);font-size:14.5px;font-weight:700;line-height:1.3;cursor:pointer"><input type="checkbox" id="ck-csv"'+(csvMarcada(dv)?' checked':'')+' onchange="csvGrava(this.checked)" style="width:24px;height:24px;flex:none;accent-color:var(--pri);margin:0"><span>Salvar este cartão para compras futuras<small style="display:block;font-weight:500;font-size:12.5px;opacity:.8;margin-top:2px">Na próxima vez você paga mais rápido.</small></span></label><div class="nt" style="font-size:12.5px;margin-top:6px">Pagamento à vista no crédito. O CVV nunca fica guardado, e a foto do cartão é lida no seu aparelho, sem ser enviada. Se o cartão não puder ser salvo na sua conta, ele fica guardado só neste aparelho e na próxima compra você digita apenas o CVV.</div></form>';
+      +'<label class="ck-sv" style="display:flex;align-items:center;gap:12px;margin-top:14px;padding:13px 14px;border:2px solid var(--pri);border-radius:14px;background:color-mix(in srgb,var(--pri) 13%,transparent);font-size:14.5px;font-weight:700;line-height:1.3;cursor:pointer"><input type="checkbox" id="ck-csv"'+(csvMarcada(dv)?' checked':'')+' onchange="csvGrava(this.checked)" style="width:24px;height:24px;flex:none;accent-color:var(--pri);margin:0"><span>Salvar este cartão para compras futuras<small style="display:block;font-weight:500;font-size:12.5px;opacity:.8;margin-top:2px">Na próxima vez você paga mais rápido.</small></span></label><div class="nt" style="font-size:12.5px;margin-top:6px">Pagamento à vista no crédito. O CVC nunca fica guardado, e a foto do cartão é lida no seu aparelho, sem ser enviada. Se o cartão não puder ser salvo na sua conta, ele fica guardado só neste aparelho e na próxima compra você digita apenas o CVC.</div></form>';
   }
   return h;
 }
@@ -1939,7 +1939,7 @@ function ckChamaGar(m){ fetch(API+'/food/garcom',{method:'POST',headers:{'Conten
       if(nm.length<13||!ckLuhn(nm)){ ctErro('Confira o número do cartão.'); return; }
       if(gv('ck-cnome').length<3){ ctErro('Digite o nome como está no cartão.'); return; }
       if(vl.length!==2||vl[0].length!==2||vl[1].length!==2){ ctErro('Digite a validade no formato MM/AA.'); return; }
-      if(gv('ck-ccv').length<3){ ctErro('Digite o CVV do cartão (3 ou 4 números).'); return; }
+      if(gv('ck-ccv').length<3){ ctErro('Digite o CVC do cartão (3 ou 4 números).'); return; }
       if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(mail)){ ctErro('Digite um e-mail válido.'); return; }
       if(gv('ck-ccep').replace(/\D/g,'').length!==8||!gv('ck-cnum')){ ctErro('Informe o CEP e o número da fatura do cartão.'); return; }
       try{ localStorage.setItem('lf_mail',mail); }catch(x){}
@@ -2013,7 +2013,7 @@ function pdConfere(){
 }
 function pdVoltou(){ if(D&&!document.hidden&&pdLer()){ pdLiga(); pdConfere(); } }
 document.addEventListener('visibilitychange',pdVoltou); window.addEventListener('pageshow',pdVoltou); window.addEventListener('focus',pdVoltou);
-function avisoCartao(){ return '<div style="margin-top:16px;background:#fff7ed;color:#9a3412;border:1px solid #fdba74;border-radius:12px;padding:12px;font-size:13.5px;line-height:1.45"><b>Pagamento aprovado.</b> '+(CK.dvOk?'O cartão ficou guardado neste aparelho. Na próxima compra, digite só o CVV.':'O cartão não ficou salvo no LiveFood. Guarde o cartão no seu celular (Google ou Apple) para ele preencher sozinho na próxima compra.')+'</div>'; }
+function avisoCartao(){ return '<div style="margin-top:16px;background:#fff7ed;color:#9a3412;border:1px solid #fdba74;border-radius:12px;padding:12px;font-size:13.5px;line-height:1.45"><b>Pagamento aprovado.</b> '+(CK.dvOk?'O cartão ficou guardado neste aparelho. Na próxima compra, digite só o CVC.':'O cartão não ficou salvo no LiveFood. Guarde o cartão no seu celular (Google ou Apple) para ele preencher sozinho na próxima compra.')+'</div>'; }
 function ckOk(p){
   if(PD.ok===p.id) return; PD.ok=p.id; clearInterval(CK.tmr);
   pdEsvazia(p);
@@ -2132,7 +2132,7 @@ function mpPagar(){
       if(nm.length<13||!ckLuhn(nm)){ ctErro('Confira o número do cartão.'); return; }
       if(gv('ck-cnome').length<3){ ctErro('Digite o nome como está no cartão.'); return; }
       if(vl.length!==2||vl[0].length!==2||vl[1].length!==2){ ctErro('Digite a validade no formato MM/AA.'); return; }
-      if(gv('ck-ccv').length<3){ ctErro('Digite o CVV do cartão (3 ou 4 números).'); return; }
+      if(gv('ck-ccv').length<3){ ctErro('Digite o CVC do cartão (3 ou 4 números).'); return; }
       if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(mail)){ ctErro('Digite um e-mail válido.'); return; }
       if(gv('ck-ccep').replace(/\D/g,'').length!==8||!gv('ck-cnum')){ ctErro('Informe o CEP e o número da fatura do cartão.'); return; }
       try{ localStorage.setItem('lf_mail',mail); }catch(x){}
@@ -2177,7 +2177,7 @@ function mpVigia(){
 function mpOkSvg(){ return '<svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg>'; }
 function mpPago(){
   MP.formaTela=false; clearInterval(MP.tmr);
-  if(MP.semCartao){ MP.semCartao=0; toast(MP.dvOk?'Pago! Cartão guardado neste aparelho: na próxima, só o CVV.':'Pago! O cartão não ficou salvo no LiveFood.',true); }
+  if(MP.semCartao){ MP.semCartao=0; toast(MP.dvOk?'Pago! Cartão guardado neste aparelho: na próxima, só o CVC.':'Pago! O cartão não ficou salvo no LiveFood.',true); }
   var cad=MP.novoCad?'<div style="margin-top:16px;background:#ffffff14;border-radius:12px;padding:12px;font-size:13.5px;line-height:1.45">Cadastro feito. Na próxima vez, seus dados já estarão salvos e o pagamento é mais rápido.</div>':''; MP.novoCad=0;
   if(MP.rp){ if(window.LiveApp) LiveApp.comemorar({titulo:'Pagamento confirmado!',sub:'Obrigado pela visita!'});
     abreFolha('<div class="wb" style="text-align:center;padding:36px 20px 24px">'+mpOkSvg()+'<div style="font-size:22px;font-weight:800;margin-top:14px">Pagamento confirmado</div><div style="margin-top:8px;color:var(--mut);font-size:14.5px;line-height:1.5">Sua parte da mesa '+esc(MP.rp.parte.mesa)+' foi paga: <b style="color:#fff">'+brl(MP.parte.valor)+'</b>.<br>Quem abriu a conta já está vendo.</div>'+cad+'</div><div class="rod"><button class="bt c" onclick="fechaSheet()">Ver '+esc(catRef())+'</button></div>',true); return; }
@@ -2489,8 +2489,8 @@ function contaTela(){
   } else if(ab==='pagto'){
     h+='<div class="cl" style="margin-top:16px">Meus cartões</div>';
     var cts=c.cartoes||[];
-    if(!cts.length&&!DV.c) h+='<div class="ad" style="cursor:default"><div class="tx"><b>Nenhum cartão salvo</b><small>No checkout, escolha Cartão de crédito e marque "Salvar este cartão". O CVV nunca fica guardado.</small></div></div>';
-    if(DV.c) h+='<div class="ad" style="cursor:default"><div class="tx"><b>Cartão •••• '+esc(String(DV.c.numero).slice(-4))+'</b><small>Guardado só neste aparelho · no pagamento você digita o CVV</small></div><div class="ac"><button class="lk" style="color:#f87171" onclick="dvApaga()">Remover</button></div></div>';
+    if(!cts.length&&!DV.c) h+='<div class="ad" style="cursor:default"><div class="tx"><b>Nenhum cartão salvo</b><small>No checkout, escolha Cartão de crédito e marque "Salvar este cartão". O CVC nunca fica guardado.</small></div></div>';
+    if(DV.c) h+='<div class="ad" style="cursor:default"><div class="tx"><b>Cartão •••• '+esc(String(DV.c.numero).slice(-4))+'</b><small>Guardado só neste aparelho · no pagamento você digita o CVC</small></div><div class="ac"><button class="lk" style="color:#f87171" onclick="dvApaga()">Remover</button></div></div>';
     cts.forEach(function(k){ h+='<div class="ad" style="cursor:default"><div class="tx"><b>'+esc(k.bandeira||'Cartão')+' •••• '+esc(k.final||'')+'</b><small>Crédito à vista</small></div><div class="ac"><button class="lk" style="color:#f87171" onclick="ctCartaoDel(\''+esc(k.id)+'\')">Remover</button></div></div>'; });
   } else {
     h+='<div class="cl" style="margin-top:16px">Histórico de pedidos</div><div id="cc-hist"><div class="nt" style="font-size:13px">Carregando…</div></div>';
