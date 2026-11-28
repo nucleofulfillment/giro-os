@@ -20,11 +20,12 @@ function css(){ if(document.getElementById('css-bipador')) return; var s=documen
   document.head.appendChild(s); }
 function som(ok){ try{ navigator.vibrate&&navigator.vibrate(ok?60:[120,60,120]); }catch(e){}
   try{ B.ctx=B.ctx||new (window.AudioContext||window.webkitAudioContext)(); var a=B.ctx; if(a.state==='suspended') a.resume(); var o=a.createOscillator(), g=a.createGain(), t=a.currentTime; o.type='square'; o.frequency.value=ok?1800:320; g.gain.setValueAtTime(.12,t); g.gain.exponentialRampToValueAtTime(.001,t+(ok?.12:.35)); o.connect(g); g.connect(a.destination); o.start(t); o.stop(t+(ok?.12:.35)); }catch(e){} }
-function para(){ cancelAnimationFrame(B.raf); B.raf=0; try{ if(B.zx){ B.zx.reset(); B.zx=null; } }catch(e){} if(B.stream){ B.stream.getTracks().forEach(function(t){ t.stop(); }); B.stream=null; } }
-function fechar(){ para(); if(B.box){ B.box.remove(); B.box=null; } document.removeEventListener('keydown', esc, true); }
+function para(){ cancelAnimationFrame(B.raf); clearTimeout(B.raf); B.raf=0; try{ if(B.zx){ B.zx.reset(); B.zx=null; } }catch(e){} if(B.stream){ B.stream.getTracks().forEach(function(t){ t.stop(); }); B.stream=null; } }
+function fechar(){ para(); if(B.box){ B.box.remove(); B.box=null; } document.removeEventListener('keydown', esc, true); if(B.tec){ document.removeEventListener('keydown', B.tec, true); B.tec=null; } }
 function esc(e){ if(e.key==='Escape') fechar(); }
 function erro(t){ var e=B.box&&B.box.querySelector('.bpd-e'); if(e) e.textContent=t||''; }
-function lido(c){ c=String(c||'').trim(); if(!c||!B.op) return; if(Date.now()<B.ate) return; B.ate=Date.now()+1500;
+function lido(c){ c=String(c||'').trim(); if(!c||!B.op) return; if(Date.now()<B.ate) return; if(B.op.continuo&&c===B.ult&&Date.now()-B.ultT<5000) return;   /* a mesma comanda parada na frente da câmera não repete */
+  B.ate=Date.now()+1500; B.ult=c; B.ultT=Date.now();
   var r; try{ r=B.op.aoLer(c, fechar); }catch(e){ console.error(e); }
   som(r!==false);
   if(r===false){ erro('Código '+c+' não encontrado.'); return; }
@@ -35,10 +36,40 @@ function le(v){
     }).catch(function(){ leZx(v); }); return; }
   leZx(v);
 }
+/* sem o leitor do navegador (maquininha antiga, iPhone): a biblioteca ZXing lê um quadro por vez, copiado para um canvas.
+   Alterna o meio da imagem e o quadro inteiro, e mostra na tela o que está fazendo (para saber onde parou, se parar). */
 function leZx(v){
-  var vai=function(){ if(!B.stream||!window.ZXing) return; var r=new ZXing.BrowserMultiFormatReader(); B.zx=r; r.decodeFromStream(B.stream,v,function(res){ if(res) lido(res.getText()); }).catch(function(){}); };
+  var vai=function(){
+    if(!B.stream) return;
+    if(!window.ZXing){ erro('Não consegui carregar o leitor. Digite o código.'); return; }
+    var Z=window.ZXing, hints=new Map(), leitor, cv=document.createElement('canvas'), cx=cv.getContext('2d'), n=0, falha='', meu=B.stream;
+    try{
+      hints.set(Z.DecodeHintType.POSSIBLE_FORMATS,[Z.BarcodeFormat.CODE_128,Z.BarcodeFormat.CODE_39,Z.BarcodeFormat.EAN_13,Z.BarcodeFormat.EAN_8,Z.BarcodeFormat.ITF]);
+      hints.set(Z.DecodeHintType.TRY_HARDER,true);
+      leitor=new Z.MultiFormatReader(); leitor.setHints(hints);
+    }catch(e){ erro('O leitor não funcionou neste aparelho ('+(e.message||e.name)+'). Digite o código.'); return; }
+    (function passo(){
+      if(B.stream!==meu) return;
+      var w=v.videoWidth, h=v.videoHeight;
+      if(v.readyState>=2&&w&&h){
+        n++;
+        var meio=n%3!==0, ch=meio?Math.round(h*0.45):h, y=meio?Math.round((h-ch)/2):0, k=Math.min(1,1280/w);
+        cv.width=Math.round(w*k); cv.height=Math.round(ch*k);
+        try{
+          cx.drawImage(v,0,y,w,ch,0,0,cv.width,cv.height);
+          var fonte=new Z.HTMLCanvasElementLuminanceSource(cv);
+          var bin=n%2?new Z.HybridBinarizer(fonte):new Z.GlobalHistogramBinarizer(fonte);
+          var r=leitor.decodeWithState(new Z.BinaryBitmap(bin));
+          if(r&&r.getText()) lido(r.getText());
+        }catch(e){ if(e&&!/NotFound|Checksum|Format/.test((e.getKind&&e.getKind())||e.name||'')&&!(Z.NotFoundException&&e instanceof Z.NotFoundException)) falha=e.message||e.name||'erro'; }
+        info('Lendo '+w+'x'+h+' · '+n+' tentativas'+(falha?' · '+String(falha).slice(0,60):''));
+      }
+      B.raf=setTimeout(passo,160);
+    })();
+  };
   if(window.ZXing){ vai(); return; }
-  var s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js'; s.onload=vai; s.onerror=function(){ erro('Não consegui ligar o leitor pela câmera. Digite o código.'); }; document.head.appendChild(s);
+  info('Carregando o leitor…');
+  var s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js'; s.onload=vai; s.onerror=function(){ erro('Não consegui carregar o leitor (internet). Digite o código.'); }; document.head.appendChild(s);
 }
 /* câmera de TRÁS: aparelho antigo ignora o pedido "environment" e abre a da frente, então escolhemos pela lista de câmeras.
    O botão "Trocar câmera" (proxima=true) passa para a outra e o aparelho guarda a escolha. */
@@ -66,7 +97,7 @@ function cameraAntiga(fontes,proxima){
   if(proxima) q=(q+1)%fontes.length;
   try{ localStorage.setItem('lf_cam_ant',ids[q]); }catch(e){}
   info('Câmeras: '+fontes.length+' ('+fontes.map(function(s){ return s.facing||s.label||'sem nome'; }).join(', ')+') · usando a '+(q+1));
-  return camPede({video:{mandatory:{sourceId:ids[q]}},audio:false}).catch(function(){ return camPede({video:{optional:[{sourceId:ids[q]}]},audio:false}); })
+  return camPede({video:{mandatory:{sourceId:ids[q],minWidth:1280,minHeight:720}},audio:false}).catch(function(){ return camPede({video:{mandatory:{sourceId:ids[q]}},audio:false}); }).catch(function(){ return camPede({video:{optional:[{sourceId:ids[q]}]},audio:false}); })
     .catch(function(e){ info('Câmeras: '+fontes.length+' · não abriu a '+(q+1)+' ('+((e&&(e.name||e.message))||'erro')+')'); return camPede({video:true,audio:false}); });
 }
 function info(t){ window.Bipador.info=t; var e=document.querySelector('.bpd-i'); if(e) e.textContent=t; }
@@ -104,11 +135,14 @@ window.Bipador={
     d.querySelector('b').textContent=B.op.titulo||'Bipar código de barras';
     d.querySelector('.bpd-d').textContent=B.op.dica||'Aponte a câmera para o código de barras. Leitor USB também funciona.';
     document.body.appendChild(d); B.box=d;
-    var inp=d.querySelector('input'), ok=function(){ var c=inp.value.trim(); inp.value=''; if(c){ B.ate=0; lido(c); } inp.focus(); };
+    var inp=d.querySelector('input'), toque=('ontouchstart' in window), ok=function(){ var c=inp.value.trim(); inp.value=''; if(c){ B.ate=0; lido(c); } if(!toque) inp.focus(); };
+    if(toque){ inp.blur(); try{ document.activeElement&&document.activeElement.blur(); }catch(e){}
+      B.tec=function(e){ if(B.box!==d||document.activeElement===inp) return; if(e.keyCode===13){ e.preventDefault(); ok(); } else if(e.key&&e.key.length===1&&/[0-9A-Za-z-]/.test(e.key)) inp.value+=e.key; else if(e.keyCode===8) inp.value=inp.value.slice(0,-1); };
+      document.addEventListener('keydown',B.tec,true); }
     d.querySelector('.bpd-m button').onclick=ok; inp.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); ok(); } });
     d.querySelector('.bpd-x').onclick=fechar; d.addEventListener('click',function(e){ if(e.target===d) fechar(); });
     document.addEventListener('keydown', esc, true);
-    setTimeout(function(){ try{ inp.focus({preventScroll:true}); }catch(e){} },80);
+    if(!toque) setTimeout(function(){ try{ inp.focus({preventScroll:true}); }catch(e){} },80);
     var v=d.querySelector('video');
     var liga=function(proxima){ para(); camera(proxima).then(function(st){
       if(B.box!==d){ camPara(st); return; }
