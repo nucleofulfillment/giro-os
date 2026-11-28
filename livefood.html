@@ -13,7 +13,7 @@
 <title>Cardápio · LiveFood</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
-<!-- LIVEFOOD-35 --><meta name="versao" content="LIVEFOOD-35">
+<!-- LIVEFOOD-36 --><meta name="versao" content="LIVEFOOD-36">
 <style>
 :root{--bg:#0b0b0d;--tx:#fff;--mut:rgba(255,255,255,.68);--pri:#FF5A00;--pri2:#FF5A00;--glass:rgba(18,18,22,.62);--line:rgba(255,255,255,.16)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -1949,9 +1949,19 @@ function ckConfere(){
    (ou a tela do QR Code ser fechada); mesmo assim conferimos, mostramos a confirmação e esvaziamos a sacola. */
 var PD={tmr:null,busca:0,ok:''};
 function pdK(){ return 'lf_pend_'+(D.cli||CLI); }
+function pdItem(i){ return JSON.stringify([i.p,i.tam,i.sab,i.borda,i.adds,i.obs,i.qty]); }
 function pdSac(){ return JSON.stringify(SAC.map(function(i){ return [i.p,i.tam,i.sab,i.borda,i.adds,i.obs,i.qty]; })); }
+/* (LIVEFOOD-36) pedido pago: tira da sacola os itens que foram no pedido e deixa só o que o cliente pôs depois. Antes era tudo ou nada:
+   qualquer diferença na sacola (ou outra aba aberta com a sacola antiga) fazia o pedido pago continuar inteiro na sacola. */
+function pdEsvazia(p){
+  var x=pdLer(); sacLer();   /* relê do aparelho: outra aba pode ter mexido na sacola */
+  if(x&&x.id===p.id){ pdSolta(); if(x.itens&&x.itens.length){ var rest=x.itens.slice(); SAC=SAC.filter(function(i){ var k=rest.indexOf(pdItem(i)); if(k<0) return true; rest.splice(k,1); return false; }); } else if(!x.sac||x.sac===pdSac()) SAC=[]; }
+  else SAC=[];
+  sacGrava();
+}
+window.addEventListener('storage',function(e){ try{ if(D&&e.key===lsk()) sacLer(); }catch(x){} });   /* sacola igual em todas as abas */
 function pdLer(){ try{ return JSON.parse(localStorage.getItem(pdK())||'null'); }catch(e){ return null; } }
-function pdGrava(p){ try{ localStorage.setItem(pdK(),JSON.stringify({id:p.id,t:Date.now(),sac:pdSac(),ctk:ctk()})); }catch(e){} pdLiga(); }
+function pdGrava(p){ try{ localStorage.setItem(pdK(),JSON.stringify({id:p.id,t:Date.now(),sac:pdSac(),itens:SAC.map(pdItem),ctk:ctk()})); }catch(e){} pdLiga(); }
 function pdSolta(){ try{ localStorage.removeItem(pdK()); }catch(e){} clearInterval(PD.tmr); PD.tmr=null; }
 function pdLiga(){ if(!PD.tmr) PD.tmr=setInterval(pdConfere,5000); }
 function pdConfere(){
@@ -1970,8 +1980,7 @@ document.addEventListener('visibilitychange',pdVoltou); window.addEventListener(
 function avisoCartao(){ return '<div style="margin-top:16px;background:#fff7ed;color:#9a3412;border:1px solid #fdba74;border-radius:12px;padding:12px;font-size:13.5px;line-height:1.45"><b>Pagamento aprovado.</b> '+(CK.dvOk?'O cartão ficou guardado neste aparelho. Na próxima compra, digite só o CVV.':'O cartão não ficou salvo no LiveFood. Guarde o cartão no seu celular (Google ou Apple) para ele preencher sozinho na próxima compra.')+'</div>'; }
 function ckOk(p){
   if(PD.ok===p.id) return; PD.ok=p.id; clearInterval(CK.tmr);
-  var x=pdLer(), mudou=false; if(x&&x.id===p.id){ mudou=x.sac!==pdSac(); pdSolta(); }
-  if(!mudou){ SAC=[]; sacGrava(); }   /* sacola montada de novo depois do Pix: não apaga */
+  pdEsvazia(p);
   try{ localStorage.removeItem('lf_prog_'+(D.cli||CLI)); }catch(e){}
   if(window.LiveApp) LiveApp.comemorar({titulo:'Pedido #'+p.num+(p.pagto==='dinheiro'||p.pagto==='maquina'||p.pagto==='caixa'||p.pagto==='conta'?' enviado!':' confirmado!'),sub:p.modo==='mesa'?'Já estamos preparando! 🍳':ehRest()?'Já estamos preparando o seu pedido 🍳':'Já estamos separando o seu pedido 🛍️'});
   abreFolha('<div class="wb" style="text-align:center;padding:36px 20px 24px"><svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg><div style="font-size:22px;font-weight:800;margin-top:14px">Pedido #'+p.num+(p.pagto==='dinheiro'||p.pagto==='maquina'||p.pagto==='caixa'||p.pagto==='conta'?' enviado!':' confirmado!')+'</div><div style="margin-top:8px;color:var(--mut);font-size:14.5px;line-height:1.5">'+(p.lf_comanda?'Lançado na sua <b style="color:#fff">comanda '+esc(p.lf_comanda)+'</b>. Você paga na saída do evento.':p.pagto==='conta'?'Para pagar, toque em <b style="color:#fff">Fechar conta</b> quando quiser.':p.pagto==='caixa'?'Pague <b style="color:#fff">'+brl(p.total)+'</b> no caixa (cartão ou dinheiro).':p.pagto==='dinheiro'?'Pague <b style="color:#fff">'+brl(p.total)+'</b> em dinheiro '+(p.modo==='retirada'?'na retirada':'ao entregador')+'.':'Pagamento recebido: <b style="color:#fff">'+brl(p.total)+'</b>.')+'<br>'+(p.prog_dia?'Agendado para <b style="color:#fff">'+esc(progFmt({dia:p.prog_dia,hora:p.prog_hora}))+'</b>, com prioridade na fila.':(p.modo==='mesa'?'Já estamos preparando! Levamos até a sua mesa.':p.modo==='retirada'?'Avisaremos quando estiver pronto para retirar.':'Já estamos preparando o seu pedido.'))+'</div>'+(CK.semCartao&&p.pagto==='cartao'?avisoCartao():'')+'</div><div class="rod"><button class="bt c" onclick="'+(p.modo==='mesa'?'fechaSheet();mesaInit(true)':'fechaSheet()')+'">'+(p.modo==='mesa'?'Voltar ao início':(catEhCardapio()?'Voltar ao cardápio':'Voltar para '+esc(catNome())))+'</button></div>',true);
