@@ -43,29 +43,33 @@ function leZx(v){
   var vai=function(){
     if(!B.stream) return;
     if(!window.ZXing||!window.ZXing.DecodeHintType){ erro('Não consegui carregar o leitor neste aparelho'+(B.falhaZx?' ('+B.falhaZx+')':'')+'. Digite o código.'); return; }
-    var Z=window.ZXing, hints=new Map(), leitor, cv=document.createElement('canvas'), cx=cv.getContext('2d'), n=0, falha='', meu=B.stream;
+    var Z=window.ZXing, hints=new Map(), leitor, rapido, cv=document.createElement('canvas'), cx=cv.getContext('2d'), n=0, falha='', meu=B.stream;
     try{
       hints.set(Z.DecodeHintType.POSSIBLE_FORMATS,[Z.BarcodeFormat.QR_CODE,Z.BarcodeFormat.CODE_128,Z.BarcodeFormat.CODE_39,Z.BarcodeFormat.EAN_13,Z.BarcodeFormat.EAN_8,Z.BarcodeFormat.ITF]);
       hints.set(Z.DecodeHintType.TRY_HARDER,true);
       leitor=new Z.MultiFormatReader(); leitor.setHints(hints);
+      var hr=new Map(); hr.set(Z.DecodeHintType.POSSIBLE_FORMATS,[Z.BarcodeFormat.QR_CODE]); rapido=new Z.MultiFormatReader(); rapido.setHints(hr);
     }catch(e){ erro('O leitor não funcionou neste aparelho ('+(e.message||e.name)+'). Digite o código.'); return; }
     (function passo(){
       if(B.stream!==meu) return;
       var w=v.videoWidth, h=v.videoHeight;
       if(v.readyState>=2&&w&&h){
         n++;
-        var meio=n%3!==0, ch=meio?Math.round(h*0.45):h, y=meio?Math.round((h-ch)/2):0, k=Math.min(1,1280/w);
-        cv.width=Math.round(w*k); cv.height=Math.round(ch*k);
+        /* aparelho lento: imagem menor e so o quadrado do meio; o leitor completo entra 1 a cada 4 vezes */
+        var t0=Date.now(), forte=n%4===0, lado=Math.min(w,h), ch=forte?Math.round(h*0.5):Math.round(lado*0.8), cw=forte?w:ch, x0=Math.round((w-cw)/2), y=Math.round((h-ch)/2), k=Math.min(1,(forte?800:480)/cw);
+        cv.width=Math.round(cw*k); cv.height=Math.round(ch*k);
         try{
-          cx.drawImage(v,0,y,w,ch,0,0,cv.width,cv.height);
+          cx.drawImage(v,x0,y,cw,ch,0,0,cv.width,cv.height);
           var fonte=new Z.HTMLCanvasElementLuminanceSource(cv);
           var bin=n%2?new Z.HybridBinarizer(fonte):new Z.GlobalHistogramBinarizer(fonte);
-          var r=leitor.decodeWithState(new Z.BinaryBitmap(bin));
+          var r=(forte?leitor:rapido).decodeWithState(new Z.BinaryBitmap(bin));
           if(r&&r.getText()) lido(r.getText());
         }catch(e){ if(e&&!/NotFound|Checksum|Format/.test((e.getKind&&e.getKind())||e.name||'')&&!(Z.NotFoundException&&e instanceof Z.NotFoundException)) falha=e.message||e.name||'erro'; }
-        info('Lendo '+w+'x'+h+' · '+n+' tentativas'+(falha?' · '+String(falha).slice(0,60):''));
+        var dt=Date.now()-t0; B.dt=B.dt?Math.round((B.dt*3+dt)/4):dt;
+        info('Lendo '+w+'x'+h+' · '+n+' · '+B.dt+' ms'+(falha?' · '+String(falha).slice(0,60):''));
       }
-      B.raf=setTimeout(passo,160);
+      /* a leitura ocupa no maximo 1/3 do tempo: a imagem da camera nao trava; depois de ler, uma pausa */
+      B.raf=setTimeout(passo,Date.now()<B.ate?700:Math.max(220,(B.dt||0)*2));
     })();
   };
   if(window.ZXing&&window.ZXing.DecodeHintType){ vai(); return; }
@@ -102,7 +106,7 @@ function cameraAntiga(fontes,proxima){
   return camPede({video:{mandatory:{sourceId:ids[q],minWidth:1280,minHeight:720}},audio:false}).catch(function(){ return camPede({video:{mandatory:{sourceId:ids[q]}},audio:false}); }).catch(function(){ return camPede({video:{optional:[{sourceId:ids[q]}]},audio:false}); })
     .catch(function(e){ info('Câmeras: '+fontes.length+' · não abriu a '+(q+1)+' ('+((e&&(e.name||e.message))||'erro')+')'); return camPede({video:true,audio:false}); });
 }
-function info(t){ window.Bipador.info=t; var e=document.querySelector('.bpd-i'); if(e) e.textContent='Leitor v9 · '+t; var s=document.querySelector('.bpd-s'); if(s) s.textContent='Leitor v9 · '+t; }
+function info(t){ window.Bipador.info=t; var e=document.querySelector('.bpd-i'); if(e) e.textContent='Leitor v10 · '+t; var s=document.querySelector('.bpd-s'); if(s) s.textContent='Leitor v10 · '+t; }
 function chromeAntigo(){ var m=(navigator.userAgent.match(/Chrome\/(\d+)/)||[])[1]; return !!m&&Number(m)<60; }
 function camera(proxima){
   if(chromeAntigo()) return fontesAntigas().then(function(f){ return f.length?cameraAntiga(f,proxima):cameraNova(proxima); });
@@ -132,7 +136,7 @@ window.Bipador={
   abrir:function(op){
     css(); fechar(); B.op=op||{}; B.ate=0;
     var d=document.createElement('div'); d.className='bpd'+(B.op.cheia?' cheia':'');
-    d.innerHTML='<div class="bpd-c"><div class="bpd-h"><b></b><button class="bpd-x" type="button" aria-label="Fechar">✕</button></div><div class="bpd-i" style="font-size:11.5px;color:#71717A;margin:-4px 2px 8px">Leitor v9</div><div class="bpd-v"><video playsinline muted autoplay></video><i></i><span class="bpd-s" style="position:absolute;left:8px;bottom:8px;right:8px;color:#fff;font-size:11.5px;font-weight:700;background:rgba(0,0,0,.6);border-radius:8px;padding:4px 8px">Leitor v9</span></div>'+
+    d.innerHTML='<div class="bpd-c"><div class="bpd-h"><b></b><button class="bpd-x" type="button" aria-label="Fechar">✕</button></div><div class="bpd-i" style="font-size:11.5px;color:#71717A;margin:-4px 2px 8px">Leitor v10</div><div class="bpd-v"><video playsinline muted autoplay></video><i></i><span class="bpd-s" style="position:absolute;left:8px;bottom:8px;right:8px;color:#fff;font-size:11.5px;font-weight:700;background:rgba(0,0,0,.6);border-radius:8px;padding:4px 8px">Leitor v10</span></div>'+
       '<div class="bpd-d"></div><div class="bpd-m"><input inputmode="numeric" autocomplete="off" placeholder="Ou digite o código"><button type="button">OK</button></div><div class="bpd-e"></div><div class="bpd-ok"></div></div>';
     d.querySelector('b').textContent=B.op.titulo||'Bipar código de barras';
     d.querySelector('.bpd-d').textContent=B.op.dica||'Aponte a câmera para o código de barras. Leitor USB também funciona.';
