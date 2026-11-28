@@ -1711,19 +1711,105 @@ function parteEntrega(i,k,j){
   if(!confirm('Marcar '+(pt.k==='B'?'a BEBIDA':'a COMIDA')+' do pedido #'+pt.cod+' como entregue?')) return;
   api('/painel/atend-entregue',{id:pt.pid,parte:pt.k}).then(function(r){ if(r&&r.ok){ toast((pt.k==='B'?'Bebida':'Comida')+' entregue ✅'); COMSIG=''; carregaCom(); } else toast((r&&r.mensagem)||'Não consegui marcar. Tente de novo.'); });
 }
+/* ══ LOTE DE ENTREGAS: bipa o que vai levar, sai, e marca Entregue em cada lugar ══ */
+function loteOn(){ return !!(D&&D.cfg&&D.cfg.entrega_lote); }
+function loteLocal(c){ return c.ap?'AP '+c.ap+(c.torre?' · Torre '+c.torre:''):(c.mesa?'Mesa '+c.mesa:(c.nome||'Sem mesa')); }
+function loteMeus(l){ return (l||[]).filter(function(c){ return c.lote&&c.lote.meu; }); }
+/* o que aparece no topo de "Para entregar" */
+function loteTopo(pagos){
+  var meus=loteMeus(pagos), sep=meus.filter(function(c){ return !c.lote.saiu; }), rua=meus.length-sep.length;
+  var h='<button class="bt" style="margin:0 0 10px;width:100%" onclick="loteBipar(false)">📷 Bipar pedido para levar</button>';
+  if(!meus.length) return h;
+  h+='<div style="border:2px solid #FF5A00;border-radius:14px;padding:10px 12px;margin-bottom:12px"><div style="font-weight:900">Meu lote · '+meus.length+(meus.length===1?' pedido':' pedidos')+(rua&&!sep.length?' · em entrega':'')+'</div>'
+    +meus.map(function(c){ return '<div style="font-size:13.5px;margin-top:4px">#'+esc(c.cod)+' · '+esc(loteLocal(c))+'</div>'; }).join('')
+    +(sep.length?'<button class="bt g" style="margin:8px 0 0;width:100%" onclick="loteSair()">Pronto, sair para entregar</button>':'')+'</div>';
+  return h;
+}
+/* botões de cada cartão quando o lote está ligado */
+function loteBotoes(c,i){
+  if(c.estado!=='pronto') return '<div style="text-align:center;font-weight:900;padding:10px;color:'+(PARTE_ST[c.estado]||PARTE_ST[''])[1]+'">⏳ '+(PARTE_ST[c.estado]||PARTE_ST[''])[0]+'</div>';
+  if(!c.lote) return '<button class="bt s" style="width:100%" onclick="lotePegar({pid:COMS['+i+'].pid,parte:COMS['+i+'].parte})">Pegar este pedido</button>';
+  if(!c.lote.meu) return '<div style="text-align:center;font-weight:800;padding:10px;color:var(--mu2)">Com '+esc(c.lote.nome||'outro garçom')+'</div>'+(GEST?'<button class="bt s" style="width:100%" onclick="loteSoltar('+i+')">Liberar</button>':'');
+  return '<button class="bt g" onclick="entregueMarca('+i+')">✓ Entregue</button><button class="bt s" style="width:100%;margin-top:6px" onclick="loteSoltar('+i+')">'+(c.lote.saiu?'Não entreguei · devolver':'Tirar do lote')+'</button>';
+}
+function loteRecarrega(){ COMSIG=''; carregaCom(); }
+/* pede o pedido ao servidor e trata as respostas */
+function lotePegar(corpo,naCamera){
+  corpo.acao='pegar';
+  return api('/painel/atend-lote',corpo).then(function(r){
+    if(r&&r.ok){
+      var p=r.pegos[0], txt=r.pegos.map(function(x){ return '#'+x.cod+' · '+x.local; }).join(', ');
+      loteRecarrega();
+      if(p&&r.pegos.every(function(x){ return x.ja; })){ toast(txt+' já estava no lote'); return r; }
+      if(naCamera) loteAviso(txt+' no lote · '+r.noLote);
+      else if(r.noLote===r.pegos.length) lotePergunta(txt);
+      else toast(txt+' no lote ✅');
+      return r;
+    }
+    if(r&&r.erro==='pendente'){ if(window.Bipador) Bipador.fechar(); lotePendente(r.pendentes,corpo); return r; }
+    var m=(r&&r.mensagem)||'Não consegui pegar o pedido. Tente de novo.';
+    if(naCamera) loteAviso(m,true); else toast(m);
+    return r;
+  });
+}
+function loteAviso(t,erro){
+  var k=document.querySelector('.bpd-ok');
+  if(!k){ toast(t); return; }
+  k.style.display='block'; k.style.background=erro?'#FEF2F2':'#ECFDF3'; k.style.color=erro?'#991B1B':'#14532D'; k.textContent=t;
+}
+/* primeiro pedido: pergunta se vai levar mais algum */
+function lotePergunta(txt){
+  folha('Pedido separado','<div style="font-size:19px;font-weight:900;margin:4px 0 8px">'+esc(txt)+'</div><div style="font-size:16px">Vai levar mais algum?</div>',
+    '<button class="bt" style="margin:0" onclick="fecha();loteBipar(true)">Sim, bipar outro</button><button class="bt g" style="margin:8px 0 0;width:100%" onclick="fecha();loteSair()">Não, sair agora</button>');
+}
+/* câmera: continuo = fica aberta para bipar vários, com o botão de sair */
+function loteBipar(continuo){
+  if(!window.Bipador){ toast('Leitor de código não disponível.'); return; }
+  Bipador.abrir({titulo:continuo?'Bipe os próximos':'Bipar pedido para levar',continuo:continuo,dica:'Aponte para o código de barras da comanda, ou digite o número (ex.: 53-B).',aoLer:function(cod,fechar){
+    if(!continuo) fechar();
+    lotePegar({cod:cod},continuo);
+    return continuo?'Lendo '+cod+'…':true;
+  }});
+  if(continuo){
+    var cx=document.querySelector('.bpd-c'); if(!cx) return;
+    var b=document.createElement('button'); b.type='button'; b.className='bt g'; b.textContent='Pronto, sair para entregar'; b.style.cssText='width:100%;margin:10px 0 0';
+    b.onclick=function(){ Bipador.fechar(); loteSair(); }; cx.appendChild(b);
+  }
+}
+function loteSair(){ api('/painel/atend-lote',{acao:'sair'}).then(function(r){ if(r&&r.ok){ toast('Boa entrega! Marque Entregue em cada lugar.'); loteRecarrega(); } else toast((r&&r.mensagem)||'Não consegui. Tente de novo.'); }); }
+function loteSoltar(i){
+  var c=COMS[i]; if(!c) return; if(!confirm('Devolver o pedido #'+c.cod+' para a lista?')) return;
+  api('/painel/atend-lote',{acao:'soltar',pid:c.pid,parte:c.parte}).then(function(r){ if(r&&r.ok) loteRecarrega(); else toast((r&&r.mensagem)||'Não consegui. Tente de novo.'); });
+}
+/* esqueceu de marcar o anterior */
+var LOTEP=null;
+function lotePendente(pend,corpo){
+  LOTEP={pend:pend,corpo:corpo};
+  folha('Falta marcar a entrega','<div style="font-size:15px;margin-bottom:8px">Você entregou?</div>'+pend.map(function(p){ return '<div style="font-size:17px;font-weight:900;margin:4px 0">#'+esc(p.cod)+' · '+esc(p.local)+'</div>'; }).join(''),
+    '<button class="bt g" style="margin:0;width:100%" onclick="loteResolve(true)">Sim, entreguei</button><button class="bt s" style="margin:8px 0 0;width:100%" onclick="loteResolve(false)">Não, ainda está comigo</button>');
+}
+function loteResolve(entregou){
+  var x=LOTEP; if(!x) return; LOTEP=null; fecha();
+  if(!entregou){ x.corpo.continua=true; lotePegar(x.corpo); return; }
+  Promise.all(x.pend.map(function(p){ return api('/painel/atend-entregue',{id:p.pid,parte:p.parte}); })).then(function(rs){
+    if(rs.some(function(r){ return !r||!r.ok; })){ toast('Não consegui marcar a entrega. Confira a lista e tente de novo.'); loteRecarrega(); return; }
+    lotePegar(x.corpo);
+  });
+}
 function entregaCard(c,i){
   var p=c.pedidos[0], onde=c.ap?'AP '+esc(c.ap)+(c.torre?' · Torre '+esc(c.torre):'')+(c.nome?' · '+esc(c.nome):''):comTit(c)+(c.joia?(c.mesa?' · ':'')+pill(c.joia):'');
   return '<div class="cm" id="cm'+i+'" style="border:2px solid '+(c.ent&&c.estado!=='pronto'?'#CBD5E1':'#16A34A')+'"><div class="h"><div>'+(c.misto?'<div style="font-size:12px;font-weight:900;letter-spacing:1px;color:'+(c.parte==='B'?'#2563EB':'#D97706')+'">'+(c.parte==='B'?'🍺 BEBIDA':'🍽️ COMIDA')+'</div>':'')+'<b>#'+(c.cod||plab(p))+' · '+onde+'</b><div style="font-size:12.5px;color:var(--mu2)">'+hrBR(p.criado)+(p.atend?' · '+esc(p.atend):'')+'</div></div><span class="tag g" style="margin:0">'+(c.ent&&!c.jaPago?'A RECEBER':'PAGO')+'</span></div>'
     +'<div class="pd">'+String(p.itens||'').split('; ').map(function(t){ return '<div class="pi">'+esc(t)+'</div>'; }).join('')+(p.obs?'<div class="pi" style="color:var(--mu2)">Obs.: '+esc(p.obs)+'</div>':'')+'</div>'
     +(c.ap||(c.ent&&!PRAIA)?'':locHtml(c,i)
     +'<div class="ac">'+((c.geo||(c.foto&&c.foto.k))?'<button class="bt s" onclick="entAbre('+i+')">🧭 Ir até o cliente</button>':'')+'<button class="bt s" onclick="entAqui('+i+')">📍 Estou aqui</button></div>')
-    +'<div class="ac1">'+(c.ent&&c.estado!=='pronto'?'<div style="text-align:center;font-weight:900;padding:10px;color:'+(PARTE_ST[c.estado]||PARTE_ST[''])[1]+'">⏳ '+(PARTE_ST[c.estado]||PARTE_ST[''])[0]+'</div>':'<button class="bt g" onclick="entregueMarca('+i+')">✓ Entregue</button>')+'</div></div>';
+    +'<div class="ac1">'+(c.ent&&loteOn()?loteBotoes(c,i):c.ent&&c.estado!=='pronto'?'<div style="text-align:center;font-weight:900;padding:10px;color:'+(PARTE_ST[c.estado]||PARTE_ST[''])[1]+'">⏳ '+(PARTE_ST[c.estado]||PARTE_ST[''])[0]+'</div>':'<button class="bt g" onclick="entregueMarca('+i+')">✓ Entregue</button>')+'</div></div>';
 }
 function comPinta(d){
     COMSIG=comSig(d);
     var pagos=(d.entregar||[]).filter(function(c){ return PRAIA||c.ap||c.ent; });   /* apartamento pronto aparece mesmo sem Entrega na praia */
     COMS=pagos.concat(d.comandas||[]); ENT.lista=COMS; OPENL=COMS.filter(function(c){ return !c.pago&&c.mesa&&c.joia; }); OPENH=d.hoje||OPENH; var h='';
     if(pagos.length) h+='<div class="sec" style="margin:0 0 8px">Para entregar · '+pagos.length+'</div>';
+    if(loteOn()&&pagos.length) h+=loteTopo(pagos);
     COMS.forEach(function(c,i){
       if(c.pago){ h+=entregaCard(c,i); return; }
       if(pagos.length&&i===pagos.length) h+='<div class="sec" style="margin:18px 0 8px">Comandas abertas</div>';
