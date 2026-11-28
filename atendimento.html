@@ -1713,11 +1713,11 @@ function parteEntrega(i,k,j){
 }
 function entregaCard(c,i){
   var p=c.pedidos[0], onde=c.ap?'AP '+esc(c.ap)+(c.torre?' · Torre '+esc(c.torre):'')+(c.nome?' · '+esc(c.nome):''):comTit(c)+(c.joia?(c.mesa?' · ':'')+pill(c.joia):'');
-  return '<div class="cm" id="cm'+i+'" style="border:2px solid #16A34A"><div class="h"><div>'+(c.misto?'<div style="font-size:12px;font-weight:900;letter-spacing:1px;color:'+(c.parte==='B'?'#2563EB':'#D97706')+'">'+(c.parte==='B'?'🍺 BEBIDA':'🍽️ COMIDA')+'</div>':'')+'<b>#'+(c.cod||plab(p))+' · '+onde+'</b><div style="font-size:12.5px;color:var(--mu2)">'+hrBR(p.criado)+(p.atend?' · '+esc(p.atend):'')+'</div></div><span class="tag g" style="margin:0">'+(c.ent&&!c.jaPago?'A RECEBER':'PAGO')+'</span></div>'
+  return '<div class="cm" id="cm'+i+'" style="border:2px solid '+(c.ent&&c.estado!=='pronto'?'#CBD5E1':'#16A34A')+'"><div class="h"><div>'+(c.misto?'<div style="font-size:12px;font-weight:900;letter-spacing:1px;color:'+(c.parte==='B'?'#2563EB':'#D97706')+'">'+(c.parte==='B'?'🍺 BEBIDA':'🍽️ COMIDA')+'</div>':'')+'<b>#'+(c.cod||plab(p))+' · '+onde+'</b><div style="font-size:12.5px;color:var(--mu2)">'+hrBR(p.criado)+(p.atend?' · '+esc(p.atend):'')+'</div></div><span class="tag g" style="margin:0">'+(c.ent&&!c.jaPago?'A RECEBER':'PAGO')+'</span></div>'
     +'<div class="pd">'+String(p.itens||'').split('; ').map(function(t){ return '<div class="pi">'+esc(t)+'</div>'; }).join('')+(p.obs?'<div class="pi" style="color:var(--mu2)">Obs.: '+esc(p.obs)+'</div>':'')+'</div>'
     +(c.ap||(c.ent&&!PRAIA)?'':locHtml(c,i)
     +'<div class="ac">'+((c.geo||(c.foto&&c.foto.k))?'<button class="bt s" onclick="entAbre('+i+')">🧭 Ir até o cliente</button>':'')+'<button class="bt s" onclick="entAqui('+i+')">📍 Estou aqui</button></div>')
-    +'<div class="ac1"><button class="bt g" onclick="entregueMarca('+i+')">✓ Entregue</button></div></div>';
+    +'<div class="ac1">'+(c.ent&&c.estado!=='pronto'?'<div style="text-align:center;font-weight:900;padding:10px;color:'+(PARTE_ST[c.estado]||PARTE_ST[''])[1]+'">⏳ '+(PARTE_ST[c.estado]||PARTE_ST[''])[0]+'</div>':'<button class="bt g" onclick="entregueMarca('+i+')">✓ Entregue</button>')+'</div></div>';
 }
 function comPinta(d){
     COMSIG=comSig(d);
