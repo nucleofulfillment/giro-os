@@ -1695,6 +1695,22 @@ function entregueMarca(i){
   var c=COMS[i]; if(!c||!c.pago) return; if(!confirm('Marcar '+(c.misto?(c.parte==='B'?'a BEBIDA':'a COMIDA')+' do pedido #'+c.cod:'o pedido #'+plab(c.pedidos[0]))+' como entregue?')) return;
   api('/painel/atend-entregue',{id:c.pid,parte:c.parte||undefined}).then(function(r){ if(r&&r.ok){ toast(c.misto&&!r.completo?(c.parte==='B'?'Bebida':'Comida')+' entregue ✅ Falta a outra parte':'Pedido entregue ✅'); COMSIG=''; carregaCom(); } else toast((r&&r.mensagem)||'Não consegui marcar. Tente de novo.'); });
 }
+/* comanda separada em bar e cozinha: cada parte com o seu código, a situação e o Entregue */
+var PARTE_ST={'':['Na fila','#64748B'],preparo:['Em preparo','#D97706'],pronto:['Pronto','#16A34A'],entregue:['Entregue ✓','#94A3B8']};
+function partesHtml(i,k){
+  return COMS[i].pedidos[k].partes.map(function(pt,j){
+    var st=PARTE_ST[pt.estado]||PARTE_ST[''];
+    return '<div style="border-left:4px solid '+(pt.k==='B'?'#2563EB':'#D97706')+';padding:4px 0 4px 10px;margin:8px 0">'
+      +'<div style="display:flex;justify-content:space-between;gap:8px;font-size:12px;font-weight:900"><span>'+(pt.k==='B'?'🍺 BAR':'🍽️ COZINHA')+' · #'+esc(pt.cod)+'</span><span style="color:'+st[1]+'">'+st[0]+'</span></div>'
+      +String(pt.itens||'').split('; ').map(function(t){ return '<div class="pi">'+esc(t)+'</div>'; }).join('')
+      +(pt.estado==='pronto'?'<button class="bt g" style="margin:6px 0 0" onclick="parteEntrega('+i+','+k+','+j+')">✓ Entregue #'+esc(pt.cod)+'</button>':'')+'</div>';
+  }).join('');
+}
+function parteEntrega(i,k,j){
+  var pt=COMS[i]&&COMS[i].pedidos[k]&&COMS[i].pedidos[k].partes[j]; if(!pt) return;
+  if(!confirm('Marcar '+(pt.k==='B'?'a BEBIDA':'a COMIDA')+' do pedido #'+pt.cod+' como entregue?')) return;
+  api('/painel/atend-entregue',{id:pt.pid,parte:pt.k}).then(function(r){ if(r&&r.ok){ toast((pt.k==='B'?'Bebida':'Comida')+' entregue ✅'); COMSIG=''; carregaCom(); } else toast((r&&r.mensagem)||'Não consegui marcar. Tente de novo.'); });
+}
 function entregaCard(c,i){
   var p=c.pedidos[0], onde=c.ap?'AP '+esc(c.ap)+(c.torre?' · Torre '+esc(c.torre):'')+(c.nome?' · '+esc(c.nome):''):comTit(c)+(c.joia?(c.mesa?' · ':'')+pill(c.joia):'');
   return '<div class="cm" id="cm'+i+'" style="border:2px solid #16A34A"><div class="h"><div>'+(c.misto?'<div style="font-size:12px;font-weight:900;letter-spacing:1px;color:'+(c.parte==='B'?'#2563EB':'#D97706')+'">'+(c.parte==='B'?'🍺 BEBIDA':'🍽️ COMIDA')+'</div>':'')+'<b>#'+(c.cod||plab(p))+' · '+onde+'</b><div style="font-size:12.5px;color:var(--mu2)">'+hrBR(p.criado)+(p.atend?' · '+esc(p.atend):'')+'</div></div><span class="tag g" style="margin:0">'+(c.ent&&!c.jaPago?'A RECEBER':'PAGO')+'</span></div>'
@@ -1712,7 +1728,7 @@ function comPinta(d){
       if(c.pago){ h+=entregaCard(c,i); return; }
       if(pagos.length&&i===pagos.length) h+='<div class="sec" style="margin:18px 0 8px">Comandas abertas</div>';
       var t=comTit(c)+(c.joia?(c.mesa?' · ':'')+pill(c.joia):'');
-      h+='<div class="cm" id="cm'+i+'"><div class="h"><div><b>'+t+'</b>'+(c.nome&&c.nome!==comTit(c)?'<div style="font-size:12.5px;color:var(--mu2)">'+esc(c.nome)+'</div>':'')+'</div><span class="v">'+brl(c.total)+'</span></div>'+(c.pedidos.length&&c.pedidos[0].sub?'<div style="font-size:12px;font-weight:800;color:var(--mu2);margin-top:6px">PEDIDO #'+c.pedidos[0].num+'</div>':'')+'<div class="pd">'+c.pedidos.map(function(p,k){ return '<div class="pr"><div class="ph"><span><b>#'+plab(p)+'</b> · '+new Date(p.criado).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+(p.atend?' · '+esc(p.atend):'')+'</span><button onclick="reimp('+i+','+k+')" title="Imprimir">🖨</button></div>'+String(p.itens||'').split('; ').map(function(t){ return '<div class="pi">'+esc(t)+'</div>'; }).join('')+'</div>'; }).join('')+'</div>'
+      h+='<div class="cm" id="cm'+i+'"><div class="h"><div><b>'+t+'</b>'+(c.nome&&c.nome!==comTit(c)?'<div style="font-size:12.5px;color:var(--mu2)">'+esc(c.nome)+'</div>':'')+'</div><span class="v">'+brl(c.total)+'</span></div>'+(c.pedidos.length&&c.pedidos[0].sub?'<div style="font-size:12px;font-weight:800;color:var(--mu2);margin-top:6px">PEDIDO #'+c.pedidos[0].num+'</div>':'')+'<div class="pd">'+c.pedidos.map(function(p,k){ return '<div class="pr"><div class="ph"><span><b>#'+plab(p)+'</b> · '+new Date(p.criado).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+(p.atend?' · '+esc(p.atend):'')+'</span><button onclick="reimp('+i+','+k+')" title="Imprimir">🖨</button></div>'+(p.partes&&p.partes.length?partesHtml(i,k):String(p.itens||'').split('; ').map(function(t){ return '<div class="pi">'+esc(t)+'</div>'; }).join(''))+'</div>'; }).join('')+'</div>'
         +(c.servico>0?'<div style="display:flex;justify-content:space-between;font-size:13px;color:var(--mu2);margin-top:6px"><span>Serviço do garçom</span><b>'+brl(c.servico)+'</b></div>':'')
         +locHtml(c,i)+'<div class="ac"><button class="bt s" onclick="ativaComanda(COMS['+i+'])"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Pedido</button>'
         +(PRAIA?'<button class="bt s" onclick="mudaLugar('+i+')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg>Mudar lugar</button>'+((c.geo||(c.foto&&c.foto.k))?'<button class="bt s" onclick="entAbreC(COMS['+i+'])"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>Localizar</button>':''):'<button class="bt s" onclick="trocaForm('+i+')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg>Trocar mesa</button>')
