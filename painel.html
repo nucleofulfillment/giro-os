@@ -9977,7 +9977,10 @@ function mzQrTodos(){
   if(!mzCliOk()) return;
   mzSlug(function(){}); mzQrLib(function(){});
   el('sh-import').querySelector('h3').textContent='Imprimir QR codes das mesas';
-  el('cd-imp-corpo').innerHTML='<p style="margin:0 0 12px;font-size:13px;color:var(--muted2);line-height:1.5">Monta as folhas A4 com o QR de todas as <b>'+MZ.lista.length+' mesas</b>, já no tamanho escolhido. Na janela de impressão, dá para imprimir ou <b>Salvar como PDF</b>.</p>'
+  var grs=[]; MZ.lista.forEach(function(m){ if(m.grupo&&grs.indexOf(m.grupo)<0) grs.push(m.grupo); });
+  el('cd-imp-corpo').innerHTML='<p style="margin:0 0 12px;font-size:13px;color:var(--muted2);line-height:1.5">Monta as folhas A4 com o QR das mesas escolhidas, já no tamanho escolhido. Na janela de impressão, dá para imprimir ou <b>Salvar como PDF</b>.</p>'
+    +'<div class="field"><label>Quais mesas (em branco = todas)</label><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="font-size:13px">Do número</span><input class="inp" id="mza4-de" type="number" min="1" inputmode="numeric" style="width:90px"><span style="font-size:13px">até</span><input class="inp" id="mza4-ate" type="number" min="1" inputmode="numeric" style="width:90px">'
+    +(grs.length?'<select class="inp" id="mza4-gr" style="width:auto;max-width:200px"><option value="">Todos os grupos</option>'+grs.map(function(g){ return '<option value="'+esc(g)+'">'+esc(g)+'</option>'; }).join('')+'</select>':'')+'</div></div>'
     +'<div class="field"><label>Tamanho de cada QR (quadrado, em cm)</label><div style="display:flex;gap:6px;flex-wrap:wrap" id="mza4-tams">'+[3,4,5,6,8,10].map(function(t){ return '<button type="button" class="btn sec sm" data-cm="'+t+'">'+t+' × '+t+'</button>'; }).join('')+'</div>'
     +'<div style="display:flex;align-items:center;gap:8px;margin-top:8px"><span style="font-size:13px">Outro:</span><input class="inp" id="mza4-cm" type="number" min="2.5" max="19" step="0.5" style="width:90px"><span style="font-size:13px">cm</span></div></div>'
     +'<label style="display:flex;align-items:center;gap:8px;font-size:14px;margin:10px 0 4px"><input type="checkbox" id="mza4-nome" style="width:auto"> Mostrar o nome do restaurante</label>'
@@ -9986,20 +9989,29 @@ function mzQrTodos(){
     +'<button class="btn pri wide" id="mza4-bt">🖨 Gerar e imprimir</button>';
   abrir('sh-import');
   el('mza4-nome').checked=MZA4.nome; el('mza4-corte').checked=MZA4.corte; el('mza4-cm').value=MZA4.cm;
+  /* só as mesas pedidas: intervalo de números e/ou um grupo (Piscina, Norte…) */
+  function escolhidas(){
+    var de=parseInt(el('mza4-de').value,10), ate=parseInt(el('mza4-ate').value,10), gr=el('mza4-gr')?el('mza4-gr').value:'';
+    if(de&&ate&&de>ate){ var tr=de; de=ate; ate=tr; }
+    return MZ.lista.filter(function(m){ var n=parseInt(m.num,10); if(gr&&m.grupo!==gr) return false; if(de&&!(n>=de)) return false; if(ate&&!(n<=ate)) return false; return true; })
+      .sort(function(a,b){ return (parseInt(a.num,10)||0)-(parseInt(b.num,10)||0); });
+  }
   function pinta(){
-    var cm=parseFloat(String(el('mza4-cm').value).replace(',','.'));
+    var cm=parseFloat(String(el('mza4-cm').value).replace(',','.')), qt=escolhidas().length;
+    if(!qt){ el('mza4-info').textContent='Nenhuma mesa nessa escolha.'; el('mza4-bt').disabled=true; return; }
     if(!(cm>=2.5&&cm<=19)){ el('mza4-info').textContent='Escolha um tamanho entre 2,5 e 19 cm.'; el('mza4-bt').disabled=true; return; }
     MZA4.cm=cm; MZA4.nome=el('mza4-nome').checked; MZA4.corte=el('mza4-corte').checked; el('mza4-bt').disabled=false;
-    var k=mzA4Calc(cm), pg=Math.ceil(MZ.lista.length/k.pag);
+    var k=mzA4Calc(cm), pg=Math.ceil(qt/k.pag);
     [].forEach.call(el('mza4-tams').children,function(b){ b.classList.toggle('pri',parseFloat(b.getAttribute('data-cm'))===cm); b.classList.toggle('sec',parseFloat(b.getAttribute('data-cm'))!==cm); });
-    el('mza4-info').textContent=String(cm).replace('.',',')+' × '+String(cm).replace('.',',')+' cm → '+k.col+' por linha · '+k.pag+' por folha A4 · '+pg+(pg===1?' folha':' folhas')+' para '+MZ.lista.length+' mesas';
+    el('mza4-info').textContent=String(cm).replace('.',',')+' × '+String(cm).replace('.',',')+' cm → '+k.col+' por linha · '+k.pag+' por folha A4 · '+pg+(pg===1?' folha':' folhas')+' para '+qt+(qt===1?' mesa':' mesas');
   }
+  el('mza4-de').oninput=pinta; el('mza4-ate').oninput=pinta; if(el('mza4-gr')) el('mza4-gr').onchange=pinta;
   [].forEach.call(el('mza4-tams').children,function(b){ b.onclick=function(){ el('mza4-cm').value=b.getAttribute('data-cm'); pinta(); }; });
   el('mza4-cm').oninput=pinta; el('mza4-nome').onchange=pinta; el('mza4-corte').onchange=pinta;
   el('mza4-bt').onclick=function(){
     var bt=el('mza4-bt'); bt.disabled=true; bt.textContent='Montando as folhas…';
     mzSlug(function(){ mzQrLib(function(){ setTimeout(function(){
-      mzImprimirA4(MZ.lista.map(function(m){ var u=mzLink(m.num); return {n:m.num,u:u,qr:mzQrData(u),g:m.grupo||''}; }),MZA4);
+      mzImprimirA4(escolhidas().map(function(m){ var u=mzLink(m.num); return {n:m.num,u:u,qr:mzQrData(u),g:m.grupo||''}; }),MZA4);
       bt.disabled=false; bt.textContent='🖨 Gerar e imprimir'; fecharTudo();
     },30); }); });
   };
