@@ -100,7 +100,7 @@ function cameraAntiga(fontes,proxima){
   return camPede({video:{mandatory:{sourceId:ids[q],minWidth:1280,minHeight:720}},audio:false}).catch(function(){ return camPede({video:{mandatory:{sourceId:ids[q]}},audio:false}); }).catch(function(){ return camPede({video:{optional:[{sourceId:ids[q]}]},audio:false}); })
     .catch(function(e){ info('Câmeras: '+fontes.length+' · não abriu a '+(q+1)+' ('+((e&&(e.name||e.message))||'erro')+')'); return camPede({video:true,audio:false}); });
 }
-function info(t){ window.Bipador.info=t; var e=document.querySelector('.bpd-i'); if(e) e.textContent=t; }
+function info(t){ window.Bipador.info=t; var e=document.querySelector('.bpd-i'); if(e) e.textContent='Leitor v6 · '+t; }
 function chromeAntigo(){ var m=(navigator.userAgent.match(/Chrome\/(\d+)/)||[])[1]; return !!m&&Number(m)<60; }
 function camera(proxima){
   if(chromeAntigo()) return fontesAntigas().then(function(f){ return f.length?cameraAntiga(f,proxima):cameraNova(proxima); });
@@ -130,13 +130,13 @@ window.Bipador={
   abrir:function(op){
     css(); fechar(); B.op=op||{}; B.ate=0;
     var d=document.createElement('div'); d.className='bpd';
-    d.innerHTML='<div class="bpd-c"><div class="bpd-h"><b></b><button class="bpd-x" type="button" aria-label="Fechar">✕</button></div><div class="bpd-v"><video playsinline muted autoplay></video><i></i></div>'+
-      '<div class="bpd-d"></div><div class="bpd-i" style="font-size:11.5px;color:#71717A;margin:0 2px 8px"></div><div class="bpd-m"><input inputmode="numeric" autocomplete="off" placeholder="Ou digite o código"><button type="button">OK</button></div><div class="bpd-e"></div><div class="bpd-ok"></div></div>';
+    d.innerHTML='<div class="bpd-c"><div class="bpd-h"><b></b><button class="bpd-x" type="button" aria-label="Fechar">✕</button></div><div class="bpd-i" style="font-size:11.5px;color:#71717A;margin:-4px 2px 8px">Leitor v6</div><div class="bpd-v"><video playsinline muted autoplay></video><i></i></div>'+
+      '<div class="bpd-d"></div><div class="bpd-m"><input inputmode="numeric" autocomplete="off" placeholder="Ou digite o código"><button type="button">OK</button></div><div class="bpd-e"></div><div class="bpd-ok"></div></div>';
     d.querySelector('b').textContent=B.op.titulo||'Bipar código de barras';
     d.querySelector('.bpd-d').textContent=B.op.dica||'Aponte a câmera para o código de barras. Leitor USB também funciona.';
     document.body.appendChild(d); B.box=d;
     var inp=d.querySelector('input'), toque=('ontouchstart' in window), ok=function(){ var c=inp.value.trim(); inp.value=''; if(c){ B.ate=0; lido(c); } if(!toque) inp.focus(); };
-    if(toque){ inp.blur(); try{ document.activeElement&&document.activeElement.blur(); }catch(e){}
+    if(toque){ inp.readOnly=true; inp.addEventListener('click',function(){ if(inp.readOnly){ inp.readOnly=false; inp.blur(); inp.focus(); } }); inp.blur(); try{ document.activeElement&&document.activeElement.blur(); }catch(e){}
       B.tec=function(e){ if(B.box!==d||document.activeElement===inp) return; if(e.keyCode===13){ e.preventDefault(); ok(); } else if(e.key&&e.key.length===1&&/[0-9A-Za-z-]/.test(e.key)) inp.value+=e.key; else if(e.keyCode===8) inp.value=inp.value.slice(0,-1); };
       document.addEventListener('keydown',B.tec,true); }
     d.querySelector('.bpd-m button').onclick=ok; inp.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); ok(); } });
