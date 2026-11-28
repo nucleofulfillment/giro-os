@@ -42,7 +42,7 @@ function le(v){
 function leZx(v){
   var vai=function(){
     if(!B.stream) return;
-    if(!window.ZXing){ erro('Não consegui carregar o leitor. Digite o código.'); return; }
+    if(!window.ZXing||!window.ZXing.DecodeHintType){ erro('Não consegui carregar o leitor neste aparelho'+(B.falhaZx?' ('+B.falhaZx+')':'')+'. Digite o código.'); return; }
     var Z=window.ZXing, hints=new Map(), leitor, cv=document.createElement('canvas'), cx=cv.getContext('2d'), n=0, falha='', meu=B.stream;
     try{
       hints.set(Z.DecodeHintType.POSSIBLE_FORMATS,[Z.BarcodeFormat.QR_CODE,Z.BarcodeFormat.CODE_128,Z.BarcodeFormat.CODE_39,Z.BarcodeFormat.EAN_13,Z.BarcodeFormat.EAN_8,Z.BarcodeFormat.ITF]);
@@ -68,9 +68,10 @@ function leZx(v){
       B.raf=setTimeout(passo,160);
     })();
   };
-  if(window.ZXing){ vai(); return; }
+  if(window.ZXing&&window.ZXing.DecodeHintType){ vai(); return; }
   info('Carregando o leitor…');
-  var s=document.createElement('script'); s.src='zxing.js?v=1'; s.onload=vai; s.onerror=function(){ erro('Não consegui carregar o leitor (internet). Digite o código.'); }; document.head.appendChild(s);
+  window.addEventListener('error',function(ev){ if(/zxing/i.test(String(ev.filename||''))) B.falhaZx=String(ev.message||'').slice(0,80); });
+  var s=document.createElement('script'); s.src='zxing.js?v=2'; s.onload=vai; s.onerror=function(){ erro('Não consegui carregar o leitor (internet). Digite o código.'); }; document.head.appendChild(s);
 }
 /* câmera de TRÁS: aparelho antigo ignora o pedido "environment" e abre a da frente, então escolhemos pela lista de câmeras.
    O botão "Trocar câmera" (proxima=true) passa para a outra e o aparelho guarda a escolha. */
@@ -101,7 +102,7 @@ function cameraAntiga(fontes,proxima){
   return camPede({video:{mandatory:{sourceId:ids[q],minWidth:1280,minHeight:720}},audio:false}).catch(function(){ return camPede({video:{mandatory:{sourceId:ids[q]}},audio:false}); }).catch(function(){ return camPede({video:{optional:[{sourceId:ids[q]}]},audio:false}); })
     .catch(function(e){ info('Câmeras: '+fontes.length+' · não abriu a '+(q+1)+' ('+((e&&(e.name||e.message))||'erro')+')'); return camPede({video:true,audio:false}); });
 }
-function info(t){ window.Bipador.info=t; var e=document.querySelector('.bpd-i'); if(e) e.textContent='Leitor v8 · '+t; var s=document.querySelector('.bpd-s'); if(s) s.textContent='Leitor v8 · '+t; }
+function info(t){ window.Bipador.info=t; var e=document.querySelector('.bpd-i'); if(e) e.textContent='Leitor v9 · '+t; var s=document.querySelector('.bpd-s'); if(s) s.textContent='Leitor v9 · '+t; }
 function chromeAntigo(){ var m=(navigator.userAgent.match(/Chrome\/(\d+)/)||[])[1]; return !!m&&Number(m)<60; }
 function camera(proxima){
   if(chromeAntigo()) return fontesAntigas().then(function(f){ return f.length?cameraAntiga(f,proxima):cameraNova(proxima); });
@@ -131,7 +132,7 @@ window.Bipador={
   abrir:function(op){
     css(); fechar(); B.op=op||{}; B.ate=0;
     var d=document.createElement('div'); d.className='bpd'+(B.op.cheia?' cheia':'');
-    d.innerHTML='<div class="bpd-c"><div class="bpd-h"><b></b><button class="bpd-x" type="button" aria-label="Fechar">✕</button></div><div class="bpd-i" style="font-size:11.5px;color:#71717A;margin:-4px 2px 8px">Leitor v8</div><div class="bpd-v"><video playsinline muted autoplay></video><i></i><span class="bpd-s" style="position:absolute;left:8px;bottom:8px;right:8px;color:#fff;font-size:11.5px;font-weight:700;background:rgba(0,0,0,.6);border-radius:8px;padding:4px 8px">Leitor v8</span></div>'+
+    d.innerHTML='<div class="bpd-c"><div class="bpd-h"><b></b><button class="bpd-x" type="button" aria-label="Fechar">✕</button></div><div class="bpd-i" style="font-size:11.5px;color:#71717A;margin:-4px 2px 8px">Leitor v9</div><div class="bpd-v"><video playsinline muted autoplay></video><i></i><span class="bpd-s" style="position:absolute;left:8px;bottom:8px;right:8px;color:#fff;font-size:11.5px;font-weight:700;background:rgba(0,0,0,.6);border-radius:8px;padding:4px 8px">Leitor v9</span></div>'+
       '<div class="bpd-d"></div><div class="bpd-m"><input inputmode="numeric" autocomplete="off" placeholder="Ou digite o código"><button type="button">OK</button></div><div class="bpd-e"></div><div class="bpd-ok"></div></div>';
     d.querySelector('b').textContent=B.op.titulo||'Bipar código de barras';
     d.querySelector('.bpd-d').textContent=B.op.dica||'Aponte a câmera para o código de barras. Leitor USB também funciona.';
