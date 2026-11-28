@@ -13,7 +13,7 @@
 <title>Cardápio · LiveFood</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
-<!-- LIVEFOOD-35 --><meta name="versao" content="LIVEFOOD-35">
+<!-- LIVEFOOD-37 --><meta name="versao" content="LIVEFOOD-37">
 <style>
 :root{--bg:#0b0b0d;--tx:#fff;--mut:rgba(255,255,255,.68);--pri:#FF5A00;--pri2:#FF5A00;--glass:rgba(18,18,22,.62);--line:rgba(255,255,255,.16)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -1624,6 +1624,26 @@ function scTela(im,giro,lado,troca){
 }
 /* tira número (confere pelo dígito verificador), validade e CVV do texto lido. Na dúvida deixa em branco: o cliente digita */
 function scNumOk(n){ if(!ckLuhn(n)||/^(\d)\1+$/.test(n)) return false; var l=n.length; return l===16?/^([2456]|35)/.test(n):l===15?/^3[47]/.test(n):l===14?/^3[068]/.test(n):false; }   /* tamanho coerente com a bandeira: um número "montado" não passa por acaso */
+/* (LIVEFOOD-37) uma linha serve de nome? 2 a 5 palavras só de letras (maiúsculas ou Só A Inicial), que não seja rótulo, aviso, banco ou bandeira.
+   Devolve o nome em maiúsculas, ou '' */
+var SC_NAO=/(^| )(VALID|THRU|VALIDO|VÁLIDO|VALIDADE|ATE|ATÉ|GOOD|EXPIRES?|EXPIRA|VENCE|VENCIMENTO|MEMBER|SINCE|CLIENTE|DESDE|CVV|CVC|CODIGO|CÓDIGO|SEGURANCA|SEGURANÇA|BANCO|BANK|CARD|CARTAO|CARTÃO|CREDIT|CREDITO|CRÉDITO|DEBIT|DEBITO|DÉBITO|VISA|MASTERCARD|MASTER|ELO|AMEX|AMERICAN|EXPRESS|HIPERCARD|PLATINUM|GOLD|BLACK|INFINITE|SIGNATURE|INTERNATIONAL|INTERNACIONAL|NACIONAL|ELECTRON|MAESTRO|CIRRUS|NUBANK|ITAU|ITAÚ|BRADESCO|SANTANDER|CAIXA|INTER|BRASIL|BRAZIL|DIGITAL|SAC|OUVIDORIA|AUTHORIZED|ASSINATURA|AUTORIZADA|EXTERIOR|USO|USE|SOMENTE|APENAS|EXCLUSIVO|PESSOAL|INTRANSFERIVEL|INTRANSFERÍVEL|CENTRAL|ATENDIMENTO|CAPITAIS|REGIOES|REGIÕES|METROPOLITANAS|DEMAIS|LOCALIDADES|DEFICIENTE|AUDITIVO|FALA|EMITIDO|EMISSOR|LICENCA|LICENÇA|PROPRIEDADE|TITULAR|PORTADOR|NOME|CONTA|AGENCIA|AGÊNCIA|FUNCAO|FUNÇÃO|COMPRAS|SAQUES?|PAGAMENTOS?|TELEFONE|LIGUE|ACESSE|APP|SITE|WWW|COM|CONTACTLESS|APROXIMACAO|APROXIMAÇÃO|CHIP|SENHA|ESTE|ESTA|PARA|VALIDO|ACEITO|REDE|WORLD|WORLDWIDE|BUSINESS|EMPRESARIAL|CORPORATE|PREMIUM|PRIME|SELECT|UNIQUE|STANDARD|CLASSIC|ADICIONAL)( |$)/;
+function scNomeOk(l){
+  l=String(l||'').replace(/[^A-Za-zÀ-ÿ' ]+/g,' ').replace(/\s+/g,' ').trim(); if(l.length<6||l.length>26) return '';
+  var maiu=/^[A-ZÀ-Ý']{2,}( [A-ZÀ-Ý']+){1,4}$/.test(l), inic=/^[A-ZÀ-Ý][a-zà-ÿ']+( ([A-ZÀ-Ý][a-zà-ÿ']*|d[aeo]s?|e)){1,4}$/.test(l); if(!maiu&&!inic) return '';
+  l=l.toUpperCase(); if(SC_NAO.test(l)||/^(NO|NA|EM|AO|OU|SE|OS|AS|UM) /.test(l)) return '';
+  return l;
+}
+function scSemAcento(t){ return String(t||'').toUpperCase().replace(/[ÀÁÂÃÄ]/g,'A').replace(/[ÈÉÊË]/g,'E').replace(/[ÌÍÎÏ]/g,'I').replace(/[ÒÓÔÕÖ]/g,'O').replace(/[ÙÚÛÜ]/g,'U').replace(/Ç/g,'C'); }
+/* escolhe o nome entre as linhas lidas (c: [{n:nome,h:altura da letra,c:confiança}]): primeiro a que bate com o nome que o cliente já tem na conta;
+   senão a de letra maior (no cartão o nome é maior que os avisos); empate vai para a que mais se repetiu */
+function scNomeEscolhe(c,refs){
+  var g={}, o=[]; (c||[]).forEach(function(x){ if(!x||!x.n||(x.c!=null&&x.c<50)) return; if(!g[x.n]){ g[x.n]={n:x.n,v:0,h:0}; o.push(g[x.n]); } g[x.n].v++; if(x.h>g[x.n].h) g[x.n].h=x.h; });
+  if(!o.length) return '';
+  var pal={}; (refs||[]).forEach(function(r){ scSemAcento(r).split(/[^A-Z]+/).forEach(function(w){ if(w.length>=3) pal[w]=1; }); });
+  var bate=o.filter(function(x){ return scSemAcento(x.n).split(' ').some(function(w){ return pal[w]; }); });
+  var lista=bate.length?bate:o; lista.sort(function(a,b){ return (Math.abs(a.h-b.h)>Math.max(a.h,b.h)*0.12)?b.h-a.h:b.v-a.v; });
+  return lista[0].n;
+}
 /* (LIVEFOOD-34) uma leitura (um texto): número só com pedaços da MESMA linha, ou 4 grupos de 4 algarismos em linhas seguidas (cartão vertical) */
 function scParse1(t){
   var r={num:'',val:'',cvv:'',ops:[],nomes:[]}, bruto=String(t||''), agora=new Date(), aa=agora.getFullYear()%100, mm=agora.getMonth()+1, melhor=-1;
@@ -1637,10 +1657,7 @@ function scParse1(t){
   if(achou){ r.num=achou.n; achou.us.forEach(function(k){ k.u=1; }); }
   var rot=bruto.match(/(?:CVV2?|CVC2?|CVN|CID|C[OÓ]D(?:IGO)?\.?\s*(?:DE\s*)?SEG\w*|SECURITY\s*CODE)\D{0,12}(\d{3,4})(?!\d)/i); if(rot) r.cvv=rot[1];
   tk.forEach(function(k){ if(!k.u&&/^\d{3,4}$/.test(k.d)&&r.ops.indexOf(k.d)<0) r.ops.push(k.d); });
-  /* (LIVEFOOD-35) nome: linha só de letras maiúsculas, com 2 a 5 palavras, que não seja rótulo, banco ou bandeira */
-  bruto.split(/\n/).forEach(function(l){ l=l.replace(/\s+/g,' ').trim(); if(l.length<6||l.length>26||!/^[A-ZÀ-Ý]{2,}( [A-ZÀ-Ý]+){1,4}$/.test(l)) return;
-    if(/(^| )(VALID|THRU|VALIDO|VÁLIDO|VALIDADE|ATE|ATÉ|GOOD|EXPIRES?|MEMBER|SINCE|CLIENTE|DESDE|CVV|CVC|BANCO|BANK|CARD|CARTAO|CARTÃO|CREDIT|CREDITO|CRÉDITO|DEBIT|DEBITO|DÉBITO|VISA|MASTERCARD|MASTER|ELO|AMEX|AMERICAN|EXPRESS|HIPERCARD|PLATINUM|GOLD|BLACK|INFINITE|SIGNATURE|INTERNATIONAL|INTERNACIONAL|ELECTRON|MAESTRO|NUBANK|ITAU|ITAÚ|BRADESCO|SANTANDER|CAIXA|INTER|BRASIL|DIGITAL|SAC|OUVIDORIA|AUTHORIZED|SIGNATURE|ASSINATURA)( |$)/.test(l)) return;
-    if(r.nomes.indexOf(l)<0) r.nomes.push(l); });
+  bruto.split(/\n/).forEach(function(l){ var n=scNomeOk(l); if(n&&r.nomes.indexOf(n)<0) r.nomes.push(n); });
   return r;
 }
 /* várias leituras da mesma foto, separadas por \f: vale o que mais se repete. Na dúvida deixa em branco: o cliente digita */
@@ -1663,19 +1680,22 @@ function scLe(f){
       /* (LIVEFOOD-34) a leitura erra quando a letra fica grande ou pequena demais: cada giro é tentado em vários tamanhos (e, por último,
          com claro e escuro trocados), e cada tentativa de dois jeitos (tudo; só algarismos). Achado o número, faz até 4 leituras a mais
          desse giro para sair também a validade e o CVV, que têm letra menor. Para em 40 s e devolve o que tiver. */
-      var t0=Date.now(), gde=Math.max(im.width,im.height), vars=[[1800,0],[1100,0]].concat(gde>1900?[[2600,0]]:[]).concat([[1800,1]]), tx='', melhor=null, soDig=0, extras=0;
+      var t0=Date.now(), gde=Math.max(im.width,im.height), vars=[[1800,0],[1100,0]].concat(gde>1900?[[2600,0]]:[]).concat([[1800,1]]), tx='', melhor=null, soDig=0, extras=0, nomes=[], exNome=0;
       var completo=function(r){ return !!(r&&r.num&&r.val&&r.cvv); };
-      var le=function(tela,dig){ var tinha=!!melhor, p=dig!==soDig?w.setParameters({tessedit_char_whitelist:dig?'0123456789/ ':''}).then(function(){ soDig=dig; }):Promise.resolve(); return p.then(function(){ return w.recognize(tela); }).then(function(o){ if(tinha) extras++; tx+=(tx?'\f':'')+((o&&o.data&&o.data.text)||''); var r=scParse(tx); if(r.num) melhor=r; return r; }); };
-      var chega=function(r){ return completo(r)||(melhor&&extras>=4)||Date.now()-t0>40000; };
+      var le=function(tela,dig){ var tinha=!!melhor, p=dig!==soDig?w.setParameters({tessedit_char_whitelist:dig?'0123456789/ ':''}).then(function(){ soDig=dig; }):Promise.resolve(); return p.then(function(){ return w.recognize(tela); }).then(function(o){ if(tinha) extras++; var d=(o&&o.data)||{}; tx+=(tx?'\f':'')+(d.text||'');
+          if(!dig){ var ls=d.lines&&d.lines.length?d.lines:String(d.text||'').split(/\n/).map(function(t){ return {text:t}; }); ls.forEach(function(l){ var n=scNomeOk(l.text); if(n) nomes.push({n:n,h:l.bbox?(l.bbox.y1-l.bbox.y0)/tela.height:0,c:l.confidence}); }); }   /* (LIVEFOOD-37) linhas que podem ser o nome, com a altura da letra */
+          var r=scParse(tx); if(r.num) melhor=r; return r; }); };
+      var chega=function(r){ if(Date.now()-t0>40000) return true; if(completo(r)){ if(nomes.length||exNome>=2) return true; exNome++; return false; } return !!(melhor&&extras>=4); };   /* número, validade e CVV lidos mas nenhum nome: até 2 leituras a mais, em outro tamanho */
+      var refs=[]; try{ refs=[CT.conta&&CT.conta.nome,CT.conta&&CT.conta.cobranca&&CT.conta.cobranca.nome]; }catch(e){}
       var passo=function(n){
         var g=Math.floor(n/vars.length), vi=n%vars.length;
         if(g>=giros.length||Date.now()-t0>40000) return melhor;
-        if(vi===0){ if(melhor) return melhor; tx=''; }   /* giro novo só se o anterior não achou o número */
+        if(vi===0){ if(melhor) return melhor; tx=''; nomes=[]; }   /* giro novo só se o anterior não achou o número */
         scSt(melhor?'Lendo a validade e o CVV…':'Lendo o cartão… ('+(g+1)+'/'+giros.length+')');
         var tela=scTela(im,giros[g],vars[vi][0],vars[vi][1]);
-        return le(tela,0).then(function(r){ if(chega(r)) return melhor; return le(tela,1); }).then(function(r){ if(chega(r)) return melhor; return passo(n+1); });
+        return le(tela,0).then(function(r){ if(chega(r)) return melhor; if(completo(r)) return passo(n+1); /* só falta o nome: ler só algarismos não ajuda */ return le(tela,1).then(function(r2){ if(chega(r2)) return melhor; return passo(n+1); }); });
       };
-      return passo(0);
+      return Promise.resolve(passo(0)).then(function(r){ if(r){ var nm=scNomeEscolhe(nomes,refs); if(nm) r.nome=nm; } return r; });
     }).then(function(r){ res=r; if(w) return w.terminate(); },function(e){ if(w){ try{ w.terminate(); }catch(x){} } throw e; }).then(function(){ return res; });
 }
 function scArq(inp){
@@ -1685,7 +1705,7 @@ function scArq(inp){
     if(!r||!r.num){ scSt('Não consegui ler o cartão. Tente outra foto, com boa luz e sem reflexo, ou digite os dados.'); return; }
     var n=$('ck-cn'), v=$('ck-cval'), c=$('ck-ccv'); if(!n){ scSt(''); return; }
     n.value=r.num.replace(/(\d{4})(?=\d)/g,'$1 '); if(v&&r.val) v.value=r.val; if(c) c.value=r.cvv||'';
-    var no=$('ck-cnome'); if(no&&r.nome&&(!no.value.trim()||(DV.c&&no.value===DV.c.nome))) no.value=r.nome;   /* (LIVEFOOD-35) nome lido só entra se o campo estiver vazio (ou com o nome do cartão antigo) */
+    var no=$('ck-cnome'); if(no&&r.nome) no.value=r.nome;   /* (LIVEFOOD-37) o nome lido na foto vale para este cartão; sem nome lido, fica o que já estava */
     scSt('Confira os dados lidos'+(r.val?'':', digite a validade')+(r.cvv?'':' e digite o CVV')+' antes de pagar.');
     var falta=!r.val?v:(!r.cvv?c:((no&&!no.value.trim())?no:null)); if(falta){ try{ falta.focus(); }catch(e){} }
     if(r.val&&r.cvv&&no&&!no.value.trim()) scSt('Confira os dados lidos e digite o nome como está no cartão.');
@@ -1949,9 +1969,19 @@ function ckConfere(){
    (ou a tela do QR Code ser fechada); mesmo assim conferimos, mostramos a confirmação e esvaziamos a sacola. */
 var PD={tmr:null,busca:0,ok:''};
 function pdK(){ return 'lf_pend_'+(D.cli||CLI); }
+function pdItem(i){ return JSON.stringify([i.p,i.tam,i.sab,i.borda,i.adds,i.obs,i.qty]); }
 function pdSac(){ return JSON.stringify(SAC.map(function(i){ return [i.p,i.tam,i.sab,i.borda,i.adds,i.obs,i.qty]; })); }
+/* (LIVEFOOD-36) pedido pago: tira da sacola os itens que foram no pedido e deixa só o que o cliente pôs depois. Antes era tudo ou nada:
+   qualquer diferença na sacola (ou outra aba aberta com a sacola antiga) fazia o pedido pago continuar inteiro na sacola. */
+function pdEsvazia(p){
+  var x=pdLer(); sacLer();   /* relê do aparelho: outra aba pode ter mexido na sacola */
+  if(x&&x.id===p.id){ pdSolta(); if(x.itens&&x.itens.length){ var rest=x.itens.slice(); SAC=SAC.filter(function(i){ var k=rest.indexOf(pdItem(i)); if(k<0) return true; rest.splice(k,1); return false; }); } else if(!x.sac||x.sac===pdSac()) SAC=[]; }
+  else SAC=[];
+  sacGrava();
+}
+window.addEventListener('storage',function(e){ try{ if(D&&e.key===lsk()) sacLer(); }catch(x){} });   /* sacola igual em todas as abas */
 function pdLer(){ try{ return JSON.parse(localStorage.getItem(pdK())||'null'); }catch(e){ return null; } }
-function pdGrava(p){ try{ localStorage.setItem(pdK(),JSON.stringify({id:p.id,t:Date.now(),sac:pdSac(),ctk:ctk()})); }catch(e){} pdLiga(); }
+function pdGrava(p){ try{ localStorage.setItem(pdK(),JSON.stringify({id:p.id,t:Date.now(),sac:pdSac(),itens:SAC.map(pdItem),ctk:ctk()})); }catch(e){} pdLiga(); }
 function pdSolta(){ try{ localStorage.removeItem(pdK()); }catch(e){} clearInterval(PD.tmr); PD.tmr=null; }
 function pdLiga(){ if(!PD.tmr) PD.tmr=setInterval(pdConfere,5000); }
 function pdConfere(){
@@ -1970,8 +2000,7 @@ document.addEventListener('visibilitychange',pdVoltou); window.addEventListener(
 function avisoCartao(){ return '<div style="margin-top:16px;background:#fff7ed;color:#9a3412;border:1px solid #fdba74;border-radius:12px;padding:12px;font-size:13.5px;line-height:1.45"><b>Pagamento aprovado.</b> '+(CK.dvOk?'O cartão ficou guardado neste aparelho. Na próxima compra, digite só o CVV.':'O cartão não ficou salvo no LiveFood. Guarde o cartão no seu celular (Google ou Apple) para ele preencher sozinho na próxima compra.')+'</div>'; }
 function ckOk(p){
   if(PD.ok===p.id) return; PD.ok=p.id; clearInterval(CK.tmr);
-  var x=pdLer(), mudou=false; if(x&&x.id===p.id){ mudou=x.sac!==pdSac(); pdSolta(); }
-  if(!mudou){ SAC=[]; sacGrava(); }   /* sacola montada de novo depois do Pix: não apaga */
+  pdEsvazia(p);
   try{ localStorage.removeItem('lf_prog_'+(D.cli||CLI)); }catch(e){}
   if(window.LiveApp) LiveApp.comemorar({titulo:'Pedido #'+p.num+(p.pagto==='dinheiro'||p.pagto==='maquina'||p.pagto==='caixa'||p.pagto==='conta'?' enviado!':' confirmado!'),sub:p.modo==='mesa'?'Já estamos preparando! 🍳':ehRest()?'Já estamos preparando o seu pedido 🍳':'Já estamos separando o seu pedido 🛍️'});
   abreFolha('<div class="wb" style="text-align:center;padding:36px 20px 24px"><svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg><div style="font-size:22px;font-weight:800;margin-top:14px">Pedido #'+p.num+(p.pagto==='dinheiro'||p.pagto==='maquina'||p.pagto==='caixa'||p.pagto==='conta'?' enviado!':' confirmado!')+'</div><div style="margin-top:8px;color:var(--mut);font-size:14.5px;line-height:1.5">'+(p.lf_comanda?'Lançado na sua <b style="color:#fff">comanda '+esc(p.lf_comanda)+'</b>. Você paga na saída do evento.':p.pagto==='conta'?'Para pagar, toque em <b style="color:#fff">Fechar conta</b> quando quiser.':p.pagto==='caixa'?'Pague <b style="color:#fff">'+brl(p.total)+'</b> no caixa (cartão ou dinheiro).':p.pagto==='dinheiro'?'Pague <b style="color:#fff">'+brl(p.total)+'</b> em dinheiro '+(p.modo==='retirada'?'na retirada':'ao entregador')+'.':'Pagamento recebido: <b style="color:#fff">'+brl(p.total)+'</b>.')+'<br>'+(p.prog_dia?'Agendado para <b style="color:#fff">'+esc(progFmt({dia:p.prog_dia,hora:p.prog_hora}))+'</b>, com prioridade na fila.':(p.modo==='mesa'?'Já estamos preparando! Levamos até a sua mesa.':p.modo==='retirada'?'Avisaremos quando estiver pronto para retirar.':'Já estamos preparando o seu pedido.'))+'</div>'+(CK.semCartao&&p.pagto==='cartao'?avisoCartao():'')+'</div><div class="rod"><button class="bt c" onclick="'+(p.modo==='mesa'?'fechaSheet();mesaInit(true)':'fechaSheet()')+'">'+(p.modo==='mesa'?'Voltar ao início':(catEhCardapio()?'Voltar ao cardápio':'Voltar para '+esc(catNome())))+'</button></div>',true);
