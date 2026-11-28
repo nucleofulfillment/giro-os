@@ -13,7 +13,7 @@
 <title>Cardápio · LiveFood</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
-<!-- LIVEFOOD-39 --><meta name="versao" content="LIVEFOOD-39">
+<!-- LIVEFOOD-40 --><meta name="versao" content="LIVEFOOD-40">
 <style>
 :root{--bg:#0b0b0d;--tx:#fff;--mut:rgba(255,255,255,.68);--pri:#FF5A00;--pri2:#FF5A00;--glass:rgba(18,18,22,.62);--line:rgba(255,255,255,.16)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -360,7 +360,9 @@ html.clbbar #stage .ov{--ov-b:max(calc(232px + env(safe-area-inset-bottom)),var(
 html.clbbar #stage.sem-cards .ov{--ov-b:calc(128px + env(safe-area-inset-bottom))}
 #stage .ov.p-base.a-esq{padding-right:96px}
 html.kb #nav,html.kb #clbHome,html.kb #mside,html.kb #mnb{display:none!important}
-html.kb #sheet,html.kb #sheet.wz,html.kb #sheet.fz,html.kb #sheet.fx{bottom:var(--kb,0px)!important;top:0!important;height:auto!important;max-height:none!important;border-radius:0;transform:none;transition:none}
+/* (LIVEFOOD-40) iPhone: campo com letra menor que 16px faz o Safari dar zoom e deslocar a página ao abrir o teclado */
+@supports (-webkit-touch-callout:none){ html .cin,html #sheet input,html #sheet textarea,html #sheet select,html input[type=search],html input[type=text],html input[type=tel],html input[type=email]{font-size:16px} }
+html.kb #sheet,html.kb #sheet.wz,html.kb #sheet.fz,html.kb #sheet.fx{bottom:var(--kb,0px)!important;top:var(--kbt,0px)!important;height:auto!important;max-height:none!important;border-radius:0;transform:none;transition:none}
 html.kb #sheet .wh{padding:2px 10px}html.kb #sheet .rod{padding:6px 12px}html.kb #sheet .rod .bt{padding-top:9px;padding-bottom:9px}html.kb #sheet .rod.col .bt.g{display:none}
 #mpav{position:fixed;inset:0;z-index:90;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.55)}#mpav.on{display:flex}#mpav .cx{width:100%;max-width:340px;background:#fff;color:#1c1c1e;border-radius:22px;padding:22px 20px 18px;text-align:center;box-shadow:0 18px 50px rgba(0,0,0,.35);animation:mpavE .3s cubic-bezier(.2,1.3,.4,1)}#mpav .lv{width:118px;margin:0 auto 12px}#mpav .tt1{font-size:19px;font-weight:800;line-height:1.25}#mpav .vl1{font-size:26px;font-weight:900;color:#FF5A00;margin-top:6px}#mpav .st1{font-size:14px;color:#6b6b73;margin:4px 0 12px}@keyframes mpavE{from{transform:scale(.86);opacity:0}to{transform:none;opacity:1}}
 .mp-bar{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.mp-ch{display:inline-flex;align-items:center;min-height:38px;padding:0 13px;border:1.5px solid var(--line);border-radius:11px;background:transparent;color:inherit;font:inherit;font-size:13.5px;font-weight:700;text-decoration:none;cursor:pointer}.mp-ch.pri{border-color:var(--pri);color:var(--pri2,var(--pri))}
@@ -1770,12 +1772,11 @@ function dvApaga(quieto){
   else if(CT.ctx==='conta'&&!$('ck-cn')) contaTela();
   toast('Cartão removido deste aparelho');
 }
-/* (LIVEFOOD-39) "Salvar este cartão": a caixa volta como o cliente deixou da última vez neste aparelho. Quem marcou uma vez não precisa marcar
-   de novo a cada pedido do dia; quem desmarcou continua desmarcado. Na primeira vez continua desmarcada: salvar é escolha do cliente. */
+/* (LIVEFOOD-40) "Salvar este cartão" já vem marcada (decisão do dono da plataforma). Quem desmarcar continua desmarcado nos pedidos seguintes deste aparelho. */
 function csvK(){ return 'lf_csv_'+(D.cli||CLI); }
 function csvLer(){ try{ return localStorage.getItem(csvK())||''; }catch(e){ return ''; } }
 function csvGrava(on){ try{ localStorage.setItem(csvK(),on?'1':'0'); }catch(e){} }
-function csvMarcada(dv){ var p=csvLer(); return p==='0'?false:!!(dv||p==='1'); }
+function csvMarcada(dv){ return csvLer()!=='0'; }
 function ckCartaoHtml(c){
   var cs=c.cartoes||[], h='', e=null, i;
   if(CK.cid===undefined) CK.cid=cs.length?cs[0].id:'';
@@ -2016,17 +2017,24 @@ var MC={forma:'pix',d:null,tmr:null};
 /* (159) PAGAMENTO PELO CELULAR NA MESA E RACHA. Cada pagamento é uma parte da conta; a mesa fecha sozinha quando as partes cobrem o total. Só aparece com a opção ligada no painel. */
 var MP={d:null,parte:null,forma:'',formaTela:false,envio:{},prox:null,consente:0,tmr:null,n:2,pes:[],val:[],rp:null,cpfN:false};
 /* com o teclado aberto, o campo em que a pessoa digita fica sempre à vista (Android encolhe a página; iPhone cobre a parte de baixo) */
-var KB={base:innerHeight,larg:innerWidth,on:false};
+var KB={base:innerHeight,larg:innerWidth,on:false,ios:/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)};
 function kbAjusta(){
   var v=window.visualViewport, ih=innerHeight, a=document.activeElement, ed=!!(a&&/^(INPUT|TEXTAREA)$/.test(a.tagName)&&a.closest('#sheet'));
   if(innerWidth!==KB.larg){ KB.larg=innerWidth; KB.base=ih; }
   if(!ed&&ih>KB.base*0.8) KB.base=ih;
   var cob=v?Math.max(0,ih-v.height-v.offsetTop):0, ab=ed&&(cob>80||ih<KB.base*0.8);
   document.documentElement.style.setProperty('--kb',(ab?cob:0)+'px');
+  /* (LIVEFOOD-40) iPhone: com o teclado aberto o Safari empurra a página para cima; a folha passa a começar onde a parte visível começa */
+  document.documentElement.style.setProperty('--kbt',(ab&&v&&KB.ios?Math.max(0,Math.round(v.offsetTop)):0)+'px');
   document.documentElement.classList.toggle('kb',ab);
   if(ab&&!KB.on) kbMostra(); KB.on=ab;
 }
-function kbMostra(){ setTimeout(function(){ var a=document.activeElement; if(a&&a.closest&&a.closest('#sheet')&&a.scrollIntoView) a.scrollIntoView({block:'center',behavior:'auto'}); },60); }
+function kbMostra(){ setTimeout(function(){ var a=document.activeElement; if(!(a&&a.closest&&a.closest('#sheet'))) return;
+  if(KB.ios&&a.getBoundingClientRect){   /* (LIVEFOOD-40) iPhone: rola só a lista de dentro da folha; scrollIntoView também empurrava a página inteira */
+    var sc=a.parentNode; while(sc&&sc.id!=='sheet'&&!(sc.scrollHeight>sc.clientHeight+4&&/(auto|scroll)/.test(getComputedStyle(sc).overflowY))) sc=sc.parentNode;
+    if(sc&&sc.getBoundingClientRect){ var ra=a.getBoundingClientRect(), rs=sc.getBoundingClientRect(); sc.scrollTop+=(ra.top+ra.height/2)-(rs.top+rs.height/2); return; }
+  }
+  if(a.scrollIntoView) a.scrollIntoView({block:'center',behavior:'auto'}); },60); }
 window.addEventListener('resize',kbAjusta);
 if(window.visualViewport){ visualViewport.addEventListener('resize',kbAjusta); visualViewport.addEventListener('scroll',kbAjusta); }
 document.addEventListener('focusin',function(e){ if(e.target&&e.target.closest&&e.target.closest('#sheet')){ kbAjusta(); if(KB.on) kbMostra(); setTimeout(kbAjusta,350); } });
