@@ -1013,7 +1013,7 @@ html.loja-p .cd-dest{display:none!important}
           </div>
           <div class="pills" id="pd-pills" style="margin-top:20px;margin-bottom:6px"></div>
           <div class="tb-wrap"><table class="tb">
-            <thead><tr><th>Pedido</th><th>Bairro / cidade</th><th>Origem</th><th>Tempo</th><th>Entregador</th><th>Status</th><th>Valor</th><th>Recebimento</th><th></th></tr></thead>
+            <thead><tr><th>Pedido</th><th>Mesa / bairro</th><th>Origem</th><th>Tempo</th><th>Entregador</th><th>Status</th><th>Valor</th><th>Recebimento</th><th></th></tr></thead>
             <tbody id="pd-corpo"></tbody>
           </table></div>
         </div>
@@ -5485,7 +5485,7 @@ function pdTempo(p){
 }
 function pdTempoHtml(p){ var t=pdTempo(p); if(!t) return '<span style="color:var(--muted2)">—</span>'; return '<span class="badge '+t.cls+'">'+t.rot+'</span><br><span style="font-size:11px;color:var(--muted)">há '+pdMinTxt(t.min)+'</span>'; }
 function pdForma(p){ return p.pgr||p.pg||''; }
-function pdNum(p){ return p.tr==='gir' ? String(p.cod).replace(/^\d{6}-/,'') : p.cod; }
+function pdNum(p){ return p.fn ? String(p.fn) : (p.tr==='gir' ? String(p.cod).replace(/^\d{6}-/,'') : p.cod); }   /* um número só: o mesmo que o cliente vê */
 function pdRecebHtml(p){
   if(p.pgr) return '<span class="badge b-ok">'+esc(PD_FORMA[p.pgr]||p.pgr)+' ✓</span>';
   if(!p.pg) return '<span style="color:var(--muted2)">—</span>';
@@ -5585,7 +5585,7 @@ function pintarPedidos(){
      Os de mesa já pagos não entram de novo: eles já vêm para esta lista como "Entregue" (origem Mesa) pelo foodImportar */
   var msHoje=(!dIni||dIni<=hojeISO())&&(!dFim||dFim>=hojeISO());
   var pills='';
-  for(i=0;i<stAll.length;i++){ var qtdP=cont[stAll[i]]; if(stAll[i]==='todos'&&msHoje&&typeof MS!=='undefined'&&MS.ped){ var ccT={}; (MS.con||[]).forEach(function(k){ ccT[k.mesa]=1; }); qtdP+=(MS.con||[]).length+MS.ped.filter(function(x){ return !msDentroConta(x,ccT)&&x.status!=='pago'; }).length; }
+  for(i=0;i<stAll.length;i++){ var qtdP=cont[stAll[i]]; if(stAll[i]==='todos'&&msHoje&&typeof MS!=='undefined'&&MS.ped) qtdP+=msTodos().filter(function(m){ return !m.copia; }).length;
     pills+='<span class="pill'+(FILTRO_PD===stAll[i]?' on':'')+'" style="position:relative;overflow:visible" onclick="filtrarPedidos(\''+stAll[i]+'\')">'+(stAll[i]==='todos'?'Todos':stAll[i]==='coletado'?'Na fila':stAll[i]==='cancelado'?'Cancelados':stAll[i][0].toUpperCase()+stAll[i].slice(1))+'<span style="position:absolute;top:-7px;right:-7px;min-width:17px;height:17px;padding:0 4px;border-radius:99px;background:'+(qtdP>0?'var(--roxo)':'var(--border2)')+';color:'+(qtdP>0?'#fff':'var(--muted2)')+';font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;line-height:1;box-shadow:0 0 0 2px var(--s1)">'+qtdP+'</span></span>';
   }
   var qMs=0; if(typeof MS!=='undefined'&&MS.ped){ var ccMs={}; (MS.con||[]).forEach(function(k){ ccMs[k.mesa]=1; }); qMs=(MS.con||[]).length+MS.ped.filter(function(x){ return !msDentroConta(x,ccMs); }).length; }
@@ -5612,21 +5612,33 @@ function pintarPedidos(){
     achados.push({p:p,i:i});
   }
   /* o pedido mais novo entra no topo (pedido do usuário 09/11); urgentes continuam em cima; entregues/devolvidos por último, também do mais novo ao mais antigo */
+  /* em "Todos" é uma lista só: um pedido por linha, do mais novo ao mais antigo, mesa junto com o resto */
+  var unir=FILTRO_PD==='todos'&&msHoje&&!tf&&!mFiltro&&!oFiltro&&!fFiltro&&!ocFiltro;
   achados.sort(function(a,b){
+    if(FILTRO_PD==='todos') return ((pdHoraMs(b.p)||0)-(pdHoraMs(a.p)||0))||(b.i-a.i);
     var fa=PD_FIM[a.p.st]?1:0, fb=PD_FIM[b.p.st]?1:0; if(fa!==fb) return fa-fb;
     if(!fa){ var ua=a.p.urg?1:0, ub=b.p.urg?1:0; if(ua!==ub) return ub-ua; }
     var ma=pdHoraMs(a.p)||0, mb=pdHoraMs(b.p)||0; if(ma!==mb) return mb-ma;
     return b.i-a.i;
   });
-  var h='', n=achados.length, k;
-  for(k=0;k<achados.length && k<LIM;k++){ var p3=achados[k].p, m3=motorista(p3.mt), ender=[(p3.bai||p3.bairro||''),(p3.cid||'')].filter(Boolean).join(' · ');
-    h+='<tr onclick="abrirPedido(\''+p3.cod+'\')"><td>'+(p3.urg?'<span class="mp-urg">🔥</span> ':'')+'<b>'+esc(pdNum(p3))+'</b>'+((p3.tr==='gir'&&p3.dia&&p3.dia!==hojeISO())?' <span style="font-size:11px;color:var(--muted)">'+esc(p3.dia.slice(8,10)+'/'+p3.dia.slice(5,7))+'</span>':'')+cpBtn(pdNum(p3))+'<br><span style="color:var(--muted);font-size:11.5px">'+esc(p3.cliente||infoPacote(p3))+'</span>'+((p3.obs&&p3.obs!=='em aberto'&&p3.obs!=='na base'&&p3.st!=='entregue')?'<br><span style="color:var(--amber);font-size:11px;font-weight:600">⚠ '+esc(p3.obs)+'</span>':'')+((p3.st!=='entregue'&&p3.bairro&&(!p3.num||!p3.rua))?'<br><span style="color:var(--amber);font-size:11px;font-weight:600">⚠ '+(!p3.num?'sem número':'sem nome da rua')+'</span>':'')+'</td>'+
-       '<td>'+esc(ender||'—')+'</td><td>'+esc(p3.canal||'—')+'</td><td>'+pdTempoHtml(p3)+'</td><td>'+esc(m3?m3.n:'sem entregador')+'</td><td>'+badgeStatus(p3.st)+'</td><td>'+(p3.vl==null?'—':moeda(p3.vl))+'</td><td>'+pdRecebHtml(p3)+'</td><td style="white-space:nowrap">'+pdAcaoHtml(p3)+'</td></tr>';}
-  if(n>LIM) h+='<tr><td colspan="9"><div class="empty">Mostrando os primeiros '+LIM+' de '+n+' pedidos — use a busca ou os filtros para ver os outros</div></td></tr>';
-  if(FILTRO_PD==='todos'&&msHoje&&!tf&&!mFiltro&&!oFiltro&&!fFiltro&&!ocFiltro){   /* (240) mesas em andamento entram em Todos, em cima */
-    var mp=msPedidosHtml(busca,true), sec=function(t){ return '<tr class="ms-sec"><td colspan="9">'+t+'</td></tr>'; };
-    if(mp.ativos) h=sec('Mesas em andamento')+mp.ativos+(h?sec('Pedidos de hoje')+h:'');
+  var linhas=[], msCopia={}, k;
+  if(unir) msTodos().forEach(function(m){
+    var x=m.x; if(busca&&!msAchou(x,busca)) return;
+    if(m.copia) msCopia[m.copia.cmid]=1;
+    linhas.push({t:msTempo(x), num:Number(x.num)||0, h:msLinhaTodos(x,m.copia)});
+  });
+  for(k=0;k<achados.length;k++){ var p3=achados[k].p, m3=motorista(p3.mt), ender=[(p3.bai||p3.bairro||''),(p3.cid||'')].filter(Boolean).join(' · ');
+    if(p3.cmid&&msCopia[p3.cmid]) continue;   /* já está na lista com a situação ao vivo da mesa */
+    var h='<tr onclick="abrirPedido(\''+p3.cod+'\')"><td>'+(p3.urg?'<span class="mp-urg">🔥</span> ':'')+'<b>'+(p3.fn?'#':'')+esc(pdNum(p3))+'</b>'+((p3.tr==='gir'&&p3.dia&&p3.dia!==hojeISO())?' <span style="font-size:11px;color:var(--muted)">'+esc(p3.dia.slice(8,10)+'/'+p3.dia.slice(5,7))+'</span>':'')+cpBtn(pdNum(p3))+'<br><span style="color:var(--muted);font-size:11.5px">'+esc(p3.canal==='Mesa'&&p3.itens?p3.itens:(p3.cliente||infoPacote(p3)))+'</span>'+((p3.obs&&p3.obs!=='em aberto'&&p3.obs!=='na base'&&p3.st!=='entregue')?'<br><span style="color:var(--amber);font-size:11px;font-weight:600">⚠ '+esc(p3.obs)+'</span>':'')+((p3.st!=='entregue'&&p3.bairro&&(!p3.num||!p3.rua))?'<br><span style="color:var(--amber);font-size:11px;font-weight:600">⚠ '+(!p3.num?'sem número':'sem nome da rua')+'</span>':'')+'</td>'+
+       '<td>'+esc(ender||'—')+'</td><td>'+esc(p3.canal||'—')+'</td><td>'+(pdHoraMs(p3)?msQuando(pdHoraMs(p3))+'<br>':'')+(pdTempo(p3)?pdTempoHtml(p3):'')+'</td><td>'+esc(m3?m3.n:(p3.canal==='Mesa'?'—':'sem entregador'))+'</td><td>'+badgeStatus(p3.st)+'</td><td>'+(p3.vl==null?'—':moeda(p3.vl))+'</td><td>'+pdRecebHtml(p3)+'</td><td style="white-space:nowrap">'+pdAcaoHtml(p3)+'</td></tr>';
+    linhas.push({t:pdHoraMs(p3)||0, num:Number(p3.fn)||0, h:h});
   }
+  /* quando os dois têm número do servidor, manda o número (é a ordem de entrada); senão, a hora */
+  if(FILTRO_PD==='todos') linhas.sort(function(a,b){ return (a.num&&b.num)?b.num-a.num:b.t-a.t; });
+  var n=linhas.length;
+  h=linhas.slice(0,LIM).map(function(l){ return l.h; }).join('');
+  if(n>LIM) h+='<tr><td colspan="9"><div class="empty">Mostrando os primeiros '+LIM+' de '+n+' pedidos — use a busca ou os filtros para ver os outros</div></td></tr>';
+  if(unir) h=msAvisoFechar()+h;   /* quem pediu a conta fica no topo */
   if(!h) h='<tr><td colspan="9"><div class="empty">Nenhum pedido encontrado'+(tf?' para esta transportadora':'')+'</div></td></tr>';
   if(FILTRO_PD==='mesas') h=msPedidosHtml(busca);
   try{ el('pd-corpo').parentNode.classList.toggle('tb-ms',FILTRO_PD==='mesas'); }catch(e){}
@@ -5652,16 +5664,37 @@ function msPedLinha(x){
 }
 /* (159) quem pagou o quê numa conta rachada */
 function msRachaHtml(l){ if(!l||!l.length) return ''; return '<span style="display:block;margin-top:4px;font-size:11.5px;line-height:1.5;white-space:normal"><b>'+(l.length>1?'Conta rachada entre '+l.length+' pessoas':'Pagou parte da conta')+'</b>'+l.map(function(p){ return '<br>'+esc(p.nome)+(p.itens?' ('+esc(p.itens)+')':'')+' · '+moeda(p.valor)+' · '+(p.status==='paga'?'<span style="color:var(--green,#16a34a);font-weight:700">Pago'+(p.forma==='pix'?' no Pix':p.forma==='cartao'?' no cartão':'')+'</span>':'<span style="color:var(--amber,#b7791f);font-weight:700">Aguardando</span>'); }).join('')+'</span>'; }
+/* lista única de "Todos": abertos, servidos sem pagar e concluídos. "copia" = a linha que o mesmo pedido pago já tem em PEDIDOS */
+function msTempo(x){ var c=x.criado, n=Number(c); return isFinite(n)&&n>0?n:(Date.parse(c)||0); }
+function msQuando(ms){ var d=new Date(ms), h=new Date(); return msHora(ms)+(d.toDateString()===h.toDateString()?'':' <span style="font-size:11px;color:var(--muted)">'+('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2)+'</span>'); }
+function msAchou(x,busca){ return ((msBal(x.mesa)?'cliente balcão':'mesa '+x.mesa)+' '+x.num+' '+x.itens+' '+(x.atend||'')+' '+(x.cli||'')).toLowerCase().indexOf(busca)>=0; }
+function msTodos(){
+  if(typeof MS==='undefined') return [];
+  var porId={}, out=[];
+  PEDIDOS.forEach(function(p){ if(p.cmid) porId[p.cmid]=p; });
+  (MS.ped||[]).forEach(function(x){ out.push({x:x, copia:porId['fd'+x.id]||null}); });
+  (MS.serv||[]).forEach(function(x){ out.push({x:x, copia:porId['fd'+x.id]||null}); });
+  (MS.feito||[]).forEach(function(x){ if(!porId['fd'+x.id]) out.push({x:x, copia:null}); });
+  return out.filter(function(m){ return !(m.copia&&m.copia.st==='cancelado'); });
+}
+function msLinhaTodos(x,copia){
+  return '<tr style="cursor:pointer" onclick="msDetalhe(\''+esc(x.id)+'\')"><td><b>#'+x.num+'</b>'+msInfo(x)+msRachaHtml(x.racha)+'</td><td>'+msLocal(x.mesa)+'</td><td>'+msOrigem(x.mesa)+'</td><td>'+msQuando(msTempo(x))+'</td><td>—</td><td>'+msSelo(x)+'</td><td>'+moeda(x.total)+'</td><td>'+msReceb(x)+'</td><td style="white-space:nowrap">'+msBt(x,'pri')+(copia?pdAcaoHtml(copia):'')+'</td></tr>';
+}
+function msAvisoFechar(){
+  var l=((typeof MS!=='undefined'&&MS.con)||[]).filter(function(k){ return k.pedir; });
+  return l.map(function(k){ return '<tr class="ms-conta"><td colspan="6"><b>'+msLocal(k.mesa)+'</b> quer fechar a conta · '+msPedirTx(k.pedir)+'</td><td>'+moeda(k.pago?Math.max(0,Math.round((k.total-k.pago)*100)/100):k.total)+'</td><td colspan="2" style="white-space:nowrap"><button class="btn pri sm" type="button" onclick="msFechaMesa(\''+esc(k.mesa)+'\')">Recebi · fechar mesa</button></td></tr>'; }).join('');
+}
 /* (077) pedidos das MESAS aparecem em Pedidos, no filtro MESAS (lista própria; não mistura com a fila do motoboy) */
 function msPedidosHtml(busca,partes){
-  var h='', ped=(typeof MS!=='undefined'&&MS.ped)||[], con=(typeof MS!=='undefined'&&MS.con)||[], feito=(typeof MS!=='undefined'&&MS.feito)||[];
+  var h='', ped=((typeof MS!=='undefined'&&MS.ped)||[]).concat((typeof MS!=='undefined'&&MS.serv)||[]), con=(typeof MS!=='undefined'&&MS.con)||[], feito=(typeof MS!=='undefined'&&MS.feito)||[];
   var comConta={}; con.forEach(function(k){ comConta[k.mesa]=1; });
   con.forEach(function(k){ var dela=ped.filter(function(x){ return msDentroConta(x,comConta); }).filter(function(x){ return x.mesa===k.mesa; }); if(busca&&((msBal(k.mesa)?'cliente balcão':'mesa '+k.mesa)+' conta '+dela.map(function(x){ return x.num+' '+x.itens; }).join(' ')).toLowerCase().indexOf(busca)<0) return;
-    h+='<tr class="ms-conta"><td><b>'+msLocal(k.mesa)+'</b><br><span style="color:var(--muted);font-size:11.5px">conta aberta · '+k.n+(k.n>1?' pedidos':' pedido')+'</span>'+msRachaHtml(k.pessoas)+'</td><td>'+msLocal(k.mesa)+'</td><td>'+msOrigem(k.mesa)+'</td><td>—</td><td>—</td><td><div class="ms-selos">'+(k.pessoas&&k.pessoas.length?'<span style="font-size:11.5px;font-weight:800;color:#fff;background:#2563eb;border-radius:10px;padding:2px 9px">'+(k.pessoas.length>1?'Rachada entre '+k.pessoas.length:'Parte paga')+'</span>':'')+(k.pedir?'<span style="font-size:11.5px;font-weight:800;color:#fff;background:#ef4444;border-radius:10px;padding:2px 9px">Quer fechar · '+msPedirTx(k.pedir)+'</span>':(k.pix?'<span style="font-size:12px;color:var(--muted)">Pix em andamento</span>':((k.pessoas&&k.pessoas.length)?'':'<span style="font-size:12px;color:var(--muted)">Consumindo</span>')))+'</div></td><td>'+moeda(k.total)+'</td><td>'+(k.pago?'Falta receber '+moeda(Math.max(0,Math.round((k.total-k.pago)*100)/100)):'Conta aberta')+'</td><td style="white-space:nowrap"><button class="btn pri sm" type="button" onclick="msFechaMesa(\''+esc(k.mesa)+'\')">'+(k.pago?'Recebi o restante · fechar':'Recebi · fechar mesa')+'</button></td></tr>'+dela.map(msPedLinha).join(''); });
+    h+='<tr class="ms-conta"><td><b>'+msLocal(k.mesa)+'</b><br><span style="color:var(--muted);font-size:11.5px">conta aberta · '+k.n+(k.n>1?' pedidos':' pedido')+'</span>'+msRachaHtml(k.pessoas)+'</td><td>—</td><td>'+msOrigem(k.mesa)+'</td><td>—</td><td>—</td><td><div class="ms-selos">'+(k.pessoas&&k.pessoas.length?'<span style="font-size:11.5px;font-weight:800;color:#fff;background:#2563eb;border-radius:10px;padding:2px 9px">'+(k.pessoas.length>1?'Rachada entre '+k.pessoas.length:'Parte paga')+'</span>':'')+(k.pedir?'<span style="font-size:11.5px;font-weight:800;color:#fff;background:#ef4444;border-radius:10px;padding:2px 9px">Quer fechar · '+msPedirTx(k.pedir)+'</span>':(k.pix?'<span style="font-size:12px;color:var(--muted)">Pix em andamento</span>':((k.pessoas&&k.pessoas.length)?'':'<span style="font-size:12px;color:var(--muted)">Consumindo</span>')))+'</div></td><td>'+moeda(k.total)+'</td><td>'+(k.pago?'Falta receber '+moeda(Math.max(0,Math.round((k.total-k.pago)*100)/100)):'Conta aberta')+'</td><td style="white-space:nowrap"><button class="btn pri sm" type="button" onclick="msFechaMesa(\''+esc(k.mesa)+'\')">'+(k.pago?'Recebi o restante · fechar':'Recebi · fechar mesa')+'</button></td></tr>'+dela.map(msPedLinha).join(''); });
   var linha=function(x,fim){ return '<tr class="ms-ped'+(fim?' ms-feito':'')+'" style="cursor:pointer" onclick="msDetalhe(\''+esc(x.id)+'\')"><td><b>#'+x.num+'</b>'+msInfo(x)+msRachaHtml(x.racha)+'</td><td>'+msLocal(x.mesa)+'</td><td>'+msOrigem(x.mesa)+'</td><td>'+msHora(x.criado)+'</td><td>—</td><td>'+msSelo(x)+'</td><td>'+moeda(x.total)+'</td><td>'+msReceb(x)+'</td><td style="white-space:nowrap">'+(fim?'':msBt(x,'pri'))+'</td></tr>'; };
   var achou=function(x){ return !busca||(((msBal(x.mesa)?'cliente balcão':'mesa '+x.mesa)+' '+x.num+' '+x.itens+' '+(x.atend||'')+' '+(x.cli||'')).toLowerCase().indexOf(busca)>=0); };
   var novo1=function(l){ var t=function(x){ var c=x.criado, n=Number(c); return isFinite(n)&&n>0?n:(Date.parse(c)||0); }; return l.slice().sort(function(a,b){ return t(b)-t(a); }); };   /* o mais novo no topo */
-  novo1(ped).forEach(function(x){ if(msDentroConta(x,comConta)||!achou(x)) return; if(partes&&x.status==='pago') return; h+=linha(x,false); });   /* em Todos, o pago já aparece pela cópia "Entregue" */
+  novo1(ped).forEach(function(x){ if(msDentroConta(x,comConta)||!achou(x)) return;
+ if(partes&&x.status==='pago') return; h+=linha(x,false); });   /* em Todos, o pago já aparece pela cópia "Entregue" */
   var hf=''; novo1(feito).forEach(function(x){ if(achou(x)) hf+=linha(x,true); });
   if(partes) return {ativos:h, feitos:hf};
   if(hf) h+='<tr class="ms-sec"><td colspan="9">Concluídos hoje · pagos e servidos</td></tr>'+hf;
@@ -5844,6 +5877,8 @@ function foodImportar(o,fim){
     var ped={cod:cod, tr:'gir', mt:null, cliente:o.nome||'', bairro:ret?'Retirada':(e.bairro||''), rua:ret?'':(e.rua||''), num:ret?'':(e.numero||''), comp:ret?'':(e.compl||''), bai:ret?'Retirada':(e.bairro||''), cid:ret?'':(e.cidade||''), endOrig:'', vl:(o.total==null?0:o.total), cep:ret?'':(e.cep||''), area:'', st:'coletado', t1:'', t2:'', tel:o.fone||'', canal:(o.origem==='whats'?'WhatsApp':'Cardápio'), vend:'', scan:cod, dia:hoje, hora:hora, obs:'em aberto', ent:'', fechId:null,
       tam:'', hp:ms, pg:(o.pagto==='dinheiro'?'dinheiro':o.pagto==='maquina'?'cartao':o.pagto==='pix_local'?'pix':'online'), pgp:(o.pagto==='dinheiro'||o.pagto==='maquina'||o.pagto==='pix_local'?0:1), pgr:'', tx:(o.frete==null?null:o.frete), itens:(o.itens||'')+(o.desconto>0?' | Desconto do pedido programado: -R$ '+Number(o.desconto).toFixed(2).replace('.',','):''), atend:'',
       com:'', atn:'', tpe:ag?'Agendado':(ret?'Retirada':'Entrega'), prz:ag?(o.prog_hora||''):'', prt:ag?('agendado para '+pa[2]+'/'+pa[1]+' às '+o.prog_hora):'', ref:ret?'':(e.ref||''), tpg:null, apg:(o.pagto==='dinheiro'||o.pagto==='maquina'||o.pagto==='pix_local'?(o.total||0):0), op:[(o.obs||''),(o.pagto==='dinheiro'?('Cobrar R$ '+Number(o.total||0).toFixed(2).replace('.',',')+' em dinheiro'+(o.troco>0?' · troco para R$ '+Number(o.troco).toFixed(2).replace('.',','):' · sem troco')):''),(o.pagto==='maquina'?('Cobrar R$ '+Number(o.total||0).toFixed(2).replace('.',',')+' no cartão'+(o.modo==='retirada'?'':' (levar maquininha)')):''),(o.pagto==='pix_local'?('Cobrar R$ '+Number(o.total||0).toFixed(2).replace('.',',')+' no Pix'+(o.modo==='retirada'?' (QR da loja no balcão)':' (levar o QR do Pix da loja)')):'')].filter(Boolean).join(' | '), cmid:'fd'+o.id, urg:ag?1:0};
+    if(o.num) ped.fn=String(o.num);
+    if(Number(o.criado)>0){ ped.hp=Number(o.criado); ped.hora=msHora(ped.hp); }   /* hora em que o pedido foi feito, não a hora em que o painel recebeu */
     if(o.modo==='mesa'){   /* (079) pedido de mesa pago: entra em Pedidos/Dashboard como ENTREGUE (não vai pra fila do motoboy) e lança a entrada no Fluxo de Caixa */
       var mz=String((e&&e.mesa)||''), dz=new Date(), entz=ymdLocal(dz)+' '+hora, mzT=msLocal(mz).replace(/&amp;/g,'&');   /* (240) "Sem mesa #7" / "Cliente Balcão" em vez de "Mesa SM7" */
       ped.st='entregue'; ped.ent=entz; ped.cliente=mzT+(o.nome&&!/^(Mesa |Sem mesa|Cliente Balcão|Tickets)/.test(o.nome)?' · '+o.nome:''); ped.bairro=mzT; ped.bai=ped.bairro; ped.rua=''; ped.num=''; ped.comp=''; ped.cid=''; ped.cep=''; ped.ref='';
@@ -9204,10 +9239,10 @@ function msPoll(){
     MS.vistoC=vc; try{ localStorage.setItem('giro_ms_vistoC',JSON.stringify(vc)); }catch(e){}
     (d.pedidos||[]).forEach(function(x){ if(!MS.vistoP[x.id]){ MS.vistoP[x.id]=1; if(MS.init) av.push('🍽️ '+msLocal(x.mesa)+': novo pedido #'+x.num); } });
     (d.contas||[]).forEach(function(k){ if(k.pedir&&!MS.vistoK[k.mesa+k.pedir+k.total]){ MS.vistoK[k.mesa+k.pedir+k.total]=1; if(MS.init) av.push('🧾 Mesa '+k.mesa+' quer fechar a conta ('+msPedirTx(k.pedir)+')'); } });
-    MS.ped=d.pedidos||[]; MS.cha=d.chamados||[]; MS.con=d.contas||[]; MS.feito=d.feitos||[]; MS.init=1;   /* (240) feitos: pedidos de mesa concluídos hoje (pagos e servidos) */
+    MS.ped=d.pedidos||[]; MS.cha=d.chamados||[]; MS.con=d.contas||[]; MS.feito=d.feitos||[]; MS.serv=d.servidos||[]; MS.init=1;   /* (240) feitos: pedidos de mesa concluídos hoje (pagos e servidos) */
     if(av.length){ aviso(av.join(' · ')); msBeep(); }
     msBadge(); if(MS.aberto) msPintar();
-    var sg=JSON.stringify([MS.ped.map(function(x){ return x.id+x.fase+x.status; }),MS.con,MS.feito.length,MS.feito[0]&&MS.feito[0].id]); if(sg!==MS.sig){ MS.sig=sg; try{ if(typeof PAG!=='undefined'&&PAG==='pedidos') pintarPedidos(); if(typeof PAG!=='undefined'&&PAG==='dashboard') pintarDashboard(); }catch(e){} }
+    var sg=JSON.stringify([MS.ped.map(function(x){ return x.id+x.fase+x.status; }),MS.con,MS.feito.length,MS.feito[0]&&MS.feito[0].id,MS.serv.length]); if(sg!==MS.sig){ MS.sig=sg; try{ if(typeof PAG!=='undefined'&&PAG==='pedidos') pintarPedidos(); if(typeof PAG!=='undefined'&&PAG==='dashboard') pintarDashboard(); }catch(e){} }
     try{ dbLiberar(); }catch(e){}
   }).catch(function(){ MS.busy=0; });
 }
@@ -10027,7 +10062,7 @@ function nfcTenta(){
   });
 }
 function msDetalhe(id){
-  var x=((typeof MS!=='undefined'&&MS.ped)||[]).filter(function(o){ return o.id===id; })[0]; if(!x) return;
+  var x=(typeof MS!=='undefined'?[].concat(MS.ped||[],MS.serv||[],MS.feito||[]):[]).filter(function(o){ return o.id===id; })[0]; if(!x) return;
   var rc=x.status==='pago'?(x.pagto==='pix'?'Pago no Pix':x.pagto==='dinheiro'?'Pago em dinheiro':x.pagto==='cartao'?'Pago no cartão':x.pagto==='racha'?'Conta rachada':x.pagto==='cartao_cliente'?'Pago com o cartão do cliente':x.pagto==='misto'?'Pago dividido'+(x.partes?': '+pgPartesTxt(x.partes):''):'Pago'):(x.status==='marcado'?'Pendurado':'Conta aberta');
   var fs=x.fase==='preparo'?'Em preparo':(x.fase==='rota'?'Pronto':'Novo');
   var linha=function(t){ return '<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:14px;line-height:1.4">'+esc(t)+'</div>'; };
