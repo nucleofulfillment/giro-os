@@ -1692,20 +1692,20 @@ setInterval(function(){ try{ if(TK&&D&&ABA!=='com') comBusca(); if(TK&&D&&D.mesa
    Eles entram em COMS (depois dos pagos vêm as comandas abertas) para o mapa, a foto e o bipar funcionarem igual. */
 function comSig(d){ return JSON.stringify([d.comandas||[],d.entregar||[]]); }
 function entregueMarca(i){
-  var c=COMS[i]; if(!c||!c.pago) return; if(!confirm('Marcar o pedido #'+plab(c.pedidos[0])+' como entregue?')) return;
-  api('/painel/atend-entregue',{id:c.pid}).then(function(r){ if(r&&r.ok){ toast('Pedido entregue ✅'); COMSIG=''; carregaCom(); } else toast((r&&r.mensagem)||'Não consegui marcar. Tente de novo.'); });
+  var c=COMS[i]; if(!c||!c.pago) return; if(!confirm('Marcar '+(c.misto?(c.parte==='B'?'a BEBIDA':'a COMIDA')+' do pedido #'+c.cod:'o pedido #'+plab(c.pedidos[0]))+' como entregue?')) return;
+  api('/painel/atend-entregue',{id:c.pid,parte:c.parte||undefined}).then(function(r){ if(r&&r.ok){ toast(c.misto&&!r.completo?(c.parte==='B'?'Bebida':'Comida')+' entregue ✅ Falta a outra parte':'Pedido entregue ✅'); COMSIG=''; carregaCom(); } else toast((r&&r.mensagem)||'Não consegui marcar. Tente de novo.'); });
 }
 function entregaCard(c,i){
-  var p=c.pedidos[0], onde=comTit(c)+(c.joia?(c.mesa?' · ':'')+pill(c.joia):'');
-  return '<div class="cm" id="cm'+i+'" style="border:2px solid #16A34A"><div class="h"><div><b>#'+plab(p)+' · '+onde+'</b><div style="font-size:12.5px;color:var(--mu2)">'+hrBR(p.criado)+(p.atend?' · '+esc(p.atend):'')+'</div></div><span class="tag g" style="margin:0">PAGO</span></div>'
+  var p=c.pedidos[0], onde=c.ap?'AP '+esc(c.ap)+(c.torre?' · Torre '+esc(c.torre):'')+(c.nome?' · '+esc(c.nome):''):comTit(c)+(c.joia?(c.mesa?' · ':'')+pill(c.joia):'');
+  return '<div class="cm" id="cm'+i+'" style="border:2px solid #16A34A"><div class="h"><div>'+(c.misto?'<div style="font-size:12px;font-weight:900;letter-spacing:1px;color:'+(c.parte==='B'?'#2563EB':'#D97706')+'">'+(c.parte==='B'?'🍺 BEBIDA':'🍽️ COMIDA')+'</div>':'')+'<b>#'+(c.cod||plab(p))+' · '+onde+'</b><div style="font-size:12.5px;color:var(--mu2)">'+hrBR(p.criado)+(p.atend?' · '+esc(p.atend):'')+'</div></div><span class="tag g" style="margin:0">'+(c.ent&&!c.jaPago?'A RECEBER':'PAGO')+'</span></div>'
     +'<div class="pd">'+String(p.itens||'').split('; ').map(function(t){ return '<div class="pi">'+esc(t)+'</div>'; }).join('')+(p.obs?'<div class="pi" style="color:var(--mu2)">Obs.: '+esc(p.obs)+'</div>':'')+'</div>'
-    +locHtml(c,i)
-    +'<div class="ac">'+((c.geo||(c.foto&&c.foto.k))?'<button class="bt s" onclick="entAbre('+i+')">🧭 Ir até o cliente</button>':'')+'<button class="bt s" onclick="entAqui('+i+')">📍 Estou aqui</button></div>'
+    +(c.ap||(c.ent&&!PRAIA)?'':locHtml(c,i)
+    +'<div class="ac">'+((c.geo||(c.foto&&c.foto.k))?'<button class="bt s" onclick="entAbre('+i+')">🧭 Ir até o cliente</button>':'')+'<button class="bt s" onclick="entAqui('+i+')">📍 Estou aqui</button></div>')
     +'<div class="ac1"><button class="bt g" onclick="entregueMarca('+i+')">✓ Entregue</button></div></div>';
 }
 function comPinta(d){
     COMSIG=comSig(d);
-    var pagos=PRAIA?(d.entregar||[]):[];
+    var pagos=(d.entregar||[]).filter(function(c){ return PRAIA||c.ap||c.ent; });   /* apartamento pronto aparece mesmo sem Entrega na praia */
     COMS=pagos.concat(d.comandas||[]); ENT.lista=COMS; OPENL=COMS.filter(function(c){ return !c.pago&&c.mesa&&c.joia; }); OPENH=d.hoje||OPENH; var h='';
     if(pagos.length) h+='<div class="sec" style="margin:0 0 8px">Para entregar · '+pagos.length+'</div>';
     COMS.forEach(function(c,i){
@@ -1718,12 +1718,12 @@ function comPinta(d){
         +(PRAIA?'<button class="bt s" onclick="mudaLugar('+i+')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg>Mudar lugar</button>'+((c.geo||(c.foto&&c.foto.k))?'<button class="bt s" onclick="entAbreC(COMS['+i+'])"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>Localizar</button>':''):'<button class="bt s" onclick="trocaForm('+i+')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg>Trocar mesa</button>')
         +'</div><div class="ac1"><button class="bt g" onclick="fechaForm('+i+')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18M7 15h3"/></svg>Fechar conta</button></div></div>';
     });
-    $('lCom').innerHTML=(cobraHora()&&!PRAIA)?(h?'<div class="sec" style="margin-top:22px">Comandas ainda abertas</div>'+h:''):(h||'<p style="color:var(--mu2)">Nenhuma comanda aberta agora.</p>'); achaPed();   /* (239) cobrar na hora: só mostra se ainda houver alguma aberta */
+    $('lCom').innerHTML=(cobraHora()&&!PRAIA&&!pagos.length)?(h?'<div class="sec" style="margin-top:22px">Comandas ainda abertas</div>'+h:''):(h||'<p style="color:var(--mu2)">Nenhuma comanda aberta agora.</p>'); achaPed();   /* (239) cobrar na hora: só mostra se ainda houver alguma aberta */
   }
 function achaPed(){
   var q=($('bPed').value||'').toLowerCase().trim(), num=/^\d+$/.test(q);
   COMS.forEach(function(c,i){ var e=$('cm'+i); if(!e) return;
-    var ok=!q||String(c.joia).indexOf(q)===0&&num||(c.nome||'').toLowerCase().indexOf(q)>=0||(num&&String(c.mesa)===q)||(c.pedidos.some(function(p){ return plab(p)===q||String(p.num)===q; }));
+    var ok=!q||String(c.joia).indexOf(q)===0&&num||(c.nome||'').toLowerCase().indexOf(q)>=0||(num&&String(c.mesa)===q)||(c.ap&&String(c.ap).toLowerCase()===q)||(c.cod&&String(c.cod).toLowerCase()===q)||(c.pedidos.some(function(p){ return plab(p)===q||String(p.num)===q; }));
     e.style.display=ok?'':'none'; });
 }
 /* (154) cliente mudou de mesa: escolhe a nova no mapa (ou encosta na etiqueta) e os pedidos em aberto vão junto */

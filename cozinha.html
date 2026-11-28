@@ -446,19 +446,22 @@ function bipeAviso(t,ok){
 function bipar(ev){
   if(ev.key!=='Enter'||!BIPE) return;
   var b=$('busca'), n=bipeNum(b.value); if(!n) return;
-  ev.preventDefault(); bipeMarca(n);
+  ev.preventDefault(); bipeMarca(n,bipeSetor(b.value));
 }
 /* o código de barras da comanda traz o rótulo do pedido (128, ou 128-2 numa segunda etiqueta): vale o primeiro número */
+/* 53-B = só o bar; 53-C = só a cozinha (pedido dividido em duas entregas) */
+function bipeSetor(v){ var m=/-\s*([bc])\s*$/i.exec(String(v||'')); return m?(m[1].toLowerCase()==='b'?'bar':'cozinha'):'todos'; }
 function bipeNum(v){ var m=/\d+/.exec(String(v||'')); return m?parseInt(m[0],10):0; }
-function bipeMarca(n){
+function bipeMarca(n,setor){
+  setor=setor||'todos';
   var b=$('busca');
   var p=null,i; for(i=0;i<PED.length;i++){ if(Number(PED[i].num)===n){ p=PED[i]; break; } }
   b.value=''; pinta(); if(!BIPE_CAM) b.focus();   /* com a câmera aberta, não chama o teclado do celular */
   if(!p){ bipeAviso('Não achei o pedido '+n+' na fila.',0); return; }
   if(p.estado==='pronto'){ bipeAviso('O pedido '+n+' já está pronto.',1); return; }
-  var id=p.id; PEND[id]={e:'pronto',t:Date.now()}; p.estado='pronto'; pinta();
+  var id=p.id; if(setor==='todos'){ PEND[id]={e:'pronto',t:Date.now()}; p.estado='pronto'; pinta(); }   /* com 53-B / 53-C só uma parte fica pronta: espera o servidor */
   /* est "todos": o bipe vale para o pedido inteiro (cozinha e bar), mesmo com a tela filtrada num setor */
-  fetch(API+'/painel/cozinha-fase',{method:'POST',headers:hdr(),body:JSON.stringify({id:id,estado:'pronto',est:'todos'})}).then(function(r){ return r.json(); }).then(function(d){ if(!d||!d.ok) throw 0; PEND[id].t=Date.now(); bipeAviso('Pedido '+n+' pronto.',1); setTimeout(function(){ BUSY=0; busca(); },300); })
+  fetch(API+'/painel/cozinha-fase',{method:'POST',headers:hdr(),body:JSON.stringify({id:id,estado:'pronto',est:setor})}).then(function(r){ return r.json(); }).then(function(d){ if(!d||!d.ok) throw 0; if(PEND[id]) PEND[id].t=Date.now(); bipeAviso('Pedido '+n+' pronto.',1); setTimeout(function(){ BUSY=0; busca(); },300); })
     .catch(function(){ delete PEND[id]; bipeAviso('Não consegui marcar o pedido '+n+'. Tente de novo.',0); BUSY=0; busca(); });
 }
 /* (302) leitor pela câmera do celular: aponta para o código de barras da comanda e o pedido vira pronto, sem digitar.
@@ -488,7 +491,7 @@ function bipeCamera(){
         var n=bipeNum(cs[0].rawValue); if(!n) return;
         if(n===ultimo&&Date.now()-quando<4000) return;   /* a mesma comanda parada na frente da câmera não repete */
         ultimo=n; quando=Date.now(); try{ if(navigator.vibrate) navigator.vibrate(80); }catch(e){}
-        bipeMarca(n);   /* a câmera continua aberta para a próxima comanda */
+        bipeMarca(n,bipeSetor(cs[0].rawValue));   /* a câmera continua aberta para a próxima comanda */
       }).catch(function(){ lendo=false; });
     },280)};
   }).catch(function(){ el.remove(); bipeAviso('Não consegui abrir a câmera. Libere a câmera para este site e tente de novo.',0); });
