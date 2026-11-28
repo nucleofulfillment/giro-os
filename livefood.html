@@ -13,7 +13,7 @@
 <title>Cardápio · LiveFood</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
-<!-- LIVEFOOD-41 --><meta name="versao" content="LIVEFOOD-41">
+<!-- LIVEFOOD-42 --><meta name="versao" content="LIVEFOOD-42">
 <style>
 :root{--bg:#0b0b0d;--tx:#fff;--mut:rgba(255,255,255,.68);--pri:#FF5A00;--pri2:#FF5A00;--glass:rgba(18,18,22,.62);--line:rgba(255,255,255,.16)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -1719,26 +1719,28 @@ function scArq(inp){
 var DV={c:null,k:null,de:'',err:'',nova:0};
 function dvFone(){ var f=String((CT.conta&&CT.conta.fone)||''); return CT.tok&&f&&!/^mesa/i.test(f)?f.replace(/\D/g,''):''; }
 function dvK(){ var f=dvFone(); return f?'lf_dvc_'+(D.cli||CLI)+'_'+f:''; }
-function dvPode(){ try{ return !!(dvK()&&window.crypto&&crypto.subtle&&window.indexedDB&&window.TextEncoder&&window.TextDecoder); }catch(e){ return false; } }
+function dvPode(){ try{ return !!(dvK()&&window.crypto&&crypto.subtle&&window.localStorage&&window.TextEncoder&&window.TextDecoder); }catch(e){ return false; } }
 function dvB64(u){ var s='',i; for(i=0;i<u.length;i++) s+=String.fromCharCode(u[i]); return btoa(s); }
 function dvBin(t){ var s=atob(t), u=new Uint8Array(s.length), i; for(i=0;i<s.length;i++) u[i]=s.charCodeAt(i); return u; }
+/* (LIVEFOOD-42) a chave fica no próprio armazenamento do navegador (localStorage). Antes ficava no IndexedDB como chave não exportável, e o
+   iPhone perdia essa chave ao fechar o Safari: o cartão só continuava salvo com o navegador aberto. */
 function dvChave(){
   if(DV.k) return Promise.resolve(DV.k);
+  try{
+    var b=localStorage.getItem('lf_dvk')||'', raw;
+    if(b) raw=dvBin(b); else { raw=crypto.getRandomValues(new Uint8Array(32)); localStorage.setItem('lf_dvk',dvB64(raw)); if(localStorage.getItem('lf_dvk')!==dvB64(raw)) throw new Error('sem armazenamento'); }
+    return crypto.subtle.importKey('raw',raw,{name:'AES-GCM'},false,['encrypt','decrypt']).then(function(k){ DV.k=k; return k; });
+  }catch(e){ return Promise.reject(e); }
+}
+/* chave antiga (IndexedDB), só para abrir cartões guardados antes da LIVEFOOD-42; não cria chave nova */
+function dvChaveAnt(){
   return new Promise(function(ok,no){
-    var rq=indexedDB.open('lf_dv',1);
+    var rq; try{ rq=indexedDB.open('lf_dv',1); }catch(e){ no(e); return; }
     rq.onupgradeneeded=function(){ rq.result.createObjectStore('k'); };
-    rq.onerror=function(){ no(rq.error); };
-    rq.onsuccess=function(){
-      var db=rq.result, g=db.transaction('k').objectStore('k').get('a');
-      g.onerror=function(){ no(g.error); };
-      g.onsuccess=function(){
-        if(g.result){ DV.k=g.result; ok(DV.k); return; }
-        DV.nova=1; crypto.subtle.generateKey({name:'AES-GCM',length:256},false,['encrypt','decrypt']).then(function(k){
-          var t=db.transaction('k','readwrite'); t.objectStore('k').put(k,'a');
-          t.oncomplete=function(){ DV.k=k; ok(k); }; t.onerror=function(){ no(t.error); }; t.onabort=function(){ no(t.error); };
-        },no);
-      };
-    };
+    rq.onerror=function(){ no(rq.error||new Error('idb')); };
+    rq.onsuccess=function(){ var g; try{ g=rq.result.transaction('k').objectStore('k').get('a'); }catch(e){ no(e); return; }
+      g.onerror=function(){ no(g.error||new Error('idb')); };
+      g.onsuccess=function(){ if(g.result) ok(g.result); else { DV.nova=1; no(new Error('sem chave')); } }; };
   });
 }
 function dvSalva(o){
@@ -1747,7 +1749,7 @@ function dvSalva(o){
   try{
     var iv=crypto.getRandomValues(new Uint8Array(12));
     return dvChave().then(function(ch){ return crypto.subtle.encrypt({name:'AES-GCM',iv:iv},ch,new TextEncoder().encode(JSON.stringify(o))); })
-      .then(function(ct){ localStorage.setItem(k,JSON.stringify({iv:dvB64(iv),ct:dvB64(new Uint8Array(ct))})); DV.c=o; DV.de=k; return true; })
+      .then(function(ct){ localStorage.setItem(k,JSON.stringify({v:2,iv:dvB64(iv),ct:dvB64(new Uint8Array(ct))})); DV.c=o; DV.de=k; DV.err=''; return true; })
       .catch(function(){ return false; });
   }catch(e){ return Promise.resolve(false); }
 }
@@ -1760,8 +1762,9 @@ function dvCarrega(){
     return;
   }
   var etapa='A3';   /* A3: não abriu a chave do aparelho · A4: a chave do aparelho foi perdida · A5: não decifrou · A6: conteúdo inválido */
-  dvChave().then(function(ch){ etapa=DV.nova?'A4':'A5'; return crypto.subtle.decrypt({name:'AES-GCM',iv:dvBin(v.iv)},ch,dvBin(v.ct)); })
-    .then(function(pl){ etapa='A6'; var o=JSON.parse(new TextDecoder().decode(pl)); if(DV.de!==k) return; if(!o||!o.numero){ DV.err='A6'; return; } DV.c=o; DV.err=''; dvPreenche(); })
+  var ant=v.v!==2; DV.nova=0;
+  (ant?dvChaveAnt():dvChave()).then(function(ch){ etapa='A5'; return crypto.subtle.decrypt({name:'AES-GCM',iv:dvBin(v.iv)},ch,dvBin(v.ct)); },function(e){ if(DV.nova) etapa='A4'; throw e; })
+    .then(function(pl){ etapa='A6'; var o=JSON.parse(new TextDecoder().decode(pl)); if(DV.de!==k) return; if(!o||!o.numero){ DV.err='A6'; return; } DV.c=o; DV.err=''; dvPreenche(); if(ant) dvSalva(o); /* regrava no formato novo */ })
     .catch(function(e){ if(DV.de===k){ DV.err=etapa+((e&&e.name)?' '+String(e.name).slice(0,24):''); var x=$('dv-er'); if(x) x.textContent=dvErroTxt(); } });   /* não apaga mais o cartão guardado numa falha: pode ser passageira */
 }
 function dvErroTxt(){ return DV.err?'Não consegui abrir o cartão guardado neste aparelho (código '+DV.err+'). Digite os dados do cartão.':''; }
@@ -1798,7 +1801,7 @@ function ckCartaoHtml(c){
     if(scPode()) h+='<button type="button" onclick="scAbre()" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:8px;padding:12px;border:2px dashed var(--pri);border-radius:14px;background:transparent;color:inherit;font:inherit;font-weight:700;font-size:14.5px;cursor:pointer">📷 Ler o cartão pela câmera</button><input type="file" id="sc-in" accept="image/*" capture="environment" style="display:none" onchange="scArq(this)"><div class="nt" id="sc-st" style="font-size:12.5px;margin-top:6px" aria-live="polite"></div>';   /* (LIVEFOOD-32) */
     h+='<form autocomplete="on" onsubmit="return false" style="margin:6px 0 0"><input class="cin" id="ck-cn" name="cardnumber" type="tel" inputmode="numeric" autocomplete="cc-number" maxlength="23" placeholder="Número do cartão" value="'+esc(dv?dvMasc():'')+'" oninput="ckCardNum(this)"><input class="cin" id="ck-cnome" name="ccname" autocomplete="cc-name" maxlength="60" placeholder="Nome como está no cartão" value="'+esc((dv&&dv.nome)||cob.nome||'')+'" style="margin-top:8px"><div style="display:flex;gap:8px;margin-top:8px"><input class="cin" id="ck-cval" name="exp-date" type="tel" inputmode="numeric" autocomplete="cc-exp" maxlength="5" placeholder="MM/AA" value="'+esc(dv?dv.mes+'/'+dv.ano:'')+'" oninput="ckCardVal(this)" style="flex:1"><input class="cin" id="ck-ccv" name="cvc" type="tel" inputmode="numeric" autocomplete="cc-csc" maxlength="4" placeholder="CVV" style="flex:1"></div>'
       +'<input class="cin" id="ck-cmail" name="email" type="email" inputmode="email" autocomplete="email" maxlength="90" placeholder="Seu e-mail" value="'+esc(ml)+'" style="margin-top:8px"><div style="display:flex;gap:8px;margin-top:8px"><input class="cin" id="ck-ccep" name="postal" autocomplete="postal-code" type="tel" inputmode="numeric" maxlength="9" placeholder="CEP da fatura" value="'+esc(cob.cep||(e?e.cep:''))+'" style="flex:2"><input class="cin" id="ck-cnum" maxlength="12" placeholder="Nº" value="'+esc(cob.numero||(e?e.numero:''))+'" style="flex:1"></div>'
-      +'<label class="ck-sv" style="display:flex;align-items:center;gap:12px;margin-top:14px;padding:13px 14px;border:2px solid var(--pri);border-radius:14px;background:color-mix(in srgb,var(--pri) 13%,transparent);font-size:14.5px;font-weight:700;line-height:1.3;cursor:pointer"><input type="checkbox" id="ck-csv"'+(csvMarcada(dv)?' checked':'')+' onchange="csvGrava(this.checked)" style="width:24px;height:24px;flex:none;accent-color:var(--pri);margin:0"><span>Salvar este cartão para compras futuras<small style="display:block;font-weight:500;font-size:12.5px;opacity:.8;margin-top:2px">Na próxima vez você paga mais rápido.</small></span></label><div class="nt" style="font-size:12.5px;margin-top:6px">Pagamento à vista no crédito. O CVV nunca fica guardado, e a foto do cartão é lida no seu aparelho, sem ser enviada. Se o cartão não puder ser salvo na sua conta, ele fica guardado só neste aparelho, protegido, e na próxima compra você digita apenas o CVV.</div></form>';
+      +'<label class="ck-sv" style="display:flex;align-items:center;gap:12px;margin-top:14px;padding:13px 14px;border:2px solid var(--pri);border-radius:14px;background:color-mix(in srgb,var(--pri) 13%,transparent);font-size:14.5px;font-weight:700;line-height:1.3;cursor:pointer"><input type="checkbox" id="ck-csv"'+(csvMarcada(dv)?' checked':'')+' onchange="csvGrava(this.checked)" style="width:24px;height:24px;flex:none;accent-color:var(--pri);margin:0"><span>Salvar este cartão para compras futuras<small style="display:block;font-weight:500;font-size:12.5px;opacity:.8;margin-top:2px">Na próxima vez você paga mais rápido.</small></span></label><div class="nt" style="font-size:12.5px;margin-top:6px">Pagamento à vista no crédito. O CVV nunca fica guardado, e a foto do cartão é lida no seu aparelho, sem ser enviada. Se o cartão não puder ser salvo na sua conta, ele fica guardado só neste aparelho e na próxima compra você digita apenas o CVV.</div></form>';
   }
   return h;
 }
