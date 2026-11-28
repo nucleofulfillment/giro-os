@@ -245,7 +245,7 @@ body.lgon #top,body.lgon #cols{display:none}
 </div>
 
 <!-- ══════════ APP ══════════ -->
-<div id="top"><img class="lo" id="lo" alt="" style="display:none"><h1 id="emp">Preparo</h1><label class="busca"><span aria-hidden="true">🔍</span><input id="busca" type="search" inputmode="search" placeholder="Mesa ou nº do pedido" autocomplete="off" oninput="pinta()"></label><span class="seg" id="seg"><button id="sCozinha" onclick="setEst('cozinha')">🍳 Cozinha</button><button id="sBar" onclick="setEst('bar')">🍺 Bar</button><button id="sTodos" onclick="setEst('todos')">Unificado</button></span><span id="rel"></span><button class="ib" id="bSom" onclick="somAlterna()">🔔 Som</button><button class="ib" onclick="telaCheia()">⛶</button><a class="ib bt-hub" href="hub.html" title="Voltar ao Hub"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Hub</a><button class="ib" onclick="sair()">Sair</button></div>
+<div id="top"><img class="lo" id="lo" alt="" style="display:none"><h1 id="emp">Preparo</h1><label class="busca"><span aria-hidden="true">🔍</span><input id="busca" type="search" inputmode="search" placeholder="Nome, mesa, AP ou torre" autocomplete="off" oninput="pinta()"></label><span class="seg" id="seg"><button id="sCozinha" onclick="setEst('cozinha')">🍳 Cozinha</button><button id="sBar" onclick="setEst('bar')">🍺 Bar</button><button id="sTodos" onclick="setEst('todos')">Unificado</button></span><span id="rel"></span><button class="ib" id="bSom" onclick="somAlterna()">🔔 Som</button><button class="ib" onclick="telaCheia()">⛶</button><a class="ib bt-hub" href="hub.html" title="Voltar ao Hub"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Hub</a><button class="ib" onclick="sair()">Sair</button></div>
 <div id="cols"><div class="col n"><h2><span>Novos</span><span id="cN">0</span></h2><div id="lN"></div></div><div class="col p"><h2><span id="tP">Em preparo</span><span id="cP">0</span></h2><div id="lP"></div></div><div class="col r"><h2><span>Prontos</span><span id="cR">0</span></h2><div id="lR"></div></div></div>
 <div id="det" onclick="if(event.target===this)fechaDet()"><div class="det-box" role="dialog" aria-modal="true" aria-label="Detalhes do pedido"><button class="det-x" onclick="fechaDet()" aria-label="Fechar">×</button><div id="det-c"></div></div></div>
 <div id="som"><button onclick="somLiga()">🔔 Toque para ativar o som dos pedidos</button></div>
@@ -327,7 +327,32 @@ var PRIO={}; try{ PRIO=JSON.parse(localStorage.getItem('coz_prio')||'{}')||{}; }
 function prioGrava(){ try{ localStorage.setItem('coz_prio',JSON.stringify(PRIO)); }catch(e){} }
 function ordena(l){ return l.map(function(p,i){ return {p:p,i:i}; }).sort(function(a,b){ var x=PRIO[a.p.id]||0, y=PRIO[b.p.id]||0; return (y-x)||(a.i-b.i); }).map(function(o){ return o.p; }); }
 function colunas(){ var c={n:[],p:[],r:[]}; PED.forEach(function(p){ c[colDe(p)].push(p); }); c.n=ordena(c.n); c.p=ordena(c.p); c.r=ordena(c.r); return c; }
-function bate(p,q){ if(!q) return true; q=q.toLowerCase().replace(/^#/,''); return String(p.mesa||'').toLowerCase()===q||String(p.num)===q||(String(p.num)+(p.sub?'-'+p.sub:''))===q||String(p.nome||'').toLowerCase().indexOf(q)>=0||(/^\d+$/.test(q)&&String(p.mesa||'').indexOf(q)===0); }
+/* busca aproximada: sem diferença de acento, aceita erro de digitação no nome e acha também por apartamento e torre ("ap 102", "torre b") */
+function semAc(s){ return String(s==null?'':s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''); }
+/* quantas letras trocadas, faltando, sobrando ou invertidas separam duas palavras */
+function dist(a,b){ var m=[],i,j; for(i=0;i<=a.length;i++) m[i]=[i]; for(j=1;j<=b.length;j++) m[0][j]=j;
+  for(i=1;i<=a.length;i++) for(j=1;j<=b.length;j++){ m[i][j]=Math.min(m[i-1][j]+1,m[i][j-1]+1,m[i-1][j-1]+(a[i-1]===b[j-1]?0:1)); if(i>1&&j>1&&a[i-1]===b[j-2]&&a[i-2]===b[j-1]) m[i][j]=Math.min(m[i][j],m[i-2][j-2]+1); }
+  return m[a.length][b.length]; }
+function parecida(t,w){ if(w.indexOf(t)>=0) return true; var f=t.length>=7?2:(t.length>=4?1:0); if(!f) return false;
+  for(var n=t.length-1;n<=t.length+1;n++) if(dist(t,w.slice(0,n))<=f) return true; return false; }
+function bate(p,q){
+  q=semAc(q).replace(/#/g,' ').trim(); if(!q) return true;
+  var end=semAc(p.cli_end), ap=(end.match(/(?:apartamento|apto|ap)\.?\s+([a-z0-9]+)/)||[])[1]||'', torre=(end.match(/torre\s+([a-z0-9]+)/)||[])[1]||'';
+  var mesa=semAc(p.mesa), num=String(p.num), lab=num+(p.sub?'-'+p.sub:'');
+  var palavras=(semAc(p.nome)+' '+end).split(/[^a-z0-9]+/).filter(Boolean);
+  var tk=q.split(/\s+/), i, t, prox;
+  for(i=0;i<tk.length;i++){ t=tk[i]; prox=tk[i+1];
+    /* "ap 102", "torre b" e "mesa 4" procuram só naquele campo */
+    if(prox&&/^(ap|apto|apartamento)$/.test(t)){ if(ap.indexOf(prox)!==0) return false; i++; continue; }
+    if(prox&&t==='torre'){ if(torre!==prox) return false; i++; continue; }
+    if(prox&&t==='mesa'){ if(mesa.indexOf(prox)!==0) return false; i++; continue; }
+    if(/^\d+(-\d+)?$/.test(t)){ if(num===t||lab===t||mesa.indexOf(t)===0||ap.indexOf(t)===0) continue; return false; }
+    if(t.length===1){ if(torre===t||mesa===t||palavras.indexOf(t)>=0) continue; return false; }
+    if(mesa===t||ap===t||palavras.some(function(w){ return parecida(t,w); })) continue;
+    return false;
+  }
+  return true;
+}
 function pinta(){
   var c=colunas(), q=($('busca')&&$('busca').value.trim())||'', vivos={};
   PED.forEach(function(p){ vivos[p.id]=1; }); var mud=0; for(var k0 in PRIO) if(!vivos[k0]&&INIT){ delete PRIO[k0]; mud=1; } if(mud) prioGrava();
