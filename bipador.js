@@ -12,7 +12,7 @@ function css(){ if(document.getElementById('css-bipador')) return; var s=documen
   '.bpd{position:fixed;top:0;right:0;bottom:0;left:0;inset:0;z-index:4000;background:rgba(20,20,22,.6);display:flex;align-items:center;justify-content:center;padding:16px}'+
   '.bpd-c{width:100%;max-width:460px;background:#fff;border-radius:22px;padding:16px;box-shadow:0 30px 60px rgba(0,0,0,.3);font-family:inherit;color:#1C1C1E}'+
   '.bpd-h{display:flex;align-items:center;gap:10px;margin-bottom:10px}.bpd-h b{flex:1;font-size:18px}.bpd-x{width:40px;height:40px;border-radius:50%;border:1px solid #DFDFE4;background:#fff;font-size:16px;cursor:pointer}'+
-  '.bpd-v{min-height:200px;position:relative;border-radius:16px;overflow:hidden;background:#111;aspect-ratio:4/3}.bpd-v video{width:100%;height:100%;object-fit:cover;display:block}'+
+  '.bpd-v{height:40vh;max-height:340px;min-height:180px;position:relative;border-radius:16px;overflow:hidden;background:#111}.bpd-v video{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block}.bpd-c{max-height:100%;overflow-y:auto}.bpd-i{position:relative}'+
   '.bpd-v i{position:absolute;left:12%;right:12%;top:50%;height:2px;background:#FF5A00;box-shadow:0 0 12px #FF5A00;animation:bpdL 1.6s ease-in-out infinite}@keyframes bpdL{0%,100%{transform:translateY(-40px)}50%{transform:translateY(40px)}}'+
   '.bpd-d{font-size:13.5px;color:#71717A;font-weight:600;margin:10px 2px}.bpd-e{font-size:13px;color:#B91C1C;font-weight:700;margin:8px 2px}'+
   '.bpd-m{display:flex;gap:8px}.bpd-m input{flex:1;min-width:0;min-height:52px;border-radius:14px;border:2px solid #DFDFE4;padding:0 12px;font:inherit;font-size:18px;font-weight:700;outline:none}.bpd-m input:focus{border-color:#FF5A00}.bpd-m button{min-height:52px;border-radius:14px;border:0;background:#FF5A00;color:#fff;font:inherit;font-weight:800;padding:0 18px;cursor:pointer}'+
@@ -100,7 +100,7 @@ function cameraAntiga(fontes,proxima){
   return camPede({video:{mandatory:{sourceId:ids[q],minWidth:1280,minHeight:720}},audio:false}).catch(function(){ return camPede({video:{mandatory:{sourceId:ids[q]}},audio:false}); }).catch(function(){ return camPede({video:{optional:[{sourceId:ids[q]}]},audio:false}); })
     .catch(function(e){ info('Câmeras: '+fontes.length+' · não abriu a '+(q+1)+' ('+((e&&(e.name||e.message))||'erro')+')'); return camPede({video:true,audio:false}); });
 }
-function info(t){ window.Bipador.info=t; var e=document.querySelector('.bpd-i'); if(e) e.textContent='Leitor v6 · '+t; }
+function info(t){ window.Bipador.info=t; var e=document.querySelector('.bpd-i'); if(e) e.textContent='Leitor v7 · '+t; var s=document.querySelector('.bpd-s'); if(s) s.textContent='Leitor v7 · '+t; }
 function chromeAntigo(){ var m=(navigator.userAgent.match(/Chrome\/(\d+)/)||[])[1]; return !!m&&Number(m)<60; }
 function camera(proxima){
   if(chromeAntigo()) return fontesAntigas().then(function(f){ return f.length?cameraAntiga(f,proxima):cameraNova(proxima); });
@@ -130,7 +130,7 @@ window.Bipador={
   abrir:function(op){
     css(); fechar(); B.op=op||{}; B.ate=0;
     var d=document.createElement('div'); d.className='bpd';
-    d.innerHTML='<div class="bpd-c"><div class="bpd-h"><b></b><button class="bpd-x" type="button" aria-label="Fechar">✕</button></div><div class="bpd-i" style="font-size:11.5px;color:#71717A;margin:-4px 2px 8px">Leitor v6</div><div class="bpd-v"><video playsinline muted autoplay></video><i></i></div>'+
+    d.innerHTML='<div class="bpd-c"><div class="bpd-h"><b></b><button class="bpd-x" type="button" aria-label="Fechar">✕</button></div><div class="bpd-i" style="font-size:11.5px;color:#71717A;margin:-4px 2px 8px">Leitor v7</div><div class="bpd-v"><video playsinline muted autoplay></video><i></i><span class="bpd-s" style="position:absolute;left:8px;bottom:8px;right:8px;color:#fff;font-size:11.5px;font-weight:700;background:rgba(0,0,0,.6);border-radius:8px;padding:4px 8px">Leitor v7</span></div>'+
       '<div class="bpd-d"></div><div class="bpd-m"><input inputmode="numeric" autocomplete="off" placeholder="Ou digite o código"><button type="button">OK</button></div><div class="bpd-e"></div><div class="bpd-ok"></div></div>';
     d.querySelector('b').textContent=B.op.titulo||'Bipar código de barras';
     d.querySelector('.bpd-d').textContent=B.op.dica||'Aponte a câmera para o código de barras. Leitor USB também funciona.';
