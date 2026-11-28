@@ -45,6 +45,72 @@ Buf.prototype.inv = function (on) { return this.raw(0x1D, 0x42, on ? 1 : 0); };
 function quebra(s, n) { const out = []; let l = ''; String(s).split(' ').forEach(p => { while (p.length > n) { if (l) { out.push(l); l = ''; } out.push(p.slice(0, n)); p = p.slice(n); } if (!l) l = p; else if ((l + ' ' + p).length <= n) l += ' ' + p; else { out.push(l); l = p; } }); if (l) out.push(l); return out.length ? out : ['']; }
 function dataHora(ms) { const d = new Date(ms || Date.now()); const o = { timeZone: 'America/Sao_Paulo' }; return d.toLocaleDateString('pt-BR', o) + ' ' + d.toLocaleTimeString('pt-BR', Object.assign({ hour: '2-digit', minute: '2-digit' }, o)); }
 
+/* ── QR versão 1 (21x21), correção M, até 14 caracteres: o número do pedido ── */
+function qrMatriz(txt) {
+  const d = Buffer.from(String(txt), 'latin1');
+  if (!d.length || d.length > 14) return null;
+  const bits = [], poe = (v, n) => { for (let i = n - 1; i >= 0; i--) bits.push((v >> i) & 1); };
+  poe(4, 4); poe(d.length, 8); d.forEach(x => poe(x, 8)); poe(0, Math.min(4, 128 - bits.length));
+  while (bits.length % 8) bits.push(0);
+  const dados = []; for (let i = 0; i < bits.length; i += 8) dados.push(parseInt(bits.slice(i, i + 8).join(''), 2));
+  for (let k = 0; dados.length < 16; k++) dados.push(k % 2 ? 17 : 236);
+  /* Reed-Solomon em GF(256), 10 bytes de correção */
+  const exp = [], log = []; for (let i = 0, x = 1; i < 255; i++) { exp[i] = x; log[x] = i; x <<= 1; if (x & 256) x ^= 285; }
+  const mul = (a, b) => (a && b) ? exp[(log[a] + log[b]) % 255] : 0;
+  let gerador = [1];
+  for (let i = 0; i < 10; i++) { const n = gerador.concat(0); for (let j = 1; j < n.length; j++) n[j] ^= mul(gerador[j - 1], exp[i]); gerador = n; }
+  const resto = dados.concat(new Array(10).fill(0));
+  for (let i = 0; i < 16; i++) { const f = resto[i]; if (f) for (let j = 1; j < gerador.length; j++) resto[i + j] ^= mul(gerador[j], f); }
+  const todos = dados.concat(resto.slice(16));
+  /* desenho: marcas de posição, de tempo, módulo fixo e informação de formato (M, máscara 0) */
+  const N = 21, m = [], fixo = [];
+  for (let y = 0; y < N; y++) { m.push(new Array(N).fill(0)); fixo.push(new Array(N).fill(false)); }
+  const marca = (x, y, v) => { m[y][x] = v ? 1 : 0; fixo[y][x] = true; };
+  [[0, 0], [14, 0], [0, 14]].forEach(([ox, oy]) => {
+    for (let y = -1; y <= 7; y++) for (let x = -1; x <= 7; x++) {
+      const px = ox + x, py = oy + y; if (px < 0 || py < 0 || px >= N || py >= N) continue;
+      const dist = Math.max(Math.abs(x - 3), Math.abs(y - 3)); marca(px, py, dist !== 2 && dist !== 4);
+    }
+  });
+  for (let i = 8; i < 13; i++) { marca(i, 6, i % 2 === 0); marca(6, i, i % 2 === 0); }
+  const formato = 0x5412, f = i => (formato >> i) & 1;
+  for (let i = 0; i <= 5; i++) marca(8, i, f(i));
+  marca(8, 7, f(6)); marca(8, 8, f(7)); marca(7, 8, f(8));
+  for (let i = 9; i < 15; i++) marca(14 - i, 8, f(i));
+  for (let i = 0; i < 8; i++) marca(N - 1 - i, 8, f(i));
+  for (let i = 8; i < 15; i++) marca(8, N - 15 + i, f(i));
+  marca(8, N - 8, 1);
+  let k = 0;
+  for (let dir = N - 1; dir >= 1; dir -= 2) {
+    if (dir === 6) dir = 5;
+    const sobe = ((dir + 1) & 2) === 0;
+    for (let v = 0; v < N; v++) for (let j = 0; j < 2; j++) {
+      const x = dir - j, y = sobe ? N - 1 - v : v;
+      if (fixo[y][x]) continue;
+      let bit = k < todos.length * 8 ? (todos[k >> 3] >> (7 - (k & 7))) & 1 : 0; k++;
+      if ((x + y) % 2 === 0) bit ^= 1;
+      m[y][x] = bit;
+    }
+  }
+  return m;
+}
+/* imprime o QR como imagem (GS v 0), que toda impressora térmica ESC/POS entende */
+function qrImagem(b, txt) {
+  const m = qrMatriz(txt); if (!m) return;
+  const esc = 9, borda = 2, lado = (m.length + borda * 2) * esc, larg = Math.ceil(lado / 8), img = [];
+  for (let y = 0; y < lado; y++) for (let bx = 0; bx < larg; bx++) {
+    let byte = 0;
+    for (let k = 0; k < 8; k++) {
+      const x = bx * 8 + k, mx = Math.floor(x / esc) - borda, my = Math.floor(y / esc) - borda;
+      if (my >= 0 && my < m.length && mx >= 0 && mx < m.length && m[my][mx]) byte |= 0x80 >> k;
+    }
+    img.push(byte);
+  }
+  b.raw(0x1D, 0x76, 0x30, 0, larg & 255, larg >> 8, lado & 255, lado >> 8);
+  img.forEach(x => b.raw(x));
+  b.raw(10);
+}
+
 function etiqueta(p, cfg) {
   const b = new Buf(cfg), tr = '-'.repeat(COLS), setor = p.setor === 'bar' ? 'BAR' : (p.setor === 'caixa' ? 'CAIXA' : 'COZINHA');
   b.raw(0x1B, 0x40, 0x1B, 0x74, cfg.codepage == null ? 3 : cfg.codepage);   /* inicia + tabela de caracteres */
@@ -88,15 +154,8 @@ function etiqueta(p, cfg) {
   if (p.obs) { b.ln(tr).bold(true); quebra('OBS: ' + p.obs, COLS).forEach(x => b.ln(x)); b.bold(false); }
   b.ln(tr).align(1);
   const cod = String(p.lab).replace(/[^0-9A-Za-z-]/g, '');
-  /* QR com o mesmo número: a câmera da maquininha lê melhor que as barras */
-  {
-    const q = bytesTxt(cod, cfg), nq = q.length + 3;
-    b.raw(0x1D, 0x28, 0x6B, 4, 0, 0x31, 0x41, 0x32, 0);          /* QR modelo 2 */
-    b.raw(0x1D, 0x28, 0x6B, 3, 0, 0x31, 0x43, 9);                /* tamanho do ponto */
-    b.raw(0x1D, 0x28, 0x6B, 3, 0, 0x31, 0x45, 0x31);             /* correção de erro M */
-    b.raw(0x1D, 0x28, 0x6B, nq & 255, nq >> 8, 0x31, 0x50, 0x30, ...q);
-    b.raw(0x1D, 0x28, 0x6B, 3, 0, 0x31, 0x51, 0x30).raw(10);
-  }
+  /* QR com o mesmo número: a câmera da maquininha lê melhor que as barras. Vai como IMAGEM, porque muita impressora ignora o comando próprio de QR */
+  qrImagem(b, cod);
   b.raw(0x1D, 0x68, 70, 0x1D, 0x77, 2, 0x1D, 0x48, 0, 0x1D, 0x6B, 73, cod.length + 2, 0x7B, 0x42, ...bytesTxt(cod, cfg)).raw(10);
   b.bold(true).size(1, 2).ln(String(p.lab)).size(1, 1).bold(false);
   b.raw(10, 10, 10, 0x1D, 0x56, 66, 3);   /* avança e corta */
