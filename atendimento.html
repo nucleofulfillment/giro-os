@@ -1716,14 +1716,47 @@ function loteOn(){ return !!(D&&D.cfg&&D.cfg.entrega_lote); }
 function loteLocal(c){ return c.ap?'AP '+c.ap+(c.torre?' · Torre '+c.torre:''):(c.mesa?'Mesa '+c.mesa:(c.nome||'Sem mesa')); }
 function loteMeus(l){ return (l||[]).filter(function(c){ return c.lote&&c.lote.meu; }); }
 /* Pegar é um toque no cartão ou o número + Enter (tecla verde da maquininha). A tela marca na hora e confirma com o servidor depois. */
-var LOTE={d:null,opt:{},semCam:false};
+var LOTE={d:null,opt:{},semCam:false,ab:{},abrirCod:{}};   /* ab = linhas abertas; abrirCod = pedidos recém-bipados, que abrem sozinhos */
 function loteChave(c){ return c.pid+'|'+c.parte; }
 function loteAplica(l){ l.forEach(function(c){ var k=loteChave(c); if(k in LOTE.opt) c.lote=LOTE.opt[k]||undefined; }); }
 /* campo do número no alto de "Para entregar"; a câmera só abre se o garçom pedir */
 function loteTopo(pagos){
-  return '<div style="display:flex;gap:8px;margin-bottom:10px"><input class="inp" id="loteNum" inputmode="numeric" autocomplete="off" placeholder="Nº do pedido + Enter" style="flex:1;min-width:0;font-size:18px;font-weight:800;margin:0" onkeydown="if(event.keyCode===13){ event.preventDefault(); loteDigitou(); }">'
-    +'<button class="bt" style="margin:0;width:auto;padding:0 16px" onclick="loteDigitou()">Levar</button>'
-    +(LOTE.semCam?'':'<button class="bt s" style="margin:0;width:auto;padding:0 12px" title="Ler com a câmera" onclick="loteBipar()">📷</button>')+'</div>';
+  return (LOTE.semCam?'':'<button class="bt" style="margin:0 0 8px;padding:18px;font-size:18px" onclick="loteBipar()">📷 Bipar QR code</button>')
+    +'<div style="display:flex;gap:8px;margin-bottom:10px"><input class="inp" id="loteNum" inputmode="numeric" autocomplete="off" placeholder="ou digite o nº do pedido" style="flex:1;min-width:0;font-size:15px;font-weight:700;margin:0;padding:9px 12px" onkeydown="if(event.keyCode===13){ event.preventDefault(); loteDigitou(); }">'
+    +'<button class="bt s" style="margin:0;width:auto;padding:0 16px" onclick="loteDigitou()">OK</button></div>';
+}
+/* quem aparece primeiro: o que está comigo em entrega, o meu lote, os prontos livres, o resto, e por último o que está com outro garçom */
+function loteOrdem(c){ if(c.lote&&c.lote.meu) return c.lote.saiu?0:1; if(c.lote) return 4; return c.estado==='pronto'?2:3; }
+function loteAbre(i){ var c=COMS[i]; if(!c) return; var k=loteChave(c); LOTE.ab[k]=!LOTE.ab[k]; loteRepinta(); }
+/* uma linha por pedido; tocar abre os detalhes. O botão da direita resolve o mais comum sem abrir. */
+function entLinha(c,i){
+  var p=c.pedidos[0], k=loteChave(c), lt=loteOn();
+  if(LOTE.abrirCod[c.cod]){ LOTE.ab[k]=true; delete LOTE.abrirCod[c.cod]; }
+  var ab=!!LOTE.ab[k], st=PARTE_ST[c.estado]||PARTE_ST[''], chip=[st[0],st[1]], borda='#E4E4E7', rap='';
+  var pronto=c.estado==='pronto';
+  if(pronto){ chip=['Pronto','#16A34A']; borda='#16A34A'; }
+  if(lt&&c.lote){
+    if(!c.lote.meu){ chip=['Com '+(c.lote.nome||'outro'),'#71717A']; borda='#E4E4E7'; }
+    else if(c.lote.saiu){ chip=['Em entrega','#EA580C']; borda='#EA580C'; rap='<button class="bt g" style="margin:0;width:auto;padding:9px 12px;font-size:14px;flex:none" onclick="event.stopPropagation();entregueMarca('+i+')">✓ Entregue</button>'; }
+    else { chip=['No lote ✓','#16A34A']; borda='#FF5A00'; }
+  } else if(pronto){
+    rap=lt?'<button class="bt" style="margin:0;width:auto;padding:9px 14px;font-size:14px;flex:none" onclick="event.stopPropagation();loteToque('+i+')">＋ Levar</button>'
+          :'<button class="bt g" style="margin:0;width:auto;padding:9px 12px;font-size:14px;flex:none" onclick="event.stopPropagation();entregueMarca('+i+')">✓ Entregue</button>';
+  }
+  var onde=c.ap?esc(loteLocal(c)):(comTit(c)||esc(c.nome||''));
+  var h='<div class="cm" id="cm'+i+'" style="padding:0;overflow:hidden;border:2px solid '+borda+'">'
+    +'<div onclick="loteAbre('+i+')" style="display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;min-height:54px">'
+    +'<div style="flex:1;min-width:0"><div style="font-size:17px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(c.misto?(c.parte==='B'?'🍺 ':'🍽️ '):'')+'#'+esc(c.cod||plab(p))+' <span style="font-weight:700;font-size:14.5px">· '+onde+'</span></div>'
+    +'<div style="font-size:12px;font-weight:800;color:'+chip[1]+'">'+esc(chip[0])+'</div></div>'
+    +rap+'<span style="flex:none;color:var(--mu2);font-size:13px;width:14px;text-align:center">'+(ab?'▾':'▸')+'</span></div>';
+  if(ab){
+    h+='<div style="padding:0 12px 12px;border-top:1px solid var(--b2)">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12.5px;color:var(--mu2);margin-top:8px"><span>'+hrBR(p.criado)+(p.atend?' · '+esc(p.atend):'')+(c.ap&&c.nome?' · '+esc(c.nome):'')+'</span><span class="tag g" style="margin:0">'+(c.jaPago?'PAGO':'A RECEBER')+'</span></div>'
+      +'<div class="pd">'+String(p.itens||'').split('; ').map(function(x){ return '<div class="pi">'+esc(x)+'</div>'; }).join('')+(p.obs?'<div class="pi" style="color:var(--mu2)">Obs.: '+esc(p.obs)+'</div>':'')+'</div>'
+      +(PRAIA&&!c.ap?locHtml(c,i)+'<div class="ac">'+((c.geo||(c.foto&&c.foto.k))?'<button class="bt s" onclick="entAbre('+i+')">🧭 Ir até o cliente</button>':'')+'<button class="bt s" onclick="entAqui('+i+')">📍 Estou aqui</button></div>':'')
+      +'<div class="ac1">'+(lt?loteBotoes(c,i):pronto?'<button class="bt g" onclick="entregueMarca('+i+')">✓ Entregue</button>':'<div style="text-align:center;font-weight:900;padding:10px;color:'+st[1]+'">⏳ '+st[0]+'</div>')+'</div></div>';
+  }
+  return h+'</div>';
 }
 document.addEventListener('keydown',function(e){
   var c=$('loteNum'); if(!c||ABA!=='com'||!c.offsetParent||document.querySelector('.bpd')) return;
@@ -1738,12 +1771,14 @@ function loteDigitou(){
 }
 /* barra fixa embaixo com o que está separado */
 function loteBarra(pagos){
-  var b=$('loteBar'), sep=loteOn()?loteMeus(pagos).filter(function(c){ return !c.lote.saiu; }):[];
+  var b=$('loteBar'), meus=loteOn()?loteMeus(pagos):[], sep=meus.filter(function(c){ return !c.lote.saiu; }), rua=meus.length-sep.length, l=$('lCom');
   if(!b){ var v=$('v-com'); if(!v) return; b=document.createElement('div'); b.id='loteBar'; v.appendChild(b); }
-  if(!sep.length){ b.style.display='none'; b.innerHTML=''; return; }
+  if(!meus.length){ b.style.display='none'; b.innerHTML=''; if(l) l.style.paddingBottom=''; return; }
   var nav=$('nav');
-  b.style.cssText='display:block;position:fixed;left:0;right:0;max-width:560px;margin:0 auto;z-index:29;bottom:'+((nav&&nav.offsetHeight)||56)+'px;background:#fff;color:#1C1C1E;border-top:3px solid var(--pri);padding:8px 12px;box-shadow:0 -6px 18px rgba(0,0,0,.18)';
-  b.innerHTML='<div style="font-size:13.5px;font-weight:800;margin-bottom:6px">Meu lote: '+sep.map(function(c){ return '#'+esc(c.cod); }).join(' · ')+'</div><button class="bt g" style="margin:0;width:100%" onclick="loteSair()">Sair para entregar ('+sep.length+')</button>';
+  b.style.cssText='display:flex;align-items:center;gap:8px;position:fixed;left:0;right:0;max-width:560px;margin:0 auto;z-index:29;bottom:'+((nav&&nav.offsetHeight)||56)+'px;background:#fff;color:#1C1C1E;border-top:2px solid var(--pri);padding:6px 10px;box-shadow:0 -4px 12px rgba(0,0,0,.14);font-size:13.5px';
+  if(sep.length) b.innerHTML='<b style="flex:none">Lote '+sep.length+'</b><span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#52525B">'+sep.map(function(c){ return '#'+esc(c.cod); }).join(' · ')+'</span><button class="bt g" style="margin:0;width:auto;padding:9px 14px;font-size:14px;flex:none" onclick="loteSair()">Sair para entregar ▸</button>';
+  else b.innerHTML='<b style="flex:none;color:#EA580C">Em entrega</b><span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#52525B">'+(rua===1?'falta 1: ':'faltam '+rua+': ')+meus.map(function(c){ return '#'+esc(c.cod); }).join(' · ')+'</span>';
+  if(l) l.style.paddingBottom=(b.offsetHeight+10)+'px';
 }
 /* botões de cada cartão quando o lote está ligado */
 function loteBotoes(c,i){
@@ -1767,6 +1802,7 @@ function lotePegar(corpo,naCamera){
   corpo.acao='pegar';
   return api('/painel/atend-lote',corpo).then(function(r){
     if(r&&r.ok){
+      r.pegos.forEach(function(x){ LOTE.abrirCod[x.cod]=1; });   /* o que acabou de ser bipado abre na lista */
       var txt=r.pegos.map(function(x){ return '#'+x.cod+' · '+x.local; }).join(', ');
       var ja=r.pegos.every(function(x){ return x.ja; });
       txt+=ja?' já estava no lote':' no lote ✅';
@@ -1812,6 +1848,7 @@ function loteResolve(entregou){
   });
 }
 function entregaCard(c,i){
+  if(c.ent) return entLinha(c,i);
   var p=c.pedidos[0], onde=c.ap?'AP '+esc(c.ap)+(c.torre?' · Torre '+esc(c.torre):'')+(c.nome?' · '+esc(c.nome):''):comTit(c)+(c.joia?(c.mesa?' · ':'')+pill(c.joia):'');
   return '<div class="cm" id="cm'+i+'" style="border:2px solid '+(c.ent&&c.estado!=='pronto'?'#CBD5E1':'#16A34A')+'"><div class="h"><div>'+(c.misto?'<div style="font-size:12px;font-weight:900;letter-spacing:1px;color:'+(c.parte==='B'?'#2563EB':'#D97706')+'">'+(c.parte==='B'?'🍺 BEBIDA':'🍽️ COMIDA')+'</div>':'')+'<b>#'+(c.cod||plab(p))+' · '+onde+'</b><div style="font-size:12.5px;color:var(--mu2)">'+hrBR(p.criado)+(p.atend?' · '+esc(p.atend):'')+'</div></div><span class="tag g" style="margin:0">'+(c.ent&&!c.jaPago?'A RECEBER':'PAGO')+'</span></div>'
     +'<div class="pd">'+String(p.itens||'').split('; ').map(function(t){ return '<div class="pi">'+esc(t)+'</div>'; }).join('')+(p.obs?'<div class="pi" style="color:var(--mu2)">Obs.: '+esc(p.obs)+'</div>':'')+'</div>'
@@ -1822,7 +1859,7 @@ function entregaCard(c,i){
 function comPinta(d){
     COMSIG=comSig(d);
     var pagos=(d.entregar||[]).filter(function(c){ return PRAIA||c.ap||c.ent; });
-    LOTE.d=d; if(loteOn()) loteAplica(pagos);
+    LOTE.d=d; if(loteOn()){ loteAplica(pagos); pagos=pagos.map(function(c,n){ return {c:c,n:n}; }).sort(function(a,b){ return (loteOrdem(a.c)-loteOrdem(b.c))||(a.n-b.n); }).map(function(o){ return o.c; }); }
     var ln=$('loteNum'), lnV=ln?ln.value:'', lnF=!!ln&&document.activeElement===ln;   /* apartamento pronto aparece mesmo sem Entrega na praia */
     COMS=pagos.concat(d.comandas||[]); ENT.lista=COMS; OPENL=COMS.filter(function(c){ return !c.pago&&c.mesa&&c.joia; }); OPENH=d.hoje||OPENH; var h='';
     if(pagos.length) h+='<div class="sec" style="margin:0 0 8px">Para entregar · '+pagos.length+'</div>';
