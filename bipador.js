@@ -65,13 +65,15 @@ function leZx(v){
       var forte=n%5===0, lado=Math.min(w,h), ch=forte?Math.round(h*0.5):Math.round(lado*0.8), cw=forte?w:ch, x0=Math.round((w-cw)/2), y=Math.round((h-ch)/2), k=Math.min(1,(forte?800:(n%2?400:300))/cw);
       cv.width=Math.round(cw*k); cv.height=Math.round(ch*k);
       try{
+        var c0=Date.now();
         cx.drawImage(v,x0,y,cw,ch,0,0,cv.width,cv.height);
         var im=cx.getImageData(0,0,cv.width,cv.height);
+        var cap=Date.now()-c0; B.cap=B.cap?Math.round((B.cap*3+cap)/4):cap;   /* tempo que a TELA gasta copiando o quadro */
         ocupado=true; wk.postMessage({buf:im.data.buffer,w:cv.width,h:cv.height,n:n,forte:forte},[im.data.buffer]);
       }catch(e){ ocupado=false; }
-      info('Lendo '+w+'x'+h+' · '+n+' · '+(B.dt||0)+' ms · 2º plano');
+      info(w+'x'+h+' · '+n+' · copia '+(B.cap||0)+' ms · lê '+(B.dt||0)+' ms · 2º plano');
     }
-    B.raf=setTimeout(passo,80);
+    B.raf=setTimeout(passo,Math.max(80,(B.cap||0)*3));   /* a cópia do quadro ocupa no máximo 1/4 do tempo da tela */
   })();
 }
 function leZxTela(v){
@@ -141,7 +143,7 @@ function cameraAntiga(fontes,proxima){
   return camPede({video:{mandatory:{sourceId:ids[q],minWidth:1280,minHeight:720}},audio:false}).catch(function(){ return camPede({video:{mandatory:{sourceId:ids[q]}},audio:false}); }).catch(function(){ return camPede({video:{optional:[{sourceId:ids[q]}]},audio:false}); })
     .catch(function(e){ info('Câmeras: '+fontes.length+' · não abriu a '+(q+1)+' ('+((e&&(e.name||e.message))||'erro')+')'); return camPede({video:true,audio:false}); });
 }
-function info(t){ window.Bipador.info=t; var e=document.querySelector('.bpd-i'); if(e) e.textContent='Leitor v12 · '+t; var s=document.querySelector('.bpd-s'); if(s) s.textContent='Leitor v12 · '+t; }
+function info(t){ window.Bipador.info=t; var e=document.querySelector('.bpd-i'); if(e) e.textContent='Leitor v13 · '+t; var s=document.querySelector('.bpd-s'); if(s) s.textContent='Leitor v13 · '+t; }
 function chromeAntigo(){ var m=(navigator.userAgent.match(/Chrome\/(\d+)/)||[])[1]; return !!m&&Number(m)<60; }
 function camera(proxima){
   if(chromeAntigo()) return fontesAntigas().then(function(f){ return f.length?cameraAntiga(f,proxima):cameraNova(proxima); });
@@ -171,7 +173,7 @@ window.Bipador={
   abrir:function(op){
     css(); fechar(); B.op=op||{}; B.ate=0;
     var d=document.createElement('div'); d.className='bpd'+(B.op.cheia?' cheia':'');
-    d.innerHTML='<div class="bpd-c"><div class="bpd-h"><b></b><button class="bpd-x" type="button" aria-label="Fechar">✕</button></div><div class="bpd-i" style="font-size:11.5px;color:#71717A;margin:-4px 2px 8px">Leitor v12</div><div class="bpd-v"><video playsinline muted autoplay></video><i></i><span class="bpd-s" style="position:absolute;left:8px;bottom:8px;right:8px;color:#fff;font-size:11.5px;font-weight:700;background:rgba(0,0,0,.6);border-radius:8px;padding:4px 8px">Leitor v12</span></div>'+
+    d.innerHTML='<div class="bpd-c"><div class="bpd-h"><b></b><button class="bpd-x" type="button" aria-label="Fechar">✕</button></div><div class="bpd-i" style="font-size:11.5px;color:#71717A;margin:-4px 2px 8px">Leitor v13</div><div class="bpd-v"><video playsinline muted autoplay></video><i></i><span class="bpd-s" style="position:absolute;left:8px;bottom:8px;right:8px;color:#fff;font-size:11.5px;font-weight:700;background:rgba(0,0,0,.6);border-radius:8px;padding:4px 8px">Leitor v13</span></div>'+
       '<div class="bpd-d"></div><div class="bpd-m"><input inputmode="numeric" autocomplete="off" placeholder="Ou digite o código"><button type="button">OK</button></div><div class="bpd-e"></div><div class="bpd-ok"></div></div>';
     d.querySelector('b').textContent=B.op.titulo||'Bipar código de barras';
     d.querySelector('.bpd-d').textContent=B.op.dica||'Aponte a câmera para o código de barras. Leitor USB também funciona.';

@@ -20,7 +20,7 @@ button,input,select,textarea{font-family:var(--f);font-size:16px}
 body{padding-bottom:calc(150px + 0px);padding-bottom:calc(150px + env(safe-area-inset-bottom))}
 .hide{display:none!important}
 /* login */
-#login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:var(--grad)}
+#login{position:fixed;top:0;left:0;right:0;bottom:0;overflow-y:auto;display:flex;align-items:flex-start;justify-content:center;padding:24px 20px;background:var(--grad)}
 #login .c{background:#fff;border-radius:22px;padding:26px 22px;width:100%;max-width:380px}
 #login h1{margin:0 0 4px;font-size:24px;font-weight:800}#login p{margin:0 0 16px;color:var(--mu2);font-size:14px}
 .inp{width:100%;padding:13px 14px;border-radius:12px;border:1.5px solid var(--b2);background:#FAFAFA;color:var(--tx)}
@@ -332,7 +332,7 @@ html.pos .bt-hub,html.pos .lt-bt{display:none!important}
 <!-- abertura com o Live (fundo branco + logo laranja); curta, para não atrasar o garçom -->
 <div id="lf-abertura" data-minimo="350" data-esperar="1" data-rapido="1" style="position:fixed;top:0;right:0;bottom:0;left:0;inset:0;z-index:2147483000;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px"><div class="lfa-live" style="width:140px"></div><img src="livefood-logo.png" alt="LiveFood" style="height:42px;width:auto"><div class="lfa-barra"><i></i></div></div>
 <script>setTimeout(function(){ var a=document.getElementById('lf-abertura'); if(a) a.remove(); },3500);   /* rede de segurança: a abertura nunca passa de 3,5 s */</script>
-<script src="site/js/live-mascote.js"></script><script src="site/js/live-app.js?v=2"></script><script src="lojas.js"></script><script src="bipador.js?v=12"></script>
+<script src="site/js/live-mascote.js"></script><script src="site/js/live-app.js?v=2"></script><script src="lojas.js"></script><script src="bipador.js?v=13"></script>
 
 <script>/* (ATEND-53) marca o app da maquininha (pos) e o navegador antigo (velho: sem gap no flex) */
 (function(){ var h=document.documentElement;
@@ -1808,7 +1808,7 @@ function lotePegar(corpo,naCamera){
       var txt=r.pegos.map(function(x){ return '#'+x.cod+' · '+x.local; }).join(', ');
       var ja=r.pegos.every(function(x){ return x.ja; });
       txt+=ja?' já estava no lote':' no lote ✅';
-      if(naCamera) loteAviso(txt); else toast(txt);
+      if(naCamera){ loteAviso(txt); setTimeout(function(){ if(window.Bipador) Bipador.fechar(); toast(txt); },900); } else toast(txt);
       loteRecarrega(); return r;
     }
     if(r&&r.erro==='pendente'){ if(window.Bipador) Bipador.fechar(); LOTE.opt={}; loteRecarrega(); lotePendente(r.pendentes,corpo); return r; }
