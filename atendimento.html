@@ -645,6 +645,9 @@ function linkJoia(j){
   if(!j) return; var c=abertaJoia(j); if(!c||cur) return;
   /* (236) não preenche mais a mesa sozinho: ao continuar, o garçom escolhe manter a mesa ou trocar (perguntaMesa) */
 }
+/* nome para chamar: digitado na hora, vale só para este pedido; não é cliente cadastrado */
+var CHAMAR='';
+function chamarAtivo(){ return !!(D&&D.cfg&&D.cfg.pede_nome); }
 function plab(p){ return p.sub?p.num+'-'+p.sub:String(p.num); }
 function modo(m){ COM.modo=m; try{ nfcChipPinta(); }catch(e){} mostraMapaBtn(); $('sgM').classList.toggle('on',m==='mesa'); $('sgB').classList.toggle('on',m==='balcao'); $('lbMesa').textContent=m==='mesa'?'Número da mesa':'Número da comanda do balcão (opcional)'; var liv=m==='balcao'&&balLivre(), gl=m==='mesa'&&garLivre(); $('lbCli').textContent=liv||gl?'Cliente (opcional)':'Cliente'; if(gl) $('lbMesa').textContent='Número da mesa (opcional)'; if(!JOIA_ABC) $('iJoia').placeholder=liv?'Sem cliente: toque em Continuar':'Digite o número do cliente'; }   /* (238) garçom: mesa e cliente opcionais */
 /* (153) balcão sem cliente: ligado no painel, em Configurações clientes */
@@ -701,7 +704,7 @@ function abreComanda(){
   if(COM.modo!=='balcao'&&mesa&&!ehSMM(mesa)&&D.mesas&&D.mesas.length&&D.mesas.indexOf(mesa)<0){ er.textContent='⚠️ A mesa '+mesa+' não está cadastrada. Escolha no mapa de mesas.'; return; }
   var avulso=(!mesa&&!joia&&COM.modo==='balcao'&&balLivre())||semNada;
   if(!mesa&&!joia&&!avulso){ er.textContent=COM.modo==='balcao'?'Informe o cliente. Para vender sem cliente, ligue "Vender no balcão sem cliente" no painel, em Configurações clientes, e recarregue esta página.':'Informe a mesa ou a joia do cliente.'; return Promise.resolve(); }
-  var vai=function(){ $('sugs').innerHTML=''; COM.mesa=mesa; COM.joia=joia; COM.avulso=avulso; COM.sm=semNada; if(avulso) COM.nome=semNada?'Sem mesa':'Cliente Balcão'; CART=[]; mostraComanda(); verCats(); foco('#bProd'); };
+  var vai=function(){ CHAMAR=''; $('sugs').innerHTML=''; COM.mesa=mesa; COM.joia=joia; COM.avulso=avulso; COM.sm=semNada; if(avulso) COM.nome=semNada?'Sem mesa':'Cliente Balcão'; CART=[]; mostraComanda(); verCats(); foco('#bProd'); };
   /* (230) cliente que está na lista guardada no celular: o cardápio abre NA HORA e a situação (bloqueio, conta em aberto) é conferida por trás.
      Se estiver bloqueado, volta para a tela do cliente com o aviso. O servidor confere de novo ao enviar o pedido. */
   var loc=joia&&CLIS?CLIS.filter(function(c){ return String(c[0])===joia; })[0]:null;
@@ -721,7 +724,7 @@ function mostraComanda(){
   try{ nfcChipPinta(); }catch(e){} $('chipT').innerHTML=t.join(' · '); $('chipS').textContent=COM.sm||ehSMM(COM.mesa)?'Sem cliente':(COM.nome||'Comanda aberta'); $('chip').classList.remove('hide');
 }
 function trocaComanda(){ if(CART.length&&!confirm('Há itens no pedido que ainda não foram enviados. Trocar de comanda mesmo assim?')) return; zeraComanda(); }
-function zeraComanda(){ COPOS=null; NFCG=null; try{ nfcChipPinta(); }catch(e){}   /* (250) */ _ab=0; AUTOJ=''; AUTOM=''; carregaAbertas(); COM={mesa:'',joia:'',nome:'',modo:COM.modo,dev:0,bloq:false,liberar:false}; modo(COM.modo); CART=[]; $('chip').classList.add('hide'); $('iMesa').value=''; $('iJoia').value=''; $('joiaInfo').innerHTML=''; $('sugs').innerHTML=''; $('idErr').textContent=''; limpaBusca(); ['p-cats','p-prods'].forEach(function(i){ $(i).classList.add('hide'); }); $('p-ident').classList.remove('hide'); cartBar(); window.scrollTo(0,0); if(JOIA_ABC) joiaTeclado(true); foco('#iJoia'); }   /* (228) começa pelo cliente */
+function zeraComanda(){ CHAMAR=''; COPOS=null; NFCG=null; try{ nfcChipPinta(); }catch(e){}   /* (250) */ _ab=0; AUTOJ=''; AUTOM=''; carregaAbertas(); COM={mesa:'',joia:'',nome:'',modo:COM.modo,dev:0,bloq:false,liberar:false}; modo(COM.modo); CART=[]; $('chip').classList.add('hide'); $('iMesa').value=''; $('iJoia').value=''; $('joiaInfo').innerHTML=''; $('sugs').innerHTML=''; $('idErr').textContent=''; limpaBusca(); ['p-cats','p-prods'].forEach(function(i){ $(i).classList.add('hide'); }); $('p-ident').classList.remove('hide'); cartBar(); window.scrollTo(0,0); if(JOIA_ABC) joiaTeclado(true); foco('#iJoia'); }   /* (228) começa pelo cliente */
 function ativaComanda(c){ COM={mesa:c.mesa||'',joia:c.joia||'',nome:c.nome||'',modo:(c.joia&&!c.mesa)||ehBalM(c.mesa)?'balcao':'mesa',dev:0,bloq:false,liberar:false}; modo(COM.modo); CART=[]; mostraComanda(); $('p-ident').classList.add('hide'); aba('ped'); verCats(); }
 /* ── cardápio: categorias em cards ── */
 function fotoProd(p){ return p.foto?API+'/food/foto/'+encodeURIComponent(CLI)+'/'+encodeURIComponent(p.id):''; }
@@ -1062,7 +1065,7 @@ function nfcEnvia(uid){
   api('/painel/atend-pedido',comEnvio({modo:COM.modo,nfc:uid,obs:FC.obs,copos:FC.copos||undefined,itens:CART.map(function(i){ return {p:i.p,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs,qty:i.qty}; })})).then(function(r){
     if(r.ok){
       envioOk();
-      var ped={num:r.num,sub:r.sub||0,mesa:r.mesa||'',joia:'',nome:'Cartão ····'+uid.slice(-4),atend:D.usuario,criado:Date.now(),obs:FC.obs,modo:COM.modo,copos:FC.copos,l:CART.map(function(i){ return {p:i.p,nome:i.nome,qty:i.qty,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs}; })};
+      var ped={num:r.num,sub:r.sub||0,mesa:r.mesa||'',joia:'',nome:'Cartão ····'+uid.slice(-4),atend:D.usuario,chamar:chamarAtivo()?CHAMAR.trim():'',criado:Date.now(),obs:FC.obs,modo:COM.modo,copos:FC.copos,l:CART.map(function(i){ return {p:i.p,nome:i.nome,qty:i.qty,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs}; })};
       fecha(); CART=[]; COPOS=null; FC.copos=0; cartBar(); if(FC.imp) imprimeAuto(ped);
       zeraComanda();
       if(window.LiveApp) LiveApp.comemorar({titulo:'Pedido #'+plab(r)+' gravado no cartão!',valor:brl(r.total),forma:'💳 Cartão ····'+uid.slice(-4),sub:'Já foi para a cozinha 🍳 · paga na saída',ms:2200}); else toast('Pedido #'+plab(r)+' gravado no cartão ····'+uid.slice(-4));
@@ -1090,6 +1093,7 @@ function abreCarrinho(){
   h+=srvLinha(srvVal(cartTot()),srvPct());
   h+=coposHtml();
   if(PRAIA) h+='<div id="pFotoBx"></div><label class="l">📍 Observação do local (opcional)</label><input class="inp" id="pRef" maxlength="140" placeholder="Ex.: guarda-sol azul, 2ª fileira" value="'+esc(GEO.ref||'')+'" oninput="GEO.ref=this.value">';
+  if(chamarAtivo()) h+='<label class="l">Nome para chamar (opcional)</label><input class="inp" id="pNome" maxlength="40" autocomplete="off" autocapitalize="words" placeholder="Ex.: Ana, boné azul" value="'+esc(CHAMAR)+'" oninput="CHAMAR=this.value">';
   h+='<label class="l">Observação do pedido (cozinha)</label><input class="inp" id="pObs" maxlength="300">'+(PRAIA?'<div id="pGps" style="margin-top:12px">'+praiaGpsTxt()+'</div>':'')+'<div class="er" id="pErr"></div>';
   var totC=Math.round((cartTot()+srvVal(cartTot()))*100)/100, hj=cobraHora();
   var smP2=PRAIA&&COM.sm, pd=PRAIA&&hj&&(!COM.avulso||COM.sm);   /* entrega na praia: primeiro gera o pedido, cobra depois na comanda */
@@ -1248,11 +1252,11 @@ function ccpCobrar(){ if(!CCP.c||!CCP.cb) return; var c=CCP.c, cb=CCP.cb; CCP.on
 /* (246) rede ruim: cada envio leva um número (env). Se a resposta não chegar e o garçom tocar de novo com o mesmo pedido, o servidor devolve o pedido
    que já criou em vez de duplicar. Mudou o carrinho, a mesa ou o cliente = número novo. Deu certo = zera. */
 var ENVIO={id:'',sig:''};
-function comEnvio(corpo){ var c={},k; for(k in corpo) if(k!=='liberar'&&k!=='geo') c[k]=corpo[k]; var sig=JSON.stringify(c); if(sig!==ENVIO.sig){ ENVIO.sig=sig; ENVIO.id=Date.now().toString(36)+Math.random().toString(36).slice(2,10); } corpo.env=ENVIO.id; return corpo; }
+function comEnvio(corpo){ if(chamarAtivo()&&CHAMAR.trim()) corpo.chamar=CHAMAR.trim(); var c={},k; for(k in corpo) if(k!=='liberar'&&k!=='geo') c[k]=corpo[k]; var sig=JSON.stringify(c); if(sig!==ENVIO.sig){ ENVIO.sig=sig; ENVIO.id=Date.now().toString(36)+Math.random().toString(36).slice(2,10); } corpo.env=ENVIO.id; return corpo; }
 function envioOk(){ ENVIO.id=''; ENVIO.sig=''; }
 var SEM_REDE='Sem rede agora. Quando a rede voltar, toque de novo: se o pedido já tinha chegado, ele não duplica.';
 function fcCorpo(){ return comEnvio({geo:FC.geo||praiaGeo(),modo:COM.modo,mesa:COM.mesa,joia:COM.joia,obs:FC.obs,liberar:COM.liberar,pagar:FC.forma,tef:FC.tef||undefined,cartao:FC.forma==='cartao_cliente'?FC.cartao:undefined,partes:FC.forma==='misto'?(FC.partes||[]).map(function(pt){ return {f:pt.f,v:pt.v}; }):undefined,copos:FC.copos||undefined,itens:CART.map(function(i){ return {p:i.p,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs,qty:i.qty}; })}); }
-function fcPed(){ return {num:0,sub:0,mesa:COM.mesa||'',joia:COM.joia,nome:COM.nome,atend:D.usuario,criado:Date.now(),obs:FC.obs,modo:COM.modo,copos:FC.copos,l:CART.map(function(i){ return {p:i.p,nome:i.nome,qty:i.qty,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs}; })}; }
+function fcPed(){ return {num:0,sub:0,mesa:COM.mesa||'',joia:COM.joia,nome:COM.nome,atend:D.usuario,chamar:chamarAtivo()?CHAMAR.trim():'',criado:Date.now(),obs:FC.obs,modo:COM.modo,copos:FC.copos,l:CART.map(function(i){ return {p:i.p,nome:i.nome,qty:i.qty,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs}; })}; }
 function fcConfirma(){
   var b=$('rzOk'); if(!b||b.disabled) return;
   if(posForma(FC.forma)&&!FC.tef){   /* (ATEND-49) cobra na maquininha; aprovado, envia o pedido já pago */
@@ -1266,7 +1270,7 @@ function fcConfirma(){
   api('/painel/atend-pedido',fcCorpo()).then(function(r){
     if(r.ok&&r.pago){ envioOk(); FC.tef=null; FC.geo=null; pendTira();
       if(PRAIA&&(FOTOL.img||(GEO.ref||'').trim())) api('/painel/atend-local-foto',{joia:COM.joia,mesa:(r.mesa||COM.mesa),img:FOTOL.img||undefined,obs:(GEO.ref||'').trim()}); FOTOL.img=''; GEO.ref='';
-      var ped={num:r.num,sub:r.sub||0,mesa:COM.mesa||(COM.sm?'':r.mesa)||'',joia:COM.joia,nome:COM.nome,atend:D.usuario,criado:Date.now(),obs:FC.obs,modo:COM.modo,copos:FC.copos,l:CART.map(function(i){ return {p:i.p,nome:i.nome,qty:i.qty,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs}; })};
+      var ped={num:r.num,sub:r.sub||0,mesa:COM.mesa||(COM.sm?'':r.mesa)||'',joia:COM.joia,nome:COM.nome,atend:D.usuario,chamar:chamarAtivo()?CHAMAR.trim():'',criado:Date.now(),obs:FC.obs,modo:COM.modo,copos:FC.copos,l:CART.map(function(i){ return {p:i.p,nome:i.nome,qty:i.qty,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs}; })};
       var x=FC_FORMAS[FC.forma]||['','',''], tot=r.total; if(FC.forma==='misto') x=['🔀',(FC.partes||[]).map(function(pt){ return (FC_FORMAS[pt.f]||['',pt.f])[1]+' '+brl(pt.v); }).join(' + ')]; fcFechaTela(); CART=[]; COPOS=null; FC.partes=null; FC.copos=0; cartBar(); if(FC.imp) imprimeAuto(ped);
       zeraComanda();
       if(window.LiveApp) LiveApp.comemorar({titulo:FC.forma==='marcar'?'Marcado na conta!':'Pedido #'+plab(r)+' pago!',valor:brl(tot),forma:x[0]+' '+x[1],sub:(r.cartao?(r.cartao.modo==='pre'?'Saldo do cartão: '+brl(r.cartao.saldo):'Na conta de '+(r.cartao.nome||'cliente'))+' · ':'')+'Já foi para a cozinha 🍳',ms:2200}); else toast('Pedido #'+plab(r)+' pago · '+brl(tot));
@@ -1281,7 +1285,7 @@ function tiraItem(k){ CART.splice(k,1); if(!CART.length){ fecha(); cartBar(); } 
 function enviaPedido(){
   var b=$('pBt'); b.disabled=true; b.textContent='Enviando…'; $('pErr').textContent=''; var cpE=coposVal();   /* (250) copos */
   api('/painel/atend-pedido',comEnvio({geo:praiaGeo(),modo:COM.modo,mesa:COM.mesa,joia:COM.joia,obs:($('pObs')||{value:''}).value,liberar:COM.liberar,copos:cpE||undefined,itens:CART.map(function(i){ return {p:i.p,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs,qty:i.qty}; })})).then(function(r){
-    if(r.ok){ lpBaixa(r.num); envioOk(); setTimeout(comBusca,600); if(PRAIA&&(FOTOL.img||(GEO.ref||'').trim())) api('/painel/atend-local-foto',{joia:COM.joia,mesa:(r.mesa||COM.mesa),img:FOTOL.img||undefined,obs:(GEO.ref||'').trim()}); FOTOL.img=''; GEO.ref=''; var ped={num:r.num,sub:r.sub||0,mesa:COM.mesa,joia:COM.joia,nome:COM.nome,atend:D.usuario,criado:Date.now(),obs:($('pObs')||{value:''}).value,modo:COM.modo,copos:cpE,l:CART.map(function(i){ return {p:i.p,nome:i.nome,qty:i.qty,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs}; })}; var avulsoP=COM.avulso, smP=COM.sm; CART=[]; COPOS=null; fecha(); cartBar();
+    if(r.ok){ lpBaixa(r.num); envioOk(); setTimeout(comBusca,600); if(PRAIA&&(FOTOL.img||(GEO.ref||'').trim())) api('/painel/atend-local-foto',{joia:COM.joia,mesa:(r.mesa||COM.mesa),img:FOTOL.img||undefined,obs:(GEO.ref||'').trim()}); FOTOL.img=''; GEO.ref=''; var ped={num:r.num,sub:r.sub||0,mesa:COM.mesa,joia:COM.joia,nome:COM.nome,atend:D.usuario,chamar:chamarAtivo()?CHAMAR.trim():'',criado:Date.now(),obs:($('pObs')||{value:''}).value,modo:COM.modo,copos:cpE,l:CART.map(function(i){ return {p:i.p,nome:i.nome,qty:i.qty,tam:i.tam,sab:i.sab,borda:i.borda,adds:i.adds,obs:i.obs}; })}; var avulsoP=COM.avulso, smP=COM.sm; CART=[]; COPOS=null; fecha(); cartBar();
       /* venda do balcão sem cliente: já pergunta como o cliente pagou (ou fica em Comandas, se cobrar depois) · (238) garçom sem mesa e sem cliente: igual, com a taxa do garçom */
       if(avulsoP&&smP&&PRAIA){ toast('Pedido #'+plab(r)+' enviado para a cozinha'); zeraComanda(); if(impOn()) imprimeAuto(ped); return; }
       if(avulsoP){ toast('Pedido #'+plab(r)+' '+(smP?'enviado para a cozinha':'criado')); zeraComanda(); if(impOn()) imprimeAuto(ped); COMS=[{mesa:r.mesa,joia:'',nome:smP?'Sem mesa':'Cliente Balcão',total:r.total,servico:r.servico||0,pedidos:[],avulso:1}]; fechaForm(0); return; }
@@ -2000,7 +2004,7 @@ function filaSetor(p){
 }
 function imprime(p){ imprimeFila(p,filaSetor(p)); }
 /* (ATEND-37) impressão automática: manda para a fila do Worker (o programa do restaurante imprime em cada impressora); se o programa não está ligado, imprime pelo navegador como antes */
-function imprimeAuto(p){
+function imprimeAuto(p){ if(p.chamar&&!p.nomeNaObs) p=Object.assign({},p,{obs:['NOME: '+p.chamar.toUpperCase(),p.obs].filter(Boolean).join(' | '),nomeNaObs:1});
   var fila=filaSetor(p);
   if(PY.sim&&!posTem()){ setTimeout(function(){ pyPreviaPedido(p,fila); },2400); return; }   /* (305) loja em modo simulação: o pedido sai na impressora aqui na tela, depois da comemoração */
   api('/painel/atend-imprimir',{lab:plab(p),mesa:ehSMM(p.mesa)?'':p.mesa,modo:p.modo,joia:p.joia,nome:p.nome,atend:p.atend,criado:p.criado,obs:p.obs,reimp:p.reimp?1:0,empresa:D.empresa||'',fila:fila.map(function(x){ return {setor:x[0],l:x[1],grupo:x[2]||undefined,copos:x[3]||undefined}; })}).then(function(r){
