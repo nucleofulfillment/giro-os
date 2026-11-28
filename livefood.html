@@ -13,7 +13,7 @@
 <title>Cardápio · LiveFood</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
-<!-- LIVEFOOD-40 --><meta name="versao" content="LIVEFOOD-40">
+<!-- LIVEFOOD-41 --><meta name="versao" content="LIVEFOOD-41">
 <style>
 :root{--bg:#0b0b0d;--tx:#fff;--mut:rgba(255,255,255,.68);--pri:#FF5A00;--pri2:#FF5A00;--glass:rgba(18,18,22,.62);--line:rgba(255,255,255,.16)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -1716,7 +1716,7 @@ function scArq(inp){
 /* (LIVEFOOD-31) enquanto o Asaas não libera o token: o cartão fica guardado SÓ NESTE APARELHO, cifrado (número, nome e validade).
    Nunca o CVV, e nada disso vai para o servidor do LiveFood além do que o pagamento já envia. A chave fica no navegador e não pode ser copiada dele.
    Vale só para quem entrou com o código do WhatsApp; sair da conta apaga. Quando o Asaas devolver o token, a cópia do aparelho é apagada. */
-var DV={c:null,k:null,de:''};
+var DV={c:null,k:null,de:'',err:'',nova:0};
 function dvFone(){ var f=String((CT.conta&&CT.conta.fone)||''); return CT.tok&&f&&!/^mesa/i.test(f)?f.replace(/\D/g,''):''; }
 function dvK(){ var f=dvFone(); return f?'lf_dvc_'+(D.cli||CLI)+'_'+f:''; }
 function dvPode(){ try{ return !!(dvK()&&window.crypto&&crypto.subtle&&window.indexedDB&&window.TextEncoder&&window.TextDecoder); }catch(e){ return false; } }
@@ -1733,7 +1733,7 @@ function dvChave(){
       g.onerror=function(){ no(g.error); };
       g.onsuccess=function(){
         if(g.result){ DV.k=g.result; ok(DV.k); return; }
-        crypto.subtle.generateKey({name:'AES-GCM',length:256},false,['encrypt','decrypt']).then(function(k){
+        DV.nova=1; crypto.subtle.generateKey({name:'AES-GCM',length:256},false,['encrypt','decrypt']).then(function(k){
           var t=db.transaction('k','readwrite'); t.objectStore('k').put(k,'a');
           t.oncomplete=function(){ DV.k=k; ok(k); }; t.onerror=function(){ no(t.error); }; t.onabort=function(){ no(t.error); };
         },no);
@@ -1753,13 +1753,18 @@ function dvSalva(o){
 }
 function dvCarrega(){
   var k=''; try{ k=dvK(); }catch(e){ return; }
-  if(k===DV.de) return; DV.de=k; DV.c=null; if(!k||!dvPode()) return;
+  if(k===DV.de) return; DV.de=k; DV.c=null; DV.err=''; if(!k||!dvPode()) return;
   var v=null; try{ v=JSON.parse(localStorage.getItem(k)||'null'); }catch(e){}
-  if(!v||!v.iv||!v.ct) return;
-  dvChave().then(function(ch){ return crypto.subtle.decrypt({name:'AES-GCM',iv:dvBin(v.iv)},ch,dvBin(v.ct)); })
-    .then(function(pl){ var o=JSON.parse(new TextDecoder().decode(pl)); if(DV.de!==k||!o||!o.numero) return; DV.c=o; dvPreenche(); })
-    .catch(function(){ try{ localStorage.removeItem(k); }catch(e){} });
+  if(!v||!v.iv||!v.ct){   /* (LIVEFOOD-41) nada guardado nesta conta: anota se existe cartão guardado em outra conta desta loja (ajuda a achar o motivo) */
+    try{ var pre='lf_dvc_'+(D.cli||CLI)+'_', i, q; for(i=0;i<localStorage.length;i++){ q=localStorage.key(i); if(q&&q.indexOf(pre)===0&&q!==k) DV.err='A2'; } }catch(e){}
+    return;
+  }
+  var etapa='A3';   /* A3: não abriu a chave do aparelho · A4: a chave do aparelho foi perdida · A5: não decifrou · A6: conteúdo inválido */
+  dvChave().then(function(ch){ etapa=DV.nova?'A4':'A5'; return crypto.subtle.decrypt({name:'AES-GCM',iv:dvBin(v.iv)},ch,dvBin(v.ct)); })
+    .then(function(pl){ etapa='A6'; var o=JSON.parse(new TextDecoder().decode(pl)); if(DV.de!==k) return; if(!o||!o.numero){ DV.err='A6'; return; } DV.c=o; DV.err=''; dvPreenche(); })
+    .catch(function(e){ if(DV.de===k){ DV.err=etapa+((e&&e.name)?' '+String(e.name).slice(0,24):''); var x=$('dv-er'); if(x) x.textContent=dvErroTxt(); } });   /* não apaga mais o cartão guardado numa falha: pode ser passageira */
 }
+function dvErroTxt(){ return DV.err?'Não consegui abrir o cartão guardado neste aparelho (código '+DV.err+'). Digite os dados do cartão.':''; }
 function dvMasc(){ return DV.c?'•••• •••• •••• '+String(DV.c.numero).slice(-4):''; }
 function dvNum(v){ return DV.c&&v===dvMasc()?String(DV.c.numero):String(v||'').replace(/\D/g,''); }   /* campo intocado = número guardado */
 function dvPreenche(){ var n=$('ck-cn'); if(!DV.c||!n||n.value) return; n.value=dvMasc(); var a=$('ck-cnome'), b=$('ck-cval'), sv=$('ck-csv'); if(a&&DV.c.nome) a.value=DV.c.nome; if(b) b.value=DV.c.mes+'/'+DV.c.ano; if(sv&&csvLer()!=='0') sv.checked=true; }
@@ -1789,6 +1794,7 @@ function ckCartaoHtml(c){
     var cob=c.cobranca||{}; if(cob.email) ml=cob.email;   /* (LIVEFOOD-30) o que já foi preenchido numa compra volta pronto */
     var dv=DV.c;   /* (LIVEFOOD-31) cartão guardado neste aparelho */
     if(dv) h+='<div class="ad on" id="dv-fx" style="cursor:default;margin-top:6px"><div class="tx"><b>Cartão •••• '+esc(String(dv.numero).slice(-4))+'</b><small>Guardado neste aparelho · digite só o CVV</small></div><div class="ac"><button type="button" class="lk" onclick="dvApaga()">Remover</button></div></div>';
+    h+='<div class="nt" id="dv-er" style="font-size:12.5px;margin-top:6px;color:#b45309">'+esc(dv?'':dvErroTxt())+'</div>';   /* (LIVEFOOD-41) */
     if(scPode()) h+='<button type="button" onclick="scAbre()" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:8px;padding:12px;border:2px dashed var(--pri);border-radius:14px;background:transparent;color:inherit;font:inherit;font-weight:700;font-size:14.5px;cursor:pointer">📷 Ler o cartão pela câmera</button><input type="file" id="sc-in" accept="image/*" capture="environment" style="display:none" onchange="scArq(this)"><div class="nt" id="sc-st" style="font-size:12.5px;margin-top:6px" aria-live="polite"></div>';   /* (LIVEFOOD-32) */
     h+='<form autocomplete="on" onsubmit="return false" style="margin:6px 0 0"><input class="cin" id="ck-cn" name="cardnumber" type="tel" inputmode="numeric" autocomplete="cc-number" maxlength="23" placeholder="Número do cartão" value="'+esc(dv?dvMasc():'')+'" oninput="ckCardNum(this)"><input class="cin" id="ck-cnome" name="ccname" autocomplete="cc-name" maxlength="60" placeholder="Nome como está no cartão" value="'+esc((dv&&dv.nome)||cob.nome||'')+'" style="margin-top:8px"><div style="display:flex;gap:8px;margin-top:8px"><input class="cin" id="ck-cval" name="exp-date" type="tel" inputmode="numeric" autocomplete="cc-exp" maxlength="5" placeholder="MM/AA" value="'+esc(dv?dv.mes+'/'+dv.ano:'')+'" oninput="ckCardVal(this)" style="flex:1"><input class="cin" id="ck-ccv" name="cvc" type="tel" inputmode="numeric" autocomplete="cc-csc" maxlength="4" placeholder="CVV" style="flex:1"></div>'
       +'<input class="cin" id="ck-cmail" name="email" type="email" inputmode="email" autocomplete="email" maxlength="90" placeholder="Seu e-mail" value="'+esc(ml)+'" style="margin-top:8px"><div style="display:flex;gap:8px;margin-top:8px"><input class="cin" id="ck-ccep" name="postal" autocomplete="postal-code" type="tel" inputmode="numeric" maxlength="9" placeholder="CEP da fatura" value="'+esc(cob.cep||(e?e.cep:''))+'" style="flex:2"><input class="cin" id="ck-cnum" maxlength="12" placeholder="Nº" value="'+esc(cob.numero||(e?e.numero:''))+'" style="flex:1"></div>'
