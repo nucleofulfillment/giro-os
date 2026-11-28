@@ -50,7 +50,32 @@ function camPede(c){
 function camPara(st){ st.getTracks().forEach(function(t){ t.stop(); }); }
 function camId(st){ var t=st.getVideoTracks()[0]; try{ return (t.getSettings&&t.getSettings().deviceId)||''; }catch(e){ return ''; } }
 function camAbre(id){ return camPede({video:{deviceId:{exact:id}},audio:false}).catch(function(){ return camPede({video:{optional:[{sourceId:id}]},audio:false}); }); }
+/* navegador antigo (ex.: Chrome 52 da maquininha): lista as câmeras por MediaStreamTrack.getSources e pede a escolhida por sourceId */
+function fontesAntigas(){
+  return new Promise(function(ok){
+    var T=window.MediaStreamTrack, fim=false; if(!T||!T.getSources){ ok([]); return; }
+    setTimeout(function(){ if(!fim){ fim=true; ok([]); } },1500);
+    try{ T.getSources(function(l){ if(fim) return; fim=true; ok((l||[]).filter(function(s){ return s.kind==='video'; })); }); }catch(e){ fim=true; ok([]); }
+  });
+}
+function cameraAntiga(fontes,proxima){
+  var guardada=''; try{ guardada=localStorage.getItem('lf_cam_ant')||''; }catch(e){}
+  var ids=fontes.map(function(s){ return s.id; }), q=ids.indexOf(guardada), i;
+  if(q<0){ for(i=0;i<fontes.length;i++) if(/environment/i.test(fontes[i].facing||'')||/back|rear|traseira/i.test(fontes[i].label||'')){ q=i; break; } }
+  if(q<0) q=fontes.length>1?1:0;
+  if(proxima) q=(q+1)%fontes.length;
+  try{ localStorage.setItem('lf_cam_ant',ids[q]); }catch(e){}
+  info('Câmeras: '+fontes.length+' ('+fontes.map(function(s){ return s.facing||s.label||'sem nome'; }).join(', ')+') · usando a '+(q+1));
+  return camPede({video:{mandatory:{sourceId:ids[q]}},audio:false}).catch(function(){ return camPede({video:{optional:[{sourceId:ids[q]}]},audio:false}); })
+    .catch(function(e){ info('Câmeras: '+fontes.length+' · não abriu a '+(q+1)+' ('+((e&&(e.name||e.message))||'erro')+')'); return camPede({video:true,audio:false}); });
+}
+function info(t){ window.Bipador.info=t; var e=document.querySelector('.bpd-i'); if(e) e.textContent=t; }
+function chromeAntigo(){ var m=(navigator.userAgent.match(/Chrome\/(\d+)/)||[])[1]; return !!m&&Number(m)<60; }
 function camera(proxima){
+  if(chromeAntigo()) return fontesAntigas().then(function(f){ return f.length?cameraAntiga(f,proxima):cameraNova(proxima); });
+  return cameraNova(proxima);
+}
+function cameraNova(proxima){
   return camPede({video:{facingMode:{ideal:'environment'}},audio:false}).catch(function(){ return camPede({video:true,audio:false}); }).then(function(st){
     var md=navigator.mediaDevices; if(!md||!md.enumerateDevices) return st;
     return md.enumerateDevices().then(function(ds){
@@ -75,7 +100,7 @@ window.Bipador={
     css(); fechar(); B.op=op||{}; B.ate=0;
     var d=document.createElement('div'); d.className='bpd';
     d.innerHTML='<div class="bpd-c"><div class="bpd-h"><b></b><button class="bpd-x" type="button" aria-label="Fechar">✕</button></div><div class="bpd-v"><video playsinline muted autoplay></video><i></i></div>'+
-      '<div class="bpd-d"></div><div class="bpd-m"><input inputmode="numeric" autocomplete="off" placeholder="Ou digite o código"><button type="button">OK</button></div><div class="bpd-e"></div><div class="bpd-ok"></div></div>';
+      '<div class="bpd-d"></div><div class="bpd-i" style="font-size:11.5px;color:#71717A;margin:0 2px 8px"></div><div class="bpd-m"><input inputmode="numeric" autocomplete="off" placeholder="Ou digite o código"><button type="button">OK</button></div><div class="bpd-e"></div><div class="bpd-ok"></div></div>';
     d.querySelector('b').textContent=B.op.titulo||'Bipar código de barras';
     d.querySelector('.bpd-d').textContent=B.op.dica||'Aponte a câmera para o código de barras. Leitor USB também funciona.';
     document.body.appendChild(d); B.box=d;
@@ -87,8 +112,8 @@ window.Bipador={
     var v=d.querySelector('video');
     var liga=function(proxima){ para(); camera(proxima).then(function(st){
       if(B.box!==d){ camPara(st); return; }
-      B.stream=st; v.srcObject=st; v.play().catch(function(){}); le(v);
-    }).catch(function(e){ d.querySelector('.bpd-v').style.display='none'; var n=(navigator.userAgent.match(/Chrome\/(\d+)/)||[])[1]; erro('Não consegui abrir a câmera. Libere a permissão, ou digite o código. (motivo: '+((e&&e.name)||'desconhecido')+(n?', navegador '+n:'')+')'); }); };
+      B.stream=st; if('srcObject' in v) v.srcObject=st; else v.src=URL.createObjectURL(st); var pl=v.play(); if(pl&&pl.catch) pl.catch(function(){}); le(v);
+    }).catch(function(e){ d.querySelector('.bpd-v').style.display='none'; var n=(navigator.userAgent.match(/Chrome\/(\d+)/)||[])[1]; if(B.op&&B.op.aoFalhar) B.op.aoFalhar(); erro('Não consegui abrir a câmera. Libere a permissão, ou digite o código. (motivo: '+((e&&e.name)||'desconhecido')+((e&&e.message)?' - '+String(e.message).slice(0,90):'')+(n?', navegador '+n:'')+')'); }); };
     var tc=document.createElement('button'); tc.type='button'; tc.textContent='🔄 Trocar câmera'; tc.style.cssText='width:100%;margin:8px 0 0;min-height:44px;border-radius:12px;border:1px solid #DFDFE4;background:#F4F4F5;font:inherit;font-weight:800'; tc.onclick=function(){ liga(true); };
     d.querySelector('.bpd-v').insertAdjacentElement('afterend',tc);
     liga(false);

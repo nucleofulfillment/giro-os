@@ -331,7 +331,7 @@ html.pos .bt-hub,html.pos .lt-bt{display:none!important}
 <!-- abertura com o Live (fundo branco + logo laranja); curta, para não atrasar o garçom -->
 <div id="lf-abertura" data-minimo="350" data-esperar="1" data-rapido="1" style="position:fixed;top:0;right:0;bottom:0;left:0;inset:0;z-index:2147483000;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px"><div class="lfa-live" style="width:140px"></div><img src="livefood-logo.png" alt="LiveFood" style="height:42px;width:auto"><div class="lfa-barra"><i></i></div></div>
 <script>setTimeout(function(){ var a=document.getElementById('lf-abertura'); if(a) a.remove(); },3500);   /* rede de segurança: a abertura nunca passa de 3,5 s */</script>
-<script src="site/js/live-mascote.js"></script><script src="site/js/live-app.js?v=2"></script><script src="lojas.js"></script><script src="bipador.js?v=3"></script>
+<script src="site/js/live-mascote.js"></script><script src="site/js/live-app.js?v=2"></script><script src="lojas.js"></script><script src="bipador.js?v=4"></script>
 
 <script>/* (ATEND-53) marca o app da maquininha (pos) e o navegador antigo (velho: sem gap no flex) */
 (function(){ var h=document.documentElement;
@@ -1715,22 +1715,44 @@ function parteEntrega(i,k,j){
 function loteOn(){ return !!(D&&D.cfg&&D.cfg.entrega_lote); }
 function loteLocal(c){ return c.ap?'AP '+c.ap+(c.torre?' · Torre '+c.torre:''):(c.mesa?'Mesa '+c.mesa:(c.nome||'Sem mesa')); }
 function loteMeus(l){ return (l||[]).filter(function(c){ return c.lote&&c.lote.meu; }); }
-/* o que aparece no topo de "Para entregar" */
+/* Pegar é um toque no cartão ou o número + Enter (tecla verde da maquininha). A tela marca na hora e confirma com o servidor depois. */
+var LOTE={d:null,opt:{},semCam:false};
+function loteChave(c){ return c.pid+'|'+c.parte; }
+function loteAplica(l){ l.forEach(function(c){ var k=loteChave(c); if(k in LOTE.opt) c.lote=LOTE.opt[k]||undefined; }); }
+/* campo do número no alto de "Para entregar"; a câmera só abre se o garçom pedir */
 function loteTopo(pagos){
-  var meus=loteMeus(pagos), sep=meus.filter(function(c){ return !c.lote.saiu; }), rua=meus.length-sep.length;
-  var h='<button class="bt" style="margin:0 0 10px;width:100%" onclick="loteBipar(false)">📷 Bipar pedido para levar</button>';
-  if(!meus.length) return h;
-  h+='<div style="border:2px solid #FF5A00;border-radius:14px;padding:10px 12px;margin-bottom:12px"><div style="font-weight:900">Meu lote · '+meus.length+(meus.length===1?' pedido':' pedidos')+(rua&&!sep.length?' · em entrega':'')+'</div>'
-    +meus.map(function(c){ return '<div style="font-size:13.5px;margin-top:4px">#'+esc(c.cod)+' · '+esc(loteLocal(c))+'</div>'; }).join('')
-    +(sep.length?'<button class="bt g" style="margin:8px 0 0;width:100%" onclick="loteSair()">Pronto, sair para entregar</button>':'')+'</div>';
-  return h;
+  return '<div style="display:flex;gap:8px;margin-bottom:10px"><input class="inp" id="loteNum" inputmode="numeric" autocomplete="off" placeholder="Nº do pedido + Enter" style="flex:1;min-width:0;font-size:18px;font-weight:800;margin:0" onkeydown="if(event.keyCode===13){ event.preventDefault(); loteDigitou(); }">'
+    +'<button class="bt" style="margin:0;width:auto;padding:0 16px" onclick="loteDigitou()">Levar</button>'
+    +(LOTE.semCam?'':'<button class="bt s" style="margin:0;width:auto;padding:0 12px" title="Ler com a câmera" onclick="loteBipar()">📷</button>')+'</div>';
+}
+function loteDigitou(){
+  var e=$('loteNum'); if(!e) return; var v=e.value.trim(); if(!v) return;
+  e.value=''; lotePegar({cod:v});
+}
+/* barra fixa embaixo com o que está separado */
+function loteBarra(pagos){
+  var b=$('loteBar'), sep=loteOn()?loteMeus(pagos).filter(function(c){ return !c.lote.saiu; }):[];
+  if(!b){ var v=$('v-com'); if(!v) return; b=document.createElement('div'); b.id='loteBar'; v.appendChild(b); }
+  if(!sep.length){ b.style.display='none'; b.innerHTML=''; return; }
+  var nav=$('nav');
+  b.style.cssText='display:block;position:fixed;left:0;right:0;max-width:560px;margin:0 auto;z-index:29;bottom:'+((nav&&nav.offsetHeight)||56)+'px;background:#fff;color:#1C1C1E;border-top:3px solid var(--pri);padding:8px 12px;box-shadow:0 -6px 18px rgba(0,0,0,.18)';
+  b.innerHTML='<div style="font-size:13.5px;font-weight:800;margin-bottom:6px">Meu lote: '+sep.map(function(c){ return '#'+esc(c.cod); }).join(' · ')+'</div><button class="bt g" style="margin:0;width:100%" onclick="loteSair()">Sair para entregar ('+sep.length+')</button>';
 }
 /* botões de cada cartão quando o lote está ligado */
 function loteBotoes(c,i){
   if(c.estado!=='pronto') return '<div style="text-align:center;font-weight:900;padding:10px;color:'+(PARTE_ST[c.estado]||PARTE_ST[''])[1]+'">⏳ '+(PARTE_ST[c.estado]||PARTE_ST[''])[0]+'</div>';
-  if(!c.lote) return '<button class="bt s" style="width:100%" onclick="lotePegar({pid:COMS['+i+'].pid,parte:COMS['+i+'].parte})">Pegar este pedido</button>';
+  if(!c.lote) return '<button class="bt" style="width:100%;margin:0" onclick="loteToque('+i+')">＋ Levar</button>';
   if(!c.lote.meu) return '<div style="text-align:center;font-weight:800;padding:10px;color:var(--mu2)">Com '+esc(c.lote.nome||'outro garçom')+'</div>'+(GEST?'<button class="bt s" style="width:100%" onclick="loteSoltar('+i+')">Liberar</button>':'');
-  return '<button class="bt g" onclick="entregueMarca('+i+')">✓ Entregue</button><button class="bt s" style="width:100%;margin-top:6px" onclick="loteSoltar('+i+')">'+(c.lote.saiu?'Não entreguei · devolver':'Tirar do lote')+'</button>';
+  if(!c.lote.saiu) return '<button class="bt g" style="width:100%;margin:0" onclick="loteToque('+i+')">✓ No meu lote · tocar para tirar</button>';
+  return '<button class="bt g" onclick="entregueMarca('+i+')">✓ Entregue</button><button class="bt s" style="width:100%;margin-top:6px" onclick="loteSoltar('+i+')">Não entreguei · devolver</button>';
+}
+function loteRepinta(){ if(LOTE.d) comPinta(LOTE.d); }
+function loteToque(i){
+  var c=COMS[i]; if(!c) return; var k=loteChave(c); if(k in LOTE.opt) return;   /* esperando o servidor: ignora toque repetido */
+  var tira=!!(c.lote&&c.lote.meu&&!c.lote.saiu);
+  LOTE.opt[k]=tira?null:{meu:1,saiu:0}; if(tira) c.lote=undefined; loteRepinta();
+  if(tira){ api('/painel/atend-lote',{acao:'soltar',pid:c.pid,parte:c.parte}).then(function(r){ delete LOTE.opt[k]; if(!r||!r.ok) toast((r&&r.mensagem)||'Não consegui tirar. Tente de novo.'); loteRecarrega(); }); return; }
+  lotePegar({pid:c.pid,parte:c.parte}).then(function(){ delete LOTE.opt[k]; loteRecarrega(); });
 }
 function loteRecarrega(){ COMSIG=''; carregaCom(); }
 /* pede o pedido ao servidor e trata as respostas */
@@ -1738,18 +1760,16 @@ function lotePegar(corpo,naCamera){
   corpo.acao='pegar';
   return api('/painel/atend-lote',corpo).then(function(r){
     if(r&&r.ok){
-      var p=r.pegos[0], txt=r.pegos.map(function(x){ return '#'+x.cod+' · '+x.local; }).join(', ');
-      loteRecarrega();
-      if(p&&r.pegos.every(function(x){ return x.ja; })){ toast(txt+' já estava no lote'); return r; }
-      if(naCamera) loteAviso(txt+' no lote · '+r.noLote);
-      else if(r.noLote===r.pegos.length) lotePergunta(txt);
-      else toast(txt+' no lote ✅');
-      return r;
+      var txt=r.pegos.map(function(x){ return '#'+x.cod+' · '+x.local; }).join(', ');
+      var ja=r.pegos.every(function(x){ return x.ja; });
+      txt+=ja?' já estava no lote':' no lote ✅';
+      if(naCamera) loteAviso(txt); else toast(txt);
+      loteRecarrega(); return r;
     }
-    if(r&&r.erro==='pendente'){ if(window.Bipador) Bipador.fechar(); lotePendente(r.pendentes,corpo); return r; }
+    if(r&&r.erro==='pendente'){ if(window.Bipador) Bipador.fechar(); LOTE.opt={}; loteRecarrega(); lotePendente(r.pendentes,corpo); return r; }
     var m=(r&&r.mensagem)||'Não consegui pegar o pedido. Tente de novo.';
     if(naCamera) loteAviso(m,true); else toast(m);
-    return r;
+    loteRecarrega(); return r;
   });
 }
 function loteAviso(t,erro){
@@ -1757,26 +1777,14 @@ function loteAviso(t,erro){
   if(!k){ toast(t); return; }
   k.style.display='block'; k.style.background=erro?'#FEF2F2':'#ECFDF3'; k.style.color=erro?'#991B1B':'#14532D'; k.textContent=t;
 }
-/* primeiro pedido: pergunta se vai levar mais algum */
-function lotePergunta(txt){
-  folha('Pedido separado','<div style="font-size:19px;font-weight:900;margin:4px 0 8px">'+esc(txt)+'</div><div style="font-size:16px">Vai levar mais algum?</div>',
-    '<button class="bt" style="margin:0" onclick="fecha();loteBipar(true)">Sim, bipar outro</button><button class="bt g" style="margin:8px 0 0;width:100%" onclick="fecha();loteSair()">Não, sair agora</button>');
-}
-/* câmera: continuo = fica aberta para bipar vários, com o botão de sair */
-function loteBipar(continuo){
+/* câmera (opcional): fica aberta para bipar vários; se não abrir neste aparelho, o botão some até recarregar */
+function loteBipar(){
   if(!window.Bipador){ toast('Leitor de código não disponível.'); return; }
-  Bipador.abrir({titulo:continuo?'Bipe os próximos':'Bipar pedido para levar',continuo:continuo,dica:'Aponte para o código de barras da comanda, ou digite o número (ex.: 53-B).',aoLer:function(cod,fechar){
-    if(!continuo) fechar();
-    lotePegar({cod:cod},continuo);
-    return continuo?'Lendo '+cod+'…':true;
+  Bipador.abrir({titulo:'Bipar pedidos para levar',continuo:true,dica:'Aponte para o código de barras da comanda, ou digite o número (ex.: 53-B).',aoFalhar:function(){ LOTE.semCam=true; loteRepinta(); },aoLer:function(cod){
+    lotePegar({cod:cod},true); return 'Lendo '+cod+'…';
   }});
-  if(continuo){
-    var cx=document.querySelector('.bpd-c'); if(!cx) return;
-    var b=document.createElement('button'); b.type='button'; b.className='bt g'; b.textContent='Pronto, sair para entregar'; b.style.cssText='width:100%;margin:10px 0 0';
-    b.onclick=function(){ Bipador.fechar(); loteSair(); }; cx.appendChild(b);
-  }
 }
-function loteSair(){ api('/painel/atend-lote',{acao:'sair'}).then(function(r){ if(r&&r.ok){ toast('Boa entrega! Marque Entregue em cada lugar.'); loteRecarrega(); } else toast((r&&r.mensagem)||'Não consegui. Tente de novo.'); }); }
+function loteSair(){ api('/painel/atend-lote',{acao:'sair'}).then(function(r){ if(window.Bipador) Bipador.fechar(); if(r&&r.ok){ toast('Boa entrega! Marque Entregue em cada lugar.'); loteRecarrega(); } else toast((r&&r.mensagem)||'Não consegui. Tente de novo.'); }); }
 function loteSoltar(i){
   var c=COMS[i]; if(!c) return; if(!confirm('Devolver o pedido #'+c.cod+' para a lista?')) return;
   api('/painel/atend-lote',{acao:'soltar',pid:c.pid,parte:c.parte}).then(function(r){ if(r&&r.ok) loteRecarrega(); else toast((r&&r.mensagem)||'Não consegui. Tente de novo.'); });
@@ -1806,7 +1814,9 @@ function entregaCard(c,i){
 }
 function comPinta(d){
     COMSIG=comSig(d);
-    var pagos=(d.entregar||[]).filter(function(c){ return PRAIA||c.ap||c.ent; });   /* apartamento pronto aparece mesmo sem Entrega na praia */
+    var pagos=(d.entregar||[]).filter(function(c){ return PRAIA||c.ap||c.ent; });
+    LOTE.d=d; if(loteOn()) loteAplica(pagos);
+    var ln=$('loteNum'), lnV=ln?ln.value:'', lnF=!!ln&&document.activeElement===ln;   /* apartamento pronto aparece mesmo sem Entrega na praia */
     COMS=pagos.concat(d.comandas||[]); ENT.lista=COMS; OPENL=COMS.filter(function(c){ return !c.pago&&c.mesa&&c.joia; }); OPENH=d.hoje||OPENH; var h='';
     if(pagos.length) h+='<div class="sec" style="margin:0 0 8px">Para entregar · '+pagos.length+'</div>';
     if(loteOn()&&pagos.length) h+=loteTopo(pagos);
@@ -1820,7 +1830,8 @@ function comPinta(d){
         +(PRAIA?'<button class="bt s" onclick="mudaLugar('+i+')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg>Mudar lugar</button>'+((c.geo||(c.foto&&c.foto.k))?'<button class="bt s" onclick="entAbreC(COMS['+i+'])"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>Localizar</button>':''):'<button class="bt s" onclick="trocaForm('+i+')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg>Trocar mesa</button>')
         +'</div><div class="ac1"><button class="bt g" onclick="fechaForm('+i+')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18M7 15h3"/></svg>Fechar conta</button></div></div>';
     });
-    $('lCom').innerHTML=(cobraHora()&&!PRAIA&&!pagos.length)?(h?'<div class="sec" style="margin-top:22px">Comandas ainda abertas</div>'+h:''):(h||'<p style="color:var(--mu2)">Nenhuma comanda aberta agora.</p>'); achaPed();   /* (239) cobrar na hora: só mostra se ainda houver alguma aberta */
+    $('lCom').innerHTML=(cobraHora()&&!PRAIA&&!pagos.length)?(h?'<div class="sec" style="margin-top:22px">Comandas ainda abertas</div>'+h:''):(h||'<p style="color:var(--mu2)">Nenhuma comanda aberta agora.</p>'); achaPed(); loteBarra(pagos);
+    var ln2=$('loteNum'); if(ln2){ ln2.value=lnV; if(lnF) ln2.focus(); }   /* (239) cobrar na hora: só mostra se ainda houver alguma aberta */
   }
 function achaPed(){
   var q=($('bPed').value||'').toLowerCase().trim(), num=/^\d+$/.test(q);
