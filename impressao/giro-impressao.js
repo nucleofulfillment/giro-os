@@ -94,21 +94,32 @@ function qrMatriz(txt) {
   }
   return m;
 }
-/* imprime o QR como imagem (GS v 0), que toda impressora térmica ESC/POS entende */
+/* letras 5x7 para escrever o número do pedido dentro da imagem, ao lado do QR */
+const LETRAS = {
+  '0': ['01110', '10001', '10011', '10101', '11001', '10001', '01110'], '1': ['00100', '01100', '00100', '00100', '00100', '00100', '01110'],
+  '2': ['01110', '10001', '00001', '00010', '00100', '01000', '11111'], '3': ['11110', '00001', '00001', '01110', '00001', '00001', '11110'],
+  '4': ['00010', '00110', '01010', '10010', '11111', '00010', '00010'], '5': ['11111', '10000', '11110', '00001', '00001', '10001', '01110'],
+  '6': ['00110', '01000', '10000', '11110', '10001', '10001', '01110'], '7': ['11111', '00001', '00010', '00100', '01000', '01000', '01000'],
+  '8': ['01110', '10001', '10001', '01110', '10001', '10001', '01110'], '9': ['01110', '10001', '10001', '01111', '00001', '00010', '01100'],
+  '-': ['00000', '00000', '00000', '11111', '00000', '00000', '00000'], 'B': ['11110', '10001', '10001', '11110', '10001', '10001', '11110'],
+  'C': ['01110', '10001', '10000', '10000', '10000', '10001', '01110']
+};
+/* imprime o QR como imagem (GS v 0), que toda impressora térmica ESC/POS entende, com o número do pedido grande ao lado.
+   Devolve true se o número coube ao lado (senão quem chamou imprime o número embaixo). */
 function qrImagem(b, txt) {
-  const m = qrMatriz(txt); if (!m) return;
-  const esc = 9, borda = 2, lado = (m.length + borda * 2) * esc, larg = Math.ceil(lado / 8), img = [];
-  for (let y = 0; y < lado; y++) for (let bx = 0; bx < larg; bx++) {
-    let byte = 0;
-    for (let k = 0; k < 8; k++) {
-      const x = bx * 8 + k, mx = Math.floor(x / esc) - borda, my = Math.floor(y / esc) - borda;
-      if (my >= 0 && my < m.length && mx >= 0 && mx < m.length && m[my][mx]) byte |= 0x80 >> k;
-    }
-    img.push(byte);
-  }
-  b.raw(0x1D, 0x76, 0x30, 0, larg & 255, larg >> 8, lado & 255, lado >> 8);
-  img.forEach(x => b.raw(x));
-  b.raw(10);
+  const m = qrMatriz(txt); if (!m) return false;
+  const W = COLS * 12, esc = 8, borda = 2, lado = (m.length + borda * 2) * esc, margem = 16, larg = W / 8;
+  const t = String(txt).toUpperCase(), temLetras = t.split('').every(c => LETRAS[c]);
+  const s = temLetras ? Math.min(6, Math.floor((W - margem - lado - 24 - 8) / (t.length * 6))) : 0, aoLado = s >= 4;
+  const tx = margem + lado + 24, ty = Math.round((lado - 7 * s) / 2);
+  const preto = (x, y) => {
+    if (x >= margem && x < margem + lado) { const mx = Math.floor((x - margem) / esc) - borda, my = Math.floor(y / esc) - borda; return my >= 0 && my < m.length && mx >= 0 && mx < m.length && !!m[my][mx]; }
+    if (aoLado && x >= tx && y >= ty && y < ty + 7 * s) { const k = Math.floor((x - tx) / (6 * s)), cx = Math.floor(((x - tx) % (6 * s)) / s), g = LETRAS[t[k]]; return !!g && cx < 5 && g[Math.floor((y - ty) / s)][cx] === '1'; }
+    return false;
+  };
+  b.align(0).raw(0x1D, 0x76, 0x30, 0, larg & 255, larg >> 8, lado & 255, lado >> 8);
+  for (let y = 0; y < lado; y++) for (let bx = 0; bx < larg; bx++) { let byte = 0; for (let k = 0; k < 8; k++) if (preto(bx * 8 + k, y)) byte |= 0x80 >> k; b.raw(byte); }
+  return aoLado;
 }
 
 function etiqueta(p, cfg) {
@@ -152,12 +163,13 @@ function etiqueta(p, cfg) {
     b.raw(10);
   });
   if (p.obs) { b.ln(tr).bold(true); quebra('OBS: ' + p.obs, COLS).forEach(x => b.ln(x)); b.bold(false); }
+  /* total do pedido: referência para o garçom cobrar */
+  if (Number(p.total) > 0) { const te = 'TOTAL DO PEDIDO', td = 'R$ ' + Number(p.total).toFixed(2).replace('.', ','); b.ln(tr).bold(true).size(1, 2).ln(te + ' '.repeat(Math.max(1, COLS - te.length - td.length)) + td).size(1, 1).bold(false); }
   b.ln(tr).align(1);
   const cod = String(p.lab).replace(/[^0-9A-Za-z-]/g, '');
   /* QR com o mesmo número: a câmera da maquininha lê melhor que as barras. Vai como IMAGEM, porque muita impressora ignora o comando próprio de QR */
-  qrImagem(b, cod);
-  b.raw(0x1D, 0x68, 70, 0x1D, 0x77, 2, 0x1D, 0x48, 0, 0x1D, 0x6B, 73, cod.length + 2, 0x7B, 0x42, ...bytesTxt(cod, cfg)).raw(10);
-  b.bold(true).size(1, 2).ln(String(p.lab)).size(1, 1).bold(false);
+  /* só o QR (sem o código de barras) e o número ao lado: menos papel */
+  if (!qrImagem(b, cod)) b.align(1).bold(true).size(1, 2).ln(String(p.lab)).size(1, 1).bold(false);
   b.raw(10, 10, 10, 0x1D, 0x56, 66, 3);   /* avança e corta */
   return Buffer.from(b.b);
 }

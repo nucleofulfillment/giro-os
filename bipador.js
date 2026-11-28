@@ -24,11 +24,12 @@ function som(ok){ try{ navigator.vibrate&&navigator.vibrate(ok?60:[120,60,120]);
 function para(){ cancelAnimationFrame(B.raf); clearTimeout(B.raf); B.raf=0; try{ if(B.zx){ B.zx.reset(); B.zx=null; } }catch(e){} if(B.stream){ B.stream.getTracks().forEach(function(t){ t.stop(); }); B.stream=null; } }
 function fechar(){ para(); if(B.box){ B.box.remove(); B.box=null; } document.removeEventListener('keydown', esc, true); if(B.tec){ document.removeEventListener('keydown', B.tec, true); B.tec=null; } }
 function esc(e){ if(e.key==='Escape') fechar(); }
+function faixa(t,ok){ var v=B.box&&B.box.querySelector('.bpd-v'); if(!v) return; var f=v.querySelector('.bpd-f'); if(!f){ f=document.createElement('div'); f.className='bpd-f'; f.style.cssText='position:absolute;left:0;right:0;top:0;padding:14px 10px;text-align:center;color:#fff;font-size:22px;font-weight:900'; v.appendChild(f); } f.textContent=t; f.style.background=ok?'rgba(22,163,74,.92)':'rgba(220,38,38,.92)'; f.style.display='block'; clearTimeout(B.fx); B.fx=setTimeout(function(){ f.style.display='none'; },1400); }
 function erro(t){ var e=B.box&&B.box.querySelector('.bpd-e'); if(e) e.textContent=t||''; }
-function lido(c){ c=String(c||'').trim(); if(!c||!B.op) return; if(Date.now()<B.ate) return; if(B.op.continuo&&c===B.ult&&Date.now()-B.ultT<5000) return;   /* a mesma comanda parada na frente da câmera não repete */
-  B.ate=Date.now()+1500; B.ult=c; B.ultT=Date.now();
+function lido(c){ c=String(c||'').trim(); if(!c||!B.op) return; if(Date.now()<B.ate) return; if(B.op.continuo&&c===B.ult&&Date.now()-B.ultT<4000) return;   /* a mesma comanda parada na frente da câmera não repete */
+  B.ate=Date.now()+(B.op.continuo?600:1500); B.ult=c; B.ultT=Date.now();
   var r; try{ r=B.op.aoLer(c, fechar); }catch(e){ console.error(e); }
-  som(r!==false);
+  som(r!==false); faixa(r===false?'✕ '+c:(typeof r==='string'?r:'✓ '+c), r!==false);
   if(r===false){ erro('Código '+c+' não encontrado.'); return; }
   erro(''); if(!B.op.continuo) fechar(); else { var k=B.box&&B.box.querySelector('.bpd-ok'); if(k){ k.style.display='block'; k.textContent=(typeof r==='string'?r:'Lido: '+c); } } }
 function le(v){
@@ -56,7 +57,7 @@ function leZx(v){
       if(v.readyState>=2&&w&&h){
         n++;
         /* aparelho lento: imagem menor e so o quadrado do meio; o leitor completo entra 1 a cada 4 vezes */
-        var t0=Date.now(), forte=n%4===0, lado=Math.min(w,h), ch=forte?Math.round(h*0.5):Math.round(lado*0.8), cw=forte?w:ch, x0=Math.round((w-cw)/2), y=Math.round((h-ch)/2), k=Math.min(1,(forte?800:480)/cw);
+        var t0=Date.now(), forte=n%5===0, lado=Math.min(w,h), ch=forte?Math.round(h*0.5):Math.round(lado*0.8), cw=forte?w:ch, x0=Math.round((w-cw)/2), y=Math.round((h-ch)/2), k=Math.min(1,(forte?800:(n%2?400:300))/cw);
         cv.width=Math.round(cw*k); cv.height=Math.round(ch*k);
         try{
           cx.drawImage(v,x0,y,cw,ch,0,0,cv.width,cv.height);
@@ -69,7 +70,7 @@ function leZx(v){
         info('Lendo '+w+'x'+h+' · '+n+' · '+B.dt+' ms'+(falha?' · '+String(falha).slice(0,60):''));
       }
       /* a leitura ocupa no maximo 1/3 do tempo: a imagem da camera nao trava; depois de ler, uma pausa */
-      B.raf=setTimeout(passo,Date.now()<B.ate?700:Math.max(220,(B.dt||0)*2));
+      B.raf=setTimeout(passo,Date.now()<B.ate?300:Math.max(60,Math.round((B.dt||0)*0.8)));
     })();
   };
   if(window.ZXing&&window.ZXing.DecodeHintType){ vai(); return; }
@@ -106,7 +107,7 @@ function cameraAntiga(fontes,proxima){
   return camPede({video:{mandatory:{sourceId:ids[q],minWidth:1280,minHeight:720}},audio:false}).catch(function(){ return camPede({video:{mandatory:{sourceId:ids[q]}},audio:false}); }).catch(function(){ return camPede({video:{optional:[{sourceId:ids[q]}]},audio:false}); })
     .catch(function(e){ info('Câmeras: '+fontes.length+' · não abriu a '+(q+1)+' ('+((e&&(e.name||e.message))||'erro')+')'); return camPede({video:true,audio:false}); });
 }
-function info(t){ window.Bipador.info=t; var e=document.querySelector('.bpd-i'); if(e) e.textContent='Leitor v10 · '+t; var s=document.querySelector('.bpd-s'); if(s) s.textContent='Leitor v10 · '+t; }
+function info(t){ window.Bipador.info=t; var e=document.querySelector('.bpd-i'); if(e) e.textContent='Leitor v11 · '+t; var s=document.querySelector('.bpd-s'); if(s) s.textContent='Leitor v11 · '+t; }
 function chromeAntigo(){ var m=(navigator.userAgent.match(/Chrome\/(\d+)/)||[])[1]; return !!m&&Number(m)<60; }
 function camera(proxima){
   if(chromeAntigo()) return fontesAntigas().then(function(f){ return f.length?cameraAntiga(f,proxima):cameraNova(proxima); });
@@ -136,7 +137,7 @@ window.Bipador={
   abrir:function(op){
     css(); fechar(); B.op=op||{}; B.ate=0;
     var d=document.createElement('div'); d.className='bpd'+(B.op.cheia?' cheia':'');
-    d.innerHTML='<div class="bpd-c"><div class="bpd-h"><b></b><button class="bpd-x" type="button" aria-label="Fechar">✕</button></div><div class="bpd-i" style="font-size:11.5px;color:#71717A;margin:-4px 2px 8px">Leitor v10</div><div class="bpd-v"><video playsinline muted autoplay></video><i></i><span class="bpd-s" style="position:absolute;left:8px;bottom:8px;right:8px;color:#fff;font-size:11.5px;font-weight:700;background:rgba(0,0,0,.6);border-radius:8px;padding:4px 8px">Leitor v10</span></div>'+
+    d.innerHTML='<div class="bpd-c"><div class="bpd-h"><b></b><button class="bpd-x" type="button" aria-label="Fechar">✕</button></div><div class="bpd-i" style="font-size:11.5px;color:#71717A;margin:-4px 2px 8px">Leitor v11</div><div class="bpd-v"><video playsinline muted autoplay></video><i></i><span class="bpd-s" style="position:absolute;left:8px;bottom:8px;right:8px;color:#fff;font-size:11.5px;font-weight:700;background:rgba(0,0,0,.6);border-radius:8px;padding:4px 8px">Leitor v11</span></div>'+
       '<div class="bpd-d"></div><div class="bpd-m"><input inputmode="numeric" autocomplete="off" placeholder="Ou digite o código"><button type="button">OK</button></div><div class="bpd-e"></div><div class="bpd-ok"></div></div>';
     d.querySelector('b').textContent=B.op.titulo||'Bipar código de barras';
     d.querySelector('.bpd-d').textContent=B.op.dica||'Aponte a câmera para o código de barras. Leitor USB também funciona.';
